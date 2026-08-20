@@ -558,6 +558,36 @@ function playPowerOnSound() {
   } catch (e) {}
 }
 
+// One-shot filtered-noise burst (13th pass, "fun startup/shutdown"). Same
+// noise-generation approach as startStaticNoise() but deliberately NOT
+// wired into the staticSrc/staticGain globals that the seek-static state
+// machine owns -- this is a self-contained, self-cleaning burst for power
+// beats, so it can't leave the persistent bed's own start/stop bookkeeping
+// out of sync.
+function playStaticBurst(duration, peakGain, freq) {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const n = Math.floor(ctx.sampleRate * duration)
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.frequency.value = freq ?? 1400
+    filter.Q.value = 0.7
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0, t)
+    gain.gain.linearRampToValueAtTime(peakGain ?? 0.14, t + duration * 0.3)
+    gain.gain.linearRampToValueAtTime(0, t + duration)
+    src.connect(filter).connect(gain).connect(ctx.destination)
+    src.start(t)
+    src.stop(t + duration + 0.02)
+  } catch (e) {}
+}
+
 // --- program ---------------------------------------------------------------
 
 export default {
@@ -649,7 +679,14 @@ export default {
     this.player = null
     this.volume = 70
     this.muted = false
-    this.poweredOn = true
+    // 13th pass (Matthew: "the app should default to a powered off state")
+    // -- the set now boots cold. init() no longer draws the ready-state
+    // chrome at all; it lands directly on the same STANDBY screen
+    // powerDown() ends on, silently (no relay click/hum -- there's no
+    // power to click OFF from, this is before first power-on). Pressing P
+    // runs powerUp()'s full beat sequence, same as any later power cycle,
+    // so "turning it on" always means and looks like the same thing.
+    this.poweredOn = false
 
     // Scrolling-waveform VU state (11th pass -- see drawVU()).
     this.lastProgressDraw = 0
@@ -657,29 +694,16 @@ export default {
     this.vuVelocity = 0
     this.vuTrace = new Array(24).fill(0)
 
-    this.drawChrome(s)
-
     this.history = []
     this.nowPlaying = null
 
-    this.drawScale(s)
-    this.setStatus(s, 'SYSTEM READY', false)
-    this.drawVolume(s)
-    this.drawSignal(s)
-    this.drawVU(s)
-    this.drawDial(s)
-    this.drawFreq(s)
-    this.clearStation(s)
-    this.clearTrack(s)
-    this.setPlayState(s)
-    this.drawHint(s)
-
-    // Warm-up flicker (10th pass, skeuomorphism idea Matthew picked) -- a
-    // brief flicker across the panel borders right after everything above
-    // has already drawn its resting state, like a tube warming up rather
-    // than snapping straight to steady. Purely cosmetic and self-contained;
-    // see playBootFlicker() for the beat sequence.
-    this.playBootFlicker(s)
+    for (let y = 0; y < term.rows; y++)
+      for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
+    const midY = Math.round(term.rows / 2)
+    const label = 'STANDBY'
+    term.text(centerX(term.cols, label), midY, label, FAINT)
+    const hint = '[P] POWER ON'
+    term.text(centerX(term.cols, hint), midY + 2, hint, FAINT)
 
     this.initPlayer(s)
 
@@ -811,6 +835,21 @@ export default {
         }
         this.setStatus(s, 'POWERING DOWN', false)
       } },
+      { delay: 140, fn: () => {
+        // Signal-loss glitch (13th pass, "fun shutdown") -- a scatter of
+        // random block/noise glyphs across the dial and tuning rows right
+        // before the picture collapses, like the tuner losing lock a beat
+        // before the tube itself dies. Paired with a short filtered-noise
+        // burst so it reads/sounds like the same event.
+        const glitchChars = '▓▒░#%&*'
+        for (let x = BOX_X0 + 1; x < BOX_X1; x++) {
+          if (Math.random() < 0.55) {
+            const ch = glitchChars[Math.floor(Math.random() * glitchChars.length)]
+            term.put(x, DIAL_Y, ch, Math.random() < 0.3 ? BRIGHT : FAINT)
+          }
+        }
+        playStaticBurst(0.12, 0.16, 2200)
+      } },
       { delay: 170, fn: () => {
         // Whole picture collapses to the horizontal centerline -- a CRT's
         // vertical deflection dying while the beam is still lit reads as
@@ -845,6 +884,12 @@ export default {
     const midY = Math.round(term.rows / 2)
     playPowerOnSound()
 
+    const bootLines = [
+      'MODEL SG-1  SIGNAL RECEIVER',
+      '[ OK ] TUBES WARMING',
+      '[ OK ] TUNER CALIBRATED',
+      '[ OK ] AUDIO PATH READY',
+    ]
     const beats = [
       { delay: 0, fn: () => {
         // Same tube-off dot the collapse ended on, lighting back up first.
@@ -856,8 +901,25 @@ export default {
         // the rest of the picture does, reverse of the power-down collapse.
         clearAll()
         for (let x = 0; x < term.cols; x++) term.put(x, midY, '─', NORMAL)
+        // Light static crackle as the tube catches, same texture the
+        // power-down glitch beat used, quieter and higher-pitched (coming
+        // up clean rather than dying).
+        playStaticBurst(0.18, 0.08, 2600)
       } },
-      { delay: 190, fn: () => {
+      { delay: 200, fn: () => {
+        // Boot-text beat (13th pass, "fun startup/shutdown") -- a short
+        // typewriter-style POST readout, same [ OK ] idiom used elsewhere
+        // in the project's terminal-program voice, landing one line at a
+        // time before the full picture snaps in. Cosmetic only, no state.
+        clearAll()
+        const startY = midY - Math.floor(bootLines.length / 2)
+        bootLines.forEach((line, i) => {
+          setTimeout(() => {
+            term.text(centerX(term.cols, line), startY + i, line, i === 0 ? BOLD : DIM)
+          }, i * 70)
+        })
+      } },
+      { delay: 200 + bootLines.length * 70 + 120, fn: () => {
         // Full picture back -- same chrome init() draws on a fresh boot,
         // just without touching freq/lockedChannel/bags/volume/history.
         clearAll()
