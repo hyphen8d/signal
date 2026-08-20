@@ -66,6 +66,7 @@ function realTrack(youtubeId, title, artist) {
 // gained 6 (4 new + the 2 reassigned) and the rest gained 4.
 const CHANNELS = [
   { id: 'static-bloom', freq: 137.4, callsign: 'STATIC BLOOM', tagline: 'flannel and feedback, still transmitting',
+    like: 'Nirvana, Soundgarden, Alice In Chains', // 18th pass: guide station reference
     // Matthew 8/20: "I don't hear a station id tone for static bloom." The
     // ident itself was firing fine (confirmed by hooking createOscillator
     // in a live tab) -- it was just pitched a full octave below every other
@@ -87,6 +88,7 @@ const CHANNELS = [
       realTrack('_nGsT_qFMBs', "Touch Me I'm Sick", 'Mudhoney'),
     ] },
   { id: 'relic-signal', freq: 219.8, callsign: 'RELIC SIGNAL', tagline: 'the old masters, undying carrier',
+    like: 'Beethoven, Chopin, Vivaldi',
     ident: [523.3, 659.3, 784.0, 1046.5],
     tracks: [
       realTrack('IvrzJ8uH1PI', 'Symphony No. 5', 'Beethoven'),
@@ -101,6 +103,7 @@ const CHANNELS = [
       realTrack('8UfpgT9FMAk', 'The Planets: Mars, the Bringer of War', 'Holst'),
     ] },
   { id: 'quiet-hours', freq: 356.2, callsign: 'QUIET HOURS', tagline: 'low power, long wave, lights out',
+    like: 'Brian Eno, Sigur Rós, Grouper',
     ident: [392.0, 369.9, 329.6, 293.7],
     tracks: [
       realTrack('UfcAVejslrU', 'Weightless', 'Marconi Union'),
@@ -120,6 +123,7 @@ const CHANNELS = [
       realTrack('jl_z5JvrKlc', 'Discreet Music', 'Brian Eno'),
     ] },
   { id: 'cold-wave', freq: 512.9, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
+    like: 'New Order, The Cure, Depeche Mode',
     ident: [440.0, 554.4, 659.3, 880.0],
     tracks: [
       realTrack('9GMjH1nR0ds', 'Blue Monday \'88', 'New Order'),
@@ -134,6 +138,7 @@ const CHANNELS = [
       realTrack('iIpfWORQWhU', 'I Ran (So Far Away)', 'A Flock of Seagulls'),
     ] },
   { id: 'the-study', freq: 823.1, callsign: 'THE STUDY', tagline: 'lamp light, turned pages, one more chapter',
+    like: 'Nujabes, Bonobo, Tycho',
     ident: [329.6, 293.7, 261.6, 220.0],
     tracks: [
       realTrack('XnFOucmKlXA', 'Aruarian Dance', 'Nujabes'),
@@ -158,6 +163,7 @@ const CHANNELS = [
   // HOURS/COLD WAVE, 650.0 between COLD WAVE/THE STUDY, 878.9 past THE
   // STUDY toward the top of the band) so none of the original 5 moved.
   { id: 'high-rise', freq: 650.0, callsign: 'HIGH RISE', tagline: 'chrome towers, all-night funk',
+    like: 'Tatsuro Yamashita, Anri, Mariya Takeuchi',
     ident: [523.3, 659.3, 830.6, 987.8],
     tracks: [
       realTrack('5zTkTlj2h9E', 'Stay With Me', 'Miki Matsubara'),
@@ -178,6 +184,7 @@ const CHANNELS = [
       realTrack('XJWqHmY-g9U', 'Telephone Number', 'Junko Ohashi'),
     ] },
   { id: 'outlaw-frequency', freq: 288.6, callsign: 'OUTLAW FREQUENCY', tagline: 'dust on the trail, a debt still owed',
+    like: 'Johnny Cash, Ennio Morricone, Marty Robbins',
     ident: [220.0, 196.0, 174.6, 146.8],
     tracks: [
       realTrack('eJlN9jdQFSc', "God's Gonna Cut You Down", 'Johnny Cash'),
@@ -196,6 +203,7 @@ const CHANNELS = [
       realTrack('rIQTRvKq7Z0', 'Not Even Stevie Nicks', 'Calexico'),
     ] },
   { id: 'circuit-crush', freq: 434.5, callsign: 'CIRCUIT CRUSH', tagline: 'analog glow, the long drive home',
+    like: 'Kavinsky, GUNSHIP, Perturbator',
     ident: [466.2, 587.3, 698.5, 932.3],
     tracks: [
       realTrack('ZVS6Q_lbKQ0', 'Nightcall', 'Kavinsky'),
@@ -210,6 +218,7 @@ const CHANNELS = [
       realTrack('qKauZYXABrM', 'Night Force', 'Power Glove'),
     ] },
   { id: 'atomic', freq: 878.9, callsign: 'ATOMIC', tagline: 'jump blues and static, dance while the counter clicks',
+    like: 'Louis Prima, Cab Calloway, The Ink Spots',
     ident: [392.0, 493.9, 587.3, 493.9],
     tracks: [
       realTrack('GkHd1d_UVOE', "I Don't Want to Set the World on Fire", 'The Ink Spots'),
@@ -258,6 +267,13 @@ const BOX_X1 = 77
 // nameplate briefly lived here (10th pass) but moved into the title bar
 // itself in the 11th pass -- this row is free again.
 const STATUS_Y = 2
+// Fixed interior width for the status word inside setStatus()'s brackets
+// (18th pass) -- longest status string in use is "POWERING DOWN" (13
+// chars). Padding every status word to this width keeps the whole
+// "● [ STATUS ]" readout a constant length so the LED never shifts
+// position between transitions. Bump this if a longer status string is
+// ever added.
+const STATUS_TEXT_WIDTH = 13
 
 const TUNER_TOP_Y = 3
 const SCALE_Y = 4
@@ -304,6 +320,17 @@ const VU_DIVIDER_Y = 20
 const VU_Y = 21
 const METERS_BOT_Y = 22
 
+// LEVELS split (18th pass, Matthew: "we have room down in the levels area
+// to maybe halve that and have levels on one side and something tbd on the
+// other") -- VOL/SIG/VU meters, which never actually needed the box's full
+// ~74-column interior (their compact "LABEL [bar] NN" text just used to
+// sit centered in a lot of empty space), now live in the left half only.
+// The right half is a reserved, currently-blank column -- content TBD, not
+// yet built. METERS_DIVIDER_X is the vertical divider's column; interior
+// left range is BOX_X0+1..METERS_DIVIDER_X-1, right range is
+// METERS_DIVIDER_X+1..BOX_X1-1.
+const METERS_DIVIDER_X = 39
+
 const HINT_Y1 = 23
 const HINT_Y2 = 24
 
@@ -312,6 +339,14 @@ const HINT_Y2 = 24
  *  at both edges -- this is what broke the hint row before). */
 function centerX(cols, text) {
   return Math.max(0, Math.floor((cols - text.length) / 2))
+}
+
+/** Same idea as centerX, but centered within an arbitrary [x0, x1] column
+ *  range instead of the full grid width (18th pass) -- used by the LEVELS
+ *  meters now that they're confined to the box's left half rather than its
+ *  full interior. */
+function centerXRange(x0, x1, text) {
+  return x0 + Math.max(0, Math.floor((x1 - x0 + 1 - text.length) / 2))
 }
 
 // Date/time module (15th pass, Matthew: "let's add date and time as a
@@ -346,8 +381,12 @@ function truncate(str, maxLen) {
 /** Box-drawing helpers. Borders are drawn once (in init) and never touched
  *  again -- every row-content function below clears only its own interior
  *  span, not the full canvas width, so the frame stays put across redraws. */
-function drawBoxTop(term, y, x0, x1, label, attr) {
-  const inner = x1 - x0 - 1
+// labelX1 (18th pass, defaults to x1) lets a label be centered over a
+// narrower span than the box's full width -- LEVELS uses this to keep its
+// title clear of the METERS_DIVIDER_X vertical divider added the same
+// pass, without changing how every other (unsplit) box's label centers.
+function drawBoxTop(term, y, x0, x1, label, attr, labelX1 = x1) {
+  const inner = labelX1 - x0 - 1
   const tag = label ? ` ${label} ` : ''
   const tagX = tag ? x0 + 1 + Math.floor((inner - tag.length) / 2) : -1
   term.put(x0, y, '┌', attr)
@@ -719,7 +758,7 @@ export default {
     drawBoxSide(term, PLAYBACK_Y, BOX_X0, BOX_X1, MUTED)
     drawBoxBottom(term, NOWPLAYING_BOT_Y, BOX_X0, BOX_X1, MUTED)
 
-    drawBoxTop(term, METERS_TOP_Y, BOX_X0, BOX_X1, 'LEVELS', MUTED)
+    drawBoxTop(term, METERS_TOP_Y, BOX_X0, BOX_X1, 'LEVELS', MUTED, METERS_DIVIDER_X)
     drawBoxSide(term, VOL_Y, BOX_X0, BOX_X1, MUTED)
     drawBoxSide(term, VOL_SIG_DIVIDER_Y, BOX_X0, BOX_X1, MUTED)
     drawBoxSide(term, SIG_Y, BOX_X0, BOX_X1, MUTED)
@@ -731,9 +770,23 @@ export default {
     // -- the two divider rows inside LEVELS were plain blank interiors
     // (just the box's side borders with nothing between). Filling them with
     // a dotted perforation pattern instead reads as a physical speaker
-    // grille sitting between the meters, at zero extra row cost.
-    drawGrille(term, VOL_SIG_DIVIDER_Y, BOX_X0, BOX_X1)
-    drawGrille(term, VU_DIVIDER_Y, BOX_X0, BOX_X1)
+    // grille sitting between the meters, at zero extra row cost. Confined
+    // to the left half only (18th pass, see METERS_DIVIDER_X) -- the right
+    // half is reserved/blank until there's content for it.
+    drawGrille(term, VOL_SIG_DIVIDER_Y, BOX_X0, METERS_DIVIDER_X)
+    drawGrille(term, VU_DIVIDER_Y, BOX_X0, METERS_DIVIDER_X)
+
+    // LEVELS vertical divider (18th pass, Matthew: "halve that and have
+    // levels on one side and something tbd on the other") -- splits the
+    // single LEVELS box into two halves without changing its outer frame.
+    // T-junctions where the divider meets the box's own top/bottom border,
+    // a plain vertical bar down the interior rows. Drawn after the grille
+    // above so it isn't overwritten by it.
+    term.put(METERS_DIVIDER_X, METERS_TOP_Y, '┳', MUTED)
+    for (const y of [VOL_Y, VOL_SIG_DIVIDER_Y, SIG_Y, VU_DIVIDER_Y, VU_Y]) {
+      term.put(METERS_DIVIDER_X, y, '│', MUTED)
+    }
+    term.put(METERS_DIVIDER_X, METERS_BOT_Y, '┻', MUTED)
 
     // Chassis corner brackets (10th pass, skeuomorphism idea Matthew
     // picked) -- the 4 columns outside the panel stack (x 0-1 and 78-79)
@@ -802,7 +855,7 @@ export default {
     this.lastProgressDraw = 0
     this.vuSample = 0.03
     this.vuVelocity = 0
-    this.vuTrace = new Array(24).fill(0)
+    this.vuTrace = new Array(16).fill(0) // 18th pass: trimmed from 24, see drawVU()
 
     this.history = [] // stack of previously-locked channels, for [B] back
     this.nowPlaying = null
@@ -920,13 +973,28 @@ export default {
   // connection explicit: it's the light for THIS status. Glyph+attr baked
   // into the same centered string as the bracket so the whole "● [ TEXT ]"
   // unit centers as one line rather than the LED floating off to one side).
+  // 17th/18th pass (Matthew: the LED "seems less like something decorative
+  // or a component because it changes position" -- true: the bracket text
+  // varies in length per status ("SEEKING" vs "POWERING DOWN"), so the
+  // whole centered "LED + bracket" unit's width changed every transition
+  // and the LED visibly hopped left/right instead of staying put. Fixed by
+  // padding the status word to STATUS_TEXT_WIDTH (13, the longest word
+  // used -- "POWERING DOWN") before wrapping it in brackets, so `bracket`
+  // and therefore `combined` are a fixed length on every call. The LED now
+  // sits at the same column always; only the word inside the brackets
+  // changes, which is the "status window/widget that doesn't change shape"
+  // Matthew asked for.
   setStatus(s, text, active) {
     const { term } = s
     const locked = this.mode === 'locked'
     const seeking = this.mode === 'seeking' || this.scanning
     const ledGlyph = locked ? '●' : '○'
     const ledAttr = locked ? BRIGHT : seeking ? DIM : FAINT
-    const bracket = `[ ${text} ]`
+    const padTotal = STATUS_TEXT_WIDTH - text.length
+    const padL = Math.max(0, Math.floor(padTotal / 2))
+    const padR = Math.max(0, padTotal - padL)
+    const padded = ' '.repeat(padL) + text + ' '.repeat(padR)
+    const bracket = `[ ${padded} ]`
     const combined = `${ledGlyph}  ${bracket}`
     for (let x = 0; x < term.cols; x++) term.put(x, STATUS_Y, ' ')
     const startX = centerX(term.cols, combined)
@@ -943,12 +1011,24 @@ export default {
     const { term } = s
     const tops = [
       [TUNER_TOP_Y, 'TUNING BAND'], [STATION_TOP_Y, 'STATION'],
-      [NOWPLAYING_TOP_Y, 'NOW PLAYING'], [METERS_TOP_Y, 'LEVELS'],
+      [NOWPLAYING_TOP_Y, 'NOW PLAYING'],
+      // labelX1 = METERS_DIVIDER_X here (18th pass) -- without it this
+      // would re-center "LEVELS" across the box's full width on every
+      // flicker beat, colliding with (and, worse, permanently
+      // mis-positioning relative to) the divider once the beats stop.
+      [METERS_TOP_Y, 'LEVELS', METERS_DIVIDER_X],
     ]
     const bottoms = [TUNER_BOT_Y, STATION_BOT_Y, NOWPLAYING_BOT_Y, METERS_BOT_Y]
     const redraw = (attr) => {
-      for (const [y, label] of tops) drawBoxTop(term, y, BOX_X0, BOX_X1, label, attr)
+      for (const [y, label, labelX1] of tops) drawBoxTop(term, y, BOX_X0, BOX_X1, label, attr, labelX1)
       for (const y of bottoms) drawBoxBottom(term, y, BOX_X0, BOX_X1, attr)
+      // 18th pass: drawBoxTop/Bottom redraw the LEVELS row as a plain
+      // border, which would otherwise erase the LEVELS divider's
+      // T-junctions on every power-on (this runs on every powerUp, not
+      // just the very first boot). Redrawing them at the same attr keeps
+      // them in sync with the rest of the flicker instead of vanishing.
+      term.put(METERS_DIVIDER_X, METERS_TOP_Y, '┳', attr)
+      term.put(METERS_DIVIDER_X, METERS_BOT_Y, '┻', attr)
     }
     const beats = [[FAINT, 30], [NORMAL, 110], [FAINT, 40], [DIM, 90], [BRIGHT, 70], [MUTED, 160]]
     let t = 0
@@ -1148,24 +1228,26 @@ export default {
 
   drawVolume(s) {
     const { term } = s
-    for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, VOL_Y, ' ')
-    // Widened from 10 to 24 segments now that the meter has its own boxed
-    // panel and the full width to use -- a 10-block bar looked stingy
-    // sitting alone in a near-full-width frame.
-    const segs = 24
+    // 18th pass: confined to the LEVELS box's left half (see
+    // METERS_DIVIDER_X) -- only clears/centers up to the divider now,
+    // leaving the reserved right half alone.
+    for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, VOL_Y, ' ')
+    // Segment count trimmed from 24 to 16 in the 18th pass to fit the
+    // halved width with clean margins either side of the divider.
+    const segs = 16
     const filled = this.muted ? 0 : Math.round((this.volume / 100) * segs)
     let bar = ''
     for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '-'
     const label = this.muted ? `VOL [${bar}] MUTE` : `VOL [${bar}] ${this.volume}`
-    term.text(centerX(term.cols, label), VOL_Y, label, DIM)
+    term.text(centerXRange(BOX_X0 + 1, METERS_DIVIDER_X - 1, label), VOL_Y, label, DIM)
   },
 
   // Decorative, but reinforces the tuning fantasy: fills in as you approach
   // a channel while seeking, full once locked.
   drawSignal(s) {
     const { term } = s
-    for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, SIG_Y, ' ')
-    const segs = 24
+    for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, SIG_Y, ' ')
+    const segs = 16
     let pct = 0
     if (this.mode === 'locked') pct = 1
     else {
@@ -1176,7 +1258,7 @@ export default {
     let bar = ''
     for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '-'
     const label = `SIG [${bar}]`
-    term.text(centerX(term.cols, label), SIG_Y, label, filled > 0 ? DIM : FAINT)
+    term.text(centerXRange(BOX_X0 + 1, METERS_DIVIDER_X - 1, label), SIG_Y, label, filled > 0 ? DIM : FAINT)
   },
 
   // STATION (callsign + tagline) and NOW PLAYING (track) are separate
@@ -1280,7 +1362,10 @@ export default {
   // -- WebAudio has no visibility into the YouTube iframe's actual output.
   drawVU(s) {
     const { term } = s
-    for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, VU_Y, ' ')
+    // 18th pass: confined to the left half, and this.vuTrace shrank from
+    // 24 to 16 samples (see init()) to match -- same reasoning as the
+    // VOL/SIG segment trim above.
+    for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, VU_Y, ' ')
     const playing = this.mode === 'locked' && this.playState === 'playing'
     const target = playing ? 0.15 + Math.random() * 0.8 : 0.03
     const spring = 0.4
@@ -1294,7 +1379,7 @@ export default {
     let bar = ''
     for (const v of this.vuTrace) bar += chars[Math.max(0, Math.min(chars.length - 1, Math.round(v * (chars.length - 1))))]
     const label = `VU  ${bar}`
-    term.text(centerX(term.cols, label), VU_Y, label, playing ? DIM : FAINT)
+    term.text(centerXRange(BOX_X0 + 1, METERS_DIVIDER_X - 1, label), VU_Y, label, playing ? DIM : FAINT)
   },
 
   // BUG/NAMING FIXED 2026-08-20: this used to log an entry on every track
@@ -1553,14 +1638,29 @@ export default {
   openGuide(s) {
     if (this.guideOpen) return
     this.guideOpen = true
+    this.guidePage = 1
     // A scan/preset-sweep timer left running would keep punching fresh
     // dial/freq redraws into rows the guide is now using underneath it, so
     // it gets stopped outright rather than just visually covered.
     this.stopScan()
     stopStaticNoise()
+    this.drawGuidePage(s)
+  },
+  // 18th pass (Matthew: "add a station reference to the guide") -- the
+  // about/credit/contact/controls screen was already using ~18 of 25 rows,
+  // and a full 9-station table needs about 10 more, so the guide became 2
+  // pages rather than cramming both onto one. ArrowLeft/ArrowRight flip
+  // between them (see key()); any other key still closes the guide exactly
+  // like before.
+  drawGuidePage(s) {
     const { term } = s
     for (let y = 0; y < term.rows; y++)
       for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
+    if (this.guidePage === 1) this.drawGuidePageAbout(s)
+    else this.drawGuidePageStations(s)
+  },
+  drawGuidePageAbout(s) {
+    const { term } = s
     const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
     put(1, 'SIGNAL -- GUIDE', BOLD)
     put(3, 'A tuning-dial internet radio, rendered entirely as text.', NORMAL)
@@ -1575,7 +1675,29 @@ export default {
     put(16, '[N] SKIP            [UP/DOWN] VOL        [M] MUTE', DIM)
     put(17, '[P] POWER           [G] GUIDE', DIM)
     put(20, 'SIGNAL v0.2', FAINT)
-    put(22, '[ press any key to close ]', FAINT)
+    put(22, '[->] STATIONS        [any other key] CLOSE', FAINT)
+  },
+  // Station reference table -- freq/name/desc/artists-like, one entry per
+  // 2 rows (callsign line, then an indented detail line), 9 stations x 2
+  // rows = 18 rows, rows 3-20 exactly. Ordered by CHANNEL_PRESET_ORDER
+  // (freq ascending, same order as the dial left-to-right and the [1-9]
+  // preset keys after the 17th pass) rather than CHANNELS' chronological
+  // order, so the preset number shown here matches what actually tunes to
+  // that station.
+  drawGuidePageStations(s) {
+    const { term } = s
+    const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
+    put(1, 'SIGNAL -- STATIONS', BOLD)
+    const startY = 3
+    CHANNEL_PRESET_ORDER.forEach((ch, i) => {
+      const presetNum = i + 1
+      const y = startY + i * 2
+      const header = `[${presetNum}] ${ch.freq.toFixed(1)}   ${ch.callsign}`
+      term.text(4, y, header, BRIGHT)
+      const detail = truncate(`${ch.tagline} -- like ${ch.like}`, term.cols - 8)
+      term.text(8, y + 1, detail, MUTED)
+    })
+    put(22, '[<-] ABOUT        [any other key] CLOSE', FAINT)
   },
   closeGuide(s) {
     this.guideOpen = false
@@ -1710,11 +1832,18 @@ export default {
       if (e.key === 'p' || e.key === 'P') { e.preventDefault(); this.powerUp(s) }
       return
     }
-    // Guide overlay (15th pass) -- while open, ANY key closes it (matches
-    // the "[ press any key to close ]" hint drawn on the guide screen
-    // itself), not just G again. Intercepted before the switch below so
+    // Guide overlay (15th pass; paged 18th pass) -- while open, ANY key
+    // closes it (matches the "[any other key] CLOSE" hint on both guide
+    // pages) except ArrowRight on page 1 / ArrowLeft on page 2, which flip
+    // to the other page instead. Intercepted before the switch below so
     // nothing else (seek, lock, presets) can act underneath the overlay.
-    if (this.guideOpen) { e.preventDefault(); this.closeGuide(s); return }
+    if (this.guideOpen) {
+      e.preventDefault()
+      if (this.guidePage === 1 && e.key === 'ArrowRight') { this.guidePage = 2; this.drawGuidePage(s); return }
+      if (this.guidePage === 2 && e.key === 'ArrowLeft') { this.guidePage = 1; this.drawGuidePage(s); return }
+      this.closeGuide(s)
+      return
+    }
     switch (e.key) {
       case 'ArrowLeft': e.preventDefault(); this.seekStep(s, -SEEK_STEP); break
       case 'ArrowRight': e.preventDefault(); this.seekStep(s, SEEK_STEP); break
@@ -1791,7 +1920,13 @@ export default {
     if (Math.random() < 0.05) {
       const rows = [TUNER_BOT_Y, STATION_BOT_Y, NOWPLAYING_BOT_Y, METERS_BOT_Y]
       const y = rows[Math.floor(Math.random() * rows.length)]
-      const x = BOX_X0 + 1 + Math.floor(Math.random() * (BOX_X1 - BOX_X0 - 1))
+      let x = BOX_X0 + 1 + Math.floor(Math.random() * (BOX_X1 - BOX_X0 - 1))
+      // 18th pass: METERS_BOT_Y now has a '┻' T-junction at
+      // METERS_DIVIDER_X (see drawChrome) -- this shimmer assumed every
+      // bottom-border cell was a plain '─' and would permanently stomp the
+      // junction with a dash if it ever landed there (writes '─' both for
+      // the flash and the fade-back). Nudge off that one column instead.
+      if (y === METERS_BOT_Y && x === METERS_DIVIDER_X) x += x < BOX_X1 - 1 ? 1 : -1
       s.term.put(x, y, '─', DIM)
       setTimeout(() => { if (this.poweredOn) s.term.put(x, y, '─', MUTED) }, 90 + Math.random() * 80)
     }
