@@ -225,6 +225,19 @@ const CHANNELS = [
     ] },
 ]
 
+// Preset-key ordering (17th pass, Matthew: "presets should match the tuning
+// band left to right") -- CHANNELS above is ordered however stations were
+// added over time (original 5, then 4 more slotted into freq gaps), not by
+// frequency, so pressing 1-9 in order used to jump around the dial instead
+// of walking it left to right (e.g. preset 5, THE STUDY at 823.1, sat to
+// the RIGHT of preset 6, HIGH RISE at 650.0). Rather than reshuffle the
+// CHANNELS array itself -- which would scatter the historical comments
+// documenting when/why each station and its frequency were added -- this
+// derives a separate lookup sorted by freq ascending, so preset number
+// order always matches left-to-right position on the dial regardless of
+// CHANNELS' own (chronological) order.
+const CHANNEL_PRESET_ORDER = [...CHANNELS].sort((a, b) => a.freq - b.freq)
+
 // --- layout (80x25 grid) -----------------------------------------------
 
 // Re-spaced 2026-08-20 (4th pass) -- boxed layout. Previous passes fixed
@@ -668,24 +681,23 @@ export default {
     // Title bar, inverse plane.
     for (let x = 0; x < term.cols; x++) term.put(x, 0, ' ', NORMAL, 1)
     term.text(2, 0, 'SIGNAL', BOLD, 1)
-    term.text(72, 0, 'v0.2', DIM, 1)
-    // Date/time module (15th pass) -- lives in the open gap between the
-    // brand-plate and "v0.2", same inverse title-bar plane. Drawn once here
-    // on every chrome (re)draw; the 1s ticker set up in init() keeps it
-    // live after that (see drawClock()/this._clockTimer).
+    // Date/time module (15th pass; repositioned 17th pass, Matthew: "remove
+    // version number from here put date/time there instead with formating
+    // that was used for version") -- the version number used to live at
+    // x=72 in this same DIM/inverse style; it's gone now and the clock sits
+    // in its place instead. Drawn once here on every chrome (re)draw; the
+    // 1s ticker set up in init() keeps it live after that (see
+    // drawClock()/this._clockTimer).
     this.drawClock(s)
-    // Power/lock LED (10th pass, skeuomorphism idea Matthew picked) -- a
-    // single indicator dot next to the title, dark/faint when idle, dim
-    // while seeking, solid bright once locked. Drawn by drawLED(), called
-    // from setStatus() so it stays in sync with every status change without
-    // needing its own call site at every transition.
-    this.drawLED(s)
 
     // Brand-plate nameplate (10th pass, skeuomorphism idea Matthew picked;
     // moved into the title bar itself in the 11th pass, Matthew: "move
-    // model sg-1 etc into header") -- sits in the open space between the
-    // LED and "v0.2", same inverse plane as the rest of the title row
-    // instead of floating as its own dim line underneath it.
+    // model sg-1 etc into header") -- sits in the open space left of the
+    // clock, same inverse plane as the rest of the title row instead of
+    // floating as its own dim line underneath it. The power/lock LED used
+    // to sit here too (10th pass) but moved down onto the status line in
+    // the 17th pass (Matthew: it "wasn't obvious" tucked in next to the
+    // title text) -- see setStatus().
     const brand = 'MODEL SG-1  -  SIGNAL RECEIVER'
     term.text(centerX(term.cols, brand), 0, brand, FAINT, 1)
 
@@ -735,17 +747,17 @@ export default {
   },
 
   // Date/time module, running-screen half (15th pass; repositioned +
-  // brightened 16th pass, Matthew: "wrong spot, too dim"). Left-aligned into
-  // the gap between the LED (x=9) and the brand-plate (starts x=25) --
-  // columns 11-24 are free there, plenty for the fixed 11-char string with
-  // a column of breathing room on each side. DIM instead of FAINT so it
-  // actually reads at a glance instead of all but disappearing into the
-  // inverse title-bar plane. Same width every tick, so no blank-first
-  // needed.
+  // brightened 16th pass, Matthew: "wrong spot, too dim"; moved again 17th
+  // pass onto the version number's old spot, Matthew: "remove version
+  // number from here put date/time there instead with formating that was
+  // used for version"). Right-aligned to end at column 75 -- exactly where
+  // "v0.2" used to end -- same DIM/inverse formatting the version used, so
+  // it reads the same way the version did, just with the date/time in its
+  // place. Same width every tick, so no blank-first needed.
   drawClock(s) {
     const { term } = s
     const str = formatClock(new Date())
-    const x = 12
+    const x = 76 - str.length
     for (let i = 0; i < str.length; i++) term.put(x + i, 0, str[i], DIM, 1)
   },
 
@@ -899,25 +911,27 @@ export default {
   // 11th pass (Matthew: "add some flair around scanning, locked status...
   // brackets so it's not just floating text") -- wraps every status string
   // in a readout-style bracket instead of leaving it as bare centered text.
+  //
+  // Power/lock LED (10th pass, skeuomorphism idea Matthew picked; moved
+  // here 17th pass -- it used to sit in the title bar next to "SIGNAL", one
+  // cell on the inverse plane, but Matthew found it "wasn't obvious" tucked
+  // in next to the title text with nothing tying it to what it meant.
+  // Living right in front of the bracketed status text instead makes the
+  // connection explicit: it's the light for THIS status. Glyph+attr baked
+  // into the same centered string as the bracket so the whole "● [ TEXT ]"
+  // unit centers as one line rather than the LED floating off to one side).
   setStatus(s, text, active) {
-    const { term } = s
-    const display = `[ ${text} ]`
-    for (let x = 0; x < term.cols; x++) term.put(x, STATUS_Y, ' ')
-    term.text(centerX(term.cols, display), STATUS_Y, display, active ? BRIGHT : MUTED)
-    this.drawLED(s)
-  },
-
-  // Power/lock LED (10th pass) -- lives in the title bar next to "SIGNAL",
-  // one cell, inverse plane like the rest of that row. Called from
-  // setStatus() so every status transition (locked/seeking/scanning/idle)
-  // keeps it in sync without a separate call site per transition.
-  drawLED(s) {
     const { term } = s
     const locked = this.mode === 'locked'
     const seeking = this.mode === 'seeking' || this.scanning
-    const glyph = locked ? '●' : '○'
-    const attr = locked ? BRIGHT : seeking ? DIM : FAINT
-    term.put(9, 0, glyph, attr, 1)
+    const ledGlyph = locked ? '●' : '○'
+    const ledAttr = locked ? BRIGHT : seeking ? DIM : FAINT
+    const bracket = `[ ${text} ]`
+    const combined = `${ledGlyph}  ${bracket}`
+    for (let x = 0; x < term.cols; x++) term.put(x, STATUS_Y, ' ')
+    const startX = centerX(term.cols, combined)
+    term.put(startX, STATUS_Y, ledGlyph, ledAttr)
+    term.text(startX + 3, STATUS_Y, bracket, active ? BRIGHT : MUTED)
   },
 
   // Warm-up flicker (10th pass) -- a short beat sequence that redraws the
@@ -1721,7 +1735,10 @@ export default {
       // pass's drop to 5.
       case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
         e.preventDefault()
-        const ch = CHANNELS[Number(e.key) - 1]
+        // 17th pass: CHANNEL_PRESET_ORDER (freq-sorted), not CHANNELS
+        // (chronological add-order) -- see its definition for why -- so
+        // preset number always matches left-to-right position on the dial.
+        const ch = CHANNEL_PRESET_ORDER[Number(e.key) - 1]
         if (ch) this.presetTune(s, ch)
         break
       }
