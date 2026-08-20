@@ -301,6 +301,14 @@ function centerX(cols, text) {
   return Math.max(0, Math.floor((cols - text.length) / 2))
 }
 
+// Date/time module (15th pass, Matthew: "let's add date and time as a
+// module"). Fixed-width "MM/DD HH:MM:SS" (always 14 chars) so drawClock()
+// can write it in place every tick without needing to blank first.
+function formatClock(d) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 /** Hard-cap a string to maxLen, marking the cut with "..." (not the U+2026
  *  ellipsis glyph -- the bitmap font may not have it, and a missing glyph
  *  silently falls back to "?", which reads worse than three periods).
@@ -656,6 +664,11 @@ export default {
     for (let x = 0; x < term.cols; x++) term.put(x, 0, ' ', NORMAL, 1)
     term.text(2, 0, 'SIGNAL', BOLD, 1)
     term.text(72, 0, 'v0.1', DIM, 1)
+    // Date/time module (15th pass) -- lives in the open gap between the
+    // brand-plate and "v0.1", same inverse title-bar plane. Drawn once here
+    // on every chrome (re)draw; the 1s ticker set up in init() keeps it
+    // live after that (see drawClock()/this._clockTimer).
+    this.drawClock(s)
     // Power/lock LED (10th pass, skeuomorphism idea Matthew picked) -- a
     // single indicator dot next to the title, dark/faint when idle, dim
     // while seeking, solid bright once locked. Drawn by drawLED(), called
@@ -714,6 +727,29 @@ export default {
     term.put(term.cols - 1, TUNER_TOP_Y, '┓', MUTED)
     term.put(0, METERS_BOT_Y, '┗', MUTED)
     term.put(term.cols - 1, METERS_BOT_Y, '┛', MUTED)
+  },
+
+  // Date/time module, running-screen half (15th pass) -- right-aligned into
+  // the gap between the brand-plate and "v0.1" in the title bar (columns
+  // 56-71 are free there; the string is a fixed 14 chars, ending at column
+  // 70, one column of breathing room before "v0.1" at 72). Same width every
+  // tick, so no blank-first needed.
+  drawClock(s) {
+    const { term } = s
+    const str = formatClock(new Date())
+    const x = 71 - str.length
+    for (let i = 0; i < str.length; i++) term.put(x + i, 0, str[i], FAINT, 1)
+  },
+
+  // Date/time module, STANDBY half (15th pass) -- real clock-radios keep
+  // their clock lit even powered off, so this shows underneath the
+  // STANDBY/"[P] POWER ON" text rather than going dark along with
+  // everything else. Driven by the same this._clockTimer as drawClock().
+  drawStandbyClock(s) {
+    const { term } = s
+    const str = formatClock(new Date())
+    const midY = Math.round(term.rows / 2)
+    term.text(centerX(term.cols, str), midY + 4, str, FAINT)
   },
 
   init(s) {
@@ -785,6 +821,22 @@ export default {
     term.text(centerX(term.cols, label), midY, label, FAINT)
     const hint = '[P] POWER ON'
     term.text(centerX(term.cols, hint), midY + 2, hint, FAINT)
+    this.drawStandbyClock(s)
+
+    // Guide overlay (15th pass, Matthew: "we also need a G for guide").
+    this.guideOpen = false
+
+    // Date/time module ticker (15th pass) -- one interval for the whole
+    // page lifetime, since the clock needs to keep ticking on the STANDBY
+    // screen too (a real clock-radio's display doesn't go dark just
+    // because the set itself is off). Skipped entirely while the guide
+    // overlay is open, since that's a full-screen takeover with nothing to
+    // tick into.
+    this._clockTimer = setInterval(() => {
+      if (this.guideOpen) return
+      if (this.poweredOn) this.drawClock(s)
+      else this.drawStandbyClock(s)
+    }, 1000)
 
     this.initPlayer(s)
 
@@ -950,6 +1002,7 @@ export default {
         term.text(centerX(term.cols, label), midY, label, FAINT)
         const hint = '[P] POWER ON'
         term.text(centerX(term.cols, hint), midY + 2, hint, FAINT)
+        this.drawStandbyClock(s)
       } },
     ]
     for (const { delay, fn } of beats) setTimeout(fn, delay)
@@ -969,16 +1022,18 @@ export default {
       'MODEL SG-1  SIGNAL RECEIVER',
       '[ OK ] TUBES WARMING',
       '[ OK ] TUNER CALIBRATED',
+      '[ OK ] SIGNAL LOCK ARMED',
       '[ OK ] AUDIO PATH READY',
     ]
-    // Pacing (14th pass, Matthew: "the cold boot sequence is too fast") --
-    // roughly 2.5x the original beat spacing. A cold-open power-on is the
-    // very first thing anyone sees when they load the page, so it's worth
-    // letting it actually breathe rather than snapping through in ~600ms.
-    const DOT_MS = 220
-    const LINE_STAGGER_MS = 140
-    const BOOT_TEXT_DELAY = 550
-    const REVEAL_DELAY = BOOT_TEXT_DELAY + bootLines.length * LINE_STAGGER_MS + 320
+    // Pacing (15th pass, Matthew: "even longer cold boot please" -- a
+    // second pass after the 14th pass already slowed this down once). Full
+    // sequence now runs a little over 3s. Still one-shot on every power-on,
+    // not just the very first cold one, so it stays worth the wait rather
+    // than becoming an annoyance to click through on every session.
+    const DOT_MS = 500
+    const LINE_STAGGER_MS = 240
+    const BOOT_TEXT_DELAY = 1200
+    const REVEAL_DELAY = BOOT_TEXT_DELAY + bootLines.length * LINE_STAGGER_MS + 700
     const beats = [
       { delay: 0, fn: () => {
         // Same tube-off dot the collapse ended on, lighting back up first.
@@ -1221,8 +1276,8 @@ export default {
   // control, not one of the primary listed ones.
   drawHint(s) {
     const { term } = s
-    const line1 = '[<-/->] SEEK    [ENTER] LOCK    [S] SCAN    [1-9] PRESETS    [B] BACK'
-    const line2 = '[SPACE] PLAY/PAUSE    [N] SKIP    [UP/DOWN] VOL    [M] MUTE    [P] POWER'
+    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BACK   [G] GUIDE'
+    const line2 = '[SPACE] PLAY/PAUSE   [N] SKIP   [UP/DOWN] VOL   [M] MUTE   [P] POWER'
     for (let x = 0; x < term.cols; x++) { term.put(x, HINT_Y1, ' ', NORMAL, 1); term.put(x, HINT_Y2, ' ', NORMAL, 1) }
     term.text(centerX(term.cols, line1), HINT_Y1, line1, BOLD, 1)
     term.text(centerX(term.cols, line2), HINT_Y2, line2, NORMAL, 1)
@@ -1449,6 +1504,75 @@ export default {
     const channel = this.history.pop()
     this.presetTune(s, channel)
   },
+
+  // [G] guide (15th pass, Matthew: "we also need a G for guide... a simple
+  // guide on how things work, a blurb about what the app is and that it is
+  // made by me, Hyphen8d, inspired by my music tastes but made for the
+  // community"). Full-screen takeover, same clearAll-and-redraw approach
+  // the power sequences already use. Any keypress closes it (see key()) --
+  // there's no separate "close" key to remember, same idea as the STANDBY
+  // screen only listening for P.
+  openGuide(s) {
+    if (this.guideOpen) return
+    this.guideOpen = true
+    // A scan/preset-sweep timer left running would keep punching fresh
+    // dial/freq redraws into rows the guide is now using underneath it, so
+    // it gets stopped outright rather than just visually covered.
+    this.stopScan()
+    stopStaticNoise()
+    const { term } = s
+    for (let y = 0; y < term.rows; y++)
+      for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
+    const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
+    put(1, 'SIGNAL -- GUIDE', BOLD)
+    put(3, 'A tuning-dial internet radio, rendered entirely as text.', NORMAL)
+    put(4, 'Power it on, spin the dial, lock onto a station, and let it play.', NORMAL)
+    put(6, 'Made by Hyphen8d -- inspired by my own music taste,', MUTED)
+    put(7, 'built for anyone who wants a weird little radio to leave on.', MUTED)
+    put(9, 'Got an idea, a station request, or found something broken?', NORMAL)
+    put(10, 'Reach out -- matt@gial.co', BRIGHT)
+    put(12, 'CONTROLS', BOLD)
+    put(14, '[<-/->] SEEK        [ENTER] LOCK        [S] SCAN', DIM)
+    put(15, '[1-9] PRESETS       [B] BACK            [SPACE] PLAY/PAUSE', DIM)
+    put(16, '[N] SKIP            [UP/DOWN] VOL        [M] MUTE', DIM)
+    put(17, '[P] POWER           [G] GUIDE', DIM)
+    put(20, 'SIGNAL v0.1', FAINT)
+    put(22, '[ press any key to close ]', FAINT)
+  },
+  closeGuide(s) {
+    this.guideOpen = false
+    // BUG FIXED (15th pass): the guide screen writes into a couple of rows
+    // (the "SIGNAL -- GUIDE" header at row 1, in particular) that nothing
+    // below ever redraws -- drawChrome only touches row 0, the box frames
+    // start at row 3. Without an explicit clear first, that header was
+    // left behind permanently after closing, printed right over the
+    // status line. Same clearAll() the power sequences already use.
+    const { term } = s
+    for (let y = 0; y < term.rows; y++)
+      for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
+    // Rebuild -- chrome, frames, meters, then resume whatever the actual
+    // mode/status was before the guide opened (guide never touched
+    // freq/lockedChannel/playState, only covered them visually).
+    this.drawChrome(s)
+    this.drawScale(s)
+    this.drawVolume(s)
+    this.drawSignal(s)
+    this.drawVU(s)
+    this.drawDial(s)
+    this.drawFreq(s)
+    this.drawHint(s)
+    if (this.mode === 'locked' && this.lockedChannel) {
+      this.showStation(s, this.lockedChannel)
+      if (this.currentTrack) this.showTrack(s, this.currentTrack)
+      this.setStatus(s, 'LOCKED', true)
+    } else {
+      this.clearStation(s)
+      this.clearTrack(s)
+      this.setStatus(s, 'SEEKING', false)
+    }
+    this.setPlayState(s, this.playState)
+  },
+
   stopScan() {
     this.scanning = false
     if (this.scanTimer) { clearInterval(this.scanTimer); this.scanTimer = null }
@@ -1527,6 +1651,7 @@ export default {
   onPointerMove(s, e) {
     if (!this.dragging) return
     if (!this.poweredOn) return
+    if (this.guideOpen) return
     const rect = s.canvas.getBoundingClientRect()
     const dx = e.clientX - this.dragLastX
     this.dragLastX = e.clientX
@@ -1547,6 +1672,11 @@ export default {
       if (e.key === 'p' || e.key === 'P') { e.preventDefault(); this.powerUp(s) }
       return
     }
+    // Guide overlay (15th pass) -- while open, ANY key closes it (matches
+    // the "[ press any key to close ]" hint drawn on the guide screen
+    // itself), not just G again. Intercepted before the switch below so
+    // nothing else (seek, lock, presets) can act underneath the overlay.
+    if (this.guideOpen) { e.preventDefault(); this.closeGuide(s); return }
     switch (e.key) {
       case 'ArrowLeft': e.preventDefault(); this.seekStep(s, -SEEK_STEP); break
       case 'ArrowRight': e.preventDefault(); this.seekStep(s, SEEK_STEP); break
@@ -1560,6 +1690,8 @@ export default {
       case 'p': case 'P': e.preventDefault(); this.powerDown(s); break
       // History back (14th pass, Matthew: "discovery/history -- sure").
       case 'b': case 'B': e.preventDefault(); this.goBack(s); break
+      // Guide (15th pass, Matthew: "we also need a G for guide").
+      case 'g': case 'G': e.preventDefault(); this.openGuide(s); break
       // 11th pass (2026-08-20): 4 new stations brought CHANNELS back up to
       // 9 -- preset keys match its length again, same pattern as the 10th
       // pass's drop to 5.
@@ -1577,8 +1709,10 @@ export default {
     // everything themselves on their own timers, so the normal per-frame
     // idle shimmer/progress/VU redraws need to stay out of the way while
     // powered off (they'd otherwise paint stray dial dots and meter bars
-    // onto what's supposed to read as a dark screen).
-    if (!this.poweredOn) return
+    // onto what's supposed to read as a dark screen). Same reasoning for
+    // the guide overlay (15th pass) -- it's a full-screen takeover of the
+    // same grid, so per-frame redraws would punch holes in it too.
+    if (!this.poweredOn || this.guideOpen) return
 
     // Idle shimmer on the dial while seeking, so the empty band doesn't feel
     // dead between channels. Cheap: only touch a handful of cells per frame.
