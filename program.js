@@ -383,22 +383,10 @@ const METERS_BOT_Y = 22
 // METERS_DIVIDER_X+1..BOX_X1-1.
 const METERS_DIVIDER_X = 39
 
-// GIAL nameplate (19th pass, Matthew: "add a stylized 'GIAL' nameplate for
-// now in the empty spot in lower right", referencing a wireframe/italic
-// display-font mockup he shared) -- fills the LEVELS right half reserved
-// above. Generated with figlet's "slant" font (closest built-in match to
-// that italic, slanted-outline look) rather than hand-drawn -- guarantees
-// every row is genuinely monospace-aligned instead of eyeballed. All 5
-// rows are exactly 23 chars wide (figlet pads them), which is what makes
-// using one shared start column below safe. "For now" per Matthew -- this
-// is a placeholder, not a final wordmark.
-const NAMEPLATE_LINES = [
-  '   _____________    __ ',
-  '  / ____/  _/   |  / / ',
-  ' / / __ / // /| | / /  ',
-  '/ /_/ // // ___ |/ /___',
-  '\\____/___/_/  |_/_____/',
-]
+// GIAL nameplate (19th pass) -- retired 23rd pass. Was always a stated
+// placeholder ("for now", "not a final wordmark" -- see git history),
+// replaced with the functional status-light panel below (drawIndicators())
+// in the same LEVELS right half.
 
 const HINT_Y1 = 23
 const HINT_Y2 = 24
@@ -882,17 +870,12 @@ export default {
     }
     term.put(METERS_DIVIDER_X, METERS_BOT_Y, '┻', MUTED)
 
-    // GIAL nameplate (19th pass) -- fills the LEVELS right half reserved
-    // in the 18th pass. Static, drawn once here like the rest of the
-    // chassis chrome (LED/brand-plate/grille/corner brackets above) rather
-    // than redrawn per-frame, since it never changes. All 5 NAMEPLATE_LINES
-    // rows share one start column (they're all exactly 23 chars, see that
-    // const) so the glyph doesn't drift row to row.
-    {
-      const nameplateX = centerXRange(METERS_DIVIDER_X + 1, BOX_X1 - 1, NAMEPLATE_LINES[0])
-      const nameplateRows = [VOL_Y, VOL_SIG_DIVIDER_Y, SIG_Y, VU_DIVIDER_Y, VU_Y]
-      NAMEPLATE_LINES.forEach((line, i) => term.text(nameplateX, nameplateRows[i], line, DIM))
-    }
+    // The LEVELS right half (GIAL nameplate's old spot) is now the status-
+    // light panel -- see drawIndicators(). Unlike the nameplate it wasn't
+    // static, so it isn't drawn here; the two call sites that used to
+    // follow drawChrome() with a nameplate-is-already-there assumption
+    // (powerUp's reveal beat, closeGuide()) now call drawIndicators()
+    // explicitly, same as they already do for drawVU().
 
     // Chassis corner brackets (10th pass, skeuomorphism idea Matthew
     // picked) -- the 4 columns outside the panel stack (x 0-1 and 78-79)
@@ -1359,6 +1342,7 @@ export default {
         this.drawVolume(s)
         this.drawSignal(s)
         this.drawVU(s)
+        this.drawIndicators(s, 0)
         this.drawDial(s)
         this.drawFreq(s)
         this.drawHint(s)
@@ -1586,6 +1570,73 @@ export default {
   // blending invisibly into the ambient random walk.
   pulseVU(amount) {
     this.vuVelocity += amount
+  },
+
+  // Status-light panel (23rd pass, replacing the placeholder GIAL wordmark
+  // -- see the comment where NAMEPLATE_LINES used to be). Five bracketed
+  // indicator rows in the LEVELS right half, redrawn on the same per-frame
+  // cadence as drawVU() (see the frame() call site) so the blinking/pulsing
+  // ones actually animate instead of only updating on a state-change event.
+  //
+  // Row-by-row, each ties to state that already exists elsewhere rather
+  // than inventing anything new to track:
+  //   PWR / AIR   -- PWR is trivially always lit (STANDBY owns the whole
+  //                  grid when the set is actually off, so there's no
+  //                  "on but this row is dark" state to show); AIR reacts
+  //                  to this.playState, lit only while actually playing.
+  //   TUNED/DRIFT/SEEK -- mirrors the dial's own lock/near-lock bands
+  //                  (LOCK_THRESHOLD / NEAR_THRESHOLD, the same ones
+  //                  drawDial()'s glow uses).
+  //   LIVE/BUFFERING/PAUSED/NO SIGNAL -- directly mirrors this.playState,
+  //                  so it can't drift out of sync with the actual player.
+  //   STEREO/MONO -- cosmetic, per Matthew's own spec: solid once locked,
+  //                  degrades to MONO while buffering (no real stereo
+  //                  detection exists, or could -- the YouTube iframe
+  //                  exposes no channel-count info either).
+  //   MUTE        -- a fixed-position always-there light for mute state,
+  //                  which otherwise only shows up by replacing the VOL
+  //                  meter's numeric readout (see drawVolume) -- easy to
+  //                  miss since it's not in a constant spot.
+  drawIndicatorRow(s, y, segments) {
+    const { term } = s
+    for (let x = METERS_DIVIDER_X + 1; x < BOX_X1; x++) term.put(x, y, ' ')
+    const full = segments.map((seg) => seg.text).join('   ')
+    let x = centerXRange(METERS_DIVIDER_X + 1, BOX_X1 - 1, full)
+    for (const seg of segments) {
+      term.text(x, y, seg.text, seg.attr)
+      x += seg.text.length + 3
+    }
+  },
+
+  drawIndicators(s, t) {
+    const locked = this.mode === 'locked'
+    const blink = Math.floor((t || 0) * 2) % 2 === 0 // ~2Hz, shared by every blinking light below
+    const { dist } = nearestChannel(this.freq)
+    const drifting = !locked && dist <= NEAR_THRESHOLD // same "close but not locked" band drawDial's glow uses
+
+    this.drawIndicatorRow(s, VOL_Y, [
+      { text: '[ PWR ]', attr: BRIGHT },
+      { text: '[ AIR ]', attr: (locked && this.playState === 'playing') ? BRIGHT : FAINT },
+    ])
+
+    let tuneLabel = 'SEEK', tuneAttr = DIM
+    if (locked) { tuneLabel = 'TUNED'; tuneAttr = BRIGHT }
+    else if (drifting) { tuneLabel = 'DRIFT'; tuneAttr = blink ? BRIGHT : DIM }
+    this.drawIndicatorRow(s, VOL_SIG_DIVIDER_Y, [{ text: `[ ${tuneLabel} ]`, attr: tuneAttr }])
+
+    let streamLabel = 'NO SIGNAL', streamAttr = FAINT
+    if (locked && this.playState === 'playing') { streamLabel = 'LIVE'; streamAttr = BRIGHT }
+    else if (locked && this.playState === 'buffering') { streamLabel = 'BUFFERING...'; streamAttr = blink ? BRIGHT : DIM }
+    else if (locked && this.playState === 'paused') { streamLabel = 'PAUSED'; streamAttr = DIM }
+    this.drawIndicatorRow(s, SIG_Y, [{ text: `[ ${streamLabel} ]`, attr: streamAttr }])
+
+    const stereo = locked && this.playState !== 'buffering'
+    this.drawIndicatorRow(s, VU_DIVIDER_Y, [
+      { text: '[ STEREO ]', attr: stereo ? BRIGHT : FAINT },
+      { text: '[ MONO ]', attr: stereo ? FAINT : BRIGHT },
+    ])
+
+    this.drawIndicatorRow(s, VU_Y, [{ text: '[ MUTE ]', attr: this.muted ? BRIGHT : FAINT }])
   },
 
   // BUG/NAMING FIXED 2026-08-20: this used to log an entry on every track
@@ -1960,6 +2011,7 @@ export default {
     this.drawVolume(s)
     this.drawSignal(s)
     this.drawVU(s)
+    this.drawIndicators(s, 0)
     this.drawDial(s)
     this.drawFreq(s)
     this.drawHint(s)
@@ -2213,6 +2265,9 @@ export default {
     if (t - (this.lastVuDraw || 0) > 0.12) {
       this.lastVuDraw = t
       this.drawVU(s)
+      // 23rd pass: status lights share the VU's redraw cadence -- cheap,
+      // and it's the same rate the SEEK/DRIFT/BUFFERING blink needs anyway.
+      this.drawIndicators(s, t)
     }
 
     // Always-on idle phosphor shimmer (14th pass, Matthew: "a subtle
