@@ -101,6 +101,9 @@ isn't just an internal annoyance anymore.
 
 Playback is real YouTube video via the IFrame API, audio-only in practice —
 the player is docked off-screen since the terminal is the only visible UI.
+Because of that, listeners without YouTube Premium may see a YouTube ad
+before a track starts — that's YouTube's embed behavior, not something
+SIGNAL controls or attempts to suppress. The in-app Guide (`[G]`) says so.
 
 ## License
 

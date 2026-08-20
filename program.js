@@ -1061,6 +1061,15 @@ export default {
     ]
     const bottoms = [TUNER_BOT_Y, STATION_BOT_Y, NOWPLAYING_BOT_Y, METERS_BOT_Y]
     const redraw = (attr) => {
+      // BUG FIXED (caught live, 20th pass): this beat sequence runs for
+      // ~500ms after powerUp()'s REVEAL_DELAY fires, via its own raw
+      // setTimeouts -- it doesn't know about anything that happens after
+      // it was scheduled. If the guide (see openGuide()) is opened during
+      // that window (plausible -- it's right when the set finishes
+      // powering on and controls first respond), these box-border redraws
+      // punch straight through the guide's full-screen text, since they
+      // never checked guideOpen. Bail out here instead.
+      if (this.guideOpen) return
       for (const [y, label, labelX1] of tops) drawBoxTop(term, y, BOX_X0, BOX_X1, label, attr, labelX1)
       for (const y of bottoms) drawBoxBottom(term, y, BOX_X0, BOX_X1, attr)
       // 18th pass: drawBoxTop/Bottom redraw the LEVELS row as a plain
@@ -1715,6 +1724,14 @@ export default {
     put(15, '[1-9] PRESETS       [B] BACK            [SPACE] PLAY/PAUSE', DIM)
     put(16, '[N] SKIP            [UP/DOWN] VOL        [M] MUTE', DIM)
     put(17, '[P] POWER           [G] GUIDE', DIM)
+    // 20th pass (Matthew: "for people that don't have youtube premium..
+    // they hear ads. options?") -- decided against anything that tries to
+    // detect/suppress the ad itself (that's ad-blocking circumvention
+    // against YouTube's ToS, not something to build around even here) or a
+    // bigger re-sourcing effort. This is the cheap, honest middle ground:
+    // just tell people up front so an ad reads as expected rather than as
+    // SIGNAL being broken.
+    put(19, "Playback is real YouTube video -- ads may play without Premium", FAINT)
     put(20, 'SIGNAL v0.2', FAINT)
     put(22, '[->] STATIONS        [any other key] CLOSE', FAINT)
   },
