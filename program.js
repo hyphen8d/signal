@@ -890,8 +890,12 @@ export default {
   drawStandbyClock(s) {
     const { term } = s
     const str = formatClock(new Date())
-    const midY = Math.round(term.rows / 2)
-    term.text(centerX(term.cols, str), midY + 4, str, FAINT)
+    // 19th pass: true grid center (floor, not round -- round(25/2) was
+    // landing one row low) with the STANDBY/hint/clock block distributed
+    // symmetrically around it (-2/0/+2) instead of only extending downward,
+    // which is what made the whole block read as vertically off-center.
+    const midY = Math.floor(term.rows / 2)
+    term.text(centerX(term.cols, str), midY + 2, str, FAINT)
   },
 
   init(s) {
@@ -958,11 +962,14 @@ export default {
 
     for (let y = 0; y < term.rows; y++)
       for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
-    const midY = Math.round(term.rows / 2)
+    // 19th pass: see drawStandbyClock() -- floor(rows/2) is the true center
+    // row, and the block is now centered around it (-2/0/+2) rather than
+    // only extending downward from it.
+    const midY = Math.floor(term.rows / 2)
     const label = 'STANDBY'
-    term.text(centerX(term.cols, label), midY, label, FAINT)
+    term.text(centerX(term.cols, label), midY - 2, label, FAINT)
     const hint = '[P] POWER ON'
-    term.text(centerX(term.cols, hint), midY + 2, hint, FAINT)
+    term.text(centerX(term.cols, hint), midY, hint, FAINT)
     this.drawStandbyClock(s)
 
     // Guide overlay (15th pass, Matthew: "we also need a G for guide").
@@ -1153,7 +1160,8 @@ export default {
       for (let y = 0; y < term.rows; y++)
         for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
     }
-    const midY = Math.round(term.rows / 2)
+    // 19th pass: floor, not round -- see drawStandbyClock()
+    const midY = Math.floor(term.rows / 2)
 
     const beats = [
       { delay: 0, fn: () => {
@@ -1204,9 +1212,9 @@ export default {
       { delay: 320, fn: () => {
         clearAll()
         const label = 'STANDBY'
-        term.text(centerX(term.cols, label), midY, label, FAINT)
+        term.text(centerX(term.cols, label), midY - 2, label, FAINT)
         const hint = '[P] POWER ON'
-        term.text(centerX(term.cols, hint), midY + 2, hint, FAINT)
+        term.text(centerX(term.cols, hint), midY, hint, FAINT)
         this.drawStandbyClock(s)
         this._powerAnimating = false // sequence landed, ticker can resume
       } },
@@ -1222,7 +1230,8 @@ export default {
       for (let y = 0; y < term.rows; y++)
         for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
     }
-    const midY = Math.round(term.rows / 2)
+    // 19th pass: floor, not round -- see drawStandbyClock()
+    const midY = Math.floor(term.rows / 2)
     playPowerOnSound()
 
     const bootLines = [
