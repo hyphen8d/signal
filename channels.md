@@ -1,6 +1,6 @@
 # SIGNAL -- channel roster
 
-Generated from program.js. 9 stations, 90 tracks total.
+Generated from program.js. 10 stations, 100 tracks total.
 
 ## STATIC BLOOM -- 137.4
 
@@ -172,3 +172,22 @@ Tracks (10):
 8. **Civilization (Bongo, Bongo, Bongo)** -- Andrews Sisters & Danny Kaye  ([youtu.be/VEyDNTLlRgU](https://youtu.be/VEyDNTLlRgU))
 9. **Keep A-Knockin' (But You Can't Come In)** -- Louis Jordan  ([youtu.be/6pcve7daxNM](https://youtu.be/6pcve7daxNM))
 10. **Pistol Packin' Mama** -- Bing Crosby & The Andrews Sisters  ([youtu.be/UNxgn8npVLI](https://youtu.be/UNxgn8npVLI))
+
+## HACKBACK -- 893.7
+
+*boom bap broadcast, deep cuts only*
+
+Ident tones (Hz): 349.2, 293.7, 246.9, 220
+
+Tracks (10):
+
+1. **Can I Kick It?** -- A Tribe Called Quest  ([youtu.be/D-uV8TGjaGU](https://youtu.be/D-uV8TGjaGU))
+2. **Award Tour** -- A Tribe Called Quest  ([youtu.be/P800UWoE9xs](https://youtu.be/P800UWoE9xs))
+3. **Me Myself and I** -- De La Soul  ([youtu.be/jdtKT5q-CW8](https://youtu.be/jdtKT5q-CW8))
+4. **Buddy** -- De La Soul  ([youtu.be/WX6G6sODMrQ](https://youtu.be/WX6G6sODMrQ))
+5. **Children's Story** -- Slick Rick  ([youtu.be/HjNTu8jdukA](https://youtu.be/HjNTu8jdukA))
+6. **Rosa Parks** -- Outkast  ([youtu.be/drsQLEU0N1Y](https://youtu.be/drsQLEU0N1Y))
+7. **Ms. Jackson** -- Outkast  ([youtu.be/EUVo8epKwv0](https://youtu.be/EUVo8epKwv0))
+8. **C.R.E.A.M.** -- Wu-Tang Clan  ([youtu.be/4yNQ7_7I5aE](https://youtu.be/4yNQ7_7I5aE))
+9. **Doomsday** -- MF DOOM  ([youtu.be/LMeluRz2wv4](https://youtu.be/LMeluRz2wv4))
+10. **Bouge de là** -- MC Solaar  ([youtu.be/MNYsmMDZfiA](https://youtu.be/MNYsmMDZfiA))

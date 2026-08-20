@@ -244,6 +244,26 @@ const CHANNELS = [
       realTrack('6pcve7daxNM', "Keep A-Knockin' (But You Can't Come In)", 'Louis Jordan'),
       realTrack('UNxgn8npVLI', "Pistol Packin' Mama", 'Bing Crosby & The Andrews Sisters'),
     ] },
+  // 20th pass (Matthew: "add a new channel for 0 called Hackback with music
+  // like tribe called quest, de la soul, slick rick, outkast, wu tang, MF
+  // doom, MC solaar") -- golden-age/underground hip-hop station, bound to
+  // the new preset key `0`. freq 893.7 sits one dial column short of the
+  // absolute right edge, distinct from ATOMIC at 878.9.
+  { id: 'hackback', freq: 893.7, callsign: 'HACKBACK', tagline: 'boom bap broadcast, deep cuts only',
+    like: 'A Tribe Called Quest, De La Soul, Wu-Tang Clan',
+    ident: [349.2, 293.7, 246.9, 220.0],
+    tracks: [
+      realTrack('D-uV8TGjaGU', 'Can I Kick It?', 'A Tribe Called Quest'),
+      realTrack('P800UWoE9xs', 'Award Tour', 'A Tribe Called Quest'),
+      realTrack('jdtKT5q-CW8', 'Me Myself and I', 'De La Soul'),
+      realTrack('WX6G6sODMrQ', 'Buddy', 'De La Soul'),
+      realTrack('HjNTu8jdukA', "Children's Story", 'Slick Rick'),
+      realTrack('drsQLEU0N1Y', 'Rosa Parks', 'Outkast'),
+      realTrack('EUVo8epKwv0', 'Ms. Jackson', 'Outkast'),
+      realTrack('4yNQ7_7I5aE', 'C.R.E.A.M.', 'Wu-Tang Clan'),
+      realTrack('LMeluRz2wv4', 'Doomsday', 'MF DOOM'),
+      realTrack('MNYsmMDZfiA', 'Bouge de là', 'MC Solaar'),
+    ] },
 ]
 
 // Preset-key ordering (17th pass, Matthew: "presets should match the tuning
@@ -1449,7 +1469,7 @@ export default {
   // control, not one of the primary listed ones.
   drawHint(s) {
     const { term } = s
-    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BACK   [G] GUIDE'
+    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [0-9] PRESETS   [B] BACK   [G] GUIDE'
     const line2 = '[SPACE] PLAY/PAUSE   [N] SKIP   [UP/DOWN] VOL   [M] MUTE   [P] POWER'
     for (let x = 0; x < term.cols; x++) { term.put(x, HINT_Y1, ' ', NORMAL, 1); term.put(x, HINT_Y2, ' ', NORMAL, 1) }
     term.text(centerX(term.cols, line1), HINT_Y1, line1, BOLD, 1)
@@ -1721,7 +1741,7 @@ export default {
     put(10, 'Reach out -- matt@gial.co', BRIGHT)
     put(12, 'CONTROLS', BOLD)
     put(14, '[<-/->] SEEK        [ENTER] LOCK        [S] SCAN', DIM)
-    put(15, '[1-9] PRESETS       [B] BACK            [SPACE] PLAY/PAUSE', DIM)
+    put(15, '[0-9] PRESETS       [B] BACK            [SPACE] PLAY/PAUSE', DIM)
     put(16, '[N] SKIP            [UP/DOWN] VOL        [M] MUTE', DIM)
     put(17, '[P] POWER           [G] GUIDE', DIM)
     // 20th pass (Matthew: "for people that don't have youtube premium..
@@ -1736,26 +1756,29 @@ export default {
     put(22, '[->] STATIONS        [any other key] CLOSE', FAINT)
   },
   // Station reference table -- freq/name/desc/artists-like, one entry per
-  // 2 rows (callsign line, then an indented detail line), 9 stations x 2
-  // rows = 18 rows, rows 3-20 exactly. Ordered by CHANNEL_PRESET_ORDER
-  // (freq ascending, same order as the dial left-to-right and the [1-9]
-  // preset keys after the 17th pass) rather than CHANNELS' chronological
-  // order, so the preset number shown here matches what actually tunes to
-  // that station.
+  // 2 rows (callsign line, then an indented detail line), 10 stations x 2
+  // rows = 20 rows, rows 3-22 exactly (20th pass: grew from 9 to 10 with
+  // HACKBACK, footer nudged down to row 24 to keep clear of it). Ordered by
+  // CHANNEL_PRESET_ORDER (freq ascending, same order as the dial
+  // left-to-right and the [0-9] preset keys after the 17th/20th passes)
+  // rather than CHANNELS' chronological order, so the preset number shown
+  // here matches what actually tunes to that station. HACKBACK is last in
+  // freq order and bound to `0`, so its displayed preset number is 0, not
+  // 10.
   drawGuidePageStations(s) {
     const { term } = s
     const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
     put(1, 'SIGNAL -- STATIONS', BOLD)
     const startY = 3
     CHANNEL_PRESET_ORDER.forEach((ch, i) => {
-      const presetNum = i + 1
+      const presetNum = i + 1 === 10 ? 0 : i + 1
       const y = startY + i * 2
       const header = `[${presetNum}] ${ch.freq.toFixed(1)}   ${ch.callsign}`
       term.text(4, y, header, BRIGHT)
       const detail = truncate(`${ch.tagline} -- like ${ch.like}`, term.cols - 8)
       term.text(8, y + 1, detail, MUTED)
     })
-    put(22, '[<-] ABOUT        [any other key] CLOSE', FAINT)
+    put(24, '[<-] ABOUT        [any other key] CLOSE', FAINT)
   },
   closeGuide(s) {
     this.guideOpen = false
@@ -1920,12 +1943,16 @@ export default {
       // 11th pass (2026-08-20): 4 new stations brought CHANNELS back up to
       // 9 -- preset keys match its length again, same pattern as the 10th
       // pass's drop to 5.
-      case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
+      // 20th pass: HACKBACK is the 10th station, bound to `0` since there's
+      // no digit key past 9 -- treated as preset slot 10 (last, rightmost
+      // on the dial) rather than slot 0.
+      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
         e.preventDefault()
         // 17th pass: CHANNEL_PRESET_ORDER (freq-sorted), not CHANNELS
         // (chronological add-order) -- see its definition for why -- so
         // preset number always matches left-to-right position on the dial.
-        const ch = CHANNEL_PRESET_ORDER[Number(e.key) - 1]
+        const slot = e.key === '0' ? 10 : Number(e.key)
+        const ch = CHANNEL_PRESET_ORDER[slot - 1]
         if (ch) this.presetTune(s, ch)
         break
       }

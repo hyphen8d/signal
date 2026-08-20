@@ -1,7 +1,7 @@
 # SIGNAL
 
 A community-facing, unofficial internet-radio-style web toy: a terminal/CRT
-tuning-dial receiver with 9 curated stations, real songs, station idents,
+tuning-dial receiver with 10 curated stations, real songs, station idents,
 scanning, presets, and a power switch.
 
 Built on top of [`cyberspace-crt`](https://github.com/unremarkablegarden/cyberspace-crt),
@@ -36,19 +36,19 @@ plain `python3 -m http.server` can serve you a stale cached copy of
 | `<-` / `->` | Seek |
 | `Enter` | Lock onto the nearest station |
 | `S` | Scan (auto-sweep, locks when it finds a station) |
-| `1`–`9` | Jump straight to a preset station |
+| `0`–`9` | Jump straight to a preset station |
 | `B` | Back to the previously locked station |
 | `Space` | Play / pause |
 | `N` | Skip to another track on the current station |
 | `Up` / `Down` | Volume |
 | `M` | Mute |
 | `P` | Power off / on |
-| `G` | Guide -- about, full controls reference, and a station reference (freq/name/desc/artists-like for all 9); `<-`/`->` flips between the two guide pages, any other key closes it |
+| `G` | Guide -- about, full controls reference, and a station reference (freq/name/desc/artists-like for all 10); `<-`/`->` flips between the two guide pages, any other key closes it |
 | drag the dial | Seek with the mouse (desktop only, by design) |
 
 ## Stations
 
-9 stations, 10 tracks each. Full roster with taglines and track lists:
+10 stations, 10 tracks each. Full roster with taglines and track lists:
 [`channels.md`](./channels.md) — generated straight from the live
 `CHANNELS` array in `program.js` (`tools/channels-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station
