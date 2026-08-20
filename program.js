@@ -302,11 +302,16 @@ function centerX(cols, text) {
 }
 
 // Date/time module (15th pass, Matthew: "let's add date and time as a
-// module"). Fixed-width "MM/DD HH:MM:SS" (always 14 chars) so drawClock()
-// can write it in place every tick without needing to blank first.
+// module"). Fixed-width "MM/DD HH:MM" (always 11 chars) so drawClock() can
+// write it in place every tick without needing to blank first.
+// 16th pass (Matthew: seconds were distracting, and too dim/wrong spot in
+// the title bar) -- dropped :SS. The tick timer still fires every second
+// (drawStandbyClock/scan timers elsewhere rely on the same cadence being
+// cheap), but the string itself only actually changes once a minute now,
+// so nothing visibly flickers.
 function formatClock(d) {
   const pad = (n) => String(n).padStart(2, '0')
-  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 /** Hard-cap a string to maxLen, marking the cut with "..." (not the U+2026
@@ -663,9 +668,9 @@ export default {
     // Title bar, inverse plane.
     for (let x = 0; x < term.cols; x++) term.put(x, 0, ' ', NORMAL, 1)
     term.text(2, 0, 'SIGNAL', BOLD, 1)
-    term.text(72, 0, 'v0.1', DIM, 1)
+    term.text(72, 0, 'v0.2', DIM, 1)
     // Date/time module (15th pass) -- lives in the open gap between the
-    // brand-plate and "v0.1", same inverse title-bar plane. Drawn once here
+    // brand-plate and "v0.2", same inverse title-bar plane. Drawn once here
     // on every chrome (re)draw; the 1s ticker set up in init() keeps it
     // live after that (see drawClock()/this._clockTimer).
     this.drawClock(s)
@@ -679,7 +684,7 @@ export default {
     // Brand-plate nameplate (10th pass, skeuomorphism idea Matthew picked;
     // moved into the title bar itself in the 11th pass, Matthew: "move
     // model sg-1 etc into header") -- sits in the open space between the
-    // LED and "v0.1", same inverse plane as the rest of the title row
+    // LED and "v0.2", same inverse plane as the rest of the title row
     // instead of floating as its own dim line underneath it.
     const brand = 'MODEL SG-1  -  SIGNAL RECEIVER'
     term.text(centerX(term.cols, brand), 0, brand, FAINT, 1)
@@ -729,16 +734,19 @@ export default {
     term.put(term.cols - 1, METERS_BOT_Y, '┛', MUTED)
   },
 
-  // Date/time module, running-screen half (15th pass) -- right-aligned into
-  // the gap between the brand-plate and "v0.1" in the title bar (columns
-  // 56-71 are free there; the string is a fixed 14 chars, ending at column
-  // 70, one column of breathing room before "v0.1" at 72). Same width every
-  // tick, so no blank-first needed.
+  // Date/time module, running-screen half (15th pass; repositioned +
+  // brightened 16th pass, Matthew: "wrong spot, too dim"). Left-aligned into
+  // the gap between the LED (x=9) and the brand-plate (starts x=25) --
+  // columns 11-24 are free there, plenty for the fixed 11-char string with
+  // a column of breathing room on each side. DIM instead of FAINT so it
+  // actually reads at a glance instead of all but disappearing into the
+  // inverse title-bar plane. Same width every tick, so no blank-first
+  // needed.
   drawClock(s) {
     const { term } = s
     const str = formatClock(new Date())
-    const x = 71 - str.length
-    for (let i = 0; i < str.length; i++) term.put(x + i, 0, str[i], FAINT, 1)
+    const x = 12
+    for (let i = 0; i < str.length; i++) term.put(x + i, 0, str[i], DIM, 1)
   },
 
   // Date/time module, STANDBY half (15th pass) -- real clock-radios keep
@@ -832,8 +840,20 @@ export default {
     // because the set itself is off). Skipped entirely while the guide
     // overlay is open, since that's a full-screen takeover with nothing to
     // tick into.
+    // 16th pass (Matthew: "remove date/time during cold boot") -- the boot
+    // and shutdown beat sequences both flip this.poweredOn to its end state
+    // immediately (see powerUp()/powerDown()) and then spend ~3s animating
+    // toward the final picture with their own setTimeout beats. Without a
+    // guard, this 1s ticker would independently redraw the clock on top of
+    // whatever the animation currently has on screen (the boot-text POST
+    // readout, the collapsing centerline, etc.) -- it doesn't know an
+    // animation is mid-flight, it just sees poweredOn=false and draws the
+    // standby clock over it. this._powerAnimating is set for the duration
+    // of both sequences so the ticker skips a beat instead of stomping on
+    // them.
+    this._powerAnimating = false
     this._clockTimer = setInterval(() => {
-      if (this.guideOpen) return
+      if (this.guideOpen || this._powerAnimating) return
       if (this.poweredOn) this.drawClock(s)
       else this.drawStandbyClock(s)
     }, 1000)
@@ -934,6 +954,7 @@ export default {
   powerDown(s) {
     if (!this.poweredOn) return
     this.poweredOn = false
+    this._powerAnimating = true // cleared once the STANDBY beat lands below
     this.stopScan()
     // stopScan() no longer stops the ambient static bed on its own (12th
     // pass) -- power-down is one of the two places (with tryLock) that
@@ -1003,6 +1024,7 @@ export default {
         const hint = '[P] POWER ON'
         term.text(centerX(term.cols, hint), midY + 2, hint, FAINT)
         this.drawStandbyClock(s)
+        this._powerAnimating = false // sequence landed, ticker can resume
       } },
     ]
     for (const { delay, fn } of beats) setTimeout(fn, delay)
@@ -1010,6 +1032,7 @@ export default {
 
   powerUp(s) {
     if (this.poweredOn) return
+    this._powerAnimating = true // cleared once REVEAL_DELAY lands below
     const { term } = s
     const clearAll = () => {
       for (let y = 0; y < term.rows; y++)
@@ -1068,6 +1091,7 @@ export default {
         // just without touching freq/lockedChannel/bags/volume/history.
         clearAll()
         this.poweredOn = true
+        this._powerAnimating = false // sequence landed, ticker can resume
         this.drawChrome(s)
         this.drawScale(s)
         this.setStatus(s, 'SYSTEM READY', false)
@@ -1271,7 +1295,7 @@ export default {
 
   // Filled-background control panel, same treatment as the title bar
   // (Matthew, 8/20: distinguish the controls from the rest of the screen
-  // the same way SIGNAL/v0.1 stand out up top, not as dim floating text).
+  // the same way SIGNAL/v0.2 stand out up top, not as dim floating text).
   // "drag to sweep" deliberately left off -- it's a hidden/discoverable
   // control, not one of the primary listed ones.
   drawHint(s) {
@@ -1536,7 +1560,7 @@ export default {
     put(15, '[1-9] PRESETS       [B] BACK            [SPACE] PLAY/PAUSE', DIM)
     put(16, '[N] SKIP            [UP/DOWN] VOL        [M] MUTE', DIM)
     put(17, '[P] POWER           [G] GUIDE', DIM)
-    put(20, 'SIGNAL v0.1', FAINT)
+    put(20, 'SIGNAL v0.2', FAINT)
     put(22, '[ press any key to close ]', FAINT)
   },
   closeGuide(s) {
