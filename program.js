@@ -1610,31 +1610,26 @@ export default {
 
   drawIndicators(s, t) {
     const locked = this.mode === 'locked'
-    const blink = Math.floor((t || 0) * 2) % 2 === 0 // ~2Hz, shared by every blinking light below
-    const { dist } = nearestChannel(this.freq)
-    const drifting = !locked && dist <= NEAR_THRESHOLD // same "close but not locked" band drawDial's glow uses
 
     this.drawIndicatorRow(s, VOL_Y, [
       { text: '[ PWR ]', attr: BRIGHT },
       { text: '[ AIR ]', attr: (locked && this.playState === 'playing') ? BRIGHT : FAINT },
     ])
+    // Explicitly blanked, not just left alone -- these two used to carry the
+    // TUNED/DRIFT/SEEK and LIVE/BUFFERING/PAUSED/NO SIGNAL rows; an empty
+    // segment list clears the row without writing anything into it.
+    this.drawIndicatorRow(s, VOL_SIG_DIVIDER_Y, [])
 
-    let tuneLabel = 'SEEK', tuneAttr = DIM
-    if (locked) { tuneLabel = 'TUNED'; tuneAttr = BRIGHT }
-    else if (drifting) { tuneLabel = 'DRIFT'; tuneAttr = blink ? BRIGHT : DIM }
-    this.drawIndicatorRow(s, VOL_SIG_DIVIDER_Y, [{ text: `[ ${tuneLabel} ]`, attr: tuneAttr }])
-
-    let streamLabel = 'NO SIGNAL', streamAttr = FAINT
-    if (locked && this.playState === 'playing') { streamLabel = 'LIVE'; streamAttr = BRIGHT }
-    else if (locked && this.playState === 'buffering') { streamLabel = 'BUFFERING...'; streamAttr = blink ? BRIGHT : DIM }
-    else if (locked && this.playState === 'paused') { streamLabel = 'PAUSED'; streamAttr = DIM }
-    this.drawIndicatorRow(s, SIG_Y, [{ text: `[ ${streamLabel} ]`, attr: streamAttr }])
-
+    // 24th pass (Matthew: pull the TUNED/DRIFT/SEEK and LIVE/BUFFERING/
+    // PAUSED/NO SIGNAL rows back out right after adding them) -- down to 3
+    // rows now, on VOL_Y/SIG_Y/VU_Y with the two divider rows left blank
+    // between them, same rhythm as the LEVELS box's own left half.
     const stereo = locked && this.playState !== 'buffering'
-    this.drawIndicatorRow(s, VU_DIVIDER_Y, [
+    this.drawIndicatorRow(s, SIG_Y, [
       { text: '[ STEREO ]', attr: stereo ? BRIGHT : FAINT },
       { text: '[ MONO ]', attr: stereo ? FAINT : BRIGHT },
     ])
+    this.drawIndicatorRow(s, VU_DIVIDER_Y, []) // blanked, was STEREO/MONO's row before the relayout above
 
     this.drawIndicatorRow(s, VU_Y, [{ text: '[ MUTE ]', attr: this.muted ? BRIGHT : FAINT }])
   },
