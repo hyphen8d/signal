@@ -183,7 +183,9 @@ const CHANNELS = [
       realTrack('T_lC2O1oIew', 'Plastic Love', 'Mariya Takeuchi'),
       realTrack('XJWqHmY-g9U', 'Telephone Number', 'Junko Ohashi'),
     ] },
-  { id: 'outlaw-frequency', freq: 288.6, callsign: 'OUTLAW FREQUENCY', tagline: 'dust on the trail, a debt unpaid', // 19th pass: trimmed
+  { id: 'outlaw-frequency', freq: 288.6, callsign: 'OUTLAW', tagline: 'dust on the trail, a debt unpaid', // 21st pass: shortened from
+    // "OUTLAW FREQUENCY" (Matthew: its station-ID ident was hard to hear/
+    // pick out -- renaming for now rather than redesigning the ident tone)
     like: 'Johnny Cash, Ennio Morricone, Marty Robbins',
     ident: [220.0, 196.0, 174.6, 146.8],
     tracks: [
@@ -1624,7 +1626,13 @@ export default {
   seekStep(s, delta) {
     this.stopScan()
     const wasLocked = this.mode === 'locked'
-    this.retune(s, this.freq + delta)
+    // 21st pass (Matthew: "scrolling with arrows should be able to cycle to
+    // the other side of the tuning band since scan can do it") -- mirror
+    // startScan's wraparound instead of clampFreq's dead stop at the edges.
+    let f = this.freq + delta
+    if (f > FREQ_MAX) f = FREQ_MIN
+    else if (f < FREQ_MIN) f = FREQ_MAX
+    this.retune(s, f)
     playSeekStatic()
     // Land-on-lock (added 2026-08-20, Matthew: "when you hit one of the
     // stations while seeking with arrows and you land on one, it locks"):
@@ -1752,11 +1760,11 @@ export default {
     // just tell people up front so an ad reads as expected rather than as
     // SIGNAL being broken.
     put(19, "Playback is real YouTube video -- ads may play without Premium", FAINT)
-    put(20, 'SIGNAL v0.2', FAINT)
+    put(20, 'SIGNAL v0.3', FAINT)
     put(22, '[->] STATIONS        [any other key] CLOSE', FAINT)
   },
-  // Station reference table -- freq/name/desc/artists-like, one entry per
-  // 2 rows (callsign line, then an indented detail line), 10 stations x 2
+  // Station reference table -- freq/name/tagline/artists-like, one entry
+  // per 2 rows (header line, then an indented "like" line), 10 stations x 2
   // rows = 20 rows, rows 3-22 exactly (20th pass: grew from 9 to 10 with
   // HACKBACK, footer nudged down to row 24 to keep clear of it). Ordered by
   // CHANNEL_PRESET_ORDER (freq ascending, same order as the dial
@@ -1765,6 +1773,14 @@ export default {
   // here matches what actually tunes to that station. HACKBACK is last in
   // freq order and bound to `0`, so its displayed preset number is 0, not
   // 10.
+  // 21st pass (Matthew: "we need a better way of showing 'artists like:' --
+  // we should be able to see 3 examples"): the tagline used to share the
+  // detail row with the like-list, so anything past ~2 artists got cut off
+  // with "..." -- confirmed happening on ATOMIC and HACKBACK. Tagline now
+  // lives on the header row (there's plenty of width there, taglines are
+  // capped at 35 chars and callsigns are short), leaving the whole detail
+  // row just for "like: A, B, C" -- every station's 3 examples now fit with
+  // room to spare (longest is 52 chars against a ~72-char row).
   drawGuidePageStations(s) {
     const { term } = s
     const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
@@ -1773,9 +1789,9 @@ export default {
     CHANNEL_PRESET_ORDER.forEach((ch, i) => {
       const presetNum = i + 1 === 10 ? 0 : i + 1
       const y = startY + i * 2
-      const header = `[${presetNum}] ${ch.freq.toFixed(1)}   ${ch.callsign}`
+      const header = truncate(`[${presetNum}] ${ch.freq.toFixed(1)}   ${ch.callsign} -- ${ch.tagline}`, term.cols - 4)
       term.text(4, y, header, BRIGHT)
-      const detail = truncate(`${ch.tagline} -- like ${ch.like}`, term.cols - 8)
+      const detail = truncate(`like: ${ch.like}`, term.cols - 8)
       term.text(8, y + 1, detail, MUTED)
     })
     put(24, '[<-] ABOUT        [any other key] CLOSE', FAINT)

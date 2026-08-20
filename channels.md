@@ -116,7 +116,7 @@ Tracks (10):
 9. **Plastic Love** -- Mariya Takeuchi  ([youtu.be/T_lC2O1oIew](https://youtu.be/T_lC2O1oIew))
 10. **Telephone Number** -- Junko Ohashi  ([youtu.be/XJWqHmY-g9U](https://youtu.be/XJWqHmY-g9U))
 
-## OUTLAW FREQUENCY -- 288.6
+## OUTLAW -- 288.6
 
 *dust on the trail, a debt unpaid*
 
