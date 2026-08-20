@@ -1,6 +1,6 @@
 # SIGNAL -- channel roster
 
-Generated from program.js. 10 stations, 100 tracks total.
+Generated from program.js. 9 stations, 90 tracks total.
 
 ## STATIC BLOOM -- 137.4
 
@@ -115,25 +115,6 @@ Tracks (10):
 8. **Ride On Time** -- Tatsuro Yamashita  ([youtu.be/XE45nsroFTE](https://youtu.be/XE45nsroFTE))
 9. **Plastic Love** -- Mariya Takeuchi  ([youtu.be/T_lC2O1oIew](https://youtu.be/T_lC2O1oIew))
 10. **Telephone Number** -- Junko Ohashi  ([youtu.be/XJWqHmY-g9U](https://youtu.be/XJWqHmY-g9U))
-
-## OUTLAW -- 288.6
-
-*dust on the trail, a debt unpaid*
-
-Ident tones (Hz): 220, 196, 174.6, 146.8
-
-Tracks (10):
-
-1. **God's Gonna Cut You Down** -- Johnny Cash  ([youtu.be/eJlN9jdQFSc](https://youtu.be/eJlN9jdQFSc))
-2. **Sleeping on the Blacktop** -- Colter Wall  ([youtu.be/tpUdq8MLZ5k](https://youtu.be/tpUdq8MLZ5k))
-3. **The Good, the Bad and the Ugly (Main Theme)** -- Ennio Morricone  ([youtu.be/Hac9A_f_nb4](https://youtu.be/Hac9A_f_nb4))
-4. **The Ecstasy of Gold** -- Ennio Morricone  ([youtu.be/PYI09PMNazw](https://youtu.be/PYI09PMNazw))
-5. **El Paso** -- Marty Robbins  ([youtu.be/zWm5WErkffQ](https://youtu.be/zWm5WErkffQ))
-6. **Ghost Riders In The Sky** -- Johnny Cash  ([youtu.be/M2d8dj4R80E](https://youtu.be/M2d8dj4R80E))
-7. **Kate McCannon** -- Colter Wall  ([youtu.be/B7E8n7I6IHw](https://youtu.be/B7E8n7I6IHw))
-8. **The Ballad of Robert Moore and Betty Coltrane** -- Nick Cave & The Bad Seeds  ([youtu.be/wrjmcyaBYoY](https://youtu.be/wrjmcyaBYoY))
-9. **Gallo Del Cielo** -- Tom Russell  ([youtu.be/P3so4gpDRpQ](https://youtu.be/P3so4gpDRpQ))
-10. **Not Even Stevie Nicks** -- Calexico  ([youtu.be/rIQTRvKq7Z0](https://youtu.be/rIQTRvKq7Z0))
 
 ## CIRCUIT CRUSH -- 434.5
 

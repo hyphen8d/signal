@@ -183,27 +183,13 @@ const CHANNELS = [
       realTrack('T_lC2O1oIew', 'Plastic Love', 'Mariya Takeuchi'),
       realTrack('XJWqHmY-g9U', 'Telephone Number', 'Junko Ohashi'),
     ] },
-  { id: 'outlaw-frequency', freq: 288.6, callsign: 'OUTLAW', tagline: 'dust on the trail, a debt unpaid', // 21st pass: shortened from
-    // "OUTLAW FREQUENCY" (Matthew: its station-ID ident was hard to hear/
-    // pick out -- renaming for now rather than redesigning the ident tone)
-    like: 'Johnny Cash, Ennio Morricone, Marty Robbins',
-    ident: [220.0, 196.0, 174.6, 146.8],
-    tracks: [
-      realTrack('eJlN9jdQFSc', "God's Gonna Cut You Down", 'Johnny Cash'),
-      realTrack('tpUdq8MLZ5k', 'Sleeping on the Blacktop', 'Colter Wall'),
-      // Re-pointed from gothic Americana to spaghetti-western per Matthew
-      // 8/20 ("more red dead redemption style") -- Chelsea Wolfe and Timber
-      // Timbre dropped (doom-folk, not this lane), 8 tracks added spanning
-      // the actual Morricone/outlaw-ballad/border-noir range.
-      realTrack('Hac9A_f_nb4', 'The Good, the Bad and the Ugly (Main Theme)', 'Ennio Morricone'),
-      realTrack('PYI09PMNazw', 'The Ecstasy of Gold', 'Ennio Morricone'),
-      realTrack('zWm5WErkffQ', 'El Paso', 'Marty Robbins'),
-      realTrack('M2d8dj4R80E', 'Ghost Riders In The Sky', 'Johnny Cash'),
-      realTrack('B7E8n7I6IHw', 'Kate McCannon', 'Colter Wall'),
-      realTrack('wrjmcyaBYoY', 'The Ballad of Robert Moore and Betty Coltrane', 'Nick Cave & The Bad Seeds'),
-      realTrack('P3so4gpDRpQ', 'Gallo Del Cielo', 'Tom Russell'),
-      realTrack('rIQTRvKq7Z0', 'Not Even Stevie Nicks', 'Calexico'),
-    ] },
+  // 22nd pass (Matthew: "drop outlaw channel completely, 9 channels is our
+  // max for now") -- OUTLAW (freq 288.6, spaghetti-western/outlaw-country)
+  // removed outright rather than just renamed; its station-ID ident had
+  // already been flagged as hard to hear, and 9 is the agreed ceiling for
+  // now with HACKBACK's addition. If it comes back later, its full track
+  // list (Johnny Cash, Ennio Morricone, Marty Robbins, Colter Wall, Nick
+  // Cave, Tom Russell, Calexico) is in git history on this commit's parent.
   { id: 'circuit-crush', freq: 434.5, callsign: 'CIRCUIT CRUSH', tagline: 'analog glow, the long drive home',
     like: 'Kavinsky, GUNSHIP, Perturbator',
     ident: [466.2, 587.3, 698.5, 932.3],
@@ -1505,7 +1491,7 @@ export default {
   // control, not one of the primary listed ones.
   drawHint(s) {
     const { term } = s
-    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [0-9] PRESETS   [B] BACK   [G] GUIDE'
+    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BACK   [G] GUIDE'
     const line2 = '[SPACE] PLAY/PAUSE   [N] SKIP   [UP/DOWN] VOL   [M] MUTE   [P] POWER'
     for (let x = 0; x < term.cols; x++) { term.put(x, HINT_Y1, ' ', NORMAL, 1); term.put(x, HINT_Y2, ' ', NORMAL, 1) }
     term.text(centerX(term.cols, line1), HINT_Y1, line1, BOLD, 1)
@@ -1787,7 +1773,7 @@ export default {
     put(10, 'Reach out -- matt@gial.co', BRIGHT)
     put(12, 'CONTROLS', BOLD)
     put(14, '[<-/->] SEEK        [ENTER] LOCK        [S] SCAN', DIM)
-    put(15, '[0-9] PRESETS       [B] BACK            [SPACE] PLAY/PAUSE', DIM)
+    put(15, '[1-9] PRESETS       [B] BACK            [SPACE] PLAY/PAUSE', DIM)
     put(16, '[N] SKIP            [UP/DOWN] VOL        [M] MUTE', DIM)
     put(17, '[P] POWER           [G] GUIDE', DIM)
     // 20th pass (Matthew: "for people that don't have youtube premium..
@@ -1802,15 +1788,13 @@ export default {
     put(22, '[->] STATIONS        [any other key] CLOSE', FAINT)
   },
   // Station reference table -- freq/name/tagline/artists-like, one entry
-  // per 2 rows (header line, then an indented "like" line), 10 stations x 2
-  // rows = 20 rows, rows 3-22 exactly (20th pass: grew from 9 to 10 with
-  // HACKBACK, footer nudged down to row 24 to keep clear of it). Ordered by
-  // CHANNEL_PRESET_ORDER (freq ascending, same order as the dial
-  // left-to-right and the [0-9] preset keys after the 17th/20th passes)
-  // rather than CHANNELS' chronological order, so the preset number shown
-  // here matches what actually tunes to that station. HACKBACK is last in
-  // freq order and bound to `0`, so its displayed preset number is 0, not
-  // 10.
+  // per 2 rows (header line, then an indented "like" line), 9 stations x 2
+  // rows = 18 rows, rows 3-20 exactly (22nd pass: back to 9 after OUTLAW was
+  // dropped and HACKBACK's `0` binding retired -- footer back at row 22).
+  // Ordered by CHANNEL_PRESET_ORDER (freq ascending, same order as the dial
+  // left-to-right and the [1-9] preset keys) rather than CHANNELS'
+  // chronological order, so the preset number shown here matches what
+  // actually tunes to that station.
   // 21st pass (Matthew: "we need a better way of showing 'artists like:' --
   // we should be able to see 3 examples"): the tagline used to share the
   // detail row with the like-list, so anything past ~2 artists got cut off
@@ -1825,14 +1809,14 @@ export default {
     put(1, 'SIGNAL -- STATIONS', BOLD)
     const startY = 3
     CHANNEL_PRESET_ORDER.forEach((ch, i) => {
-      const presetNum = i + 1 === 10 ? 0 : i + 1
+      const presetNum = i + 1
       const y = startY + i * 2
       const header = truncate(`[${presetNum}] ${ch.freq.toFixed(1)}   ${ch.callsign} -- ${ch.tagline}`, term.cols - 4)
       term.text(4, y, header, BRIGHT)
       const detail = truncate(`like: ${ch.like}`, term.cols - 8)
       term.text(8, y + 1, detail, MUTED)
     })
-    put(24, '[<-] ABOUT        [any other key] CLOSE', FAINT)
+    put(22, '[<-] ABOUT        [any other key] CLOSE', FAINT)
   },
   closeGuide(s) {
     this.guideOpen = false
@@ -1997,16 +1981,17 @@ export default {
       // 11th pass (2026-08-20): 4 new stations brought CHANNELS back up to
       // 9 -- preset keys match its length again, same pattern as the 10th
       // pass's drop to 5.
-      // 20th pass: HACKBACK is the 10th station, bound to `0` since there's
-      // no digit key past 9 -- treated as preset slot 10 (last, rightmost
-      // on the dial) rather than slot 0.
-      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
+      // 22nd pass: back to `1`-`9` only -- HACKBACK's `0` binding (20th
+      // pass) only made sense while there were 10 stations; dropping OUTLAW
+      // brought the roster back to 9 (Matthew: "9 channels is our max for
+      // now"), so `0` is retired and HACKBACK now falls wherever it lands
+      // in CHANNEL_PRESET_ORDER like everything else.
+      case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
         e.preventDefault()
         // 17th pass: CHANNEL_PRESET_ORDER (freq-sorted), not CHANNELS
         // (chronological add-order) -- see its definition for why -- so
         // preset number always matches left-to-right position on the dial.
-        const slot = e.key === '0' ? 10 : Number(e.key)
-        const ch = CHANNEL_PRESET_ORDER[slot - 1]
+        const ch = CHANNEL_PRESET_ORDER[Number(e.key) - 1]
         if (ch) this.presetTune(s, ch)
         break
       }
