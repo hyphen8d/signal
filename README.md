@@ -37,12 +37,13 @@ plain `python3 -m http.server` can serve you a stale cached copy of
 | `Enter` | Lock onto the nearest station |
 | `S` | Scan (auto-sweep, locks when it finds a station) |
 | `1`–`9` | Jump straight to a preset station |
+| `B` | Back to the previously locked station |
 | `Space` | Play / pause |
 | `N` | Skip to another track on the current station |
 | `Up` / `Down` | Volume |
 | `M` | Mute |
 | `P` | Power off / on |
-| drag the dial | Seek with the mouse |
+| drag the dial | Seek with the mouse (desktop only, by design) |
 
 ## Stations
 
@@ -55,6 +56,24 @@ list:
 ```
 node tools/channels-to-md.js
 ```
+
+## Content ops
+
+Every track ID in `program.js` is manually verified against YouTube's oEmbed
+endpoint before it's added — never hardcoded on faith. That discipline
+matters more now that the repo (and the Pages URL) are public: a dead ID
+isn't just an internal annoyance anymore.
+
+- **Adding tracks:** verify via oEmbed first, add to the channel's `tracks`
+  array, then re-run `node tools/channels-to-md.js` so `channels.md` stays
+  in sync. No fixed cadence yet — add as you find good tracks, just don't
+  let any one channel drop below ~10.
+- **Dead videos:** the player now auto-skips on any playback error (private,
+  removed, region-locked, etc.) instead of going silent mid-song — same
+  behavior as pressing `[N]` manually. It doesn't retry the same ID or flag
+  it anywhere, so a channel can quietly lose a track over time. Worth an
+  occasional spot-check (re-run oEmbed against the full roster) rather than
+  waiting to notice by ear.
 
 ## How it's built
 
