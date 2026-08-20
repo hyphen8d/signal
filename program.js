@@ -30,6 +30,21 @@ const NEAR_THRESHOLD = 24
 const SEEK_STEP = 8
 const SCAN_STEP = 6
 
+// Display modes (23rd pass, Matthew: "let users cycle display modes") --
+// the CRT engine (src/crt.js) already ships a full set of named phosphor
+// tints (see PHOSPHORS in config.js) and a setPhosphor(name) hook on both
+// CRT and Screen; this is purely an app-layer cycle on top of that, not a
+// new rendering feature. Deliberately a curated subset and order, not every
+// key in PHOSPHORS -- 'bubblegum' is explicitly "not a real phosphor" per
+// its own comment in config.js, so it's left out of the default cycle
+// rather than sitting between two real ones.
+const DISPLAY_MODES = [
+  { key: 'matrix', label: 'GREEN PHOSPHOR' },
+  { key: 'vt320', label: 'CLASSIC AMBER' },
+  { key: 'brutalist', label: 'CYBER BLUE' },
+  { key: 'white', label: 'MONOCHROME' },
+]
+
 /** Real, searched-and-verified (YouTube oEmbed) tracks per channel, so each
  *  station is at least genuinely different from the others -- the 4 recycled
  *  placeholder IDs (one of them literally the Rick Astley rickroll) were the
@@ -286,6 +301,13 @@ const BOX_X1 = 77
 // Row 1 sits blank between the title bar and STATUS_Y. The brand-plate
 // nameplate briefly lived here (10th pass) but moved into the title bar
 // itself in the 11th pass -- this row is free again.
+// 23rd pass: it's also the only spare row on the fully-packed 25-row grid
+// (see the layout budget notes), so it doubles as a transient home for the
+// "[C] DISPLAY" mode label -- see flashDisplayMode(). The guide overlay
+// (15th pass) claims the same row for its own header while open; whichever
+// of the two is active owns it, they never overlap since 'c' is inert
+// while the guide is open (see key()).
+const DISPLAY_MODE_Y = 1
 const STATUS_Y = 2
 // Fixed interior width for the status word inside setStatus()'s brackets
 // (18th pass) -- longest status string in use is "POWERING DOWN" (13
@@ -714,14 +736,19 @@ function playPresetWhoosh() {
 // Remembers the last-locked station, its track, volume, and mute across a
 // reload -- freq is NOT restored on its own (a bare tuned-but-not-locked
 // position isn't worth remembering), only ever alongside a channel lock.
+// 23rd pass: also remembers the chosen display mode (phosphor key), same
+// reasoning as volume/mute -- a cosmetic preference the set was left in,
+// not something tied to a station lock.
 const STORAGE_KEY = 'signal:state:v1'
 function saveSignalState(program) {
   try {
+    const mode = DISPLAY_MODES[program.displayModeIndex || 0]
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       channelId: program.lockedChannel ? program.lockedChannel.id : null,
       trackId: program.currentTrack ? program.currentTrack.id : null,
       volume: program.volume,
       muted: program.muted,
+      phosphor: mode ? mode.key : undefined,
     }))
   } catch (e) {}
 }
@@ -898,6 +925,39 @@ export default {
     term.text(centerX(term.cols, str), midY + 2, str, FAINT)
   },
 
+  // Display modes (23rd pass). Cycles the CRT's phosphor tint through
+  // DISPLAY_MODES via the engine's existing setPhosphor() hook -- see the
+  // comment on DISPLAY_MODES for why this is a curated subset, not every
+  // key in config.js's PHOSPHORS.
+  cycleDisplayMode(s) {
+    this.displayModeIndex = (this.displayModeIndex + 1) % DISPLAY_MODES.length
+    const mode = DISPLAY_MODES[this.displayModeIndex]
+    s.setPhosphor(mode.key)
+    this.flashDisplayMode(s, mode.label)
+    saveSignalState(this)
+  },
+
+  // Transient "which mode is this" label on DISPLAY_MODE_Y (row 1, the one
+  // spare row on the fully-packed grid -- see its own comment). Not a
+  // status the way setStatus()'s bracketed line is (that always reflects
+  // real seek/lock state); this is a self-clearing toast, closer to how the
+  // preset whoosh is a one-shot beat rather than persistent state.
+  flashDisplayMode(s, label) {
+    const { term } = s
+    if (this._displayModeFlashTimer) clearTimeout(this._displayModeFlashTimer)
+    for (let x = 0; x < term.cols; x++) term.put(x, DISPLAY_MODE_Y, ' ')
+    term.text(centerX(term.cols, label), DISPLAY_MODE_Y, label, BRIGHT)
+    this._displayModeFlashTimer = setTimeout(() => {
+      this._displayModeFlashTimer = null
+      // The guide overlay claims this same row for its own header -- if it
+      // opened while this timer was pending, it owns row 1 now and already
+      // cleared/redrew it; blanking here would stomp its header instead of
+      // cleaning up after ourselves.
+      if (this.guideOpen) return
+      for (let x = 0; x < term.cols; x++) term.put(x, DISPLAY_MODE_Y, ' ')
+    }, 1400)
+  },
+
   init(s) {
     const { term } = s
 
@@ -943,10 +1003,20 @@ export default {
     // a restored session and a fresh one flow through the exact same code
     // below. Only ever restores a *locked* station (see saveSignalState) --
     // a bare tuned-but-not-locked dial position isn't worth remembering.
+    // 23rd pass: same restore-before-anything-touches-it flow as
+    // volume/mute above, so displayModeIndex is right by the time the
+    // STANDBY chrome below (and the setPhosphor() call after this block)
+    // draws with it. Defaults to index 0 ('matrix'/GREEN PHOSPHOR), which
+    // matches the phosphor mount() already set on the CRT before init() ran.
+    this.displayModeIndex = 0
     const saved = loadSignalState()
     if (saved) {
       if (typeof saved.volume === 'number') this.volume = Math.min(100, Math.max(0, saved.volume))
       if (typeof saved.muted === 'boolean') this.muted = saved.muted
+      if (typeof saved.phosphor === 'string') {
+        const idx = DISPLAY_MODES.findIndex((m) => m.key === saved.phosphor)
+        if (idx !== -1) this.displayModeIndex = idx
+      }
       if (saved.channelId) {
         const ch = CHANNELS.find((c) => c.id === saved.channelId)
         if (ch) {
@@ -959,6 +1029,10 @@ export default {
         }
       }
     }
+    // Only actually calls into the CRT when a non-default mode was restored
+    // -- otherwise this is a same-value no-op on top of mount()'s own
+    // setPhosphor(PHOSPHOR) call, cheap either way.
+    s.setPhosphor(DISPLAY_MODES[this.displayModeIndex].key)
 
     for (let y = 0; y < term.rows; y++)
       for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
@@ -1513,7 +1587,11 @@ export default {
   drawHint(s) {
     const { term } = s
     const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BACK   [G] GUIDE'
-    const line2 = '[SPACE] PLAY/PAUSE   [N] SKIP   [UP/DOWN] VOL   [M] MUTE   [P] POWER'
+    // 23rd pass: "[C] MODE" rather than the fuller "[C] DISPLAY" -- line2
+    // was already 68/80 cols and DISPLAY doesn't fit even at 2-space
+    // spacing (the fixed hint row has broken before on an over-length
+    // string, see centerX()'s own clamping comment).
+    const line2 = '[SPACE] PLAY/PAUSE   [N] SKIP   [UP/DOWN] VOL   [M] MUTE   [P] POWER  [C] MODE'
     for (let x = 0; x < term.cols; x++) { term.put(x, HINT_Y1, ' ', NORMAL, 1); term.put(x, HINT_Y2, ' ', NORMAL, 1) }
     term.text(centerX(term.cols, line1), HINT_Y1, line1, BOLD, 1)
     term.text(centerX(term.cols, line2), HINT_Y2, line2, NORMAL, 1)
@@ -1796,7 +1874,7 @@ export default {
     put(14, '[<-/->] SEEK        [ENTER] LOCK        [S] SCAN', DIM)
     put(15, '[1-9] PRESETS       [B] BACK            [SPACE] PLAY/PAUSE', DIM)
     put(16, '[N] SKIP            [UP/DOWN] VOL        [M] MUTE', DIM)
-    put(17, '[P] POWER           [G] GUIDE', DIM)
+    put(17, '[P] POWER           [G] GUIDE            [C] DISPLAY MODE', DIM)
     // 20th pass (Matthew: "for people that don't have youtube premium..
     // they hear ads. options?") -- decided against anything that tries to
     // detect/suppress the ad itself (that's ad-blocking circumvention
@@ -2056,6 +2134,8 @@ export default {
       case 'b': case 'B': e.preventDefault(); this.goBack(s); break
       // Guide (15th pass, Matthew: "we also need a G for guide").
       case 'g': case 'G': e.preventDefault(); this.openGuide(s); break
+      // Display modes (23rd pass, Matthew: "let users cycle display modes").
+      case 'c': case 'C': e.preventDefault(); this.cycleDisplayMode(s); break
       // 11th pass (2026-08-20): 4 new stations brought CHANNELS back up to
       // 9 -- preset keys match its length again, same pattern as the 10th
       // pass's drop to 5.
