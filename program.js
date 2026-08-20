@@ -1554,7 +1554,23 @@ export default {
     // VOL/SIG segment trim above.
     for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, VU_Y, ' ')
     const playing = this.mode === 'locked' && this.playState === 'playing'
-    const target = playing ? 0.15 + Math.random() * 0.8 : 0.03
+    // 23rd pass (Matthew: "more animation, fun to see it change as you do
+    // things"): the target was previously a flat 0.15-0.95 swing whenever
+    // playing, regardless of volume/mute, and a flat 0.03 the rest of the
+    // time -- so muting or turning the volume down didn't do anything to
+    // it, and it went dead the instant you weren't locked. Two changes:
+    //   1. Volume/mute now actually scale the swing, so a quiet or muted
+    //      set reads as a quiet or flat meter, not a full-swing one.
+    //   2. 'seeking' mode (this covers both idle-tuned and actively
+    //      scanning -- see the mode comment in init()) gets its own low
+    //      flutter instead of pinning to the same 0.03 floor as powered-on-
+    //      but-paused, so hunting for a signal still reads as "alive".
+    const volFactor = this.muted ? 0 : this.volume / 100
+    const searching = this.mode === 'seeking'
+    let target
+    if (playing) target = volFactor * (0.15 + Math.random() * 0.8)
+    else if (searching) target = 0.04 + Math.random() * 0.10
+    else target = 0.03
     const spring = 0.4
     const damping = 0.5
     const accel = (target - this.vuSample) * spring - this.vuVelocity * damping
@@ -1567,6 +1583,15 @@ export default {
     for (const v of this.vuTrace) bar += chars[Math.max(0, Math.min(chars.length - 1, Math.round(v * (chars.length - 1))))]
     const label = `VU  ${bar}`
     term.text(centerXRange(BOX_X0 + 1, METERS_DIVIDER_X - 1, label), VU_Y, label, playing ? DIM : FAINT)
+  },
+
+  // 23rd pass: a one-shot push into the spring rather than a new state
+  // machine -- pulseVU() just shoves vuVelocity, and the existing
+  // spring/damping in drawVU() above pulls it back down over the next few
+  // draws, so a lock/skip reads as an attack-and-decay hit instead of
+  // blending invisibly into the ambient random walk.
+  pulseVU(amount) {
+    this.vuVelocity += amount
   },
 
   // BUG/NAMING FIXED 2026-08-20: this used to log an entry on every track
@@ -1696,6 +1721,9 @@ export default {
     this.showTrack(s, track)
     if (this.nowPlaying) this.nowPlaying.title = track.title
     this.loadTrack(track)
+    // 23rd pass: smaller attack than tryLock's -- a skip is a lesser event
+    // than finding a new station.
+    this.pulseVU(0.3)
     saveSignalState(this)
   },
   adjustVolume(s, delta) {
@@ -1805,6 +1833,8 @@ export default {
     // so locking on COLD WAVE sounds different from locking on QUIET HOURS,
     // instead of every station announcing itself with the same generic chime.
     playIdent(channel.ident)
+    // 23rd pass: attack transient on lock, see pulseVU().
+    this.pulseVU(0.5)
     this.setStatus(s, 'LOCKED', true)
     this.drawDial(s)
     const track = this.nextTrack(channel)
