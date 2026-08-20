@@ -1,0 +1,1408 @@
+// SIGNAL -- a tuning-dial radio, rendered entirely through the text grid.
+//
+// The YouTube player (#ytDock in index.html) is docked off-screen -- this
+// is an audio-focused experience, and the terminal is the only UI. Because
+// there's no visible player at all, this program is the ONLY source of
+// playback feedback (playing/paused, what's on), so that's treated as a
+// real UI requirement here, not cosmetic.
+//
+// Each channel has real, verified tracks (see realTrack() below). Real
+// per-channel playlists (several hours, no near-term repeat) are still the
+// next real step before this goes anywhere near real people.
+
+import { NORMAL, BRIGHT, BOLD, DIM, MUTED, FAINT, BG } from './src/term.js'
+
+// --- data -------------------------------------------------------------
+
+// A wide, irregular fictional band -- not the real 88-108 FM range, and not
+// clean tenths like real station assignments, on purpose (Matthew, 8/20:
+// the old range read as too close to an actual FM dial).
+const FREQ_MIN = 100.0
+const FREQ_MAX = 900.0
+// Scaled up ~40x from the old 88-108 tuning feel (20-wide band -> 800-wide).
+const LOCK_THRESHOLD = 6
+const NEAR_THRESHOLD = 24
+// BUG FIXED 2026-08-20: these move distances were left at their old
+// 88-108-band values (0.2 / 0.15) after the band widened 40x, so seeking
+// and scanning crawled across the new range at the old range's pace --
+// this, not the layout, was why arrow keys felt pointless and scanning
+// felt broken. Scaled to match the thresholds above.
+const SEEK_STEP = 8
+const SCAN_STEP = 6
+
+/** Real, searched-and-verified (YouTube oEmbed) tracks per channel, so each
+ *  station is at least genuinely different from the others -- the 4 recycled
+ *  placeholder IDs (one of them literally the Rick Astley rickroll) were the
+ *  same clips on every channel, which is what made it impossible to
+ *  actually evaluate. Each channel now carries 2 real tracks and nothing
+ *  else; real per-channel playlists (several hours, no near-term repeat)
+ *  are the next real step. */
+function realTrack(youtubeId, title, artist) {
+  return { id: `yt:${youtubeId}:real`, youtubeId, title, artist }
+}
+
+// `tagline` replaces the old plain genre label -- Matthew asked to settle on
+// short creative descriptions instead of e.g. "flow / focus". These are a
+// first draft, easy to swap.
+// `ident` is a short WebAudio tone sequence (Hz, played in order) that
+// stands in for a station ID jingle -- one per channel, so locking onto a
+// station sounds distinctive before you've even read the screen (added
+// 2026-08-20, 9th pass, Matthew: "let's try station idents"). Standardized
+// to exactly 4 tones each (10th pass, Matthew: "station IDS to be 4 tones
+// long"): a grungy descending run, an ascending major arpeggio, a soft
+// downward drift, a bright synth-pop arpeggio, and a warm lofi descent.
+//
+// SIGNAL LOCK (steady-carrier ambient station) was removed 2026-08-20
+// (10th pass, Matthew: "remove the station signal lock"). Its two tracks
+// (Eno's "An Ending (Ascent)", Pärt's "Spiegel im Spiegel") were reassigned
+// rather than deleted -- both fit QUIET HOURS' ambient/neoclassical lane
+// better than they fit any of the remaining stations, and CHAMBER FREQ
+// wasn't a clean home for them either (they're modern minimalist, not the
+// "old masters" the tagline promises).
+//
+// Every remaining station also picked up 4 new real, oEmbed-verified tracks
+// this pass (Matthew: "add at least 4 more songs to each remaining
+// station"), on top of whatever it already had -- so QUIET HOURS actually
+// gained 6 (4 new + the 2 reassigned) and the rest gained 4.
+const CHANNELS = [
+  { id: 'static-bloom', freq: 137.4, callsign: 'STATIC BLOOM', tagline: 'flannel and feedback, still transmitting',
+    // Matthew 8/20: "I don't hear a station id tone for static bloom." The
+    // ident itself was firing fine (confirmed by hooking createOscillator
+    // in a live tab) -- it was just pitched a full octave below every other
+    // channel's ident (130.8-196 vs. 300+ everywhere else), quiet-to-silent
+    // on typical laptop/built-in speakers for a 160ms burst. Same 4-note
+    // shape, one octave up: still the lowest/moodiest ident of the set,
+    // just actually audible.
+    ident: [392.0, 349.2, 311.2, 261.6],
+    tracks: [
+      realTrack('hTWKbfoikeg', 'Smells Like Teen Spirit', 'Nirvana'),
+      realTrack('3mbBbFH9fAg', 'Black Hole Sun', 'Soundgarden'),
+      realTrack('Nco_kh8xJDs', 'Would?', 'Alice In Chains'),
+      realTrack('qM0zINtulhM', 'Alive', 'Pearl Jam'),
+      realTrack('yjJL9DGU7Gg', 'Interstate Love Song', 'Stone Temple Pilots'),
+      realTrack('eBG7P-K-r1Y', 'Everlong', 'Foo Fighters'),
+      realTrack('PE5f561Y1x4', 'Nearly Lost You', 'Screaming Trees'),
+      realTrack('cH_rfGBwamc', 'Violet', 'Hole'),
+      realTrack('XKvHgPHLlv4', 'Hunger Strike', 'Temple of the Dog'),
+      realTrack('_nGsT_qFMBs', "Touch Me I'm Sick", 'Mudhoney'),
+    ] },
+  { id: 'relic-signal', freq: 219.8, callsign: 'RELIC SIGNAL', tagline: 'the old masters, undying carrier',
+    ident: [523.3, 659.3, 784.0, 1046.5],
+    tracks: [
+      realTrack('IvrzJ8uH1PI', 'Symphony No. 5', 'Beethoven'),
+      realTrack('fZrm9h3JRGs', 'Suite bergamasque: III. Clair de lune', 'Debussy / Lang Lang'),
+      realTrack('XWOC6xImhtg', 'Air on the G String', 'Bach'),
+      realTrack('nO8uUTB2RlA', 'Nocturne Op. 9 No. 2', 'Chopin'),
+      realTrack('3LiztfE1X7E', 'The Four Seasons: Spring', 'Vivaldi'),
+      realTrack('Rj6Gk3YFdaQ', 'Gymnopedie No. 1', 'Erik Satie'),
+      realTrack('roC1jDB3IUo', 'Canon in D Major', 'Pachelbel'),
+      realTrack('hcpM0yN7p0c', 'Eine kleine Nachtmusik', 'Mozart'),
+      realTrack('OqvHWUZZdP0', 'In the Hall of the Mountain King', 'Grieg'),
+      realTrack('8UfpgT9FMAk', 'The Planets: Mars, the Bringer of War', 'Holst'),
+    ] },
+  { id: 'quiet-hours', freq: 356.2, callsign: 'QUIET HOURS', tagline: 'low power, long wave, lights out',
+    ident: [392.0, 369.9, 329.6, 293.7],
+    tracks: [
+      realTrack('UfcAVejslrU', 'Weightless', 'Marconi Union'),
+      // Reassigned from the retired SIGNAL LOCK station -- see comment above.
+      realTrack('sfBlBs25Ewk', 'An Ending (Ascent) [arr. David Le Page]', 'Brian Eno / Orchestra of the Swan'),
+      realTrack('TJ6Mzvh3XCc', 'Spiegel im Spiegel', 'Arvo Pärt'),
+      realTrack('0kYc55bXJFI', 'Near Light', 'Olafur Arnalds'),
+      realTrack('YC6pJOH7bF0', 'Adamord', 'Stars of the Lid'),
+      realTrack('QJ-polFpeX0', 'Music for Airports: 1/1', 'Brian Eno'),
+      // Swapped out Richter's "On The Nature of Daylight" and Nils Frahm's
+      // "Says" 2026-08-20 -- both read as classical/neoclassical, the same
+      // lane as RELIC SIGNAL. These 4 are drone/ambient/embient-rock, built
+      // to put a room to sleep rather than to be listened to.
+      realTrack('8L64BcCRDAE', 'Svefn-g-englar', 'Sigur Rós'),
+      realTrack('wLxbD0CkS30', "Heavy Water / I'd Rather Be Sleeping", 'Grouper'),
+      realTrack('BD3D5mCjt7I', 'Disintegration Loop 1.1', 'William Basinski'),
+      realTrack('jl_z5JvrKlc', 'Discreet Music', 'Brian Eno'),
+    ] },
+  { id: 'cold-wave', freq: 512.9, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
+    ident: [440.0, 554.4, 659.3, 880.0],
+    tracks: [
+      realTrack('9GMjH1nR0ds', 'Blue Monday \'88', 'New Order'),
+      realTrack('1ASpBpT8bRQ', 'Just Like Heaven', 'The Cure'),
+      realTrack('aGSKrC7dGcY', 'Enjoy the Silence', 'Depeche Mode'),
+      realTrack('aGCdLKXNF3w', 'Everybody Wants to Rule the World', 'Tears for Fears'),
+      realTrack('d5XJ2GiR6Bo', 'Enola Gay', 'Orchestral Manoeuvres in the Dark'),
+      realTrack('uPudE8nDog0', "Don't You Want Me", 'The Human League'),
+      realTrack('M1oqX84UKOE', "Don't You (Forget About Me)", 'Simple Minds'),
+      realTrack('6KR52lEWLEM', 'Sweet Dreams (Are Made of This)', 'Eurythmics'),
+      realTrack('0VhzcPnGHXQ', 'Cars', 'Gary Numan'),
+      realTrack('iIpfWORQWhU', 'I Ran (So Far Away)', 'A Flock of Seagulls'),
+    ] },
+  { id: 'the-study', freq: 823.1, callsign: 'THE STUDY', tagline: 'lamp light, turned pages, one more chapter',
+    ident: [329.6, 293.7, 261.6, 220.0],
+    tracks: [
+      realTrack('XnFOucmKlXA', 'Aruarian Dance', 'Nujabes'),
+      realTrack('InFbBlpDTfQ', 'Midnight In A Perfect World', 'DJ Shadow'),
+      realTrack('KMKeBpySf78', 'Kong', 'Bonobo'),
+      realTrack('mehLx_Fjv_c', 'A Walk', 'Tycho'),
+      // Swapped out Massive Attack's "Teardrop" and Portishead's "Glory Box"
+      // 2026-08-20 -- both read as trip-hop/downtempo proper, an adjacent
+      // but heavier lane than the lofi-girl/chillhop winddown this station
+      // is meant to be (winding down, not sleep -- that's QUIET HOURS).
+      realTrack('DEqSQq9Rkuo', 'Lonely', 'Idealism'),
+      realTrack('iUcHNED9mV4', 'Fireflies', "Kupla x j'san"),
+      realTrack('zK_Fb7XVrBY', 'Flower Dance', 'DJ Okawari'),
+      realTrack('pmJC2aO5vq0', 'Time: The Donut of the Heart', 'J Dilla'),
+      realTrack('0yDKIyOJaYM', 'Soon It Will Be Cold Enough', 'Emancipator'),
+      realTrack('GMbIF2UeLiA', 'Point in Space and Time', 'Flawed Mangoes'),
+    ] },
+
+  // 4 new stations added 2026-08-20, tracklists as given by Matthew, all
+  // oEmbed-verified. Frequencies slotted into the gaps between the original
+  // 5 (288.6 between RELIC SIGNAL/QUIET HOURS, 434.5 between QUIET
+  // HOURS/COLD WAVE, 650.0 between COLD WAVE/THE STUDY, 878.9 past THE
+  // STUDY toward the top of the band) so none of the original 5 moved.
+  { id: 'high-rise', freq: 650.0, callsign: 'HIGH RISE', tagline: 'chrome towers, all-night funk',
+    ident: [523.3, 659.3, 830.6, 987.8],
+    tracks: [
+      realTrack('5zTkTlj2h9E', 'Stay With Me', 'Miki Matsubara'),
+      realTrack('tWqZASIxlqs', 'Sparkle', 'Tatsuro Yamashita'),
+      realTrack('8ageCZxJ-WQ', '4:00AM', 'Taeko Onuki'),
+      // Matthew listed this as "Casiio" -- the actual 1981 city-pop
+      // original (and every real recording found) is Yasuha's, so it's
+      // credited to her rather than to an artist that doesn't have this
+      // song.
+      realTrack('4X7ZvpwBiKA', 'Flyday Chinatown', 'Yasuha'),
+      // Japan-only city pop per Matthew 8/20 -- all additions below are
+      // Japanese artists, matching the 4 originals.
+      realTrack('k-BrT2SQ7SI', "Cat's Eye", 'Anri'),
+      realTrack('vUQjdwRno5g', 'Say Goodbye', 'Hiroshi Sato'),
+      realTrack('k7VkzjSe5Ng', 'Moment Of Twilight', 'Minako Yoshida'),
+      realTrack('XE45nsroFTE', 'Ride On Time', 'Tatsuro Yamashita'),
+      realTrack('T_lC2O1oIew', 'Plastic Love', 'Mariya Takeuchi'),
+      realTrack('XJWqHmY-g9U', 'Telephone Number', 'Junko Ohashi'),
+    ] },
+  { id: 'outlaw-frequency', freq: 288.6, callsign: 'OUTLAW FREQUENCY', tagline: 'dust on the trail, a debt still owed',
+    ident: [220.0, 196.0, 174.6, 146.8],
+    tracks: [
+      realTrack('eJlN9jdQFSc', "God's Gonna Cut You Down", 'Johnny Cash'),
+      realTrack('tpUdq8MLZ5k', 'Sleeping on the Blacktop', 'Colter Wall'),
+      // Re-pointed from gothic Americana to spaghetti-western per Matthew
+      // 8/20 ("more red dead redemption style") -- Chelsea Wolfe and Timber
+      // Timbre dropped (doom-folk, not this lane), 8 tracks added spanning
+      // the actual Morricone/outlaw-ballad/border-noir range.
+      realTrack('Hac9A_f_nb4', 'The Good, the Bad and the Ugly (Main Theme)', 'Ennio Morricone'),
+      realTrack('PYI09PMNazw', 'The Ecstasy of Gold', 'Ennio Morricone'),
+      realTrack('zWm5WErkffQ', 'El Paso', 'Marty Robbins'),
+      realTrack('M2d8dj4R80E', 'Ghost Riders In The Sky', 'Johnny Cash'),
+      realTrack('B7E8n7I6IHw', 'Kate McCannon', 'Colter Wall'),
+      realTrack('wrjmcyaBYoY', 'The Ballad of Robert Moore and Betty Coltrane', 'Nick Cave & The Bad Seeds'),
+      realTrack('P3so4gpDRpQ', 'Gallo Del Cielo', 'Tom Russell'),
+      realTrack('rIQTRvKq7Z0', 'Not Even Stevie Nicks', 'Calexico'),
+    ] },
+  { id: 'circuit-crush', freq: 434.5, callsign: 'CIRCUIT CRUSH', tagline: 'analog glow, the long drive home',
+    ident: [466.2, 587.3, 698.5, 932.3],
+    tracks: [
+      realTrack('ZVS6Q_lbKQ0', 'Nightcall', 'Kavinsky'),
+      realTrack('URma_gu1aNE', 'Sunset', 'The Midnight'),
+      realTrack('-nC5TBv3sfU', 'Tech Noir', 'GUNSHIP'),
+      realTrack('TvZskcqdYcE', 'Running in the Night', 'FM-84 feat. Ollie Wride'),
+      realTrack('RY66fdMt4vc', 'Future Club', 'Perturbator'),
+      realTrack('er416Ad3R1g', 'Turbo Killer', 'Carpenter Brut'),
+      realTrack('aPjVZgoaAtE', 'A Real Hero', 'Electric Youth ft. College'),
+      realTrack('gDpfybAvEag', 'On the Run', 'Timecop1983'),
+      realTrack('eEELYwi-ABg', 'Riot', 'Dance With The Dead'),
+      realTrack('qKauZYXABrM', 'Night Force', 'Power Glove'),
+    ] },
+  { id: 'atomic', freq: 878.9, callsign: 'ATOMIC', tagline: 'jump blues and static, dance while the counter clicks',
+    ident: [392.0, 493.9, 587.3, 493.9],
+    tracks: [
+      realTrack('GkHd1d_UVOE', "I Don't Want to Set the World on Fire", 'The Ink Spots'),
+      realTrack('Q9bSOaSuScQ', 'Crawl Out Through the Fallout', 'Sheldon Allman'),
+      realTrack('8V7AxNJWKYU', 'Butcher Pete (Part 1)', 'Roy Brown'),
+      realTrack('daFhT6mBOWo', 'The Wanderer', 'Dion'),
+      realTrack('DGLPvnbryGU', 'The End of the World', 'Skeeter Davis'),
+      realTrack('PkVlkUIHF8c', "Jump, Jive An' Wail", 'Louis Prima'),
+      realTrack('WtSLYrTKrEw', 'Minnie the Moocher', 'Cab Calloway'),
+      realTrack('P1EG__jgefA', "Choo Choo Ch'Boogie", 'Louis Jordan'),
+      realTrack('wf4nY0mLrrA', 'Boogie Woogie Bugle Boy', 'The Andrews Sisters'),
+      realTrack('SllhnR7D8LA', "Good Rockin' Tonight", 'Wynonie Harris'),
+    ] },
+]
+
+// --- layout (80x25 grid) -----------------------------------------------
+
+// Re-spaced 2026-08-20 (4th pass) -- boxed layout. Previous passes fixed
+// vertical spacing and moved VOL/SIG below the band, but everything still
+// read as loose floating text lines. Matthew asked for elements to have
+// more presence: the tuning band, the level meters, and the station info
+// are now each their own bordered panel (box-drawing chars, natively
+// supported by the grid -- see term.js's join-column handling for the
+// U+2500-259F range), and the control legend at the bottom gets the same
+// filled-background treatment as the title bar instead of floating dim
+// text. Box widths all match (columns 2-77) for a consistent frame.
+const DIAL_X0 = 4
+const DIAL_X1 = 75
+const BOX_X0 = 2
+const BOX_X1 = 77
+
+// Row 1 sits blank between the title bar and STATUS_Y. The brand-plate
+// nameplate briefly lived here (10th pass) but moved into the title bar
+// itself in the 11th pass -- this row is free again.
+const STATUS_Y = 2
+
+const TUNER_TOP_Y = 3
+const SCALE_Y = 4
+const DIAL_Y = 5
+const FREQ_Y = 6
+const TUNER_BOT_Y = 7
+
+// ON AIR moved above LEVELS 2026-08-20 (5th pass) -- what's actually
+// playing matters more than the volume/signal meters, so it gets the
+// higher-priority slot right under the tuner (Matthew: "think about
+// priority and user experience").
+// 7th pass (same day): split the single ON AIR box into two -- STATION
+// (callsign + tagline, identity, doesn't change on a track skip) and NOW
+// PLAYING (title/artist + progress bar + play state, changes on every
+// track). Matthew: "station info should be broken out from current
+// playing song info; this looks like a blob."
+// 8th pass (same day): the progress bar and play-state indicator merged
+// onto one PLAYBACK_Y row (drawPlayback) -- they're both about playback
+// status and there was no reason they needed separate lines. That freed a
+// row, spent on a blank divider inside LEVELS between the real VOL/SIG
+// meters and the decorative VU row, so VU reads as its own thing instead
+// of fusing into one solid block with the meters above it (Matthew: "the
+// levels blob").
+// 9th pass (same day): Matthew wanted VOL further separated from SIG too,
+// so LEVELS gets a second divider. Paid for by dropping the blank spacer
+// row between TUNER and STATION -- those two boxes now sit border-to-
+// border like NOWPLAYING/METERS already did, which is consistent rather
+// than a special case.
+const STATION_TOP_Y = 8
+const STATION_Y = 9
+const TAGLINE_Y = 10
+const STATION_BOT_Y = 11
+
+const NOWPLAYING_TOP_Y = 12
+const TRACK_Y = 13
+const PLAYBACK_Y = 14
+const NOWPLAYING_BOT_Y = 15
+
+const METERS_TOP_Y = 16
+const VOL_Y = 17
+const VOL_SIG_DIVIDER_Y = 18
+const SIG_Y = 19
+const VU_DIVIDER_Y = 20
+const VU_Y = 21
+const METERS_BOT_Y = 22
+
+const HINT_Y1 = 23
+const HINT_Y2 = 24
+
+/** Centre text, clamped so it never starts off-grid (a too-long string
+ *  would otherwise centre to a negative x and get silently clipped/garbled
+ *  at both edges -- this is what broke the hint row before). */
+function centerX(cols, text) {
+  return Math.max(0, Math.floor((cols - text.length) / 2))
+}
+
+/** Hard-cap a string to maxLen, marking the cut with "..." (not the U+2026
+ *  ellipsis glyph -- the bitmap font may not have it, and a missing glyph
+ *  silently falls back to "?", which reads worse than three periods).
+ *  BUG FIXED 2026-08-20 (9th pass): centerX only clamped the START
+ *  position so a string never began off-grid, but never limited the
+ *  string's own length -- a long track/artist combo (e.g. "An Ending
+ *  (Ascent) [arr. David Le Page] -- Brian Eno / Orchestra of the Swan")
+ *  just ran straight through the STATION/NOW PLAYING box's side borders
+ *  and off the edge of the 80-column grid. Every track line now goes
+ *  through this before being centered. */
+function truncate(str, maxLen) {
+  if (str.length <= maxLen) return str
+  if (maxLen <= 3) return str.slice(0, Math.max(0, maxLen))
+  return str.slice(0, maxLen - 3) + '...'
+}
+
+/** Box-drawing helpers. Borders are drawn once (in init) and never touched
+ *  again -- every row-content function below clears only its own interior
+ *  span, not the full canvas width, so the frame stays put across redraws. */
+function drawBoxTop(term, y, x0, x1, label, attr) {
+  const inner = x1 - x0 - 1
+  const tag = label ? ` ${label} ` : ''
+  const tagX = tag ? x0 + 1 + Math.floor((inner - tag.length) / 2) : -1
+  term.put(x0, y, '┌', attr)
+  for (let x = x0 + 1; x < x1; x++) {
+    if (tag && x >= tagX && x < tagX + tag.length) term.put(x, y, tag[x - tagX], attr)
+    else term.put(x, y, '─', attr)
+  }
+  term.put(x1, y, '┐', attr)
+}
+function drawBoxBottom(term, y, x0, x1, attr) {
+  term.put(x0, y, '└', attr)
+  for (let x = x0 + 1; x < x1; x++) term.put(x, y, '─', attr)
+  term.put(x1, y, '┘', attr)
+}
+function drawBoxSide(term, y, x0, x1, attr) {
+  term.put(x0, y, '│', attr)
+  term.put(x1, y, '│', attr)
+}
+
+/** Speaker-grille perforation pattern for the LEVELS box divider rows
+ *  (10th pass). Reuses '·', already confirmed present in the bitmap font
+ *  (the idle-shimmer dots on the dial use the same glyph). */
+function drawGrille(term, y, x0, x1) {
+  for (let x = x0 + 1; x < x1; x++) {
+    term.put(x, y, (x - x0) % 2 === 1 ? '·' : ' ', FAINT)
+  }
+}
+
+function freqToCol(f) {
+  const pct = (f - FREQ_MIN) / (FREQ_MAX - FREQ_MIN)
+  return Math.round(DIAL_X0 + pct * (DIAL_X1 - DIAL_X0))
+}
+function colToFreq(col) {
+  const pct = (col - DIAL_X0) / (DIAL_X1 - DIAL_X0)
+  return FREQ_MIN + pct * (FREQ_MAX - FREQ_MIN)
+}
+function clampFreq(f) { return Math.min(FREQ_MAX, Math.max(FREQ_MIN, f)) }
+function nearestChannel(freq) {
+  let best = null, bestDist = Infinity
+  for (const ch of CHANNELS) {
+    const d = Math.abs(ch.freq - freq)
+    if (d < bestDist) { bestDist = d; best = ch }
+  }
+  return { channel: best, dist: bestDist }
+}
+
+// --- shuffle bag ---------------------------------------------------------
+
+function shuffledIndices(n) {
+  const arr = Array.from({ length: n }, (_, i) => i)
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
+// --- WebAudio: tick + lock tone, no external files ----------------------
+
+let actx = null
+function audioCtx() {
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)()
+  // Chrome/Safari can hand back a context that's still 'suspended' even
+  // from inside a keydown handler -- the very first oscillator scheduled
+  // on it is silent even though nothing throws and nothing looks wrong
+  // (Matthew 8/20: "I don't hear a station id tone for static bloom" --
+  // it's usually the first channel tried after a fresh page load, i.e.
+  // the first sound the context ever plays). Nudging resume() on every
+  // call is a no-op once running, so this just self-heals the first call
+  // instead of only fixing it retroactively on the second one.
+  if (actx.state === 'suspended') actx.resume().catch(() => {})
+  return actx
+}
+// Static burst for manual seeking (11th pass, Matthew: "there should be
+// static as you seek manually") -- replaces the old per-step playTick(),
+// which was a short flat-noise click too subtle to read as static. This is
+// longer and band-passed like the scanning static bed (startStaticNoise),
+// just fired as a one-shot per arrow-key step instead of held continuously.
+function playSeekStatic() {
+  try {
+    const ctx = audioCtx()
+    const n = Math.floor(ctx.sampleRate * 0.09)
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.frequency.value = 1400
+    filter.Q.value = 0.5
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.22, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09)
+    src.connect(filter).connect(gain).connect(ctx.destination)
+    src.start()
+  } catch (e) {}
+}
+function playLockTone() {
+  try {
+    const ctx = audioCtx()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(880, ctx.currentTime)
+    gain.gain.setValueAtTime(0.25, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.26)
+  } catch (e) {}
+}
+
+// Station ident (added 2026-08-20, 9th pass) -- a short per-channel tone
+// motif (see CHANNELS[].ident) played on lock instead of the generic
+// playLockTone(), so each station announces itself distinctly before
+// you've even read the screen. Falls back to playLockTone() if a channel
+// somehow has no ident defined.
+function playIdent(freqs) {
+  if (!freqs || !freqs.length) { playLockTone(); return }
+  try {
+    const ctx = audioCtx()
+    let t = ctx.currentTime
+    freqs.forEach((f) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(f, t)
+      gain.gain.setValueAtTime(0.001, t)
+      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16)
+      osc.connect(gain).connect(ctx.destination)
+      osc.start(t)
+      osc.stop(t + 0.18)
+      t += 0.11
+    })
+  } catch (e) {}
+}
+
+// Continuous static bed while scanning, in place of a bare tick per step --
+// filtered noise, faded in/out rather than started/stopped hard.
+let staticSrc = null
+let staticGain = null
+function startStaticNoise() {
+  if (staticSrc) return
+  try {
+    const ctx = audioCtx()
+    const n = ctx.sampleRate * 2
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    src.loop = true
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.frequency.value = 1200
+    filter.Q.value = 0.6
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0, ctx.currentTime)
+    gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.15)
+    src.connect(filter).connect(gain).connect(ctx.destination)
+    src.start()
+    staticSrc = src
+    staticGain = gain
+  } catch (e) {}
+}
+function stopStaticNoise() {
+  if (!staticSrc) return
+  const src = staticSrc, gain = staticGain
+  staticSrc = null
+  staticGain = null
+  try {
+    const ctx = audioCtx()
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15)
+    setTimeout(() => { try { src.stop() } catch (e) {} }, 200)
+  } catch (e) {}
+}
+
+// Power down/up sweeps (12th pass, Matthew: "let's build a power on and
+// power down sequence"). Same tube-electronics logic as a real set: powering
+// down is a fast collapse (voltage drops faster than it rises), powering up
+// is a slower warm-up. A short relay "click" bookends each.
+function playClick(t0) {
+  try {
+    const ctx = audioCtx()
+    const t = t0 ?? ctx.currentTime
+    const n = Math.floor(ctx.sampleRate * 0.012)
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n)
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.35, t)
+    src.connect(gain).connect(ctx.destination)
+    src.start(t)
+  } catch (e) {}
+}
+function playPowerDownSound() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    playClick(t)
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(660, t + 0.02)
+    osc.frequency.exponentialRampToValueAtTime(40, t + 0.55)
+    gain.gain.setValueAtTime(0.001, t + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.24, t + 0.06)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start(t + 0.02)
+    osc.stop(t + 0.62)
+  } catch (e) {}
+}
+function playPowerOnSound() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    playClick(t)
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(90, t + 0.03)
+    osc.frequency.exponentialRampToValueAtTime(720, t + 0.4)
+    gain.gain.setValueAtTime(0.001, t + 0.03)
+    gain.gain.exponentialRampToValueAtTime(0.2, t + 0.12)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start(t + 0.03)
+    osc.stop(t + 0.47)
+  } catch (e) {}
+}
+
+// --- program ---------------------------------------------------------------
+
+export default {
+  // Static chrome -- title bar, brand-plate, panel frames, grille, corner
+  // brackets. Drawn once at boot and again after a power-up (12th pass);
+  // extracted out of init() so both call sites stay in sync instead of
+  // duplicating ~60 lines of box-drawing.
+  drawChrome(s) {
+    const { term } = s
+
+    // Title bar, inverse plane.
+    for (let x = 0; x < term.cols; x++) term.put(x, 0, ' ', NORMAL, 1)
+    term.text(2, 0, 'SIGNAL', BOLD, 1)
+    term.text(72, 0, 'v0.1', DIM, 1)
+    // Power/lock LED (10th pass, skeuomorphism idea Matthew picked) -- a
+    // single indicator dot next to the title, dark/faint when idle, dim
+    // while seeking, solid bright once locked. Drawn by drawLED(), called
+    // from setStatus() so it stays in sync with every status change without
+    // needing its own call site at every transition.
+    this.drawLED(s)
+
+    // Brand-plate nameplate (10th pass, skeuomorphism idea Matthew picked;
+    // moved into the title bar itself in the 11th pass, Matthew: "move
+    // model sg-1 etc into header") -- sits in the open space between the
+    // LED and "v0.1", same inverse plane as the rest of the title row
+    // instead of floating as its own dim line underneath it.
+    const brand = 'MODEL SG-1  -  SIGNAL RECEIVER'
+    term.text(centerX(term.cols, brand), 0, brand, FAINT, 1)
+
+    // Panel frames -- drawn once, never redrawn. Every content function
+    // below only clears its own interior span, so these stay put.
+    drawBoxTop(term, TUNER_TOP_Y, BOX_X0, BOX_X1, 'TUNING BAND', MUTED)
+    drawBoxSide(term, SCALE_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxSide(term, DIAL_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxSide(term, FREQ_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxBottom(term, TUNER_BOT_Y, BOX_X0, BOX_X1, MUTED)
+
+    drawBoxTop(term, STATION_TOP_Y, BOX_X0, BOX_X1, 'STATION', MUTED)
+    drawBoxSide(term, STATION_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxSide(term, TAGLINE_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxBottom(term, STATION_BOT_Y, BOX_X0, BOX_X1, MUTED)
+
+    drawBoxTop(term, NOWPLAYING_TOP_Y, BOX_X0, BOX_X1, 'NOW PLAYING', MUTED)
+    drawBoxSide(term, TRACK_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxSide(term, PLAYBACK_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxBottom(term, NOWPLAYING_BOT_Y, BOX_X0, BOX_X1, MUTED)
+
+    drawBoxTop(term, METERS_TOP_Y, BOX_X0, BOX_X1, 'LEVELS', MUTED)
+    drawBoxSide(term, VOL_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxSide(term, VOL_SIG_DIVIDER_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxSide(term, SIG_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxSide(term, VU_DIVIDER_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxSide(term, VU_Y, BOX_X0, BOX_X1, MUTED)
+    drawBoxBottom(term, METERS_BOT_Y, BOX_X0, BOX_X1, MUTED)
+
+    // Speaker-grille texture (10th pass, skeuomorphism idea Matthew picked)
+    // -- the two divider rows inside LEVELS were plain blank interiors
+    // (just the box's side borders with nothing between). Filling them with
+    // a dotted perforation pattern instead reads as a physical speaker
+    // grille sitting between the meters, at zero extra row cost.
+    drawGrille(term, VOL_SIG_DIVIDER_Y, BOX_X0, BOX_X1)
+    drawGrille(term, VU_DIVIDER_Y, BOX_X0, BOX_X1)
+
+    // Chassis corner brackets (10th pass, skeuomorphism idea Matthew
+    // picked) -- the 4 columns outside the panel stack (x 0-1 and 78-79)
+    // were unused; bracketing the stack's outer corners there reads as a
+    // physical bezel around the receiver rather than the panels just
+    // floating on black.
+    term.put(0, TUNER_TOP_Y, '┏', MUTED)
+    term.put(term.cols - 1, TUNER_TOP_Y, '┓', MUTED)
+    term.put(0, METERS_BOT_Y, '┗', MUTED)
+    term.put(term.cols - 1, METERS_BOT_Y, '┛', MUTED)
+  },
+
+  init(s) {
+    const { term } = s
+
+    // Leftover from the old 88-108 band -- 93.0 is below the current
+    // FREQ_MIN (100.0), so the dial opened already out-of-range. Now starts
+    // exactly at FREQ_MIN.
+    this.freq = FREQ_MIN
+    this.mode = 'seeking' // 'seeking' | 'locked'
+    this.lockedChannel = null
+    this.currentTrack = null
+    this.bags = {}
+    this.scanning = false
+    this.scanTimer = null
+    this.ready = false
+    this.player = null
+    this.volume = 70
+    this.muted = false
+    this.poweredOn = true
+
+    // Scrolling-waveform VU state (11th pass -- see drawVU()).
+    this.lastProgressDraw = 0
+    this.vuSample = 0.03
+    this.vuVelocity = 0
+    this.vuTrace = new Array(24).fill(0)
+
+    this.drawChrome(s)
+
+    this.history = []
+    this.nowPlaying = null
+
+    this.drawScale(s)
+    this.setStatus(s, 'SYSTEM READY', false)
+    this.drawVolume(s)
+    this.drawSignal(s)
+    this.drawVU(s)
+    this.drawDial(s)
+    this.drawFreq(s)
+    this.clearStation(s)
+    this.clearTrack(s)
+    this.setPlayState(s)
+    this.drawHint(s)
+
+    // Warm-up flicker (10th pass, skeuomorphism idea Matthew picked) -- a
+    // brief flicker across the panel borders right after everything above
+    // has already drawn its resting state, like a tube warming up rather
+    // than snapping straight to steady. Purely cosmetic and self-contained;
+    // see playBootFlicker() for the beat sequence.
+    this.playBootFlicker(s)
+
+    this.initPlayer(s)
+
+    this.dragging = false
+    this.dragLastX = 0
+    document.addEventListener('pointerdown', (e) => this.onPointerDown(s, e))
+    document.addEventListener('pointermove', (e) => this.onPointerMove(s, e))
+    document.addEventListener('pointerup', () => { this.dragging = false })
+  },
+
+  drawScale(s) {
+    const { term } = s
+    for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, SCALE_Y, ' ')
+    term.text(DIAL_X0 - 1, SCALE_Y, '100.0', DIM)
+    term.text(freqToCol(500) - 2, SCALE_Y, '500.0', DIM)
+    term.text(DIAL_X1 - 4, SCALE_Y, '900.0', DIM)
+  },
+
+  drawDial(s) {
+    const { term } = s
+    for (let x = DIAL_X0; x <= DIAL_X1; x++) term.put(x, DIAL_Y, '·', FAINT)
+    const { channel: near, dist } = nearestChannel(this.freq)
+    for (const ch of CHANNELS) {
+      const col = freqToCol(ch.freq)
+      const glow = this.mode === 'seeking' && ch === near && dist <= NEAR_THRESHOLD
+      const locked = this.mode === 'locked' && this.lockedChannel === ch
+      term.put(col, DIAL_Y, '▲', locked ? BRIGHT : glow ? BOLD : NORMAL)
+    }
+    const cursorCol = freqToCol(this.freq)
+    term.put(cursorCol, DIAL_Y, '█', BRIGHT)
+  },
+
+  drawFreq(s) {
+    const { term } = s
+    for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, FREQ_Y, ' ')
+    const str = this.freq.toFixed(1)
+    term.text(centerX(term.cols, str), FREQ_Y, str, BOLD)
+  },
+
+  // 11th pass (Matthew: "add some flair around scanning, locked status...
+  // brackets so it's not just floating text") -- wraps every status string
+  // in a readout-style bracket instead of leaving it as bare centered text.
+  setStatus(s, text, active) {
+    const { term } = s
+    const display = `[ ${text} ]`
+    for (let x = 0; x < term.cols; x++) term.put(x, STATUS_Y, ' ')
+    term.text(centerX(term.cols, display), STATUS_Y, display, active ? BRIGHT : MUTED)
+    this.drawLED(s)
+  },
+
+  // Power/lock LED (10th pass) -- lives in the title bar next to "SIGNAL",
+  // one cell, inverse plane like the rest of that row. Called from
+  // setStatus() so every status transition (locked/seeking/scanning/idle)
+  // keeps it in sync without a separate call site per transition.
+  drawLED(s) {
+    const { term } = s
+    const locked = this.mode === 'locked'
+    const seeking = this.mode === 'seeking' || this.scanning
+    const glyph = locked ? '●' : '○'
+    const attr = locked ? BRIGHT : seeking ? DIM : FAINT
+    term.put(9, 0, glyph, attr, 1)
+  },
+
+  // Warm-up flicker (10th pass) -- a short beat sequence that redraws the
+  // 4 panel top/bottom borders at varying brightness right after boot,
+  // then settles back to the normal resting MUTED attr. One-shot, timer-
+  // based (same pattern as the scan/preset timers elsewhere in this file),
+  // not part of the per-frame loop.
+  playBootFlicker(s) {
+    const { term } = s
+    const tops = [
+      [TUNER_TOP_Y, 'TUNING BAND'], [STATION_TOP_Y, 'STATION'],
+      [NOWPLAYING_TOP_Y, 'NOW PLAYING'], [METERS_TOP_Y, 'LEVELS'],
+    ]
+    const bottoms = [TUNER_BOT_Y, STATION_BOT_Y, NOWPLAYING_BOT_Y, METERS_BOT_Y]
+    const redraw = (attr) => {
+      for (const [y, label] of tops) drawBoxTop(term, y, BOX_X0, BOX_X1, label, attr)
+      for (const y of bottoms) drawBoxBottom(term, y, BOX_X0, BOX_X1, attr)
+    }
+    const beats = [[FAINT, 30], [NORMAL, 110], [FAINT, 40], [DIM, 90], [BRIGHT, 70], [MUTED, 160]]
+    let t = 0
+    for (const [attr, delay] of beats) {
+      t += delay
+      setTimeout(() => redraw(attr), t)
+    }
+  },
+
+  // Power down/up (12th pass, Matthew: "let's build a power on and power
+  // down sequence"). Neither one resets freq/lockedChannel/shuffle
+  // bags/volume -- powering off and back on is meant to read as the same
+  // set switching states, not a fresh boot. init() still owns the actual
+  // fresh-boot path (page load) and calls drawChrome()+playBootFlicker()
+  // directly; these two reuse the same building blocks for the same look
+  // on every power cycle after that.
+  powerDown(s) {
+    if (!this.poweredOn) return
+    this.poweredOn = false
+    this.stopScan()
+    // stopScan() no longer stops the ambient static bed on its own (12th
+    // pass) -- power-down is one of the two places (with tryLock) that
+    // still needs to silence it explicitly.
+    stopStaticNoise()
+    if (this.ready && this.player) this.player.pauseVideo()
+    this.setPlayState(s)
+    playPowerDownSound()
+
+    const { term } = s
+    const clearAll = () => {
+      for (let y = 0; y < term.rows; y++)
+        for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
+    }
+    const midY = Math.round(term.rows / 2)
+
+    const beats = [
+      { delay: 0, fn: () => {
+        // Voltage surge on the way out -- borders flash bright once before
+        // the collapse starts, same beat playBootFlicker opens on, in
+        // reverse intent (dying rather than warming up).
+        this.setStatus(s, 'POWERING DOWN', true)
+      } },
+      { delay: 90, fn: () => {
+        // Content goes dark first -- station/track/meters cut before the
+        // frame itself does, like the signal chain losing power before the
+        // tube does.
+        this.clearStation(s)
+        this.clearTrack(s)
+        for (let x = BOX_X0 + 1; x < BOX_X1; x++) {
+          term.put(x, VOL_Y, ' '); term.put(x, SIG_Y, ' '); term.put(x, VU_Y, ' ')
+        }
+        this.setStatus(s, 'POWERING DOWN', false)
+      } },
+      { delay: 170, fn: () => {
+        // Whole picture collapses to the horizontal centerline -- a CRT's
+        // vertical deflection dying while the beam is still lit reads as
+        // exactly this: everything not on the middle scanline disappears.
+        clearAll()
+        for (let x = 0; x < term.cols; x++) term.put(x, midY, '─', DIM)
+      } },
+      { delay: 260, fn: () => {
+        // Centerline collapses to a single point -- the classic tube-off
+        // dot -- then that point goes dark too.
+        clearAll()
+        term.put(Math.floor(term.cols / 2), midY, '·', BRIGHT)
+      } },
+      { delay: 320, fn: () => {
+        clearAll()
+        const label = 'STANDBY'
+        term.text(centerX(term.cols, label), midY, label, FAINT)
+        const hint = '[P] POWER ON'
+        term.text(centerX(term.cols, hint), midY + 2, hint, FAINT)
+      } },
+    ]
+    for (const { delay, fn } of beats) setTimeout(fn, delay)
+  },
+
+  powerUp(s) {
+    if (this.poweredOn) return
+    const { term } = s
+    const clearAll = () => {
+      for (let y = 0; y < term.rows; y++)
+        for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
+    }
+    const midY = Math.round(term.rows / 2)
+    playPowerOnSound()
+
+    const beats = [
+      { delay: 0, fn: () => {
+        // Same tube-off dot the collapse ended on, lighting back up first.
+        clearAll()
+        term.put(Math.floor(term.cols / 2), midY, '·', DIM)
+      } },
+      { delay: 90, fn: () => {
+        // Dot expands to the centerline -- deflection coming back before
+        // the rest of the picture does, reverse of the power-down collapse.
+        clearAll()
+        for (let x = 0; x < term.cols; x++) term.put(x, midY, '─', NORMAL)
+      } },
+      { delay: 190, fn: () => {
+        // Full picture back -- same chrome init() draws on a fresh boot,
+        // just without touching freq/lockedChannel/bags/volume/history.
+        clearAll()
+        this.poweredOn = true
+        this.drawChrome(s)
+        this.drawScale(s)
+        this.setStatus(s, 'SYSTEM READY', false)
+        this.drawVolume(s)
+        this.drawSignal(s)
+        this.drawVU(s)
+        this.drawDial(s)
+        this.drawFreq(s)
+        this.drawHint(s)
+        if (this.mode === 'locked' && this.lockedChannel) {
+          // Resume exactly where it left off -- same channel, same track,
+          // same playback position -- rather than re-picking from the
+          // shuffle bag, so it reads as the same set coming back on rather
+          // than a new tune-in.
+          this.showStation(s, this.lockedChannel)
+          if (this.currentTrack) this.showTrack(s, this.currentTrack)
+          if (this.ready && this.player) this.player.playVideo()
+          this.setPlayState(s)
+        } else {
+          this.clearStation(s)
+          this.clearTrack(s)
+          this.setStatus(s, 'SEEKING', false)
+        }
+        this.playBootFlicker(s)
+      } },
+    ]
+    for (const { delay, fn } of beats) setTimeout(fn, delay)
+  },
+
+  drawVolume(s) {
+    const { term } = s
+    for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, VOL_Y, ' ')
+    // Widened from 10 to 24 segments now that the meter has its own boxed
+    // panel and the full width to use -- a 10-block bar looked stingy
+    // sitting alone in a near-full-width frame.
+    const segs = 24
+    const filled = this.muted ? 0 : Math.round((this.volume / 100) * segs)
+    let bar = ''
+    for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '-'
+    const label = this.muted ? `VOL [${bar}] MUTE` : `VOL [${bar}] ${this.volume}`
+    term.text(centerX(term.cols, label), VOL_Y, label, DIM)
+  },
+
+  // Decorative, but reinforces the tuning fantasy: fills in as you approach
+  // a channel while seeking, full once locked.
+  drawSignal(s) {
+    const { term } = s
+    for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, SIG_Y, ' ')
+    const segs = 24
+    let pct = 0
+    if (this.mode === 'locked') pct = 1
+    else {
+      const { dist } = nearestChannel(this.freq)
+      if (dist <= NEAR_THRESHOLD) pct = 1 - dist / NEAR_THRESHOLD
+    }
+    const filled = Math.round(pct * segs)
+    let bar = ''
+    for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '-'
+    const label = `SIG [${bar}]`
+    term.text(centerX(term.cols, label), SIG_Y, label, filled > 0 ? DIM : FAINT)
+  },
+
+  // STATION (callsign + tagline) and NOW PLAYING (track) are separate
+  // boxes now -- station identity doesn't change on a track skip, so it
+  // gets its own clear/draw pair instead of being wiped and redrawn
+  // alongside the track every time (Matthew, 8/20: "station info should be
+  // broken out from current playing song info").
+  clearStation(s) {
+    const { term } = s
+    for (const y of [STATION_Y, TAGLINE_Y]) {
+      for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, y, ' ')
+    }
+  },
+  showStation(s, channel) {
+    const { term } = s
+    this.clearStation(s)
+    const maxWidth = BOX_X1 - BOX_X0 - 4
+    const callsign = truncate(channel.callsign, maxWidth)
+    const tagline = truncate(channel.tagline, maxWidth)
+    term.text(centerX(term.cols, callsign), STATION_Y, callsign, BRIGHT)
+    term.text(centerX(term.cols, tagline), TAGLINE_Y, tagline, MUTED)
+  },
+
+  clearTrack(s) {
+    const { term } = s
+    for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, TRACK_Y, ' ')
+  },
+  showTrack(s, track) {
+    const { term } = s
+    this.clearTrack(s)
+    const maxWidth = BOX_X1 - BOX_X0 - 4
+    let line = `${track.title}  --  ${track.artist}`
+    if (line.length > maxWidth) {
+      // Truncate the title first and keep the artist whole where possible
+      // -- who it's by matters more once space runs out than the last
+      // few words of a long title.
+      const suffix = `  --  ${track.artist}`
+      const titleBudget = maxWidth - suffix.length
+      line = titleBudget >= 8
+        ? truncate(track.title, titleBudget) + suffix
+        : truncate(line, maxWidth)
+    }
+    term.text(centerX(term.cols, line), TRACK_Y, line, NORMAL)
+  },
+
+  // Progress bar + play-state indicator, merged onto one row 2026-08-20
+  // (8th pass) -- they used to be two separate lines but both are just
+  // "playback status", and combining them paid for the LEVELS divider row
+  // below. Only source of playback feedback at all now that the player
+  // itself is off-screen: without this there'd be no way to tell playing
+  // from paused, how far into a track you are, or that a track ended and
+  // skipped. setPlayState() updates this.playState; drawPlayback() is the
+  // only thing that actually draws, called from frame() (throttled -- time
+  // display doesn't need per-frame precision) and after any state change.
+  setPlayState(s, state) {
+    this.playState = this.mode === 'locked' ? state : null
+    this.drawPlayback(s)
+  },
+  drawPlayback(s) {
+    const { term } = s
+    for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, PLAYBACK_Y, ' ')
+    if (this.mode !== 'locked') return
+
+    let barPart = ''
+    if (this.ready && this.player) {
+      let cur, dur
+      try { cur = this.player.getCurrentTime(); dur = this.player.getDuration() } catch (e) {}
+      if (dur && isFinite(dur) && dur > 0) {
+        const fmt = (sec) => {
+          sec = Math.max(0, Math.floor(sec))
+          return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
+        }
+        const segs = 28
+        const filled = Math.round(Math.min(1, cur / dur) * segs)
+        let bar = ''
+        for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '·'
+        barPart = `[${bar}] ${fmt(cur)} / ${fmt(dur)}`
+      }
+    }
+
+    const labels = { playing: ['> PLAYING', BRIGHT], paused: ['|| PAUSED', MUTED], buffering: ['BUFFERING...', DIM] }
+    const entry = labels[this.playState]
+    const labelPart = entry ? entry[0] : ''
+    const sep = barPart && labelPart ? '   ' : ''
+    const full = barPart + sep + labelPart
+    if (!full) return
+    const startX = centerX(term.cols, full)
+    if (barPart) term.text(startX, PLAYBACK_Y, barPart, FAINT)
+    if (labelPart) term.text(startX + barPart.length + sep.length, PLAYBACK_Y, labelPart, entry[1])
+  },
+
+  // Scrolling waveform squiggle (11th pass -- Matthew wasn't digging the
+  // analog needle from the 10th pass; picked this replacement from a set of
+  // proposed alternatives). A ring buffer of recent amplitude samples
+  // (this.vuTrace) shifts left every draw and a fresh sample lands on the
+  // right, so the whole row reads as a live trace scrolling past rather
+  // than bars bouncing in place or one marker sliding. The sample itself
+  // still comes from spring-damped continuity (this.vuSample/vuVelocity)
+  // rather than pure noise, so consecutive samples flow into each other
+  // like a real waveform instead of looking like static. Still decorative
+  // -- WebAudio has no visibility into the YouTube iframe's actual output.
+  drawVU(s) {
+    const { term } = s
+    for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, VU_Y, ' ')
+    const playing = this.mode === 'locked' && this.playState === 'playing'
+    const target = playing ? 0.15 + Math.random() * 0.8 : 0.03
+    const spring = 0.4
+    const damping = 0.5
+    const accel = (target - this.vuSample) * spring - this.vuVelocity * damping
+    this.vuVelocity += accel
+    this.vuSample = Math.max(0, Math.min(1, this.vuSample + this.vuVelocity))
+    this.vuTrace.shift()
+    this.vuTrace.push(this.vuSample)
+    const chars = ' ▁▂▃▄▅▆▇█'
+    let bar = ''
+    for (const v of this.vuTrace) bar += chars[Math.max(0, Math.min(chars.length - 1, Math.round(v * (chars.length - 1))))]
+    const label = `VU  ${bar}`
+    term.text(centerX(term.cols, label), VU_Y, label, playing ? DIM : FAINT)
+  },
+
+  // BUG/NAMING FIXED 2026-08-20: this used to log an entry on every track
+  // skip within the SAME channel, so "RECENT" was really a recent-tracks
+  // log, not a channel log. The session-stats/RECENT footer line was
+  // removed entirely 2026-08-20 (7th pass, Matthew: "remove session
+  // stats... this looks like a blob") -- this now just tracks what's
+  // currently playing for skip()'s benefit, nothing gets drawn from it.
+  tuneToChannel(s, channel, track) {
+    this.nowPlaying = { channelId: channel.id, freq: channel.freq, callsign: channel.callsign, title: track.title }
+  },
+
+  // Filled-background control panel, same treatment as the title bar
+  // (Matthew, 8/20: distinguish the controls from the rest of the screen
+  // the same way SIGNAL/v0.1 stand out up top, not as dim floating text).
+  // "drag to sweep" deliberately left off -- it's a hidden/discoverable
+  // control, not one of the primary listed ones.
+  drawHint(s) {
+    const { term } = s
+    const line1 = '[<-/->] SEEK    [ENTER] LOCK    [S] SCAN    [1-9] PRESETS'
+    const line2 = '[SPACE] PLAY/PAUSE    [N] SKIP    [UP/DOWN] VOL    [M] MUTE    [P] POWER'
+    for (let x = 0; x < term.cols; x++) { term.put(x, HINT_Y1, ' ', NORMAL, 1); term.put(x, HINT_Y2, ' ', NORMAL, 1) }
+    term.text(centerX(term.cols, line1), HINT_Y1, line1, BOLD, 1)
+    term.text(centerX(term.cols, line2), HINT_Y2, line2, NORMAL, 1)
+  },
+
+  // --- bag / playback --------------------------------------------------
+
+  ensureBag(channel) {
+    if (!this.bags[channel.id]) this.bags[channel.id] = { order: shuffledIndices(channel.tracks.length), pos: 0 }
+    return this.bags[channel.id]
+  },
+  nextTrack(channel) {
+    const bag = this.ensureBag(channel)
+    if (bag.pos >= bag.order.length) { bag.order = shuffledIndices(channel.tracks.length); bag.pos = 0 }
+    const track = channel.tracks[bag.order[bag.pos]]
+    bag.pos += 1
+    return track
+  },
+
+  initPlayer(s) {
+    const self = this
+    const create = () => {
+      self.player = new YT.Player('ytDock', {
+        height: '200',
+        width: '260',
+        playerVars: { controls: 0, modestbranding: 1, rel: 0, playsinline: 1 },
+        events: {
+          onReady: () => {
+            self.ready = true
+            self.player.setVolume(self.volume)
+          },
+          onStateChange: (e) => {
+            // Mid-song join (Matthew, 8/20: "should we start stations mid
+            // song?" -- yes). loadTrack(track, {midSong:true}) cues instead
+            // of loading, which doesn't autoplay; once CUED fires the
+            // duration is finally known, so this is the first point a
+            // random start position can be picked at all. Left unseeded on
+            // a plain skip() (opts.midSong not set) -- that's a deliberate
+            // "give me a different track" action, not "tune in", so it
+            // should start at 0 like picking a track normally would.
+            if (e.data === YT.PlayerState.CUED && self.pendingMidSongSeek) {
+              self.pendingMidSongSeek = false
+              const dur = self.player.getDuration()
+              if (dur && isFinite(dur) && dur > 20) {
+                // Leave at least 30s (or the last 15%, whichever is more)
+                // of the track remaining, so a join never lands seconds
+                // from the end.
+                const maxStart = Math.max(0, dur - Math.max(30, dur * 0.15))
+                self.player.seekTo(Math.random() * maxStart, true)
+              }
+              self.player.playVideo()
+              return
+            }
+            if (e.data === YT.PlayerState.ENDED) { self.skip(s); return }
+            if (e.data === YT.PlayerState.PLAYING) self.setPlayState(s, 'playing')
+            else if (e.data === YT.PlayerState.PAUSED) self.setPlayState(s, 'paused')
+            else if (e.data === YT.PlayerState.BUFFERING) self.setPlayState(s, 'buffering')
+          },
+        },
+      })
+    }
+    // The API may already have fired its ready callback before this runs
+    // (font load + module eval takes real time) -- check the flag rather
+    // than assuming we got here first.
+    if (window.SIGNAL_YT_READY) create()
+    else window.SIGNAL_YT_QUEUE.push(create)
+  },
+  loadTrack(track, opts = {}) {
+    if (!this.ready || !this.player) return
+    if (opts.midSong) {
+      this.pendingMidSongSeek = true
+      this.player.cueVideoById(track.youtubeId)
+    } else {
+      this.pendingMidSongSeek = false
+      this.player.loadVideoById(track.youtubeId)
+    }
+  },
+  togglePlayPause(s) {
+    if (this.mode !== 'locked' || !this.ready || !this.player) return
+    const st = this.player.getPlayerState()
+    if (st === YT.PlayerState.PLAYING) this.player.pauseVideo()
+    else this.player.playVideo()
+    // onStateChange will correct this shortly regardless; setting it here
+    // too so the indicator doesn't lag a beat behind the keypress.
+    this.setPlayState(s, st === YT.PlayerState.PLAYING ? 'paused' : 'playing')
+  },
+  skip(s) {
+    if (this.mode !== 'locked') return
+    const track = this.nextTrack(this.lockedChannel)
+    this.currentTrack = track
+    // Same channel, just the next track in it -- station identity (its own
+    // box now) doesn't need to be touched at all, just the track line.
+    this.showTrack(s, track)
+    if (this.nowPlaying) this.nowPlaying.title = track.title
+    this.loadTrack(track)
+  },
+  adjustVolume(s, delta) {
+    this.volume = Math.min(100, Math.max(0, this.volume + delta))
+    if (this.muted) this.muted = false // touching volume un-mutes, like a real set
+    if (this.ready && this.player) {
+      this.player.setVolume(this.volume)
+      if (!this.muted) this.player.unMute()
+    }
+    this.drawVolume(s)
+  },
+  toggleMute(s) {
+    this.muted = !this.muted
+    if (this.ready && this.player) {
+      if (this.muted) this.player.mute()
+      else this.player.unMute()
+    }
+    this.drawVolume(s)
+  },
+
+  // --- tuning ------------------------------------------------------------
+
+  retune(s, f) {
+    this.freq = clampFreq(f)
+    this.drawFreq(s)
+    this.drawDial(s)
+    this.drawSignal(s)
+  },
+  enterSeeking(s) {
+    this.mode = 'seeking'
+    this.clearStation(s)
+    this.clearTrack(s)
+    this.setStatus(s, 'SEEKING', false)
+    if (this.ready && this.player) this.player.pauseVideo()
+    this.drawDial(s)
+    this.setPlayState(s)
+    this.drawSignal(s)
+    // Continuous static bed while not on a station (12th pass, Matthew
+    // 8/20: "when seeking with arrows there should be static between
+    // signals") -- reuses the same bed scanning already uses. Idempotent:
+    // a no-op if it's already running, so this never restarts/stutters the
+    // ramp on repeated calls.
+    startStaticNoise()
+  },
+  seekStep(s, delta) {
+    this.stopScan()
+    const wasLocked = this.mode === 'locked'
+    this.retune(s, this.freq + delta)
+    playSeekStatic()
+    // Land-on-lock (added 2026-08-20, Matthew: "when you hit one of the
+    // stations while seeking with arrows and you land on one, it locks"):
+    // if the new position is within lock range of a station, lock onto it
+    // immediately instead of requiring a separate Enter press. Skip this
+    // when the step started already locked on that same station, so a
+    // single arrow tap doesn't just replay the lock you're already on.
+    const { channel, dist } = nearestChannel(this.freq)
+    if (dist <= LOCK_THRESHOLD && !(wasLocked && this.lockedChannel === channel)) {
+      this.tryLock(s)
+      return
+    }
+    if (wasLocked) this.enterSeeking(s)
+    else this.setStatus(s, 'SEEKING', false)
+    // Covers the "already seeking, one more arrow tap" case -- enterSeeking()
+    // above only fires on a locked->seeking transition, but the continuous
+    // bed needs to be there (or stay there) on every non-locking step, not
+    // just the first one. Idempotent, same as above.
+    startStaticNoise()
+  },
+  tryLock(s) {
+    const { channel, dist } = nearestChannel(this.freq)
+    if (dist > LOCK_THRESHOLD) {
+      this.setStatus(s, 'NO SIGNAL', false)
+      return
+    }
+    this.stopScan()
+    // Locking is the one transition that actually ends the ambient static
+    // bed (stopScan() itself no longer does -- see its comment) -- a signal
+    // found means the hiss cuts, same as a real set.
+    stopStaticNoise()
+    this.retune(s, channel.freq)
+    this.mode = 'locked'
+    this.lockedChannel = channel
+    // Station idents (added 2026-08-20, Matthew: "yes lets try station
+    // idents"): each channel has its own short tone motif in CHANNELS[].ident
+    // so locking on COLD WAVE sounds different from locking on QUIET HOURS,
+    // instead of every station announcing itself with the same generic chime.
+    playIdent(channel.ident)
+    this.setStatus(s, 'LOCKED', true)
+    this.drawDial(s)
+    const track = this.nextTrack(channel)
+    this.currentTrack = track
+    this.showStation(s, channel)
+    this.showTrack(s, track)
+    this.tuneToChannel(s, channel, track)
+    // Mid-song join: cues rather than loads, so actual playback (and the
+    // PLAYING state) doesn't start until the onStateChange handler above
+    // has picked a random point in the track and seeked to it.
+    this.loadTrack(track, { midSong: true })
+    this.setPlayState(s, 'buffering')
+  },
+  stopScan() {
+    this.scanning = false
+    if (this.scanTimer) { clearInterval(this.scanTimer); this.scanTimer = null }
+    // No longer stops the static bed here (12th pass) -- stopping a scan
+    // (sweep finished, or 'S' pressed to cancel it) doesn't mean a station
+    // was found, so the hiss should keep going into plain seeking rather
+    // than cutting out. Only an actual lock (tryLock) or power-down now
+    // stops it explicitly.
+  },
+  startScan(s) {
+    // BUG FIXED 2026-08-20: SCAN_STEP (6) and LOCK_THRESHOLD (6) are the
+    // same size, so a scan started from an already-locked station would
+    // step exactly LOCK_THRESHOLD away on its very first tick and re-lock
+    // the SAME station immediately -- scan looked completely broken because
+    // it could never actually leave the station you were already on.
+    // Fixed by ignoring lock candidates until the sweep has cleared a
+    // buffer around wherever it started.
+    const startFreq = this.freq
+    const clearance = LOCK_THRESHOLD + SCAN_STEP
+    if (this.mode === 'locked') this.enterSeeking(s)
+    this.scanning = true
+    this.setStatus(s, 'SCANNING...', false)
+    startStaticNoise()
+    this.scanTimer = setInterval(() => {
+      let f = this.freq + SCAN_STEP
+      if (f > FREQ_MAX) f = FREQ_MIN
+      this.retune(s, f)
+      if (Math.abs(f - startFreq) < clearance) return
+      const { dist } = nearestChannel(f)
+      if (dist <= LOCK_THRESHOLD) this.tryLock(s)
+    }, 90)
+  },
+
+  // Added 2026-08-20 -- presets used to jump straight to the target
+  // frequency and lock instantly, which read as a hard cut rather than a
+  // tuning action (Matthew: a brief scan/static beat instead of an instant
+  // change). Sweeps the dial from wherever it is to the preset's frequency
+  // over a handful of quick steps with the static bed under it, then locks.
+  presetTune(s, channel) {
+    this.stopScan()
+    if (this.mode === 'locked') this.enterSeeking(s)
+    const startFreq = this.freq
+    const target = channel.freq
+    const steps = 6
+    let i = 0
+    this.scanning = true
+    this.setStatus(s, 'TUNING...', false)
+    startStaticNoise()
+    this.scanTimer = setInterval(() => {
+      i += 1
+      const f = i >= steps ? target : startFreq + (target - startFreq) * (i / steps)
+      this.retune(s, f)
+      if (i >= steps) {
+        this.scanning = false
+        clearInterval(this.scanTimer)
+        this.scanTimer = null
+        stopStaticNoise()
+        this.tryLock(s)
+      }
+    }, 55)
+  },
+
+  // Absolute click-to-position would need to invert the tube's fill/curve
+  // geometry to be accurate, so instead the dial behaves like a real tuning
+  // knob: drag distance maps to a frequency delta, not a screen position.
+  onPointerDown(s, e) {
+    if (e.target && e.target.closest('#ytDock')) return
+    this.dragging = true
+    this.dragLastX = e.clientX
+  },
+  onPointerMove(s, e) {
+    if (!this.dragging) return
+    if (!this.poweredOn) return
+    const rect = s.canvas.getBoundingClientRect()
+    const dx = e.clientX - this.dragLastX
+    this.dragLastX = e.clientX
+    const dFreq = (dx / rect.width) * (FREQ_MAX - FREQ_MIN)
+    this.stopScan()
+    if (this.mode === 'locked') this.enterSeeking(s)
+    this.retune(s, this.freq + dFreq)
+    this.setStatus(s, 'SEEKING', false)
+    // Same continuous bed as arrow-seeking (12th pass) -- idempotent.
+    startStaticNoise()
+  },
+
+  key(s, e) {
+    // Power toggle (12th pass) -- while off, every key except P is ignored
+    // outright so nothing (seek, scan, presets, volume) can act on a set
+    // that isn't switched on.
+    if (!this.poweredOn) {
+      if (e.key === 'p' || e.key === 'P') { e.preventDefault(); this.powerUp(s) }
+      return
+    }
+    switch (e.key) {
+      case 'ArrowLeft': e.preventDefault(); this.seekStep(s, -SEEK_STEP); break
+      case 'ArrowRight': e.preventDefault(); this.seekStep(s, SEEK_STEP); break
+      case 'Enter': e.preventDefault(); this.tryLock(s); break
+      case 's': case 'S': e.preventDefault(); this.scanning ? this.stopScan() : this.startScan(s); break
+      case ' ': e.preventDefault(); this.togglePlayPause(s); break
+      case 'n': case 'N': e.preventDefault(); this.skip(s); break
+      case 'ArrowUp': e.preventDefault(); this.adjustVolume(s, 10); break
+      case 'ArrowDown': e.preventDefault(); this.adjustVolume(s, -10); break
+      case 'm': case 'M': e.preventDefault(); this.toggleMute(s); break
+      case 'p': case 'P': e.preventDefault(); this.powerDown(s); break
+      // 11th pass (2026-08-20): 4 new stations brought CHANNELS back up to
+      // 9 -- preset keys match its length again, same pattern as the 10th
+      // pass's drop to 5.
+      case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
+        e.preventDefault()
+        const ch = CHANNELS[Number(e.key) - 1]
+        if (ch) this.presetTune(s, ch)
+        break
+      }
+    }
+  },
+
+  frame(s, t) {
+    // Power toggle (12th pass) -- the collapse/warm-up sequences draw
+    // everything themselves on their own timers, so the normal per-frame
+    // idle shimmer/progress/VU redraws need to stay out of the way while
+    // powered off (they'd otherwise paint stray dial dots and meter bars
+    // onto what's supposed to read as a dark screen).
+    if (!this.poweredOn) return
+
+    // Idle shimmer on the dial while seeking, so the empty band doesn't feel
+    // dead between channels. Cheap: only touch a handful of cells per frame.
+    if (this.mode === 'seeking' && Math.random() < 0.15) {
+      const x = DIAL_X0 + Math.floor(Math.random() * (DIAL_X1 - DIAL_X0))
+      const cursorCol = freqToCol(this.freq)
+      if (x !== cursorCol) {
+        const chars = ['·', '·', '·', ':', '.']
+        s.term.put(x, DIAL_Y, chars[Math.floor(Math.random() * chars.length)], FAINT)
+      }
+    }
+
+    // Track progress -- a few times a second is plenty for a time display.
+    if (t - this.lastProgressDraw > 0.25) {
+      this.lastProgressDraw = t
+      this.drawPlayback(s)
+    }
+
+    // Fake VU meter -- bounces a bit faster than the progress bar so it
+    // reads as "live" rather than a slow crawl. Kept running even when not
+    // locked so it eases back down to flat instead of freezing mid-bounce.
+    if (t - (this.lastVuDraw || 0) > 0.12) {
+      this.lastVuDraw = t
+      this.drawVU(s)
+    }
+
+  },
+}
