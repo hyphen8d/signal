@@ -999,6 +999,18 @@ export default {
     document.addEventListener('pointerdown', (e) => this.onPointerDown(s, e))
     document.addEventListener('pointermove', (e) => this.onPointerMove(s, e))
     document.addEventListener('pointerup', () => { this.dragging = false })
+    // 22nd pass (Matthew: "semi mobile functionality -- tapping screen can
+    // 'power on', swipe left/right for channels") -- separate gesture layer
+    // from the pointer-drag seeking above (onPointerDown ignores
+    // pointerType 'touch' now, see there) rather than trying to derive
+    // tap/swipe from the continuous drag math, which is tuned for a mouse
+    // dragging the dial, not a thumb flicking the whole screen.
+    this._touchActive = false
+    this._touchStartX = 0
+    this._touchStartY = 0
+    this._touchStartTime = 0
+    document.addEventListener('touchstart', (e) => this.onTouchStart(s, e), { passive: false })
+    document.addEventListener('touchend', (e) => this.onTouchEnd(s, e), { passive: false })
   },
 
   drawScale(s) {
@@ -1923,6 +1935,12 @@ export default {
   // geometry to be accurate, so instead the dial behaves like a real tuning
   // knob: drag distance maps to a frequency delta, not a screen position.
   onPointerDown(s, e) {
+    // 22nd pass: touch now has its own dedicated tap/swipe gesture layer
+    // (onTouchStart/onTouchEnd below) instead of being derived from this
+    // continuous drag math, which is tuned for a mouse dragging the dial a
+    // few pixels at a time -- ignoring touch here keeps this path
+    // desktop-mouse-only, same as it's always been.
+    if (e.pointerType === 'touch') return
     if (e.target && e.target.closest('#ytDock')) return
     this.dragging = true
     this.dragLastX = e.clientX
@@ -1941,6 +1959,57 @@ export default {
     this.setStatus(s, 'SEEKING', false)
     // Same continuous bed as arrow-seeking (12th pass) -- idempotent.
     startStaticNoise(nearestChannel(this.freq).dist)
+  },
+
+  // 22nd pass -- mobile has no keyboard, so it had no way to power on, lock
+  // a station, or change channels at all before this. Tap (minimal
+  // movement, quick) powers on when off, closes the guide if somehow open,
+  // otherwise toggles play/pause; a clean horizontal swipe steps to the
+  // next/previous station in dial order (same list [1-9] presets use).
+  // Deliberately its own gesture layer rather than reusing the mouse-drag
+  // seek math above -- a thumb swipe covering the whole screen width isn't
+  // the same gesture as a precise mouse drag on the dial.
+  onTouchStart(s, e) {
+    if (e.target && e.target.closest && e.target.closest('#ytDock')) return
+    if (e.touches.length !== 1) { this._touchActive = false; return } // ignore pinch/multi-touch
+    this._touchActive = true
+    const t = e.touches[0]
+    this._touchStartX = t.clientX
+    this._touchStartY = t.clientY
+    this._touchStartTime = Date.now()
+    e.preventDefault()
+  },
+  onTouchEnd(s, e) {
+    if (!this._touchActive) return
+    this._touchActive = false
+    const t = e.changedTouches[0]
+    if (!t) return
+    const dx = t.clientX - this._touchStartX
+    const dy = t.clientY - this._touchStartY
+    const dt = Date.now() - this._touchStartTime
+    const TAP_SLOP = 12
+    const SWIPE_MIN = 40
+    if (Math.abs(dx) < TAP_SLOP && Math.abs(dy) < TAP_SLOP && dt < 500) {
+      if (!this.poweredOn) { this.powerUp(s); return }
+      if (this.guideOpen) { this.closeGuide(s); return }
+      this.togglePlayPause(s)
+      return
+    }
+    if (!this.poweredOn || this.guideOpen) return
+    if (Math.abs(dx) > SWIPE_MIN && Math.abs(dx) > Math.abs(dy)) {
+      // Swipe left (finger moves right-to-left, dx negative) advances to
+      // the next station up the dial, mirroring how a left swipe reads as
+      // "forward" in a carousel; swipe right goes back one.
+      this.stepChannel(s, dx < 0 ? 1 : -1)
+    }
+  },
+  stepChannel(s, dir) {
+    const order = CHANNEL_PRESET_ORDER
+    let idx = this.lockedChannel ? order.indexOf(this.lockedChannel) : -1
+    if (idx === -1) idx = order.indexOf(nearestChannel(this.freq).channel)
+    if (idx === -1) idx = 0
+    const next = order[(idx + dir + order.length) % order.length]
+    this.presetTune(s, next)
   },
 
   key(s, e) {

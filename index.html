@@ -16,6 +16,13 @@
     width: 100%;
     height: 100%;
     cursor: none;
+    /* 22nd pass (Matthew: "semi mobile functionality -- tap to power on,
+       swipe left/right for channels") -- without this, iOS/Android treat
+       swipes on the canvas as page-pan/pinch-zoom gestures (there's no
+       scrollable content, but touch-action defaults to allowing them
+       anyway), which fights the custom tap/swipe handling in program.js
+       and can trigger Safari's edge-swipe back/forward navigation. */
+    touch-action: none;
   }
   #fault {
     position: fixed;

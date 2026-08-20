@@ -46,6 +46,20 @@ plain `python3 -m http.server` can serve you a stale cached copy of
 | `G` | Guide -- about, full controls reference, and a station reference (freq/name/desc/artists-like for all 9); `<-`/`->` flips between the two guide pages, any other key closes it |
 | drag the dial | Seek with the mouse (desktop only, by design) |
 
+### Touch (mobile)
+
+No keyboard, so touch gets its own small gesture set (22nd pass) rather than
+the full control surface above:
+
+| Gesture | Action |
+|---|---|
+| tap | Power on (when off) / play-pause (when on and locked) |
+| swipe left / right | Step to the next / previous station, in dial order |
+
+Everything else (scan, presets, back, guide, volume, mute) has no touch
+equivalent yet -- there's also currently no way to power back *off* on
+touch alone. Known gaps, not oversights.
+
 ## Stations
 
 9 stations, 10 tracks each. Full roster with taglines and track lists:
