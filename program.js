@@ -558,6 +558,60 @@ function playPowerOnSound() {
   } catch (e) {}
 }
 
+// Preset "tune-in" whoosh (14th pass, Matthew: "a fun 'tune-in' whoosh when
+// jumping straight to a preset (1-9) versus the plain lock tone"). Plays
+// once at the top of presetTune(), under the sweep -- a fast rising
+// bandpass-noise sweep, distinct from both the flat seek-static hiss and
+// the per-channel ident tones that follow once the sweep lands and locks.
+function playPresetWhoosh() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const n = Math.floor(ctx.sampleRate * 0.35)
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.Q.value = 1.1
+    filter.frequency.setValueAtTime(400, t)
+    filter.frequency.exponentialRampToValueAtTime(3200, t + 0.32)
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.001, t)
+    gain.gain.exponentialRampToValueAtTime(0.22, t + 0.08)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.34)
+    src.connect(filter).connect(gain).connect(ctx.destination)
+    src.start(t)
+    src.stop(t + 0.36)
+  } catch (e) {}
+}
+
+// localStorage persistence (14th pass, Matthew: "persistence -- yes").
+// Remembers the last-locked station, its track, volume, and mute across a
+// reload -- freq is NOT restored on its own (a bare tuned-but-not-locked
+// position isn't worth remembering), only ever alongside a channel lock.
+const STORAGE_KEY = 'signal:state:v1'
+function saveSignalState(program) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      channelId: program.lockedChannel ? program.lockedChannel.id : null,
+      trackId: program.currentTrack ? program.currentTrack.id : null,
+      volume: program.volume,
+      muted: program.muted,
+    }))
+  } catch (e) {}
+}
+function loadSignalState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch (e) { return null }
+}
+
 // One-shot filtered-noise burst (13th pass, "fun startup/shutdown"). Same
 // noise-generation approach as startStaticNoise() but deliberately NOT
 // wired into the staticSrc/staticGain globals that the seek-static state
@@ -694,8 +748,35 @@ export default {
     this.vuVelocity = 0
     this.vuTrace = new Array(24).fill(0)
 
-    this.history = []
+    this.history = [] // stack of previously-locked channels, for [B] back
     this.nowPlaying = null
+    // Set once below if a saved session is restored, so powerUp() knows
+    // the player needs an actual loadTrack() call (fresh YT.Player, never
+    // loaded anything) rather than just resuming playback on an already-
+    // cued video, which is all a same-session power-cycle needs.
+    this.needsTrackLoad = false
+
+    // Restore last session (14th pass, Matthew: "persistence -- yes") --
+    // reads localStorage before anything else touches freq/volume/mute, so
+    // a restored session and a fresh one flow through the exact same code
+    // below. Only ever restores a *locked* station (see saveSignalState) --
+    // a bare tuned-but-not-locked dial position isn't worth remembering.
+    const saved = loadSignalState()
+    if (saved) {
+      if (typeof saved.volume === 'number') this.volume = Math.min(100, Math.max(0, saved.volume))
+      if (typeof saved.muted === 'boolean') this.muted = saved.muted
+      if (saved.channelId) {
+        const ch = CHANNELS.find((c) => c.id === saved.channelId)
+        if (ch) {
+          this.mode = 'locked'
+          this.lockedChannel = ch
+          this.freq = ch.freq
+          const track = saved.trackId ? ch.tracks.find((tr) => tr.id === saved.trackId) : null
+          this.currentTrack = track || ch.tracks[0]
+          this.needsTrackLoad = true
+        }
+      }
+    }
 
     for (let y = 0; y < term.rows; y++)
       for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
@@ -890,13 +971,21 @@ export default {
       '[ OK ] TUNER CALIBRATED',
       '[ OK ] AUDIO PATH READY',
     ]
+    // Pacing (14th pass, Matthew: "the cold boot sequence is too fast") --
+    // roughly 2.5x the original beat spacing. A cold-open power-on is the
+    // very first thing anyone sees when they load the page, so it's worth
+    // letting it actually breathe rather than snapping through in ~600ms.
+    const DOT_MS = 220
+    const LINE_STAGGER_MS = 140
+    const BOOT_TEXT_DELAY = 550
+    const REVEAL_DELAY = BOOT_TEXT_DELAY + bootLines.length * LINE_STAGGER_MS + 320
     const beats = [
       { delay: 0, fn: () => {
         // Same tube-off dot the collapse ended on, lighting back up first.
         clearAll()
         term.put(Math.floor(term.cols / 2), midY, '·', DIM)
       } },
-      { delay: 90, fn: () => {
+      { delay: DOT_MS, fn: () => {
         // Dot expands to the centerline -- deflection coming back before
         // the rest of the picture does, reverse of the power-down collapse.
         clearAll()
@@ -906,7 +995,7 @@ export default {
         // up clean rather than dying).
         playStaticBurst(0.18, 0.08, 2600)
       } },
-      { delay: 200, fn: () => {
+      { delay: BOOT_TEXT_DELAY, fn: () => {
         // Boot-text beat (13th pass, "fun startup/shutdown") -- a short
         // typewriter-style POST readout, same [ OK ] idiom used elsewhere
         // in the project's terminal-program voice, landing one line at a
@@ -916,10 +1005,10 @@ export default {
         bootLines.forEach((line, i) => {
           setTimeout(() => {
             term.text(centerX(term.cols, line), startY + i, line, i === 0 ? BOLD : DIM)
-          }, i * 70)
+          }, i * LINE_STAGGER_MS)
         })
       } },
-      { delay: 200 + bootLines.length * 70 + 120, fn: () => {
+      { delay: REVEAL_DELAY, fn: () => {
         // Full picture back -- same chrome init() draws on a fresh boot,
         // just without touching freq/lockedChannel/bags/volume/history.
         clearAll()
@@ -940,8 +1029,19 @@ export default {
           // than a new tune-in.
           this.showStation(s, this.lockedChannel)
           if (this.currentTrack) this.showTrack(s, this.currentTrack)
-          if (this.ready && this.player) this.player.playVideo()
-          this.setPlayState(s)
+          if (this.needsTrackLoad && this.currentTrack) {
+            // Persistence resume (14th pass) -- this is a fresh page load,
+            // not a same-session power-cycle, so the (brand new) YT.Player
+            // has never actually loaded this track. A plain playVideo()
+            // here would be a no-op. loadTrack(..., {midSong:true}) cues it
+            // and picks a random join point, same as tryLock() does.
+            this.needsTrackLoad = false
+            this.loadTrack(this.currentTrack, { midSong: true })
+            this.setPlayState(s, 'buffering')
+          } else {
+            if (this.ready && this.player) this.player.playVideo()
+            this.setPlayState(s)
+          }
         } else {
           this.clearStation(s)
           this.clearTrack(s)
@@ -1121,7 +1221,7 @@ export default {
   // control, not one of the primary listed ones.
   drawHint(s) {
     const { term } = s
-    const line1 = '[<-/->] SEEK    [ENTER] LOCK    [S] SCAN    [1-9] PRESETS'
+    const line1 = '[<-/->] SEEK    [ENTER] LOCK    [S] SCAN    [1-9] PRESETS    [B] BACK'
     const line2 = '[SPACE] PLAY/PAUSE    [N] SKIP    [UP/DOWN] VOL    [M] MUTE    [P] POWER'
     for (let x = 0; x < term.cols; x++) { term.put(x, HINT_Y1, ' ', NORMAL, 1); term.put(x, HINT_Y2, ' ', NORMAL, 1) }
     term.text(centerX(term.cols, line1), HINT_Y1, line1, BOLD, 1)
@@ -1181,6 +1281,15 @@ export default {
             else if (e.data === YT.PlayerState.PAUSED) self.setPlayState(s, 'paused')
             else if (e.data === YT.PlayerState.BUFFERING) self.setPlayState(s, 'buffering')
           },
+          // Content-ops safety net (14th pass) -- an embedded video can go
+          // private/removed/region-locked after it was verified, and with
+          // ~90 hardcoded IDs now public that WILL happen eventually. Rather
+          // than silently dying mid-play (dead air with no visible error,
+          // since the player itself is docked off-screen), any player error
+          // just skips to another track on the same station like a manual
+          // [N] would. No retry loop against the same ID, no user-facing
+          // error state -- consistent with how ENDED already just skips.
+          onError: () => { if (self.mode === 'locked') self.skip(s) },
         },
       })
     }
@@ -1218,6 +1327,7 @@ export default {
     this.showTrack(s, track)
     if (this.nowPlaying) this.nowPlaying.title = track.title
     this.loadTrack(track)
+    saveSignalState(this)
   },
   adjustVolume(s, delta) {
     this.volume = Math.min(100, Math.max(0, this.volume + delta))
@@ -1227,6 +1337,7 @@ export default {
       if (!this.muted) this.player.unMute()
     }
     this.drawVolume(s)
+    saveSignalState(this)
   },
   toggleMute(s) {
     this.muted = !this.muted
@@ -1235,6 +1346,7 @@ export default {
       else this.player.unMute()
     }
     this.drawVolume(s)
+    saveSignalState(this)
   },
 
   // --- tuning ------------------------------------------------------------
@@ -1297,6 +1409,16 @@ export default {
     // found means the hiss cuts, same as a real set.
     stopStaticNoise()
     this.retune(s, channel.freq)
+    // History (14th pass, Matthew: "discovery/history -- sure") -- push
+    // whatever was locked before this one so [B] can step back through
+    // recently-played stations. Only real transitions count: landing back
+    // on the station you're already on (e.g. an arrow-seek that re-locks
+    // in place) doesn't push a duplicate. Capped so it can't grow forever
+    // across a long session.
+    if (this.lockedChannel && this.lockedChannel !== channel) {
+      this.history.push(this.lockedChannel)
+      if (this.history.length > 8) this.history.shift()
+    }
     this.mode = 'locked'
     this.lockedChannel = channel
     // Station idents (added 2026-08-20, Matthew: "yes lets try station
@@ -1316,6 +1438,16 @@ export default {
     // has picked a random point in the track and seeked to it.
     this.loadTrack(track, { midSong: true })
     this.setPlayState(s, 'buffering')
+    saveSignalState(this)
+  },
+  // [B] back (14th pass) -- pops the most recently locked station off
+  // history and tunes to it via the same sweep presetTune() already gives
+  // number-key presets, so stepping back reads/sounds the same as jumping
+  // to any other preset rather than a silent instant cut.
+  goBack(s) {
+    if (!this.history.length) return
+    const channel = this.history.pop()
+    this.presetTune(s, channel)
   },
   stopScan() {
     this.scanning = false
@@ -1364,6 +1496,11 @@ export default {
     let i = 0
     this.scanning = true
     this.setStatus(s, 'TUNING...', false)
+    // Tune-in whoosh (14th pass, Matthew: "a fun 'tune-in' whoosh when
+    // jumping straight to a preset (1-9)") -- plays once, under the sweep,
+    // distinct from both the plain seek-static hiss and the ident tone
+    // that plays once the sweep lands and locks a few hundred ms later.
+    playPresetWhoosh()
     startStaticNoise()
     this.scanTimer = setInterval(() => {
       i += 1
@@ -1421,6 +1558,8 @@ export default {
       case 'ArrowDown': e.preventDefault(); this.adjustVolume(s, -10); break
       case 'm': case 'M': e.preventDefault(); this.toggleMute(s); break
       case 'p': case 'P': e.preventDefault(); this.powerDown(s); break
+      // History back (14th pass, Matthew: "discovery/history -- sure").
+      case 'b': case 'B': e.preventDefault(); this.goBack(s); break
       // 11th pass (2026-08-20): 4 new stations brought CHANNELS back up to
       // 9 -- preset keys match its length again, same pattern as the 10th
       // pass's drop to 5.
@@ -1466,5 +1605,20 @@ export default {
       this.drawVU(s)
     }
 
+    // Always-on idle phosphor shimmer (14th pass, Matthew: "a subtle
+    // always-on scanline or phosphor-flicker shimmer even at idle so the
+    // CRT never looks perfectly static"). Independent of mode/lock state --
+    // unlike the dial shimmer above, this runs whenever the set is powered,
+    // locked or not. Only ever touches a box-BOTTOM border row: those are
+    // plain '─' the full width (drawBoxBottom has no embedded label, unlike
+    // drawBoxTop), so a random cell can never clobber a panel title. Briefly
+    // brightens one cell, then a timer fades it back to the resting MUTED.
+    if (Math.random() < 0.05) {
+      const rows = [TUNER_BOT_Y, STATION_BOT_Y, NOWPLAYING_BOT_Y, METERS_BOT_Y]
+      const y = rows[Math.floor(Math.random() * rows.length)]
+      const x = BOX_X0 + 1 + Math.floor(Math.random() * (BOX_X1 - BOX_X0 - 1))
+      s.term.put(x, y, '─', DIM)
+      setTimeout(() => { if (this.poweredOn) s.term.put(x, y, '─', MUTED) }, 90 + Math.random() * 80)
+    }
   },
 }
