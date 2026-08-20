@@ -4,9 +4,9 @@ Generated from program.js. 9 stations, 90 tracks total.
 
 ## STATIC BLOOM -- 137.4
 
-*flannel and feedback, still transmitting*
+*flannel and feedback, transmitting*
 
-Ident tones (Hz): 196, 174.6, 155.6, 130.8
+Ident tones (Hz): 392, 349.2, 311.2, 261.6
 
 Tracks (10):
 
@@ -80,7 +80,7 @@ Tracks (10):
 
 ## THE STUDY -- 823.1
 
-*lamp light, turned pages, one more chapter*
+*lamp light, one more chapter*
 
 Ident tones (Hz): 329.6, 293.7, 261.6, 220
 
@@ -118,7 +118,7 @@ Tracks (10):
 
 ## OUTLAW FREQUENCY -- 288.6
 
-*dust on the trail, a debt still owed*
+*dust on the trail, a debt unpaid*
 
 Ident tones (Hz): 220, 196, 174.6, 146.8
 
@@ -156,7 +156,7 @@ Tracks (10):
 
 ## ATOMIC -- 878.9
 
-*jump blues and static, dance while the counter clicks*
+*swing on while the counter clicks*
 
 Ident tones (Hz): 392, 493.9, 587.3, 493.9
 
@@ -167,8 +167,8 @@ Tracks (10):
 3. **Butcher Pete (Part 1)** -- Roy Brown  ([youtu.be/8V7AxNJWKYU](https://youtu.be/8V7AxNJWKYU))
 4. **The Wanderer** -- Dion  ([youtu.be/daFhT6mBOWo](https://youtu.be/daFhT6mBOWo))
 5. **The End of the World** -- Skeeter Davis  ([youtu.be/DGLPvnbryGU](https://youtu.be/DGLPvnbryGU))
-6. **Jump, Jive An' Wail** -- Louis Prima  ([youtu.be/PkVlkUIHF8c](https://youtu.be/PkVlkUIHF8c))
-7. **Minnie the Moocher** -- Cab Calloway  ([youtu.be/WtSLYrTKrEw](https://youtu.be/WtSLYrTKrEw))
-8. **Choo Choo Ch'Boogie** -- Louis Jordan  ([youtu.be/P1EG__jgefA](https://youtu.be/P1EG__jgefA))
-9. **Boogie Woogie Bugle Boy** -- The Andrews Sisters  ([youtu.be/wf4nY0mLrrA](https://youtu.be/wf4nY0mLrrA))
-10. **Good Rockin' Tonight** -- Wynonie Harris  ([youtu.be/SllhnR7D8LA](https://youtu.be/SllhnR7D8LA))
+6. **Atom Bomb Baby** -- The Five Stars  ([youtu.be/9qd_KDK5ChE](https://youtu.be/9qd_KDK5ChE))
+7. **Uranium Fever** -- Elton Britt  ([youtu.be/farkSCyXidI](https://youtu.be/farkSCyXidI))
+8. **Civilization (Bongo, Bongo, Bongo)** -- Andrews Sisters & Danny Kaye  ([youtu.be/VEyDNTLlRgU](https://youtu.be/VEyDNTLlRgU))
+9. **Keep A-Knockin' (But You Can't Come In)** -- Louis Jordan  ([youtu.be/6pcve7daxNM](https://youtu.be/6pcve7daxNM))
+10. **Pistol Packin' Mama** -- Bing Crosby & The Andrews Sisters  ([youtu.be/UNxgn8npVLI](https://youtu.be/UNxgn8npVLI))

@@ -65,7 +65,7 @@ function realTrack(youtubeId, title, artist) {
 // station"), on top of whatever it already had -- so QUIET HOURS actually
 // gained 6 (4 new + the 2 reassigned) and the rest gained 4.
 const CHANNELS = [
-  { id: 'static-bloom', freq: 137.4, callsign: 'STATIC BLOOM', tagline: 'flannel and feedback, still transmitting',
+  { id: 'static-bloom', freq: 137.4, callsign: 'STATIC BLOOM', tagline: 'flannel and feedback, transmitting', // 19th pass: trimmed to <=35 chars
     like: 'Nirvana, Soundgarden, Alice In Chains', // 18th pass: guide station reference
     // Matthew 8/20: "I don't hear a station id tone for static bloom." The
     // ident itself was firing fine (confirmed by hooking createOscillator
@@ -137,7 +137,7 @@ const CHANNELS = [
       realTrack('0VhzcPnGHXQ', 'Cars', 'Gary Numan'),
       realTrack('iIpfWORQWhU', 'I Ran (So Far Away)', 'A Flock of Seagulls'),
     ] },
-  { id: 'the-study', freq: 823.1, callsign: 'THE STUDY', tagline: 'lamp light, turned pages, one more chapter',
+  { id: 'the-study', freq: 823.1, callsign: 'THE STUDY', tagline: 'lamp light, one more chapter', // 19th pass: trimmed
     like: 'Nujabes, Bonobo, Tycho',
     ident: [329.6, 293.7, 261.6, 220.0],
     tracks: [
@@ -183,7 +183,7 @@ const CHANNELS = [
       realTrack('T_lC2O1oIew', 'Plastic Love', 'Mariya Takeuchi'),
       realTrack('XJWqHmY-g9U', 'Telephone Number', 'Junko Ohashi'),
     ] },
-  { id: 'outlaw-frequency', freq: 288.6, callsign: 'OUTLAW FREQUENCY', tagline: 'dust on the trail, a debt still owed',
+  { id: 'outlaw-frequency', freq: 288.6, callsign: 'OUTLAW FREQUENCY', tagline: 'dust on the trail, a debt unpaid', // 19th pass: trimmed
     like: 'Johnny Cash, Ennio Morricone, Marty Robbins',
     ident: [220.0, 196.0, 174.6, 146.8],
     tracks: [
@@ -217,20 +217,32 @@ const CHANNELS = [
       realTrack('eEELYwi-ABg', 'Riot', 'Dance With The Dead'),
       realTrack('qKauZYXABrM', 'Night Force', 'Power Glove'),
     ] },
-  { id: 'atomic', freq: 878.9, callsign: 'ATOMIC', tagline: 'jump blues and static, dance while the counter clicks',
-    like: 'Louis Prima, Cab Calloway, The Ink Spots',
+  { id: 'atomic', freq: 878.9, callsign: 'ATOMIC', tagline: 'swing on while the counter clicks', // 19th pass: trimmed
+    like: 'The Ink Spots, Roy Brown, The Five Stars',
     ident: [392.0, 493.9, 587.3, 493.9],
+    // 19th pass (Matthew: "make sure atomic playlist is from fallout 4,
+    // fallout 76 etc games") -- 5 of the original 10 tracks (Jump Jive An'
+    // Wail/Louis Prima, Minnie the Moocher/Cab Calloway, Choo Choo
+    // Ch'Boogie/Louis Jordan, Boogie Woogie Bugle Boy/Andrews Sisters, and
+    // Good Rockin' Tonight credited to Wynonie Harris rather than the Roy
+    // Brown original the games actually use) were genuine 40s/50s classics
+    // but NOT songs that are actually on Diamond City Radio (Fallout 4) or
+    // Appalachia Radio (Fallout 76) -- checked against the Fallout Wiki's
+    // Diamond City Radio song list and GameWatcher's Appalachia Radio
+    // tracklist. Replaced with 5 that are actually on those stations
+    // (oEmbed-verified same as everything else here); the remaining 5 were
+    // already correct and are untouched.
     tracks: [
       realTrack('GkHd1d_UVOE', "I Don't Want to Set the World on Fire", 'The Ink Spots'),
       realTrack('Q9bSOaSuScQ', 'Crawl Out Through the Fallout', 'Sheldon Allman'),
       realTrack('8V7AxNJWKYU', 'Butcher Pete (Part 1)', 'Roy Brown'),
       realTrack('daFhT6mBOWo', 'The Wanderer', 'Dion'),
       realTrack('DGLPvnbryGU', 'The End of the World', 'Skeeter Davis'),
-      realTrack('PkVlkUIHF8c', "Jump, Jive An' Wail", 'Louis Prima'),
-      realTrack('WtSLYrTKrEw', 'Minnie the Moocher', 'Cab Calloway'),
-      realTrack('P1EG__jgefA', "Choo Choo Ch'Boogie", 'Louis Jordan'),
-      realTrack('wf4nY0mLrrA', 'Boogie Woogie Bugle Boy', 'The Andrews Sisters'),
-      realTrack('SllhnR7D8LA', "Good Rockin' Tonight", 'Wynonie Harris'),
+      realTrack('9qd_KDK5ChE', 'Atom Bomb Baby', 'The Five Stars'),
+      realTrack('farkSCyXidI', 'Uranium Fever', 'Elton Britt'),
+      realTrack('VEyDNTLlRgU', 'Civilization (Bongo, Bongo, Bongo)', 'Andrews Sisters & Danny Kaye'),
+      realTrack('6pcve7daxNM', "Keep A-Knockin' (But You Can't Come In)", 'Louis Jordan'),
+      realTrack('UNxgn8npVLI', "Pistol Packin' Mama", 'Bing Crosby & The Andrews Sisters'),
     ] },
 ]
 
@@ -330,6 +342,23 @@ const METERS_BOT_Y = 22
 // left range is BOX_X0+1..METERS_DIVIDER_X-1, right range is
 // METERS_DIVIDER_X+1..BOX_X1-1.
 const METERS_DIVIDER_X = 39
+
+// GIAL nameplate (19th pass, Matthew: "add a stylized 'GIAL' nameplate for
+// now in the empty spot in lower right", referencing a wireframe/italic
+// display-font mockup he shared) -- fills the LEVELS right half reserved
+// above. Generated with figlet's "slant" font (closest built-in match to
+// that italic, slanted-outline look) rather than hand-drawn -- guarantees
+// every row is genuinely monospace-aligned instead of eyeballed. All 5
+// rows are exactly 23 chars wide (figlet pads them), which is what makes
+// using one shared start column below safe. "For now" per Matthew -- this
+// is a placeholder, not a final wordmark.
+const NAMEPLATE_LINES = [
+  '   _____________    __ ',
+  '  / ____/  _/   |  / / ',
+  ' / / __ / // /| | / /  ',
+  '/ /_/ // // ___ |/ /___',
+  '\\____/___/_/  |_/_____/',
+]
 
 const HINT_Y1 = 23
 const HINT_Y2 = 24
@@ -787,6 +816,18 @@ export default {
       term.put(METERS_DIVIDER_X, y, '│', MUTED)
     }
     term.put(METERS_DIVIDER_X, METERS_BOT_Y, '┻', MUTED)
+
+    // GIAL nameplate (19th pass) -- fills the LEVELS right half reserved
+    // in the 18th pass. Static, drawn once here like the rest of the
+    // chassis chrome (LED/brand-plate/grille/corner brackets above) rather
+    // than redrawn per-frame, since it never changes. All 5 NAMEPLATE_LINES
+    // rows share one start column (they're all exactly 23 chars, see that
+    // const) so the glyph doesn't drift row to row.
+    {
+      const nameplateX = centerXRange(METERS_DIVIDER_X + 1, BOX_X1 - 1, NAMEPLATE_LINES[0])
+      const nameplateRows = [VOL_Y, VOL_SIG_DIVIDER_Y, SIG_Y, VU_DIVIDER_Y, VU_Y]
+      NAMEPLATE_LINES.forEach((line, i) => term.text(nameplateX, nameplateRows[i], line, DIM))
+    }
 
     // Chassis corner brackets (10th pass, skeuomorphism idea Matthew
     // picked) -- the 4 columns outside the panel stack (x 0-1 and 78-79)
