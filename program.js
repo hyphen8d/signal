@@ -220,7 +220,14 @@ const CHANNELS = [
       realTrack('eEELYwi-ABg', 'Riot', 'Dance With The Dead'),
       realTrack('qKauZYXABrM', 'Night Force', 'Power Glove'),
     ] },
-  { id: 'atomic', freq: 878.9, callsign: 'ATOMIC', tagline: 'swing on while the counter clicks', // 19th pass: trimmed
+  // 23rd pass: freq nudged 878.9 -> 854.9 (Matthew: "station 8 and 9 are too
+  // close to each other") -- freqToCol() rounded 878.9 and HACKBACK's 893.7
+  // to adjacent dial columns (73 and 74), so their preset triangles rendered
+  // as a single "▲▲" glyph pair instead of two distinct ticks, despite the
+  // 20th-pass comment on HACKBACK claiming they were "distinct". Re-split
+  // the tail of the band (THE STUDY 823.1 up to FREQ_MAX 900) roughly evenly
+  // across ATOMIC/HACKBACK instead.
+  { id: 'atomic', freq: 854.9, callsign: 'ATOMIC', tagline: 'swing on while the counter clicks', // 19th pass: trimmed
     like: 'The Ink Spots, Roy Brown, The Five Stars',
     ident: [392.0, 493.9, 587.3, 493.9],
     // 19th pass (Matthew: "make sure atomic playlist is from fallout 4,
@@ -250,9 +257,12 @@ const CHANNELS = [
   // 20th pass (Matthew: "add a new channel for 0 called Hackback with music
   // like tribe called quest, de la soul, slick rick, outkast, wu tang, MF
   // doom, MC solaar") -- golden-age/underground hip-hop station, bound to
-  // the new preset key `0`. freq 893.7 sits one dial column short of the
-  // absolute right edge, distinct from ATOMIC at 878.9.
-  { id: 'hackback', freq: 893.7, callsign: 'HACKBACK', tagline: 'boom bap broadcast, deep cuts only',
+  // the new preset key `0`.
+  // 23rd pass: freq nudged 893.7 -> 888.7 -- see the freq comment on ATOMIC
+  // above. 893.7 rounded to the dial column right next to ATOMIC's, so the
+  // two preset triangles overlapped; this leaves a clear 3-column gap to
+  // ATOMIC and reads as its own distinct tick near the top of the band.
+  { id: 'hackback', freq: 888.7, callsign: 'HACKBACK', tagline: 'boom bap broadcast, deep cuts only',
     like: 'A Tribe Called Quest, De La Soul, Wu-Tang Clan',
     ident: [349.2, 293.7, 246.9, 220.0],
     tracks: [
@@ -1127,41 +1137,25 @@ export default {
   // brackets so it's not just floating text") -- wraps every status string
   // in a readout-style bracket instead of leaving it as bare centered text.
   //
-  // Power/lock LED (10th pass, skeuomorphism idea Matthew picked; moved
-  // here 17th pass -- it used to sit in the title bar next to "SIGNAL", one
-  // cell on the inverse plane, but Matthew found it "wasn't obvious" tucked
-  // in next to the title text with nothing tying it to what it meant.
-  // Living right in front of the bracketed status text instead makes the
-  // connection explicit: it's the light for THIS status. Glyph+attr baked
-  // into the same centered string as the bracket so the whole "● [ TEXT ]"
-  // unit centers as one line rather than the LED floating off to one side).
-  // 17th/18th pass (Matthew: the LED "seems less like something decorative
-  // or a component because it changes position" -- true: the bracket text
-  // varies in length per status ("SEEKING" vs "POWERING DOWN"), so the
-  // whole centered "LED + bracket" unit's width changed every transition
-  // and the LED visibly hopped left/right instead of staying put. Fixed by
-  // padding the status word to STATUS_TEXT_WIDTH (13, the longest word
-  // used -- "POWERING DOWN") before wrapping it in brackets, so `bracket`
-  // and therefore `combined` are a fixed length on every call. The LED now
-  // sits at the same column always; only the word inside the brackets
-  // changes, which is the "status window/widget that doesn't change shape"
-  // Matthew asked for.
+  // 23rd pass (Matthew: "the dot led thing next to it can go, it doesn't
+  // read as an LED or status" -- removed. It also turns out to have been
+  // the cause of the status line reading as off-center: `combined` (what
+  // centerX() actually centered) was `ledGlyph + '  ' + bracket`, 3 columns
+  // of glyph+gap tacked onto the LEFT side only with nothing to balance it
+  // on the right, so the bracket itself landed 1-2 columns right of true
+  // center every time. Centering the bracket alone fixes both complaints at
+  // once. Lock/seek state is still visible elsewhere (the LED's old jobs:
+  // the dial's ▲/█ brightness and the LEVELS SIG meter), so nothing here
+  // was the only place that state showed up.
   setStatus(s, text, active) {
     const { term } = s
-    const locked = this.mode === 'locked'
-    const seeking = this.mode === 'seeking' || this.scanning
-    const ledGlyph = locked ? '●' : '○'
-    const ledAttr = locked ? BRIGHT : seeking ? DIM : FAINT
     const padTotal = STATUS_TEXT_WIDTH - text.length
     const padL = Math.max(0, Math.floor(padTotal / 2))
     const padR = Math.max(0, padTotal - padL)
     const padded = ' '.repeat(padL) + text + ' '.repeat(padR)
     const bracket = `[ ${padded} ]`
-    const combined = `${ledGlyph}  ${bracket}`
     for (let x = 0; x < term.cols; x++) term.put(x, STATUS_Y, ' ')
-    const startX = centerX(term.cols, combined)
-    term.put(startX, STATUS_Y, ledGlyph, ledAttr)
-    term.text(startX + 3, STATUS_Y, bracket, active ? BRIGHT : MUTED)
+    term.text(centerX(term.cols, bracket), STATUS_Y, bracket, active ? BRIGHT : MUTED)
   },
 
   // Warm-up flicker (10th pass) -- a short beat sequence that redraws the

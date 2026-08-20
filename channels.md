@@ -135,7 +135,7 @@ Tracks (10):
 9. **Riot** -- Dance With The Dead  ([youtu.be/eEELYwi-ABg](https://youtu.be/eEELYwi-ABg))
 10. **Night Force** -- Power Glove  ([youtu.be/qKauZYXABrM](https://youtu.be/qKauZYXABrM))
 
-## ATOMIC -- 878.9
+## ATOMIC -- 854.9
 
 *swing on while the counter clicks*
 
@@ -154,7 +154,7 @@ Tracks (10):
 9. **Keep A-Knockin' (But You Can't Come In)** -- Louis Jordan  ([youtu.be/6pcve7daxNM](https://youtu.be/6pcve7daxNM))
 10. **Pistol Packin' Mama** -- Bing Crosby & The Andrews Sisters  ([youtu.be/UNxgn8npVLI](https://youtu.be/UNxgn8npVLI))
 
-## HACKBACK -- 893.7
+## HACKBACK -- 888.7
 
 *boom bap broadcast, deep cuts only*
 
