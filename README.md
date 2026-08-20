@@ -43,6 +43,7 @@ plain `python3 -m http.server` can serve you a stale cached copy of
 | `Up` / `Down` | Volume |
 | `M` | Mute |
 | `P` | Power off / on |
+| `G` | Guide -- about, full controls reference, and a station reference (freq/name/desc/artists-like for all 9); `<-`/`->` flips between the two guide pages, any other key closes it |
 | drag the dial | Seek with the mouse (desktop only, by design) |
 
 ## Stations
@@ -74,6 +75,16 @@ isn't just an internal annoyance anymore.
   it anywhere, so a channel can quietly lose a track over time. Worth an
   occasional spot-check (re-run oEmbed against the full roster) rather than
   waiting to notice by ear.
+- **Concept-tied stations:** if a station's premise points at a real source
+  (e.g. ATOMIC being an in-universe Fallout radio station), verify tracks
+  against *that* source's actual tracklist, not just oEmbed -- oEmbed only
+  confirms a video is real and embeddable, not that it's actually the song
+  the station claims to be playing. ATOMIC shipped with 5 tracks that were
+  genuine oldies but never actually on Fallout's Diamond City/Appalachia
+  Radio before this got caught and fixed.
+- **Taglines:** keep to 35 characters or under -- they're reused verbatim in
+  the guide's station reference table (`[G]` -> `->`), which has much less
+  room per station than the STATION box on the main screen does.
 
 ## How it's built
 
