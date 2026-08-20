@@ -581,7 +581,20 @@ function playIdent(freqs) {
 // filtered noise, faded in/out rather than started/stopped hard.
 let staticSrc = null
 let staticGain = null
-function startStaticNoise() {
+// 21st pass (Matthew, 0.3 wishlist: "static intensity scales with distance
+// from a station") -- the noise bed used to sit at one fixed gain the whole
+// time you were seeking/scanning, so tuning felt the same whether you were
+// miles off frequency or about to land on a station. Now it fades between
+// these two based on nearestChannel's dist, mirroring the SIG meter's own
+// falloff curve (NEAR_THRESHOLD), so the static visibly/audibly clears
+// right before a lock, same as a real radio easing out of the noise floor.
+const STATIC_MAX_GAIN = 0.1
+const STATIC_MIN_GAIN = 0.02
+function staticGainForDist(dist) {
+  const pct = dist == null ? 1 : Math.min(1, dist / NEAR_THRESHOLD)
+  return STATIC_MIN_GAIN + (STATIC_MAX_GAIN - STATIC_MIN_GAIN) * pct
+}
+function startStaticNoise(dist) {
   if (staticSrc) return
   try {
     const ctx = audioCtx()
@@ -598,11 +611,18 @@ function startStaticNoise() {
     filter.Q.value = 0.6
     const gain = ctx.createGain()
     gain.gain.setValueAtTime(0, ctx.currentTime)
-    gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.15)
+    gain.gain.linearRampToValueAtTime(staticGainForDist(dist), ctx.currentTime + 0.15)
     src.connect(filter).connect(gain).connect(ctx.destination)
     src.start()
     staticSrc = src
     staticGain = gain
+  } catch (e) {}
+}
+function setStaticIntensity(dist) {
+  if (!staticGain) return
+  try {
+    const ctx = audioCtx()
+    staticGain.gain.linearRampToValueAtTime(staticGainForDist(dist), ctx.currentTime + 0.08)
   } catch (e) {}
 }
 function stopStaticNoise() {
@@ -1357,6 +1377,7 @@ export default {
   clearTrack(s) {
     const { term } = s
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, TRACK_Y, ' ')
+    this.updateTabTitle()
   },
   showTrack(s, track) {
     const { term } = s
@@ -1374,6 +1395,19 @@ export default {
         : truncate(line, maxWidth)
     }
     term.text(centerX(term.cols, line), TRACK_Y, line, NORMAL)
+    this.updateTabTitle(track)
+  },
+  // 21st pass (Matthew, 0.3 wishlist: "browser tab title shows now-playing")
+  // -- the whole point of SIGNAL living in one tab is you leave it running
+  // in the background, so the tab itself is the only always-visible surface
+  // once you've switched away. clearTrack() (called whenever nothing's
+  // loaded -- seeking, scanning, power-off) resets to the bare title;
+  // showTrack() sets it to callsign + track. Cheap: just a document.title
+  // write, no extra DOM/animation cost.
+  updateTabTitle(track) {
+    document.title = (this.lockedChannel && track)
+      ? `${this.lockedChannel.callsign} · ${track.title} — SIGNAL`
+      : 'SIGNAL'
   },
 
   // Progress bar + play-state indicator, merged onto one row 2026-08-20
@@ -1606,6 +1640,10 @@ export default {
     this.drawFreq(s)
     this.drawDial(s)
     this.drawSignal(s)
+    // 21st pass: static bed loudness tracks distance to the nearest
+    // station -- no-ops if the noise bed isn't currently running (locked).
+    const { dist } = nearestChannel(this.freq)
+    setStaticIntensity(dist)
   },
   enterSeeking(s) {
     this.mode = 'seeking'
@@ -1621,7 +1659,7 @@ export default {
     // signals") -- reuses the same bed scanning already uses. Idempotent:
     // a no-op if it's already running, so this never restarts/stutters the
     // ramp on repeated calls.
-    startStaticNoise()
+    startStaticNoise(nearestChannel(this.freq).dist)
   },
   seekStep(s, delta) {
     this.stopScan()
@@ -1651,7 +1689,7 @@ export default {
     // above only fires on a locked->seeking transition, but the continuous
     // bed needs to be there (or stay there) on every non-locking step, not
     // just the first one. Idempotent, same as above.
-    startStaticNoise()
+    startStaticNoise(dist)
   },
   tryLock(s) {
     const { channel, dist } = nearestChannel(this.freq)
@@ -1852,7 +1890,7 @@ export default {
     if (this.mode === 'locked') this.enterSeeking(s)
     this.scanning = true
     this.setStatus(s, 'SCANNING...', false)
-    startStaticNoise()
+    startStaticNoise(nearestChannel(this.freq).dist)
     this.scanTimer = setInterval(() => {
       let f = this.freq + SCAN_STEP
       if (f > FREQ_MAX) f = FREQ_MIN
@@ -1882,7 +1920,7 @@ export default {
     // distinct from both the plain seek-static hiss and the ident tone
     // that plays once the sweep lands and locks a few hundred ms later.
     playPresetWhoosh()
-    startStaticNoise()
+    startStaticNoise(nearestChannel(this.freq).dist)
     this.scanTimer = setInterval(() => {
       i += 1
       const f = i >= steps ? target : startFreq + (target - startFreq) * (i / steps)
@@ -1918,7 +1956,7 @@ export default {
     this.retune(s, this.freq + dFreq)
     this.setStatus(s, 'SEEKING', false)
     // Same continuous bed as arrow-seeking (12th pass) -- idempotent.
-    startStaticNoise()
+    startStaticNoise(nearestChannel(this.freq).dist)
   },
 
   key(s, e) {
