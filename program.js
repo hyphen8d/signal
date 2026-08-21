@@ -1891,6 +1891,63 @@ export default {
 
     this.drawFieldReadout(s, startX, rows, state)
     this.drawEqRibbon(s, startX, rows, state)
+    // 31st pass (Matthew: "how should and could we fill that space... make
+    // them look like switches / buttons") -- the antenna glyph is only 13
+    // columns wide inside a ~37-column pane, so there's a matching ~10-
+    // column margin on the LEFT that's been sitting empty since the FLD
+    // readout/EQ ribbon only claimed the right side. These three mirror
+    // live state that's otherwise only readable from the bottom legend's
+    // key bindings or (for display mode) the screen's overall tint, with
+    // no on-screen readout at all.
+    this.drawPresetStrip(s, rows)
+    this.drawModeStrip(s, rows)
+    this.drawMuteSwitch(s, rows)
+  },
+
+  // Preset position (1-9), left margin top row -- the 9 stations map
+  // directly to the [1-9] keys in frequency order (CHANNEL_PRESET_ORDER),
+  // same mapping the guide's station table and the [B]ack logic already
+  // use. Brightness-only (no brackets) to keep it a fixed 9-column strip.
+  drawPresetStrip(s, rows) {
+    const { term } = s
+    const y = rows[0] // VOL_Y
+    const x0 = METERS_DIVIDER_X + 2
+    const idx = this.lockedChannel ? CHANNEL_PRESET_ORDER.indexOf(this.lockedChannel) : -1
+    for (let i = 0; i < CHANNEL_PRESET_ORDER.length; i++) {
+      term.put(x0 + i, y, String(i + 1), i === idx ? BRIGHT : FAINT)
+    }
+  },
+
+  // Display-mode selector, left margin middle row -- mirrors [C]'s cycle
+  // through DISPLAY_MODES. This is the one addition here that closes an
+  // actual gap rather than just duplicating something shown elsewhere:
+  // right now the only feedback for which phosphor tint is active is the
+  // whole screen's own color, with no on-screen label anywhere.
+  drawModeStrip(s, rows) {
+    const { term } = s
+    const y = rows[2] // SIG_Y
+    const x0 = METERS_DIVIDER_X + 2
+    const letters = ['G', 'A', 'B', 'M', 'P'] // matches DISPLAY_MODES order
+    const activeIdx = this.displayModeIndex
+    for (let i = 0; i < letters.length; i++) {
+      term.put(x0 + i * 2, y, letters[i], i === activeIdx ? BRIGHT : FAINT)
+    }
+    // Bracket the active letter using its flanking gap columns instead of
+    // a separate label row -- keeps the whole strip a fixed 9 columns.
+    term.put(x0 + activeIdx * 2 - 1, y, '[', BRIGHT)
+    term.put(x0 + activeIdx * 2 + 1, y, ']', BRIGHT)
+  },
+
+  // MUTE rocker, left margin bottom row -- a real switch-style readout
+  // rather than the antenna's own frozen-ring mute state, which only ever
+  // reads as "not animating" (easy to miss). Lit/BRIGHT when mute is
+  // actually engaged, same convention as a physical mute button's own LED.
+  drawMuteSwitch(s, rows) {
+    const { term } = s
+    const y = rows[4] // VU_Y
+    const x0 = METERS_DIVIDER_X + 2
+    const label = this.muted ? 'MUTE [ON ]' : 'MUTE [OFF]'
+    term.text(x0, y, label, this.muted ? BRIGHT : FAINT)
   },
 
   // Secondary readout, upper-right margin of the antenna pane (30th pass,
