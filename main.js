@@ -1,7 +1,16 @@
 // Entry point.
 
 import { mount } from './src/screen.js'
-import program from './program.js'
+// Dynamic import with a cache-busting query (28th pass, Matthew: "pink is
+// not showing up" on the live site) -- GitHub Pages serves program.js with
+// `Cache-Control: max-age=600`, so a browser that had loaded the page any
+// time in the last ~10 minutes silently keeps running the pre-deploy
+// version instead of fetching the update. A static `import program from
+// './program.js'` can't take a per-load cache-buster (import specifiers
+// must be a literal string), so this switches to a dynamic import with the
+// load time in the query string -- every page load always gets the actual
+// current deploy, no stale-script window to wait out or explain.
+const { default: program } = await import(`./program.js?t=${Date.now()}`)
 
 const canvas = document.getElementById('tube')
 
