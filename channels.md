@@ -1,10 +1,10 @@
 # SIGNAL -- channel roster
 
-Generated from program.js. 9 stations, 135 tracks total.
+Generated from program.js. 9 stations, 150 tracks total.
 
-## STATIC BLOOM -- 137.4
+## DISTORTION FIELD -- 137.4
 
-*flannel and feedback, transmitting*
+*heavy guitars, raw nerve, '90s angst*
 
 Ident tones (Hz): 392, 349.2, 311.2, 261.6
 
@@ -26,33 +26,9 @@ Tracks (15):
 14. **Cherub Rock** -- The Smashing Pumpkins  ([youtu.be/q-KE9lvU810](https://youtu.be/q-KE9lvU810))
 15. **Tomorrow** -- Silverchair  ([youtu.be/PjsMnvqL7eY](https://youtu.be/PjsMnvqL7eY))
 
-## RELIC SIGNAL -- 219.8
+## DRIFT MODE -- 356.2
 
-*the old masters, undying carrier*
-
-Ident tones (Hz): 523.3, 659.3, 784, 1046.5
-
-Tracks (15):
-
-1. **Symphony No. 5** -- Beethoven  ([youtu.be/IvrzJ8uH1PI](https://youtu.be/IvrzJ8uH1PI))
-2. **Suite bergamasque: III. Clair de lune** -- Debussy / Lang Lang  ([youtu.be/fZrm9h3JRGs](https://youtu.be/fZrm9h3JRGs))
-3. **Air on the G String** -- Bach  ([youtu.be/XWOC6xImhtg](https://youtu.be/XWOC6xImhtg))
-4. **Nocturne Op. 9 No. 2** -- Chopin  ([youtu.be/nO8uUTB2RlA](https://youtu.be/nO8uUTB2RlA))
-5. **The Four Seasons: Spring** -- Vivaldi  ([youtu.be/3LiztfE1X7E](https://youtu.be/3LiztfE1X7E))
-6. **Gymnopedie No. 1** -- Erik Satie  ([youtu.be/Rj6Gk3YFdaQ](https://youtu.be/Rj6Gk3YFdaQ))
-7. **Canon in D Major** -- Pachelbel  ([youtu.be/roC1jDB3IUo](https://youtu.be/roC1jDB3IUo))
-8. **Eine kleine Nachtmusik** -- Mozart  ([youtu.be/hcpM0yN7p0c](https://youtu.be/hcpM0yN7p0c))
-9. **In the Hall of the Mountain King** -- Grieg  ([youtu.be/OqvHWUZZdP0](https://youtu.be/OqvHWUZZdP0))
-10. **The Planets: Mars, the Bringer of War** -- Holst  ([youtu.be/8UfpgT9FMAk](https://youtu.be/8UfpgT9FMAk))
-11. **1812 Overture** -- Tchaikovsky  ([youtu.be/4C-YSq5flow](https://youtu.be/4C-YSq5flow))
-12. **Water Music** -- Handel  ([youtu.be/HfgVsUqmAN8](https://youtu.be/HfgVsUqmAN8))
-13. **William Tell Overture** -- Rossini  ([youtu.be/1yu-WOwvdOo](https://youtu.be/1yu-WOwvdOo))
-14. **Bolero** -- Ravel  ([youtu.be/5Eqj9G5j1ss](https://youtu.be/5Eqj9G5j1ss))
-15. **Ave Maria** -- Schubert  ([youtu.be/_5lHOap57to](https://youtu.be/_5lHOap57to))
-
-## QUIET HOURS -- 356.2
-
-*low power, long wave, lights out*
+*fade to black, ambient descent*
 
 Ident tones (Hz): 392, 329.6, 370, 293.7
 
@@ -98,9 +74,9 @@ Tracks (15):
 14. **Rio** -- Duran Duran  ([youtu.be/nTizYn3-QN0](https://youtu.be/nTizYn3-QN0))
 15. **Ghosts** -- Japan  ([youtu.be/JJOFQ3OtJIY](https://youtu.be/JJOFQ3OtJIY))
 
-## THE STUDY -- 823.1
+## MOMENTUM -- 823.1
 
-*lamp light, one more chapter*
+*building blocks, deep focus, productive drift*
 
 Ident tones (Hz): 329.6, 293.7, 261.6, 293.7
 
@@ -122,9 +98,9 @@ Tracks (15):
 14. **Awake** -- Tycho  ([youtu.be/VZBrZV3nHAA](https://youtu.be/VZBrZV3nHAA))
 15. **econto** -- Wun Two  ([youtu.be/nhl3wfXeCzU](https://youtu.be/nhl3wfXeCzU))
 
-## HIGH RISE -- 650.0
+## CITY LIGHTS -- 650.0
 
-*chrome towers, all-night funk*
+*tokyo nights, neon groove, city pop dreams*
 
 Ident tones (Hz): 523.3, 784, 659.3, 987.8
 
@@ -196,7 +172,7 @@ Tracks (15):
 
 ## HACKBACK -- 888.7
 
-*boom bap broadcast, deep cuts only*
+*golden age hip-hop, west coast legends, deep cuts*
 
 Ident tones (Hz): 220, 293.7, 349.2, 293.7
 
@@ -217,3 +193,42 @@ Tracks (15):
 13. **Mass Appeal** -- Gang Starr  ([youtu.be/y9lNbNGbo24](https://youtu.be/y9lNbNGbo24))
 14. **Rebirth of Slick (Cool Like Dat)** -- Digable Planets  ([youtu.be/cM4kqL13jGM](https://youtu.be/cM4kqL13jGM))
 15. **Respiration** -- Black Star  ([youtu.be/s2RhCDAMDBo](https://youtu.be/s2RhCDAMDBo))
+
+## CIPHER -- 219.8
+
+*ghost protocol, digital infiltration, breakbeat noir*
+
+Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
+
+Tracks (30):
+
+1. **Firestarter** -- The Prodigy  ([youtu.be/jNgzy5jFAxo](https://youtu.be/jNgzy5jFAxo))
+2. **Smack My Bitch Up** -- The Prodigy  ([youtu.be/yVrLJItL8dI](https://youtu.be/yVrLJItL8dI))
+3. **Block Rockin' Beats** -- Chemical Brothers  ([youtu.be/e-IWRSqNeFY](https://youtu.be/e-IWRSqNeFY))
+4. **Elektrobank** -- Chemical Brothers  ([youtu.be/N0y_nQfYrpw](https://youtu.be/N0y_nQfYrpw))
+5. **One More Time** -- Daft Punk  ([youtu.be/a80DRVJzazg](https://youtu.be/a80DRVJzazg))
+6. **Da Funk** -- Daft Punk  ([youtu.be/bNMj2l72e_c](https://youtu.be/bNMj2l72e_c))
+7. **Praise You** -- Fatboy Slim  ([youtu.be/K_3vXFU5sBo](https://youtu.be/K_3vXFU5sBo))
+8. **Weapon of Choice** -- Fatboy Slim  ([youtu.be/0Fyp-q17lzM](https://youtu.be/0Fyp-q17lzM))
+9. **Halcyon On and On** -- Orbital  ([youtu.be/Z0RfLgbU0bA](https://youtu.be/Z0RfLgbU0bA))
+10. **The Box Part II** -- Orbital  ([youtu.be/bV-hSgL1R34](https://youtu.be/bV-hSgL1R34))
+11. **Teardrop** -- Massive Attack  ([youtu.be/lAifppvx9I4](https://youtu.be/lAifppvx9I4))
+12. **Safe from Harm** -- Massive Attack  ([youtu.be/eFLhc6aGhWo](https://youtu.be/eFLhc6aGhWo))
+13. **Song of Life** -- Leftfield  ([youtu.be/1VT-4MnCNI4](https://youtu.be/1VT-4MnCNI4))
+14. **Peder Mannerfelt - Modern Talking** -- Leftfield  ([youtu.be/IUDTlvagjulW](https://youtu.be/IUDTlvagjulW))
+15. **Born Slippy** -- Underworld  ([youtu.be/t2F-aVGx7pI](https://youtu.be/t2F-aVGx7pI))
+16. **Rez** -- Underworld  ([youtu.be/CQGb6J9vQ0I](https://youtu.be/CQGb6J9vQ0I))
+17. **Everything Hertz** -- Boards of Canada  ([youtu.be/XhEdd0dqr-c](https://youtu.be/XhEdd0dqr-c))
+18. **Music Has the Right to Children** -- Boards of Canada  ([youtu.be/m0aJ-yf_5_A](https://youtu.be/m0aJ-yf_5_A))
+19. **Windowlicker** -- Aphex Twin  ([youtu.be/BiXxQ1n-sXo](https://youtu.be/BiXxQ1n-sXo))
+20. **Alberto Balsalm** -- Aphex Twin  ([youtu.be/41eEwMdw5lI](https://youtu.be/41eEwMdw5lI))
+21. **Eternal** -- Amon Tobin  ([youtu.be/Th1KvEf4iYU](https://youtu.be/Th1KvEf4iYU))
+22. **Journeyman** -- Amon Tobin  ([youtu.be/qTQQP6x0Vx4](https://youtu.be/qTQQP6x0Vx4))
+23. **Come to Dust** -- Squarepusher  ([youtu.be/7jrnBcGI0sw](https://youtu.be/7jrnBcGI0sw))
+24. **Steinbolt** -- Squarepusher  ([youtu.be/h0h79QWLmfE](https://youtu.be/h0h79QWLmfE))
+25. **Clipper** -- Autechre  ([youtu.be/fdrJZKEGYt4](https://youtu.be/fdrJZKEGYt4))
+26. **Pen Expers** -- Autechre  ([youtu.be/AyKJ5pNB44g](https://youtu.be/AyKJ5pNB44g))
+27. **Theme** -- Tron: Legacy  ([youtu.be/RW_JgiqKvaM](https://youtu.be/RW_JgiqKvaM))
+28. **Derezzed** -- Tron: Legacy  ([youtu.be/zyMgrFfGLIg](https://youtu.be/zyMgrFfGLIg))
+29. **A World Away** -- Halo Soundtrack  ([youtu.be/J6gU0YT8pCw](https://youtu.be/J6gU0YT8pCw))
+30. **Hijack** -- Johnny Mnemonic OST  ([youtu.be/gxNaS3cgNPE](https://youtu.be/gxNaS3cgNPE))

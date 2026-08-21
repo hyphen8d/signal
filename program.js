@@ -82,7 +82,11 @@ function realTrack(youtubeId, title, artist) {
 // station"), on top of whatever it already had -- so QUIET HOURS actually
 // gained 6 (4 new + the 2 reassigned) and the rest gained 4.
 const CHANNELS = [
-  { id: 'static-bloom', freq: 137.4, callsign: 'STATIC BLOOM', tagline: 'flannel and feedback, transmitting', // 19th pass: trimmed to <=35 chars
+  { id: 'distortion-field', freq: 137.4, callsign: 'DISTORTION FIELD', tagline: "heavy guitars, raw nerve, '90s angst",
+    // 28th pass (2026-08-21): renamed from STATIC BLOOM per Matthew's
+    // station-naming pass -- "DISTORTION FIELD" / "heavy guitars, raw
+    // nerve, '90s angst" was the locked-in choice (option 1B). Same
+    // grunge/alt-rock lane, same ident, same tracks -- name/tagline only.
     like: 'Nirvana, Soundgarden, Alice In Chains', // 18th pass: guide station reference
     // Matthew 8/20: "I don't hear a station id tone for static bloom." The
     // ident itself was firing fine (confirmed by hooking createOscillator
@@ -124,34 +128,26 @@ const CHANNELS = [
       realTrack('q-KE9lvU810', 'Cherub Rock', 'The Smashing Pumpkins'),
       realTrack('PjsMnvqL7eY', 'Tomorrow', 'Silverchair'),
     ] },
-  { id: 'relic-signal', freq: 219.8, callsign: 'RELIC SIGNAL', tagline: 'the old masters, undying carrier',
-    like: 'Beethoven, Chopin, Vivaldi',
-    ident: [523.3, 659.3, 784.0, 1046.5],
-    // 25th pass: straight ascending arpeggio, already unique -- untouched.
-    identTempo: 1.15,
-    // 25th pass: orchestral/classical masters are mixed with wide dynamic
-    // range and run much quieter overall than modern pop/rock -- biggest
-    // boost on the roster.
-    gain: 1.45,
-    tracks: [
-      realTrack('IvrzJ8uH1PI', 'Symphony No. 5', 'Beethoven'),
-      realTrack('fZrm9h3JRGs', 'Suite bergamasque: III. Clair de lune', 'Debussy / Lang Lang'),
-      realTrack('XWOC6xImhtg', 'Air on the G String', 'Bach'),
-      realTrack('nO8uUTB2RlA', 'Nocturne Op. 9 No. 2', 'Chopin'),
-      realTrack('3LiztfE1X7E', 'The Four Seasons: Spring', 'Vivaldi'),
-      realTrack('Rj6Gk3YFdaQ', 'Gymnopedie No. 1', 'Erik Satie'),
-      realTrack('roC1jDB3IUo', 'Canon in D Major', 'Pachelbel'),
-      realTrack('hcpM0yN7p0c', 'Eine kleine Nachtmusik', 'Mozart'),
-      realTrack('OqvHWUZZdP0', 'In the Hall of the Mountain King', 'Grieg'),
-      realTrack('8UfpgT9FMAk', 'The Planets: Mars, the Bringer of War', 'Holst'),
-      // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
-      realTrack('4C-YSq5flow', '1812 Overture', 'Tchaikovsky'),
-      realTrack('HfgVsUqmAN8', 'Water Music', 'Handel'),
-      realTrack('1yu-WOwvdOo', 'William Tell Overture', 'Rossini'),
-      realTrack('5Eqj9G5j1ss', 'Bolero', 'Ravel'),
-      realTrack('_5lHOap57to', 'Ave Maria', 'Schubert'),
-    ] },
-  { id: 'quiet-hours', freq: 356.2, callsign: 'QUIET HOURS', tagline: 'low power, long wave, lights out',
+  // RELIC SIGNAL (classical, 219.8) retired 2026-08-21 (28th pass, per
+  // Matthew's station-naming pass) -- its classical lane overlapped with
+  // QUIET HOURS' ambient/neoclassical territory (see the 10th-pass comment
+  // above), and the freed 219.8 slot went to CIPHER (see below). Track list
+  // and ident are preserved here only in this comment in case the classical
+  // lane is ever wanted back as its own station:
+  //   Beethoven Symphony No. 5 (IvrzJ8uH1PI), Debussy/Lang Lang Suite
+  //   bergamasque III (fZrm9h3JRGs), Bach Air on the G String
+  //   (XWOC6xImhtg), Chopin Nocturne Op. 9 No. 2 (nO8uUTB2RlA), Vivaldi The
+  //   Four Seasons: Spring (3LiztfE1X7E), Satie Gymnopedie No. 1
+  //   (Rj6Gk3YFdaQ), Pachelbel Canon in D Major (roC1jDB3IUo), Mozart Eine
+  //   kleine Nachtmusik (hcpM0yN7p0c), Grieg In the Hall of the Mountain
+  //   King (OqvHWUZZdP0), Holst The Planets: Mars (8UfpgT9FMAk),
+  //   Tchaikovsky 1812 Overture (4C-YSq5flow), Handel Water Music
+  //   (HfgVsUqmAN8), Rossini William Tell Overture (1yu-WOwvdOo), Ravel
+  //   Bolero (5Eqj9G5j1ss), Schubert Ave Maria (_5lHOap57to). Ident was
+  //   [523.3, 659.3, 784.0, 1046.5], identTempo 1.15, gain 1.45.
+  { id: 'drift-mode', freq: 356.2, callsign: 'DRIFT MODE', tagline: 'fade to black, ambient descent',
+    // 28th pass: renamed from QUIET HOURS (option 2B minus "sleep well").
+    // Same ambient/drone lane, same ident, same tracks -- name/tagline only.
     like: 'Brian Eno, Sigur Rós, Grouper',
     // 25th pass: was a straight descent, same shape as 3 other stations --
     // now a gentle down-up-down undulation (D U D), a shape unique to this
@@ -222,7 +218,10 @@ const CHANNELS = [
       realTrack('nTizYn3-QN0', 'Rio', 'Duran Duran'),
       realTrack('JJOFQ3OtJIY', 'Ghosts', 'Japan'),
     ] },
-  { id: 'the-study', freq: 823.1, callsign: 'THE STUDY', tagline: 'lamp light, one more chapter', // 19th pass: trimmed
+  { id: 'momentum', freq: 823.1, callsign: 'MOMENTUM', tagline: 'building blocks, deep focus, productive drift',
+    // 28th pass: renamed from THE STUDY (option e, after more naming
+    // options were requested). Same lofi/downtempo focus lane, same ident,
+    // same tracks -- name/tagline only.
     like: 'Nujabes, Bonobo, Tycho',
     // 25th pass: was a straight descent, same shape as 3 other stations --
     // now descends then flicks up at the end (D D U), a small lo-fi
@@ -260,7 +259,9 @@ const CHANNELS = [
   // 5 (288.6 between RELIC SIGNAL/QUIET HOURS, 434.5 between QUIET
   // HOURS/COLD WAVE, 650.0 between COLD WAVE/THE STUDY, 878.9 past THE
   // STUDY toward the top of the band) so none of the original 5 moved.
-  { id: 'high-rise', freq: 650.0, callsign: 'HIGH RISE', tagline: 'chrome towers, all-night funk',
+  { id: 'city-lights', freq: 650.0, callsign: 'CITY LIGHTS', tagline: 'tokyo nights, neon groove, city pop dreams',
+    // 28th pass: renamed from HIGH RISE (option 7B). Same city pop lane,
+    // same ident, same tracks -- name/tagline only.
     like: 'Tatsuro Yamashita, Anri, Mariya Takeuchi',
     // 25th pass: was a straight ascent, same shape as 3 other stations --
     // now a bouncy up-down-up (U D U), closer to the syncopated groove the
@@ -393,7 +394,9 @@ const CHANNELS = [
   // above. 893.7 rounded to the dial column right next to ATOMIC's, so the
   // two preset triangles overlapped; this leaves a clear 3-column gap to
   // ATOMIC and reads as its own distinct tick near the top of the band.
-  { id: 'hackback', freq: 888.7, callsign: 'HACKBACK', tagline: 'boom bap broadcast, deep cuts only',
+  // 28th pass: tagline updated to "golden age hip-hop, west coast legends,
+  // deep cuts" (option 9A, tagline option b) -- name (HACKBACK) unchanged.
+  { id: 'hackback', freq: 888.7, callsign: 'HACKBACK', tagline: 'golden age hip-hop, west coast legends, deep cuts',
     like: 'A Tribe Called Quest, De La Soul, Wu-Tang Clan',
     // 25th pass: was a straight descent, same shape as 3 other stations --
     // now a rise then a hard drop (U U D), like a boom-bap tag snapping
@@ -421,10 +424,14 @@ const CHANNELS = [
       realTrack('cM4kqL13jGM', 'Rebirth of Slick (Cool Like Dat)', 'Digable Planets'),
       realTrack('s2RhCDAMDBo', 'Respiration', 'Black Star'),
     ] },
-  { id: 'cipher', freq: 777.7, callsign: 'CIPHER', tagline: 'ghost protocol, digital infiltration, breakbeat noir',
-    like: 'The Prodigy, Chemical Brothers, Daft Punk',
+  { id: 'cipher', freq: 219.8, callsign: 'CIPHER', tagline: 'ghost protocol, digital infiltration, breakbeat noir',
     // 28th pass (2026-08-21): New cyberpunk station, hacker movies/synthwave
-    // aesthetic. Ident is a bouncy up-down-up-down (U D U D) breakbeat style.
+    // aesthetic (locked-in name/tagline per Matthew's naming pass). Placed
+    // at 219.8, the frequency freed by RELIC SIGNAL's retirement (see the
+    // retirement comment above DRIFT MODE) -- keeps the roster at 9
+    // stations total rather than growing to 10.
+    like: 'The Prodigy, Chemical Brothers, Daft Punk',
+    // Ident is a bouncy up-down-up-down (U D U D) breakbeat style.
     ident: [523.3, 349.2, 587.3, 293.7],
     identTempo: 0.9,
     // Breakbeat/electronic genre runs moderately loud, no special boost
