@@ -515,16 +515,16 @@ const METERS_BOT_Y = 22
 // other") -- VOL/SIG/VU meters, which never actually needed the box's full
 // ~74-column interior (their compact "LABEL [bar] NN" text just used to
 // sit centered in a lot of empty space), now live in the left half only.
-// The right half is a reserved, currently-blank column -- content TBD, not
-// yet built. METERS_DIVIDER_X is the vertical divider's column; interior
-// left range is BOX_X0+1..METERS_DIVIDER_X-1, right range is
-// METERS_DIVIDER_X+1..BOX_X1-1.
+// The right half holds the animated antenna glyph (see drawAntenna()).
+// METERS_DIVIDER_X is the vertical divider's column; interior left range is
+// BOX_X0+1..METERS_DIVIDER_X-1, right range is METERS_DIVIDER_X+1..BOX_X1-1.
 const METERS_DIVIDER_X = 39
 
 // GIAL nameplate (19th pass) -- retired 23rd pass. Was always a stated
 // placeholder ("for now", "not a final wordmark" -- see git history),
-// replaced with the functional status-light panel below (drawIndicators())
-// in the same LEVELS right half.
+// replaced with the PWR/AIR/STEREO/MONO/MUTE indicator panel, then (29th
+// pass) with the animated antenna glyph (drawAntenna()) in the same LEVELS
+// right half.
 
 const HINT_Y1 = 23
 const HINT_Y2 = 24
@@ -1015,12 +1015,12 @@ export default {
     }
     term.put(METERS_DIVIDER_X, METERS_BOT_Y, '┻', MUTED)
 
-    // The LEVELS right half (GIAL nameplate's old spot) is now the status-
-    // light panel -- see drawIndicators(). Unlike the nameplate it wasn't
-    // static, so it isn't drawn here; the two call sites that used to
-    // follow drawChrome() with a nameplate-is-already-there assumption
-    // (powerUp's reveal beat, closeGuide()) now call drawIndicators()
-    // explicitly, same as they already do for drawVU().
+    // The LEVELS right half (GIAL nameplate's old spot, then the PWR/AIR/
+    // STEREO/MONO/MUTE indicator panel) is now the animated antenna glyph --
+    // see drawAntenna(). Not static, so it isn't drawn here; the two call
+    // sites that used to follow drawChrome() with a nameplate-is-already-
+    // there assumption (powerUp's reveal beat, closeGuide()) call
+    // drawAntenna() explicitly, same as they already do for drawVU().
 
     // Chassis corner brackets (10th pass, skeuomorphism idea Matthew
     // picked) -- the 4 columns outside the panel stack (x 0-1 and 78-79)
@@ -1522,7 +1522,7 @@ export default {
         this.drawVolume(s)
         this.drawSignal(s)
         this.drawVU(s)
-        this.drawIndicators(s, 0)
+        this.drawAntenna(s, 0)
         this.drawDial(s)
         this.drawFreq(s)
         this.drawHint(s)
@@ -1752,66 +1752,90 @@ export default {
     this.vuVelocity += amount
   },
 
-  // Status-light panel (23rd pass, replacing the placeholder GIAL wordmark
-  // -- see the comment where NAMEPLATE_LINES used to be). Five bracketed
-  // indicator rows in the LEVELS right half, redrawn on the same per-frame
-  // cadence as drawVU() (see the frame() call site) so the blinking/pulsing
-  // ones actually animate instead of only updating on a state-change event.
+  // Animated antenna glyph (29th pass, replacing the PWR/AIR/STEREO/MONO/
+  // MUTE bracketed indicator rows -- Matthew: "an animated 'signal' graphic
+  // in the lower right... antenna looking thing... animate depending on
+  // status"). Fills the same LEVELS right-half rows those indicators used
+  // (VOL_Y..VU_Y), redrawn on the same per-frame cadence as drawVU() (see
+  // the frame() call site) so it actually animates rather than only
+  // updating on a state-change event.
   //
-  // Row-by-row, each ties to state that already exists elsewhere rather
-  // than inventing anything new to track:
-  //   PWR / AIR   -- PWR is trivially always lit (STANDBY owns the whole
-  //                  grid when the set is actually off, so there's no
-  //                  "on but this row is dark" state to show); AIR reacts
-  //                  to this.playState, lit only while actually playing.
-  //   TUNED/DRIFT/SEEK -- mirrors the dial's own lock/near-lock bands
-  //                  (LOCK_THRESHOLD / NEAR_THRESHOLD, the same ones
-  //                  drawDial()'s glow uses).
-  //   LIVE/BUFFERING/PAUSED/NO SIGNAL -- directly mirrors this.playState,
-  //                  so it can't drift out of sync with the actual player.
-  //   STEREO/MONO -- cosmetic, per Matthew's own spec: solid once locked,
-  //                  degrades to MONO while buffering (no real stereo
-  //                  detection exists, or could -- the YouTube iframe
-  //                  exposes no channel-count info either).
-  //   MUTE        -- a fixed-position always-there light for mute state,
-  //                  which otherwise only shows up by replacing the VOL
-  //                  meter's numeric readout (see drawVolume) -- easy to
-  //                  miss since it's not in a constant spot.
-  drawIndicatorRow(s, y, segments) {
+  // A nested-arc broadcast tower -- mast+base always faintly visible (PWR
+  // is implicit: this only ever runs while powered on, same reasoning the
+  // old PWR light used), 3 rings of arcs above it that read as the
+  // "signal" part:
+  //   seeking (not locked)  -- innermost ring blinks slowly on its own, a
+  //                            "still listening" pulse rather than silence.
+  //   locked + muted        -- frozen mid-ring, dim -- powered and locked,
+  //                            but deliberately silent.
+  //   locked + buffering     -- erratic single-ring flicker, unstable read.
+  //   locked + playing       -- rings pulse outward in sequence (inner to
+  //                            outer, looping), both sides together -- the
+  //                            "actively on air" state.
+  //   locked + paused        -- steady mid-ring, no animation.
+  ANTENNA_TEMPLATE: [
+    '(           )',
+    ' (         ) ',
+    '  (   |   )  ',
+    '      |      ',
+    '    __|__    ',
+  ],
+  // [row index into ANTENNA_TEMPLATE/antennaRows, left-char offset, right-char offset]
+  ANTENNA_RINGS: [
+    { row: 0, left: 0, right: 12 },
+    { row: 1, left: 1, right: 11 },
+    { row: 2, left: 2, right: 10 },
+  ],
+  drawAntenna(s, t) {
     const { term } = s
-    for (let x = METERS_DIVIDER_X + 1; x < BOX_X1; x++) term.put(x, y, ' ')
-    const full = segments.map((seg) => seg.text).join('   ')
-    let x = centerXRange(METERS_DIVIDER_X + 1, BOX_X1 - 1, full)
-    for (const seg of segments) {
-      term.text(x, y, seg.text, seg.attr)
-      x += seg.text.length + 3
+    const rows = [VOL_Y, VOL_SIG_DIVIDER_Y, SIG_Y, VU_DIVIDER_Y, VU_Y]
+    for (const y of rows) for (let x = METERS_DIVIDER_X + 1; x < BOX_X1; x++) term.put(x, y, ' ')
+
+    const template = this.ANTENNA_TEMPLATE
+    const startX = centerXRange(METERS_DIVIDER_X + 1, BOX_X1 - 1, template[0])
+
+    // Base structure (mast, base, and all 3 rings faintly) -- drawn fresh
+    // every frame so the previous frame's brightened ring reverts to faint
+    // before this frame picks its own active ring, rather than smearing.
+    for (let r = 0; r < template.length; r++) {
+      const line = template[r]
+      for (let i = 0; i < line.length; i++) {
+        if (line[i] !== ' ') term.put(startX + i, rows[r], line[i], FAINT)
+      }
     }
-  },
 
-  drawIndicators(s, t) {
-    const locked = this.mode === 'locked'
+    const lightRing = (ringIdx, attr) => {
+      const ring = this.ANTENNA_RINGS[ringIdx]
+      term.put(startX + ring.left, rows[ring.row], '(', attr)
+      term.put(startX + ring.right, rows[ring.row], ')', attr)
+    }
 
-    this.drawIndicatorRow(s, VOL_Y, [
-      { text: '[ PWR ]', attr: BRIGHT },
-      { text: '[ AIR ]', attr: (locked && this.playState === 'playing') ? BRIGHT : FAINT },
-    ])
-    // Explicitly blanked, not just left alone -- these two used to carry the
-    // TUNED/DRIFT/SEEK and LIVE/BUFFERING/PAUSED/NO SIGNAL rows; an empty
-    // segment list clears the row without writing anything into it.
-    this.drawIndicatorRow(s, VOL_SIG_DIVIDER_Y, [])
-
-    // 24th pass (Matthew: pull the TUNED/DRIFT/SEEK and LIVE/BUFFERING/
-    // PAUSED/NO SIGNAL rows back out right after adding them) -- down to 3
-    // rows now, on VOL_Y/SIG_Y/VU_Y with the two divider rows left blank
-    // between them, same rhythm as the LEVELS box's own left half.
-    const stereo = locked && this.playState !== 'buffering'
-    this.drawIndicatorRow(s, SIG_Y, [
-      { text: '[ STEREO ]', attr: stereo ? BRIGHT : FAINT },
-      { text: '[ MONO ]', attr: stereo ? FAINT : BRIGHT },
-    ])
-    this.drawIndicatorRow(s, VU_DIVIDER_Y, []) // blanked, was STEREO/MONO's row before the relayout above
-
-    this.drawIndicatorRow(s, VU_Y, [{ text: '[ MUTE ]', attr: this.muted ? BRIGHT : FAINT }])
+    const locked = this.mode === 'locked' && this.lockedChannel
+    if (!locked) {
+      // Seeking -- slow symmetric blink on the innermost ring only.
+      if (Math.floor(t / 0.6) % 2 === 0) lightRing(2, DIM)
+      return
+    }
+    if (this.muted) {
+      lightRing(1, DIM) // frozen, dim -- locked but silent
+      return
+    }
+    if (this.playState === 'buffering') {
+      // Erratic flicker -- a random ring, each side independently on this
+      // redraw, unstable read rather than a clean pulse.
+      const ring = this.ANTENNA_RINGS[Math.floor(Math.random() * 3)]
+      if (Math.random() < 0.7) term.put(startX + ring.left, rows[ring.row], '(', BRIGHT)
+      if (Math.random() < 0.7) term.put(startX + ring.right, rows[ring.row], ')', BRIGHT)
+      return
+    }
+    if (this.playState === 'playing') {
+      // Outward radiating pulse -- ring cycles inner -> outer -> loop.
+      const ringIdx = 2 - (Math.floor(t / 0.25) % 3)
+      lightRing(ringIdx, BRIGHT)
+      return
+    }
+    // Paused -- steady mid-ring, no animation.
+    lightRing(1, BRIGHT)
   },
 
   // BUG/NAMING FIXED 2026-08-20: this used to log an entry on every track
@@ -2218,7 +2242,7 @@ export default {
     this.drawVolume(s)
     this.drawSignal(s)
     this.drawVU(s)
-    this.drawIndicators(s, 0)
+    this.drawAntenna(s, 0)
     this.drawDial(s)
     this.drawFreq(s)
     this.drawHint(s)
@@ -2472,9 +2496,9 @@ export default {
     if (t - (this.lastVuDraw || 0) > 0.12) {
       this.lastVuDraw = t
       this.drawVU(s)
-      // 23rd pass: status lights share the VU's redraw cadence -- cheap,
-      // and it's the same rate the SEEK/DRIFT/BUFFERING blink needs anyway.
-      this.drawIndicators(s, t)
+      // 29th pass: the antenna glyph shares the VU's redraw cadence --
+      // cheap, and it's the same rate its own ring animation needs anyway.
+      this.drawAntenna(s, t)
     }
 
     // Always-on idle phosphor shimmer (14th pass, Matthew: "a subtle
