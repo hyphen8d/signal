@@ -90,6 +90,19 @@ const CHANNELS = [
     // shape, one octave up: still the lowest/moodiest ident of the set,
     // just actually audible.
     ident: [392.0, 349.2, 311.2, 261.6],
+    // 25th pass (Matthew: "make sure each 9 station ID tones are as unique
+    // from each other as they can be") -- an analysis pass found 8 of the 9
+    // idents fell into just two pitch-contour shapes (4 straight descending
+    // triads, 4 straight ascending ones), which reads as "two chimes" to the
+    // ear no matter how the exact notes differ. Redesigned so all 9 use a
+    // distinct up/down contour (one of the 8 possible 3-step shapes, or a
+    // repeated-note "flat" step for a 9th), plus a per-station identTempo
+    // multiplier on playIdent()'s note gap/envelope so genre-appropriate
+    // ones also feel rhythmically distinct, not just melodically. This one
+    // (straight descent, dreamy) was already unique and is untouched.
+    identTempo: 1.25,
+    // 25th pass: modern rock/grunge masters run loud already -- no boost.
+    gain: 1.0,
     tracks: [
       realTrack('hTWKbfoikeg', 'Smells Like Teen Spirit', 'Nirvana'),
       realTrack('3mbBbFH9fAg', 'Black Hole Sun', 'Soundgarden'),
@@ -105,6 +118,12 @@ const CHANNELS = [
   { id: 'relic-signal', freq: 219.8, callsign: 'RELIC SIGNAL', tagline: 'the old masters, undying carrier',
     like: 'Beethoven, Chopin, Vivaldi',
     ident: [523.3, 659.3, 784.0, 1046.5],
+    // 25th pass: straight ascending arpeggio, already unique -- untouched.
+    identTempo: 1.15,
+    // 25th pass: orchestral/classical masters are mixed with wide dynamic
+    // range and run much quieter overall than modern pop/rock -- biggest
+    // boost on the roster.
+    gain: 1.45,
     tracks: [
       realTrack('IvrzJ8uH1PI', 'Symphony No. 5', 'Beethoven'),
       realTrack('fZrm9h3JRGs', 'Suite bergamasque: III. Clair de lune', 'Debussy / Lang Lang'),
@@ -119,7 +138,15 @@ const CHANNELS = [
     ] },
   { id: 'quiet-hours', freq: 356.2, callsign: 'QUIET HOURS', tagline: 'low power, long wave, lights out',
     like: 'Brian Eno, Sigur Rós, Grouper',
-    ident: [392.0, 369.9, 329.6, 293.7],
+    // 25th pass: was a straight descent, same shape as 3 other stations --
+    // now a gentle down-up-down undulation (D U D), a shape unique to this
+    // channel, and the slowest identTempo of the set.
+    ident: [392.0, 329.6, 370.0, 293.7],
+    identTempo: 1.35,
+    // 25th pass: ambient/drone masters are mastered deliberately quiet
+    // (they're meant to sit low, not compete for attention) -- second-
+    // biggest boost on the roster.
+    gain: 1.5,
     tracks: [
       realTrack('UfcAVejslrU', 'Weightless', 'Marconi Union'),
       // Reassigned from the retired SIGNAL LOCK station -- see comment above.
@@ -139,7 +166,14 @@ const CHANNELS = [
     ] },
   { id: 'cold-wave', freq: 512.9, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     like: 'New Order, The Cure, Depeche Mode',
-    ident: [440.0, 554.4, 659.3, 880.0],
+    // 25th pass: was a straight ascent, same shape as 3 other stations --
+    // now reaches up then falls back twice (U D D), a moodier shape that
+    // suits "synthetic hearts, borrowed neon" better anyway.
+    ident: [440.0, 659.3, 554.4, 440.0],
+    identTempo: 1.0,
+    // 25th pass: 80s synth-pop masters run a bit quieter than modern
+    // loudness-war masters -- small boost.
+    gain: 1.1,
     tracks: [
       realTrack('9GMjH1nR0ds', 'Blue Monday \'88', 'New Order'),
       realTrack('1ASpBpT8bRQ', 'Just Like Heaven', 'The Cure'),
@@ -154,7 +188,14 @@ const CHANNELS = [
     ] },
   { id: 'the-study', freq: 823.1, callsign: 'THE STUDY', tagline: 'lamp light, one more chapter', // 19th pass: trimmed
     like: 'Nujabes, Bonobo, Tycho',
-    ident: [329.6, 293.7, 261.6, 220.0],
+    // 25th pass: was a straight descent, same shape as 3 other stations --
+    // now descends then flicks up at the end (D D U), a small lo-fi
+    // "wobble" tag instead of a flat fade-out.
+    ident: [329.6, 293.7, 261.6, 293.7],
+    identTempo: 1.1,
+    // 25th pass: lofi/downtempo masters run a bit quieter/mellower than
+    // typical modern masters -- small boost.
+    gain: 1.15,
     tracks: [
       realTrack('XnFOucmKlXA', 'Aruarian Dance', 'Nujabes'),
       realTrack('InFbBlpDTfQ', 'Midnight In A Perfect World', 'DJ Shadow'),
@@ -179,7 +220,14 @@ const CHANNELS = [
   // STUDY toward the top of the band) so none of the original 5 moved.
   { id: 'high-rise', freq: 650.0, callsign: 'HIGH RISE', tagline: 'chrome towers, all-night funk',
     like: 'Tatsuro Yamashita, Anri, Mariya Takeuchi',
-    ident: [523.3, 659.3, 830.6, 987.8],
+    // 25th pass: was a straight ascent, same shape as 3 other stations --
+    // now a bouncy up-down-up (U D U), closer to the syncopated groove the
+    // genre itself has.
+    ident: [523.3, 784.0, 659.3, 987.8],
+    identTempo: 0.85,
+    // 25th pass: city pop masters (late 70s/80s Japanese) run a bit
+    // quieter than modern masters -- small boost.
+    gain: 1.1,
     tracks: [
       realTrack('5zTkTlj2h9E', 'Stay With Me', 'Miki Matsubara'),
       realTrack('tWqZASIxlqs', 'Sparkle', 'Tatsuro Yamashita'),
@@ -207,7 +255,14 @@ const CHANNELS = [
   // Cave, Tom Russell, Calexico) is in git history on this commit's parent.
   { id: 'circuit-crush', freq: 434.5, callsign: 'CIRCUIT CRUSH', tagline: 'analog glow, the long drive home',
     like: 'Kavinsky, GUNSHIP, Perturbator',
-    ident: [466.2, 587.3, 698.5, 932.3],
+    // 25th pass: was a straight ascent, same shape as 3 other stations --
+    // now dips then double-rises (D U U), and the fastest identTempo of
+    // the set, for a punchier/more aggressive announce.
+    ident: [587.3, 466.2, 698.5, 932.3],
+    identTempo: 0.75,
+    // 25th pass: modern synthwave masters are already loud/compressed --
+    // no boost.
+    gain: 1.0,
     tracks: [
       realTrack('ZVS6Q_lbKQ0', 'Nightcall', 'Kavinsky'),
       realTrack('URma_gu1aNE', 'Sunset', 'The Midnight'),
@@ -229,7 +284,15 @@ const CHANNELS = [
   // across ATOMIC/HACKBACK instead.
   { id: 'atomic', freq: 854.9, callsign: 'ATOMIC', tagline: 'swing on while the counter clicks', // 19th pass: trimmed
     like: 'The Ink Spots, Roy Brown, The Five Stars',
-    ident: [392.0, 493.9, 587.3, 493.9],
+    // 25th pass: was up-up-down, which HACKBACK's new ident also needed --
+    // reassigned to a repeated-note doo-wop "bum-BUM" bounce (U flat U)
+    // instead, since ATOMIC's genre suits a held repeated note better than
+    // any of the 8 straight up/down shapes anyway.
+    ident: [392.0, 493.9, 493.9, 587.3],
+    identTempo: 0.9,
+    // 25th pass: 40s/50s masters (limited-range recording, minimal
+    // compression) run quieter than modern masters -- large boost.
+    gain: 1.3,
     // 19th pass (Matthew: "make sure atomic playlist is from fallout 4,
     // fallout 76 etc games") -- 5 of the original 10 tracks (Jump Jive An'
     // Wail/Louis Prima, Minnie the Moocher/Cab Calloway, Choo Choo
@@ -264,7 +327,14 @@ const CHANNELS = [
   // ATOMIC and reads as its own distinct tick near the top of the band.
   { id: 'hackback', freq: 888.7, callsign: 'HACKBACK', tagline: 'boom bap broadcast, deep cuts only',
     like: 'A Tribe Called Quest, De La Soul, Wu-Tang Clan',
-    ident: [349.2, 293.7, 246.9, 220.0],
+    // 25th pass: was a straight descent, same shape as 3 other stations --
+    // now a rise then a hard drop (U U D), like a boom-bap tag snapping
+    // down on the beat, with a tight/punchy identTempo to match.
+    ident: [220.0, 293.7, 349.2, 293.7],
+    identTempo: 0.8,
+    // 25th pass: modern hip-hop masters are already loud/compressed -- no
+    // boost.
+    gain: 1.0,
     tracks: [
       realTrack('D-uV8TGjaGU', 'Can I Kick It?', 'A Tribe Called Quest'),
       realTrack('P800UWoE9xs', 'Award Tour', 'A Tribe Called Quest'),
@@ -562,7 +632,14 @@ function playLockTone() {
 // playLockTone(), so each station announces itself distinctly before
 // you've even read the screen. Falls back to playLockTone() if a channel
 // somehow has no ident defined.
-function playIdent(freqs) {
+// 25th pass: added the `tempo` scalar (see CHANNELS[].identTempo) so
+// stations are distinct by rhythm/pacing as well as by pitch contour -- a
+// slow ambient station and a punchy synthwave one shouldn't announce
+// themselves at the same clip just because their note shapes differ.
+// Scales the note gap and the whole attack/decay envelope together, so a
+// slower tempo reads as more spacious rather than just "the same envelope
+// with gaps stretched out."
+function playIdent(freqs, tempo = 1) {
   if (!freqs || !freqs.length) { playLockTone(); return }
   try {
     const ctx = audioCtx()
@@ -573,12 +650,12 @@ function playIdent(freqs) {
       osc.type = 'triangle'
       osc.frequency.setValueAtTime(f, t)
       gain.gain.setValueAtTime(0.001, t)
-      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16)
+      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.02 * tempo)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16 * tempo)
       osc.connect(gain).connect(ctx.destination)
       osc.start(t)
-      osc.stop(t + 0.18)
-      t += 0.11
+      osc.stop(t + 0.18 * tempo)
+      t += 0.11 * tempo
     })
   } catch (e) {}
 }
@@ -1686,7 +1763,7 @@ export default {
         events: {
           onReady: () => {
             self.ready = true
-            self.player.setVolume(self.volume)
+            self.applyVolume()
           },
           onStateChange: (e) => {
             // Mid-song join (Matthew, 8/20: "should we start stations mid
@@ -1760,17 +1837,45 @@ export default {
     // box now) doesn't need to be touched at all, just the track line.
     this.showTrack(s, track)
     if (this.nowPlaying) this.nowPlaying.title = track.title
+    // Re-applies volume for the new track's gain -- a skip can land on a
+    // track mastered much louder/quieter than the one just playing.
+    this.applyVolume()
     this.loadTrack(track)
     // 23rd pass: smaller attack than tryLock's -- a skip is a lesser event
     // than finding a new station.
     this.pulseVU(0.3)
     saveSignalState(this)
   },
+  // 25th pass (Matthew: "audio loudness has been a concern as it changes")
+  // -- YouTube masters vary hugely in loudness across sources (a 1950s
+  // doo-wop recording and a modern loud/compressed synthwave master are
+  // nowhere near the same level), so switching stations could mean a real
+  // jump in perceived volume even with the slider untouched. This applies
+  // an optional multiplier on top of the user's own volume slider:
+  // `track.gain` if the current track has one, else `channel.gain`, else
+  // 1 (no change). Every setVolume() call in the file should go through
+  // this rather than calling player.setVolume(this.volume) directly, so
+  // gain is never accidentally bypassed on some code path.
+  //
+  // The channel-level gains set below are a first-pass, by-genre/by-era
+  // approximation (older and acoustic/orchestral masters run quieter than
+  // modern compressed ones -- a well-established mastering convention, not
+  // something measured per track here) rather than precisely measured
+  // per-track loudness, which nobody's actually done. Treat them as a
+  // starting point: bump an individual track's `gain` field if a specific
+  // song still stands out once you've heard it.
+  applyVolume() {
+    if (!this.ready || !this.player) return
+    const ch = this.lockedChannel
+    const gain = (this.currentTrack && this.currentTrack.gain) ?? (ch && ch.gain) ?? 1
+    const eff = Math.round(Math.min(100, Math.max(0, this.volume * gain)))
+    this.player.setVolume(eff)
+  },
   adjustVolume(s, delta) {
     this.volume = Math.min(100, Math.max(0, this.volume + delta))
     if (this.muted) this.muted = false // touching volume un-mutes, like a real set
     if (this.ready && this.player) {
-      this.player.setVolume(this.volume)
+      this.applyVolume()
       if (!this.muted) this.player.unMute()
     }
     this.drawVolume(s)
@@ -1780,7 +1885,7 @@ export default {
     this.muted = !this.muted
     if (this.ready && this.player) {
       if (this.muted) this.player.mute()
-      else this.player.unMute()
+      else { this.player.unMute(); this.applyVolume() }
     }
     this.drawVolume(s)
     saveSignalState(this)
@@ -1872,7 +1977,7 @@ export default {
     // idents"): each channel has its own short tone motif in CHANNELS[].ident
     // so locking on COLD WAVE sounds different from locking on QUIET HOURS,
     // instead of every station announcing itself with the same generic chime.
-    playIdent(channel.ident)
+    playIdent(channel.ident, channel.identTempo || 1)
     // 23rd pass: attack transient on lock, see pulseVU().
     this.pulseVU(0.5)
     this.setStatus(s, 'LOCKED', true)
@@ -1882,6 +1987,10 @@ export default {
     this.showStation(s, channel)
     this.showTrack(s, track)
     this.tuneToChannel(s, channel, track)
+    // Re-applies volume for the new channel/track's gain (see
+    // applyVolume()) -- a station switch is exactly the moment a loudness
+    // jump would otherwise show up.
+    this.applyVolume()
     // Mid-song join: cues rather than loads, so actual playback (and the
     // PLAYING state) doesn't start until the onStateChange handler above
     // has picked a random point in the track and seeked to it.
