@@ -10,9 +10,21 @@ the WebGL2 CRT text-grid engine open-sourced from [cyberspace.online](https://cy
 hosted by Cyberspace.** It just uses their engine (MIT licensed) to render a
 different program on top of it.
 
+![SIGNAL, locked onto COLD WAVE](./screenshots/hero.jpg)
+
 ## Try it
 
 **https://hyphen8d.github.io/signal/**
+
+## Screenshots
+
+The in-app guide (`[G]`) -- about, full controls reference, and the station roster:
+
+![The guide overlay](./screenshots/guide.jpg)
+
+Four switchable display modes (`[C]` to cycle) -- Classic Amber, Cyber Blue, Monochrome, on top of the default Green Phosphor above:
+
+![Classic Amber, Cyber Blue, and Monochrome display modes](./screenshots/display-modes.jpg)
 
 ## Run it locally
 
