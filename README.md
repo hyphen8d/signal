@@ -1,4 +1,4 @@
-# SIGNAL
+# SIGNAL v0.6
 
 A community-facing, unofficial internet-radio-style web toy: a terminal/CRT
 tuning-dial receiver with 9 curated stations, real songs, station idents,
@@ -74,7 +74,7 @@ touch alone. Known gaps, not oversights.
 
 ## Stations
 
-9 stations, 15 tracks each (135 total). Full roster with taglines and track lists:
+9 stations, 145 tracks total (most run 15, CIPHER runs 25). Full roster with taglines and track lists:
 [`channels.md`](./channels.md) — generated straight from the live
 `CHANNELS` array in `program.js` (`tools/channels-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station
@@ -98,7 +98,9 @@ isn't just an internal annoyance anymore.
 - **Station count:** 9 is the agreed ceiling for now — matches the `1`-`9`
   preset keys cleanly, no spillover digit needed. A 10th station briefly
   existed bound to `0`; if the roster grows past 9 again, decide the preset
-  scheme deliberately rather than defaulting back to that.
+  scheme deliberately rather than defaulting back to that. RELIC SIGNAL was
+  retired in v0.6 and CIPHER moved into its frequency slot, keeping the
+  count at 9.
 - **Dead videos:** the player now auto-skips on any playback error (private,
   removed, region-locked, etc.) instead of going silent mid-song — same
   behavior as pressing `[N]` manually. It doesn't retry the same ID or flag

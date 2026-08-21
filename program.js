@@ -2427,7 +2427,12 @@ export default {
     // just tell people up front so an ad reads as expected rather than as
     // SIGNAL being broken.
     put(19, "Playback is real YouTube video -- ads may play without Premium", FAINT)
-    put(20, 'SIGNAL v0.5', FAINT)
+    // 28th pass: was hardcoded 'SIGNAL v0.5' -- a second, separate version
+    // string that had drifted out of sync with the title bar (which was
+    // last bumped at some earlier pass without this one following). Now
+    // driven off the same VERSION_TAG the title bar uses, so the two can't
+    // drift apart again.
+    put(20, `SIGNAL ${VERSION_TAG}`, FAINT)
     put(22, '[->] STATIONS        [any other key] CLOSE', FAINT)
   },
   // Station reference table -- freq/name/tagline/artists-like, one entry
