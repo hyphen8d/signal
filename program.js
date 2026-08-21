@@ -30,28 +30,21 @@ const NEAR_THRESHOLD = 24
 const SEEK_STEP = 8
 const SCAN_STEP = 6
 
-// 26th pass (Matthew: "the standby state also could use some work" ->
-// evolved into "boot and idle feel, nice, let's do that") -- after this long
-// with no key/pointer/touch input while powered on, the set is considered
-// idle and a faint drift-text starts crawling across DISPLAY_MODE_Y (see
-// frame()/markActivity()). 3 minutes: long enough that normal listening
-// (seeking, skipping, adjusting volume) never triggers it, short enough that
-// it actually shows up during a real unattended stretch rather than never.
-const IDLE_TIMEOUT_MS = 3 * 60 * 1000
-
 // Display modes (23rd pass, Matthew: "let users cycle display modes") --
 // the CRT engine (src/crt.js) already ships a full set of named phosphor
 // tints (see PHOSPHORS in config.js) and a setPhosphor(name) hook on both
 // CRT and Screen; this is purely an app-layer cycle on top of that, not a
 // new rendering feature. Deliberately a curated subset and order, not every
-// key in PHOSPHORS -- 'bubblegum' is explicitly "not a real phosphor" per
-// its own comment in config.js, so it's left out of the default cycle
-// rather than sitting between two real ones.
+// key in PHOSPHORS.
+// 27th pass (Matthew: "add Pink color theme") -- 'bubblegum' (config.js's
+// own comment: "not a real phosphor", included here purely for fun) added
+// to the end of the cycle rather than slotted between two real ones.
 const DISPLAY_MODES = [
   { key: 'matrix', label: 'GREEN PHOSPHOR' },
   { key: 'vt320', label: 'CLASSIC AMBER' },
   { key: 'brutalist', label: 'CYBER BLUE' },
   { key: 'white', label: 'MONOCHROME' },
+  { key: 'bubblegum', label: 'BUBBLEGUM PINK' },
 ]
 
 /** Real, searched-and-verified (YouTube oEmbed) tracks per channel, so each
@@ -123,6 +116,13 @@ const CHANNELS = [
       realTrack('cH_rfGBwamc', 'Violet', 'Hole'),
       realTrack('XKvHgPHLlv4', 'Hunger Strike', 'Temple of the Dog'),
       realTrack('_nGsT_qFMBs', "Touch Me I'm Sick", 'Mudhoney'),
+      // 27th pass: 5 more tracks (Matthew, "add 5 more tracks per station"),
+      // oEmbed-verified same as everything else.
+      realTrack('5WPbqYoz9HA', 'Machinehead', 'Bush'),
+      realTrack('xsJ4O-nSveg', 'Lightning Crashes', 'Live'),
+      realTrack('28kAclQZLTE', "Pretend We're Dead", 'L7'),
+      realTrack('q-KE9lvU810', 'Cherub Rock', 'The Smashing Pumpkins'),
+      realTrack('PjsMnvqL7eY', 'Tomorrow', 'Silverchair'),
     ] },
   { id: 'relic-signal', freq: 219.8, callsign: 'RELIC SIGNAL', tagline: 'the old masters, undying carrier',
     like: 'Beethoven, Chopin, Vivaldi',
@@ -144,6 +144,12 @@ const CHANNELS = [
       realTrack('hcpM0yN7p0c', 'Eine kleine Nachtmusik', 'Mozart'),
       realTrack('OqvHWUZZdP0', 'In the Hall of the Mountain King', 'Grieg'),
       realTrack('8UfpgT9FMAk', 'The Planets: Mars, the Bringer of War', 'Holst'),
+      // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
+      realTrack('4C-YSq5flow', '1812 Overture', 'Tchaikovsky'),
+      realTrack('HfgVsUqmAN8', 'Water Music', 'Handel'),
+      realTrack('1yu-WOwvdOo', 'William Tell Overture', 'Rossini'),
+      realTrack('5Eqj9G5j1ss', 'Bolero', 'Ravel'),
+      realTrack('_5lHOap57to', 'Ave Maria', 'Schubert'),
     ] },
   { id: 'quiet-hours', freq: 356.2, callsign: 'QUIET HOURS', tagline: 'low power, long wave, lights out',
     like: 'Brian Eno, Sigur Rós, Grouper',
@@ -172,6 +178,15 @@ const CHANNELS = [
       realTrack('wLxbD0CkS30', "Heavy Water / I'd Rather Be Sleeping", 'Grouper'),
       realTrack('BD3D5mCjt7I', 'Disintegration Loop 1.1', 'William Basinski'),
       realTrack('jl_z5JvrKlc', 'Discreet Music', 'Brian Eno'),
+      // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
+      // "On the Nature of Daylight" and "Says" were swapped OUT of THE STUDY
+      // 2026-08-20 for reading too classical/neoclassical for that station's
+      // lofi/winddown lane -- both fit QUIET HOURS's ambient lane instead.
+      realTrack('InyT9Gyoz_o', 'On the Nature of Daylight', 'Max Richter'),
+      realTrack('dIwwjy4slI8', 'Says', 'Nils Frahm'),
+      realTrack('-bc37fU36Vk', 'Requiem for Dying Mothers, Pt. 1', 'Stars of the Lid'),
+      realTrack('vTaBX_FoGWk', 'Release', 'Hammock'),
+      realTrack('ShW8YyueC1s', 'In the Fog I', 'Tim Hecker'),
     ] },
   { id: 'cold-wave', freq: 512.9, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     like: 'New Order, The Cure, Depeche Mode',
@@ -194,6 +209,12 @@ const CHANNELS = [
       realTrack('6KR52lEWLEM', 'Sweet Dreams (Are Made of This)', 'Eurythmics'),
       realTrack('0VhzcPnGHXQ', 'Cars', 'Gary Numan'),
       realTrack('iIpfWORQWhU', 'I Ran (So Far Away)', 'A Flock of Seagulls'),
+      // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
+      realTrack('XZVpR3Pk-r8', 'Tainted Love', 'Soft Cell'),
+      realTrack('p3j2NYZ8FKs', 'West End Girls', 'Pet Shop Boys'),
+      realTrack('hKAT3Kp56Yg', 'Vienna', 'Ultravox'),
+      realTrack('nTizYn3-QN0', 'Rio', 'Duran Duran'),
+      realTrack('JJOFQ3OtJIY', 'Ghosts', 'Japan'),
     ] },
   { id: 'the-study', freq: 823.1, callsign: 'THE STUDY', tagline: 'lamp light, one more chapter', // 19th pass: trimmed
     like: 'Nujabes, Bonobo, Tycho',
@@ -220,6 +241,12 @@ const CHANNELS = [
       realTrack('pmJC2aO5vq0', 'Time: The Donut of the Heart', 'J Dilla'),
       realTrack('0yDKIyOJaYM', 'Soon It Will Be Cold Enough', 'Emancipator'),
       realTrack('GMbIF2UeLiA', 'Point in Space and Time', 'Flawed Mangoes'),
+      // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
+      realTrack('hQ5x8pHoIPA', 'Feather', 'Nujabes feat. Cise Starr & Akin (CYNE)'),
+      realTrack('WF34N4gJAKE', 'Cirrus', 'Bonobo'),
+      realTrack('oUbznuLaBRs', 'Anthem', 'Emancipator'),
+      realTrack('VZBrZV3nHAA', 'Awake', 'Tycho'),
+      realTrack('nhl3wfXeCzU', 'econto', 'Wun Two'),
     ] },
 
   // 4 new stations added 2026-08-20, tracklists as given by Matthew, all
@@ -254,6 +281,13 @@ const CHANNELS = [
       realTrack('XE45nsroFTE', 'Ride On Time', 'Tatsuro Yamashita'),
       realTrack('T_lC2O1oIew', 'Plastic Love', 'Mariya Takeuchi'),
       realTrack('XJWqHmY-g9U', 'Telephone Number', 'Junko Ohashi'),
+      // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
+      // Still Japan-only city pop per the 8/20 editorial decision.
+      realTrack('B6O09Jx4ONM', 'Love Step', 'Miharu Koshi'),
+      realTrack('1KP9dLRaKWg', 'Adventure', 'Momoko Kikuchi'),
+      realTrack('4wVN8r14mT0', 'Midnight Girl', 'Toshiki Kadomatsu'),
+      realTrack('WCaOX3PuKKo', 'Kimi no Heart wa Marine Blue', 'S. Kiyotaka & Omega Tribe'),
+      realTrack('-YSwJh-4j1s', 'Loveland, Island', 'Tatsuro Yamashita'),
     ] },
   // 22nd pass (Matthew: "drop outlaw channel completely, 9 channels is our
   // max for now") -- OUTLAW (freq 288.6, spaghetti-western/outlaw-country)
@@ -283,6 +317,12 @@ const CHANNELS = [
       realTrack('gDpfybAvEag', 'On the Run', 'Timecop1983'),
       realTrack('eEELYwi-ABg', 'Riot', 'Dance With The Dead'),
       realTrack('qKauZYXABrM', 'Night Force', 'Power Glove'),
+      // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
+      realTrack('-PKV79lug54', 'Redline', 'Lazerhawk'),
+      realTrack('7fDvxlK2FMc', 'Le Perv', 'Carpenter Brut'),
+      realTrack('Y8DekFFCE5c', 'Humans Are Such Easy Prey', 'Perturbator'),
+      realTrack('0x1tidUctv4', 'Body Talk', 'Mitch Murder'),
+      realTrack('VUQxsBTqh1s', 'The Wrath of Code', 'Dan Terminus'),
     ] },
   // 23rd pass: freq nudged 878.9 -> 854.9 (Matthew: "station 8 and 9 are too
   // close to each other") -- freqToCol() rounded 878.9 and HACKBACK's 893.7
@@ -325,6 +365,19 @@ const CHANNELS = [
       realTrack('VEyDNTLlRgU', 'Civilization (Bongo, Bongo, Bongo)', 'Andrews Sisters & Danny Kaye'),
       realTrack('6pcve7daxNM', "Keep A-Knockin' (But You Can't Come In)", 'Louis Jordan'),
       realTrack('UNxgn8npVLI', "Pistol Packin' Mama", 'Bing Crosby & The Andrews Sisters'),
+      // 27th pass: 5 more tracks -- same concept-tied discipline as the 19th
+      // pass fix above applies here too: each is confirmed actually on
+      // Diamond City Radio (Fallout 4) or Appalachia Radio (Fallout 76), not
+      // just a generic-sounding oldie. One candidate ("Take Me Home, Country
+      // Roads") was checked and explicitly rejected -- the in-game track is a
+      // commissioned cover, not the real John Denver recording, so crediting
+      // it to him would repeat the exact mistake this station already fixed
+      // once. oEmbed-verified same as everything else.
+      realTrack('ad6EL-qTGl8', 'Orange Colored Sky', 'Nat King Cole'),
+      realTrack('3IT8NoEe2_Q', 'Good Rocking Tonight', 'Roy Brown'),
+      realTrack('WVgCo1L9yaY', 'Mr. Sandman', 'The Chordettes'),
+      realTrack('CSW64jVTDF0', 'Sixteen Tons', 'Tennessee Ernie Ford'),
+      realTrack('zhSSJRuGw4c', 'Ghost Riders in the Sky', 'Sons of the Pioneers'),
     ] },
   // 20th pass (Matthew: "add a new channel for 0 called Hackback with music
   // like tribe called quest, de la soul, slick rick, outkast, wu tang, MF
@@ -355,6 +408,12 @@ const CHANNELS = [
       realTrack('4yNQ7_7I5aE', 'C.R.E.A.M.', 'Wu-Tang Clan'),
       realTrack('LMeluRz2wv4', 'Doomsday', 'MF DOOM'),
       realTrack('MNYsmMDZfiA', 'Bouge de là', 'MC Solaar'),
+      // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
+      realTrack('lZXtabqDY-c', "It Ain't Hard to Tell", 'Nas'),
+      realTrack('R0IUR4gkPIE', 'Protect Ya Neck', 'Wu-Tang Clan'),
+      realTrack('y9lNbNGbo24', 'Mass Appeal', 'Gang Starr'),
+      realTrack('cM4kqL13jGM', 'Rebirth of Slick (Cool Like Dat)', 'Digable Planets'),
+      realTrack('s2RhCDAMDBo', 'Respiration', 'Black Star'),
     ] },
 ]
 
@@ -1071,13 +1130,6 @@ export default {
 
     this.history = [] // stack of previously-locked channels, for [B] back
     this.nowPlaying = null
-
-    // Idle drift (26th pass) -- see IDLE_TIMEOUT_MS/markActivity()/frame().
-    this.lastActivityAt = Date.now()
-    this.idleActive = false
-    this.idleText = ''
-    this.idleX = 0
-    this.idleStepAt = 0
     // Set once below if a saved session is restored, so powerUp() knows
     // the player needs an actual loadTrack() call (fresh YT.Player, never
     // loaded anything) rather than just resuming playback on an already-
@@ -1369,11 +1421,6 @@ export default {
   powerUp(s) {
     if (this.poweredOn) return
     this._powerAnimating = true // cleared once REVEAL_DELAY lands below
-    // 26th pass: starts the idle-drift clock fresh from the actual power-on
-    // moment, not whenever init() happened to run -- otherwise a set left on
-    // STANDBY for a while before being switched on could start "idle"
-    // immediately.
-    this.lastActivityAt = Date.now()
     const { term } = s
     const clearAll = () => {
       for (let y = 0; y < term.rows; y++)
@@ -2248,7 +2295,6 @@ export default {
     // desktop-mouse-only, same as it's always been.
     if (e.pointerType === 'touch') return
     if (e.target && e.target.closest('#ytDock')) return
-    if (this.poweredOn) this.markActivity(s)
     this.dragging = true
     this.dragLastX = e.clientX
   },
@@ -2256,7 +2302,6 @@ export default {
     if (!this.dragging) return
     if (!this.poweredOn) return
     if (this.guideOpen) return
-    this.markActivity(s)
     const rect = s.canvas.getBoundingClientRect()
     const dx = e.clientX - this.dragLastX
     this.dragLastX = e.clientX
@@ -2280,7 +2325,6 @@ export default {
   onTouchStart(s, e) {
     if (e.target && e.target.closest && e.target.closest('#ytDock')) return
     if (e.touches.length !== 1) { this._touchActive = false; return } // ignore pinch/multi-touch
-    if (this.poweredOn) this.markActivity(s)
     this._touchActive = true
     const t = e.touches[0]
     this._touchStartX = t.clientX
@@ -2321,17 +2365,6 @@ export default {
     this.presetTune(s, next)
   },
 
-  // 26th pass -- resets the idle-drift timer on any real input, and cancels
-  // the drift immediately (rather than waiting for its own timeout) if it
-  // was already showing, so the set never looks like it's ignoring you.
-  markActivity(s) {
-    this.lastActivityAt = Date.now()
-    if (this.idleActive) {
-      this.idleActive = false
-      if (!this.guideOpen) for (let x = 0; x < s.term.cols; x++) s.term.put(x, DISPLAY_MODE_Y, ' ')
-    }
-  },
-
   key(s, e) {
     // Power toggle (12th pass) -- while off, every key except P is ignored
     // outright so nothing (seek, scan, presets, volume) can act on a set
@@ -2340,7 +2373,6 @@ export default {
       if (e.key === 'p' || e.key === 'P') { e.preventDefault(); this.powerUp(s) }
       return
     }
-    this.markActivity(s)
     // Guide overlay (15th pass; paged 18th pass) -- while open, ANY key
     // closes it (matches the "[any other key] CLOSE" hint on both guide
     // pages) except ArrowRight on page 1 / ArrowLeft on page 2, which flip
@@ -2448,35 +2480,6 @@ export default {
       if (y === METERS_BOT_Y && x === METERS_DIVIDER_X) x += x < BOX_X1 - 1 ? 1 : -1
       s.term.put(x, y, '─', DIM)
       setTimeout(() => { if (this.poweredOn) s.term.put(x, y, '─', MUTED) }, 90 + Math.random() * 80)
-    }
-
-    // Idle drift (26th pass, Matthew: "audio loudness... idle feel, nice,
-    // let's do that") -- after IDLE_TIMEOUT_MS with no key/pointer/touch
-    // input, a faint flavor line crawls across DISPLAY_MODE_Y (the same
-    // spare row flashDisplayMode() transiently borrows -- see its comment)
-    // so a long unattended listen doesn't look completely inert. Skipped
-    // while scanning: the sweep itself is the "still alive" signal there,
-    // and scanning's own status redraws would fight this for the row.
-    // Cancelled instantly by markActivity() on the next real input.
-    if (!this.scanning && Date.now() - this.lastActivityAt > IDLE_TIMEOUT_MS) {
-      if (!this.idleActive) {
-        this.idleActive = true
-        this.idleText = (this.mode === 'locked' && this.lockedChannel)
-          ? `-- ${this.lockedChannel.callsign} --`
-          : '-- DX-ING --'
-        this.idleX = -this.idleText.length
-        this.idleStepAt = t
-      }
-      if (t - this.idleStepAt > 0.15) {
-        this.idleStepAt = t
-        for (let x = 0; x < s.term.cols; x++) s.term.put(x, DISPLAY_MODE_Y, ' ')
-        this.idleX++
-        if (this.idleX > s.term.cols) this.idleX = -this.idleText.length
-        for (let i = 0; i < this.idleText.length; i++) {
-          const x = this.idleX + i
-          if (x >= 0 && x < s.term.cols) s.term.put(x, DISPLAY_MODE_Y, this.idleText[i], FAINT)
-        }
-      }
     }
   },
 }

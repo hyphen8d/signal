@@ -22,7 +22,7 @@ The in-app guide (`[G]`) -- about, full controls reference, and the station rost
 
 ![The guide overlay](./screenshots/guide.jpg)
 
-Four switchable display modes (`[C]` to cycle) -- Classic Amber, Cyber Blue, Monochrome, on top of the default Green Phosphor above:
+Five switchable display modes (`[C]` to cycle) -- Classic Amber, Cyber Blue, Monochrome, and Bubblegum Pink, on top of the default Green Phosphor above:
 
 ![Classic Amber, Cyber Blue, and Monochrome display modes](./screenshots/display-modes.jpg)
 
@@ -74,7 +74,7 @@ touch alone. Known gaps, not oversights.
 
 ## Stations
 
-9 stations, 10 tracks each. Full roster with taglines and track lists:
+9 stations, 15 tracks each (135 total). Full roster with taglines and track lists:
 [`channels.md`](./channels.md) — generated straight from the live
 `CHANNELS` array in `program.js` (`tools/channels-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station
@@ -103,8 +103,16 @@ isn't just an internal annoyance anymore.
   removed, region-locked, etc.) instead of going silent mid-song — same
   behavior as pressing `[N]` manually. It doesn't retry the same ID or flag
   it anywhere, so a channel can quietly lose a track over time. Worth an
-  occasional spot-check (re-run oEmbed against the full roster) rather than
-  waiting to notice by ear.
+  occasional spot-check rather than waiting to notice by ear:
+
+  ```
+  node tools/verify-roster.js               # whole roster
+  node tools/verify-roster.js --channel=atomic   # one station only
+  ```
+
+  Checks every track ID against oEmbed and prints any that are now dead,
+  private, or region/embed-restricted, with a nonzero exit code if anything
+  failed (so it's CI/cron-friendly if that's ever wanted).
 - **Concept-tied stations:** if a station's premise points at a real source
   (e.g. ATOMIC being an in-universe Fallout radio station), verify tracks
   against *that* source's actual tracklist, not just oEmbed -- oEmbed only

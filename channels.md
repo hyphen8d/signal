@@ -1,6 +1,6 @@
 # SIGNAL -- channel roster
 
-Generated from program.js. 9 stations, 90 tracks total.
+Generated from program.js. 9 stations, 135 tracks total.
 
 ## STATIC BLOOM -- 137.4
 
@@ -8,7 +8,7 @@ Generated from program.js. 9 stations, 90 tracks total.
 
 Ident tones (Hz): 392, 349.2, 311.2, 261.6
 
-Tracks (10):
+Tracks (15):
 
 1. **Smells Like Teen Spirit** -- Nirvana  ([youtu.be/hTWKbfoikeg](https://youtu.be/hTWKbfoikeg))
 2. **Black Hole Sun** -- Soundgarden  ([youtu.be/3mbBbFH9fAg](https://youtu.be/3mbBbFH9fAg))
@@ -20,6 +20,11 @@ Tracks (10):
 8. **Violet** -- Hole  ([youtu.be/cH_rfGBwamc](https://youtu.be/cH_rfGBwamc))
 9. **Hunger Strike** -- Temple of the Dog  ([youtu.be/XKvHgPHLlv4](https://youtu.be/XKvHgPHLlv4))
 10. **Touch Me I'm Sick** -- Mudhoney  ([youtu.be/_nGsT_qFMBs](https://youtu.be/_nGsT_qFMBs))
+11. **Machinehead** -- Bush  ([youtu.be/5WPbqYoz9HA](https://youtu.be/5WPbqYoz9HA))
+12. **Lightning Crashes** -- Live  ([youtu.be/xsJ4O-nSveg](https://youtu.be/xsJ4O-nSveg))
+13. **Pretend We're Dead** -- L7  ([youtu.be/28kAclQZLTE](https://youtu.be/28kAclQZLTE))
+14. **Cherub Rock** -- The Smashing Pumpkins  ([youtu.be/q-KE9lvU810](https://youtu.be/q-KE9lvU810))
+15. **Tomorrow** -- Silverchair  ([youtu.be/PjsMnvqL7eY](https://youtu.be/PjsMnvqL7eY))
 
 ## RELIC SIGNAL -- 219.8
 
@@ -27,7 +32,7 @@ Tracks (10):
 
 Ident tones (Hz): 523.3, 659.3, 784, 1046.5
 
-Tracks (10):
+Tracks (15):
 
 1. **Symphony No. 5** -- Beethoven  ([youtu.be/IvrzJ8uH1PI](https://youtu.be/IvrzJ8uH1PI))
 2. **Suite bergamasque: III. Clair de lune** -- Debussy / Lang Lang  ([youtu.be/fZrm9h3JRGs](https://youtu.be/fZrm9h3JRGs))
@@ -39,6 +44,11 @@ Tracks (10):
 8. **Eine kleine Nachtmusik** -- Mozart  ([youtu.be/hcpM0yN7p0c](https://youtu.be/hcpM0yN7p0c))
 9. **In the Hall of the Mountain King** -- Grieg  ([youtu.be/OqvHWUZZdP0](https://youtu.be/OqvHWUZZdP0))
 10. **The Planets: Mars, the Bringer of War** -- Holst  ([youtu.be/8UfpgT9FMAk](https://youtu.be/8UfpgT9FMAk))
+11. **1812 Overture** -- Tchaikovsky  ([youtu.be/4C-YSq5flow](https://youtu.be/4C-YSq5flow))
+12. **Water Music** -- Handel  ([youtu.be/HfgVsUqmAN8](https://youtu.be/HfgVsUqmAN8))
+13. **William Tell Overture** -- Rossini  ([youtu.be/1yu-WOwvdOo](https://youtu.be/1yu-WOwvdOo))
+14. **Bolero** -- Ravel  ([youtu.be/5Eqj9G5j1ss](https://youtu.be/5Eqj9G5j1ss))
+15. **Ave Maria** -- Schubert  ([youtu.be/_5lHOap57to](https://youtu.be/_5lHOap57to))
 
 ## QUIET HOURS -- 356.2
 
@@ -46,7 +56,7 @@ Tracks (10):
 
 Ident tones (Hz): 392, 329.6, 370, 293.7
 
-Tracks (10):
+Tracks (15):
 
 1. **Weightless** -- Marconi Union  ([youtu.be/UfcAVejslrU](https://youtu.be/UfcAVejslrU))
 2. **An Ending (Ascent) [arr. David Le Page]** -- Brian Eno / Orchestra of the Swan  ([youtu.be/sfBlBs25Ewk](https://youtu.be/sfBlBs25Ewk))
@@ -58,6 +68,11 @@ Tracks (10):
 8. **Heavy Water / I'd Rather Be Sleeping** -- Grouper  ([youtu.be/wLxbD0CkS30](https://youtu.be/wLxbD0CkS30))
 9. **Disintegration Loop 1.1** -- William Basinski  ([youtu.be/BD3D5mCjt7I](https://youtu.be/BD3D5mCjt7I))
 10. **Discreet Music** -- Brian Eno  ([youtu.be/jl_z5JvrKlc](https://youtu.be/jl_z5JvrKlc))
+11. **On the Nature of Daylight** -- Max Richter  ([youtu.be/InyT9Gyoz_o](https://youtu.be/InyT9Gyoz_o))
+12. **Says** -- Nils Frahm  ([youtu.be/dIwwjy4slI8](https://youtu.be/dIwwjy4slI8))
+13. **Requiem for Dying Mothers, Pt. 1** -- Stars of the Lid  ([youtu.be/-bc37fU36Vk](https://youtu.be/-bc37fU36Vk))
+14. **Release** -- Hammock  ([youtu.be/vTaBX_FoGWk](https://youtu.be/vTaBX_FoGWk))
+15. **In the Fog I** -- Tim Hecker  ([youtu.be/ShW8YyueC1s](https://youtu.be/ShW8YyueC1s))
 
 ## COLD WAVE -- 512.9
 
@@ -65,7 +80,7 @@ Tracks (10):
 
 Ident tones (Hz): 440, 659.3, 554.4, 440
 
-Tracks (10):
+Tracks (15):
 
 1. **Blue Monday '88** -- New Order  ([youtu.be/9GMjH1nR0ds](https://youtu.be/9GMjH1nR0ds))
 2. **Just Like Heaven** -- The Cure  ([youtu.be/1ASpBpT8bRQ](https://youtu.be/1ASpBpT8bRQ))
@@ -77,6 +92,11 @@ Tracks (10):
 8. **Sweet Dreams (Are Made of This)** -- Eurythmics  ([youtu.be/6KR52lEWLEM](https://youtu.be/6KR52lEWLEM))
 9. **Cars** -- Gary Numan  ([youtu.be/0VhzcPnGHXQ](https://youtu.be/0VhzcPnGHXQ))
 10. **I Ran (So Far Away)** -- A Flock of Seagulls  ([youtu.be/iIpfWORQWhU](https://youtu.be/iIpfWORQWhU))
+11. **Tainted Love** -- Soft Cell  ([youtu.be/XZVpR3Pk-r8](https://youtu.be/XZVpR3Pk-r8))
+12. **West End Girls** -- Pet Shop Boys  ([youtu.be/p3j2NYZ8FKs](https://youtu.be/p3j2NYZ8FKs))
+13. **Vienna** -- Ultravox  ([youtu.be/hKAT3Kp56Yg](https://youtu.be/hKAT3Kp56Yg))
+14. **Rio** -- Duran Duran  ([youtu.be/nTizYn3-QN0](https://youtu.be/nTizYn3-QN0))
+15. **Ghosts** -- Japan  ([youtu.be/JJOFQ3OtJIY](https://youtu.be/JJOFQ3OtJIY))
 
 ## THE STUDY -- 823.1
 
@@ -84,7 +104,7 @@ Tracks (10):
 
 Ident tones (Hz): 329.6, 293.7, 261.6, 293.7
 
-Tracks (10):
+Tracks (15):
 
 1. **Aruarian Dance** -- Nujabes  ([youtu.be/XnFOucmKlXA](https://youtu.be/XnFOucmKlXA))
 2. **Midnight In A Perfect World** -- DJ Shadow  ([youtu.be/InFbBlpDTfQ](https://youtu.be/InFbBlpDTfQ))
@@ -96,6 +116,11 @@ Tracks (10):
 8. **Time: The Donut of the Heart** -- J Dilla  ([youtu.be/pmJC2aO5vq0](https://youtu.be/pmJC2aO5vq0))
 9. **Soon It Will Be Cold Enough** -- Emancipator  ([youtu.be/0yDKIyOJaYM](https://youtu.be/0yDKIyOJaYM))
 10. **Point in Space and Time** -- Flawed Mangoes  ([youtu.be/GMbIF2UeLiA](https://youtu.be/GMbIF2UeLiA))
+11. **Feather** -- Nujabes feat. Cise Starr & Akin (CYNE)  ([youtu.be/hQ5x8pHoIPA](https://youtu.be/hQ5x8pHoIPA))
+12. **Cirrus** -- Bonobo  ([youtu.be/WF34N4gJAKE](https://youtu.be/WF34N4gJAKE))
+13. **Anthem** -- Emancipator  ([youtu.be/oUbznuLaBRs](https://youtu.be/oUbznuLaBRs))
+14. **Awake** -- Tycho  ([youtu.be/VZBrZV3nHAA](https://youtu.be/VZBrZV3nHAA))
+15. **econto** -- Wun Two  ([youtu.be/nhl3wfXeCzU](https://youtu.be/nhl3wfXeCzU))
 
 ## HIGH RISE -- 650.0
 
@@ -103,7 +128,7 @@ Tracks (10):
 
 Ident tones (Hz): 523.3, 784, 659.3, 987.8
 
-Tracks (10):
+Tracks (15):
 
 1. **Stay With Me** -- Miki Matsubara  ([youtu.be/5zTkTlj2h9E](https://youtu.be/5zTkTlj2h9E))
 2. **Sparkle** -- Tatsuro Yamashita  ([youtu.be/tWqZASIxlqs](https://youtu.be/tWqZASIxlqs))
@@ -115,6 +140,11 @@ Tracks (10):
 8. **Ride On Time** -- Tatsuro Yamashita  ([youtu.be/XE45nsroFTE](https://youtu.be/XE45nsroFTE))
 9. **Plastic Love** -- Mariya Takeuchi  ([youtu.be/T_lC2O1oIew](https://youtu.be/T_lC2O1oIew))
 10. **Telephone Number** -- Junko Ohashi  ([youtu.be/XJWqHmY-g9U](https://youtu.be/XJWqHmY-g9U))
+11. **Love Step** -- Miharu Koshi  ([youtu.be/B6O09Jx4ONM](https://youtu.be/B6O09Jx4ONM))
+12. **Adventure** -- Momoko Kikuchi  ([youtu.be/1KP9dLRaKWg](https://youtu.be/1KP9dLRaKWg))
+13. **Midnight Girl** -- Toshiki Kadomatsu  ([youtu.be/4wVN8r14mT0](https://youtu.be/4wVN8r14mT0))
+14. **Kimi no Heart wa Marine Blue** -- S. Kiyotaka & Omega Tribe  ([youtu.be/WCaOX3PuKKo](https://youtu.be/WCaOX3PuKKo))
+15. **Loveland, Island** -- Tatsuro Yamashita  ([youtu.be/-YSwJh-4j1s](https://youtu.be/-YSwJh-4j1s))
 
 ## CIRCUIT CRUSH -- 434.5
 
@@ -122,7 +152,7 @@ Tracks (10):
 
 Ident tones (Hz): 587.3, 466.2, 698.5, 932.3
 
-Tracks (10):
+Tracks (15):
 
 1. **Nightcall** -- Kavinsky  ([youtu.be/ZVS6Q_lbKQ0](https://youtu.be/ZVS6Q_lbKQ0))
 2. **Sunset** -- The Midnight  ([youtu.be/URma_gu1aNE](https://youtu.be/URma_gu1aNE))
@@ -134,6 +164,11 @@ Tracks (10):
 8. **On the Run** -- Timecop1983  ([youtu.be/gDpfybAvEag](https://youtu.be/gDpfybAvEag))
 9. **Riot** -- Dance With The Dead  ([youtu.be/eEELYwi-ABg](https://youtu.be/eEELYwi-ABg))
 10. **Night Force** -- Power Glove  ([youtu.be/qKauZYXABrM](https://youtu.be/qKauZYXABrM))
+11. **Redline** -- Lazerhawk  ([youtu.be/-PKV79lug54](https://youtu.be/-PKV79lug54))
+12. **Le Perv** -- Carpenter Brut  ([youtu.be/7fDvxlK2FMc](https://youtu.be/7fDvxlK2FMc))
+13. **Humans Are Such Easy Prey** -- Perturbator  ([youtu.be/Y8DekFFCE5c](https://youtu.be/Y8DekFFCE5c))
+14. **Body Talk** -- Mitch Murder  ([youtu.be/0x1tidUctv4](https://youtu.be/0x1tidUctv4))
+15. **The Wrath of Code** -- Dan Terminus  ([youtu.be/VUQxsBTqh1s](https://youtu.be/VUQxsBTqh1s))
 
 ## ATOMIC -- 854.9
 
@@ -141,7 +176,7 @@ Tracks (10):
 
 Ident tones (Hz): 392, 493.9, 493.9, 587.3
 
-Tracks (10):
+Tracks (15):
 
 1. **I Don't Want to Set the World on Fire** -- The Ink Spots  ([youtu.be/GkHd1d_UVOE](https://youtu.be/GkHd1d_UVOE))
 2. **Crawl Out Through the Fallout** -- Sheldon Allman  ([youtu.be/Q9bSOaSuScQ](https://youtu.be/Q9bSOaSuScQ))
@@ -153,6 +188,11 @@ Tracks (10):
 8. **Civilization (Bongo, Bongo, Bongo)** -- Andrews Sisters & Danny Kaye  ([youtu.be/VEyDNTLlRgU](https://youtu.be/VEyDNTLlRgU))
 9. **Keep A-Knockin' (But You Can't Come In)** -- Louis Jordan  ([youtu.be/6pcve7daxNM](https://youtu.be/6pcve7daxNM))
 10. **Pistol Packin' Mama** -- Bing Crosby & The Andrews Sisters  ([youtu.be/UNxgn8npVLI](https://youtu.be/UNxgn8npVLI))
+11. **Orange Colored Sky** -- Nat King Cole  ([youtu.be/ad6EL-qTGl8](https://youtu.be/ad6EL-qTGl8))
+12. **Good Rocking Tonight** -- Roy Brown  ([youtu.be/3IT8NoEe2_Q](https://youtu.be/3IT8NoEe2_Q))
+13. **Mr. Sandman** -- The Chordettes  ([youtu.be/WVgCo1L9yaY](https://youtu.be/WVgCo1L9yaY))
+14. **Sixteen Tons** -- Tennessee Ernie Ford  ([youtu.be/CSW64jVTDF0](https://youtu.be/CSW64jVTDF0))
+15. **Ghost Riders in the Sky** -- Sons of the Pioneers  ([youtu.be/zhSSJRuGw4c](https://youtu.be/zhSSJRuGw4c))
 
 ## HACKBACK -- 888.7
 
@@ -160,7 +200,7 @@ Tracks (10):
 
 Ident tones (Hz): 220, 293.7, 349.2, 293.7
 
-Tracks (10):
+Tracks (15):
 
 1. **Can I Kick It?** -- A Tribe Called Quest  ([youtu.be/D-uV8TGjaGU](https://youtu.be/D-uV8TGjaGU))
 2. **Award Tour** -- A Tribe Called Quest  ([youtu.be/P800UWoE9xs](https://youtu.be/P800UWoE9xs))
@@ -172,3 +212,8 @@ Tracks (10):
 8. **C.R.E.A.M.** -- Wu-Tang Clan  ([youtu.be/4yNQ7_7I5aE](https://youtu.be/4yNQ7_7I5aE))
 9. **Doomsday** -- MF DOOM  ([youtu.be/LMeluRz2wv4](https://youtu.be/LMeluRz2wv4))
 10. **Bouge de là** -- MC Solaar  ([youtu.be/MNYsmMDZfiA](https://youtu.be/MNYsmMDZfiA))
+11. **It Ain't Hard to Tell** -- Nas  ([youtu.be/lZXtabqDY-c](https://youtu.be/lZXtabqDY-c))
+12. **Protect Ya Neck** -- Wu-Tang Clan  ([youtu.be/R0IUR4gkPIE](https://youtu.be/R0IUR4gkPIE))
+13. **Mass Appeal** -- Gang Starr  ([youtu.be/y9lNbNGbo24](https://youtu.be/y9lNbNGbo24))
+14. **Rebirth of Slick (Cool Like Dat)** -- Digable Planets  ([youtu.be/cM4kqL13jGM](https://youtu.be/cM4kqL13jGM))
+15. **Respiration** -- Black Star  ([youtu.be/s2RhCDAMDBo](https://youtu.be/s2RhCDAMDBo))
