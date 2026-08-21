@@ -1167,6 +1167,23 @@ export default {
         }
       }
     }
+    // 28th pass (Matthew: "sometimes it doesn't automatically seek to a
+    // channel and the user has to figure out to use arrows or hit s") -- a
+    // first-ever visit (no saved session, or a save that somehow had no
+    // channelId) landed in 'seeking' mode sitting at FREQ_MIN with nothing
+    // locked, so the set just sat there silently until someone thought to
+    // press an arrow key or S. A real radio doesn't power on to dead air by
+    // default -- lands on a random preset instead, same as if that preset
+    // had been the one restored from a save (same fields, same
+    // needsTrackLoad path through powerUp()).
+    if (this.mode !== 'locked') {
+      const ch = CHANNELS[Math.floor(Math.random() * CHANNELS.length)]
+      this.mode = 'locked'
+      this.lockedChannel = ch
+      this.freq = ch.freq
+      this.currentTrack = this.nextTrack(ch)
+      this.needsTrackLoad = true
+    }
     // Only actually calls into the CRT when a non-default mode was restored
     // -- otherwise this is a same-value no-op on top of mount()'s own
     // setPhosphor(PHOSPHOR) call, cheap either way.
