@@ -30,6 +30,15 @@ const NEAR_THRESHOLD = 24
 const SEEK_STEP = 8
 const SCAN_STEP = 6
 
+// 26th pass (Matthew: "the standby state also could use some work" ->
+// evolved into "boot and idle feel, nice, let's do that") -- after this long
+// with no key/pointer/touch input while powered on, the set is considered
+// idle and a faint drift-text starts crawling across DISPLAY_MODE_Y (see
+// frame()/markActivity()). 3 minutes: long enough that normal listening
+// (seeking, skipping, adjusting volume) never triggers it, short enough that
+// it actually shows up during a real unattended stretch rather than never.
+const IDLE_TIMEOUT_MS = 3 * 60 * 1000
+
 // Display modes (23rd pass, Matthew: "let users cycle display modes") --
 // the CRT engine (src/crt.js) already ships a full set of named phosphor
 // tints (see PHOSPHORS in config.js) and a setPhosphor(name) hook on both
@@ -1062,6 +1071,13 @@ export default {
 
     this.history = [] // stack of previously-locked channels, for [B] back
     this.nowPlaying = null
+
+    // Idle drift (26th pass) -- see IDLE_TIMEOUT_MS/markActivity()/frame().
+    this.lastActivityAt = Date.now()
+    this.idleActive = false
+    this.idleText = ''
+    this.idleX = 0
+    this.idleStepAt = 0
     // Set once below if a saved session is restored, so powerUp() knows
     // the player needs an actual loadTrack() call (fresh YT.Player, never
     // loaded anything) rather than just resuming playback on an already-
@@ -1353,6 +1369,11 @@ export default {
   powerUp(s) {
     if (this.poweredOn) return
     this._powerAnimating = true // cleared once REVEAL_DELAY lands below
+    // 26th pass: starts the idle-drift clock fresh from the actual power-on
+    // moment, not whenever init() happened to run -- otherwise a set left on
+    // STANDBY for a while before being switched on could start "idle"
+    // immediately.
+    this.lastActivityAt = Date.now()
     const { term } = s
     const clearAll = () => {
       for (let y = 0; y < term.rows; y++)
@@ -1362,18 +1383,36 @@ export default {
     const midY = Math.floor(term.rows / 2)
     playPowerOnSound()
 
+    // 26th pass (Matthew: "a longer, better cold boot sequence... maybe like
+    // cyberspace.online does") -- looked at cyberspace's actual boot live: a
+    // dense retro-BIOS POST (hostname/kernel/hardware probe lines, a RAM
+    // map, per-module load bars) before it lands on the app. SIGNAL is a
+    // receiver, not an OS, so this borrows that probe-block density and
+    // key:value voice but keeps it in-fiction -- tuner/antenna/preset-table
+    // diagnostics instead of kernel modules. Values are pulled from the
+    // real constants (FREQ_MIN/MAX, CHANNELS.length) so this can't drift out
+    // of sync with the actual band/roster the way a hardcoded line could.
     const bootLines = [
       'MODEL SG-1  SIGNAL RECEIVER',
+      '',
+      `BAND        : ${FREQ_MIN.toFixed(1)} - ${FREQ_MAX.toFixed(1)} KHZ`,
+      `PRESETS     : ${CHANNELS.length} STATIONS LOADED`,
+      'OSCILLATOR  : QUARTZ, CALIBRATING...',
+      'ANTENNA     : DIPOLE, CONTINUITY OK',
+      '',
       '[ OK ] TUBES WARMING',
       '[ OK ] TUNER CALIBRATED',
+      '[ OK ] PRESET TABLE LOADED',
+      '[ OK ] SQUELCH SET',
       '[ OK ] SIGNAL LOCK ARMED',
       '[ OK ] AUDIO PATH READY',
     ]
     // Pacing (15th pass, Matthew: "even longer cold boot please" -- a
-    // second pass after the 14th pass already slowed this down once). Full
-    // sequence now runs a little over 3s. Still one-shot on every power-on,
-    // not just the very first cold one, so it stays worth the wait rather
-    // than becoming an annoyance to click through on every session.
+    // second pass after the 14th pass already slowed this down once; 26th
+    // pass grew bootLines further on top of that, so the same per-line
+    // stagger now runs ~5.5s total rather than ~3s). Still one-shot on every
+    // power-on, not just the very first cold one, so it stays worth the wait
+    // rather than becoming an annoyance to click through on every session.
     const DOT_MS = 500
     const LINE_STAGGER_MS = 240
     const BOOT_TEXT_DELAY = 1200
@@ -2062,7 +2101,7 @@ export default {
     // just tell people up front so an ad reads as expected rather than as
     // SIGNAL being broken.
     put(19, "Playback is real YouTube video -- ads may play without Premium", FAINT)
-    put(20, 'SIGNAL v0.3', FAINT)
+    put(20, 'SIGNAL v0.5', FAINT)
     put(22, '[->] STATIONS        [any other key] CLOSE', FAINT)
   },
   // Station reference table -- freq/name/tagline/artists-like, one entry
@@ -2209,6 +2248,7 @@ export default {
     // desktop-mouse-only, same as it's always been.
     if (e.pointerType === 'touch') return
     if (e.target && e.target.closest('#ytDock')) return
+    if (this.poweredOn) this.markActivity(s)
     this.dragging = true
     this.dragLastX = e.clientX
   },
@@ -2216,6 +2256,7 @@ export default {
     if (!this.dragging) return
     if (!this.poweredOn) return
     if (this.guideOpen) return
+    this.markActivity(s)
     const rect = s.canvas.getBoundingClientRect()
     const dx = e.clientX - this.dragLastX
     this.dragLastX = e.clientX
@@ -2239,6 +2280,7 @@ export default {
   onTouchStart(s, e) {
     if (e.target && e.target.closest && e.target.closest('#ytDock')) return
     if (e.touches.length !== 1) { this._touchActive = false; return } // ignore pinch/multi-touch
+    if (this.poweredOn) this.markActivity(s)
     this._touchActive = true
     const t = e.touches[0]
     this._touchStartX = t.clientX
@@ -2279,6 +2321,17 @@ export default {
     this.presetTune(s, next)
   },
 
+  // 26th pass -- resets the idle-drift timer on any real input, and cancels
+  // the drift immediately (rather than waiting for its own timeout) if it
+  // was already showing, so the set never looks like it's ignoring you.
+  markActivity(s) {
+    this.lastActivityAt = Date.now()
+    if (this.idleActive) {
+      this.idleActive = false
+      if (!this.guideOpen) for (let x = 0; x < s.term.cols; x++) s.term.put(x, DISPLAY_MODE_Y, ' ')
+    }
+  },
+
   key(s, e) {
     // Power toggle (12th pass) -- while off, every key except P is ignored
     // outright so nothing (seek, scan, presets, volume) can act on a set
@@ -2287,6 +2340,7 @@ export default {
       if (e.key === 'p' || e.key === 'P') { e.preventDefault(); this.powerUp(s) }
       return
     }
+    this.markActivity(s)
     // Guide overlay (15th pass; paged 18th pass) -- while open, ANY key
     // closes it (matches the "[any other key] CLOSE" hint on both guide
     // pages) except ArrowRight on page 1 / ArrowLeft on page 2, which flip
@@ -2394,6 +2448,35 @@ export default {
       if (y === METERS_BOT_Y && x === METERS_DIVIDER_X) x += x < BOX_X1 - 1 ? 1 : -1
       s.term.put(x, y, '─', DIM)
       setTimeout(() => { if (this.poweredOn) s.term.put(x, y, '─', MUTED) }, 90 + Math.random() * 80)
+    }
+
+    // Idle drift (26th pass, Matthew: "audio loudness... idle feel, nice,
+    // let's do that") -- after IDLE_TIMEOUT_MS with no key/pointer/touch
+    // input, a faint flavor line crawls across DISPLAY_MODE_Y (the same
+    // spare row flashDisplayMode() transiently borrows -- see its comment)
+    // so a long unattended listen doesn't look completely inert. Skipped
+    // while scanning: the sweep itself is the "still alive" signal there,
+    // and scanning's own status redraws would fight this for the row.
+    // Cancelled instantly by markActivity() on the next real input.
+    if (!this.scanning && Date.now() - this.lastActivityAt > IDLE_TIMEOUT_MS) {
+      if (!this.idleActive) {
+        this.idleActive = true
+        this.idleText = (this.mode === 'locked' && this.lockedChannel)
+          ? `-- ${this.lockedChannel.callsign} --`
+          : '-- DX-ING --'
+        this.idleX = -this.idleText.length
+        this.idleStepAt = t
+      }
+      if (t - this.idleStepAt > 0.15) {
+        this.idleStepAt = t
+        for (let x = 0; x < s.term.cols; x++) s.term.put(x, DISPLAY_MODE_Y, ' ')
+        this.idleX++
+        if (this.idleX > s.term.cols) this.idleX = -this.idleText.length
+        for (let i = 0; i < this.idleText.length; i++) {
+          const x = this.idleX + i
+          if (x >= 0 && x < s.term.cols) s.term.put(x, DISPLAY_MODE_Y, this.idleText[i], FAINT)
+        }
+      }
     }
   },
 }
