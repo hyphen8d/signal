@@ -44,7 +44,7 @@ Tracks (10):
 
 *low power, long wave, lights out*
 
-Ident tones (Hz): 392, 369.9, 329.6, 293.7
+Ident tones (Hz): 392, 329.6, 370, 293.7
 
 Tracks (10):
 
@@ -63,7 +63,7 @@ Tracks (10):
 
 *synthetic hearts, borrowed neon*
 
-Ident tones (Hz): 440, 554.4, 659.3, 880
+Ident tones (Hz): 440, 659.3, 554.4, 440
 
 Tracks (10):
 
@@ -82,7 +82,7 @@ Tracks (10):
 
 *lamp light, one more chapter*
 
-Ident tones (Hz): 329.6, 293.7, 261.6, 220
+Ident tones (Hz): 329.6, 293.7, 261.6, 293.7
 
 Tracks (10):
 
@@ -101,7 +101,7 @@ Tracks (10):
 
 *chrome towers, all-night funk*
 
-Ident tones (Hz): 523.3, 659.3, 830.6, 987.8
+Ident tones (Hz): 523.3, 784, 659.3, 987.8
 
 Tracks (10):
 
@@ -120,7 +120,7 @@ Tracks (10):
 
 *analog glow, the long drive home*
 
-Ident tones (Hz): 466.2, 587.3, 698.5, 932.3
+Ident tones (Hz): 587.3, 466.2, 698.5, 932.3
 
 Tracks (10):
 
@@ -139,7 +139,7 @@ Tracks (10):
 
 *swing on while the counter clicks*
 
-Ident tones (Hz): 392, 493.9, 587.3, 493.9
+Ident tones (Hz): 392, 493.9, 493.9, 587.3
 
 Tracks (10):
 
@@ -158,7 +158,7 @@ Tracks (10):
 
 *boom bap broadcast, deep cuts only*
 
-Ident tones (Hz): 349.2, 293.7, 246.9, 220
+Ident tones (Hz): 220, 293.7, 349.2, 293.7
 
 Tracks (10):
 
