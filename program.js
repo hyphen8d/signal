@@ -207,7 +207,13 @@ const CHANNELS = [
       realTrack('uPudE8nDog0', "Don't You Want Me", 'The Human League'),
       realTrack('M1oqX84UKOE', "Don't You (Forget About Me)", 'Simple Minds'),
       realTrack('6KR52lEWLEM', 'Sweet Dreams (Are Made of This)', 'Eurythmics'),
-      realTrack('0VhzcPnGHXQ', 'Cars', 'Gary Numan'),
+      // 31st pass (Matthew: "cars track needs replacing, its a music video
+      // or something and has extra dialog") -- the old ID was a fan
+      // reupload of the 1979 music video, which opens with spoken
+      // dialog/interview footage before the song starts. Swapped for a
+      // clean HQ-audio-only upload, oEmbed-verified same as everything
+      // else here.
+      realTrack('sj1ajOdKgKo', 'Cars', 'Gary Numan'),
       realTrack('iIpfWORQWhU', 'I Ran (So Far Away)', 'A Flock of Seagulls'),
       // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
       realTrack('XZVpR3Pk-r8', 'Tainted Love', 'Soft Cell'),
@@ -449,12 +455,13 @@ const BOX_X1 = 77
 // Row 1 sits blank between the title bar and STATUS_Y. The brand-plate
 // nameplate briefly lived here (10th pass) but moved into the title bar
 // itself in the 11th pass -- this row is free again.
-// 23rd pass: it's also the only spare row on the fully-packed 25-row grid
-// (see the layout budget notes), so it doubles as a transient home for the
-// "[C] DISPLAY" mode label -- see flashDisplayMode(). The guide overlay
-// (15th pass) claims the same row for its own header while open; whichever
-// of the two is active owns it, they never overlap since 'c' is inert
-// while the guide is open (see key()).
+// 23rd pass: it briefly doubled as a transient home for a "[C] DISPLAY"
+// mode toast (flashDisplayMode()). 31st pass: that toast was removed --
+// the antenna pane's persistent mode strip (drawModeStrip()) already shows
+// the same thing, so the transient one was redundant (Matthew: "thought
+// was cool but now not needed"). This row is genuinely free again except
+// for the guide overlay (15th pass), which still claims it for its own
+// header while open (see key()).
 const DISPLAY_MODE_Y = 1
 const STATUS_Y = 2
 // Fixed interior width for the status word inside setStatus()'s brackets
@@ -984,13 +991,18 @@ export default {
     // active") -- NOW PLAYING is the "hero" box (what's actually playing
     // matters most, see the 5th-pass note above), so its frame draws a
     // notch brighter than the other three's static MUTED chrome instead of
-    // all four boxes reading as identical weight. playBootFlicker()'s tail
-    // restores this same BRIGHT after its uniform boot-flicker beat
-    // sequence settles everything (including this box) back to MUTED.
-    drawBoxTop(term, NOWPLAYING_TOP_Y, BOX_X0, BOX_X1, 'NOW PLAYING', BRIGHT)
-    drawBoxSide(term, TRACK_Y, BOX_X0, BOX_X1, BRIGHT)
-    drawBoxSide(term, PLAYBACK_Y, BOX_X0, BOX_X1, BRIGHT)
-    drawBoxBottom(term, NOWPLAYING_BOT_Y, BOX_X0, BOX_X1, BRIGHT)
+    // all four boxes reading as identical weight. 31st pass: this was
+    // BRIGHT at first, but the CRT bloom shader turns a full-BRIGHT dashed
+    // border into what reads as a blown-out solid bar rather than a crisp
+    // line once it's actually rendered (Matthew: "what are these meant to
+    // be" re: a screenshot of exactly that). BOLD is the same one-notch-up
+    // idea without tripping the bloom. playBootFlicker()'s tail restores
+    // this same BOLD after its uniform boot-flicker beat sequence settles
+    // everything (including this box) back to MUTED.
+    drawBoxTop(term, NOWPLAYING_TOP_Y, BOX_X0, BOX_X1, 'NOW PLAYING', BOLD)
+    drawBoxSide(term, TRACK_Y, BOX_X0, BOX_X1, BOLD)
+    drawBoxSide(term, PLAYBACK_Y, BOX_X0, BOX_X1, BOLD)
+    drawBoxBottom(term, NOWPLAYING_BOT_Y, BOX_X0, BOX_X1, BOLD)
 
     drawBoxTop(term, METERS_TOP_Y, BOX_X0, BOX_X1, 'LEVELS', MUTED, METERS_DIVIDER_X)
     drawBoxSide(term, VOL_Y, BOX_X0, BOX_X1, MUTED)
@@ -1078,29 +1090,12 @@ export default {
     this.displayModeIndex = (this.displayModeIndex + 1) % DISPLAY_MODES.length
     const mode = DISPLAY_MODES[this.displayModeIndex]
     s.setPhosphor(mode.key)
-    this.flashDisplayMode(s, mode.label)
+    // 31st pass (Matthew: "flashes the name of the color... I thought was
+    // cool but now not needed") -- the antenna pane's mode strip (see
+    // drawModeStrip()) is a persistent on-screen readout of the same
+    // information this transient toast used to announce, so the toast
+    // (flashDisplayMode(), removed) was just duplicating it a second time.
     saveSignalState(this)
-  },
-
-  // Transient "which mode is this" label on DISPLAY_MODE_Y (row 1, the one
-  // spare row on the fully-packed grid -- see its own comment). Not a
-  // status the way setStatus()'s bracketed line is (that always reflects
-  // real seek/lock state); this is a self-clearing toast, closer to how the
-  // preset whoosh is a one-shot beat rather than persistent state.
-  flashDisplayMode(s, label) {
-    const { term } = s
-    if (this._displayModeFlashTimer) clearTimeout(this._displayModeFlashTimer)
-    for (let x = 0; x < term.cols; x++) term.put(x, DISPLAY_MODE_Y, ' ')
-    term.text(centerX(term.cols, label), DISPLAY_MODE_Y, label, BRIGHT)
-    this._displayModeFlashTimer = setTimeout(() => {
-      this._displayModeFlashTimer = null
-      // The guide overlay claims this same row for its own header -- if it
-      // opened while this timer was pending, it owns row 1 now and already
-      // cleared/redrew it; blanking here would stomp its header instead of
-      // cleaning up after ourselves.
-      if (this.guideOpen) return
-      for (let x = 0; x < term.cols; x++) term.put(x, DISPLAY_MODE_Y, ' ')
-    }, 1400)
   },
 
   init(s) {
@@ -1383,10 +1378,10 @@ export default {
     // land, same as it's already drawn everywhere else.
     setTimeout(() => {
       if (this.guideOpen) return
-      drawBoxTop(term, NOWPLAYING_TOP_Y, BOX_X0, BOX_X1, 'NOW PLAYING', BRIGHT)
-      drawBoxSide(term, TRACK_Y, BOX_X0, BOX_X1, BRIGHT)
-      drawBoxSide(term, PLAYBACK_Y, BOX_X0, BOX_X1, BRIGHT)
-      drawBoxBottom(term, NOWPLAYING_BOT_Y, BOX_X0, BOX_X1, BRIGHT)
+      drawBoxTop(term, NOWPLAYING_TOP_Y, BOX_X0, BOX_X1, 'NOW PLAYING', BOLD)
+      drawBoxSide(term, TRACK_Y, BOX_X0, BOX_X1, BOLD)
+      drawBoxSide(term, PLAYBACK_Y, BOX_X0, BOX_X1, BOLD)
+      drawBoxBottom(term, NOWPLAYING_BOT_Y, BOX_X0, BOX_X1, BOLD)
     }, t + 40)
   },
 
@@ -1813,13 +1808,19 @@ export default {
   // "signal" part:
   //   seeking (not locked)  -- innermost ring blinks slowly on its own, a
   //                            "still listening" pulse rather than silence.
-  //   locked + muted        -- frozen mid-ring, dim -- powered and locked,
-  //                            but deliberately silent.
   //   locked + buffering     -- erratic single-ring flicker, unstable read.
   //   locked + playing       -- rings pulse outward in sequence (inner to
   //                            outer, looping), both sides together -- the
   //                            "actively on air" state.
   //   locked + paused        -- steady mid-ring, no animation.
+  // 31st pass (Matthew: "shouldn't the antenna and FLD still be active even
+  // while muted?") -- mute used to be its own branch here (frozen dim
+  // ring), which conflated "the tuner is locked onto a signal" with "the
+  // speaker is silenced". Those are different things -- a muted radio is
+  // still receiving. Rings/FLD now key off playState only, same as an
+  // unmuted set; only the EQ ribbon (an audio-level analog, like the VU
+  // meter it sits next to) and the MUTE switch widget still check
+  // this.muted directly.
   ANTENNA_TEMPLATE: [
     '(           )',
     ' (         ) ',
@@ -1860,17 +1861,15 @@ export default {
     // 30th pass: this used to `return` straight out of each branch --
     // switched to a shared `state` string instead so drawFieldReadout()/
     // drawEqRibbon() below can run once, in every branch, without
-    // duplicating the locked/muted/buffering/playing checks. The ring
-    // logic itself is unchanged.
+    // duplicating the locked/buffering/playing checks. The ring logic
+    // itself is unchanged. (31st pass: dropped the separate muted branch
+    // -- see the comment above ANTENNA_TEMPLATE.)
     const locked = this.mode === 'locked' && this.lockedChannel
     let state
     if (!locked) {
       // Seeking -- slow symmetric blink on the innermost ring only.
       if (Math.floor(t / 0.6) % 2 === 0) lightRing(2, DIM)
       state = 'seeking'
-    } else if (this.muted) {
-      lightRing(1, DIM) // frozen, dim -- locked but silent
-      state = 'muted'
     } else if (this.playState === 'buffering') {
       // Erratic flicker -- a random ring, each side independently on this
       // redraw, unstable read rather than a clean pulse.
@@ -1961,7 +1960,7 @@ export default {
     const { term } = s
     const y = rows[2] // SIG_Y -- vertically centered on the glyph
     const x0 = startX + this.ANTENNA_TEMPLATE[0].length + 2
-    if (state === 'seeking' || state === 'muted') {
+    if (state === 'seeking') {
       term.text(x0, y, 'FLD --', FAINT)
       return
     }
@@ -1993,19 +1992,23 @@ export default {
     const x0 = startX + this.ANTENNA_TEMPLATE[0].length + 2
     const chars = ' ▁▂▃▄▅▆▇█'
     let bar = ''
+    // 31st pass: unlike the rings/FLD readout above, this ribbon stays an
+    // audio-level analog (same role as the VU meter it mirrors) -- so mute
+    // still flattens it, checked directly here rather than through `state`.
     for (let i = 0; i < this.eqSamples.length; i++) {
       let target
-      if (state === 'playing') target = 0.15 + Math.random() * 0.8
+      if (this.muted) target = 0.05
+      else if (state === 'playing') target = 0.15 + Math.random() * 0.8
       else if (state === 'buffering') target = Math.random() * 0.6
       else if (state === 'seeking') target = 0.03 + Math.random() * 0.08
-      else target = 0.05 // muted/paused -- nearly flat
+      else target = 0.05 // paused -- nearly flat
       const spring = 0.35, damping = 0.5
       const accel = (target - this.eqSamples[i]) * spring - this.eqVelocities[i] * damping
       this.eqVelocities[i] += accel
       this.eqSamples[i] = Math.max(0, Math.min(1, this.eqSamples[i] + this.eqVelocities[i]))
       bar += chars[Math.max(0, Math.min(chars.length - 1, Math.round(this.eqSamples[i] * (chars.length - 1))))]
     }
-    term.text(x0, y, bar, state === 'playing' ? DIM : FAINT)
+    term.text(x0, y, bar, !this.muted && state === 'playing' ? DIM : FAINT)
   },
 
   // BUG/NAMING FIXED 2026-08-20: this used to log an entry on every track
