@@ -12,6 +12,11 @@
 
 import { NORMAL, BRIGHT, BOLD, DIM, MUTED, FAINT, BG } from './src/term.js'
 
+// Version tag (28th pass, Matthew: "add version in upper left after
+// SIGNAL") -- shown in the title bar right next to the SIGNAL wordmark,
+// e.g. "SIGNAL v0.6". Bump on future releases.
+const VERSION_TAG = 'v0.6'
+
 // --- data -------------------------------------------------------------
 
 // A wide, irregular fictional band -- not the real 88-108 FM range, and not
@@ -437,37 +442,41 @@ const CHANNELS = [
     // Breakbeat/electronic genre runs moderately loud, no special boost
     // needed.
     gain: 1.0,
+    // 28th pass, CORRECTED 2026-08-21: the original 30 track IDs below were
+    // never actually oEmbed-verified before being committed -- every single
+    // one 404'd (see the fix commit). Full oEmbed-verify pass re-run from
+    // scratch via WebSearch + curl against the oEmbed endpoint, same
+    // discipline as every other station. Landed at 25 verified tracks
+    // rather than force-padding to 30 with more guesses; 2 tracks that
+    // would've duplicated CIRCUIT CRUSH (Perturbator "Future Club",
+    // Carpenter Brut "Turbo Killer") were deliberately left out to keep the
+    // two stations' rosters distinct.
     tracks: [
-      realTrack('jNgzy5jFAxo', 'Firestarter', 'The Prodigy'),
-      realTrack('yVrLJItL8dI', 'Smack My Bitch Up', 'The Prodigy'),
-      realTrack('e-IWRSqNeFY', 'Block Rockin\' Beats', 'Chemical Brothers'),
-      realTrack('N0y_nQfYrpw', 'Elektrobank', 'Chemical Brothers'),
-      realTrack('a80DRVJzazg', 'One More Time', 'Daft Punk'),
-      realTrack('bNMj2l72e_c', 'Da Funk', 'Daft Punk'),
-      realTrack('K_3vXFU5sBo', 'Praise You', 'Fatboy Slim'),
-      realTrack('0Fyp-q17lzM', 'Weapon of Choice', 'Fatboy Slim'),
-      realTrack('Z0RfLgbU0bA', 'Halcyon On and On', 'Orbital'),
-      realTrack('bV-hSgL1R34', 'The Box Part II', 'Orbital'),
-      realTrack('lAifppvx9I4', 'Teardrop', 'Massive Attack'),
-      realTrack('eFLhc6aGhWo', 'Safe from Harm', 'Massive Attack'),
-      realTrack('1VT-4MnCNI4', 'Song of Life', 'Leftfield'),
-      realTrack('IUDTlvagjulW', 'Peder Mannerfelt - Modern Talking', 'Leftfield'),
-      realTrack('t2F-aVGx7pI', 'Born Slippy', 'Underworld'),
-      realTrack('CQGb6J9vQ0I', 'Rez', 'Underworld'),
-      realTrack('XhEdd0dqr-c', 'Everything Hertz', 'Boards of Canada'),
-      realTrack('m0aJ-yf_5_A', 'Music Has the Right to Children', 'Boards of Canada'),
-      realTrack('BiXxQ1n-sXo', 'Windowlicker', 'Aphex Twin'),
-      realTrack('41eEwMdw5lI', 'Alberto Balsalm', 'Aphex Twin'),
-      realTrack('Th1KvEf4iYU', 'Eternal', 'Amon Tobin'),
-      realTrack('qTQQP6x0Vx4', 'Journeyman', 'Amon Tobin'),
-      realTrack('7jrnBcGI0sw', 'Come to Dust', 'Squarepusher'),
-      realTrack('h0h79QWLmfE', 'Steinbolt', 'Squarepusher'),
-      realTrack('fdrJZKEGYt4', 'Clipper', 'Autechre'),
-      realTrack('AyKJ5pNB44g', 'Pen Expers', 'Autechre'),
-      realTrack('RW_JgiqKvaM', 'Theme', 'Tron: Legacy'),
-      realTrack('zyMgrFfGLIg', 'Derezzed', 'Tron: Legacy'),
-      realTrack('J6gU0YT8pCw', 'A World Away', 'Halo Soundtrack'),
-      realTrack('gxNaS3cgNPE', 'Hijack', 'Johnny Mnemonic OST'),
+      realTrack('wmin5WkOuPw', 'Firestarter', 'The Prodigy'),
+      realTrack('xW17jtkjvvg', 'Smack My Bitch Up', 'The Prodigy'),
+      realTrack('iTxOKsyZ0Lw', "Block Rockin' Beats", 'The Chemical Brothers'),
+      realTrack('L0dxByaPWhM', 'Elektrobank', 'The Chemical Brothers'),
+      realTrack('FGBhQbmPwH8', 'One More Time', 'Daft Punk'),
+      realTrack('mmi60Bd4jSs', 'Da Funk', 'Daft Punk'),
+      realTrack('ruAi4VBoBSM', 'Praise You', 'Fatboy Slim'),
+      realTrack('wCDIYvFmgW8', 'Weapon of Choice', 'Fatboy Slim ft. Bootsy Collins'),
+      realTrack('3SwwljI-8JY', 'Halcyon', 'Orbital'),
+      realTrack('yJnve05CnNE', 'The Box', 'Orbital'),
+      realTrack('u7K72X4eo_s', 'Teardrop', 'Massive Attack'),
+      realTrack('Z15c2UineoU', 'Safe from Harm', 'Massive Attack'),
+      realTrack('QmKE9zKYx0g', 'Song of Life', 'Leftfield'),
+      realTrack('_YDyMlE5wUA', 'Phat Planet', 'Leftfield'),
+      realTrack('XiMrrleH_hI', 'Born Slippy .NUXX', 'Underworld'),
+      realTrack('F6Y7lcvubhU', 'Rez', 'Underworld'),
+      realTrack('BkZroY_oERY', 'Roygbiv', 'Boards of Canada'),
+      realTrack('A2zKARkpDW4', 'Dayvan Cowboy', 'Boards of Canada'),
+      realTrack('UBS4Gi1y_nc', 'Windowlicker', 'Aphex Twin'),
+      realTrack('h-9UvrLyj3k', 'Come to Daddy', 'Aphex Twin'),
+      realTrack('JATZS5_Qi80', 'Journeyman', 'Amon Tobin'),
+      realTrack('NB3MyO_RfpY', 'Bloodstone', 'Amon Tobin'),
+      realTrack('MWCSw_cNxKc', 'Come On My Selector', 'Squarepusher'),
+      realTrack('ev3vENli7wQ', 'Gantz Graf', 'Autechre'),
+      realTrack('0te4syL3U9c', 'Derezzed', 'Daft Punk (Tron: Legacy)'),
     ] },
 ]
 
@@ -1002,6 +1011,11 @@ export default {
     // Title bar, inverse plane.
     for (let x = 0; x < term.cols; x++) term.put(x, 0, ' ', NORMAL, 1)
     term.text(2, 0, 'SIGNAL', BOLD, 1)
+    // Version tag (28th pass, revised: Matthew wanted it same font/weight
+    // as SIGNAL itself, no codename) -- sits right after the wordmark, one
+    // space over, same BOLD as SIGNAL. Verified against the brand-plate's
+    // centerX() start (25 at 80 cols) so the two never collide.
+    term.text(9, 0, VERSION_TAG, BOLD, 1)
     // Date/time module (15th pass; repositioned 17th pass, Matthew: "remove
     // version number from here put date/time there instead with formating
     // that was used for version") -- the version number used to live at
@@ -2659,19 +2673,22 @@ export default {
       case 'n': case 'N': {
         e.preventDefault()
         // 28th pass: Shift+N enters hidden station-hopping mode (secret
-        // feature). In this mode, N cycles to the next station's first track
-        // instead of just skipping within the current station. Shift+N again
-        // exits hopping mode and returns to normal.
+        // feature). In this mode, N hops to the next station up the dial
+        // (freq-sorted, wrapping, same as stepChannel()/swipe) instead of
+        // skipping within the current station. Shift+N again exits hopping
+        // mode and returns to normal.
+        // BUG FIXED 2026-08-21: the original check used `this.locked`,
+        // which doesn't exist on this object (lock state lives in
+        // `this.mode === 'locked'` + `this.lockedChannel`, see tryLock()) --
+        // that always read undefined/falsy, so hop mode could be toggled on
+        // via the status readout but N always fell through to a plain skip.
         if (e.shiftKey) {
           this.stationHopping = !this.stationHopping
-          this.setStatus(s, this.stationHopping ? 'HOP MODE' : 'NORMAL')
+          this.setStatus(s, this.stationHopping ? 'HOP MODE' : 'NORMAL', this.stationHopping)
           return
         }
-        // Normal skip (within-station or station-hop next, depending on mode)
-        if (this.stationHopping && this.locked) {
-          const chIdx = CHANNELS.findIndex(ch => ch.id === this.lockedChannel.id)
-          const nextIdx = (chIdx + 1) % CHANNELS.length
-          this.presetTune(s, CHANNELS[nextIdx])
+        if (this.stationHopping && this.mode === 'locked' && this.lockedChannel) {
+          this.stepChannel(s, 1)
         } else {
           this.skip(s)
         }
