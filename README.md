@@ -24,7 +24,7 @@ The in-app guide (`[G]`) -- about, full controls reference, and the station rost
 
 Five switchable display modes (`[C]` to cycle) -- Classic Amber, Cyber Blue, Monochrome, and Bubblegum Pink, on top of the default Green Phosphor above:
 
-![Classic Amber, Cyber Blue, and Monochrome display modes](./screenshots/display-modes.jpg)
+![Classic Amber, Cyber Blue, Monochrome, and Bubblegum Pink display modes](./screenshots/display-modes.jpg)
 
 ## Run it locally
 
