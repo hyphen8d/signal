@@ -980,10 +980,17 @@ export default {
     drawBoxSide(term, TAGLINE_Y, BOX_X0, BOX_X1, MUTED)
     drawBoxBottom(term, STATION_BOT_Y, BOX_X0, BOX_X1, MUTED)
 
-    drawBoxTop(term, NOWPLAYING_TOP_Y, BOX_X0, BOX_X1, 'NOW PLAYING', MUTED)
-    drawBoxSide(term, TRACK_Y, BOX_X0, BOX_X1, MUTED)
-    drawBoxSide(term, PLAYBACK_Y, BOX_X0, BOX_X1, MUTED)
-    drawBoxBottom(term, NOWPLAYING_BOT_Y, BOX_X0, BOX_X1, MUTED)
+    // 30th pass (Matthew: "give the boxes more dimension... which box is
+    // active") -- NOW PLAYING is the "hero" box (what's actually playing
+    // matters most, see the 5th-pass note above), so its frame draws a
+    // notch brighter than the other three's static MUTED chrome instead of
+    // all four boxes reading as identical weight. playBootFlicker()'s tail
+    // restores this same BRIGHT after its uniform boot-flicker beat
+    // sequence settles everything (including this box) back to MUTED.
+    drawBoxTop(term, NOWPLAYING_TOP_Y, BOX_X0, BOX_X1, 'NOW PLAYING', BRIGHT)
+    drawBoxSide(term, TRACK_Y, BOX_X0, BOX_X1, BRIGHT)
+    drawBoxSide(term, PLAYBACK_Y, BOX_X0, BOX_X1, BRIGHT)
+    drawBoxBottom(term, NOWPLAYING_BOT_Y, BOX_X0, BOX_X1, BRIGHT)
 
     drawBoxTop(term, METERS_TOP_Y, BOX_X0, BOX_X1, 'LEVELS', MUTED, METERS_DIVIDER_X)
     drawBoxSide(term, VOL_Y, BOX_X0, BOX_X1, MUTED)
@@ -1127,6 +1134,16 @@ export default {
     this.vuSample = 0.03
     this.vuVelocity = 0
     this.vuTrace = new Array(16).fill(0) // 18th pass: trimmed from 24, see drawVU()
+
+    // Field-strength readout + EQ ribbon, antenna pane's right margin (30th
+    // pass -- Matthew: "secondary readout makes sense... not opposed to
+    // thin horizontal ribbons"). Own spring-damped state, same pattern as
+    // vuSample/vuVelocity above, kept separate so they don't just mirror
+    // the VU meter's motion 1:1 -- see drawFieldReadout()/drawEqRibbon().
+    this.fieldSample = 0.5
+    this.fieldVelocity = 0
+    this.eqSamples = new Array(6).fill(0.08)
+    this.eqVelocities = new Array(6).fill(0)
 
     this.history = [] // stack of previously-locked channels, for [B] back
     this.nowPlaying = null
@@ -1299,8 +1316,21 @@ export default {
     const padR = Math.max(0, padTotal - padL)
     const padded = ' '.repeat(padL) + text + ' '.repeat(padR)
     const bracket = `[ ${padded} ]`
+    const bracketX = centerX(term.cols, bracket)
     for (let x = 0; x < term.cols; x++) term.put(x, STATUS_Y, ' ')
-    term.text(centerX(term.cols, bracket), STATUS_Y, bracket, active ? BRIGHT : MUTED)
+    // 30th pass (Matthew: "the 'status' ie LOCKED... shouldn't those be
+    // emphasised") -- the bracket was already BRIGHT when active (same
+    // tier as the station callsign), so the flat feeling wasn't really a
+    // brightness problem: it's that the word sits alone on an otherwise
+    // blank row with nothing to anchor it, one row above TUNING BAND's top
+    // border. Flanking it with a thin rule spanning the same BOX_X0..
+    // BOX_X1 columns as the box directly beneath gives it a "seat" -- the
+    // status row and the box below now read as one joined strip instead of
+    // centered text floating on dead space.
+    const gap = 1
+    for (let x = BOX_X0; x < bracketX - gap; x++) term.put(x, STATUS_Y, '─', FAINT)
+    for (let x = bracketX + bracket.length + gap; x <= BOX_X1; x++) term.put(x, STATUS_Y, '─', FAINT)
+    term.text(bracketX, STATUS_Y, bracket, active ? BRIGHT : MUTED)
   },
 
   // Warm-up flicker (10th pass) -- a short beat sequence that redraws the
@@ -1346,6 +1376,18 @@ export default {
       t += delay
       setTimeout(() => redraw(attr), t)
     }
+    // 30th pass: the beats above flicker all 4 boxes uniformly, including a
+    // final MUTED settle -- which would leave NOW PLAYING dimmed down to
+    // match its neighbors, undoing drawChrome()'s brighter resting frame
+    // for it (see the "hero box" note there). Restore it once the beats
+    // land, same as it's already drawn everywhere else.
+    setTimeout(() => {
+      if (this.guideOpen) return
+      drawBoxTop(term, NOWPLAYING_TOP_Y, BOX_X0, BOX_X1, 'NOW PLAYING', BRIGHT)
+      drawBoxSide(term, TRACK_Y, BOX_X0, BOX_X1, BRIGHT)
+      drawBoxSide(term, PLAYBACK_Y, BOX_X0, BOX_X1, BRIGHT)
+      drawBoxBottom(term, NOWPLAYING_BOT_Y, BOX_X0, BOX_X1, BRIGHT)
+    }, t + 40)
   },
 
   // Power down/up (12th pass, Matthew: "let's build a power on and power
@@ -1633,7 +1675,12 @@ export default {
         ? truncate(track.title, titleBudget) + suffix
         : truncate(line, maxWidth)
     }
-    term.text(centerX(term.cols, line), TRACK_Y, line, NORMAL)
+    // 30th pass (Matthew: "can the current playing song be brighter like
+    // the station name is") -- was NORMAL, a full tier under the station
+    // callsign's BRIGHT. Bumped to BOLD rather than matching BRIGHT exactly
+    // so station (identity) and track (content) stay visually distinct
+    // tiers instead of collapsing to the same weight.
+    term.text(centerX(term.cols, line), TRACK_Y, line, BOLD)
     this.updateTabTitle(track)
   },
   // 21st pass (Matthew, 0.3 wishlist: "browser tab title shows now-playing")
@@ -1810,32 +1857,98 @@ export default {
       term.put(startX + ring.right, rows[ring.row], ')', attr)
     }
 
+    // 30th pass: this used to `return` straight out of each branch --
+    // switched to a shared `state` string instead so drawFieldReadout()/
+    // drawEqRibbon() below can run once, in every branch, without
+    // duplicating the locked/muted/buffering/playing checks. The ring
+    // logic itself is unchanged.
     const locked = this.mode === 'locked' && this.lockedChannel
+    let state
     if (!locked) {
       // Seeking -- slow symmetric blink on the innermost ring only.
       if (Math.floor(t / 0.6) % 2 === 0) lightRing(2, DIM)
-      return
-    }
-    if (this.muted) {
+      state = 'seeking'
+    } else if (this.muted) {
       lightRing(1, DIM) // frozen, dim -- locked but silent
-      return
-    }
-    if (this.playState === 'buffering') {
+      state = 'muted'
+    } else if (this.playState === 'buffering') {
       // Erratic flicker -- a random ring, each side independently on this
       // redraw, unstable read rather than a clean pulse.
       const ring = this.ANTENNA_RINGS[Math.floor(Math.random() * 3)]
       if (Math.random() < 0.7) term.put(startX + ring.left, rows[ring.row], '(', BRIGHT)
       if (Math.random() < 0.7) term.put(startX + ring.right, rows[ring.row], ')', BRIGHT)
-      return
-    }
-    if (this.playState === 'playing') {
+      state = 'buffering'
+    } else if (this.playState === 'playing') {
       // Outward radiating pulse -- ring cycles inner -> outer -> loop.
       const ringIdx = 2 - (Math.floor(t / 0.25) % 3)
       lightRing(ringIdx, BRIGHT)
+      state = 'playing'
+    } else {
+      // Paused -- steady mid-ring, no animation.
+      lightRing(1, BRIGHT)
+      state = 'paused'
+    }
+
+    this.drawFieldReadout(s, startX, rows, state)
+    this.drawEqRibbon(s, startX, rows, state)
+  },
+
+  // Secondary readout, upper-right margin of the antenna pane (30th pass,
+  // Matthew: "secondary readout makes sense"). Purely atmospheric -- not
+  // derived from any real signal math -- but driven by the same state the
+  // rings use, so it never contradicts them; it just says the same thing
+  // in a second register (text instead of glyph). Fixed-width output only
+  // (always "FLD " + 2 chars) so it never leaves a stray trailing
+  // character behind between redraws.
+  drawFieldReadout(s, startX, rows, state) {
+    const { term } = s
+    const y = rows[2] // SIG_Y -- vertically centered on the glyph
+    const x0 = startX + this.ANTENNA_TEMPLATE[0].length + 2
+    if (state === 'seeking' || state === 'muted') {
+      term.text(x0, y, 'FLD --', FAINT)
       return
     }
-    // Paused -- steady mid-ring, no animation.
-    lightRing(1, BRIGHT)
+    if (state === 'buffering') {
+      term.text(x0, y, 'FLD ..', DIM)
+      return
+    }
+    // playing/paused -- same spring/damping shape drawVU() uses for
+    // vuSample, kept as its own independent value (this.fieldSample) so
+    // this doesn't just visually mirror the VU bar's motion.
+    const target = state === 'playing' ? 0.55 + Math.random() * 0.4 : 0.5 + Math.random() * 0.06
+    const spring = 0.3, damping = 0.55
+    const accel = (target - this.fieldSample) * spring - this.fieldVelocity * damping
+    this.fieldVelocity += accel
+    this.fieldSample = Math.max(0, Math.min(1, this.fieldSample + this.fieldVelocity))
+    const val = String(Math.round(30 + this.fieldSample * 65)).padStart(2, '0')
+    term.text(x0, y, `FLD ${val}`, state === 'playing' ? DIM : FAINT)
+  },
+
+  // Small fake spectrum ribbon, lower-right margin of the antenna pane
+  // (30th pass, Matthew: "not opposed to thin horizontal ribbons"). Sits on
+  // the same row as the left pane's VU meter for symmetry, but reads as
+  // its own thing -- several independent bars with their own spring
+  // physics (see this.eqSamples/eqVelocities in init()) rather than one
+  // scrolling trace like drawVU()'s bar.
+  drawEqRibbon(s, startX, rows, state) {
+    const { term } = s
+    const y = rows[4] // VU_Y
+    const x0 = startX + this.ANTENNA_TEMPLATE[0].length + 2
+    const chars = ' ▁▂▃▄▅▆▇█'
+    let bar = ''
+    for (let i = 0; i < this.eqSamples.length; i++) {
+      let target
+      if (state === 'playing') target = 0.15 + Math.random() * 0.8
+      else if (state === 'buffering') target = Math.random() * 0.6
+      else if (state === 'seeking') target = 0.03 + Math.random() * 0.08
+      else target = 0.05 // muted/paused -- nearly flat
+      const spring = 0.35, damping = 0.5
+      const accel = (target - this.eqSamples[i]) * spring - this.eqVelocities[i] * damping
+      this.eqVelocities[i] += accel
+      this.eqSamples[i] = Math.max(0, Math.min(1, this.eqSamples[i] + this.eqVelocities[i]))
+      bar += chars[Math.max(0, Math.min(chars.length - 1, Math.round(this.eqSamples[i] * (chars.length - 1))))]
+    }
+    term.text(x0, y, bar, state === 'playing' ? DIM : FAINT)
   },
 
   // BUG/NAMING FIXED 2026-08-20: this used to log an entry on every track
