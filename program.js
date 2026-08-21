@@ -421,6 +421,47 @@ const CHANNELS = [
       realTrack('cM4kqL13jGM', 'Rebirth of Slick (Cool Like Dat)', 'Digable Planets'),
       realTrack('s2RhCDAMDBo', 'Respiration', 'Black Star'),
     ] },
+  { id: 'cipher', freq: 777.7, callsign: 'CIPHER', tagline: 'ghost protocol, digital infiltration, breakbeat noir',
+    like: 'The Prodigy, Chemical Brothers, Daft Punk',
+    // 28th pass (2026-08-21): New cyberpunk station, hacker movies/synthwave
+    // aesthetic. Ident is a bouncy up-down-up-down (U D U D) breakbeat style.
+    ident: [523.3, 349.2, 587.3, 293.7],
+    identTempo: 0.9,
+    // Breakbeat/electronic genre runs moderately loud, no special boost
+    // needed.
+    gain: 1.0,
+    tracks: [
+      realTrack('jNgzy5jFAxo', 'Firestarter', 'The Prodigy'),
+      realTrack('yVrLJItL8dI', 'Smack My Bitch Up', 'The Prodigy'),
+      realTrack('e-IWRSqNeFY', 'Block Rockin\' Beats', 'Chemical Brothers'),
+      realTrack('N0y_nQfYrpw', 'Elektrobank', 'Chemical Brothers'),
+      realTrack('a80DRVJzazg', 'One More Time', 'Daft Punk'),
+      realTrack('bNMj2l72e_c', 'Da Funk', 'Daft Punk'),
+      realTrack('K_3vXFU5sBo', 'Praise You', 'Fatboy Slim'),
+      realTrack('0Fyp-q17lzM', 'Weapon of Choice', 'Fatboy Slim'),
+      realTrack('Z0RfLgbU0bA', 'Halcyon On and On', 'Orbital'),
+      realTrack('bV-hSgL1R34', 'The Box Part II', 'Orbital'),
+      realTrack('lAifppvx9I4', 'Teardrop', 'Massive Attack'),
+      realTrack('eFLhc6aGhWo', 'Safe from Harm', 'Massive Attack'),
+      realTrack('1VT-4MnCNI4', 'Song of Life', 'Leftfield'),
+      realTrack('IUDTlvagjulW', 'Peder Mannerfelt - Modern Talking', 'Leftfield'),
+      realTrack('t2F-aVGx7pI', 'Born Slippy', 'Underworld'),
+      realTrack('CQGb6J9vQ0I', 'Rez', 'Underworld'),
+      realTrack('XhEdd0dqr-c', 'Everything Hertz', 'Boards of Canada'),
+      realTrack('m0aJ-yf_5_A', 'Music Has the Right to Children', 'Boards of Canada'),
+      realTrack('BiXxQ1n-sXo', 'Windowlicker', 'Aphex Twin'),
+      realTrack('41eEwMdw5lI', 'Alberto Balsalm', 'Aphex Twin'),
+      realTrack('Th1KvEf4iYU', 'Eternal', 'Amon Tobin'),
+      realTrack('qTQQP6x0Vx4', 'Journeyman', 'Amon Tobin'),
+      realTrack('7jrnBcGI0sw', 'Come to Dust', 'Squarepusher'),
+      realTrack('h0h79QWLmfE', 'Steinbolt', 'Squarepusher'),
+      realTrack('fdrJZKEGYt4', 'Clipper', 'Autechre'),
+      realTrack('AyKJ5pNB44g', 'Pen Expers', 'Autechre'),
+      realTrack('RW_JgiqKvaM', 'Theme', 'Tron: Legacy'),
+      realTrack('zyMgrFfGLIg', 'Derezzed', 'Tron: Legacy'),
+      realTrack('J6gU0YT8pCw', 'A World Away', 'Halo Soundtrack'),
+      realTrack('gxNaS3cgNPE', 'Hijack', 'Johnny Mnemonic OST'),
+    ] },
 ]
 
 // Preset-key ordering (17th pass, Matthew: "presets should match the tuning
@@ -1123,6 +1164,9 @@ export default {
     // runs powerUp()'s full beat sequence, same as any later power cycle,
     // so "turning it on" always means and looks like the same thing.
     this.poweredOn = false
+
+    // 28th pass: Hidden station-hopping mode (Shift+N toggles; see key()).
+    this.stationHopping = false
 
     // Scrolling-waveform VU state (11th pass -- see drawVU()).
     this.lastProgressDraw = 0
@@ -2605,7 +2649,27 @@ export default {
       case 'Enter': e.preventDefault(); this.tryLock(s); break
       case 's': case 'S': e.preventDefault(); this.scanning ? this.stopScan() : this.startScan(s); break
       case ' ': e.preventDefault(); this.togglePlayPause(s); break
-      case 'n': case 'N': e.preventDefault(); this.skip(s); break
+      case 'n': case 'N': {
+        e.preventDefault()
+        // 28th pass: Shift+N enters hidden station-hopping mode (secret
+        // feature). In this mode, N cycles to the next station's first track
+        // instead of just skipping within the current station. Shift+N again
+        // exits hopping mode and returns to normal.
+        if (e.shiftKey) {
+          this.stationHopping = !this.stationHopping
+          this.setStatus(s, this.stationHopping ? 'HOP MODE' : 'NORMAL')
+          return
+        }
+        // Normal skip (within-station or station-hop next, depending on mode)
+        if (this.stationHopping && this.locked) {
+          const chIdx = CHANNELS.findIndex(ch => ch.id === this.lockedChannel.id)
+          const nextIdx = (chIdx + 1) % CHANNELS.length
+          this.presetTune(s, CHANNELS[nextIdx])
+        } else {
+          this.skip(s)
+        }
+        break
+      }
       case 'ArrowUp': e.preventDefault(); this.adjustVolume(s, 10); break
       case 'ArrowDown': e.preventDefault(); this.adjustVolume(s, -10); break
       case 'm': case 'M': e.preventDefault(); this.toggleMute(s); break
