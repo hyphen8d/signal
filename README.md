@@ -50,7 +50,6 @@ plain `python3 -m http.server` can serve you a stale cached copy of
 | `S` | Scan (auto-sweep, locks when it finds a station) |
 | `1`–`9` | Jump straight to a preset station |
 | `B` | Back to the previously locked station |
-| `Space` | Play / pause |
 | `N` | Skip to another track on the current station |
 | `Up` / `Down` | Volume |
 | `M` | Mute |
@@ -65,7 +64,7 @@ the full control surface above:
 
 | Gesture | Action |
 |---|---|
-| tap | Power on (when off) / play-pause (when on and locked) |
+| tap | Power on (when off) / mute toggle (when on and locked) |
 | swipe left / right | Step to the next / previous station, in dial order |
 
 Everything else (scan, presets, back, guide, volume, mute) has no touch

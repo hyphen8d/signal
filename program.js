@@ -1770,6 +1770,17 @@ export default {
     this.drawPlayback(s)
   },
   drawPlayback(s) {
+    // BUG FIXED (29th pass, found verifying the hint-bar reflow): the YT
+    // player's onStateChange fires async, outside frame()'s own guideOpen
+    // bail, and used to draw straight through to PLAYBACK_Y (row 14)
+    // regardless -- which happens to be the same row the guide's CONTROLS
+    // block now uses for its first line, so a state change mid-guide (e.g.
+    // BUFFERING -> PLAYING right as you open it) punched "> PLAYING" over
+    // "[<-/->] SEEK...". `this.playState` above the guard in setPlayState()
+    // still gets updated while the guide is open, so nothing is lost --
+    // closeGuide() already calls setPlayState(s, this.playState) as its
+    // last step, which redraws this row correctly once the guide closes.
+    if (this.guideOpen) return
     const { term } = s
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, PLAYBACK_Y, ' ')
     if (this.mode !== 'locked') return
@@ -2093,12 +2104,18 @@ export default {
   // control, not one of the primary listed ones.
   drawHint(s) {
     const { term } = s
-    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BACK   [G] GUIDE'
-    // 23rd pass: "[C] MODE" rather than the fuller "[C] DISPLAY" -- line2
-    // was already 68/80 cols and DISPLAY doesn't fit even at 2-space
-    // spacing (the fixed hint row has broken before on an over-length
-    // string, see centerX()'s own clamping comment).
-    const line2 = '[SPACE] PLAY/PAUSE   [N] SKIP   [UP/DOWN] VOL   [M] MUTE   [P] POWER  [C] MODE'
+    // 29th pass (Matthew: "top row = radio-esque, bottom row = things a
+    // real radio doesn't have"): line1 is now just tuning/receiver
+    // primitives -- seek, lock, scan, presets, back. GUIDE moved down to
+    // line2 (a real radio never had a help screen) and PLAY/PAUSE was
+    // removed outright (see key() comment) rather than moved, since it's
+    // not being kept anywhere.
+    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BACK'
+    // 23rd pass: "[C] MODE" rather than the fuller "[C] DISPLAY" -- kept
+    // short for the same reason now that GUIDE joined this line too (the
+    // fixed hint row has broken before on an over-length string, see
+    // centerX()'s own clamping comment).
+    const line2 = '[N] SKIP   [UP/DOWN] VOL   [M] MUTE   [P] POWER   [G] GUIDE   [C] MODE'
     for (let x = 0; x < term.cols; x++) { term.put(x, HINT_Y1, ' ', NORMAL, 1); term.put(x, HINT_Y2, ' ', NORMAL, 1) }
     term.text(centerX(term.cols, line1), HINT_Y1, line1, BOLD, 1)
     term.text(centerX(term.cols, line2), HINT_Y2, line2, NORMAL, 1)
@@ -2184,15 +2201,6 @@ export default {
       this.pendingMidSongSeek = false
       this.player.loadVideoById(track.youtubeId)
     }
-  },
-  togglePlayPause(s) {
-    if (this.mode !== 'locked' || !this.ready || !this.player) return
-    const st = this.player.getPlayerState()
-    if (st === YT.PlayerState.PLAYING) this.player.pauseVideo()
-    else this.player.playVideo()
-    // onStateChange will correct this shortly regardless; setting it here
-    // too so the indicator doesn't lag a beat behind the keypress.
-    this.setPlayState(s, st === YT.PlayerState.PLAYING ? 'paused' : 'playing')
   },
   skip(s) {
     if (this.mode !== 'locked') return
@@ -2415,10 +2423,14 @@ export default {
     put(9, 'Got an idea, a station request, or found something broken?', NORMAL)
     put(10, 'Reach out -- matt@gial.co', BRIGHT)
     put(12, 'CONTROLS', BOLD)
+    // 29th pass: reflowed after PLAY/PAUSE was removed (see key()) --
+    // rows 14-16 are tuning/receiver controls, row 17 is the "not a real
+    // radio" trio (skip, guide, display mode), matching the same grouping
+    // now used in the on-screen hint bar (drawHint()).
     put(14, '[<-/->] SEEK        [ENTER] LOCK        [S] SCAN', DIM)
-    put(15, '[1-9] PRESETS       [B] BACK            [SPACE] PLAY/PAUSE', DIM)
-    put(16, '[N] SKIP            [UP/DOWN] VOL        [M] MUTE', DIM)
-    put(17, '[P] POWER           [G] GUIDE            [C] DISPLAY MODE', DIM)
+    put(15, '[1-9] PRESETS       [B] BACK            [UP/DOWN] VOL', DIM)
+    put(16, '[M] MUTE            [P] POWER', DIM)
+    put(17, '[N] SKIP            [G] GUIDE           [C] DISPLAY MODE', DIM)
     // 20th pass (Matthew: "for people that don't have youtube premium..
     // they hear ads. options?") -- decided against anything that tries to
     // detect/suppress the ad itself (that's ad-blocking circumvention
@@ -2629,7 +2641,11 @@ export default {
     if (Math.abs(dx) < TAP_SLOP && Math.abs(dy) < TAP_SLOP && dt < 500) {
       if (!this.poweredOn) { this.powerUp(s); return }
       if (this.guideOpen) { this.closeGuide(s); return }
-      this.togglePlayPause(s)
+      // 29th pass: tap used to toggle play/pause, but SIGNAL dropped
+      // play/pause entirely (a live broadcast can't be paused, only
+      // muted/turned off -- see key() comment on the SPACE removal). Tap
+      // now does the radio-authentic equivalent: mute toggle.
+      this.toggleMute(s)
       return
     }
     if (!this.poweredOn || this.guideOpen) return
@@ -2674,7 +2690,17 @@ export default {
       case 'ArrowRight': e.preventDefault(); this.seekStep(s, SEEK_STEP); break
       case 'Enter': e.preventDefault(); this.tryLock(s); break
       case 's': case 'S': e.preventDefault(); this.scanning ? this.stopScan() : this.startScan(s); break
-      case ' ': e.preventDefault(); this.togglePlayPause(s); break
+      // 29th pass (Matthew: "should we even have play/pause or just mute?")
+      // -- removed. A real broadcast can't be paused, only muted or turned
+      // off; play/pause was the one control that broke that fiction, since
+      // every other control (mute, power, tuning) respects that the
+      // station keeps running whether you're listening or not. `M` (mute)
+      // already does the radio-authentic version of "make it stop": it
+      // calls player.mute()/unMute(), which silences output without
+      // stopping playback underneath -- unmuting resumes wherever the
+      // "broadcast" currently is, exactly like turning a real radio's
+      // volume back up. togglePlayPause() removed entirely; SPACE is now
+      // unbound.
       case 'n': case 'N': {
         e.preventDefault()
         // 28th pass: Shift+N enters hidden station-hopping mode (secret
