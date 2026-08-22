@@ -26,6 +26,45 @@ Five switchable display modes (`[C]` to cycle) -- Classic Amber, Cyber Blue, Mon
 
 ![Classic Amber, Cyber Blue, Monochrome, and Bubblegum Pink display modes](./screenshots/display-modes.jpg)
 
+## The little touches
+
+A tuning-dial radio lives or dies on texture, not just function. A few
+things easy to miss from a screenshot alone:
+
+- **The boot sequence** is a ~5.5s retro-BIOS-style POST readout —
+  tuner/antenna/preset-table diagnostics in the receiver's own voice, not
+  kernel-speak — with the picture visibly warming up in brightness across
+  the same window, like a tube actually coming up to temperature.
+  Power-down mirrors it in reverse: a signal-loss glitch, the picture
+  collapsing to a centerline, then a single dot, then STANDBY.
+- **Every station has its own identity**, not just a name and a tracklist:
+  a marker on the dial, a distinct musical ident (a short tone motif on
+  lock — pitch contour and tempo both vary station to station, so a slow
+  ambient station and a punchy synthwave one don't announce themselves at
+  the same clip), a static-noise color while you're tuning near it, and its
+  own CRT character.
+- **The static isn't decorative filler.** Its loudness and pitch both track
+  how close you actually are to a station, off the same math the SIG meter
+  and the CRT's chroma/snow/roll degrade use — so what you hear, see, and
+  read off the meters always agree with each other.
+- **Idle imperfection.** Even sitting locked and untouched, the picture
+  never looks perfectly static: a slow phosphor shimmer runs constantly
+  along the panel borders, and — rarely — a signal briefly rolls or tears,
+  like the tuner catching a beat of real-world interference.
+- **Text resolves rather than appears.** Callsign, tagline, and track title
+  settle out of scrambled noise glyphs over a couple hundred milliseconds
+  when you lock or skip, instead of snapping into place.
+- **Every control sound is genuine feedback, not garnish** — a relay thunk
+  on mute, a volume detent, a keypress click, a thud at the band edges. The
+  status row backs all of it up visually too, sweeping and typewriting in
+  new text rather than just replacing it.
+- **The "would a real radio have this?" rule.** SIGNAL had a play/pause
+  button once. It got removed — a real broadcast can't be paused, only
+  muted or turned off, and mute already does the honest version of "make it
+  stop" without breaking the fiction that the station keeps running whether
+  you're listening or not. That test still governs what does and doesn't
+  get added.
+
 ## Run it locally
 
 No build step. Clone the repo and serve the directory over HTTP (it won't
