@@ -202,6 +202,11 @@ const STATIONS = [
       realTrack('1lfd7zeHRRs', 'Dollar Bill', 'Screaming Trees'),
       realTrack('RD9xK9smth4', 'Doll Parts', 'Hole'),
       realTrack('8KHwuOtcALQ', 'Freak', 'Silverchair'),
+      realTrack('3qVPNONdF58', 'No Rain', 'Blind Melon'),
+      realTrack('Fm72DPJCX58', 'River of Deceit', 'Mad Season'),
+      realTrack('fTqyUz_jSIo', 'Far Behind', 'Candlebox'),
+      realTrack('YgSPaXgAdzE', 'Loser', 'Beck'),
+      realTrack('MW6E_TNgCsY', 'Santa Monica', 'Everclear'),
     ] },
   // RELIC SIGNAL (classical, 219.8) retired 2026-08-21 (28th pass, per
   // Matthew's station-naming pass) -- its classical lane overlapped with
@@ -289,6 +294,11 @@ const STATIONS = [
       realTrack('SDru80vHKxU', 'Keep Up the Good Work', 'Julianna Barwick'),
       realTrack('aTcYsYZ5ZxA', 'Not At Home', 'Peter Broderick and Nils Frahm'),
       realTrack('pygwK0sBUdM', 'andata', 'Ryuichi Sakamoto'),
+      realTrack('k15pVegwe-o', 'Rhubarb', 'Aphex Twin'),
+      realTrack('57257U-W9NI', 'The Fall of Constantinople', 'Federico Albanese'),
+      realTrack('5nCRNIKkKSs', 'Rain', 'Poppy Ackroyd'),
+      realTrack('hnFX0qZbLjI', 'Poa Alpina', 'Biosphere'),
+      realTrack('CQ8zglIXZi8', 'Nuvole Bianche', 'Ludovico Einaudi'),
     ] },
   { id: 'cold-wave', freq: 512.9, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     like: 'New Order, The Cure, Depeche Mode',
@@ -346,6 +356,11 @@ const STATIONS = [
       realTrack('LWz0JC7afNQ', 'The Killing Moon', 'Echo & the Bunnymen'),
       realTrack('cFH5JgyZK1I', "It's My Life", 'Talk Talk'),
       realTrack('_6FBfAQ-NDE', "Just Can't Get Enough", 'Depeche Mode'),
+      realTrack('hKAT3Kp56Yg', 'Vienna', 'Ultravox'),
+      realTrack('-OO9LloDSJo', 'Things Can Only Get Better', 'Howard Jones'),
+      realTrack('Zi86ZiOlIVo', 'The Safety Dance', 'Men Without Hats'),
+      realTrack('wO0A0XcWy88', 'Major Tom (Coming Home)', 'Peter Schilling'),
+      realTrack('LuN6gs0AJls', 'I Melt With You', 'Modern English'),
     ] },
   { id: 'momentum', freq: 823.1, callsign: 'MOMENTUM', tagline: 'building blocks, deep focus, productive drift',
     // 28th pass: renamed from THE STUDY (option e, after more naming
@@ -401,6 +416,11 @@ const STATIONS = [
       realTrack('N_gGGpKrIZc', 'Fog', 'Nosaj Thing'),
       realTrack('8oQGWJ3CwBM', 'Sheets', 'Mndsgn'),
       realTrack('u8QhbV1Vyfs', 'Sunrise To Sunset', 'Kupla'),
+      realTrack('q-KOSq-iA9w', 'Blue Orchard', 'FloFilz'),
+      realTrack('wmNyN1XN9-8', 'Cabin in the Woods', 'Philanthrope'),
+      realTrack('ymjfXyQJ4ak', 'Be Free', 'Jinsang'),
+      realTrack('7ZguAEoNpZw', 'Soulful', "L'Indécis"),
+      realTrack('hebk7pJ4xhE', 'Seasons', 'Aso'),
     ] },
 
   // 4 new stations added 2026-08-20, tracklists as given by Matthew, all
@@ -465,6 +485,11 @@ const STATIONS = [
       realTrack('8O8m36Jr1Uk', 'Tokai (City)', 'Taeko Onuki'),
       realTrack('CyFTrxwviTc', 'Summer Suspicion', 'S. Kiyotaka & Omega Tribe'),
       realTrack('1x57WiR-uVo', 'Koi no Projection', 'Momoko Kikuchi'),
+      realTrack('jaS5yjYSAS0', 'Down Town', 'EPO'),
+      realTrack('6LBoP3CLzBg', 'First Light', 'Makoto Matsushita'),
+      realTrack('MqaEQtunNX0', "Midnight Cruisin'", 'Kingo Hamada'),
+      realTrack('8BNRHW8kwbY', 'Sky Restaurant', 'Hi-Fi Set'),
+      realTrack('uWqnsVMc8CQ', 'Last Summer Whisper', 'Anri'),
     ] },
   // 22nd pass (Matthew: "drop outlaw channel completely, 9 channels is our
   // max for now") -- OUTLAW (freq 288.6, spaghetti-western/outlaw-country)
@@ -520,6 +545,11 @@ const STATIONS = [
       realTrack('O0LB9cIobXY', 'Monochrome', 'Scandroid'),
       realTrack('LDjJ4SSPsZk', 'Time Traveler', 'Betamaxx'),
       realTrack('IDd5JgAcLhI', 'Behemoth', 'GosT'),
+      realTrack('LxIyc5qJGzQ', 'My Mistake', 'NINA'),
+      realTrack('gzRbL_Jwtzw', 'DiscoDeath', 'Robert Parker'),
+      realTrack('k4lt3DO2Xt4', 'Turn Back Time', 'Michael Oakley'),
+      realTrack('5W8mvLKSq-U', 'Isolated', 'Trevor Something'),
+      realTrack('VE3QIvywZnU', 'Living the Modern Life', 'SelloRekt & LA Dreams'),
     ] },
   // 23rd pass: freq nudged 878.9 -> 854.9 (Matthew: "station 8 and 9 are too
   // close to each other") -- freqToCol() rounded 878.9 and HACKBACK's 893.7
@@ -600,6 +630,11 @@ const STATIONS = [
       realTrack('V1HiJR4KkaM', 'Crazy He Calls Me', 'Billie Holiday'),
       realTrack('F0qD-SKugUU', 'Way Back Home', 'Bob Crosby and the Bobcats'),
       realTrack('jq2kqNTHejM', 'Uranium Rock', 'Warren Smith'),
+      realTrack('JXObqAMwDxA', 'Open the Door, Richard!', 'Jack McVea and His All Stars'),
+      realTrack('xfoseSZtllo', 'Sh-Boom', 'The Chords'),
+      realTrack('zPJ7N5_o-u8', 'Money Honey', 'Clyde McPhatter & The Drifters'),
+      realTrack('wk-c-mHNBi4', 'Old Man Atom (Talking Atomic Blues)', 'Ozie Waters and His Colorado Cowboys'),
+      realTrack('xFg6i2p8YQc', 'Rocket 88', 'Jackie Brenston & His Delta Cats'),
     ] },
   // 20th pass (Matthew: "add a new channel for 0 called Hackback with music
   // like tribe called quest, de la soul, slick rick, outkast, wu tang, MF
@@ -658,6 +693,11 @@ const STATIONS = [
       realTrack('hI8A14Qcv68', 'N.Y. State of Mind', 'Nas'),
       realTrack('TgelVkHEKdw', 'DWYCK', 'Gang Starr'),
       realTrack('EuJaStSL0xM', 'Definition', 'Black Star'),
+      realTrack('fXJc2NYwHjw', "93 'til Infinity", 'Souls of Mischief'),
+      realTrack('RijB8wnJCN0', 'Insane in the Brain', 'Cypress Hill'),
+      realTrack('N0VdRLdg2ng', 'California Love', '2Pac feat. Dr. Dre & Roger Troutman'),
+      realTrack('cKu3_3mp1U8', 'Let Me Ride', 'Dr. Dre'),
+      realTrack('OYbakN42pvA', 'Gin and Juice', 'Snoop Doggy Dogg'),
     ] },
   { id: 'cipher', freq: 219.8, callsign: 'CIPHER', tagline: 'digital infiltration, breakbeat noir',
     // 28th pass (2026-08-21): New cyberpunk station, hacker movies/synthwave
@@ -742,6 +782,11 @@ const STATIONS = [
       realTrack('s-1Y2EqThyQ', 'LFO', 'LFO'),
       realTrack('wfWMv8Y1V5E', 'Papua New Guinea', 'The Future Sound of London'),
       realTrack('XAlLaGhfLq4', 'B-Boy Stance', 'Freestylers'),
+      realTrack('ub747pprmJ8', 'Right Here, Right Now', 'Fatboy Slim'),
+      realTrack('Ld2Qb7l1VSs', 'Ni Ten Ichi Ryu', 'Photek'),
+      realTrack('m-uztVX6QFQ', 'At the River', 'Groove Armada'),
+      realTrack('8B-i1vsA6jw', 'Sour Times', 'Portishead'),
+      realTrack('svJvT6ruolA', 'No Good (Start the Dance)', 'The Prodigy'),
     ] },
 ]
 

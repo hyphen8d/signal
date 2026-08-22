@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from program.js. 9 stations, 225 tracks total.
+Generated from program.js. 9 stations, 270 tracks total.
 
 ## DISTORTION FIELD -- 137.4
 
@@ -8,7 +8,7 @@ Generated from program.js. 9 stations, 225 tracks total.
 
 Ident tones (Hz): 392, 349.2, 311.2, 261.6
 
-Tracks (25):
+Tracks (30):
 
 1. **Smells Like Teen Spirit** -- Nirvana  ([youtu.be/hTWKbfoikeg](https://youtu.be/hTWKbfoikeg))
 2. **Black Hole Sun** -- Soundgarden  ([youtu.be/3mbBbFH9fAg](https://youtu.be/3mbBbFH9fAg))
@@ -35,6 +35,11 @@ Tracks (25):
 23. **Dollar Bill** -- Screaming Trees  ([youtu.be/1lfd7zeHRRs](https://youtu.be/1lfd7zeHRRs))
 24. **Doll Parts** -- Hole  ([youtu.be/RD9xK9smth4](https://youtu.be/RD9xK9smth4))
 25. **Freak** -- Silverchair  ([youtu.be/8KHwuOtcALQ](https://youtu.be/8KHwuOtcALQ))
+26. **No Rain** -- Blind Melon  ([youtu.be/3qVPNONdF58](https://youtu.be/3qVPNONdF58))
+27. **River of Deceit** -- Mad Season  ([youtu.be/Fm72DPJCX58](https://youtu.be/Fm72DPJCX58))
+28. **Far Behind** -- Candlebox  ([youtu.be/fTqyUz_jSIo](https://youtu.be/fTqyUz_jSIo))
+29. **Loser** -- Beck  ([youtu.be/YgSPaXgAdzE](https://youtu.be/YgSPaXgAdzE))
+30. **Santa Monica** -- Everclear  ([youtu.be/MW6E_TNgCsY](https://youtu.be/MW6E_TNgCsY))
 
 ## DRIFT MODE -- 356.2
 
@@ -42,7 +47,7 @@ Tracks (25):
 
 Ident tones (Hz): 392, 329.6, 370, 293.7
 
-Tracks (25):
+Tracks (30):
 
 1. **Weightless** -- Marconi Union  ([youtu.be/UfcAVejslrU](https://youtu.be/UfcAVejslrU))
 2. **Spiegel im Spiegel** -- Arvo Pärt  ([youtu.be/TJ6Mzvh3XCc](https://youtu.be/TJ6Mzvh3XCc))
@@ -69,6 +74,11 @@ Tracks (25):
 23. **Keep Up the Good Work** -- Julianna Barwick  ([youtu.be/SDru80vHKxU](https://youtu.be/SDru80vHKxU))
 24. **Not At Home** -- Peter Broderick and Nils Frahm  ([youtu.be/aTcYsYZ5ZxA](https://youtu.be/aTcYsYZ5ZxA))
 25. **andata** -- Ryuichi Sakamoto  ([youtu.be/pygwK0sBUdM](https://youtu.be/pygwK0sBUdM))
+26. **Rhubarb** -- Aphex Twin  ([youtu.be/k15pVegwe-o](https://youtu.be/k15pVegwe-o))
+27. **The Fall of Constantinople** -- Federico Albanese  ([youtu.be/57257U-W9NI](https://youtu.be/57257U-W9NI))
+28. **Rain** -- Poppy Ackroyd  ([youtu.be/5nCRNIKkKSs](https://youtu.be/5nCRNIKkKSs))
+29. **Poa Alpina** -- Biosphere  ([youtu.be/hnFX0qZbLjI](https://youtu.be/hnFX0qZbLjI))
+30. **Nuvole Bianche** -- Ludovico Einaudi  ([youtu.be/CQ8zglIXZi8](https://youtu.be/CQ8zglIXZi8))
 
 ## COLD WAVE -- 512.9
 
@@ -76,7 +86,7 @@ Tracks (25):
 
 Ident tones (Hz): 440, 659.3, 554.4, 440
 
-Tracks (25):
+Tracks (30):
 
 1. **Blue Monday '88** -- New Order  ([youtu.be/9GMjH1nR0ds](https://youtu.be/9GMjH1nR0ds))
 2. **Just Like Heaven** -- The Cure  ([youtu.be/1ASpBpT8bRQ](https://youtu.be/1ASpBpT8bRQ))
@@ -103,6 +113,11 @@ Tracks (25):
 23. **The Killing Moon** -- Echo & the Bunnymen  ([youtu.be/LWz0JC7afNQ](https://youtu.be/LWz0JC7afNQ))
 24. **It's My Life** -- Talk Talk  ([youtu.be/cFH5JgyZK1I](https://youtu.be/cFH5JgyZK1I))
 25. **Just Can't Get Enough** -- Depeche Mode  ([youtu.be/_6FBfAQ-NDE](https://youtu.be/_6FBfAQ-NDE))
+26. **Vienna** -- Ultravox  ([youtu.be/hKAT3Kp56Yg](https://youtu.be/hKAT3Kp56Yg))
+27. **Things Can Only Get Better** -- Howard Jones  ([youtu.be/-OO9LloDSJo](https://youtu.be/-OO9LloDSJo))
+28. **The Safety Dance** -- Men Without Hats  ([youtu.be/Zi86ZiOlIVo](https://youtu.be/Zi86ZiOlIVo))
+29. **Major Tom (Coming Home)** -- Peter Schilling  ([youtu.be/wO0A0XcWy88](https://youtu.be/wO0A0XcWy88))
+30. **I Melt With You** -- Modern English  ([youtu.be/LuN6gs0AJls](https://youtu.be/LuN6gs0AJls))
 
 ## MOMENTUM -- 823.1
 
@@ -110,7 +125,7 @@ Tracks (25):
 
 Ident tones (Hz): 329.6, 293.7, 261.6, 293.7
 
-Tracks (25):
+Tracks (30):
 
 1. **Aruarian Dance** -- Nujabes  ([youtu.be/XnFOucmKlXA](https://youtu.be/XnFOucmKlXA))
 2. **Midnight In A Perfect World** -- DJ Shadow  ([youtu.be/InFbBlpDTfQ](https://youtu.be/InFbBlpDTfQ))
@@ -137,6 +152,11 @@ Tracks (25):
 23. **Fog** -- Nosaj Thing  ([youtu.be/N_gGGpKrIZc](https://youtu.be/N_gGGpKrIZc))
 24. **Sheets** -- Mndsgn  ([youtu.be/8oQGWJ3CwBM](https://youtu.be/8oQGWJ3CwBM))
 25. **Sunrise To Sunset** -- Kupla  ([youtu.be/u8QhbV1Vyfs](https://youtu.be/u8QhbV1Vyfs))
+26. **Blue Orchard** -- FloFilz  ([youtu.be/q-KOSq-iA9w](https://youtu.be/q-KOSq-iA9w))
+27. **Cabin in the Woods** -- Philanthrope  ([youtu.be/wmNyN1XN9-8](https://youtu.be/wmNyN1XN9-8))
+28. **Be Free** -- Jinsang  ([youtu.be/ymjfXyQJ4ak](https://youtu.be/ymjfXyQJ4ak))
+29. **Soulful** -- L'Indécis  ([youtu.be/7ZguAEoNpZw](https://youtu.be/7ZguAEoNpZw))
+30. **Seasons** -- Aso  ([youtu.be/hebk7pJ4xhE](https://youtu.be/hebk7pJ4xhE))
 
 ## CITY LIGHTS -- 650.0
 
@@ -144,7 +164,7 @@ Tracks (25):
 
 Ident tones (Hz): 523.3, 784, 659.3, 987.8
 
-Tracks (25):
+Tracks (30):
 
 1. **Stay With Me** -- Miki Matsubara  ([youtu.be/5zTkTlj2h9E](https://youtu.be/5zTkTlj2h9E))
 2. **Sparkle** -- Tatsuro Yamashita  ([youtu.be/tWqZASIxlqs](https://youtu.be/tWqZASIxlqs))
@@ -171,6 +191,11 @@ Tracks (25):
 23. **Tokai (City)** -- Taeko Onuki  ([youtu.be/8O8m36Jr1Uk](https://youtu.be/8O8m36Jr1Uk))
 24. **Summer Suspicion** -- S. Kiyotaka & Omega Tribe  ([youtu.be/CyFTrxwviTc](https://youtu.be/CyFTrxwviTc))
 25. **Koi no Projection** -- Momoko Kikuchi  ([youtu.be/1x57WiR-uVo](https://youtu.be/1x57WiR-uVo))
+26. **Down Town** -- EPO  ([youtu.be/jaS5yjYSAS0](https://youtu.be/jaS5yjYSAS0))
+27. **First Light** -- Makoto Matsushita  ([youtu.be/6LBoP3CLzBg](https://youtu.be/6LBoP3CLzBg))
+28. **Midnight Cruisin'** -- Kingo Hamada  ([youtu.be/MqaEQtunNX0](https://youtu.be/MqaEQtunNX0))
+29. **Sky Restaurant** -- Hi-Fi Set  ([youtu.be/8BNRHW8kwbY](https://youtu.be/8BNRHW8kwbY))
+30. **Last Summer Whisper** -- Anri  ([youtu.be/uWqnsVMc8CQ](https://youtu.be/uWqnsVMc8CQ))
 
 ## CIRCUIT CRUSH -- 434.5
 
@@ -178,7 +203,7 @@ Tracks (25):
 
 Ident tones (Hz): 587.3, 466.2, 698.5, 932.3
 
-Tracks (25):
+Tracks (30):
 
 1. **Nightcall** -- Kavinsky  ([youtu.be/ZVS6Q_lbKQ0](https://youtu.be/ZVS6Q_lbKQ0))
 2. **Sunset** -- The Midnight  ([youtu.be/URma_gu1aNE](https://youtu.be/URma_gu1aNE))
@@ -205,6 +230,11 @@ Tracks (25):
 23. **Monochrome** -- Scandroid  ([youtu.be/O0LB9cIobXY](https://youtu.be/O0LB9cIobXY))
 24. **Time Traveler** -- Betamaxx  ([youtu.be/LDjJ4SSPsZk](https://youtu.be/LDjJ4SSPsZk))
 25. **Behemoth** -- GosT  ([youtu.be/IDd5JgAcLhI](https://youtu.be/IDd5JgAcLhI))
+26. **My Mistake** -- NINA  ([youtu.be/LxIyc5qJGzQ](https://youtu.be/LxIyc5qJGzQ))
+27. **DiscoDeath** -- Robert Parker  ([youtu.be/gzRbL_Jwtzw](https://youtu.be/gzRbL_Jwtzw))
+28. **Turn Back Time** -- Michael Oakley  ([youtu.be/k4lt3DO2Xt4](https://youtu.be/k4lt3DO2Xt4))
+29. **Isolated** -- Trevor Something  ([youtu.be/5W8mvLKSq-U](https://youtu.be/5W8mvLKSq-U))
+30. **Living the Modern Life** -- SelloRekt & LA Dreams  ([youtu.be/VE3QIvywZnU](https://youtu.be/VE3QIvywZnU))
 
 ## ATOMIC -- 854.9
 
@@ -212,7 +242,7 @@ Tracks (25):
 
 Ident tones (Hz): 392, 493.9, 493.9, 587.3
 
-Tracks (25):
+Tracks (30):
 
 1. **I Don't Want to Set the World on Fire** -- The Ink Spots  ([youtu.be/GkHd1d_UVOE](https://youtu.be/GkHd1d_UVOE))
 2. **Crawl Out Through the Fallout** -- Sheldon Allman  ([youtu.be/Q9bSOaSuScQ](https://youtu.be/Q9bSOaSuScQ))
@@ -239,6 +269,11 @@ Tracks (25):
 23. **Crazy He Calls Me** -- Billie Holiday  ([youtu.be/V1HiJR4KkaM](https://youtu.be/V1HiJR4KkaM))
 24. **Way Back Home** -- Bob Crosby and the Bobcats  ([youtu.be/F0qD-SKugUU](https://youtu.be/F0qD-SKugUU))
 25. **Uranium Rock** -- Warren Smith  ([youtu.be/jq2kqNTHejM](https://youtu.be/jq2kqNTHejM))
+26. **Open the Door, Richard!** -- Jack McVea and His All Stars  ([youtu.be/JXObqAMwDxA](https://youtu.be/JXObqAMwDxA))
+27. **Sh-Boom** -- The Chords  ([youtu.be/xfoseSZtllo](https://youtu.be/xfoseSZtllo))
+28. **Money Honey** -- Clyde McPhatter & The Drifters  ([youtu.be/zPJ7N5_o-u8](https://youtu.be/zPJ7N5_o-u8))
+29. **Old Man Atom (Talking Atomic Blues)** -- Ozie Waters and His Colorado Cowboys  ([youtu.be/wk-c-mHNBi4](https://youtu.be/wk-c-mHNBi4))
+30. **Rocket 88** -- Jackie Brenston & His Delta Cats  ([youtu.be/xFg6i2p8YQc](https://youtu.be/xFg6i2p8YQc))
 
 ## HACKBACK -- 888.7
 
@@ -246,7 +281,7 @@ Tracks (25):
 
 Ident tones (Hz): 220, 293.7, 349.2, 293.7
 
-Tracks (25):
+Tracks (30):
 
 1. **Can I Kick It?** -- A Tribe Called Quest  ([youtu.be/D-uV8TGjaGU](https://youtu.be/D-uV8TGjaGU))
 2. **Award Tour** -- A Tribe Called Quest  ([youtu.be/P800UWoE9xs](https://youtu.be/P800UWoE9xs))
@@ -273,6 +308,11 @@ Tracks (25):
 23. **N.Y. State of Mind** -- Nas  ([youtu.be/hI8A14Qcv68](https://youtu.be/hI8A14Qcv68))
 24. **DWYCK** -- Gang Starr  ([youtu.be/TgelVkHEKdw](https://youtu.be/TgelVkHEKdw))
 25. **Definition** -- Black Star  ([youtu.be/EuJaStSL0xM](https://youtu.be/EuJaStSL0xM))
+26. **93 'til Infinity** -- Souls of Mischief  ([youtu.be/fXJc2NYwHjw](https://youtu.be/fXJc2NYwHjw))
+27. **Insane in the Brain** -- Cypress Hill  ([youtu.be/RijB8wnJCN0](https://youtu.be/RijB8wnJCN0))
+28. **California Love** -- 2Pac feat. Dr. Dre & Roger Troutman  ([youtu.be/N0VdRLdg2ng](https://youtu.be/N0VdRLdg2ng))
+29. **Let Me Ride** -- Dr. Dre  ([youtu.be/cKu3_3mp1U8](https://youtu.be/cKu3_3mp1U8))
+30. **Gin and Juice** -- Snoop Doggy Dogg  ([youtu.be/OYbakN42pvA](https://youtu.be/OYbakN42pvA))
 
 ## CIPHER -- 219.8
 
@@ -280,7 +320,7 @@ Tracks (25):
 
 Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
 
-Tracks (25):
+Tracks (30):
 
 1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
 2. **Smack My Bitch Up** -- The Prodigy  ([youtu.be/xW17jtkjvvg](https://youtu.be/xW17jtkjvvg))
@@ -307,3 +347,8 @@ Tracks (25):
 23. **LFO** -- LFO  ([youtu.be/s-1Y2EqThyQ](https://youtu.be/s-1Y2EqThyQ))
 24. **Papua New Guinea** -- The Future Sound of London  ([youtu.be/wfWMv8Y1V5E](https://youtu.be/wfWMv8Y1V5E))
 25. **B-Boy Stance** -- Freestylers  ([youtu.be/XAlLaGhfLq4](https://youtu.be/XAlLaGhfLq4))
+26. **Right Here, Right Now** -- Fatboy Slim  ([youtu.be/ub747pprmJ8](https://youtu.be/ub747pprmJ8))
+27. **Ni Ten Ichi Ryu** -- Photek  ([youtu.be/Ld2Qb7l1VSs](https://youtu.be/Ld2Qb7l1VSs))
+28. **At the River** -- Groove Armada  ([youtu.be/m-uztVX6QFQ](https://youtu.be/m-uztVX6QFQ))
+29. **Sour Times** -- Portishead  ([youtu.be/8B-i1vsA6jw](https://youtu.be/8B-i1vsA6jw))
+30. **No Good (Start the Dance)** -- The Prodigy  ([youtu.be/svJvT6ruolA](https://youtu.be/svJvT6ruolA))
