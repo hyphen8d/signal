@@ -15,7 +15,9 @@ import { NORMAL, BRIGHT, BOLD, DIM, MUTED, FAINT, BG } from './src/term.js'
 // config.js) -- needed here so the new live CRT hooks (search "32nd pass"
 // below) know what "clean picture" and "warmed up" actually mean, rather
 // than hardcoding a second copy of those numbers.
-import { SCREEN } from './config.js'
+// 41st pass: PHOSPHORS too -- the secret-station proximity tease bleeds
+// the live tint toward 'red' (see applySecretTease).
+import { SCREEN, PHOSPHORS } from './config.js'
 
 // Version tag (28th pass, Matthew: "add version in upper left after
 // SIGNAL") -- shown in the title bar right next to the SIGNAL wordmark,
@@ -132,6 +134,43 @@ const STATIONS = [
     identTempo: 1.25,
     // 25th pass: modern rock/grunge masters run loud already -- no boost.
     gain: 1.0,
+    // 41st pass -- per-station identity (Matthew: "ideas on how we can give
+    // the channels more identity?"). Everything a station had until now was
+    // INFORMATIONAL -- callsign, tagline, desc, ident motif, dial position --
+    // i.e. things you read. These four fields are things you feel without
+    // reading, and every one of them rides machinery that already existed:
+    //   glyph  -- this station's marker on the dial, in place of the nine
+    //             identical '▲'s, so the band becomes a map you learn.
+    //             CHOSEN FOR LEGIBILITY, NOT FOR THEME (Matthew: "they do
+    //             not need to be thematic at all it needs to be whatever
+    //             reads best"). The first set matched each station's
+    //             character -- a downward triangle for the heavy station, a
+    //             dot for the ambient one -- and that is exactly what made
+    //             it uneven: the geometric shapes ('●' '◆' '◊' '¤' '▪')
+    //             occupy a fraction of the cell, so at NORMAL weight they
+    //             wash out into the dial's own FAINT dots under bloom,
+    //             while '▓' '▒' '◘' are so solid they read as a second
+    //             cursor. Every glyph here was rendered in the running app,
+    //             in a field of dial dots, at NORMAL weight, and picked
+    //             from what survived: full cell height, comparable ink
+    //             mass, and no two shapes confusable with each other at
+    //             8x16 under bloom (which is why '‡' lost to '╬', '¶' lost
+    //             to '%', and 'Ø' was dropped for blurring into 'Ω').
+    //             Dial-adjacent stations are deliberately given the most
+    //             dissimilar shapes. '★' and '▪' are absent from the face
+    //             entirely and render as '?'.
+    //   static -- centre frequency of the noise bed while you are tuning
+    //             near it, so each station's approach SOUNDS different.
+    //   crt    -- partial overrides on config.js's SCREEN baseline, applied
+    //             while locked (see setCrtCharacter). Deliberately subtle
+    //             and never announced: heavy and downward; the grainiest, hottest picture on the roster.
+    //   meter  -- VU/EQ ballistics (see stationBallistics). One number set,
+    //             large perceptual effect, because the meters are always in
+    //             view.
+    glyph: 'Æ',
+    static: 1900,
+    crt: { noise: 0.19, bloomAmt: 1.75, flicker: 0.11 },
+    meter: { spring: 0.55, damping: 0.42, swing: 1.1 },
     tracks: [
       realTrack('hTWKbfoikeg', 'Smells Like Teen Spirit', 'Nirvana'),
       realTrack('3mbBbFH9fAg', 'Black Hole Sun', 'Soundgarden'),
@@ -196,14 +235,16 @@ const STATIONS = [
     // (they're meant to sit low, not compete for attention) -- second-
     // biggest boost on the roster.
     gain: 1.5,
+    // 41st pass -- see the field notes on DISTORTION FIELD above. hollow and soft; long persistence, dimmer gun, slowest meters by far
+    glyph: '§',
+    static: 700,
+    crt: { decay: 0.88, brightness: 1.12, bloomAmt: 1.7, scanMax: 0.6 },
+    meter: { spring: 0.16, damping: 0.72, swing: 0.55 },
     tracks: [
       realTrack('UfcAVejslrU', 'Weightless', 'Marconi Union'),
-      // Reassigned from the retired SIGNAL LOCK station -- see comment above.
-      realTrack('sfBlBs25Ewk', 'An Ending (Ascent) [arr. David Le Page]', 'Brian Eno / Orchestra of the Swan'),
       realTrack('TJ6Mzvh3XCc', 'Spiegel im Spiegel', 'Arvo Pärt'),
       realTrack('0kYc55bXJFI', 'Near Light', 'Olafur Arnalds'),
       realTrack('YC6pJOH7bF0', 'Adamord', 'Stars of the Lid'),
-      realTrack('QJ-polFpeX0', 'Music for Airports: 1/1', 'Brian Eno'),
       // Swapped out Richter's "On The Nature of Daylight" and Nils Frahm's
       // "Says" 2026-08-20 -- both read as classical/neoclassical, the same
       // lane as RELIC SIGNAL. These 4 are drone/ambient/embient-rock, built
@@ -211,6 +252,20 @@ const STATIONS = [
       realTrack('8L64BcCRDAE', 'Svefn-g-englar', 'Sigur Rós'),
       realTrack('wLxbD0CkS30', "Heavy Water / I'd Rather Be Sleeping", 'Grouper'),
       realTrack('BD3D5mCjt7I', 'Disintegration Loop 1.1', 'William Basinski'),
+      // 40th pass (Matthew: "remove brian eno as one of the examples in the
+      // guide and put a different track") -- the Guide's SAMPLE TRACKS list
+      // is not a curated field, it's the first 6 DISTINCT primary artists in
+      // this array's own order (see sampleTracks/primaryArtist), so what
+      // shows up there is decided purely by position. Eno led the list at
+      // slot 2 with the Orchestra of the Swan arrangement, and "Music for
+      // Airports" sat at slot 6, so pulling only the first one would have
+      // promoted the second into the same spot. Both moved down here
+      // instead, which drops Eno out of the sampled six without touching
+      // the station's rotation -- all three Eno entries (plus the Budd/Eno
+      // collaboration further down) still play exactly as often as before.
+      // The Guide now shows Grouper as the sixth example.
+      realTrack('sfBlBs25Ewk', 'An Ending (Ascent) [arr. David Le Page]', 'Brian Eno / Orchestra of the Swan'),
+      realTrack('QJ-polFpeX0', 'Music for Airports: 1/1', 'Brian Eno'),
       realTrack('jl_z5JvrKlc', 'Discreet Music', 'Brian Eno'),
       // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
       // "On the Nature of Daylight" and "Says" were swapped OUT of THE STUDY
@@ -247,6 +302,11 @@ const STATIONS = [
     // 25th pass: 80s synth-pop masters run a bit quieter than modern
     // loudness-war masters -- small boost.
     gain: 1.1,
+    // 41st pass -- see the field notes on DISTORTION FIELD above. blocky 80s; slight glow and fringe lift
+    glyph: 'Þ',
+    static: 1300,
+    crt: { bloomAmt: 1.65, chroma: 0.35, brightness: 1.22 },
+    meter: { spring: 0.4, damping: 0.5, swing: 0.9 },
     tracks: [
       realTrack('9GMjH1nR0ds', 'Blue Monday \'88', 'New Order'),
       realTrack('1ASpBpT8bRQ', 'Just Like Heaven', 'The Cure'),
@@ -302,6 +362,11 @@ const STATIONS = [
     // 25th pass: lofi/downtempo masters run a bit quieter/mellower than
     // typical modern masters -- small boost.
     gain: 1.15,
+    // 41st pass -- see the field notes on DISTORTION FIELD above. upward and clean; the least noisy picture, steadiest meters
+    glyph: '&',
+    static: 1050,
+    crt: { noise: 0.1, bloomAmt: 1.3, flicker: 0.05 },
+    meter: { spring: 0.3, damping: 0.6, swing: 0.75 },
     tracks: [
       realTrack('XnFOucmKlXA', 'Aruarian Dance', 'Nujabes'),
       realTrack('InFbBlpDTfQ', 'Midnight In A Perfect World', 'DJ Shadow'),
@@ -357,6 +422,11 @@ const STATIONS = [
     // 25th pass: city pop masters (late 70s/80s Japanese) run a bit
     // quieter than modern masters -- small boost.
     gain: 1.1,
+    // 41st pass -- see the field notes on DISTORTION FIELD above. neon; the brightest, bloomiest picture
+    glyph: 'Ω',
+    static: 1450,
+    crt: { bloomAmt: 1.8, brightness: 1.38 },
+    meter: { spring: 0.45, damping: 0.48, swing: 0.95 },
     tracks: [
       realTrack('5zTkTlj2h9E', 'Stay With Me', 'Miki Matsubara'),
       realTrack('tWqZASIxlqs', 'Sparkle', 'Tatsuro Yamashita'),
@@ -415,6 +485,11 @@ const STATIONS = [
     // 25th pass: modern synthwave masters are already loud/compressed --
     // no boost.
     gain: 1.0,
+    // 41st pass -- see the field notes on DISTORTION FIELD above. circuitry; heaviest misconvergence and mask
+    glyph: '¥',
+    static: 1750,
+    crt: { chroma: 0.5, maskAmt: 0.8, bloomAmt: 1.72 },
+    meter: { spring: 0.55, damping: 0.42, swing: 1.05 },
     tracks: [
       realTrack('ZVS6Q_lbKQ0', 'Nightcall', 'Kavinsky'),
       realTrack('URma_gu1aNE', 'Sunset', 'The Midnight'),
@@ -478,6 +553,11 @@ const STATIONS = [
     // tracklist. Replaced with 5 that are actually on those stations
     // (oEmbed-verified same as everything else here); the remaining 5 were
     // already correct and are untouched.
+    // 41st pass -- see the field notes on DISTORTION FIELD above. an older set: shorter persistence, looser mask, more flicker and grain
+    glyph: '£',
+    static: 900,
+    crt: { noise: 0.17, flicker: 0.1, decay: 0.7, brightness: 1.2, maskAmt: 0.55 },
+    meter: { spring: 0.5, damping: 0.45, swing: 0.85 },
     tracks: [
       realTrack('GkHd1d_UVOE', "I Don't Want to Set the World on Fire", 'The Ink Spots'),
       realTrack('Q9bSOaSuScQ', 'Crawl Out Through the Fallout', 'Sheldon Allman'),
@@ -543,6 +623,11 @@ const STATIONS = [
     // 25th pass: modern hip-hop masters are already loud/compressed -- no
     // boost.
     gain: 1.0,
+    // 41st pass -- see the field notes on DISTORTION FIELD above. thicker scanlines, a touch more grain
+    glyph: '%',
+    static: 1150,
+    crt: { noise: 0.15, bloomAmt: 1.5, scanMax: 0.75 },
+    meter: { spring: 0.42, damping: 0.5, swing: 0.95 },
     tracks: [
       realTrack('D-uV8TGjaGU', 'Can I Kick It?', 'A Tribe Called Quest'),
       realTrack('P800UWoE9xs', 'Award Tour', 'A Tribe Called Quest'),
@@ -609,6 +694,11 @@ const STATIONS = [
     // flag as having stalled at IFrame state UNSTARTED during a live
     // verification pass despite a clean oEmbed 200 -- not dead, just
     // worth a second look if it ever seems to hang on lock.
+    // 41st pass -- see the field notes on DISTORTION FIELD above. crystalline; more colour fringe and a tighter grille, meters twitch
+    glyph: '╬',
+    static: 1600,
+    crt: { chroma: 0.45, maskAmt: 0.78, bloomAmt: 1.6 },
+    meter: { spring: 0.6, damping: 0.4, swing: 1.05 },
     tracks: [
       realTrack('wmin5WkOuPw', 'Firestarter', 'The Prodigy'),
       realTrack('xW17jtkjvvg', 'Smack My Bitch Up', 'The Prodigy'),
@@ -692,6 +782,12 @@ const SECRET_STATION = {
   // 90s-2000s alt/industrial rock masters run loud already -- no boost.
   gain: 1.0,
   secret: true,
+  // 41st pass -- same per-station identity fields as the public roster (see
+  // DISTORTION FIELD's field notes). No glyph: this one is never drawn on
+  // the dial, which is the whole point of it being secret.
+  static: 2000,
+  crt: { noise: 0.2, flicker: 0.12, bloomAmt: 1.6, brightness: 1.4 },
+  meter: { spring: 0.62, damping: 0.38, swing: 1.15 },
   tracks: [
     realTrack('nOVW938sr0k', 'Head Like a Hole', 'Nine Inch Nails'),
     realTrack('eQy0MSchVnM', 'Terrible Lie', 'Nine Inch Nails'),
@@ -970,6 +1066,17 @@ function colToFreq(col) {
   return FREQ_MIN + pct * (FREQ_MAX - FREQ_MIN)
 }
 function clampFreq(f) { return Math.min(FREQ_MAX, Math.max(FREQ_MIN, f)) }
+// 41st pass: dial columns holding a station marker, computed once (station
+// frequencies never change at runtime). frame()'s seek shimmer skips these
+// so it stops erasing the markers -- see the bug note there. Declared HERE
+// rather than up with STATION_PRESET_ORDER because freqToCol() reads
+// DIAL_X0/DIAL_X1, which are const declarations further down the file:
+// evaluating this any earlier throws a temporal-dead-zone ReferenceError and
+// takes the whole module out. The secret station is deliberately absent --
+// it has no marker to protect, and reserving its column would carve a
+// permanently shimmer-free notch in the dial at 777.7, exactly the kind of
+// tell a hidden station should not have.
+const STATION_COLS = new Set(STATIONS.map((ch) => freqToCol(ch.freq)))
 // 2026-08-22 (Matthew: "let's make it so you can lock into the station
 // using the tuner by going to 777.7 even though it is a 'hidden' station")
 // -- includes SECRET_STATION alongside STATIONS, so seeking/dragging/
@@ -979,7 +1086,34 @@ function clampFreq(f) { return Math.min(FREQ_MAX, Math.max(FREQ_MIN, f)) }
 // 1-9 preset keys, or the preset-position strip -- this is the one place
 // that intentionally makes it reachable by tuning alone, on top of the
 // dedicated 0 key.
+// 41st pass (Matthew: "I'm not sure I like the NIN station being
+// discoverable by just going back and forth seeking... it should only happen
+// when you hit 0"). This reverses the 2026-08-22 decision quoted above, but
+// only halfway, which is the whole idea: the two questions the old single
+// function answered got split apart.
+//
+//   nearestStation() -- "what can I LOCK onto from here?" Real stations
+//     only. Seek, scan, drag and Enter all run through this, so none of
+//     them can land on 777.7 any more. '0' still gets in (it calls
+//     presetTune -> tryLock with an explicit `forced` station, bypassing
+//     this entirely), and leaving means pressing '0' again.
+//
+//   nearestSignal() -- "what is the receiver PICKING UP from here?"
+//     Includes the secret station. The SIG meter, the S/N readout, the
+//     static bed and the CRT degrade all run through this, so sweeping past
+//     777.7 still makes the meters climb and the hiss clear: you can feel a
+//     carrier sitting there that you cannot catch. Combined with
+//     applySecretTease()'s red bleed, the set is visibly and audibly
+//     insisting something is there while refusing to tune it.
 function nearestStation(freq) {
+  let best = null, bestDist = Infinity
+  for (const ch of STATIONS) {
+    const d = Math.abs(ch.freq - freq)
+    if (d < bestDist) { bestDist = d; best = ch }
+  }
+  return { station: best, dist: bestDist }
+}
+function nearestSignal(freq) {
   let best = null, bestDist = Infinity
   for (const ch of [...STATIONS, SECRET_STATION]) {
     const d = Math.abs(ch.freq - freq)
@@ -1020,7 +1154,10 @@ function audioCtx() {
 // which was a short flat-noise click too subtle to read as static. This is
 // longer and band-passed like the scanning static bed (startStaticNoise),
 // just fired as a one-shot per arrow-key step instead of held continuously.
-function playSeekStatic() {
+// 41st pass: `centreHz` -- see STATIONS[].static. The one-shot seek hiss
+// takes its colour from whatever station is nearest, so a step toward ATOMIC
+// sounds narrower and older than a step toward CIRCUIT CRUSH.
+function playSeekStatic(centreHz = 1400) {
   try {
     const ctx = audioCtx()
     const n = Math.floor(ctx.sampleRate * 0.09)
@@ -1031,7 +1168,7 @@ function playSeekStatic() {
     src.buffer = buf
     const filter = ctx.createBiquadFilter()
     filter.type = 'bandpass'
-    filter.frequency.value = 1400
+    filter.frequency.value = centreHz
     filter.Q.value = 0.5
     const gain = ctx.createGain()
     gain.gain.setValueAtTime(0.22, ctx.currentTime)
@@ -1098,6 +1235,12 @@ function playIdent(freqs, tempo = 1, s = null) {
 // filtered noise, faded in/out rather than started/stopped hard.
 let staticSrc = null
 let staticGain = null
+// 41st pass: the bed's bandpass is now a live handle, because its centre
+// frequency tracks whichever station is nearest (STATIONS[].static) and
+// ramps between them as you tune -- so crossing the band is a slow change in
+// the COLOUR of the hiss, not just its volume.
+let staticFilter = null
+const STATIC_CENTRE_DEFAULT = 1200
 // 21st pass (Matthew, 0.3 wishlist: "static intensity scales with distance
 // from a station") -- the noise bed used to sit at one fixed gain the whole
 // time you were seeking/scanning, so tuning felt the same whether you were
@@ -1111,7 +1254,7 @@ function staticGainForDist(dist) {
   const pct = dist == null ? 1 : Math.min(1, dist / NEAR_THRESHOLD)
   return STATIC_MIN_GAIN + (STATIC_MAX_GAIN - STATIC_MIN_GAIN) * pct
 }
-function startStaticNoise(dist) {
+function startStaticNoise(dist, centreHz = STATIC_CENTRE_DEFAULT) {
   if (staticSrc) return
   try {
     const ctx = audioCtx()
@@ -1124,7 +1267,7 @@ function startStaticNoise(dist) {
     src.loop = true
     const filter = ctx.createBiquadFilter()
     filter.type = 'bandpass'
-    filter.frequency.value = 1200
+    filter.frequency.value = centreHz
     filter.Q.value = 0.6
     const gain = ctx.createGain()
     gain.gain.setValueAtTime(0, ctx.currentTime)
@@ -1133,13 +1276,21 @@ function startStaticNoise(dist) {
     src.start()
     staticSrc = src
     staticGain = gain
+    staticFilter = filter
   } catch (e) {}
 }
-function setStaticIntensity(dist) {
+function setStaticIntensity(dist, centreHz) {
   if (!staticGain) return
   try {
     const ctx = audioCtx()
     staticGain.gain.linearRampToValueAtTime(staticGainForDist(dist), ctx.currentTime + 0.08)
+    // Slower ramp than the gain on purpose: loudness should track the dial
+    // tightly (it is the "am I close" signal), while timbre drifting over a
+    // few hundred ms reads as the receiver settling rather than as the hiss
+    // jumping between presets.
+    if (staticFilter && centreHz) {
+      staticFilter.frequency.linearRampToValueAtTime(centreHz, ctx.currentTime + 0.35)
+    }
   } catch (e) {}
 }
 function stopStaticNoise() {
@@ -1147,6 +1298,7 @@ function stopStaticNoise() {
   const src = staticSrc, gain = staticGain
   staticSrc = null
   staticGain = null
+  staticFilter = null
   try {
     const ctx = audioCtx()
     gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15)
@@ -1549,12 +1701,28 @@ function playStaticBurst(duration, peakGain, freq) {
  *  moment a lock does (dist is exactly 0 at a station's own freq,
  *  including right after tryLock() calls retune(s, station.freq), so this
  *  self-resets to a clean picture with no separate "reset" call needed). */
+// 41st pass -- per-station CRT character (Matthew: "I'm also for per station
+// CRT character"). config.js's SCREEN is still the nominal set; crtBase is
+// SCREEN with the locked station's own `crt` overrides merged in, and it is
+// what every hook below now treats as "clean picture" instead of SCREEN
+// directly. Without this indirection the existing hooks would quietly undo
+// each station's character: the distance degrade would restore SCREEN's
+// chroma on lock, the ident bloom pulse would settle to SCREEN's bloom, the
+// focus snap would land on SCREEN's beam, and the power-on ramp would climb
+// to SCREEN's brightness -- each one erasing whatever the station asked for
+// a few hundred ms after it was applied.
+let crtBase = { ...SCREEN }
+function setCrtCharacter(s, station) {
+  crtBase = { ...SCREEN, ...((station && station.crt) || {}) }
+  if (!s?.crt?.params) return
+  Object.assign(s.crt.params, crtBase)
+}
 function crtDegradeForDist(dist) {
   const pct = dist == null ? 1 : Math.min(1, dist / NEAR_THRESHOLD)
   return {
-    chroma: SCREEN.chroma + (0.9 - SCREEN.chroma) * pct,
-    snow: SCREEN.snow + (0.035 - SCREEN.snow) * pct,
-    roll: SCREEN.roll + (0.5 - SCREEN.roll) * pct,
+    chroma: crtBase.chroma + (0.9 - crtBase.chroma) * pct,
+    snow: crtBase.snow + (0.035 - crtBase.snow) * pct,
+    roll: crtBase.roll + (0.5 - crtBase.roll) * pct,
   }
 }
 function setCrtDegradation(s, dist) {
@@ -1589,7 +1757,7 @@ function rampCrtParams(s, from, to, durationMs, startDelay = 0) {
  *  (though in practice onError only fires while locked, i.e. dist 0). */
 function flashCrtGlitch(s) {
   if (!s?.crt?.params) return
-  const { dist } = nearestStation(s.program.freq)
+  const { dist } = nearestSignal(s.program.freq)
   const restore = crtDegradeForDist(dist)
   Object.assign(s.crt.params, { chroma: 2.4, roll: 0.5 })
   setTimeout(() => { if (s?.crt?.params) Object.assign(s.crt.params, restore) }, 150)
@@ -1613,16 +1781,16 @@ function pulseBloom(s, amt = 0.5, ms = 90) {
   // makes the glow breathe in time with the motif.
   if (bloomTimer) { clearInterval(bloomTimer); bloomTimer = null }
   const start = Date.now()
-  s.crt.params.bloomAmt = SCREEN.bloomAmt + amt
+  s.crt.params.bloomAmt = crtBase.bloomAmt + amt
   bloomTimer = setInterval(() => {
     const k = (Date.now() - start) / ms
     if (!s?.crt?.params || k >= 1) {
       clearInterval(bloomTimer)
       bloomTimer = null
-      if (s?.crt?.params) s.crt.params.bloomAmt = SCREEN.bloomAmt
+      if (s?.crt?.params) s.crt.params.bloomAmt = crtBase.bloomAmt
       return
     }
-    s.crt.params.bloomAmt = SCREEN.bloomAmt + amt * (1 - k)
+    s.crt.params.bloomAmt = crtBase.bloomAmt + amt * (1 - k)
   }, 16)
 }
 
@@ -1634,9 +1802,9 @@ function pulseBloom(s, amt = 0.5, ms = 90) {
  *  chroma/snow/roll rather than overwriting any of it. */
 function flashFocusSnap(s) {
   if (!s?.crt?.params) return
-  const soft = { beam: Math.min(2, SCREEN.beam * 2), sharpen: SCREEN.sharpen * 0.2 }
-  const over = { beam: SCREEN.beam * 0.78, sharpen: Math.min(2, SCREEN.sharpen * 1.6) }
-  const home = { beam: SCREEN.beam, sharpen: SCREEN.sharpen }
+  const soft = { beam: Math.min(2, crtBase.beam * 2), sharpen: crtBase.sharpen * 0.2 }
+  const over = { beam: crtBase.beam * 0.78, sharpen: Math.min(2, crtBase.sharpen * 1.6) }
+  const home = { beam: crtBase.beam, sharpen: crtBase.sharpen }
   Object.assign(s.crt.params, soft)
   rampCrtParams(s, soft, over, 130)
   rampCrtParams(s, over, home, 180, 140)
@@ -1828,7 +1996,14 @@ export default {
   // to remember to special-case the secret station on its own.
   applyPhosphor(s) {
     const secret = this.mode === 'locked' && this.lockedStation && this.lockedStation.secret
-    s.setPhosphor(secret ? 'red' : DISPLAY_MODES[this.displayModeIndex].key)
+    // 41st pass: setPhosphor() no-ops when the requested tint is already the
+    // active one BY REFERENCE, and applySecretTease() leaves a freshly built
+    // array in there -- so without clearing the flag and forcing the
+    // assignment, coming off a tease could leave the blended tint stuck.
+    this._teasing = false
+    const name = secret ? 'red' : DISPLAY_MODES[this.displayModeIndex].key
+    if (s.crt && PHOSPHORS[name]) s.crt.phosphor = PHOSPHORS[name]
+    s.setPhosphor(name)
   },
 
   init(s) {
@@ -2037,7 +2212,12 @@ export default {
       const col = freqToCol(ch.freq)
       const glow = this.mode === 'seeking' && ch === near && dist <= NEAR_THRESHOLD
       const locked = this.mode === 'locked' && this.lockedStation === ch
-      term.put(col, DIAL_Y, '▲', locked ? BRIGHT : glow ? BOLD : NORMAL)
+      // 41st pass: each station's own marker (STATIONS[].glyph) instead of
+      // nine identical triangles, so the band reads as a map you learn
+      // rather than a row of anonymous ticks. Every glyph is verified
+      // present in the Terminus BDF -- an unmapped codepoint renders blank,
+      // which would silently delete a station from the dial.
+      term.put(col, DIAL_Y, ch.glyph || '▲', locked ? BRIGHT : glow ? BOLD : NORMAL)
     }
     const cursorCol = freqToCol(this.freq)
     term.put(cursorCol, DIAL_Y, '█', BRIGHT)
@@ -2288,14 +2468,14 @@ export default {
   crtIdleEvent(s, kind) {
     if (!s?.crt?.params) return
     const { term } = s
-    const { dist } = nearestStation(this.freq)
+    const { dist } = nearestSignal(this.freq)
     // Restore to what the CURRENT tuning distance calls for, not to
     // nominal -- same reasoning as flashCrtGlitch().
     const restore = crtDegradeForDist(dist)
     kind = kind || (Math.random() < 0.5 ? 'roll' : 'tear')
     if (kind === 'roll') {
-      rampCrtParams(s, { roll: restore.roll, rollSpeed: SCREEN.rollSpeed }, { roll: 0.45, rollSpeed: 0.9 }, 260)
-      rampCrtParams(s, { roll: 0.45, rollSpeed: 0.9 }, { roll: restore.roll, rollSpeed: SCREEN.rollSpeed }, 500, 700)
+      rampCrtParams(s, { roll: restore.roll, rollSpeed: crtBase.rollSpeed }, { roll: 0.45, rollSpeed: 0.9 }, 260)
+      rampCrtParams(s, { roll: 0.45, rollSpeed: 0.9 }, { roll: restore.roll, rollSpeed: crtBase.rollSpeed }, 500, 700)
       return
     }
     Object.assign(s.crt.params, { snow: 0.03, chroma: 1.6 })
@@ -2474,7 +2654,7 @@ export default {
         this.drawStandbyClock(s)
         // 38th pass: afterglow bleeding back down to nominal persistence
         // across the first moments of STANDBY, rather than snapping back.
-        rampCrtParams(s, { decay: 0.96 }, { decay: SCREEN.decay }, 420)
+        rampCrtParams(s, { decay: 0.96 }, { decay: crtBase.decay }, 420)
         this._powerAnimating = false // sequence landed, ticker can resume
       } },
     ]
@@ -2492,10 +2672,15 @@ export default {
     // 19th pass: floor, not round -- see drawStandbyClock()
     const midY = Math.floor(term.rows / 2)
     playPowerOnSound()
+    // 41st pass: re-establish the baseline for whatever station is being
+    // resumed BEFORE the warm-up ramp below reads crtBase.brightness/bg off
+    // it -- otherwise a set resuming onto DRIFT MODE warms up to the nominal
+    // brightness and only drops to the station's dimmer picture afterwards.
+    setCrtCharacter(s, this.mode === 'locked' ? this.lockedStation : null)
     // 38th pass: powerDown() raises `decay` for the afterglow smear on the
     // way out, so a power-cycle has to come back to nominal persistence
     // rather than inheriting a tube that never stops glowing.
-    if (s?.crt?.params) s.crt.params.decay = SCREEN.decay
+    if (s?.crt?.params) s.crt.params.decay = crtBase.decay
 
     // 26th pass (Matthew: "a longer, better cold boot sequence... maybe like
     // cyberspace.online does") -- looked at cyberspace's actual boot live: a
@@ -2542,7 +2727,7 @@ export default {
     rampCrtParams(
       s,
       { brightness: 0.05, bg: 0.02 },
-      { brightness: SCREEN.brightness, bg: SCREEN.bg },
+      { brightness: crtBase.brightness, bg: crtBase.bg },
       REVEAL_DELAY,
     )
     const beats = [
@@ -2654,7 +2839,9 @@ export default {
     let pct = 0
     if (this.mode === 'locked') pct = 1
     else {
-      const { dist } = nearestStation(this.freq)
+      // 41st pass: nearestSignal, not nearestStation -- the SIG meter is a
+      // reception readout, and the secret station is really there.
+      const { dist } = nearestSignal(this.freq)
       if (dist <= NEAR_THRESHOLD) pct = 1 - dist / NEAR_THRESHOLD
     }
     const filled = Math.round(pct * segs)
@@ -2688,12 +2875,19 @@ export default {
     this.clearStation(s)
     const maxWidth = BOX_X1 - BOX_X0 - 4
     // 37th pass (Matthew: "some flair on either side of the station name,
-    // trying to jazz up the interface") -- flanking on-air-lamp dots, using
-    // a glyph (●) already proven to render in this BDF font elsewhere in
-    // the app (the status-readout LED). Budgeted out of the same maxWidth
-    // truncate() already enforces, so even the longest callsign
-    // (DISTORTION FIELD) still can't push the box past its border.
-    const FLAIR = '●'
+    // trying to jazz up the interface") -- flanking on-air lamps. Budgeted
+    // out of the same maxWidth truncate() already enforces, so even the
+    // longest callsign (DISTORTION FIELD) still can't push the box past its
+    // border.
+    // 41st pass (Matthew: "extend the station glyphs to either side of the
+    // station name replacing the 'on air' circles") -- the flair is now the
+    // station's own dial marker, so the shape you hunt for on the band is
+    // the same shape that frames the callsign once you land on it. The two
+    // places a station identifies itself now agree. Falls back to the
+    // original dot for anything without a glyph -- which today means the
+    // secret station, and that is correct: it has no marker on the dial to
+    // echo, because it has no marker at all.
+    const FLAIR = station.glyph || '●'
     const flairWidth = FLAIR.length * 2 + 2 // "● " + " ●"
     const callsign = truncate(station.callsign, maxWidth - flairWidth)
     const flaired = `${FLAIR} ${callsign} ${FLAIR}`
@@ -2846,12 +3040,17 @@ export default {
     //      but-paused, so hunting for a signal still reads as "alive".
     const volFactor = this.muted ? 0 : this.volume / 100
     const searching = this.mode === 'seeking'
+    // 41st pass -- per-station ballistics (see stationBallistics). Only the
+    // PLAYING target is scaled by swing: the seeking flutter and the resting
+    // floor belong to the receiver, not to whatever station happens to be
+    // loaded, so they stay identical everywhere on the dial.
+    const b = this.stationBallistics()
     let target
-    if (playing) target = volFactor * (0.15 + Math.random() * 0.8)
+    if (playing) target = Math.min(1, volFactor * b.swing * (0.15 + Math.random() * 0.8))
     else if (searching) target = 0.04 + Math.random() * 0.10
     else target = 0.03
-    const spring = 0.4
-    const damping = 0.5
+    const spring = b.spring
+    const damping = b.damping
     const accel = (target - this.vuSample) * spring - this.vuVelocity * damping
     this.vuVelocity += accel
     this.vuSample = Math.max(0, Math.min(1, this.vuSample + this.vuVelocity))
@@ -2871,6 +3070,23 @@ export default {
     for (const v of this.vuTrace) bar += chars[Math.max(0, Math.min(chars.length - 1, Math.round(v * (chars.length - 1))))]
     const label = `VU  ${bar}`
     term.text(centerXRange(BOX_X0 + 1, METERS_DIVIDER_X - 1, label), VU_Y, label, playing ? DIM : FAINT)
+  },
+
+  /** 41st pass -- per-station meter ballistics (Matthew: "I'm also for ...
+   *  Per-station meter ballistics"). Three numbers per station, feeding both
+   *  the VU trace and the EQ ribbon:
+   *    spring  -- how hard the meter is pulled toward its target
+   *    damping -- how fast that pull is bled off
+   *    swing   -- how far the target itself travels while playing
+   *  DRIFT MODE drifts (0.16/0.72/0.55, barely moving); CIPHER and the
+   *  secret station snap (0.6+/0.4/1.05+). The defaults below are the values
+   *  every station used before this pass, so anything without a `meter`
+   *  field behaves exactly as it always did -- including "no station at
+   *  all", which is what the meters fall back to while seeking. */
+  DEFAULT_BALLISTICS: { spring: 0.4, damping: 0.5, swing: 1 },
+  stationBallistics() {
+    const m = this.mode === 'locked' && this.lockedStation && this.lockedStation.meter
+    return m ? { ...this.DEFAULT_BALLISTICS, ...m } : this.DEFAULT_BALLISTICS
   },
 
   // 23rd pass: a one-shot push into the spring rather than a new state
@@ -3069,7 +3285,7 @@ export default {
     // landing mid-sweep before tryLock has retuned to the exact frequency)
     // can ever show a degraded S/N on a carrier the set is holding. Locked
     // is locked.
-    const pct = state === 'seeking' ? Math.min(1, nearestStation(this.freq).dist / NEAR_THRESHOLD) : 0
+    const pct = state === 'seeking' ? Math.min(1, nearestSignal(this.freq).dist / NEAR_THRESHOLD) : 0
     const snr = Math.round(this.SNR_MAX + (this.SNR_MIN - this.SNR_MAX) * pct)
     // Same attribute convention as drawFieldReadout() below, so the two
     // readouts read as one stacked pair rather than two unrelated labels.
@@ -3119,17 +3335,23 @@ export default {
     const x0 = startX + this.ANTENNA_TEMPLATE[0].length + 2
     const chars = ' ▁▂▃▄▅▆▇█'
     let bar = ''
+    const b = this.stationBallistics()
     // 31st pass: unlike the rings/FLD readout above, this ribbon stays an
     // audio-level analog (same role as the VU meter it mirrors) -- so mute
     // still flattens it, checked directly here rather than through `state`.
     for (let i = 0; i < this.eqSamples.length; i++) {
       let target
       if (this.muted) target = 0.05
-      else if (state === 'playing') target = 0.15 + Math.random() * 0.8
+      else if (state === 'playing') target = Math.min(1, b.swing * (0.15 + Math.random() * 0.8))
       else if (state === 'buffering') target = Math.random() * 0.6
       else if (state === 'seeking') target = 0.03 + Math.random() * 0.08
       else target = 0.05 // paused -- nearly flat
-      const spring = 0.35, damping = 0.5
+      // 41st pass: same station ballistics as the VU, scaled down slightly
+      // -- the ribbon reads as several narrow bands rather than one summed
+      // level, and bands that snap exactly as hard as the main meter make
+      // the two look like copies of each other instead of two instruments
+      // watching the same signal.
+      const spring = b.spring * 0.9, damping = b.damping
       const accel = (target - this.eqSamples[i]) * spring - this.eqVelocities[i] * damping
       this.eqVelocities[i] += accel
       this.eqSamples[i] = Math.max(0, Math.min(1, this.eqSamples[i] + this.eqVelocities[i]))
@@ -3354,17 +3576,70 @@ export default {
     this.drawSignal(s)
     // 21st pass: static bed loudness tracks distance to the nearest
     // station -- no-ops if the noise bed isn't currently running (locked).
-    const { dist } = nearestStation(this.freq)
-    setStaticIntensity(dist)
+    // 41st pass: nearestSignal, not nearestStation -- everything below this
+    // line is metering (how loud the hiss is, how degraded the picture is),
+    // and the secret station is a real carrier for those purposes even
+    // though nothing here can lock onto it.
+    const { station: sigStation, dist } = nearestSignal(this.freq)
+    setStaticIntensity(dist, sigStation && sigStation.static)
     // 32nd pass: the picture itself degrades the same way the hiss does --
     // see crtDegradeForDist(). dist is 0 exactly at a station's own freq
     // (including right after a lock, since tryLock() calls retune(s,
     // station.freq)), so this naturally settles back to a clean picture on
     // lock without a separate "reset" call.
     setCrtDegradation(s, dist)
+    this.applySecretTease(s)
+  },
+
+  /** 41st pass (Matthew: "maybe make it also go red a bit?") -- the visual
+   *  half of the secret station's tease. nearestSignal() already lets the
+   *  meters and the hiss react to a carrier at 777.7 that nearestStation()
+   *  refuses to lock; this bleeds the tube's tint toward the same alarming
+   *  red that station forces once you are actually on it, in proportion to
+   *  how close the dial is. Sweeping past feels like the set is reacting to
+   *  something it will not name.
+   *
+   *  Writes s.crt.phosphor directly rather than going through
+   *  setPhosphor(name): that call is name-keyed (so it cannot express an
+   *  in-between tint at all) and it clears the persistence buffer on every
+   *  change, which is right for a hard channel-change flash and very wrong
+   *  for a gradual bleed -- it would strobe black on every tuning step.
+   *  Always assigns a NEW array; PHOSPHORS entries are shared config objects
+   *  and mutating one in place would corrupt the tint for the whole session. */
+  applySecretTease(s) {
+    if (!s || !s.crt) return
+    // Locked is applyPhosphor()'s business, not this function's.
+    if (this.mode === 'locked') return
+    const base = PHOSPHORS[DISPLAY_MODES[this.displayModeIndex].key]
+    if (!base) return
+    const pct = 1 - Math.min(1, Math.abs(SECRET_STATION.freq - this.freq) / NEAR_THRESHOLD)
+    if (pct <= 0) {
+      // Only restore if this function is what moved it -- otherwise every
+      // tuning step anywhere on the band would fight applyPhosphor().
+      if (this._teasing) { s.crt.phosphor = base; this._teasing = false }
+      return
+    }
+    const red = PHOSPHORS.red
+    // Caps well short of full red: at the threshold edge it should read as a
+    // faint warmth you might not consciously notice, and even dead on the
+    // frequency it stays a tint rather than the full alarm state that locking
+    // the station actually gives you. The reward has to stay bigger than the
+    // tease.
+    const k = pct * 0.6
+    s.crt.phosphor = [
+      base[0] + (red[0] - base[0]) * k,
+      base[1] + (red[1] - base[1]) * k,
+      base[2] + (red[2] - base[2]) * k,
+    ]
+    this._teasing = true
   },
   enterSeeking(s) {
     this.mode = 'seeking'
+    // 41st pass: back to the nominal set the moment we are off a station --
+    // station character is a property of being locked onto it, not of having
+    // been there. Order matters: this rebuilds crtBase, so the degrade below
+    // (via retune/startStaticNoise callers) lands on the right baseline.
+    setCrtCharacter(s, null)
     // 2026-08-22: leaving a lock is the other half of applyPhosphor()'s
     // job -- tuning away from the secret NIN station has to drop the forced
     // red tint back to whatever the user's normal display mode is.
@@ -3381,7 +3656,8 @@ export default {
     // signals") -- reuses the same bed scanning already uses. Idempotent:
     // a no-op if it's already running, so this never restarts/stutters the
     // ramp on repeated calls.
-    startStaticNoise(nearestStation(this.freq).dist)
+    const sig = nearestSignal(this.freq)
+    startStaticNoise(sig.dist, sig.station && sig.station.static)
   },
   seekStep(s, delta) {
     this.stopScan()
@@ -3400,7 +3676,12 @@ export default {
     // 38th pass: the band edge finally makes a sound -- see playBandBump()
     // for why this fires on the wrap rather than replacing it with a stop.
     if (wrapped) playBandBump()
-    playSeekStatic()
+    // 41st pass: the one-shot seek hiss takes its colour from whatever is
+    // nearest, same field the continuous bed uses -- see STATIONS[].static.
+    // Offset above the bed's centre so a step still reads as a separate
+    // event layered on the bed rather than a momentary swell of it.
+    const seekSig = nearestSignal(this.freq).station
+    playSeekStatic((seekSig && seekSig.static ? seekSig.static : STATIC_CENTRE_DEFAULT) + 200)
     // Land-on-lock (added 2026-08-20, Matthew: "when you hit one of the
     // stations while seeking with arrows and you land on one, it locks"):
     // if the new position is within lock range of a station, lock onto it
@@ -3418,7 +3699,13 @@ export default {
     // above only fires on a locked->seeking transition, but the continuous
     // bed needs to be there (or stay there) on every non-locking step, not
     // just the first one. Idempotent, same as above.
-    startStaticNoise(dist)
+    // 41st pass: `dist` here is the LOCKING distance (real stations only --
+    // see nearestStation), which is not what the bed should follow: near
+    // 777.7 that number is large while the receiver is in fact sitting on a
+    // strong carrier. The bed uses the signal distance so the hiss clears
+    // over the secret station the same as any other.
+    const bedSig = nearestSignal(this.freq)
+    startStaticNoise(bedSig.dist, bedSig.station && bedSig.station.static)
   },
   // 2026-08-22: optional `forced` param -- SECRET_STATION is deliberately
   // NOT part of STATIONS (see its own comment for why), so nearestStation()
@@ -3463,6 +3750,11 @@ export default {
     }
     this.mode = 'locked'
     this.lockedStation = station
+    // 41st pass: this station's own picture, before anything below reads the
+    // baseline back (the ident bloom pulse, the focus snap, and retune()'s
+    // distance degrade all settle to crtBase -- see setCrtCharacter).
+    setCrtCharacter(s, station)
+    setCrtDegradation(s, 0)
     // 2026-08-22: forces the red tint on for the secret NIN station, and
     // restores the normal preference for everything else -- see
     // applyPhosphor()'s comment.
@@ -3623,7 +3915,9 @@ export default {
     STATION_PRESET_ORDER.forEach((ch, i) => {
       const presetNum = String(i + 1).padStart(2, '0')
       const y = startY + i * 2
-      const line = truncate(`[${presetNum}] ${ch.freq.toFixed(1)}   ${ch.callsign} -- ${ch.tagline}`, term.cols - 8)
+      // 41st pass: the dial marker leads the line, so the index doubles as
+      // the legend for the band -- you can read off which shape to hunt for.
+      const line = truncate(`[${presetNum}] ${ch.glyph || ' '}  ${ch.freq.toFixed(1)}   ${ch.callsign} -- ${ch.tagline}`, term.cols - 8)
       term.text(4, y, line, BRIGHT)
     })
     put(22, '[<-] ABOUT   [1-9] JUMP   [->] NEXT   [any other key] CLOSE', FAINT)
@@ -3647,7 +3941,13 @@ export default {
     const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
     put(1, `SIGNAL -- STATIONS   [${presetNum}/${String(STATION_PRESET_ORDER.length).padStart(2, '0')}]`, BOLD)
     const contentWidth = term.cols - 8
-    term.text(4, 3, `[${presetNum}] ${ch.freq.toFixed(1)}   ${ch.callsign}`, BRIGHT)
+    // 41st pass: flanks the callsign the same way the STATION box does once
+    // you are locked on. Deliberately NOT also led by the glyph the way the
+    // index page's rows are -- the index needs it out front because it is a
+    // legend you scan down a column of; here it would just print the same
+    // mark three times on one line.
+    const mark = ch.glyph || '●'
+    term.text(4, 3, `[${presetNum}] ${ch.freq.toFixed(1)}   ${mark} ${ch.callsign} ${mark}`, BRIGHT)
     term.text(4, 4, truncate(ch.tagline, contentWidth), MUTED)
     term.text(4, 6, '-'.repeat(Math.min(72, contentWidth)), FAINT)
     wordWrap(ch.desc, contentWidth).slice(0, 3).forEach((line, li) => term.text(4, 8 + li, line, NORMAL))
@@ -3716,7 +4016,8 @@ export default {
     if (this.mode === 'locked') this.enterSeeking(s)
     this.scanning = true
     this.setStatus(s, 'SCANNING...', false)
-    startStaticNoise(nearestStation(this.freq).dist)
+    const sig = nearestSignal(this.freq)
+    startStaticNoise(sig.dist, sig.station && sig.station.static)
     this.scanTimer = setInterval(() => {
       let f = this.freq + SCAN_STEP
       if (f > FREQ_MAX) f = FREQ_MIN
@@ -3752,7 +4053,8 @@ export default {
     // distinct from both the plain seek-static hiss and the ident tone
     // that plays once the sweep lands and locks a few hundred ms later.
     playPresetWhoosh()
-    startStaticNoise(nearestStation(this.freq).dist)
+    const sig = nearestSignal(this.freq)
+    startStaticNoise(sig.dist, sig.station && sig.station.static)
     this.scanTimer = setInterval(() => {
       i += 1
       const f = i >= steps ? target : startFreq + (target - startFreq) * (i / steps)
@@ -3798,7 +4100,8 @@ export default {
     this.retune(s, this.freq + dFreq)
     this.setStatus(s, 'SEEKING', false)
     // Same continuous bed as arrow-seeking (12th pass) -- idempotent.
-    startStaticNoise(nearestStation(this.freq).dist)
+    const sig = nearestSignal(this.freq)
+    startStaticNoise(sig.dist, sig.station && sig.station.static)
   },
 
   // 22nd pass -- mobile has no keyboard, so it had no way to power on, lock
@@ -3978,7 +4281,18 @@ export default {
     if (this.mode === 'seeking' && Math.random() < 0.15) {
       const x = DIAL_X0 + Math.floor(Math.random() * (DIAL_X1 - DIAL_X0))
       const cursorCol = freqToCol(this.freq)
-      if (x !== cursorCol) {
+      // BUG FIXED (41st pass, found while verifying the per-station dial
+      // glyphs): this shimmer picks ANY column on the dial and paints a
+      // FAINT '·'/':' over it -- including the columns holding station
+      // markers. Nothing repaints them until the next retune() call, so
+      // sitting still anywhere on the band quietly ate the markers one by
+      // one, and the dial you were supposed to be navigating by went blank.
+      // It has always done this (the old uniform '▲'s disappeared exactly
+      // the same way); giving each station its own glyph is what finally
+      // made it obvious, since a dial full of DIFFERENT shapes is something
+      // you actually read. The cursor column was already excluded for the
+      // same reason -- this just extends that to the markers.
+      if (x !== cursorCol && !STATION_COLS.has(x)) {
         const chars = ['·', '·', '·', ':', '.']
         s.term.put(x, DIAL_Y, chars[Math.floor(Math.random() * chars.length)], FAINT)
       }
