@@ -1126,8 +1126,14 @@ function mobileLayout(tagLines, trackLines) {
   // maybe make them on the same line, spread out from each other?" then
   // "add the fld changing number widget and a more obvious mute off/on") --
   // two widget rows: VU|SIG, then FLD|MUTE directly below.
-  const widgetRow = npBot + 2
-  const widgetRow2 = widgetRow + 1
+  // 2026-08-22, round 2 (Matthew: "add some space vertically between the
+  // first row of widgets and the second") -- widgetRow moved one row closer
+  // to npBot (was +2) to make room for a full blank row before widgetRow2
+  // (now +2 instead of +1), so the gap Matthew asked for doesn't eat into
+  // the existing blank row above the hint footer -- net row budget in the
+  // worst case (2-line tagline + 2-line title) is unchanged.
+  const widgetRow = npBot + 1
+  const widgetRow2 = widgetRow + 2
   return {
     tagLines, trackLines,
     stationTop: top, stationCall, stationTag1, stationTag2, stationBot,
@@ -2352,16 +2358,22 @@ export default {
   // 2026-08-22 (Matthew: "let's have the top header mirror what we have on
   // desktop... date, time, sg-1 etc") -- wordmark+clock share row 0 same as
   // desktop's title bar (left/right split instead of centered, so there's
-  // room for both); the brand-plate now takes row 1, which used to just be
-  // blank spacing between the title and the status row.
+  // room for both); the brand-plate took row 1, which used to just be blank
+  // spacing between the title and the status row.
+  // 2026-08-22, round 2 (Matthew: "keep to one line. just put SG-1 in the
+  // middle instead of the full thing") -- the two-row mirror read as too
+  // heavy on a 42-col phone screen. Back to one row: wordmark left, a short
+  // "SG-1" centered (not the full "MODEL SG-1 - SIGNAL RECEIVER" plate),
+  // clock right. Row 1 goes back to being blank spacer, same as before the
+  // two-row version existed.
   mobileDrawChrome(s) {
     const { term } = s
     for (let x = 0; x < term.cols; x++) { term.put(x, 0, ' ', NORMAL, 1); term.put(x, 1, ' ', NORMAL, 1) }
     const title = `SIGNAL ${VERSION_TAG}`
     term.text(2, 0, title, BOLD, 1)
     this.drawClock(s)
-    const brand = 'MODEL SG-1  -  SIGNAL RECEIVER'
-    term.text(centerX(term.cols, brand), 1, brand, FAINT, 1)
+    const brand = 'SG-1'
+    term.text(centerX(term.cols, brand), 0, brand, FAINT, 1)
     if (!this._mLayout) this._mLayout = mobileLayout(2, 2)
     this.mobileDrawFrame(s)
   },
@@ -3911,8 +3923,19 @@ export default {
     const attrs = { playing: BRIGHT, paused: MUTED, buffering: DIM }
     const icon = icons[this.playState] || ' '
     const attr = attrs[this.playState] || FAINT
-    const full = `${icon} [${bar}] ${fmt(cur)}/${fmt(dur)}`
-    term.text(centerX(term.cols, full), y, full, attr)
+    // 2026-08-22 (Matthew: "I think the progress bar is too bright...
+    // let's make sure to match between desktop and mobile the weight of
+    // things") -- this used to paint icon+bar+time as one BRIGHT/MUTED/DIM
+    // string, so the bar itself flared BRIGHT whenever playing. Desktop's
+    // drawPlayback never does that: the bar+time (barPart) is always FAINT,
+    // and only the state label (labelPart) carries BRIGHT/MUTED/DIM. Same
+    // split here -- the icon is the "label", bar+time stays FAINT.
+    const iconPart = icon
+    const barPart = ` [${bar}] ${fmt(cur)}/${fmt(dur)}`
+    const full = iconPart + barPart
+    const startX = centerX(term.cols, full)
+    term.text(startX, y, iconPart, attr)
+    term.text(startX + iconPart.length, y, barPart, FAINT)
   },
 
   // Scrolling waveform squiggle (11th pass -- Matthew wasn't digging the
@@ -4444,16 +4467,22 @@ export default {
             if (e.data === YT.PlayerState.ENDED) { self.skip(s); return }
             if (e.data === YT.PlayerState.PLAYING) {
               self.setPlayState(s, 'playing')
-              // 2026-08-22 (bug: "nothing plays... I have to mute and
-              // unmute" -- see loadTrack()'s comment for the autoplay-block
-              // mechanics this works around) -- restore the level the
-              // instant real playback actually starts. Unmuting here rather
-              // than right after the play call: by the time PLAYING fires
-              // it's an already-running video, not a fresh autoplay
-              // request, so the browser allows the programmatic unmute.
+              // 2026-08-22, round 2 (Matthew's exact repro: plays silently,
+              // stays silent through a station swipe, only comes back after
+              // manually tapping mute then unmute) -- the first attempt
+              // tried to unmute right here, reasoning that an
+              // already-running video isn't a fresh autoplay request
+              // anymore. That reasoning was wrong on the stricter mobile
+              // browsers: unmuting by script is ITS OWN gated action, and
+              // this handler fires from an async postMessage callback, not
+              // a live gesture, so the unmute silently failed too -- the
+              // video played, just muted, forever. Now this only flags the
+              // intent (_pendingUnmute); onTouchStart/key() -- which DO run
+              // inside a real gesture, and fire on literally the next tap
+              // or swipe -- are what actually call unMute().
               if (self._forcedMuteForAutoplay) {
                 self._forcedMuteForAutoplay = false
-                if (!self.muted) { self.player.unMute(); self.applyVolume() }
+                if (!self.muted) self._pendingUnmute = true
               }
             }
             else if (e.data === YT.PlayerState.PAUSED) self.setPlayState(s, 'paused')
@@ -5114,6 +5143,31 @@ export default {
   // so a swipe can't accidentally trigger both a station change and a skip.
   onTouchStart(s, e) {
     if (this.poweredOn) this._lastInputAt = Date.now()
+    // 2026-08-22 (bug report, round 2 -- Matthew's exact repro: power on,
+    // silent; swipe to a new station, still silent; tap mute (shows MUTED,
+    // still silent); tap it again to unmute -- THEN it plays): the
+    // loadTrack()/PLAYING-handler mute-then-unmute from the previous round
+    // gets the mute half right (muted autoplay is unconditionally allowed,
+    // which is why playback actually starts and the UI shows real
+    // progress/track info) but the auto-unmute half doesn't reliably work
+    // -- unmuting a video by script is ALSO gated behind a live user
+    // gesture on the stricter mobile browsers, and the PLAYING event that
+    // triggers it fires from an async postMessage callback, not from
+    // inside a touch handler. So it plays, but stays muted forever, until
+    // Matthew's own mute-tap-then-unmute-tap supplies the real gesture the
+    // unMute() call needed all along -- his second tap is what actually
+    // works, same as manually doing it before this fix existed.
+    // Fix: stop trying to unmute from the async callback. Leave
+    // _pendingUnmute set there instead, and flush it here, at the top of
+    // the touch handler that already runs on every tap AND every swipe --
+    // this IS a live gesture, so the very next touch after playback starts
+    // (which on a phone is usually within a second or two) unmutes for
+    // real, with no dedicated "tap mute twice" dance required.
+    if (this._pendingUnmute && !this.muted && this.ready && this.player) {
+      this._pendingUnmute = false
+      this.player.unMute()
+      this.applyVolume()
+    }
     if (this.visualizerActive) { this.exitVisualizer(s); e.preventDefault(); return }
     if (e.target && e.target.closest && e.target.closest('#ytDock')) return
     // 45th pass -- two-finger tap cycles display mode/tint, the touch
@@ -5906,6 +5960,14 @@ export default {
     // 43rd pass -- any key counts as activity for the idle-visualizer
     // clock, whether or not it does anything else below.
     this._lastInputAt = Date.now()
+    // 2026-08-22 -- same fix as onTouchStart's: unmuting from the async
+    // PLAYING callback isn't a live gesture on the stricter browsers, so
+    // flush it here too, on the desktop keyboard path.
+    if (this._pendingUnmute && !this.muted && this.ready && this.player) {
+      this._pendingUnmute = false
+      this.player.unMute()
+      this.applyVolume()
+    }
     // Keypress click (32nd pass; scoped to mapped keys only 2026-08-22,
     // Matthew: "hearing sound when I command tab between programs, that
     // should not happen") -- the listener sits on window (see
