@@ -1089,6 +1089,14 @@ const MSTATION_TOP_Y = 4
 // title actually reclaims its row instead of leaving it blank.
 const MHINT_Y1 = 20
 const MHINT_Y2 = 21
+// 2026-08-22 (Matthew: "the vu and signal are too close to each other...
+// make them on the same line, spread out from each other") -- VU sits left
+// of this column, SIG sits right of it, on one shared widget row instead of
+// two stacked ones. Column left blank as the gap between them rather than
+// drawing a divider glyph -- the STATION/NOW PLAYING boxes are the only
+// bordered elements on this screen, and a widget row divider would compete
+// with them.
+const MWIDGET_DIVIDER_X = 21
 
 // 2026-08-22 (Matthew: "the layout of text in the boxes... not using the
 // space well... room to put some fun things below now playing") -- row
@@ -1110,13 +1118,15 @@ function mobileLayout(tagLines, trackLines) {
   const npTrack2 = trackLines >= 2 ? npTop + 2 : null
   const npArtist = npTop + 1 + trackLines
   const npBot = npArtist + 1
-  const widgetVU = npBot + 2
-  const widgetSig = widgetVU + 1
+  // 2026-08-22 (Matthew: "the vu and signal are too close to each other.
+  // maybe make them on the same line, spread out from each other?") -- one
+  // shared row, VU left / SIG right, rather than two stacked rows.
+  const widgetRow = npBot + 2
   return {
     tagLines, trackLines,
     stationTop: top, stationCall, stationTag1, stationTag2, stationBot,
     npTop, npTrack1, npTrack2, npArtist, npBot,
-    widgetVU, widgetSig,
+    widgetRow,
     hint1: MHINT_Y1, hint2: MHINT_Y2,
   }
 }
@@ -3554,7 +3564,6 @@ export default {
   // Percent computation is shared with desktop; only the render target
   // (row + width) differs, via mobileDrawSignal.
   drawSignal(s) {
-    const segs = 16
     let pct = 0
     if (this.mode === 'locked') pct = 1
     else {
@@ -3563,22 +3572,30 @@ export default {
       const { dist } = nearestSignal(this.freq)
       if (dist <= NEAR_THRESHOLD) pct = 1 - dist / NEAR_THRESHOLD
     }
+    if (this.mobile) { this.mobileDrawSignal(s, pct); return }
+    const { term } = s
+    const segs = 16
     const filled = Math.round(pct * segs)
     let bar = ''
     for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '-'
-    if (this.mobile) { this.mobileDrawSignal(s, bar, filled); return }
-    const { term } = s
     for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, SIG_Y, ' ')
     const label = `SIG [${bar}]`
     term.text(centerXRange(BOX_X0 + 1, METERS_DIVIDER_X - 1, label), SIG_Y, label, filled > 0 ? DIM : FAINT)
   },
-  mobileDrawSignal(s, bar, filled) {
+  // 2026-08-22 -- shares the widget row with mobileDrawVU (VU left, SIG
+  // right of MWIDGET_DIVIDER_X); own shorter segment count sized for the
+  // half-width rather than reusing desktop's 16 (label wouldn't fit).
+  mobileDrawSignal(s, pct) {
     if (!this._mLayout) return
     const { term } = s
-    const y = this._mLayout.widgetSig
-    for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
-    const label = `SIG [${bar}]`
-    term.text(centerXRange(MBOX_X0 + 1, MBOX_X1 - 1, label), y, label, filled > 0 ? DIM : FAINT)
+    const y = this._mLayout.widgetRow
+    const segs = 10
+    const filled = Math.round(pct * segs)
+    let bar = ''
+    for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '-'
+    const label = `SIG[${bar}]`
+    for (let x = MWIDGET_DIVIDER_X + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+    term.text(centerXRange(MWIDGET_DIVIDER_X + 1, MBOX_X1 - 1, label), y, label, filled > 0 ? DIM : FAINT)
   },
 
   // STATION (callsign + tagline) and NOW PLAYING (track) are separate
@@ -3897,11 +3914,11 @@ export default {
     // reads as a quiet or flat meter, not a full-swing one" -- flat, not
     // invisible). '▁' is the lowest non-empty block, so the floor is
     // always at least a visible flat trace.
+    if (this.mobile) { this.mobileDrawVU(s, playing); return }
+    const { term } = s
     const chars = '▁▁▂▃▄▅▆▇█'
     let bar = ''
     for (const v of this.vuTrace) bar += chars[Math.max(0, Math.min(chars.length - 1, Math.round(v * (chars.length - 1))))]
-    if (this.mobile) { this.mobileDrawVU(s, bar, playing); return }
-    const { term } = s
     // 18th pass: confined to the left half, and this.vuTrace shrank from
     // 24 to 16 samples (see init()) to match -- same reasoning as the
     // VOL/SIG segment trim above.
@@ -3909,13 +3926,21 @@ export default {
     const label = `VU  ${bar}`
     term.text(centerXRange(BOX_X0 + 1, METERS_DIVIDER_X - 1, label), VU_Y, label, playing ? DIM : FAINT)
   },
-  mobileDrawVU(s, bar, playing) {
+  // 2026-08-22 -- shares the widget row with mobileDrawSignal (VU left of
+  // MWIDGET_DIVIDER_X, SIG right). Own shorter trace tail sized for the
+  // half-width -- this.vuTrace itself is unchanged (still 16 samples,
+  // shared with desktop's physics), this just renders fewer of them.
+  mobileDrawVU(s, playing) {
     if (!this._mLayout) return
     const { term } = s
-    const y = this._mLayout.widgetVU
-    for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
-    const label = `VU  ${bar}`
-    term.text(centerXRange(MBOX_X0 + 1, MBOX_X1 - 1, label), y, label, playing ? DIM : FAINT)
+    const chars = '▁▁▂▃▄▅▆▇█'
+    const n = 8
+    let bar = ''
+    for (const v of this.vuTrace.slice(-n)) bar += chars[Math.max(0, Math.min(chars.length - 1, Math.round(v * (chars.length - 1))))]
+    const y = this._mLayout.widgetRow
+    const label = `VU ${bar}`
+    for (let x = MBOX_X0 + 1; x < MWIDGET_DIVIDER_X; x++) term.put(x, y, ' ')
+    term.text(centerXRange(MBOX_X0 + 1, MWIDGET_DIVIDER_X - 1, label), y, label, playing ? DIM : FAINT)
   },
 
   /** 41st pass -- per-station meter ballistics (Matthew: "I'm also for ...
@@ -4310,7 +4335,20 @@ export default {
               return
             }
             if (e.data === YT.PlayerState.ENDED) { self.skip(s); return }
-            if (e.data === YT.PlayerState.PLAYING) self.setPlayState(s, 'playing')
+            if (e.data === YT.PlayerState.PLAYING) {
+              self.setPlayState(s, 'playing')
+              // 2026-08-22 (bug: "nothing plays... I have to mute and
+              // unmute" -- see loadTrack()'s comment for the autoplay-block
+              // mechanics this works around) -- restore the level the
+              // instant real playback actually starts. Unmuting here rather
+              // than right after the play call: by the time PLAYING fires
+              // it's an already-running video, not a fresh autoplay
+              // request, so the browser allows the programmatic unmute.
+              if (self._forcedMuteForAutoplay) {
+                self._forcedMuteForAutoplay = false
+                if (!self.muted) { self.player.unMute(); self.applyVolume() }
+              }
+            }
             else if (e.data === YT.PlayerState.PAUSED) self.setPlayState(s, 'paused')
             else if (e.data === YT.PlayerState.BUFFERING) self.setPlayState(s, 'buffering')
           },
@@ -4336,6 +4374,21 @@ export default {
   },
   loadTrack(track, opts = {}) {
     if (!this.ready || !this.player) return
+    // 2026-08-22 (bug report: "on load after power on, nothing plays...
+    // even changing stations doesn't play audio. I have to mute and
+    // unmute" -- classic mobile autoplay block. cueVideoById()'s later
+    // playVideo() and loadVideoById()'s own implicit autoplay both count as
+    // "start playing audio," and mobile browsers only allow that
+    // unprompted if either the call is still inside a live user-gesture
+    // window, or the video is muted. The gesture window is long closed by
+    // the time this runs (a network round trip after the tap/swipe that
+    // picked the station), so an unmuted call was getting silently
+    // swallowed -- no error, no state change, just permanent BUFFERING.
+    // Muting first sidesteps the block entirely; toggling mute/unmute by
+    // hand was doing exactly this already, just manually. The PLAYING
+    // handler above restores the real level the moment playback actually
+    // begins.
+    if (!this.muted) { this.player.mute(); this._forcedMuteForAutoplay = true }
     if (opts.midSong) {
       this.pendingMidSongSeek = true
       // 36th pass: opts.resumeAt (seconds) means "seek here instead of a
