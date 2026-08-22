@@ -2,7 +2,7 @@
 
 Generated from program.js. 9 stations, 270 tracks total.
 
-## DISTORTION FIELD -- 137.4
+## DISTORTION FIELD -- 194.8
 
 *heavy guitars, raw nerve, '90s angst*
 

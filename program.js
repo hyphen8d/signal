@@ -113,12 +113,18 @@ function realTrack(youtubeId, title, artist) {
 // station"), on top of whatever it already had -- so QUIET HOURS actually
 // gained 6 (4 new + the 2 reassigned) and the rest gained 4.
 const STATIONS = [
-  { id: 'distortion-field', freq: 137.4, callsign: 'DISTORTION FIELD', tagline: "heavy guitars, raw nerve, '90s angst",
+  { id: 'distortion-field', freq: 194.8, callsign: 'DISTORTION FIELD', tagline: "heavy guitars, raw nerve, '90s angst",
     // 28th pass (2026-08-21): renamed from STATIC BLOOM per Matthew's
     // station-naming pass -- "DISTORTION FIELD" / "heavy guitars, raw
     // nerve, '90s angst" was the locked-in choice (option 1B). Same
     // grunge/alt-rock lane, same ident, same tracks -- name/tagline only.
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
+    // v0.8 patch: freq bumped 137.4 -> 194.8 -- when CIPHER moved to 133.7
+    // (see CIPHER's own field notes below) the two sat only 3.7 KHZ apart
+    // on the dial, way tighter than the roster's normal spacing. This
+    // isn't the exact midpoint to DRIFT MODE's 356.2 either (that'd be
+    // 244.95) -- deliberately asymmetric so the gap reads as organic
+    // placement, not a rule.
     desc: 'Grunge and alternative rock from the early-to-mid 90s Seattle sound and its ripple effects -- distorted guitars, raw vocals, and radio-ready angst.',
     // Matthew 8/20: "I don't hear a station id tone for static bloom." The
     // ident itself was firing fine (confirmed by hooking createOscillator
@@ -747,11 +753,12 @@ const STATIONS = [
     // stations total rather than growing to 10.
     // 48th pass (2026-08-22, v0.8): moved 219.8 -> 133.7 -- a "1337" nod
     // that fits CIPHER's own hacker theme -- which drops it under
-    // DISTORTION FIELD's 137.4 and swaps their preset order: CIPHER is now
-    // key `1`, DISTORTION FIELD key `2` (Matthew: "swapping stations 1 and
-    // 2 and making station 1 be 133.7"). DISTORTION FIELD's own freq is
-    // untouched; STATION_PRESET_ORDER is freq-sorted, so this one change
-    // is the entire swap.
+    // DISTORTION FIELD and swaps their preset order: CIPHER is now key
+    // `1`, DISTORTION FIELD key `2` (Matthew: "swapping stations 1 and 2
+    // and making station 1 be 133.7"). STATION_PRESET_ORDER is
+    // freq-sorted, so this one change was the entire swap. A follow-up
+    // patch then moved DISTORTION FIELD's own freq too, 137.4 -> 194.8 --
+    // see its field notes -- once the two ended up only 3.7 KHZ apart.
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: 'Big beat and breakbeat electronica for late-night infiltration runs -- Chemical Brothers, Prodigy, and Massive Attack alongside everything that soundtracked a decade of hacker movies.',
     // Ident is a bouncy up-down-up-down (U D U D) breakbeat style.
