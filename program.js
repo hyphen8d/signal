@@ -17,7 +17,11 @@ import { NORMAL, BRIGHT, BOLD, DIM, MUTED, FAINT } from './src/term.js'
 // than hardcoding a second copy of those numbers.
 // 41st pass: PHOSPHORS too -- the secret-station proximity tease bleeds
 // the live tint toward 'red' (see applySecretTease).
-import { SCREEN, PHOSPHORS } from './config.js'
+// 45th pass: MOBILE_LITE -- decided once in config.js off viewport/pointer
+// detection, before this module even runs (it sizes the GRID mount() builds
+// the Term/CRT from). Read here to pick which of the two draw paths below
+// runs; nothing about the underlying state/audio/gesture logic changes.
+import { SCREEN, PHOSPHORS, MOBILE_LITE } from './config.js'
 
 // Version tag (28th pass, Matthew: "add version in upper left after
 // SIGNAL") -- shown in the title bar right next to the SIGNAL wordmark,
@@ -1064,6 +1068,30 @@ const METERS_DIVIDER_X = 39
 
 const HINT_Y1 = 23
 const HINT_Y2 = 24
+
+// --- mobile lite layout (45th pass) -------------------------------------
+// A second, much smaller layout, live only when MOBILE_LITE picked the
+// narrow GRID in config.js -- see the import comment above. Column/row
+// literals here, unlike the desktop block above, since the mobile GRID is a
+// fixed 42x22 whenever this path runs at all (config.js decides one grid or
+// the other before this module even runs, never both). Just the identity
+// essentials: station, now playing, status, a touch-gesture legend instead
+// of the keyboard one. No dial, no LEVELS/antenna instrument panel, no
+// clock/brand-plate -- all of that reads as noise at this size and none of
+// it is interactive on a device with no keyboard and no drag-to-seek.
+const MBOX_X0 = 1
+const MBOX_X1 = 40
+const MSTATUS_Y = 2
+const MSTATION_TOP_Y = 4
+const MSTATION_Y = 5
+const MTAGLINE_Y = 6
+const MSTATION_BOT_Y = 7
+const MNOWPLAYING_TOP_Y = 9
+const MTRACK_Y = 10
+const MARTIST_Y = 11
+const MNOWPLAYING_BOT_Y = 12
+const MHINT_Y1 = 18
+const MHINT_Y2 = 19
 
 /** Centre text, clamped so it never starts off-grid (a too-long string
  *  would otherwise centre to a negative x and get silently clipped/garbled
@@ -2214,7 +2242,41 @@ export default {
     term.text(centerX(term.cols, brand), 0, brand, FAINT, 1)
   },
 
+  // 45th pass -- mobile's whole frame: wordmark, status line, STATION and
+  // NOW PLAYING boxes, a touch-gesture footer instead of the keyboard hint
+  // rows. No clock (drawClock hardcodes column 76, well past this grid's 42
+  // -- not worth teaching it a second layout for a detail this minor), no
+  // brand-plate, no TUNING BAND/LEVELS boxes at all.
+  mobileDrawChrome(s) {
+    const { term } = s
+    for (let x = 0; x < term.cols; x++) term.put(x, 0, ' ', NORMAL, 1)
+    const title = `SIGNAL ${VERSION_TAG}`
+    term.text(centerX(term.cols, title), 0, title, BOLD, 1)
+
+    drawBoxTop(term, MSTATION_TOP_Y, MBOX_X0, MBOX_X1, 'STATION', MUTED)
+    drawBoxSide(term, MSTATION_Y, MBOX_X0, MBOX_X1, MUTED)
+    drawBoxSide(term, MTAGLINE_Y, MBOX_X0, MBOX_X1, MUTED)
+    drawBoxBottom(term, MSTATION_BOT_Y, MBOX_X0, MBOX_X1, MUTED)
+
+    drawBoxTop(term, MNOWPLAYING_TOP_Y, MBOX_X0, MBOX_X1, 'NOW PLAYING', BOLD)
+    drawBoxSide(term, MTRACK_Y, MBOX_X0, MBOX_X1, BOLD)
+    drawBoxSide(term, MARTIST_Y, MBOX_X0, MBOX_X1, BOLD)
+    drawBoxBottom(term, MNOWPLAYING_BOT_Y, MBOX_X0, MBOX_X1, BOLD)
+
+    // ASCII only -- the bitmap font doesn't carry every Unicode glyph (a
+    // past pass found this the hard way with a couple of star/square glyphs
+    // silently rendering as '?'), so this sticks to the same bracket idiom
+    // the desktop hint rows use rather than risking arrow glyphs the face
+    // may not have.
+    const line1 = 'TAP: MUTE'
+    const line2 = '[<-/->] STATION   [^/v] TRACK'
+    for (let x = 0; x < term.cols; x++) { term.put(x, MHINT_Y1, ' ', NORMAL, 1); term.put(x, MHINT_Y2, ' ', NORMAL, 1) }
+    term.text(centerX(term.cols, line1), MHINT_Y1, line1, BOLD, 1)
+    term.text(centerX(term.cols, line2), MHINT_Y2, line2, NORMAL, 1)
+  },
+
   drawChrome(s) {
+    if (this.mobile) { this.mobileDrawChrome(s); return }
     const { term } = s
 
     this.drawTitleBar(s)
@@ -2306,6 +2368,7 @@ export default {
   // it reads the same way the version did, just with the date/time in its
   // place. Same width every tick, so no blank-first needed.
   drawClock(s) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     const str = formatClock(new Date())
     const x = 76 - str.length
@@ -2317,6 +2380,7 @@ export default {
   // STANDBY/"[P] POWER ON" text rather than going dark along with
   // everything else. Driven by the same this._clockTimer as drawClock().
   drawStandbyClock(s) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     const str = formatClock(new Date())
     // 19th pass: true grid center (floor, not round -- round(25/2) was
@@ -2379,6 +2443,11 @@ export default {
 
   init(s) {
     const { term } = s
+
+    // 45th pass -- decided once, at boot, off config.js's viewport/pointer
+    // check. Every mobile-only draw branch below reads this rather than
+    // re-detecting anything itself.
+    this.mobile = MOBILE_LITE
 
     // Leftover from the old 88-108 band -- 93.0 is below the current
     // FREQ_MIN (100.0), so the dial opened already out-of-range. Now starts
@@ -2603,7 +2672,10 @@ export default {
     const midY = Math.floor(term.rows / 2)
     const label = 'STANDBY'
     term.text(centerX(term.cols, label), midY - 2, label, FAINT)
-    const hint = '[P] POWER ON'
+    // 45th pass -- mobile has no keyboard, so the keyboard hint here is
+    // meaningless; same swap the touch tap/swipe layer already makes for
+    // the locked-screen hint footer (see mobileDrawChrome).
+    const hint = this.mobile ? 'TAP TO POWER ON' : '[P] POWER ON'
     term.text(centerX(term.cols, hint), midY, hint, FAINT)
     this.drawStandbyClock(s)
 
@@ -2652,6 +2724,7 @@ export default {
   },
 
   drawScale(s) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, SCALE_Y, ' ')
     term.text(DIAL_X0 - 1, SCALE_Y, '100.0', DIM)
@@ -2660,6 +2733,7 @@ export default {
   },
 
   drawDial(s) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     for (let x = DIAL_X0; x <= DIAL_X1; x++) term.put(x, DIAL_Y, '·', FAINT)
     const { station: near, dist } = nearestStation(this.freq)
@@ -2679,6 +2753,7 @@ export default {
   },
 
   drawFreq(s) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, FREQ_Y, ' ')
     const str = this.freq.toFixed(1)
@@ -2753,7 +2828,20 @@ export default {
    *  the rest blanked. The unrevealed remainder is padded with spaces
    *  rather than shortened, so the bracket is a constant width and the
    *  readout never shifts horizontally mid-reveal. */
+  // 45th pass -- plain centered bracket, no flanking rule (BOX_X0/BOX_X1
+  // are desktop columns, off the end of the 42-col mobile grid) and no
+  // per-character reveal. Every setStatus()/flashStatus() caller across the
+  // file funnels through here, so gating this one spot covers all of them
+  // -- LOCKED, SEEKING, MUTED/UNMUTED, VOL nn, everything.
+  mobileDrawStatusRow(s, text, attr) {
+    const { term } = s
+    const bracket = `[ ${text} ]`
+    for (let x = 0; x < term.cols; x++) term.put(x, MSTATUS_Y, ' ')
+    term.text(centerX(term.cols, bracket), MSTATUS_Y, bracket, attr)
+  },
+
   drawStatusRow(s, text, active, revealed, opts = {}) {
+    if (this.mobile) { this.mobileDrawStatusRow(s, text, opts.attr ?? (active ? BRIGHT : MUTED)); return }
     const { term } = s
     const padTotal = STATUS_TEXT_WIDTH - text.length
     const padL = Math.max(0, Math.floor(padTotal / 2))
@@ -2972,6 +3060,12 @@ export default {
   // based (same pattern as the scan/preset timers elsewhere in this file),
   // not part of the per-frame loop.
   playBootFlicker(s) {
+    // 45th pass -- every row/label here is a desktop box border; on
+    // mobile's shorter grid several of those row numbers land on completely
+    // different content (see clearStation's comment on the same collision).
+    // Skipping the flicker cosmetic entirely on mobile rather than teaching
+    // it a second geometry.
+    if (this.mobile) return
     const { term } = s
     const tops = [
       [TUNER_TOP_Y, 'TUNING BAND'], [STATION_TOP_Y, 'STATION'],
@@ -3118,7 +3212,7 @@ export default {
         clearAll()
         const label = 'STANDBY'
         term.text(centerX(term.cols, label), midY - 2, label, FAINT)
-        const hint = '[P] POWER ON'
+        const hint = this.mobile ? 'TAP TO POWER ON' : '[P] POWER ON'
         term.text(centerX(term.cols, hint), midY, hint, FAINT)
         this.drawStandbyClock(s)
         // 38th pass: afterglow bleeding back down to nominal persistence
@@ -3287,6 +3381,7 @@ export default {
   },
 
   drawVolume(s) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     // 18th pass: confined to the LEVELS box's left half (see
     // METERS_DIVIDER_X) -- only clears/centers up to the divider now,
@@ -3305,6 +3400,7 @@ export default {
   // Decorative, but reinforces the tuning fantasy: fills in as you approach
   // a station while seeking, full once locked.
   drawSignal(s) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, SIG_Y, ' ')
     const segs = 16
@@ -3329,6 +3425,15 @@ export default {
   // alongside the track every time (Matthew, 8/20: "station info should be
   // broken out from current playing song info").
   clearStation(s) {
+    // 45th pass -- desktop's STATION_Y/TAGLINE_Y row numbers land on
+    // completely different content on mobile's shorter grid (row 9 is the
+    // NOW PLAYING box's top border there, not station text), so this can't
+    // just no-op out of range the way a plain column overrun would.
+    if (this.mobile) {
+      const { term } = s
+      for (const y of [MSTATION_Y, MTAGLINE_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+      return
+    }
     const { term } = s
     // 38th pass: kill any in-flight resolve on these rows first, or its
     // next tick paints characters back onto a row we just cleared.
@@ -3342,7 +3447,32 @@ export default {
   // opts.revealMs shortens/lengthens it. Default is the full reveal --
   // every path that shows a station (lock, guide close, power-on resume)
   // is a moment where a receiver settling onto a signal is the right read.
+  // 45th pass -- plain text, no resolve-from-noise animation. That effect
+  // is tuned for the desktop's wider boxes; keeping it out here is a
+  // simplicity choice for this first mobile pass, not a technical limit.
+  mobileShowStation(s, station) {
+    const { term } = s
+    for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) { term.put(x, MSTATION_Y, ' '); term.put(x, MTAGLINE_Y, ' ') }
+    const maxWidth = MBOX_X1 - MBOX_X0 - 4
+    const FLAIR = station.glyph || '●'
+    const flairWidth = FLAIR.length * 2 + 2
+    const callsign = truncate(station.callsign, maxWidth - flairWidth)
+    const flaired = `${FLAIR} ${callsign} ${FLAIR}`
+    const tagline = truncate(station.tagline, maxWidth)
+    term.text(centerX(term.cols, flaired), MSTATION_Y, flaired, BRIGHT)
+    term.text(centerX(term.cols, tagline), MTAGLINE_Y, tagline, MUTED)
+  },
+  mobileShowTrack(s, track) {
+    const { term } = s
+    for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) { term.put(x, MTRACK_Y, ' '); term.put(x, MARTIST_Y, ' ') }
+    const maxWidth = MBOX_X1 - MBOX_X0 - 4
+    term.text(centerX(term.cols, truncate(track.title, maxWidth)), MTRACK_Y, truncate(track.title, maxWidth), BOLD)
+    const artist = truncate(track.artist, maxWidth)
+    term.text(centerX(term.cols, artist), MARTIST_Y, artist, MUTED)
+  },
+
   showStation(s, station, opts = {}) {
+    if (this.mobile) { this.mobileShowStation(s, station); return }
     const { term } = s
     this.clearStation(s)
     const maxWidth = BOX_X1 - BOX_X0 - 4
@@ -3380,6 +3510,11 @@ export default {
 
   clearTrack(s) {
     const { term } = s
+    if (this.mobile) {
+      for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) { term.put(x, MTRACK_Y, ' '); term.put(x, MARTIST_Y, ' ') }
+      this.updateTabTitle()
+      return
+    }
     this._cancelResolve(TRACK_Y) // see clearStation
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, TRACK_Y, ' ')
     this.updateTabTitle()
@@ -3388,6 +3523,7 @@ export default {
   // shorter one -- a track change within a station you are already locked
   // onto is a smaller event than finding the station was.
   showTrack(s, track, opts = {}) {
+    if (this.mobile) { this.mobileShowTrack(s, track); return }
     const { term } = s
     this.clearTrack(s)
     const maxWidth = BOX_X1 - BOX_X0 - 4
@@ -3439,6 +3575,7 @@ export default {
     this.drawPlayback(s)
   },
   drawPlayback(s) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     // BUG FIXED (29th pass, found verifying the hint-bar reflow): the YT
     // player's onStateChange fires async, outside frame()'s own guideOpen
     // bail, and used to draw straight through to PLAYBACK_Y (row 14)
@@ -3493,6 +3630,7 @@ export default {
   // like a real waveform instead of looking like static. Still decorative
   // -- WebAudio has no visibility into the YouTube iframe's actual output.
   drawVU(s) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     // 18th pass: confined to the left half, and this.vuTrace shrank from
     // 24 to 16 samples (see init()) to match -- same reasoning as the
@@ -3611,6 +3749,7 @@ export default {
     { row: 2, left: 2, right: 10 },
   ],
   drawAntenna(s, t) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     const rows = [VOL_Y, VOL_SIG_DIVIDER_Y, SIG_Y, VU_DIVIDER_Y, VU_Y]
     for (const y of rows) for (let x = METERS_DIVIDER_X + 1; x < BOX_X1; x++) term.put(x, y, ' ')
@@ -3685,6 +3824,7 @@ export default {
   // same mapping the guide's station table and the [B]ack logic already
   // use. Brightness-only (no brackets) to keep it a fixed 9-column strip.
   drawPresetStrip(s, rows) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     const y = rows[0] // VOL_Y
     const x0 = METERS_DIVIDER_X + 2
@@ -3700,6 +3840,7 @@ export default {
   // right now the only feedback for which phosphor tint is active is the
   // whole screen's own color, with no on-screen label anywhere.
   drawModeStrip(s, rows) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     const y = rows[2] // SIG_Y
     const x0 = METERS_DIVIDER_X + 2
@@ -3719,6 +3860,7 @@ export default {
   // reads as "not animating" (easy to miss). Lit/BRIGHT when mute is
   // actually engaged, same convention as a physical mute button's own LED.
   drawMuteSwitch(s, rows) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     const y = rows[4] // VU_Y
     const x0 = METERS_DIVIDER_X + 2
@@ -3748,6 +3890,7 @@ export default {
   SNR_MAX: 56,
   SNR_MIN: 9,
   drawSnrReadout(s, startX, rows, state) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     const y = rows[0] // VOL_Y -- directly above FLD on SIG_Y
     const x0 = startX + this.ANTENNA_TEMPLATE[0].length + 2
@@ -3772,6 +3915,7 @@ export default {
   // (always "FLD " + 2 chars) so it never leaves a stray trailing
   // character behind between redraws.
   drawFieldReadout(s, startX, rows, state) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     const y = rows[2] // SIG_Y -- vertically centered on the glyph
     const x0 = startX + this.ANTENNA_TEMPLATE[0].length + 2
@@ -3802,6 +3946,7 @@ export default {
   // physics (see this.eqSamples/eqVelocities in init()) rather than one
   // scrolling trace like drawVU()'s bar.
   drawEqRibbon(s, startX, rows, state) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     const y = rows[4] // VU_Y
     const x0 = startX + this.ANTENNA_TEMPLATE[0].length + 2
@@ -3846,6 +3991,7 @@ export default {
   // (Matthew, 8/20: distinguish the controls from the rest of the screen
   // the same way SIGNAL/v0.2 stand out up top, not as dim floating text).
   drawHint(s) {
+    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     // 29th pass (Matthew: "top row = radio-esque, bottom row = things a
     // real radio doesn't have"): line1 is now just tuning/receiver
@@ -5455,8 +5601,12 @@ export default {
 
     // Visualizer (43rd pass) -- idle trigger. Only arms while locked and
     // actually playing; there's nothing worth idling into while seeking,
-    // scanning, or between stations. Manual entry is the [V] case in key().
-    if (!this.visualizerActive && this.mode === 'locked' && this.lockedStation &&
+    // scanning, or between stations. Manual entry is the [V] case in key(),
+    // which mobile can never reach anyway (no keyboard) -- but this timer
+    // fires on its own regardless of input source, so it needs its own
+    // guard: every visualizer effect is drawn for the 80-col desktop grid
+    // and would render as garbage squeezed into mobile's 42.
+    if (!this.mobile && !this.visualizerActive && this.mode === 'locked' && this.lockedStation &&
         Date.now() - this._lastInputAt > VISUALIZER_IDLE_MS) {
       this.enterVisualizer(s)
     }
@@ -5469,7 +5619,11 @@ export default {
 
     // Idle shimmer on the dial while seeking, so the empty band doesn't feel
     // dead between stations. Cheap: only touch a handful of cells per frame.
-    if (this.mode === 'seeking' && Math.random() < 0.15) {
+    // 45th pass -- mobile has no dial at all, and DIAL_Y collides with the
+    // station-name row on its grid, so this is skipped there rather than
+    // risking a stray dot landing in displayed text during the brief
+    // 'seeking' window a preset sweep passes through.
+    if (!this.mobile && this.mode === 'seeking' && Math.random() < 0.15) {
       const x = DIAL_X0 + Math.floor(Math.random() * (DIAL_X1 - DIAL_X0))
       const cursorCol = freqToCol(this.freq)
       // BUG FIXED (41st pass, found while verifying the per-station dial
@@ -5535,7 +5689,12 @@ export default {
     // DIM for all four -- a flat DIM read as invisible on the MUTED rows but
     // a much bigger, face-changing dip on NOW PLAYING's brighter BOLD rest
     // (found live right after the rest-attribute fix, same session).
-    if (Math.random() < 0.05) {
+    // 45th pass -- these are desktop row numbers; on mobile's shorter grid
+    // one of them (STATION_BOT_Y) lands on the NOW PLAYING box's artist
+    // row instead of a border, which would occasionally punch a stray '-'
+    // into displayed text. Skipping the shimmer on mobile entirely rather
+    // than building it a second row/column set for a cosmetic-only effect.
+    if (!this.mobile && Math.random() < 0.05) {
       const y = BOX_BOTTOM_ROWS[Math.floor(Math.random() * BOX_BOTTOM_ROWS.length)]
       let x = BOX_X0 + 1 + Math.floor(Math.random() * (BOX_X1 - BOX_X0 - 1))
       // 18th pass: METERS_BOT_Y now has a '┻' T-junction at

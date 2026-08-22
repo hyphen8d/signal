@@ -94,13 +94,34 @@ export const PHOSPHORS = {
 export const PHOSPHOR = 'matrix'
 
 /**
+ * Mobile lite detection (45th pass, Matthew: "different mobile layout that is
+ * more legible... a portrait experience... a 'lite' experience"). Off-
+ * detection only, no manual toggle -- a narrow, portrait, touch-primary
+ * viewport gets the lite grid below; everything else gets the normal one.
+ * Checked once at module load, not live on rotation -- the grid is fixed for
+ * the life of the Term/CRT instances mount() builds from it (see screen.js),
+ * so re-flowing on an in-session rotation would need a real re-mount, which
+ * is out of scope for this pass.
+ */
+export const MOBILE_LITE =
+  typeof matchMedia === 'function' &&
+  matchMedia('(pointer: coarse)').matches &&
+  matchMedia('(max-width: 600px) and (orientation: portrait)').matches
+
+/**
  * Grid size in cells, and the unlit margin around it in framebuffer pixels.
  *
  * The faceplate is 4:3 whatever is set here; the framebuffer is stretched onto
  * it. 80x25 in an 8x16 face is a 26% horizontal squash, as VGA text mode was on
- * a 4:3 monitor.
+ * a 4:3 monitor. That stretch-to-fit means cols/rows are free to be any shape
+ * -- the mobile grid below is deliberately much narrower than 80 (see
+ * MOBILE_LITE), so each column gets far more of the phone's actual width per
+ * character, instead of 80 columns of the desktop layout all being crammed
+ * into a screen a fraction of a desktop monitor's width.
  */
-export const GRID = { cols: 80, rows: 25, padX: 6, padY: 5 }
+export const GRID = MOBILE_LITE
+  ? { cols: 42, rows: 22, padX: 6, padY: 5 }
+  : { cols: 80, rows: 25, padX: 6, padY: 5 }
 
 /**
  * The face. Any BDF up to 16px wide.
