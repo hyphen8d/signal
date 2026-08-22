@@ -80,6 +80,14 @@ export const PHOSPHORS = {
   // Not a real phosphor. The blue keeps it a rose rather than a salmon.
   bubblegum: [1.00, 0.50, 0.82],
   white:     [0.86, 0.92, 1.00],  // P4
+  // 2026-08-22 (Matthew: "make it use a red theme when you're on that
+  // station") -- forced-only tint for program.js's secret NIN station.
+  // Deliberately not in DISPLAY_MODES / the [C] cycle, so it's never
+  // user-selectable on its own -- program.js's applyPhosphor() is the only
+  // caller, and only while locked onto that one station. Not held to the
+  // luminance-matching note above for that reason: it's meant to read as
+  // an alarming departure from the other tints, not blend in with them.
+  red:       [1.00, 0.12, 0.10],
 }
 
 /** Which tint the tube starts in. */

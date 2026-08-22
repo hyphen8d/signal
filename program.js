@@ -39,6 +39,17 @@ const NEAR_THRESHOLD = 24
 // felt broken. Scaled to match the thresholds above.
 const SEEK_STEP = 8
 const SCAN_STEP = 6
+// 36th pass (Matthew: "lock back onto a station and it's a different song
+// every time -- a real broadcast would still be on the same song, just
+// further along"). Flat-cutoff fix: tryLock() remembers, per station, the
+// track and position playing when you last left it. Re-locking onto that
+// station within this window resumes the same track (seeked forward by
+// however long you were away) instead of drawing a fresh one from the
+// shuffle bag; past the window it's treated as a real gap and draws
+// normally. Deliberately flat rather than duration-aware -- simpler, and
+// "gone a while -> different song" is close enough to real radio without
+// simulating each station's timeline continuously in the background.
+const RESUME_CUTOFF_MS = 3 * 60 * 1000
 
 // Display modes (23rd pass, Matthew: "let users cycle display modes") --
 // the CRT engine (src/crt.js) already ships a full set of named phosphor
@@ -656,6 +667,59 @@ const STATIONS = [
 // order always matches left-to-right position on the dial regardless of
 // STATIONS' own (chronological) order.
 const STATION_PRESET_ORDER = [...STATIONS].sort((a, b) => a.freq - b.freq)
+
+// SECRET_STATION (2026-08-22, Matthew: "let's launch a secret NIN station,
+// only reachable by pressing 0") -- deliberately NOT part of STATIONS. That
+// keeps it out of everything that walks STATIONS or STATION_PRESET_ORDER:
+// nearestStation() (so it can never be found by seeking/scanning),
+// stations-to-md.js's generated roster doc, and the Guide's station index
+// and detail pages (guideTotalPages() is 2 + STATION_PRESET_ORDER.length,
+// so it doesn't even get a page). The only way in is the dedicated '0' key
+// handler below, which calls presetTune() on this object directly.
+// Frequency 777.7 is CIPHER's old slot from before it moved to 219.8 (28th
+// pass) -- freed up and never reused since, so this reuses a piece of
+// project history instead of picking an arbitrary number.
+const SECRET_STATION = {
+  id: 'nin', freq: 777.7, callsign: 'NINE INCH NAILS', tagline: 'industrial rage, mechanical dread',
+  like: 'Nine Inch Nails',
+  desc: 'A hidden feed of Nine Inch Nails -- distorted synths, drum machines pushed past redline, and a quarter century of turning self-destruction into something you can dance to. Off the books; not in the Guide.',
+  // Tight chromatic half-step descent (B3-Bb3-A3-Ab3) -- every other
+  // station's ident jumps by a third or more, so this one's the only motif
+  // on the roster that grinds down in semitones. Deliberately harsh/
+  // mechanical rather than melodic, to match the station.
+  ident: [246.9, 233.1, 220.0, 207.7],
+  identTempo: 0.7,
+  // 90s-2000s alt/industrial rock masters run loud already -- no boost.
+  gain: 1.0,
+  secret: true,
+  tracks: [
+    realTrack('nOVW938sr0k', 'Head Like a Hole', 'Nine Inch Nails'),
+    realTrack('eQy0MSchVnM', 'Terrible Lie', 'Nine Inch Nails'),
+    realTrack('L0WWoJz4cHM', 'Something I Can Never Have', 'Nine Inch Nails'),
+    realTrack('yVpw1SwJRBI', 'Gave Up', 'Nine Inch Nails'),
+    realTrack('eTYU94s6bbc', 'Wish', 'Nine Inch Nails'),
+    realTrack('PTFwQP86BRs', 'Closer', 'Nine Inch Nails'),
+    realTrack('-ZJvHXm4cYM', 'March of the Pigs', 'Nine Inch Nails'),
+    realTrack('0MNbjF3-VI4', 'Reptile', 'Nine Inch Nails'),
+    realTrack('SO4p9DeaCkw', 'Ruiner', 'Nine Inch Nails'),
+    realTrack('QWDsyvIfbak', 'The Becoming', 'Nine Inch Nails'),
+    realTrack('KR4DjYczINM', 'Hurt', 'Nine Inch Nails'),
+    realTrack('XdhKnAw6VZw', 'Burn', 'Nine Inch Nails'),
+    realTrack('nUf-XxQed08', 'The Perfect Drug', 'Nine Inch Nails'),
+    realTrack('TfKTgx15jag', 'The Day the World Went Away', 'Nine Inch Nails'),
+    realTrack('dcIOInVS7jo', 'La Mer', 'Nine Inch Nails'),
+    realTrack('O56rh3K0j6I', 'Into the Void', 'Nine Inch Nails'),
+    realTrack('P9BfvPjsXXw', "We're in This Together", 'Nine Inch Nails'),
+    realTrack('kUZn9mk0g0w', 'Somewhat Damaged', 'Nine Inch Nails'),
+    realTrack('2U0flA_Yp64', 'And All That Could Have Been', 'Nine Inch Nails'),
+    realTrack('xwhBRJStz7w', 'The Hand That Feeds', 'Nine Inch Nails'),
+    realTrack('F-jZHMX-CJ0', 'Right Where It Belongs', 'Nine Inch Nails'),
+    realTrack('wwvLlEtxX3o', 'Only', 'Nine Inch Nails'),
+    realTrack('FvVDlbzsKR4', 'Survivalism', 'Nine Inch Nails'),
+    realTrack('yA281OuU3rk', 'Copy of A', 'Nine Inch Nails'),
+    realTrack('gm4tn8znQE0', 'Burning Bright (Field on Fire)', 'Nine Inch Nails'),
+  ],
+}
 
 // --- layout (80x25 grid) -----------------------------------------------
 
@@ -1462,14 +1526,32 @@ export default {
   // key in config.js's PHOSPHORS.
   cycleDisplayMode(s) {
     this.displayModeIndex = (this.displayModeIndex + 1) % DISPLAY_MODES.length
-    const mode = DISPLAY_MODES[this.displayModeIndex]
-    s.setPhosphor(mode.key)
+    // 2026-08-22: routed through applyPhosphor() rather than a direct
+    // setPhosphor() call -- if you're locked onto the secret NIN station,
+    // its forced red tint should keep overriding the visible picture even
+    // as you cycle the underlying preference; applyPhosphor() is what
+    // enforces that. See its comment just below.
+    this.applyPhosphor(s)
     // 31st pass (Matthew: "flashes the name of the color... I thought was
     // cool but now not needed") -- the antenna pane's mode strip (see
     // drawModeStrip()) is a persistent on-screen readout of the same
     // information this transient toast used to announce, so the toast
     // (flashDisplayMode(), removed) was just duplicating it a second time.
     saveSignalState(this)
+  },
+  // 2026-08-22 (Matthew: "make it use a red theme when you're on that
+  // station") -- the single place that decides what phosphor tint should
+  // actually be on screen right now: the secret NIN station's forced 'red'
+  // (see config.js's PHOSPHORS -- 'red' is deliberately NOT in DISPLAY_MODES,
+  // so it's never reachable via the normal [C] cycle) whenever it's the
+  // locked station, otherwise whatever the user's normal DISPLAY_MODES
+  // preference is. Called from every place mode/lockedStation can change
+  // (tryLock, enterSeeking) plus cycleDisplayMode itself, so the picture is
+  // always in sync with current lock state instead of each call site having
+  // to remember to special-case the secret station on its own.
+  applyPhosphor(s) {
+    const secret = this.mode === 'locked' && this.lockedStation && this.lockedStation.secret
+    s.setPhosphor(secret ? 'red' : DISPLAY_MODES[this.displayModeIndex].key)
   },
 
   init(s) {
@@ -1483,6 +1565,10 @@ export default {
     this.lockedStation = null
     this.currentTrack = null
     this.bags = {}
+    // 36th pass: { [stationId]: { track, position, at } } -- see
+    // RESUME_CUTOFF_MS above. Populated in tryLock() right before it
+    // switches lockedStation away from whatever it currently is.
+    this.lastPlayback = {}
     this.scanning = false
     this.scanTimer = null
     this.ready = false
@@ -2032,9 +2118,18 @@ export default {
     const { term } = s
     this.clearStation(s)
     const maxWidth = BOX_X1 - BOX_X0 - 4
-    const callsign = truncate(station.callsign, maxWidth)
+    // 37th pass (Matthew: "some flair on either side of the station name,
+    // trying to jazz up the interface") -- flanking on-air-lamp dots, using
+    // a glyph (●) already proven to render in this BDF font elsewhere in
+    // the app (the status-readout LED). Budgeted out of the same maxWidth
+    // truncate() already enforces, so even the longest callsign
+    // (DISTORTION FIELD) still can't push the box past its border.
+    const FLAIR = '●'
+    const flairWidth = FLAIR.length * 2 + 2 // "● " + " ●"
+    const callsign = truncate(station.callsign, maxWidth - flairWidth)
+    const flaired = `${FLAIR} ${callsign} ${FLAIR}`
     const tagline = truncate(station.tagline, maxWidth)
-    term.text(centerX(term.cols, callsign), STATION_Y, callsign, BRIGHT)
+    term.text(centerX(term.cols, flaired), STATION_Y, flaired, BRIGHT)
     term.text(centerX(term.cols, tagline), TAGLINE_Y, tagline, MUTED)
   },
 
@@ -2482,7 +2577,17 @@ export default {
             if (e.data === YT.PlayerState.CUED && self.pendingMidSongSeek) {
               self.pendingMidSongSeek = false
               const dur = self.player.getDuration()
-              if (dur && isFinite(dur) && dur > 20) {
+              // 36th pass: a remembered resumeAt (see tryLock()'s
+              // within-cutoff path) seeks to a specific position instead of
+              // a random one -- same outro-buffer clamp either way, so a
+              // resume can't land seconds from the end any more than a
+              // fresh random join can.
+              const resumeAt = self.pendingResumeSeek
+              self.pendingResumeSeek = null
+              if (resumeAt != null && dur && isFinite(dur)) {
+                const maxStart = Math.max(0, dur - Math.max(30, dur * 0.15))
+                self.player.seekTo(Math.min(resumeAt, maxStart), true)
+              } else if (dur && isFinite(dur) && dur > 20) {
                 // Leave at least 30s (or the last 15%, whichever is more)
                 // of the track remaining, so a join never lands seconds
                 // from the end.
@@ -2521,9 +2626,15 @@ export default {
     if (!this.ready || !this.player) return
     if (opts.midSong) {
       this.pendingMidSongSeek = true
+      // 36th pass: opts.resumeAt (seconds) means "seek here instead of a
+      // random point" -- set by tryLock()'s within-cutoff resume path. null
+      // for a normal fresh lock, which keeps the existing random-join
+      // behavior in the CUED handler below.
+      this.pendingResumeSeek = opts.resumeAt ?? null
       this.player.cueVideoById(track.youtubeId)
     } else {
       this.pendingMidSongSeek = false
+      this.pendingResumeSeek = null
       this.player.loadVideoById(track.youtubeId)
     }
   },
@@ -2609,6 +2720,10 @@ export default {
   },
   enterSeeking(s) {
     this.mode = 'seeking'
+    // 2026-08-22: leaving a lock is the other half of applyPhosphor()'s
+    // job -- tuning away from the secret NIN station has to drop the forced
+    // red tint back to whatever the user's normal display mode is.
+    this.applyPhosphor(s)
     this.clearStation(s)
     this.clearTrack(s)
     this.setStatus(s, 'SEEKING', false)
@@ -2653,8 +2768,15 @@ export default {
     // just the first one. Idempotent, same as above.
     startStaticNoise(dist)
   },
-  tryLock(s) {
-    const { station, dist } = nearestStation(this.freq)
+  // 2026-08-22: optional `forced` param -- SECRET_STATION is deliberately
+  // NOT part of STATIONS (see its own comment for why), so nearestStation()
+  // can never find it and the normal seek/scan/Enter lock path correctly
+  // never lands on it. presetTune() needs a way to lock onto it directly by
+  // reference once its tuning sweep reaches 777.7 -- passing the station
+  // through here does that without touching the nearestStation()-driven
+  // path every other lock still uses.
+  tryLock(s, forced) {
+    const { station, dist } = forced ? { station: forced, dist: 0 } : nearestStation(this.freq)
     if (dist > LOCK_THRESHOLD) {
       this.setStatus(s, 'NO SIGNAL', false)
       return
@@ -2665,6 +2787,18 @@ export default {
     // found means the hiss cuts, same as a real set.
     stopStaticNoise()
     this.retune(s, station.freq)
+    // 36th pass: snapshot whatever was actually playing before we move
+    // lockedStation off of it -- see RESUME_CUTOFF_MS above. Unconditional
+    // on station identity (not just `!== station`) on purpose: re-locking
+    // onto the SAME station you're already on (e.g. an arrow-seek that
+    // snaps back in place) used to redraw a random new track too, which is
+    // the same complaint from a different trigger -- this now resumes it
+    // near-instantly instead, since almost no time will have passed.
+    if (this.lockedStation && this.currentTrack) {
+      let pos = 0
+      try { pos = this.player?.getCurrentTime?.() || 0 } catch (e) {}
+      this.lastPlayback[this.lockedStation.id] = { track: this.currentTrack, position: pos, at: Date.now() }
+    }
     // History (14th pass, Matthew: "discovery/history -- sure") -- push
     // whatever was locked before this one so [B] can step back through
     // recently-played stations. Only real transitions count: landing back
@@ -2677,6 +2811,10 @@ export default {
     }
     this.mode = 'locked'
     this.lockedStation = station
+    // 2026-08-22: forces the red tint on for the secret NIN station, and
+    // restores the normal preference for everything else -- see
+    // applyPhosphor()'s comment.
+    this.applyPhosphor(s)
     // Station idents (added 2026-08-20, Matthew: "yes lets try station
     // idents"): each station has its own short tone motif in STATIONS[].ident
     // so locking on COLD WAVE sounds different from locking on QUIET HOURS,
@@ -2686,7 +2824,11 @@ export default {
     this.pulseVU(0.5)
     this.setStatus(s, 'LOCKED', true)
     this.drawDial(s)
-    const track = this.nextTrack(station)
+    // 36th pass: resume within the cutoff instead of always drawing fresh.
+    const remembered = this.lastPlayback[station.id]
+    const resumeGapMs = remembered ? Date.now() - remembered.at : Infinity
+    const withinCutoff = remembered && resumeGapMs < RESUME_CUTOFF_MS
+    const track = withinCutoff ? remembered.track : this.nextTrack(station)
     this.currentTrack = track
     this.showStation(s, station)
     this.showTrack(s, track)
@@ -2695,10 +2837,18 @@ export default {
     // applyVolume()) -- a station switch is exactly the moment a loudness
     // jump would otherwise show up.
     this.applyVolume()
-    // Mid-song join: cues rather than loads, so actual playback (and the
-    // PLAYING state) doesn't start until the onStateChange handler above
-    // has picked a random point in the track and seeked to it.
-    this.loadTrack(track, { midSong: true })
+    if (withinCutoff) {
+      // Resume: seek to roughly where the "broadcast" would be now (the
+      // position it was at when you left, advanced by however long you
+      // were gone), clamped the same way the random mid-song join is --
+      // see the CUED handler in initPlayer().
+      this.loadTrack(track, { midSong: true, resumeAt: remembered.position + resumeGapMs / 1000 })
+    } else {
+      // Mid-song join: cues rather than loads, so actual playback (and the
+      // PLAYING state) doesn't start until the onStateChange handler above
+      // has picked a random point in the track and seeked to it.
+      this.loadTrack(track, { midSong: true })
+    }
     this.setPlayState(s, 'buffering')
     saveSignalState(this)
   },
@@ -2940,7 +3090,11 @@ export default {
         clearInterval(this.scanTimer)
         this.scanTimer = null
         stopStaticNoise()
-        this.tryLock(s)
+        // 2026-08-22: pass `station` through explicitly -- see tryLock()'s
+        // `forced` param comment. Needed for SECRET_STATION (not in
+        // STATIONS, so nearestStation() alone would never find it at
+        // 777.7), and harmless for every normal preset too.
+        this.tryLock(s, station)
       }
     }, 55)
   },
@@ -3109,6 +3263,10 @@ export default {
         if (ch) this.presetTune(s, ch)
         break
       }
+      // 2026-08-22: '0' bound directly to SECRET_STATION, not derived from
+      // STATION_PRESET_ORDER -- see that constant's comment for why it's
+      // deliberately not part of STATIONS at all.
+      case '0': e.preventDefault(); this.presetTune(s, SECRET_STATION); break
     }
   },
 
