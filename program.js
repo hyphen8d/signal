@@ -4565,6 +4565,11 @@ export default {
   // Deliberately its own gesture layer rather than reusing the mouse-drag
   // seek math above -- a thumb swipe covering the whole screen width isn't
   // the same gesture as a precise mouse drag on the dial.
+  // 45th pass -- added a clean vertical swipe to skip the track, giving
+  // mobile the same three controls the desktop keyboard has (power, mute,
+  // station, track) without adding any on-screen UI. Horizontal/vertical
+  // are treated as exclusive per-gesture (whichever axis moved more wins),
+  // so a swipe can't accidentally trigger both a station change and a skip.
   onTouchStart(s, e) {
     if (this.poweredOn) this._lastInputAt = Date.now()
     if (this.visualizerActive) { this.exitVisualizer(s); e.preventDefault(); return }
@@ -4603,6 +4608,14 @@ export default {
       // the next station up the dial, mirroring how a left swipe reads as
       // "forward" in a carousel; swipe right goes back one.
       this.stepStation(s, dx < 0 ? 1 : -1)
+    } else if (Math.abs(dy) > SWIPE_MIN && Math.abs(dy) > Math.abs(dx)) {
+      // 45th pass -- vertical swipe skips the track, same mechanism as the
+      // [N] key. skip() is a no-op unless mode === 'locked', so this is
+      // already safe while still tuning -- matches the horizontal-swipe
+      // guard above rather than needing its own. Track selection comes out
+      // of a shuffle bag, not a fixed sequence, so there's no meaningful
+      // "previous" to give the down-swipe -- both directions just skip.
+      this.skip(s)
     }
   },
   stepStation(s, dir) {
