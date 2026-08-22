@@ -4604,10 +4604,13 @@ export default {
     }
     if (!this.poweredOn || this.guideOpen) return
     if (Math.abs(dx) > SWIPE_MIN && Math.abs(dx) > Math.abs(dy)) {
-      // Swipe left (finger moves right-to-left, dx negative) advances to
-      // the next station up the dial, mirroring how a left swipe reads as
-      // "forward" in a carousel; swipe right goes back one.
-      this.stepStation(s, dx < 0 ? 1 : -1)
+      // 45th pass -- flipped (Matthew, live on his phone: "station swipe
+      // still seems mirrored"). Now matches the dial itself, which reads
+      // left-to-right as low-to-high frequency in the TUNING BAND box:
+      // swipe right (finger moves left-to-right, dx positive) tunes up to
+      // the next station, swipe left tunes down to the previous one. The
+      // old mapping treated it like a carousel (left = forward) instead.
+      this.stepStation(s, dx > 0 ? 1 : -1)
     } else if (Math.abs(dy) > SWIPE_MIN && Math.abs(dy) > Math.abs(dx)) {
       // 45th pass -- vertical swipe skips the track, same mechanism as the
       // [N] key. skip() is a no-op unless mode === 'locked', so this is
