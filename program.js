@@ -1153,6 +1153,16 @@ function stopStaticNoise() {
 // at that rate a full relay clack would read as chattering hardware
 // rather than typing, so this is shorter, quieter, and brighter (a
 // high-passed tick rather than a full-spectrum thump).
+//
+// 2026-08-22: the actual set of keys this app treats as a command while
+// powered on and the guide is closed -- see isMappedKey() near key() for
+// how this gates playKeyClick() to real commands only, not every keydown
+// the page happens to see.
+const MAPPED_KEYS = new Set([
+  'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter',
+  's', 'S', 'n', 'N', 'm', 'M', 'p', 'P', 'b', 'B', 'g', 'G', 'c', 'C',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+])
 function playKeyClick() {
   try {
     const ctx = audioCtx()
@@ -2281,7 +2291,16 @@ export default {
     this.vuSample = Math.max(0, Math.min(1, this.vuSample + this.vuVelocity))
     this.vuTrace.shift()
     this.vuTrace.push(this.vuSample)
-    const chars = ' ▁▂▃▄▅▆▇█'
+    // 2026-08-22 (bug report: "no ... VU" while muted) -- chars[0] used to
+    // be a literal space, so once volFactor hit 0 (any station, whenever
+    // muted -- not specific to the secret station) the spring eventually
+    // settles vuSample to exactly 0 and the *entire* row rendered as
+    // blank, reading as "the VU meter is gone" rather than the intended
+    // "flat line" (see the 23rd-pass comment above: "a quiet or muted set
+    // reads as a quiet or flat meter, not a full-swing one" -- flat, not
+    // invisible). '▁' is the lowest non-empty block, so the floor is
+    // always at least a visible flat trace.
+    const chars = '▁▁▂▃▄▅▆▇█'
     let bar = ''
     for (const v of this.vuTrace) bar += chars[Math.max(0, Math.min(chars.length - 1, Math.round(v * (chars.length - 1))))]
     const label = `VU  ${bar}`
@@ -3193,11 +3212,32 @@ export default {
     this.presetTune(s, next)
   },
 
+  // 2026-08-22: mirrors the exact three-way branching key() itself does
+  // (powered-off, guide-open, normal) so "does this key do something"
+  // matches "does this key click" precisely, without executing any of
+  // key()'s actual side effects to find out.
+  isMappedKey(e) {
+    if (!this.poweredOn) return e.key === 'p' || e.key === 'P'
+    // The guide overlay closes on any key at all (see the "[any other
+    // key] CLOSE" hint on every guide page) -- so while it's open, every
+    // key is a real command, not just the ones in MAPPED_KEYS.
+    if (this.guideOpen) return true
+    return MAPPED_KEYS.has(e.key)
+  },
   key(s, e) {
-    // Keypress click (32nd pass) -- fires first, unconditionally, before
-    // the power-off early-return below, so it clicks the same as a real
-    // keyboard would even on a key that ends up doing nothing.
-    playKeyClick()
+    // Keypress click (32nd pass; scoped to mapped keys only 2026-08-22,
+    // Matthew: "hearing sound when I command tab between programs, that
+    // should not happen") -- the listener sits on window (see
+    // screen.js's addEventListener), so it sees every keydown that
+    // reaches the page, not just ones this app cares about -- a browser/
+    // OS shortcut like Cmd+Tab can still surface a keydown here before
+    // (or instead of) the OS fully taking over. Original intent was "click
+    // the same as a real keyboard would even on a key that ends up doing
+    // nothing *in the app*" (e.g. Enter with nothing in range) -- not
+    // "click for literally any keystroke on the page". isMappedKey() below
+    // draws that line: true for anything this build actually treats as a
+    // command in the current mode, false for everything else.
+    if (this.isMappedKey(e)) playKeyClick()
     // Power toggle (12th pass) -- while off, every key except P is ignored
     // outright so nothing (seek, scan, presets, volume) can act on a set
     // that isn't switched on.

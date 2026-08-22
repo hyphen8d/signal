@@ -308,7 +308,21 @@ export class CRT {
   /** Set the beam tint by name. See PHOSPHORS in config.js. */
   setPhosphor(name) {
     const tint = PHOSPHORS[name]
-    if (tint) this.phosphor = tint
+    if (!tint || tint === this.phosphor) return
+    this.phosphor = tint
+    // 2026-08-22 (bug report: locking the secret NIN station left the old
+    // tint's afterglow visibly bleeding through the new one -- overlapping/
+    // garbled-looking text for a beat right after the switch) -- the
+    // persistence buffer accumulates brightness across frames for the
+    // phosphor-decay look, so a tint change alone leaves the PREVIOUS
+    // tint's accumulated glow sitting in that buffer, composited with the
+    // new tint on the very next frame. Clearing it here is the same
+    // tradeoff setSource()/build() already make on a resize (see
+    // clearPersist()'s own comment: "so frame 0 is not garbage") -- one
+    // frame flashes to black instead of a lingering double-exposure ghost,
+    // which reads as a clean instant switch, closer to a real set's
+    // channel change than a smeared one.
+    this.clearPersist()
   }
 
   /** Allocate the buffers sized from the source. */
