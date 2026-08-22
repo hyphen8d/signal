@@ -1084,12 +1084,17 @@ const MBOX_X1 = 40
 const MSTATUS_Y = 2
 const MSTATION_TOP_Y = 4
 const MSTATION_Y = 5
+// 45th pass -- tagline and track title each grew a second line (Matthew:
+// "use additional lines as needed" rather than truncating with an ellipsis
+// on desktop's one-line budget). Rows below shifted down to make room.
 const MTAGLINE_Y = 6
-const MSTATION_BOT_Y = 7
-const MNOWPLAYING_TOP_Y = 9
-const MTRACK_Y = 10
-const MARTIST_Y = 11
-const MNOWPLAYING_BOT_Y = 12
+const MTAGLINE2_Y = 7
+const MSTATION_BOT_Y = 8
+const MNOWPLAYING_TOP_Y = 10
+const MTRACK_Y = 11
+const MTRACK2_Y = 12
+const MARTIST_Y = 13
+const MNOWPLAYING_BOT_Y = 14
 const MHINT_Y1 = 18
 const MHINT_Y2 = 19
 
@@ -1135,6 +1140,36 @@ function truncate(str, maxLen) {
   if (str.length <= maxLen) return str
   if (maxLen <= 3) return str.slice(0, Math.max(0, maxLen))
   return str.slice(0, maxLen - 3) + '...'
+}
+
+// 45th pass -- word-wrap into up to maxLines lines of maxWidth, rather than
+// truncate()'s single-line ellipsis. Mobile's narrower columns cut off
+// station names and track titles that fit fine on desktop's wider boxes;
+// Matthew: "I also don't like not seeing the whole name and title... use
+// additional lines as needed." Greedy fill; if there's still leftover text
+// after maxLines, the last line gets truncate()'s ellipsis treatment so it's
+// at least visibly cut off rather than silently dropped.
+function wrapLines(text, maxWidth, maxLines) {
+  const words = text.split(/\s+/).filter(Boolean)
+  const lines = []
+  let cur = ''
+  let i = 0
+  for (; i < words.length; i++) {
+    const word = words[i]
+    const candidate = cur ? `${cur} ${word}` : word
+    if (candidate.length <= maxWidth) { cur = candidate; continue }
+    if (!cur) { lines.push(truncate(word, maxWidth)); continue } // one word wider than the whole box
+    lines.push(cur)
+    cur = word
+    if (lines.length >= maxLines) break
+  }
+  if (lines.length < maxLines && cur) { lines.push(cur); i = words.length }
+  if (i < words.length || lines.length > maxLines) {
+    lines.length = Math.min(lines.length, maxLines)
+    const last = lines[maxLines - 1] ?? ''
+    lines[maxLines - 1] = last.length + 3 <= maxWidth ? `${last}...` : truncate(last, maxWidth)
+  }
+  return lines
 }
 
 /** First n tracks from a station's tracks array, deduped so no artist
@@ -1956,9 +1991,32 @@ function playStaticBurst(duration, peakGain, freq) {
 // focus snap would land on SCREEN's beam, and the power-on ramp would climb
 // to SCREEN's brightness -- each one erasing whatever the station asked for
 // a few hundred ms after it was applied.
+// 45th pass -- Matthew, live on his phone: "we might need to turn down some
+// effects to make it easier to read on mobile." Grain, scanlines, chroma
+// fringing and bloom all read fine on a desktop monitor at native size, but
+// mobile's characters are already smaller and get photographed/viewed at a
+// steeper angle -- the same effects stack into real illegibility rather
+// than texture. Applied on top of (and after, so it always wins over) any
+// per-station crt override, since legibility matters more on this layout
+// than any one station's specific character. First-pass numbers, not
+// re-measured against a phone the way the visualizer rounds were -- expect
+// to retune these live same as everything else got tuned.
+const MOBILE_CRT_OVERRIDE = {
+  noise: 0.04,
+  noiseStreak: 3,
+  snow: 0.001,
+  scanMin: 0.2,
+  scanMax: 0.35,
+  chroma: 0.05,
+  bloomAmt: 0.7,
+  threshold: 0.6,
+  sharpen: 0.4,
+  flicker: 0.03,
+  maskAmt: 0.35,
+}
 let crtBase = { ...SCREEN }
 function setCrtCharacter(s, station) {
-  crtBase = { ...SCREEN, ...((station && station.crt) || {}) }
+  crtBase = { ...SCREEN, ...((station && station.crt) || {}), ...(MOBILE_LITE ? MOBILE_CRT_OVERRIDE : {}) }
   if (!s?.crt?.params) return
   Object.assign(s.crt.params, crtBase)
 }
@@ -2256,10 +2314,12 @@ export default {
     drawBoxTop(term, MSTATION_TOP_Y, MBOX_X0, MBOX_X1, 'STATION', MUTED)
     drawBoxSide(term, MSTATION_Y, MBOX_X0, MBOX_X1, MUTED)
     drawBoxSide(term, MTAGLINE_Y, MBOX_X0, MBOX_X1, MUTED)
+    drawBoxSide(term, MTAGLINE2_Y, MBOX_X0, MBOX_X1, MUTED)
     drawBoxBottom(term, MSTATION_BOT_Y, MBOX_X0, MBOX_X1, MUTED)
 
     drawBoxTop(term, MNOWPLAYING_TOP_Y, MBOX_X0, MBOX_X1, 'NOW PLAYING', BOLD)
     drawBoxSide(term, MTRACK_Y, MBOX_X0, MBOX_X1, BOLD)
+    drawBoxSide(term, MTRACK2_Y, MBOX_X0, MBOX_X1, BOLD)
     drawBoxSide(term, MARTIST_Y, MBOX_X0, MBOX_X1, BOLD)
     drawBoxBottom(term, MNOWPLAYING_BOT_Y, MBOX_X0, MBOX_X1, BOLD)
 
@@ -2268,7 +2328,9 @@ export default {
     // silently rendering as '?'), so this sticks to the same bracket idiom
     // the desktop hint rows use rather than risking arrow glyphs the face
     // may not have.
-    const line1 = 'TAP: MUTE'
+    // 45th pass: 2-finger tap (display mode/tint) added to the legend
+    // alongside the original three.
+    const line1 = 'TAP MUTE   2-TAP COLOR'
     const line2 = '[<-/->] STATION   [^/v] TRACK'
     for (let x = 0; x < term.cols; x++) { term.put(x, MHINT_Y1, ' ', NORMAL, 1); term.put(x, MHINT_Y2, ' ', NORMAL, 1) }
     term.text(centerX(term.cols, line1), MHINT_Y1, line1, BOLD, 1)
@@ -2719,6 +2781,9 @@ export default {
     this._touchStartX = 0
     this._touchStartY = 0
     this._touchStartTime = 0
+    // 45th pass -- two-finger tap (display mode cycle), tracked separately.
+    this._twoFingerActive = false
+    this._twoFingerStartTime = 0
     document.addEventListener('touchstart', (e) => this.onTouchStart(s, e), { passive: false })
     document.addEventListener('touchend', (e) => this.onTouchEnd(s, e), { passive: false })
   },
@@ -3431,7 +3496,7 @@ export default {
     // just no-op out of range the way a plain column overrun would.
     if (this.mobile) {
       const { term } = s
-      for (const y of [MSTATION_Y, MTAGLINE_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+      for (const y of [MSTATION_Y, MTAGLINE_Y, MTAGLINE2_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
       return
     }
     const { term } = s
@@ -3452,21 +3517,27 @@ export default {
   // simplicity choice for this first mobile pass, not a technical limit.
   mobileShowStation(s, station) {
     const { term } = s
-    for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) { term.put(x, MSTATION_Y, ' '); term.put(x, MTAGLINE_Y, ' ') }
+    for (const y of [MSTATION_Y, MTAGLINE_Y, MTAGLINE2_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
     const maxWidth = MBOX_X1 - MBOX_X0 - 4
     const FLAIR = station.glyph || '●'
     const flairWidth = FLAIR.length * 2 + 2
     const callsign = truncate(station.callsign, maxWidth - flairWidth)
     const flaired = `${FLAIR} ${callsign} ${FLAIR}`
-    const tagline = truncate(station.tagline, maxWidth)
     term.text(centerX(term.cols, flaired), MSTATION_Y, flaired, BRIGHT)
-    term.text(centerX(term.cols, tagline), MTAGLINE_Y, tagline, MUTED)
+    // 45th pass -- wrapped across both tagline rows rather than truncated to
+    // one (Matthew: "use additional lines as needed"). Second row left blank
+    // when the tagline fits on one line.
+    const [tag1, tag2] = wrapLines(station.tagline, maxWidth, 2)
+    term.text(centerX(term.cols, tag1), MTAGLINE_Y, tag1, MUTED)
+    if (tag2) term.text(centerX(term.cols, tag2), MTAGLINE2_Y, tag2, MUTED)
   },
   mobileShowTrack(s, track) {
     const { term } = s
-    for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) { term.put(x, MTRACK_Y, ' '); term.put(x, MARTIST_Y, ' ') }
+    for (const y of [MTRACK_Y, MTRACK2_Y, MARTIST_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
     const maxWidth = MBOX_X1 - MBOX_X0 - 4
-    term.text(centerX(term.cols, truncate(track.title, maxWidth)), MTRACK_Y, truncate(track.title, maxWidth), BOLD)
+    const [t1, t2] = wrapLines(track.title, maxWidth, 2)
+    term.text(centerX(term.cols, t1), MTRACK_Y, t1, BOLD)
+    if (t2) term.text(centerX(term.cols, t2), MTRACK2_Y, t2, BOLD)
     const artist = truncate(track.artist, maxWidth)
     term.text(centerX(term.cols, artist), MARTIST_Y, artist, MUTED)
   },
@@ -3511,7 +3582,7 @@ export default {
   clearTrack(s) {
     const { term } = s
     if (this.mobile) {
-      for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) { term.put(x, MTRACK_Y, ' '); term.put(x, MARTIST_Y, ' ') }
+      for (const y of [MTRACK_Y, MTRACK2_Y, MARTIST_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
       this.updateTabTitle()
       return
     }
@@ -4720,7 +4791,19 @@ export default {
     if (this.poweredOn) this._lastInputAt = Date.now()
     if (this.visualizerActive) { this.exitVisualizer(s); e.preventDefault(); return }
     if (e.target && e.target.closest && e.target.closest('#ytDock')) return
-    if (e.touches.length !== 1) { this._touchActive = false; return } // ignore pinch/multi-touch
+    // 45th pass -- two-finger tap cycles display mode/tint, the touch
+    // equivalent of desktop's [C]. Its own tracked gesture rather than
+    // folded into the single-finger tap/swipe state below -- a second
+    // finger landing mid-swipe cancels whatever single-finger gesture was
+    // in flight rather than being read as part of it.
+    if (e.touches.length === 2) {
+      this._touchActive = false
+      this._twoFingerActive = true
+      this._twoFingerStartTime = Date.now()
+      e.preventDefault()
+      return
+    }
+    if (e.touches.length !== 1) { this._touchActive = false; this._twoFingerActive = false; return } // ignore 3+ fingers
     this._touchActive = true
     const t = e.touches[0]
     this._touchStartX = t.clientX
@@ -4729,6 +4812,18 @@ export default {
     e.preventDefault()
   },
   onTouchEnd(s, e) {
+    if (this._twoFingerActive) {
+      this._twoFingerActive = false
+      // e.touches is what's STILL down after this touchend -- 0 means both
+      // fingers are now up, i.e. the tap actually completed rather than one
+      // finger lifting while the other kept going (which reads as the start
+      // of some other gesture, not a tap).
+      if (e.touches.length === 0 && Date.now() - this._twoFingerStartTime < 500 &&
+          this.poweredOn && !this.guideOpen) {
+        this.cycleDisplayMode(s)
+      }
+      return
+    }
     if (!this._touchActive) return
     this._touchActive = false
     const t = e.changedTouches[0]
