@@ -41,6 +41,9 @@ export const SCREEN = {
   bg: 0.11,
   /** Light spilled onto the area around the tube. Range 0..0.15. */
   ambient: 0.102,
+  /** How fast that spill fades with distance from the tube center -- lower
+   *  lets it reach further into the surround. Range 0.5..4. */
+  ambientFalloff: 2.2,
 
   // --- mask ---
   /** Aperture grille depth. Range 0..1. */

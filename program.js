@@ -117,7 +117,7 @@ function realTrack(youtubeId, title, artist) {
 // station"), on top of whatever it already had -- so QUIET HOURS actually
 // gained 6 (4 new + the 2 reassigned) and the rest gained 4.
 const STATIONS = [
-  { id: 'distortion-field', freq: 194.8, callsign: 'DISTORTION FIELD', tagline: "heavy guitars, raw nerve, '90s angst",
+  { id: 'distortion-field', freq: 194.8, callsign: 'DISTORTION FIELD', tagline: "raw nerve, '90s angst",
     // 28th pass (2026-08-21): renamed from STATIC BLOOM per Matthew's
     // station-naming pass -- "DISTORTION FIELD" / "heavy guitars, raw
     // nerve, '90s angst" was the locked-in choice (option 1B). Same
@@ -392,7 +392,7 @@ const STATIONS = [
       realTrack('wO0A0XcWy88', 'Major Tom (Coming Home)', 'Peter Schilling'),
       realTrack('LuN6gs0AJls', 'I Melt With You', 'Modern English'),
     ] },
-  { id: 'momentum', freq: 823.1, callsign: 'MOMENTUM', tagline: 'building blocks, deep focus, productive drift',
+  { id: 'momentum', freq: 823.1, callsign: 'MOMENTUM', tagline: 'deep focus, productive drift',
     // 28th pass: renamed from THE STUDY (option e, after more naming
     // options were requested). Same lofi/downtempo focus lane, same ident,
     // same tracks -- name/tagline only.
@@ -461,7 +461,7 @@ const STATIONS = [
   // 5 (288.6 between RELIC SIGNAL/QUIET HOURS, 434.5 between QUIET
   // HOURS/COLD WAVE, 650.0 between COLD WAVE/THE STUDY, 878.9 past THE
   // STUDY toward the top of the band) so none of the original 5 moved.
-  { id: 'city-lights', freq: 650.0, callsign: 'CITY LIGHTS', tagline: 'tokyo nights, neon groove, city pop dreams',
+  { id: 'city-lights', freq: 650.0, callsign: 'CITY LIGHTS', tagline: 'tokyo nights, city pop dreams',
     // 28th pass: renamed from HIGH RISE (option 7B). Same city pop lane,
     // same ident, same tracks -- name/tagline only.
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
@@ -690,7 +690,7 @@ const STATIONS = [
   // ATOMIC and reads as its own distinct tick near the top of the band.
   // 28th pass: tagline updated to "golden age hip-hop, west coast legends,
   // deep cuts" (option 9A, tagline option b) -- name (HACKBACK) unchanged.
-  { id: 'hackback', freq: 888.7, callsign: 'HACKBACK', tagline: 'golden age hip-hop, west coast legends',
+  { id: 'hackback', freq: 888.7, callsign: 'HACKBACK', tagline: 'golden age hip-hop legends',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: 'Golden-age hip-hop with a west coast backbone -- classic boom-bap, deep cuts, and a few legends who never needed a feature to prove it.',
     // 25th pass: was a straight descent, same shape as 3 other stations --
@@ -749,7 +749,7 @@ const STATIONS = [
       realTrack('cKu3_3mp1U8', 'Let Me Ride', 'Dr. Dre'),
       realTrack('OYbakN42pvA', 'Gin and Juice', 'Snoop Doggy Dogg'),
     ] },
-  { id: 'cipher', freq: 133.7, callsign: 'CIPHER', tagline: 'digital infiltration, breakbeat noir',
+  { id: 'cipher', freq: 133.7, callsign: 'CIPHER', tagline: 'digital infiltration',
     // 28th pass (2026-08-21): New cyberpunk station, hacker movies/synthwave
     // aesthetic (locked-in name/tagline per Matthew's naming pass). Placed
     // at 219.8, the frequency freed by RELIC SIGNAL's retirement (see the
@@ -2013,6 +2013,13 @@ const MOBILE_CRT_OVERRIDE = {
   sharpen: 0.4,
   flicker: 0.03,
   maskAmt: 0.35,
+  // 2026-08-22 (Matthew: "is there any way to make the black above and below
+  // a different color or texture?") -- the tube is hard-locked to 4:3, so a
+  // portrait phone letterboxes above/below it in shader-computed black
+  // (crt.js's `uPhosphor * uAmbient * exp(-uAmbientFalloff * length(p))`).
+  // Rather than a fake CSS overlay, just let the real phosphor glow reach
+  // further into that space -- lower falloff, same tint, same physics.
+  ambientFalloff: 0.6,
 }
 let crtBase = { ...SCREEN }
 function setCrtCharacter(s, station) {
@@ -3512,10 +3519,12 @@ export default {
   // opts.revealMs shortens/lengthens it. Default is the full reveal --
   // every path that shows a station (lock, guide close, power-on resume)
   // is a moment where a receiver settling onto a signal is the right read.
-  // 45th pass -- plain text, no resolve-from-noise animation. That effect
-  // is tuned for the desktop's wider boxes; keeping it out here is a
-  // simplicity choice for this first mobile pass, not a technical limit.
-  mobileShowStation(s, station) {
+  // 45th pass -- now resolves out of noise same as desktop (Matthew: "let's
+  // think of a better tuner animation" -- mobile's station change had
+  // nothing but a status-row text flash, since it has no dial to animate).
+  // resolveText() is coordinate-generic (takes x/y as params, not baked-in
+  // desktop constants), so this is a straight reuse, not new machinery.
+  mobileShowStation(s, station, opts = {}) {
     const { term } = s
     for (const y of [MSTATION_Y, MTAGLINE_Y, MTAGLINE2_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
     const maxWidth = MBOX_X1 - MBOX_X0 - 4
@@ -3523,27 +3532,45 @@ export default {
     const flairWidth = FLAIR.length * 2 + 2
     const callsign = truncate(station.callsign, maxWidth - flairWidth)
     const flaired = `${FLAIR} ${callsign} ${FLAIR}`
-    term.text(centerX(term.cols, flaired), MSTATION_Y, flaired, BRIGHT)
-    // 45th pass -- wrapped across both tagline rows rather than truncated to
-    // one (Matthew: "use additional lines as needed"). Second row left blank
+    // wrapped across both tagline rows rather than truncated to one
+    // (Matthew: "use additional lines as needed"). Second row left blank
     // when the tagline fits on one line.
     const [tag1, tag2] = wrapLines(station.tagline, maxWidth, 2)
-    term.text(centerX(term.cols, tag1), MTAGLINE_Y, tag1, MUTED)
-    if (tag2) term.text(centerX(term.cols, tag2), MTAGLINE2_Y, tag2, MUTED)
+    const callX = centerX(term.cols, flaired)
+    const tag1X = centerX(term.cols, tag1)
+    if (opts.reveal === false) {
+      term.text(callX, MSTATION_Y, flaired, BRIGHT)
+      term.text(tag1X, MTAGLINE_Y, tag1, MUTED)
+      if (tag2) term.text(centerX(term.cols, tag2), MTAGLINE2_Y, tag2, MUTED)
+    } else {
+      const ms = opts.revealMs ?? 260
+      this.resolveText(s, callX, MSTATION_Y, flaired, BRIGHT, ms)
+      this.resolveText(s, tag1X, MTAGLINE_Y, tag1, MUTED, ms + 90)
+      if (tag2) this.resolveText(s, centerX(term.cols, tag2), MTAGLINE2_Y, tag2, MUTED, ms + 90)
+    }
   },
-  mobileShowTrack(s, track) {
+  mobileShowTrack(s, track, opts = {}) {
     const { term } = s
     for (const y of [MTRACK_Y, MTRACK2_Y, MARTIST_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
     const maxWidth = MBOX_X1 - MBOX_X0 - 4
     const [t1, t2] = wrapLines(track.title, maxWidth, 2)
-    term.text(centerX(term.cols, t1), MTRACK_Y, t1, BOLD)
-    if (t2) term.text(centerX(term.cols, t2), MTRACK2_Y, t2, BOLD)
     const artist = truncate(track.artist, maxWidth)
-    term.text(centerX(term.cols, artist), MARTIST_Y, artist, MUTED)
+    const t1X = centerX(term.cols, t1)
+    const artistX = centerX(term.cols, artist)
+    if (opts.reveal === false) {
+      term.text(t1X, MTRACK_Y, t1, BOLD)
+      if (t2) term.text(centerX(term.cols, t2), MTRACK2_Y, t2, BOLD)
+      term.text(artistX, MARTIST_Y, artist, MUTED)
+    } else {
+      const ms = opts.revealMs ?? 250
+      this.resolveText(s, t1X, MTRACK_Y, t1, BOLD, ms)
+      if (t2) this.resolveText(s, centerX(term.cols, t2), MTRACK2_Y, t2, BOLD, ms)
+      this.resolveText(s, artistX, MARTIST_Y, artist, MUTED, ms + 90)
+    }
   },
 
   showStation(s, station, opts = {}) {
-    if (this.mobile) { this.mobileShowStation(s, station); return }
+    if (this.mobile) { this.mobileShowStation(s, station, opts); return }
     const { term } = s
     this.clearStation(s)
     const maxWidth = BOX_X1 - BOX_X0 - 4
@@ -3594,7 +3621,7 @@ export default {
   // shorter one -- a track change within a station you are already locked
   // onto is a smaller event than finding the station was.
   showTrack(s, track, opts = {}) {
-    if (this.mobile) { this.mobileShowTrack(s, track); return }
+    if (this.mobile) { this.mobileShowTrack(s, track, opts); return }
     const { term } = s
     this.clearTrack(s)
     const maxWidth = BOX_X1 - BOX_X0 - 4
@@ -4813,13 +4840,19 @@ export default {
   },
   onTouchEnd(s, e) {
     if (this._twoFingerActive) {
+      // BUG FIXED (live on Matthew's phone -- "color change seems iffy"):
+      // real fingers never lift in perfect sync, so touchend fires once per
+      // finger, not once for the pair. This used to clear _twoFingerActive
+      // on the FIRST of those two events (when e.touches.length was still
+      // 1, one finger still down), so by the time the second finger's
+      // touchend actually arrived with e.touches.length === 0, the flag was
+      // already false and the whole branch was skipped -- the gesture could
+      // only ever fire on the rare tick where both releases coalesced into
+      // one event. Now it only resolves (and only THEN clears the flag)
+      // once every finger is confirmed up.
+      if (e.touches.length > 0) return
       this._twoFingerActive = false
-      // e.touches is what's STILL down after this touchend -- 0 means both
-      // fingers are now up, i.e. the tap actually completed rather than one
-      // finger lifting while the other kept going (which reads as the start
-      // of some other gesture, not a tap).
-      if (e.touches.length === 0 && Date.now() - this._twoFingerStartTime < 500 &&
-          this.poweredOn && !this.guideOpen) {
+      if (Date.now() - this._twoFingerStartTime < 500 && this.poweredOn && !this.guideOpen) {
         this.cycleDisplayMode(s)
       }
       return

@@ -4,7 +4,7 @@ Generated from program.js. 9 stations, 270 tracks total.
 
 ## DISTORTION FIELD -- 194.8
 
-*heavy guitars, raw nerve, '90s angst*
+*raw nerve, '90s angst*
 
 Ident tones (Hz): 392, 349.2, 311.2, 261.6
 
@@ -121,7 +121,7 @@ Tracks (30):
 
 ## MOMENTUM -- 823.1
 
-*building blocks, deep focus, productive drift*
+*deep focus, productive drift*
 
 Ident tones (Hz): 329.6, 293.7, 261.6, 293.7
 
@@ -160,7 +160,7 @@ Tracks (30):
 
 ## CITY LIGHTS -- 650.0
 
-*tokyo nights, neon groove, city pop dreams*
+*tokyo nights, city pop dreams*
 
 Ident tones (Hz): 523.3, 784, 659.3, 987.8
 
@@ -277,7 +277,7 @@ Tracks (30):
 
 ## HACKBACK -- 888.7
 
-*golden age hip-hop, west coast legends*
+*golden age hip-hop legends*
 
 Ident tones (Hz): 220, 293.7, 349.2, 293.7
 
@@ -316,7 +316,7 @@ Tracks (30):
 
 ## CIPHER -- 133.7
 
-*digital infiltration, breakbeat noir*
+*digital infiltration*
 
 Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
 

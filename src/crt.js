@@ -138,6 +138,7 @@ uniform float uTime;
 uniform vec3 uPhosphor;
 uniform float uFill, uCurve, uBloomAmt, uMaskAmt, uMaskPitch, uVignette;
 uniform float uNoise, uFlicker, uRoll, uRollSpeed, uChroma, uBrightness, uAmbient, uBg, uGlass;
+uniform float uAmbientFalloff;
 uniform float uNoiseStreak, uSnow;
 out vec4 fragColor;
 
@@ -183,7 +184,7 @@ void main() {
 
   // --- surround -------------------------------------------------------------
   // No bezel. Only light spilled from the tube.
-  vec3 col = uPhosphor * uAmbient * exp(-2.2 * length(p));
+  vec3 col = uPhosphor * uAmbient * exp(-uAmbientFalloff * length(p));
 
   // --- glass -----------------------------------------------------------------
   // Defined in warped space so the outline follows the barrel curve and always
@@ -566,6 +567,7 @@ export class CRT {
     gl.uniform1f(u.uChroma, P.chroma)
     gl.uniform1f(u.uBrightness, P.brightness)
     gl.uniform1f(u.uAmbient, P.ambient)
+    gl.uniform1f(u.uAmbientFalloff, P.ambientFalloff)
     gl.uniform1f(u.uBg, P.bg)
     gl.uniform1f(u.uGlass, P.glass)
     this.draw()
