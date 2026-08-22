@@ -1083,20 +1083,43 @@ const MBOX_X0 = 1
 const MBOX_X1 = 40
 const MSTATUS_Y = 2
 const MSTATION_TOP_Y = 4
-const MSTATION_Y = 5
-// 45th pass -- tagline and track title each grew a second line (Matthew:
-// "use additional lines as needed" rather than truncating with an ellipsis
-// on desktop's one-line budget). Rows below shifted down to make room.
-const MTAGLINE_Y = 6
-const MTAGLINE2_Y = 7
-const MSTATION_BOT_Y = 8
-const MNOWPLAYING_TOP_Y = 10
-const MTRACK_Y = 11
-const MTRACK2_Y = 12
-const MARTIST_Y = 13
-const MNOWPLAYING_BOT_Y = 14
-const MHINT_Y1 = 18
-const MHINT_Y2 = 19
+// Hints are pinned to the bottom of the 22-row grid. Everything between the
+// STATION box and the hints -- NOW PLAYING, the widget row -- is computed by
+// mobileLayout() below rather than fixed, so a one-line tagline or track
+// title actually reclaims its row instead of leaving it blank.
+const MHINT_Y1 = 20
+const MHINT_Y2 = 21
+
+// 2026-08-22 (Matthew: "the layout of text in the boxes... not using the
+// space well... room to put some fun things below now playing") -- row
+// positions for everything between the STATION box and the hint footer,
+// derived from how many lines the current tagline/track title actually need
+// (1 or 2 each -- see wrapLines()). A short tagline or title collapses its
+// box by a row instead of leaving a blank line, and that reclaimed space
+// becomes room for the VU/SIG widget row. Recomputed by mobileRelayout()
+// whenever either line count changes; mobileShowStation/mobileShowTrack read
+// the current one off this._mLayout rather than a fixed constant.
+function mobileLayout(tagLines, trackLines) {
+  const top = MSTATION_TOP_Y
+  const stationCall = top + 1
+  const stationTag1 = top + 2
+  const stationTag2 = tagLines >= 2 ? top + 3 : null
+  const stationBot = top + 2 + tagLines
+  const npTop = stationBot + 2
+  const npTrack1 = npTop + 1
+  const npTrack2 = trackLines >= 2 ? npTop + 2 : null
+  const npArtist = npTop + 1 + trackLines
+  const npBot = npArtist + 1
+  const widgetVU = npBot + 2
+  const widgetSig = widgetVU + 1
+  return {
+    tagLines, trackLines,
+    stationTop: top, stationCall, stationTag1, stationTag2, stationBot,
+    npTop, npTrack1, npTrack2, npArtist, npBot,
+    widgetVU, widgetSig,
+    hint1: MHINT_Y1, hint2: MHINT_Y2,
+  }
+}
 
 /** Centre text, clamped so it never starts off-grid (a too-long string
  *  would otherwise centre to a negative x and get silently clipped/garbled
@@ -2317,18 +2340,29 @@ export default {
     for (let x = 0; x < term.cols; x++) term.put(x, 0, ' ', NORMAL, 1)
     const title = `SIGNAL ${VERSION_TAG}`
     term.text(centerX(term.cols, title), 0, title, BOLD, 1)
+    if (!this._mLayout) this._mLayout = mobileLayout(2, 2)
+    this.mobileDrawFrame(s)
+  },
 
-    drawBoxTop(term, MSTATION_TOP_Y, MBOX_X0, MBOX_X1, 'STATION', MUTED)
-    drawBoxSide(term, MSTATION_Y, MBOX_X0, MBOX_X1, MUTED)
-    drawBoxSide(term, MTAGLINE_Y, MBOX_X0, MBOX_X1, MUTED)
-    drawBoxSide(term, MTAGLINE2_Y, MBOX_X0, MBOX_X1, MUTED)
-    drawBoxBottom(term, MSTATION_BOT_Y, MBOX_X0, MBOX_X1, MUTED)
+  // Draws the STATION box, NOW PLAYING box, and hint footer at the row
+  // positions in this._mLayout. Split out from mobileDrawChrome (which only
+  // draws the title bar itself) so mobileRelayout() can redraw just this
+  // part whenever a line-count change moves everything below the title.
+  mobileDrawFrame(s) {
+    const { term } = s
+    const L = this._mLayout
 
-    drawBoxTop(term, MNOWPLAYING_TOP_Y, MBOX_X0, MBOX_X1, 'NOW PLAYING', BOLD)
-    drawBoxSide(term, MTRACK_Y, MBOX_X0, MBOX_X1, BOLD)
-    drawBoxSide(term, MTRACK2_Y, MBOX_X0, MBOX_X1, BOLD)
-    drawBoxSide(term, MARTIST_Y, MBOX_X0, MBOX_X1, BOLD)
-    drawBoxBottom(term, MNOWPLAYING_BOT_Y, MBOX_X0, MBOX_X1, BOLD)
+    drawBoxTop(term, L.stationTop, MBOX_X0, MBOX_X1, 'STATION', MUTED)
+    drawBoxSide(term, L.stationCall, MBOX_X0, MBOX_X1, MUTED)
+    drawBoxSide(term, L.stationTag1, MBOX_X0, MBOX_X1, MUTED)
+    if (L.stationTag2 != null) drawBoxSide(term, L.stationTag2, MBOX_X0, MBOX_X1, MUTED)
+    drawBoxBottom(term, L.stationBot, MBOX_X0, MBOX_X1, MUTED)
+
+    drawBoxTop(term, L.npTop, MBOX_X0, MBOX_X1, 'NOW PLAYING', BOLD)
+    drawBoxSide(term, L.npTrack1, MBOX_X0, MBOX_X1, BOLD)
+    if (L.npTrack2 != null) drawBoxSide(term, L.npTrack2, MBOX_X0, MBOX_X1, BOLD)
+    drawBoxSide(term, L.npArtist, MBOX_X0, MBOX_X1, BOLD)
+    drawBoxBottom(term, L.npBot, MBOX_X0, MBOX_X1, BOLD)
 
     // ASCII only -- the bitmap font doesn't carry every Unicode glyph (a
     // past pass found this the hard way with a couple of star/square glyphs
@@ -2339,9 +2373,31 @@ export default {
     // alongside the original three.
     const line1 = 'TAP MUTE   2-TAP COLOR'
     const line2 = '[<-/->] STATION   [^/v] TRACK'
-    for (let x = 0; x < term.cols; x++) { term.put(x, MHINT_Y1, ' ', NORMAL, 1); term.put(x, MHINT_Y2, ' ', NORMAL, 1) }
-    term.text(centerX(term.cols, line1), MHINT_Y1, line1, BOLD, 1)
-    term.text(centerX(term.cols, line2), MHINT_Y2, line2, NORMAL, 1)
+    for (let x = 0; x < term.cols; x++) { term.put(x, L.hint1, ' ', NORMAL, 1); term.put(x, L.hint2, ' ', NORMAL, 1) }
+    term.text(centerX(term.cols, line1), L.hint1, line1, BOLD, 1)
+    term.text(centerX(term.cols, line2), L.hint2, line2, NORMAL, 1)
+  },
+
+  // Recomputes this._mLayout when the tagline or track title's line count
+  // changes (see mobileLayout()), and if it did, wipes and redraws
+  // everything below the status row at the new positions. Returns whether a
+  // relayout actually happened, so callers know whether the OTHER box (the
+  // one they didn't just draw) needs restoring -- a relayout clears the
+  // whole zone, station and now-playing both, regardless of which one's
+  // line count triggered it.
+  mobileRelayout(s, tagLines, trackLines) {
+    if (!this._mLayout) this._mLayout = mobileLayout(2, 2)
+    const cur = this._mLayout
+    if (cur.tagLines === tagLines && cur.trackLines === trackLines) return false
+    const { term } = s
+    this._mLayout = mobileLayout(tagLines, trackLines)
+    for (let y = 3; y < term.rows; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
+    this.mobileDrawFrame(s)
+    // Widgets live in the zone that just got wiped -- redraw them at their
+    // new row immediately rather than waiting for the next VU tick.
+    this.drawVU(s)
+    this.drawSignal(s)
+    return true
   },
 
   drawChrome(s) {
@@ -2905,15 +2961,18 @@ export default {
   // per-character reveal. Every setStatus()/flashStatus() caller across the
   // file funnels through here, so gating this one spot covers all of them
   // -- LOCKED, SEEKING, MUTED/UNMUTED, VOL nn, everything.
-  mobileDrawStatusRow(s, text, attr) {
+  // 2026-08-22: takes inv now too (was silently dropped before, so LOCKED's
+  // inverse flash never showed on mobile even though the timer driving it
+  // fired correctly).
+  mobileDrawStatusRow(s, text, attr, inv = 0) {
     const { term } = s
     const bracket = `[ ${text} ]`
-    for (let x = 0; x < term.cols; x++) term.put(x, MSTATUS_Y, ' ')
-    term.text(centerX(term.cols, bracket), MSTATUS_Y, bracket, attr)
+    for (let x = 0; x < term.cols; x++) term.put(x, MSTATUS_Y, ' ', NORMAL, 0)
+    term.text(centerX(term.cols, bracket), MSTATUS_Y, bracket, attr, inv)
   },
 
   drawStatusRow(s, text, active, revealed, opts = {}) {
-    if (this.mobile) { this.mobileDrawStatusRow(s, text, opts.attr ?? (active ? BRIGHT : MUTED)); return }
+    if (this.mobile) { this.mobileDrawStatusRow(s, text, opts.attr ?? (active ? BRIGHT : MUTED), opts.inv ? 1 : 0); return }
     const { term } = s
     const padTotal = STATUS_TEXT_WIDTH - text.length
     const padL = Math.max(0, Math.floor(padTotal / 2))
@@ -2975,6 +3034,24 @@ export default {
     const sweeping = text.startsWith('SCANNING') || text.startsWith('TUNING')
     const seeking = text === 'SEEKING'
     if (!sweeping && !seeking) return
+    // 2026-08-22 (Matthew: "the tuning 'line' also draws over the status")
+    // -- this whole block below is hardcoded to STATUS_Y/BOX_X0/BOX_X1,
+    // desktop's row and its 2..77 column span. It was never gated for
+    // mobile at all, so every TUNING/SEEKING/SCANNING status kicked this
+    // off on the 42-col mobile grid too. This._statusBracketX/Len are only
+    // ever written by drawStatusRow's DESKTOP branch (mobile returns before
+    // reaching them), so on mobile they sit at their constructor default of
+    // 0 forever -- which makes rightCols run from column 1 to BOX_X1 (77),
+    // painting a FAINT rule across nearly the whole status row every tick
+    // and overwriting the "[ TUNING n ]" text mobileDrawStatusRow just
+    // centered there, with the BRIGHT sweep cell itself only visible for
+    // the fraction of that 77-column travel that lands inside the 42-column
+    // mobile grid before wrapping -- which is exactly the "animates only
+    // briefly left to right" Matthew described. Mobile's status row just
+    // sits still instead: 40 columns isn't enough room for a travelling
+    // dash to read as motion anyway, and the LOCKED flash / NO SIGNAL blink
+    // above still land correctly through drawStatusRow's mobile branch.
+    if (this.mobile) return
     let i = 0
     this._statusAnimTimer = setInterval(() => {
       if (!alive()) { this._clearStatusTimers(); return }
@@ -3471,10 +3548,12 @@ export default {
 
   // Decorative, but reinforces the tuning fantasy: fills in as you approach
   // a station while seeking, full once locked.
+  // 2026-08-22 (Matthew: "room to put some fun things here below now
+  // playing... maybe vu + signal") -- the mobile early-return used to sit at
+  // the very top, so the SIG bar didn't even exist on mobile before now.
+  // Percent computation is shared with desktop; only the render target
+  // (row + width) differs, via mobileDrawSignal.
   drawSignal(s) {
-    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
-    const { term } = s
-    for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, SIG_Y, ' ')
     const segs = 16
     let pct = 0
     if (this.mode === 'locked') pct = 1
@@ -3487,8 +3566,19 @@ export default {
     const filled = Math.round(pct * segs)
     let bar = ''
     for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '-'
+    if (this.mobile) { this.mobileDrawSignal(s, bar, filled); return }
+    const { term } = s
+    for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, SIG_Y, ' ')
     const label = `SIG [${bar}]`
     term.text(centerXRange(BOX_X0 + 1, METERS_DIVIDER_X - 1, label), SIG_Y, label, filled > 0 ? DIM : FAINT)
+  },
+  mobileDrawSignal(s, bar, filled) {
+    if (!this._mLayout) return
+    const { term } = s
+    const y = this._mLayout.widgetSig
+    for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+    const label = `SIG [${bar}]`
+    term.text(centerXRange(MBOX_X0 + 1, MBOX_X1 - 1, label), y, label, filled > 0 ? DIM : FAINT)
   },
 
   // STATION (callsign + tagline) and NOW PLAYING (track) are separate
@@ -3501,9 +3591,17 @@ export default {
     // completely different content on mobile's shorter grid (row 9 is the
     // NOW PLAYING box's top border there, not station text), so this can't
     // just no-op out of range the way a plain column overrun would.
+    // 2026-08-22: row positions now come from this._mLayout (see
+    // mobileLayout()) rather than fixed constants -- the box height varies
+    // with tagline line count.
     if (this.mobile) {
       const { term } = s
-      for (const y of [MSTATION_Y, MTAGLINE_Y, MTAGLINE2_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+      if (!this._mLayout) return
+      const L = this._mLayout
+      for (const y of [L.stationCall, L.stationTag1, L.stationTag2]) {
+        if (y == null) continue
+        for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+      }
       return
     }
     const { term } = s
@@ -3524,49 +3622,71 @@ export default {
   // nothing but a status-row text flash, since it has no dial to animate).
   // resolveText() is coordinate-generic (takes x/y as params, not baked-in
   // desktop constants), so this is a straight reuse, not new machinery.
+  // 2026-08-22: now runs through mobileRelayout() first -- a tagline that
+  // fits on one line collapses the STATION box by a row instead of leaving
+  // the second row blank (Matthew: "the layout of text in the boxes is [not]
+  // using the space well"), and everything below (NOW PLAYING, the widget
+  // row, the hints) shifts up to match.
   mobileShowStation(s, station, opts = {}) {
     const { term } = s
-    for (const y of [MSTATION_Y, MTAGLINE_Y, MTAGLINE2_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+    if (!this._mLayout) this._mLayout = mobileLayout(2, 2)
     const maxWidth = MBOX_X1 - MBOX_X0 - 4
+    // wrapped across both tagline rows rather than truncated to one
+    // (Matthew: "use additional lines as needed"). Second row omitted
+    // entirely (see mobileRelayout) when the tagline fits on one line.
+    const [tag1, tag2] = wrapLines(station.tagline, maxWidth, 2)
+    const relaid = this.mobileRelayout(s, tag2 ? 2 : 1, this._mLayout.trackLines)
+    const L = this._mLayout
+    for (const y of [L.stationCall, L.stationTag1, L.stationTag2]) {
+      if (y == null) continue
+      for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+    }
     const FLAIR = station.glyph || '●'
     const flairWidth = FLAIR.length * 2 + 2
     const callsign = truncate(station.callsign, maxWidth - flairWidth)
     const flaired = `${FLAIR} ${callsign} ${FLAIR}`
-    // wrapped across both tagline rows rather than truncated to one
-    // (Matthew: "use additional lines as needed"). Second row left blank
-    // when the tagline fits on one line.
-    const [tag1, tag2] = wrapLines(station.tagline, maxWidth, 2)
     const callX = centerX(term.cols, flaired)
     const tag1X = centerX(term.cols, tag1)
     if (opts.reveal === false) {
-      term.text(callX, MSTATION_Y, flaired, BRIGHT)
-      term.text(tag1X, MTAGLINE_Y, tag1, MUTED)
-      if (tag2) term.text(centerX(term.cols, tag2), MTAGLINE2_Y, tag2, MUTED)
+      term.text(callX, L.stationCall, flaired, BRIGHT)
+      term.text(tag1X, L.stationTag1, tag1, MUTED)
+      if (tag2) term.text(centerX(term.cols, tag2), L.stationTag2, tag2, MUTED)
     } else {
       const ms = opts.revealMs ?? 260
-      this.resolveText(s, callX, MSTATION_Y, flaired, BRIGHT, ms)
-      this.resolveText(s, tag1X, MTAGLINE_Y, tag1, MUTED, ms + 90)
-      if (tag2) this.resolveText(s, centerX(term.cols, tag2), MTAGLINE2_Y, tag2, MUTED, ms + 90)
+      this.resolveText(s, callX, L.stationCall, flaired, BRIGHT, ms)
+      this.resolveText(s, tag1X, L.stationTag1, tag1, MUTED, ms + 90)
+      if (tag2) this.resolveText(s, centerX(term.cols, tag2), L.stationTag2, tag2, MUTED, ms + 90)
     }
+    // mobileRelayout() wipes the whole dynamic zone including NOW PLAYING,
+    // which this call didn't touch -- restore it instantly (no re-resolve)
+    // rather than leaving it blank until something else redraws it.
+    if (relaid && this.currentTrack) this.mobileShowTrack(s, this.currentTrack, { reveal: false })
   },
   mobileShowTrack(s, track, opts = {}) {
     const { term } = s
-    for (const y of [MTRACK_Y, MTRACK2_Y, MARTIST_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+    if (!this._mLayout) this._mLayout = mobileLayout(2, 2)
     const maxWidth = MBOX_X1 - MBOX_X0 - 4
     const [t1, t2] = wrapLines(track.title, maxWidth, 2)
+    const relaid = this.mobileRelayout(s, this._mLayout.tagLines, t2 ? 2 : 1)
+    const L = this._mLayout
+    for (const y of [L.npTrack1, L.npTrack2, L.npArtist]) {
+      if (y == null) continue
+      for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+    }
     const artist = truncate(track.artist, maxWidth)
     const t1X = centerX(term.cols, t1)
     const artistX = centerX(term.cols, artist)
     if (opts.reveal === false) {
-      term.text(t1X, MTRACK_Y, t1, BOLD)
-      if (t2) term.text(centerX(term.cols, t2), MTRACK2_Y, t2, BOLD)
-      term.text(artistX, MARTIST_Y, artist, MUTED)
+      term.text(t1X, L.npTrack1, t1, BOLD)
+      if (t2) term.text(centerX(term.cols, t2), L.npTrack2, t2, BOLD)
+      term.text(artistX, L.npArtist, artist, MUTED)
     } else {
       const ms = opts.revealMs ?? 250
-      this.resolveText(s, t1X, MTRACK_Y, t1, BOLD, ms)
-      if (t2) this.resolveText(s, centerX(term.cols, t2), MTRACK2_Y, t2, BOLD, ms)
-      this.resolveText(s, artistX, MARTIST_Y, artist, MUTED, ms + 90)
+      this.resolveText(s, t1X, L.npTrack1, t1, BOLD, ms)
+      if (t2) this.resolveText(s, centerX(term.cols, t2), L.npTrack2, t2, BOLD, ms)
+      this.resolveText(s, artistX, L.npArtist, artist, MUTED, ms + 90)
     }
+    if (relaid && this.lockedStation) this.mobileShowStation(s, this.lockedStation, { reveal: false })
   },
 
   showStation(s, station, opts = {}) {
@@ -3609,7 +3729,12 @@ export default {
   clearTrack(s) {
     const { term } = s
     if (this.mobile) {
-      for (const y of [MTRACK_Y, MTRACK2_Y, MARTIST_Y]) for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+      if (!this._mLayout) { this.updateTabTitle(); return }
+      const L = this._mLayout
+      for (const y of [L.npTrack1, L.npTrack2, L.npArtist]) {
+        if (y == null) continue
+        for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+      }
       this.updateTabTitle()
       return
     }
@@ -3727,13 +3852,12 @@ export default {
   // rather than pure noise, so consecutive samples flow into each other
   // like a real waveform instead of looking like static. Still decorative
   // -- WebAudio has no visibility into the YouTube iframe's actual output.
+  // 2026-08-22: mobile early-return used to sit right here, before the
+  // spring physics even ran -- this.vuSample/vuVelocity/vuTrace never
+  // advanced at all in mobile mode. Now the physics always run (shared with
+  // desktop, one clock for the whole receiver) and only the render target
+  // branches, via mobileDrawVU.
   drawVU(s) {
-    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
-    const { term } = s
-    // 18th pass: confined to the left half, and this.vuTrace shrank from
-    // 24 to 16 samples (see init()) to match -- same reasoning as the
-    // VOL/SIG segment trim above.
-    for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, VU_Y, ' ')
     const playing = this.mode === 'locked' && this.playState === 'playing'
     // 23rd pass (Matthew: "more animation, fun to see it change as you do
     // things"): the target was previously a flat 0.15-0.95 swing whenever
@@ -3776,8 +3900,22 @@ export default {
     const chars = '▁▁▂▃▄▅▆▇█'
     let bar = ''
     for (const v of this.vuTrace) bar += chars[Math.max(0, Math.min(chars.length - 1, Math.round(v * (chars.length - 1))))]
+    if (this.mobile) { this.mobileDrawVU(s, bar, playing); return }
+    const { term } = s
+    // 18th pass: confined to the left half, and this.vuTrace shrank from
+    // 24 to 16 samples (see init()) to match -- same reasoning as the
+    // VOL/SIG segment trim above.
+    for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, VU_Y, ' ')
     const label = `VU  ${bar}`
     term.text(centerXRange(BOX_X0 + 1, METERS_DIVIDER_X - 1, label), VU_Y, label, playing ? DIM : FAINT)
+  },
+  mobileDrawVU(s, bar, playing) {
+    if (!this._mLayout) return
+    const { term } = s
+    const y = this._mLayout.widgetVU
+    for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+    const label = `VU  ${bar}`
+    term.text(centerXRange(MBOX_X0 + 1, MBOX_X1 - 1, label), y, label, playing ? DIM : FAINT)
   },
 
   /** 41st pass -- per-station meter ballistics (Matthew: "I'm also for ...
