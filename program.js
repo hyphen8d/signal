@@ -1117,16 +1117,22 @@ function mobileLayout(tagLines, trackLines) {
   const npTrack1 = npTop + 1
   const npTrack2 = trackLines >= 2 ? npTop + 2 : null
   const npArtist = npTop + 1 + trackLines
-  const npBot = npArtist + 1
+  // 2026-08-22 (Matthew: "get a now playing bar with playback bar etc like
+  // we have in full version") -- one more row inside the box for the
+  // progress bar, same place desktop's PLAYBACK_Y sits relative to TRACK_Y.
+  const npProgress = npArtist + 1
+  const npBot = npProgress + 1
   // 2026-08-22 (Matthew: "the vu and signal are too close to each other.
-  // maybe make them on the same line, spread out from each other?") -- one
-  // shared row, VU left / SIG right, rather than two stacked rows.
+  // maybe make them on the same line, spread out from each other?" then
+  // "add the fld changing number widget and a more obvious mute off/on") --
+  // two widget rows: VU|SIG, then FLD|MUTE directly below.
   const widgetRow = npBot + 2
+  const widgetRow2 = widgetRow + 1
   return {
     tagLines, trackLines,
     stationTop: top, stationCall, stationTag1, stationTag2, stationBot,
-    npTop, npTrack1, npTrack2, npArtist, npBot,
-    widgetRow,
+    npTop, npTrack1, npTrack2, npArtist, npProgress, npBot,
+    widgetRow, widgetRow2,
     hint1: MHINT_Y1, hint2: MHINT_Y2,
   }
 }
@@ -2342,14 +2348,20 @@ export default {
 
   // 45th pass -- mobile's whole frame: wordmark, status line, STATION and
   // NOW PLAYING boxes, a touch-gesture footer instead of the keyboard hint
-  // rows. No clock (drawClock hardcodes column 76, well past this grid's 42
-  // -- not worth teaching it a second layout for a detail this minor), no
-  // brand-plate, no TUNING BAND/LEVELS boxes at all.
+  // rows. No TUNING BAND/LEVELS boxes at all -- no tuner strip to drive them.
+  // 2026-08-22 (Matthew: "let's have the top header mirror what we have on
+  // desktop... date, time, sg-1 etc") -- wordmark+clock share row 0 same as
+  // desktop's title bar (left/right split instead of centered, so there's
+  // room for both); the brand-plate now takes row 1, which used to just be
+  // blank spacing between the title and the status row.
   mobileDrawChrome(s) {
     const { term } = s
-    for (let x = 0; x < term.cols; x++) term.put(x, 0, ' ', NORMAL, 1)
+    for (let x = 0; x < term.cols; x++) { term.put(x, 0, ' ', NORMAL, 1); term.put(x, 1, ' ', NORMAL, 1) }
     const title = `SIGNAL ${VERSION_TAG}`
-    term.text(centerX(term.cols, title), 0, title, BOLD, 1)
+    term.text(2, 0, title, BOLD, 1)
+    this.drawClock(s)
+    const brand = 'MODEL SG-1  -  SIGNAL RECEIVER'
+    term.text(centerX(term.cols, brand), 1, brand, FAINT, 1)
     if (!this._mLayout) this._mLayout = mobileLayout(2, 2)
     this.mobileDrawFrame(s)
   },
@@ -2372,6 +2384,7 @@ export default {
     drawBoxSide(term, L.npTrack1, MBOX_X0, MBOX_X1, BOLD)
     if (L.npTrack2 != null) drawBoxSide(term, L.npTrack2, MBOX_X0, MBOX_X1, BOLD)
     drawBoxSide(term, L.npArtist, MBOX_X0, MBOX_X1, BOLD)
+    drawBoxSide(term, L.npProgress, MBOX_X0, MBOX_X1, BOLD)
     drawBoxBottom(term, L.npBot, MBOX_X0, MBOX_X1, BOLD)
 
     // ASCII only -- the bitmap font doesn't carry every Unicode glyph (a
@@ -2403,10 +2416,13 @@ export default {
     this._mLayout = mobileLayout(tagLines, trackLines)
     for (let y = 3; y < term.rows; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
     this.mobileDrawFrame(s)
-    // Widgets live in the zone that just got wiped -- redraw them at their
-    // new row immediately rather than waiting for the next VU tick.
+    // Widgets and the playback bar all live in the zone that just got
+    // wiped -- redraw them at their new rows immediately rather than
+    // waiting for the next VU/antenna tick (up to ~120ms away).
     this.drawVU(s)
     this.drawSignal(s)
+    this.drawAntenna(s, 0)
+    this.drawPlayback(s)
     return true
   },
 
@@ -2503,10 +2519,12 @@ export default {
   // it reads the same way the version did, just with the date/time in its
   // place. Same width every tick, so no blank-first needed.
   drawClock(s) {
-    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     const str = formatClock(new Date())
-    const x = 76 - str.length
+    // 2026-08-22: mobile gets its own right-aligned position on the same
+    // row (2 cols in from the edge) rather than desktop's fixed column 76,
+    // which is well past this grid's 42 columns.
+    const x = this.mobile ? term.cols - 2 - str.length : 76 - str.length
     for (let i = 0; i < str.length; i++) term.put(x + i, 0, str[i], DIM, 1)
   },
 
@@ -3748,7 +3766,7 @@ export default {
     if (this.mobile) {
       if (!this._mLayout) { this.updateTabTitle(); return }
       const L = this._mLayout
-      for (const y of [L.npTrack1, L.npTrack2, L.npArtist]) {
+      for (const y of [L.npTrack1, L.npTrack2, L.npArtist, L.npProgress]) {
         if (y == null) continue
         for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
       }
@@ -3814,19 +3832,24 @@ export default {
     this.playState = this.mode === 'locked' ? state : null
     this.drawPlayback(s)
   },
+  // BUG FIXED (29th pass, found verifying the hint-bar reflow): the YT
+  // player's onStateChange fires async, outside frame()'s own guideOpen
+  // bail, and used to draw straight through to PLAYBACK_Y (row 14)
+  // regardless -- which happens to be the same row the guide's CONTROLS
+  // block now uses for its first line, so a state change mid-guide (e.g.
+  // BUFFERING -> PLAYING right as you open it) punched "> PLAYING" over
+  // "[<-/->] SEEK...". `this.playState` above the guard in setPlayState()
+  // still gets updated while the guide is open, so nothing is lost --
+  // closeGuide() already calls setPlayState(s, this.playState) as its
+  // last step, which redraws this row correctly once the guide closes.
+  // 2026-08-22 (Matthew: "get a now playing bar with playback bar etc like
+  // we have in full version... make it work now that we don't have a tuner
+  // strip on mobile view") -- was flatly disabled on mobile before; now
+  // routes to mobileDrawPlayback for a condensed version inside the NOW
+  // PLAYING box's own extra row instead of desktop's fixed PLAYBACK_Y.
   drawPlayback(s) {
-    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
-    // BUG FIXED (29th pass, found verifying the hint-bar reflow): the YT
-    // player's onStateChange fires async, outside frame()'s own guideOpen
-    // bail, and used to draw straight through to PLAYBACK_Y (row 14)
-    // regardless -- which happens to be the same row the guide's CONTROLS
-    // block now uses for its first line, so a state change mid-guide (e.g.
-    // BUFFERING -> PLAYING right as you open it) punched "> PLAYING" over
-    // "[<-/->] SEEK...". `this.playState` above the guard in setPlayState()
-    // still gets updated while the guide is open, so nothing is lost --
-    // closeGuide() already calls setPlayState(s, this.playState) as its
-    // last step, which redraws this row correctly once the guide closes.
     if (this.guideOpen) return
+    if (this.mobile) { this.mobileDrawPlayback(s); return }
     const { term } = s
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, PLAYBACK_Y, ' ')
     if (this.mode !== 'locked') return
@@ -3857,6 +3880,39 @@ export default {
     const startX = centerX(term.cols, full)
     if (barPart) term.text(startX, PLAYBACK_Y, barPart, FAINT)
     if (labelPart) term.text(startX + barPart.length + sep.length, PLAYBACK_Y, labelPart, entry[1])
+  },
+  // 2026-08-22 -- condensed single-row version for the NOW PLAYING box's
+  // npProgress row: a leading state icon (desktop spells PLAYING/PAUSED/
+  // BUFFERING out in full, which doesn't fit here) then a shorter bar and
+  // "m:ss/m:ss" with no spaces around the slash. State reads through the
+  // icon and the row's attr (BRIGHT/MUTED/DIM) rather than a text label.
+  mobileDrawPlayback(s) {
+    if (!this._mLayout) return
+    const { term } = s
+    const y = this._mLayout.npProgress
+    for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+    if (this.mode !== 'locked') return
+    if (!this.ready || !this.player) return
+    let cur, dur
+    try { cur = this.player.getCurrentTime(); dur = this.player.getDuration() } catch (e) {}
+    if (!(dur && isFinite(dur) && dur > 0)) return
+    const fmt = (sec) => {
+      sec = Math.max(0, Math.floor(sec))
+      return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
+    }
+    // 16 segments, not desktop's 28 -- with the icon, brackets and a
+    // worst-case "12:34/45:67"-shaped time pair, this still needs to fit
+    // inside ~38 usable columns.
+    const segs = 16
+    const filled = Math.round(Math.min(1, cur / dur) * segs)
+    let bar = ''
+    for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '·'
+    const icons = { playing: '>', paused: '=', buffering: '.' }
+    const attrs = { playing: BRIGHT, paused: MUTED, buffering: DIM }
+    const icon = icons[this.playState] || ' '
+    const attr = attrs[this.playState] || FAINT
+    const full = `${icon} [${bar}] ${fmt(cur)}/${fmt(dur)}`
+    term.text(centerX(term.cols, full), y, full, attr)
   },
 
   // Scrolling waveform squiggle (11th pass -- Matthew wasn't digging the
@@ -4009,8 +4065,23 @@ export default {
     { row: 1, left: 1, right: 11 },
     { row: 2, left: 2, right: 10 },
   ],
+  // 2026-08-22 (Matthew: "add the fld changing number widget and a more
+  // obvious mute off/on") -- mobile has no antenna glyph/rings (there's no
+  // tuner strip to drive them, same reason there's no TUNING BAND box), but
+  // FLD still wants the locked/buffering/playing/paused state this function
+  // already derives, so mobile branches off with that same state string
+  // rather than recomputing it separately.
   drawAntenna(s, t) {
-    if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
+    if (this.mobile) {
+      const locked = this.mode === 'locked' && this.lockedStation
+      const state = !locked ? 'seeking'
+        : this.playState === 'buffering' ? 'buffering'
+        : this.playState === 'playing' ? 'playing'
+        : 'paused'
+      this.mobileDrawFieldReadout(s, state)
+      this.mobileDrawMuteSwitch(s)
+      return
+    }
     const { term } = s
     const rows = [VOL_Y, VOL_SIG_DIVIDER_Y, SIG_Y, VU_DIVIDER_Y, VU_Y]
     for (const y of rows) for (let x = METERS_DIVIDER_X + 1; x < BOX_X1; x++) term.put(x, y, ' ')
@@ -4127,6 +4198,42 @@ export default {
     const x0 = METERS_DIVIDER_X + 2
     const label = this.muted ? 'MUTE [ON ]' : 'MUTE [OFF]'
     term.text(x0, y, label, this.muted ? BRIGHT : FAINT)
+  },
+  // 2026-08-22 -- mobile's second widget row: FLD left of
+  // MWIDGET_DIVIDER_X, MUTE right of it, same split as VU/SIG on the row
+  // above. FLD's spring/target physics are a direct port of
+  // drawFieldReadout's (own this.fieldSample/fieldVelocity, shared with
+  // desktop -- there's only one receiver) since there's no shared antenna-
+  // pane geometry to hang a common helper off of here.
+  mobileDrawFieldReadout(s, state) {
+    if (!this._mLayout) return
+    const { term } = s
+    const y = this._mLayout.widgetRow2
+    for (let x = MBOX_X0 + 1; x < MWIDGET_DIVIDER_X; x++) term.put(x, y, ' ')
+    let label, attr
+    if (state === 'seeking') { label = 'FLD --'; attr = FAINT }
+    else if (state === 'buffering') { label = 'FLD ..'; attr = DIM }
+    else {
+      const target = state === 'playing' ? 0.55 + Math.random() * 0.4 : 0.5 + Math.random() * 0.06
+      const spring = 0.3, damping = 0.55
+      const accel = (target - this.fieldSample) * spring - this.fieldVelocity * damping
+      this.fieldVelocity += accel
+      this.fieldSample = Math.max(0, Math.min(1, this.fieldSample + this.fieldVelocity))
+      const val = String(Math.round(30 + this.fieldSample * 65)).padStart(2, '0')
+      label = `FLD ${val}`
+      attr = state === 'playing' ? DIM : FAINT
+    }
+    term.text(centerXRange(MBOX_X0 + 1, MWIDGET_DIVIDER_X - 1, label), y, label, attr)
+  },
+  // "more obvious mute off/on" (Matthew) -- direct port of drawMuteSwitch,
+  // just repositioned to the widget row's right half.
+  mobileDrawMuteSwitch(s) {
+    if (!this._mLayout) return
+    const { term } = s
+    const y = this._mLayout.widgetRow2
+    for (let x = MWIDGET_DIVIDER_X + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
+    const label = this.muted ? 'MUTE [ON ]' : 'MUTE [OFF]'
+    term.text(centerXRange(MWIDGET_DIVIDER_X + 1, MBOX_X1 - 1, label), y, label, this.muted ? BRIGHT : FAINT)
   },
 
   /** 39th pass -- signal-to-noise, in the last free block of the antenna
