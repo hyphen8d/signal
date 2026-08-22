@@ -22,7 +22,7 @@ import { SCREEN, PHOSPHORS } from './config.js'
 // Version tag (28th pass, Matthew: "add version in upper left after
 // SIGNAL") -- shown in the title bar right next to the SIGNAL wordmark,
 // e.g. "SIGNAL v0.7". Bump on future releases.
-const VERSION_TAG = 'v0.7'
+const VERSION_TAG = 'v0.8'
 
 // --- data -------------------------------------------------------------
 
@@ -178,6 +178,14 @@ const STATIONS = [
     static: 1900,
     crt: { noise: 0.19, bloomAmt: 1.75, flicker: 0.11 },
     meter: { spring: 0.55, damping: 0.42, swing: 1.1 },
+    // 46th pass -- FLAME: a living fire climbing the screen, replacing
+    // two prior concepts (FEEDBACK, then HOWL) that never landed. See the
+    // field notes above VISUAL_METHODS and drawFlameEffect.
+    visual: 'flame',
+    // v0.8: 3 tracks swapped out on Matthew's own request ("Lightning
+    // Crashes", "Dollar Bill", "No Rain" -- no specific reason given, just
+    // wanted variety) for Zombie/Possum Kingdom/Buddy Holly below, all
+    // oEmbed-verified same as everything else.
     tracks: [
       realTrack('hTWKbfoikeg', 'Smells Like Teen Spirit', 'Nirvana'),
       realTrack('3mbBbFH9fAg', 'Black Hole Sun', 'Soundgarden'),
@@ -192,7 +200,7 @@ const STATIONS = [
       // 27th pass: 5 more tracks (Matthew, "add 5 more tracks per station"),
       // oEmbed-verified same as everything else.
       realTrack('5WPbqYoz9HA', 'Machinehead', 'Bush'),
-      realTrack('xsJ4O-nSveg', 'Lightning Crashes', 'Live'),
+      realTrack('6Ejga4kJUts', 'Zombie', 'The Cranberries'),
       realTrack('28kAclQZLTE', "Pretend We're Dead", 'L7'),
       realTrack('q-KE9lvU810', 'Cherub Rock', 'The Smashing Pumpkins'),
       realTrack('PjsMnvqL7eY', 'Tomorrow', 'Silverchair'),
@@ -206,10 +214,10 @@ const STATIONS = [
       // expansion, oEmbed-verified same as everything else.
       realTrack('vabnZ9-ex7o', 'Come As You Are', 'Nirvana'),
       realTrack('EqWRaAF6_WY', 'My Hero', 'Foo Fighters'),
-      realTrack('1lfd7zeHRRs', 'Dollar Bill', 'Screaming Trees'),
+      realTrack('EkwD5rQ-_d4', 'Possum Kingdom', 'Toadies'),
       realTrack('RD9xK9smth4', 'Doll Parts', 'Hole'),
       realTrack('8KHwuOtcALQ', 'Freak', 'Silverchair'),
-      realTrack('3qVPNONdF58', 'No Rain', 'Blind Melon'),
+      realTrack('kemivUKb4f4', 'Buddy Holly', 'Weezer'),
       realTrack('Fm72DPJCX58', 'River of Deceit', 'Mad Season'),
       realTrack('fTqyUz_jSIo', 'Far Behind', 'Candlebox'),
       realTrack('YgSPaXgAdzE', 'Loser', 'Beck'),
@@ -326,6 +334,9 @@ const STATIONS = [
     static: 1300,
     crt: { bloomAmt: 1.65, chroma: 0.35, brightness: 1.22 },
     meter: { spring: 0.4, damping: 0.5, swing: 0.9 },
+    // 45th pass -- PULSE: a fixed neon lattice pulsing on a synthetic
+    // "lub-dub" heart rhythm, the tagline's "synthetic hearts" made literal.
+    visual: 'pulse',
     tracks: [
       realTrack('9GMjH1nR0ds', 'Blue Monday \'88', 'New Order'),
       realTrack('1ASpBpT8bRQ', 'Just Like Heaven', 'The Cure'),
@@ -390,6 +401,10 @@ const STATIONS = [
     static: 1050,
     crt: { noise: 0.1, bloomAmt: 1.3, flicker: 0.05 },
     meter: { spring: 0.3, damping: 0.6, swing: 0.75 },
+    // 45th pass -- STACK: calm rising bar columns, deliberately the
+    // quietest visual on the roster to match this station's own least-
+    // noisy CRT signature.
+    visual: 'stack',
     tracks: [
       realTrack('XnFOucmKlXA', 'Aruarian Dance', 'Nujabes'),
       realTrack('InFbBlpDTfQ', 'Midnight In A Perfect World', 'DJ Shadow'),
@@ -454,6 +469,9 @@ const STATIONS = [
     static: 1450,
     crt: { bloomAmt: 1.8, brightness: 1.38 },
     meter: { spring: 0.45, damping: 0.48, swing: 0.95 },
+    // 45th pass -- RIPPLE: rain rings on a Tokyo night, Matthew's own
+    // pitch for this station.
+    visual: 'ripple',
     tracks: [
       realTrack('5zTkTlj2h9E', 'Stay With Me', 'Miki Matsubara'),
       realTrack('tWqZASIxlqs', 'Sparkle', 'Tatsuro Yamashita'),
@@ -521,6 +539,9 @@ const STATIONS = [
     static: 1750,
     crt: { chroma: 0.5, maskAmt: 0.8, bloomAmt: 1.72 },
     meter: { spring: 0.55, damping: 0.42, swing: 1.05 },
+    // 44th pass -- OUTRUN: perspective grid + horizon-sliced sun, the
+    // genre's own signature image ("the long drive home").
+    visual: 'outrun',
     tracks: [
       realTrack('ZVS6Q_lbKQ0', 'Nightcall', 'Kavinsky'),
       realTrack('URma_gu1aNE', 'Sunset', 'The Midnight'),
@@ -593,6 +614,14 @@ const STATIONS = [
     static: 900,
     crt: { noise: 0.17, flicker: 0.1, decay: 0.7, brightness: 1.2, maskAmt: 0.55 },
     meter: { spring: 0.5, damping: 0.45, swing: 0.85 },
+    // 45th pass -- originally sparse Geiger clicks/hot-zone bursts (the
+    // tagline's own "counter clicks" made literal). Redesigned in the 47th
+    // pass into drifting blocky pixel clouds per live QA; dispatch key
+    // ('counter'/drawCounterEffect) kept as-is, only the visual changed.
+    visual: 'counter',
+    // v0.8: "Wheel of Fortune" (Kay Starr) swapped out for "Sixty Minute
+    // Man" below -- genuinely Fallout-radio-tied (Diamond City Radio),
+    // same concept-tied discipline as the rest of this roster.
     tracks: [
       realTrack('GkHd1d_UVOE', "I Don't Want to Set the World on Fire", 'The Ink Spots'),
       realTrack('Q9bSOaSuScQ', 'Crawl Out Through the Fallout', 'Sheldon Allman'),
@@ -625,7 +654,7 @@ const STATIONS = [
       realTrack('wf4nY0mLrrA', 'Boogie Woogie Bugle Boy', 'The Andrews Sisters'),
       realTrack('MiFSYJjvgwc', 'Shake, Rattle and Roll', 'Big Joe Turner'),
       realTrack('iYhNtOgwUho', 'All She Wants to Do Is Rock', 'Wynonie Harris'),
-      realTrack('b3iamUsIsic', 'Wheel of Fortune', 'Kay Starr'),
+      realTrack('pJbDHw_qsFs', 'Sixty Minute Man', 'Billy Ward and His Dominoes'),
       // 33rd pass: brought to 25 tracks per Matthew's second roster-wide
       // expansion -- same concept-tied discipline as above: each confirmed
       // as a real, well-attested atomic-age/period recording, oEmbed-
@@ -667,6 +696,13 @@ const STATIONS = [
     static: 1150,
     crt: { noise: 0.15, bloomAmt: 1.5, scanMax: 0.75 },
     meter: { spring: 0.42, damping: 0.5, swing: 0.95 },
+    // 45th pass -- BOOM BAP: a 16-step MPC sequencer under heavy drifting
+    // scanline bands, matching this station's own thicker-scanlines CRT
+    // trait, name taken straight from this station's own desc field.
+    visual: 'boombap',
+    // v0.8: "California Love" swapped to the Short Radio Edit upload below
+    // -- Matthew flagged the previous ID as the full-length version with
+    // the spoken intro; this cut starts straight into the song.
     tracks: [
       realTrack('D-uV8TGjaGU', 'Can I Kick It?', 'A Tribe Called Quest'),
       realTrack('P800UWoE9xs', 'Award Tour', 'A Tribe Called Quest'),
@@ -699,16 +735,23 @@ const STATIONS = [
       realTrack('EuJaStSL0xM', 'Definition', 'Black Star'),
       realTrack('fXJc2NYwHjw', "93 'til Infinity", 'Souls of Mischief'),
       realTrack('RijB8wnJCN0', 'Insane in the Brain', 'Cypress Hill'),
-      realTrack('N0VdRLdg2ng', 'California Love', '2Pac feat. Dr. Dre & Roger Troutman'),
+      realTrack('5kZFGo5r82o', 'California Love (Short Radio Edit)', '2Pac feat. Dr. Dre & Roger Troutman'),
       realTrack('cKu3_3mp1U8', 'Let Me Ride', 'Dr. Dre'),
       realTrack('OYbakN42pvA', 'Gin and Juice', 'Snoop Doggy Dogg'),
     ] },
-  { id: 'cipher', freq: 219.8, callsign: 'CIPHER', tagline: 'digital infiltration, breakbeat noir',
+  { id: 'cipher', freq: 133.7, callsign: 'CIPHER', tagline: 'digital infiltration, breakbeat noir',
     // 28th pass (2026-08-21): New cyberpunk station, hacker movies/synthwave
     // aesthetic (locked-in name/tagline per Matthew's naming pass). Placed
     // at 219.8, the frequency freed by RELIC SIGNAL's retirement (see the
     // retirement comment above DRIFT MODE) -- keeps the roster at 9
     // stations total rather than growing to 10.
+    // 48th pass (2026-08-22, v0.8): moved 219.8 -> 133.7 -- a "1337" nod
+    // that fits CIPHER's own hacker theme -- which drops it under
+    // DISTORTION FIELD's 137.4 and swaps their preset order: CIPHER is now
+    // key `1`, DISTORTION FIELD key `2` (Matthew: "swapping stations 1 and
+    // 2 and making station 1 be 133.7"). DISTORTION FIELD's own freq is
+    // untouched; STATION_PRESET_ORDER is freq-sorted, so this one change
+    // is the entire swap.
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: 'Big beat and breakbeat electronica for late-night infiltration runs -- Chemical Brothers, Prodigy, and Massive Attack alongside everything that soundtracked a decade of hacker movies.',
     // Ident is a bouncy up-down-up-down (U D U D) breakbeat style.
@@ -742,6 +785,12 @@ const STATIONS = [
     static: 1600,
     crt: { chroma: 0.45, maskAmt: 0.78, bloomAmt: 1.6 },
     meter: { spring: 0.6, damping: 0.4, swing: 1.05 },
+    // 44th pass -- BREACH: falling hex noise with fragments that resolve
+    // out of the scramble, this station's own glyph seeded into the noise.
+    visual: 'breach',
+    // v0.8: "Come On My Selector" (Squarepusher) swapped out for
+    // "Windowlicker" (Aphex Twin) below, oEmbed-verified off the artist's
+    // own YouTube channel.
     tracks: [
       realTrack('wmin5WkOuPw', 'Firestarter', 'The Prodigy'),
       realTrack('xW17jtkjvvg', 'Smack My Bitch Up', 'The Prodigy'),
@@ -768,7 +817,7 @@ const STATIONS = [
       realTrack('A2zKARkpDW4', 'Dayvan Cowboy', 'Boards of Canada'),
       realTrack('JATZS5_Qi80', 'Journeyman', 'Amon Tobin'),
       realTrack('NB3MyO_RfpY', 'Bloodstone', 'Amon Tobin'),
-      realTrack('MWCSw_cNxKc', 'Come On My Selector', 'Squarepusher'),
+      realTrack('5ZT3gTu4Sjw', 'Windowlicker', 'Aphex Twin'),
       realTrack('ev3vENli7wQ', 'Gantz Graf', 'Autechre'),
       // 35th pass: replacements for the two pulled Daft Punk tracks.
       // "Clubbed to Death" is the lobby-shootout/subway cue from The Matrix
@@ -834,6 +883,10 @@ const SECRET_STATION = {
   static: 2000,
   crt: { noise: 0.2, flicker: 0.12, bloomAmt: 1.6, brightness: 1.4 },
   meter: { spring: 0.62, damping: 0.38, swing: 1.15 },
+  // 45th pass -- DREAD: a flickering panel grid with full-row tears, the
+  // most hostile visual on the roster, fitting for the one station that
+  // isn't supposed to be found.
+  visual: 'dread',
   tracks: [
     realTrack('nOVW938sr0k', 'Head Like a Hole', 'Nine Inch Nails'),
     realTrack('eQy0MSchVnM', 'Terrible Lie', 'Nine Inch Nails'),
@@ -2005,6 +2058,14 @@ function flashFocusSnap(s) {
 // SCOPE (see the original screensaver mockup artifact) are other candidate
 // directions for stations further down the roster.
 const DRIFT_RAMP = ' .:-=+*#%@'
+// Cheap deterministic 2D hash (47th pass, OUTRUN roadside terrain) -- no
+// state, just a pseudo-random 0..1 value from two integers, so ground
+// texture can be recomputed every frame from (column, scroll-row) without
+// keeping its own buffer.
+function hash2(a, b) {
+  const v = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453
+  return v - Math.floor(v)
+}
 
 /** Maps a 0..1 density value to term.js's discrete beam-intensity tiers. */
 function visualizerLevelAttr(v) {
@@ -2015,10 +2076,93 @@ function visualizerLevelAttr(v) {
   return BRIGHT
 }
 
+// FLAME (46th pass, DISTORTION FIELD) -- replaces HOWL outright (which had
+// itself replaced the original FEEDBACK concept). Live QA: "fire 'flame'
+// living thing." Classic bottom-up fire propagation -- a heat value per
+// cell (this._fireHeat, sized term.cols x HINT_Y1, seeded in init()),
+// reseeded hot and flickering at the floor every frame, cooling and
+// drifting sideways at random as it rises. Genuinely alive: no fixed
+// cycle, no two frames identical, unlike every prior concept tried here.
+
 // station.visual -> the drawing method it dispatches to. Falls back to
 // 'drift' for any station with no visual field, or one that doesn't match
 // a built entry here yet.
-const VISUAL_METHODS = { drift: 'drawDriftEffect' }
+const VISUAL_METHODS = {
+  drift: 'drawDriftEffect',
+  flame: 'drawFlameEffect',
+  breach: 'drawBreachEffect',
+  outrun: 'drawOutrunEffect',
+  ripple: 'drawRippleEffect',
+  counter: 'drawCounterEffect',
+  stack: 'drawStackEffect',
+  boombap: 'drawBoomBapEffect',
+  dread: 'drawDreadEffect',
+  pulse: 'drawPulseEffect',
+}
+const BREACH_HEX = '0123456789ABCDEF'
+// A resolved fragment briefly holds legible mid-column before dissolving
+// back to noise -- CIPHER's own glyph mixed in alongside plausible hacker-
+// movie debris, not a generic word list.
+const BREACH_WORDS = ['0xFF', 'ROOT', '9F3A', 'ADMIN', 'ACK', 'SYN', '404', 'AUTH', '╬╬╬']
+
+// RIPPLE (45th pass, CITY LIGHTS) -- rain rings on a Tokyo night, ring
+// bands expanding from fixed drop points, respawning on a stagger once
+// each fully fades.
+// 45th pass: slots bumped 7 -> 11 (live QA: "don't understand or see much
+// on ... 6" -- too few drops meant long stretches with nothing happening).
+const RIPPLE_SLOTS = 11
+const RIPPLE_MAXAGE = 3.2
+const RIPPLE_SPEED = 3.6
+
+// BOOM BAP (45th pass, HACKBACK) -- MPC-style 16-step sequencer at this
+// genre's own tempo lane.
+const BOOMBAP_STEPS = 16
+const BOOMBAP_PATTERN = [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0]
+const BOOMBAP_BPM = 92
+
+// PULSE (45th pass, COLD WAVE) -- "synthetic hearts, borrowed neon" made
+// literal: a fixed lattice of neon nodes, not a smooth organic field like
+// DRIFT or RIPPLE. Square (Chebyshev) rings expand outward from center,
+// continuously, and their overall brightness is gated by a synthetic
+// two-beat "lub-dub" heart rhythm rather than a steady glow -- cold and
+// mechanical instead of ambient, which is what keeps it distinct from
+// RIPPLE's organic circular rain.
+// 47th pass: cycle shortened 1.9 -> 1.4 and each beat widened 0.16 -> 0.22
+// (live QA: "larger pulses ... happen a little quicker").
+const PULSE_CYCLE = 1.4
+function pulseBeatEnvelope(tc) {
+  const lub = Math.max(0, 1 - Math.abs(tc - 0.0) / 0.22)
+  const dub = Math.max(0, 1 - Math.abs(tc - 0.24) / 0.22)
+  return Math.max(lub, dub * 0.75)
+}
+// 46th pass -- live QA on PULSE: "closer... but need less unused space,"
+// and separately "5 could look better too." The lattice-plus-small-core
+// from the 45th pass was still reading thin. This adds a full-width
+// scrolling EKG-style trace across the middle band -- an actual
+// recognizable heart-monitor waveform (P bump, sharp QRS spike, T bump,
+// flat rest) instead of an abstract pulsing block -- the single most
+// literal way to draw "synthetic hearts" this roster has. u is phase
+// (0..1) through one PULSE_BEAT_COLS-wide beat.
+const PULSE_BEAT_COLS = 22
+function pulseEkgOffset(u) {
+  if (u < 0.08) return 0.05 * Math.sin((u / 0.08) * Math.PI)
+  if (u < 0.12) return 0
+  if (u < 0.14) return -0.15 * ((u - 0.12) / 0.02)
+  if (u < 0.16) return -0.15 + 1.15 * ((u - 0.14) / 0.02)
+  if (u < 0.18) return 1.0 - 1.3 * ((u - 0.16) / 0.02)
+  if (u < 0.2) return -0.3 + 0.3 * ((u - 0.18) / 0.02)
+  if (u < 0.35) return 0.15 * Math.sin(((u - 0.2) / 0.15) * Math.PI)
+  return 0
+}
+
+// DREAD (45th pass, the secret station) -- a coarse panel grid flickering
+// erratically with occasional full-row tears, more hostile than anything
+// else on the roster on purpose. Grid dims kept inside 80 cols with margin
+// (14 * 5 = 70, +6 left inset = 76).
+const DREAD_CELLS_X = 14
+const DREAD_CELLS_Y = 5
+const DREAD_CELL_W = 5
+const DREAD_CELL_H = 4
 
 // --- program ---------------------------------------------------------------
 
@@ -2284,6 +2428,88 @@ export default {
     // into it before anyone's had a chance to touch anything.
     this.visualizerActive = false
     this._lastInputAt = Date.now()
+    // Per-effect state for the visualizer roster (44th pass) -- kept here
+    // rather than reset on entry, same as vuTrace etc. below: cheap, and
+    // there's no reason a column's scroll phase or a glitch beat needs to
+    // snap back to a fixed start every time [V] is pressed.
+    this._breachCols = Array.from({ length: term.cols }, () => ({
+      speed: 6 + Math.random() * 10,
+      phase: Math.random() * 100,
+      resolveAt: 5 + Math.random() * 12,
+      word: null,
+      wordRow: 0,
+      wordUntil: 0,
+    }))
+    // OUTRUN's sky-field stars (45th pass) -- fixed positions/phases so the
+    // sky doesn't reshuffle every frame, same reasoning as _breachCols above.
+    // 45th pass: bumped from 26 to 46 (live QA: "too much white space") --
+    // the sky above the sun was still reading as dead space at the lower
+    // count.
+    this._outrunStars = Array.from({ length: 46 }, () => ({
+      x: Math.random() * term.cols,
+      y: 1 + Math.random() * 6,
+      phase: Math.random() * 10,
+      speed: 0.5 + Math.random() * 0.8,
+    }))
+    // OUTRUN's birds (48th pass) -- live QA: "add some clouds on either
+    // side of the sun or something that looks like seagulls/birds." A
+    // handful of simple caret-glyph birds gliding across the upper sky,
+    // alternating ^/v as a wingbeat, drifting slowly right and wrapping.
+    this._outrunBirds = Array.from({ length: 6 }, () => ({
+      x: Math.random() * term.cols,
+      y: 1 + Math.random() * 4,
+      speed: 0.6 + Math.random() * 1.0,
+      flapPhase: Math.random() * 10,
+      bobPhase: Math.random() * 10,
+    }))
+    // RIPPLE's rain-ring slots (45th pass, CITY LIGHTS) -- fixed drop
+    // points, each respawning on a stagger once it's fully faded.
+    this._ripples = Array.from({ length: RIPPLE_SLOTS }, () => ({
+      x: Math.random() * term.cols,
+      y: 1 + Math.random() * 21,
+      startT: -Math.random() * RIPPLE_MAXAGE,
+    }))
+    // ATOMIC's clouds (47th pass, full redesign of the old COUNTER/Geiger
+    // concept -- live QA asked to try clouds drifting along instead, with
+    // a reference image of blocky, two-tone pixel clouds: a stepped
+    // staircase ribbon, thicker and brighter at one end, trailing off
+    // thinner. makeCloudShape() below builds that shape once per cloud;
+    // drawCounterEffect() just slides it sideways.
+    this._clouds = Array.from({ length: 6 }, () => ({
+      shape: this.makeCloudShape(),
+      y: 7 + Math.floor(Math.random() * 14),
+      baseX: Math.random() * term.cols,
+      speed: 1.2 + Math.random() * 1.8,
+    }))
+    // STACK's building-block bars (45th pass, MOMENTUM; reworked later the
+    // same pass -- live QA: "bars need to be across the whole screen and
+    // should animate up and down randomly like data ... they didn't
+    // move"). 19 columns spanning the full width instead of 9 clustered in
+    // the middle, each on a much shorter reroll/rise timer plus its own
+    // jitter phase so movement reads as live-analytics noise rather than a
+    // slow calm build.
+    this._stackBars = Array.from({ length: 19 }, () => ({
+      level: Math.random(),
+      target: Math.random(),
+      speed: 0.15 + Math.random() * 0.15,
+      holdUntil: 0,
+      jitterPhase: Math.random() * 10,
+    }))
+    // DREAD's panel grid (45th pass, the secret station).
+    this._dreadGrid = Array.from({ length: DREAD_CELLS_X * DREAD_CELLS_Y }, () => Math.random() < 0.5)
+    this._dreadTear = { active: false, row: 0, until: 0 }
+    // BOOM BAP's speaker/sound-wave state (45th pass redesign, HACKBACK).
+    this._boomWaves = []
+    this._boomLastStep = -1
+    // BOOM BAP's EQ readout bars (47th pass) -- a small VU-style row across
+    // the cabinet's top, re-targeted every step so it reads as reacting to
+    // the beat. 22 bars to match the wider 47th-pass cabinet interior.
+    this._boomEq = Array.from({ length: 22 }, () => ({ level: 0, target: 0 }))
+    // FLAME's heat buffer (46th pass, DISTORTION FIELD) -- one float per
+    // cell across the visualizer's full row range (0..HINT_Y1-1; row 0 is
+    // unused since the effect never draws above row 1).
+    this._fireHeat = new Array(term.cols * HINT_Y1).fill(0)
+    this._fireLastStep = 0
 
     // Scrolling-waveform VU state (11th pass -- see drawVU()).
     this.lastProgressDraw = 0
@@ -4487,6 +4713,570 @@ export default {
         const ch = DRIFT_RAMP[idx]
         term.put(x, y, ch, visualizerLevelAttr(v))
       }
+    }
+  },
+  // FLAME effect (46th pass) -- for DISTORTION FIELD, replacing HOWL
+  // outright (which had itself replaced FEEDBACK -- see the field notes
+  // above VISUAL_METHODS). Live QA: "fire 'flame' living thing." Classic
+  // bottom-up fire propagation: the floor row is reseeded hot (with
+  // occasional dark gaps for flicker) every frame, and every row above
+  // pulls its heat from a randomly-offset cell one row below, cooling by a
+  // random amount as it rises -- the sideways randomness is what makes it
+  // drift and lick rather than rise in straight columns, and the random
+  // cooling is what gives it a natural tapering silhouette (dense near the
+  // floor, sparse embers near the top) with zero fixed cycle -- no two
+  // frames are ever the same, unlike anything else on the roster.
+  drawFlameEffect(s, t) {
+    const { term } = s
+    const cols = term.cols
+    const floorY = HINT_Y1 - 1
+    const heat = this._fireHeat
+    // 47th pass: live QA said "too fast, make more organic." At 60fps the
+    // whole buffer recomputed fresh every render frame read as a flicker
+    // rather than a living flame. Two fixes: step the physics on its own
+    // slower clock independent of render rate, and ease the floor's reseed
+    // toward its new target instead of snapping to it -- together that
+    // turns the jitter into a slow, licking billow.
+    // 48th pass: a follow-up "slow down a bit more" also dropped the
+    // per-row cooling range (0.02-0.045 -> 0.015-0.035), which was a real
+    // bug, not just a tuning choice -- with cooling that low, heat barely
+    // decayed over the ~21-row climb from floor to top, so the whole
+    // column stayed lit almost every frame instead of tapering. That's
+    // what read as "hung" on dev: not frozen, just permanently
+    // full-screen and never resolving into a flame shape. Cooling is
+    // restored to the 47th-pass range here; only the step clock (now
+    // 0.13, slower than 47th pass's 0.07) carries the further slowdown.
+    if (t - this._fireLastStep >= 0.13) {
+      this._fireLastStep = t
+      for (let x = 0; x < cols; x++) {
+        const target = Math.random() < 0.12 ? Math.random() * 0.3 : 0.75 + Math.random() * 0.25
+        const prev = heat[floorY * cols + x]
+        heat[floorY * cols + x] = prev * 0.6 + target * 0.4
+      }
+      for (let y = floorY - 1; y >= 1; y--) {
+        for (let x = 0; x < cols; x++) {
+          const drift = Math.floor(Math.random() * 3) - 1
+          const srcX = Math.max(0, Math.min(cols - 1, x + drift))
+          const below = heat[(y + 1) * cols + srcX]
+          const cooling = 0.02 + Math.random() * 0.045
+          heat[y * cols + x] = Math.max(0, below - cooling)
+        }
+      }
+    }
+    for (let y = 1; y <= floorY; y++) {
+      for (let x = 0; x < cols; x++) {
+        const v = heat[y * cols + x]
+        if (v < 0.06) { term.put(x, y, ' '); continue }
+        const idx = Math.min(DRIFT_RAMP.length - 1, Math.floor(v * DRIFT_RAMP.length))
+        term.put(x, y, DRIFT_RAMP[idx], visualizerLevelAttr(v))
+      }
+    }
+  },
+  // BREACH effect (44th pass) -- for CIPHER. Vertical hex-noise columns
+  // scrolling down through the real beam-intensity tiers (bright head,
+  // fading tail), CIPHER's own glyph seeded into the noise. What keeps this
+  // from being a stock Matrix rain: a short span in a column occasionally
+  // RESOLVES -- holds a legible fragment for a beat, then dissolves back to
+  // noise -- the same settle-out-of-scrambled-glyphs idea resolveText()
+  // already uses for callsigns and track titles, borrowed back for the
+  // canvas. Columns run at irregular, independent speeds (CIPHER's own
+  // field notes: "meters twitch") rather than one uniform waterfall.
+  drawBreachEffect(s, t) {
+    const { term } = s
+    for (let x = 0; x < term.cols; x++) {
+      const col = this._breachCols[x]
+      if (t > col.resolveAt && !col.word) {
+        col.word = BREACH_WORDS[Math.floor(Math.random() * BREACH_WORDS.length)]
+        col.wordRow = 2 + Math.floor(Math.random() * 18)
+        col.wordUntil = t + 0.5 + Math.random() * 0.4
+        col.resolveAt = t + 3 + Math.random() * 6
+      }
+      if (col.word && t > col.wordUntil) col.word = null
+      const headY = ((t * col.speed + col.phase) % 30) - 4
+      for (let y = 1; y < HINT_Y1; y++) {
+        const dist = headY - y
+        if (dist < 0 || dist > 14) { term.put(x, y, ' '); continue }
+        const alpha = Math.max(0, 1 - dist / 14)
+        const ch = BREACH_HEX[Math.floor((x * 7 + y * 3 + t * 20) % BREACH_HEX.length)]
+        term.put(x, y, ch, visualizerLevelAttr(alpha))
+      }
+      if (col.word) {
+        for (let wi = 0; wi < col.word.length; wi++) {
+          const wx = x + wi
+          if (wx < term.cols) term.put(wx, col.wordRow, col.word[wi], BRIGHT)
+        }
+      }
+    }
+  },
+  // OUTRUN effect (44th pass, fidelity pass in the 45th) -- for CIRCUIT
+  // CRUSH, which already carries the heaviest bloom on the roster and a
+  // tagline that names the shot directly ("the long drive home"). The
+  // genre's own signature image: a perspective grid receding to a
+  // vanishing point, rungs sliding toward the viewer, a horizon-sliced
+  // sun. Slowest, most hypnotic motion of the roster on purpose -- the
+  // tagline is about a drive that never quite ends, not a rush.
+  //
+  // The 44th-pass concept was right but flat: the sun was one uniform
+  // character everywhere it was lit, and the grid rungs/rails were a
+  // strict on/off with no gradient -- read as a stencil, not a glow. This
+  // pass keeps the exact same skeleton and only adds depth: the sun shades
+  // radially through the beam tiers instead of one flat '▓', its slice-
+  // gaps widen toward the bottom the way the genre's own sunset actually
+  // renders, the horizon gets a dim glow row bleeding above the bright
+  // line instead of a hard cut, the grid's rungs and rails brighten/
+  // thicken with proximity to the viewer instead of one uniform gray, and
+  // a scatter of near-static stars (this._outrunStars, seeded in init())
+  // fills what was dead space above the horizon.
+  drawOutrunEffect(s, t) {
+    const { term } = s
+    const cx = term.cols / 2
+    const horizonY = 8
+    // 46th pass: sun radius 6.5 -> 7.5 (live QA: "closer... but I think
+    // need less unused space, make elements larger").
+    const sunR = 7.5
+    // Sky: sparse near-static stars above the sun.
+    for (let y = 1; y < horizonY - 1; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
+    for (const star of this._outrunStars) {
+      if (star.y >= horizonY - 1) continue
+      const tw = 0.15 + 0.12 * Math.sin(t * star.speed + star.phase)
+      term.put(Math.round(star.x), Math.round(star.y), '.', visualizerLevelAttr(Math.max(0.05, tw)))
+    }
+    // Birds (48th pass) -- gliding silhouettes crossing the sky on either
+    // side of the sun, filling what was otherwise dead space up there.
+    for (const bird of this._outrunBirds) {
+      const bx = ((bird.x + t * bird.speed) % term.cols + term.cols) % term.cols
+      const by = Math.round(bird.y + Math.sin(t * 0.6 + bird.bobPhase) * 0.6)
+      if (by < 1 || by >= horizonY - 1) continue
+      const flap = Math.sin(t * 6 + bird.flapPhase) > 0
+      term.put(Math.round(bx), by, flap ? '^' : 'v', MUTED)
+    }
+    // Sun: radial shading (dense core -> thin rim), slice-gaps widening
+    // toward the bottom.
+    const pulse = 0.75 + 0.25 * Math.sin(t * 0.5)
+    for (let y = Math.ceil(horizonY - sunR); y < horizonY; y++) {
+      const dy = horizonY - y
+      if (dy > sunR) { for (let x = 0; x < term.cols; x++) term.put(x, y, ' '); continue }
+      const halfW = Math.sqrt(Math.max(0, sunR * sunR - dy * dy))
+      const fromBottom = sunR - dy
+      const gapPeriod = 2 + Math.floor(fromBottom / 1.6)
+      const sliceBand = fromBottom < sunR * 0.65 && Math.floor(fromBottom) % gapPeriod === 0
+      const lo = Math.round(cx - halfW), hi = Math.round(cx + halfW)
+      for (let x = 0; x < term.cols; x++) {
+        if (sliceBand || x < lo || x > hi) { term.put(x, y, ' '); continue }
+        const edgeFrac = halfW > 0 ? Math.abs(x - cx) / halfW : 0
+        const shade = Math.min(1, (1 - edgeFrac * 0.65) * pulse)
+        const ch = shade > 0.78 ? '█' : shade > 0.55 ? '▓' : shade > 0.32 ? '▒' : '░'
+        term.put(x, y, ch, visualizerLevelAttr(shade))
+      }
+    }
+    // Horizon: two dim glow rows bleeding above a bright line -- 46th
+    // pass, thickened for the same "make elements larger" note.
+    for (let x = 0; x < term.cols; x++) {
+      term.put(x, horizonY - 2, '‾', FAINT)
+      term.put(x, horizonY - 1, '‾', DIM)
+      term.put(x, horizonY, '=', BRIGHT)
+    }
+    // Grid: rungs/rails brighten and thicken with proximity to the viewer.
+    // Coefficient tuned twice now for "too much white space" -- 0.09
+    // originally, 0.2 in the 45th pass, 0.28 here in the 46th so the grid
+    // reaches full width well before the bottom row instead of just
+    // grazing it, leaving more of the lower screen genuinely filled.
+    for (let y = horizonY + 1; y < HINT_Y1; y++) {
+      const depth = y - horizonY
+      const spread = Math.min(cx - 1, depth * depth * 0.28)
+      const lo = Math.round(cx - spread), hi = Math.round(cx + spread)
+      const proximity = Math.min(1, depth / 14)
+      const rails = new Map()
+      for (let r = -3; r <= 3; r++) {
+        const railX = Math.round(cx + r * depth * 1.7)
+        if (railX >= 0 && railX < term.cols) rails.set(railX, r === 0 ? '|' : (r < 0 ? '\\' : '/'))
+      }
+      const railAttr = visualizerLevelAttr(Math.max(0.2, 0.35 + proximity * 0.35))
+      const rungPos = (depth + t * 0.6 * 8) % 6
+      const showRung = rungPos < 1
+      const rungAttr = visualizerLevelAttr(Math.max(0.15, 0.5 + proximity * 0.5))
+      const rungCh = proximity > 0.6 ? '=' : '-'
+      // Roadside terrain -- 47th pass, live QA: "build out the land/grass
+      // on either side of the road ... less empty space." Scrolls toward
+      // the viewer at the same rate as the rungs so it reads as ground
+      // rushing past rather than a static hatch fill; density and
+      // brightness both grow with proximity so the nearest ground is the
+      // most filled-in, matching the grid itself.
+      const scrollRow = Math.floor(y + t * 0.6 * 8 * 0.5)
+      const grassDensity = 0.22 + proximity * 0.4
+      const grassAttr = visualizerLevelAttr(Math.max(0.15, 0.2 + proximity * 0.45))
+      for (let x = 0; x < term.cols; x++) {
+        if (showRung && x >= lo && x <= hi) { term.put(x, y, rungCh, rungAttr); continue }
+        if (rails.has(x)) { term.put(x, y, rails.get(x), railAttr); continue }
+        if (x >= lo && x <= hi) { term.put(x, y, ' '); continue }
+        const n = hash2(x, scrollRow)
+        if (n > 1 - grassDensity) {
+          const ch = n > 1 - grassDensity * 0.15 ? '"' : n > 1 - grassDensity * 0.4 ? "'" : n > 1 - grassDensity * 0.7 ? ',' : '.'
+          term.put(x, y, ch, grassAttr)
+        } else {
+          term.put(x, y, ' ')
+        }
+      }
+    }
+  },
+  // RIPPLE effect (45th pass) -- for CITY LIGHTS. Raindrops on a Tokyo
+  // night: a handful of fixed drop points, each expanding a ring band
+  // outward and fading over RIPPLE_MAXAGE seconds before respawning
+  // elsewhere on a stagger, over a faint constant neon shimmer so the
+  // frame never reads as fully empty between drops.
+  drawRippleEffect(s, t) {
+    const { term } = s
+    for (const r of this._ripples) {
+      if (t - r.startT > RIPPLE_MAXAGE) {
+        r.x = Math.random() * term.cols
+        r.y = 1 + Math.random() * 21
+        r.startT = t + Math.random() * 0.6
+      }
+    }
+    for (let y = 1; y < HINT_Y1; y++) {
+      for (let x = 0; x < term.cols; x++) {
+        let v = 0
+        for (const r of this._ripples) {
+          const age = t - r.startT
+          if (age < 0 || age > RIPPLE_MAXAGE) continue
+          const dx = x - r.x, dy = (y - r.y) * 2.0
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          const radius = age * RIPPLE_SPEED
+          const ringDist = Math.abs(dist - radius)
+          if (ringDist < 2.2) v = Math.max(v, (1 - ringDist / 2.2) * (1 - age / RIPPLE_MAXAGE))
+        }
+        // 45th pass: neon floor and ring width both boosted -- live QA
+        // found the effect nearly invisible at the old 0.05-0.09 range,
+        // which mostly rendered FAINT/DIM and washed out under CITY
+        // LIGHTS' own bloomAmt 1.8, the heaviest on the roster.
+        const neon = 0.12 + 0.07 * Math.sin(x * 0.5 + t * 0.8 + y * 0.2)
+        v = Math.max(v * 0.95, neon)
+        if (v < 0.06) { term.put(x, y, ' '); continue }
+        const ch = v > 0.75 ? 'O' : v > 0.5 ? 'o' : v > 0.28 ? ':' : v > 0.12 ? '.' : '·'
+        term.put(x, y, ch, visualizerLevelAttr(Math.min(1, v)))
+      }
+    }
+  },
+  // Builds one blocky, two-tone cloud silhouette for ATOMIC's CLOUDS
+  // effect. 47th pass tried a hand-authored staircase ribbon; live QA
+  // asked for another pass, suggesting procedural. This 48th-pass version
+  // is a real metaball union: 4-7 overlapping circular "puffs" of varying
+  // radius baked into a fixed pixel mask, which is what actually produces
+  // the rounded, lumpy cumulus silhouette the reference image has (a
+  // staircase can only ever look like a ribbon, not a cloud). Shading
+  // reads as light on top, darker along the underside and any cell close
+  // to an edge, for a little volume. Built once at spawn and reused every
+  // frame; only the cloud's x position moves.
+  makeCloudShape() {
+    const puffCount = 4 + Math.floor(Math.random() * 4)
+    const puffs = []
+    let cursor = 0
+    for (let i = 0; i < puffCount; i++) {
+      const r = 1.8 + Math.random() * 2.4
+      cursor += r * (0.55 + Math.random() * 0.35)
+      puffs.push({ cx: cursor, cy: (Math.random() - 0.5) * 2.2, r })
+      cursor += r * 0.5
+    }
+    const w = Math.ceil(cursor + 4)
+    const h = 7
+    const cells = []
+    for (let ry = 0; ry < h; ry++) {
+      const py = ry - h / 2
+      for (let rx = 0; rx < w; rx++) {
+        let minEdge = Infinity
+        for (const p of puffs) {
+          const dx = rx - p.cx, dy = (py - p.cy) * 1.7
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < p.r) minEdge = Math.min(minEdge, p.r - dist)
+        }
+        if (minEdge === Infinity) continue
+        const shade = (py > 0.3 || minEdge < 0.9) ? 'dark' : 'light'
+        cells.push({ dx: rx, dy: ry - Math.round(h / 2), shade })
+      }
+    }
+    return { cells, w }
+  },
+  // CLOUDS effect (47th pass, full redesign of ATOMIC's old Geiger-counter
+  // concept; regenerated procedurally in the 48th) -- live QA: "let's try
+  // clouds? something like this where they kind of just move along." A
+  // handful of the metaball pixel-cloud shapes above, each at its own row
+  // and drift speed, sliding right and wrapping around once fully
+  // offscreen.
+  drawCounterEffect(s, t) {
+    const { term } = s
+    for (let y = 1; y < HINT_Y1; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
+    for (const c of this._clouds) {
+      const span = term.cols + c.shape.w + 10
+      const x0 = ((c.baseX + t * c.speed) % span + span) % span - c.shape.w - 5
+      for (const cell of c.shape.cells) {
+        const px = Math.round(x0 + cell.dx)
+        const py = c.y + cell.dy
+        if (px < 0 || px >= term.cols || py < 1 || py >= HINT_Y1) continue
+        const v = cell.shade === 'light' ? 0.85 : 0.5
+        const ch = cell.shade === 'light' ? '█' : '▓'
+        term.put(px, py, ch, visualizerLevelAttr(v))
+      }
+    }
+  },
+  // STACK effect (45th pass, reworked later the same pass) -- for
+  // MOMENTUM. Originally 9 slow bars clustered mid-screen; live QA called
+  // for the full width and visible up/down motion ("like data or
+  // analytics changing"), so this is now 19 columns spanning edge to edge,
+  // each rerolling its target and rising/falling toward it on a much
+  // shorter cycle, with a small continuous jitter layered on top so a bar
+  // is never perfectly still even mid-transition -- reads as a live
+  // ticker rather than a calm progress bar.
+  drawStackEffect(s, t) {
+    const { term } = s
+    for (let y = 1; y < HINT_Y1; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
+    const left = 2, spacingX = 4, barW = 3, floor = HINT_Y1 - 2, top = 2, height = floor - top
+    for (let i = 0; i < this._stackBars.length; i++) {
+      const bar = this._stackBars[i]
+      if (t > bar.holdUntil) {
+        if (Math.abs(bar.level - bar.target) < 0.02) {
+          bar.target = 0.1 + Math.random() * 0.85
+          bar.holdUntil = t + 0.4 + Math.random() * 0.8
+        }
+        bar.level += (bar.target - bar.level) * bar.speed
+      }
+      const jitter = 0.03 * Math.sin(t * 3.2 + bar.jitterPhase)
+      const displayLevel = Math.max(0, Math.min(1, bar.level + jitter))
+      const filled = Math.round(displayLevel * height)
+      const colX = left + i * spacingX
+      for (let w = 0; w < barW; w++) {
+        const cx = colX + w
+        if (cx >= term.cols) continue
+        for (let f = 0; f < filled; f++) {
+          const yy = floor - f
+          term.put(cx, yy, f === filled - 1 ? '▀' : '█', f === filled - 1 ? NORMAL : MUTED)
+        }
+        term.put(cx, floor + 1, '─', DIM)
+      }
+    }
+  },
+  // BOOM BAP effect (45th pass, redesigned twice since) -- for HACKBACK.
+  // Started as a 16-step MPC sequencer grid; live QA asked for "more like
+  // a speaker/boombox putting out sound waves," which became a woofer icon
+  // floating mid-screen with soft expanding blobs. Second round of QA:
+  // concept approved, execution didn't look great. This pass gives the
+  // speaker an actual body -- a drawn cabinet sitting near the floor, like
+  // a boombox on the ground -- and tightens the sound waves from a soft
+  // gradient blob into a crisp single-character ring, so each hit reads as
+  // a distinct arc rather than a smudge.
+  drawBoomBapEffect(s, t) {
+    const { term } = s
+    for (let y = 1; y < HINT_Y1; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
+    // Ambient scatter across the whole screen, not just the upper band --
+    // 47th pass, live QA: "too much empty space, fill it out."
+    for (let g = 0; g < 22; g++) {
+      term.put(Math.floor(Math.random() * term.cols), 1 + Math.floor(Math.random() * (HINT_Y1 - 2)), '.', FAINT)
+    }
+    const cx = term.cols / 2
+    // 48th pass: pushed back (HINT_Y1-3 -> HINT_Y1-7) for depth, per live
+    // QA -- the sidewalk below now fills what used to be dead foreground.
+    const speakerY = HINT_Y1 - 7
+    const stepDur = 60 / BOOMBAP_BPM / 4
+    const step = Math.floor(t / stepDur) % BOOMBAP_STEPS
+    if (step !== this._boomLastStep) {
+      this._boomLastStep = step
+      if (BOOMBAP_PATTERN[step]) {
+        // Every 6th step in this pattern is a kick (the pattern's own 0
+        // and 6 index hits land heavier); the rest read as snare-weight.
+        this._boomWaves.push({ startT: t, strength: step % 6 === 0 ? 1 : 0.72 })
+      }
+      // EQ readout bars re-roll toward a new target every step so the
+      // cabinet's meter row reacts with the beat instead of sitting still.
+      for (const bar of this._boomEq) bar.target = 0.15 + Math.random() * (BOOMBAP_PATTERN[step] ? 0.85 : 0.4)
+    }
+    for (const bar of this._boomEq) bar.level += (bar.target - bar.level) * 0.35
+    for (let i = this._boomWaves.length - 1; i >= 0; i--) {
+      if (t - this._boomWaves[i].startT > 1.3) this._boomWaves.splice(i, 1)
+    }
+    // Crisp expanding rings rising from the speaker -- a tight band (1.1
+    // wide, single character) instead of the old 2.5-wide soft gradient,
+    // so a hit reads as a distinct arc of sound rather than a blur.
+    for (let y = 1; y < speakerY; y++) {
+      for (let x = 0; x < term.cols; x++) {
+        let v = 0
+        for (const w of this._boomWaves) {
+          const age = t - w.startT
+          const dx = x - cx, dy = (y - speakerY) * 1.6
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          const radius = age * 26
+          const ringDist = Math.abs(dist - radius)
+          if (ringDist < 1.1) v = Math.max(v, (1 - ringDist / 1.1) * (1 - age / 1.3) * w.strength)
+        }
+        if (v < 0.12) continue
+        const ch = v > 0.7 ? ')' : v > 0.4 ? ':' : '.'
+        term.put(x, y, ch, visualizerLevelAttr(Math.min(1, v)))
+      }
+    }
+    // The cabinet -- bigger (47th pass: 16 wide -> 28, live QA "too much
+    // empty space, fill it out"), with a carry handle, twin drivers, and
+    // an EQ readout row so it reads as an actual boombox, not just a box
+    // with a single cone. 48th pass: trimmed slightly (28 -> 24) now that
+    // it sits farther back, so the reduced width reads as distance rather
+    // than a shrunk prop.
+    const lastHit = this._boomWaves.length ? this._boomWaves[this._boomWaves.length - 1].startT : -99
+    const flash = Math.max(0, 1 - (t - lastHit) / 0.15)
+    const width = 24
+    const left = Math.round(cx) - width / 2
+    const top = speakerY - 4, bottom = speakerY + 2
+    for (let x = left + 8; x <= left + width - 8; x++) term.put(x, top - 1, '_', DIM)
+    term.put(left + 8, top, '|', DIM)
+    term.put(left + width - 8, top, '|', DIM)
+    for (let x = left; x <= left + width; x++) {
+      term.put(x, top, '─', DIM)
+      term.put(x, bottom, '─', DIM)
+    }
+    for (let y = top; y <= bottom; y++) {
+      term.put(left, y, '│', DIM)
+      term.put(left + width, y, '│', DIM)
+    }
+    term.put(left, top, '┌', DIM)
+    term.put(left + width, top, '┐', DIM)
+    term.put(left, bottom, '└', DIM)
+    term.put(left + width, bottom, '┘', DIM)
+    // EQ readout row across the cabinet's top interior. 48th pass: kept
+    // clear of the narrower cabinet's side walls (left+2 .. left+width-2)
+    // now that width has shrunk to 24.
+    const eqY = top + 1
+    const eqLeft = left + 2
+    const eqCount = Math.min(this._boomEq.length, width - 4)
+    for (let i = 0; i < eqCount; i++) {
+      const lvl = this._boomEq[i].level
+      const ch = lvl > 0.66 ? '█' : lvl > 0.33 ? '▄' : '_'
+      term.put(eqLeft + i, eqY, ch, visualizerLevelAttr(0.4 + lvl * 0.5))
+    }
+    // Twin drivers (cones), concentric rings flashing together on hits.
+    const cyr = speakerY - 1
+    for (const dxOff of [-7, 7]) {
+      const dxr = Math.round(cx) + dxOff
+      term.put(dxr, cyr, flash > 0.5 ? '█' : '▓', visualizerLevelAttr(Math.max(0.5, flash)))
+      for (let a = 0; a < 8; a++) {
+        const ang = (a / 8) * Math.PI * 2
+        term.put(Math.round(dxr + Math.cos(ang) * 2), Math.round(cyr + Math.sin(ang) * 1), 'o', visualizerLevelAttr(0.45 + flash * 0.35))
+      }
+    }
+    // Sidewalk in front of the cabinet (48th pass, live QA: "push the
+    // boombox back to add some depth and just do a simple floor/sidewalk
+    // in front of it") -- converging edge lines toward the cabinet's base
+    // and periodic seam dashes, widening toward the viewer the same way
+    // OUTRUN's ground does.
+    const vanishX = Math.round(cx)
+    for (let y = bottom + 1; y < HINT_Y1; y++) {
+      const depth = y - bottom
+      const halfW = Math.min(vanishX, 3 + depth * 3)
+      const lo = vanishX - halfW, hi = vanishX + halfW
+      const seam = depth % 3 === 0
+      const edgeAttr = visualizerLevelAttr(Math.max(0.15, 0.2 + depth * 0.05))
+      for (let x = lo; x <= hi; x++) {
+        if (x < 0 || x >= term.cols) continue
+        if (x === lo) term.put(x, y, '\\', edgeAttr)
+        else if (x === hi) term.put(x, y, '/', edgeAttr)
+        else if (seam) term.put(x, y, '-', FAINT)
+        else term.put(x, y, '.', FAINT)
+      }
+    }
+  },
+  // DREAD effect (45th pass) -- for the secret station. The one visual on
+  // the roster meant to read as a little wrong to look at: a coarse panel
+  // grid flickering erratically with occasional full-row tears, matching
+  // this station's own harshest CRT signature and its forced red phosphor
+  // bleed on lock.
+  drawDreadEffect(s, t) {
+    const { term } = s
+    for (let y = 1; y < HINT_Y1; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
+    const tear = this._dreadTear
+    if (!tear.active && Math.random() < 0.012) {
+      tear.active = true
+      tear.row = 1 + Math.floor(Math.random() * 20)
+      tear.until = t + 0.08 + Math.random() * 0.1
+    }
+    if (tear.active && t > tear.until) tear.active = false
+    if (Math.random() < 0.4) {
+      const idx = Math.floor(Math.random() * this._dreadGrid.length)
+      this._dreadGrid[idx] = !this._dreadGrid[idx]
+    }
+    const top = 2, left = 6
+    for (let gy = 0; gy < DREAD_CELLS_Y; gy++) {
+      for (let gx = 0; gx < DREAD_CELLS_X; gx++) {
+        const on = this._dreadGrid[gy * DREAD_CELLS_X + gx]
+        const flicker = Math.random() < 0.06
+        const ch = on ? (flicker ? '▓' : '█') : (flicker ? '░' : ' ')
+        if (!on && !flicker) continue
+        const attr = on ? (flicker ? MUTED : BRIGHT) : FAINT
+        for (let cy = 0; cy < DREAD_CELL_H - 1; cy++) {
+          for (let cx = 0; cx < DREAD_CELL_W - 1; cx++) {
+            const py = top + gy * DREAD_CELL_H + cy
+            if (py < HINT_Y1) term.put(left + gx * DREAD_CELL_W + cx, py, ch, attr)
+          }
+        }
+      }
+    }
+    if (tear.active) {
+      for (let x = 0; x < term.cols; x++) term.put(x, tear.row, Math.random() < 0.5 ? '█' : ' ', BRIGHT)
+    }
+  },
+  // PULSE effect (45th pass) -- for COLD WAVE. See the PULSE_CYCLE/
+  // pulseBeatEnvelope field notes above VISUAL_METHODS for why this is a
+  // quantized lattice with a synthetic heartbeat rather than an organic
+  // field.
+  drawPulseEffect(s, t) {
+    const { term } = s
+    for (let y = 1; y < HINT_Y1; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
+    const cx = term.cols / 2, cy = 11.5
+    const tc = t % PULSE_CYCLE
+    const beatV = pulseBeatEnvelope(tc)
+    // 45th pass: live QA said "don't understand or see much" -- the
+    // lattice was too sparse (5x3 cell gaps) and too faint (idle floor
+    // topped out at FAINT) to register at a glance. Denser grid (3x2
+    // gaps), a brighter idle floor, and a clear central pulse core fix
+    // that -- the core alone should read the beat even if the lattice
+    // itself goes unnoticed.
+    for (let gy = 2; gy < HINT_Y1; gy += 2) {
+      for (let gx = 2; gx < term.cols; gx += 3) {
+        const dx = Math.abs(gx - cx), dy = Math.abs(gy - cy) * 1.7
+        const dist = Math.max(dx, dy)
+        // 48th pass: ring band widened 2.4 -> 3.2 (live QA: "larger
+        // pulses") and travel speed bumped 7 -> 10 to match the shorter
+        // PULSE_CYCLE above.
+        const ringPos = ((dist - t * 10) % 9 + 9) % 9
+        const ringDist = Math.min(ringPos, 9 - ringPos)
+        const ringV = ringDist > 3.2 ? 0 : (1 - ringDist / 3.2) * beatV
+        const idleFlicker = 0.12 + 0.06 * Math.sin(gx * 0.7 + gy * 0.5 + t * 0.4)
+        const v = Math.max(ringV, idleFlicker)
+        if (v < 0.06) continue
+        const ch = v > 0.75 ? '#' : v > 0.5 ? '+' : v > 0.25 ? '.' : '·'
+        term.put(gx, gy, ch, visualizerLevelAttr(Math.min(1, v)))
+      }
+    }
+    // Scrolling EKG trace across the middle band -- see the field notes
+    // above PULSE_BEAT_COLS/pulseEkgOffset. Replaces the small static
+    // pulse-core block from the 45th pass; this reads as an actual
+    // heartbeat line instead of a blinking square, and fills what was a
+    // dead band down the middle of the screen.
+    // 47th pass: bigger swing (amp 4 -> 6) and a two-row-thick trace --
+    // live QA, applied broadly this round ("we need larger objects/
+    // characters" plus "5 could look better") -- reads as a bold heartbeat
+    // line instead of a thin scribble. 48th pass: amp 6 -> 8 and scroll
+    // speed 9 -> 13 ("larger pulses ... happen a little quicker").
+    const baseRow = Math.round(cy)
+    const amp = 8
+    let prevY = null
+    for (let x = 0; x < term.cols; x++) {
+      const u = (((x - t * 13) / PULSE_BEAT_COLS) % 1 + 1) % 1
+      const off = pulseEkgOffset(u)
+      const y = Math.max(2, Math.min(HINT_Y1 - 2, Math.round(baseRow - off * amp)))
+      const spike = Math.abs(off) > 0.5
+      term.put(x, y, spike ? '*' : '●', spike ? BRIGHT : NORMAL)
+      const shadowY = y + 1
+      if (shadowY < HINT_Y1 - 1) term.put(x, shadowY, '·', DIM)
+      if (prevY !== null && Math.abs(y - prevY) > 1) {
+        const step = y > prevY ? 1 : -1
+        for (let yy = prevY + step; yy !== y; yy += step) term.put(x, yy, '|', spike ? NORMAL : DIM)
+      }
+      prevY = y
     }
   },
   // 44th pass -- dispatches on the locked station's own `visual` field

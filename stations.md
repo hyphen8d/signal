@@ -21,7 +21,7 @@ Tracks (30):
 9. **Hunger Strike** -- Temple of the Dog  ([youtu.be/XKvHgPHLlv4](https://youtu.be/XKvHgPHLlv4))
 10. **Touch Me I'm Sick** -- Mudhoney  ([youtu.be/_nGsT_qFMBs](https://youtu.be/_nGsT_qFMBs))
 11. **Machinehead** -- Bush  ([youtu.be/5WPbqYoz9HA](https://youtu.be/5WPbqYoz9HA))
-12. **Lightning Crashes** -- Live  ([youtu.be/xsJ4O-nSveg](https://youtu.be/xsJ4O-nSveg))
+12. **Zombie** -- The Cranberries  ([youtu.be/6Ejga4kJUts](https://youtu.be/6Ejga4kJUts))
 13. **Pretend We're Dead** -- L7  ([youtu.be/28kAclQZLTE](https://youtu.be/28kAclQZLTE))
 14. **Cherub Rock** -- The Smashing Pumpkins  ([youtu.be/q-KE9lvU810](https://youtu.be/q-KE9lvU810))
 15. **Tomorrow** -- Silverchair  ([youtu.be/PjsMnvqL7eY](https://youtu.be/PjsMnvqL7eY))
@@ -32,10 +32,10 @@ Tracks (30):
 20. **1979** -- The Smashing Pumpkins  ([youtu.be/4aeETEoNfOg](https://youtu.be/4aeETEoNfOg))
 21. **Come As You Are** -- Nirvana  ([youtu.be/vabnZ9-ex7o](https://youtu.be/vabnZ9-ex7o))
 22. **My Hero** -- Foo Fighters  ([youtu.be/EqWRaAF6_WY](https://youtu.be/EqWRaAF6_WY))
-23. **Dollar Bill** -- Screaming Trees  ([youtu.be/1lfd7zeHRRs](https://youtu.be/1lfd7zeHRRs))
+23. **Possum Kingdom** -- Toadies  ([youtu.be/EkwD5rQ-_d4](https://youtu.be/EkwD5rQ-_d4))
 24. **Doll Parts** -- Hole  ([youtu.be/RD9xK9smth4](https://youtu.be/RD9xK9smth4))
 25. **Freak** -- Silverchair  ([youtu.be/8KHwuOtcALQ](https://youtu.be/8KHwuOtcALQ))
-26. **No Rain** -- Blind Melon  ([youtu.be/3qVPNONdF58](https://youtu.be/3qVPNONdF58))
+26. **Buddy Holly** -- Weezer  ([youtu.be/kemivUKb4f4](https://youtu.be/kemivUKb4f4))
 27. **River of Deceit** -- Mad Season  ([youtu.be/Fm72DPJCX58](https://youtu.be/Fm72DPJCX58))
 28. **Far Behind** -- Candlebox  ([youtu.be/fTqyUz_jSIo](https://youtu.be/fTqyUz_jSIo))
 29. **Loser** -- Beck  ([youtu.be/YgSPaXgAdzE](https://youtu.be/YgSPaXgAdzE))
@@ -263,7 +263,7 @@ Tracks (30):
 17. **Boogie Woogie Bugle Boy** -- The Andrews Sisters  ([youtu.be/wf4nY0mLrrA](https://youtu.be/wf4nY0mLrrA))
 18. **Shake, Rattle and Roll** -- Big Joe Turner  ([youtu.be/MiFSYJjvgwc](https://youtu.be/MiFSYJjvgwc))
 19. **All She Wants to Do Is Rock** -- Wynonie Harris  ([youtu.be/iYhNtOgwUho](https://youtu.be/iYhNtOgwUho))
-20. **Wheel of Fortune** -- Kay Starr  ([youtu.be/b3iamUsIsic](https://youtu.be/b3iamUsIsic))
+20. **Sixty Minute Man** -- Billy Ward and His Dominoes  ([youtu.be/pJbDHw_qsFs](https://youtu.be/pJbDHw_qsFs))
 21. **It's a Sin to Tell a Lie** -- The Ink Spots  ([youtu.be/eP9nD0TsqEI](https://youtu.be/eP9nD0TsqEI))
 22. **Nightmare** -- Artie Shaw & His Orchestra  ([youtu.be/9A7vuGLocRw](https://youtu.be/9A7vuGLocRw))
 23. **Crazy He Calls Me** -- Billie Holiday  ([youtu.be/V1HiJR4KkaM](https://youtu.be/V1HiJR4KkaM))
@@ -310,11 +310,11 @@ Tracks (30):
 25. **Definition** -- Black Star  ([youtu.be/EuJaStSL0xM](https://youtu.be/EuJaStSL0xM))
 26. **93 'til Infinity** -- Souls of Mischief  ([youtu.be/fXJc2NYwHjw](https://youtu.be/fXJc2NYwHjw))
 27. **Insane in the Brain** -- Cypress Hill  ([youtu.be/RijB8wnJCN0](https://youtu.be/RijB8wnJCN0))
-28. **California Love** -- 2Pac feat. Dr. Dre & Roger Troutman  ([youtu.be/N0VdRLdg2ng](https://youtu.be/N0VdRLdg2ng))
+28. **California Love (Short Radio Edit)** -- 2Pac feat. Dr. Dre & Roger Troutman  ([youtu.be/5kZFGo5r82o](https://youtu.be/5kZFGo5r82o))
 29. **Let Me Ride** -- Dr. Dre  ([youtu.be/cKu3_3mp1U8](https://youtu.be/cKu3_3mp1U8))
 30. **Gin and Juice** -- Snoop Doggy Dogg  ([youtu.be/OYbakN42pvA](https://youtu.be/OYbakN42pvA))
 
-## CIPHER -- 219.8
+## CIPHER -- 133.7
 
 *digital infiltration, breakbeat noir*
 
@@ -338,7 +338,7 @@ Tracks (30):
 14. **Dayvan Cowboy** -- Boards of Canada  ([youtu.be/A2zKARkpDW4](https://youtu.be/A2zKARkpDW4))
 15. **Journeyman** -- Amon Tobin  ([youtu.be/JATZS5_Qi80](https://youtu.be/JATZS5_Qi80))
 16. **Bloodstone** -- Amon Tobin  ([youtu.be/NB3MyO_RfpY](https://youtu.be/NB3MyO_RfpY))
-17. **Come On My Selector** -- Squarepusher  ([youtu.be/MWCSw_cNxKc](https://youtu.be/MWCSw_cNxKc))
+17. **Windowlicker** -- Aphex Twin  ([youtu.be/5ZT3gTu4Sjw](https://youtu.be/5ZT3gTu4Sjw))
 18. **Gantz Graf** -- Autechre  ([youtu.be/ev3vENli7wQ](https://youtu.be/ev3vENli7wQ))
 19. **Clubbed to Death (Kurayamino Mix)** -- Rob Dougan  ([youtu.be/DzNex7Mf1bg](https://youtu.be/DzNex7Mf1bg))
 20. **Prime Audio Soup** -- Meat Beat Manifesto  ([youtu.be/lCCQdH9dffA](https://youtu.be/lCCQdH9dffA))

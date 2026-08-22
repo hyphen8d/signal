@@ -1,4 +1,4 @@
-# SIGNAL v0.7
+# SIGNAL v0.8
 
 A community-facing, unofficial internet-radio-style web toy: a terminal/CRT
 tuning-dial receiver with 9 curated stations, real songs, station idents,
@@ -113,7 +113,7 @@ touch alone. Known gaps, not oversights.
 
 ## Stations
 
-9 stations, 225 tracks total (25 per station). Full roster with taglines and track lists:
+9 stations, 295 tracks total (30 per station, plus a 25-track secret station). Full roster with taglines and track lists:
 [`stations.md`](./stations.md) — generated straight from the live
 `STATIONS` array in `program.js` (`tools/stations-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station
