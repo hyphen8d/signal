@@ -750,12 +750,18 @@ const BOX_X1 = 77
 const DISPLAY_MODE_Y = 1
 const STATUS_Y = 2
 // Fixed interior width for the status word inside setStatus()'s brackets
-// (18th pass) -- longest status string in use is "POWERING DOWN" (13
-// chars). Padding every status word to this width keeps the whole
-// "● [ STATUS ]" readout a constant length so the LED never shifts
-// position between transitions. Bump this if a longer status string is
-// ever added.
-const STATUS_TEXT_WIDTH = 13
+// (18th pass) -- longest status string in use is "BUBBLEGUM PINK" (14
+// chars, one of the display-mode names flashStatus() announces as of the
+// 38th pass; "POWERING DOWN" was the 13-char high-water mark before that).
+// Padding every status word to this width keeps the whole "● [ STATUS ]"
+// readout a constant length so the LED never shifts position between
+// transitions. Bump this if a longer status string is ever added.
+const STATUS_TEXT_WIDTH = 14
+// 38th pass: per-character stagger of the status row's typewriter reveal
+// (see setStatus). Short enough that the longest string still lands well
+// inside a quarter second -- this is punctuation, not an animation to sit
+// through.
+const STATUS_REVEAL_MS = 18
 
 const TUNER_TOP_Y = 3
 const SCALE_Y = 4
@@ -1061,7 +1067,12 @@ function playLockTone() {
 // Scales the note gap and the whole attack/decay envelope together, so a
 // slower tempo reads as more spacious rather than just "the same envelope
 // with gaps stretched out."
-function playIdent(freqs, tempo = 1) {
+// 38th pass: optional `s` (the screen) -- passing it in bumps the CRT's
+// bloom on each note of the motif (see pulseBloom), so a lock is one
+// audio-visual event instead of a tone playing while the picture sits
+// still. Optional rather than required so nothing breaks if this is ever
+// called from somewhere without a screen handle.
+function playIdent(freqs, tempo = 1, s = null) {
   if (!freqs || !freqs.length) { playLockTone(); return }
   try {
     const ctx = audioCtx()
@@ -1077,6 +1088,7 @@ function playIdent(freqs, tempo = 1) {
       osc.connect(gain).connect(ctx.destination)
       osc.start(t)
       osc.stop(t + 0.18 * tempo)
+      if (s) setTimeout(() => pulseBloom(s, 0.5, 90 * tempo), Math.max(0, (t - ctx.currentTime) * 1000))
       t += 0.11 * tempo
     })
   } catch (e) {}
@@ -1179,6 +1191,196 @@ function playKeyClick() {
     const gain = ctx.createGain()
     gain.gain.setValueAtTime(0.12, t)
     src.connect(filter).connect(gain).connect(ctx.destination)
+    src.start(t)
+  } catch (e) {}
+}
+
+// --- 38th pass: event-feedback sound effects ---------------------------
+//
+// (Matthew: "maybe some sounds as the boot happens and each item
+// appears?... what gaps am I missing?") SIGNAL already had ambient sound
+// (the static bed) and set-piece sound (power on/off), but nearly every
+// individual control -- volume, mute, display mode, guide, the band edge
+// -- changed state in silence, and the boot POST readout landed all 13 of
+// its lines without a sound. The rhythm of a machine reporting in is most
+// of why a boot sequence feels good at all, so that was the single
+// biggest gap of the set.
+//
+// All of these are deliberately quieter and shorter than the existing
+// set-piece sounds (playClick/playPowerOnSound): those bookend a session
+// a couple of times, these can fire in bursts while someone rides the
+// volume keys.
+
+/** One line of the boot POST readout landing. `kind` splits the dull
+ *  relay tick of a probe line from the brighter confirm blip of an
+ *  "[ OK ]" line; `progress` (0..1 through the sequence) creeps the pitch
+ *  up so the readout reads as a set coming up to speed rather than 13
+ *  identical beeps. */
+function playBootTick(kind, progress = 0) {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    const base = kind === 'ok' ? 760 : 380
+    const rise = kind === 'ok' ? 180 : 90
+    osc.type = kind === 'ok' ? 'triangle' : 'square'
+    // Slight per-tick detune -- 13 mathematically identical pitches in a
+    // row reads as a synthesizer, a few cents of wobble reads as hardware.
+    osc.frequency.setValueAtTime(base + rise * progress + (Math.random() * 14 - 7), t)
+    const peak = kind === 'ok' ? 0.07 : 0.045
+    const len = kind === 'ok' ? 0.05 : 0.03
+    gain.gain.setValueAtTime(0.0001, t)
+    gain.gain.exponentialRampToValueAtTime(peak, t + 0.004)
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + len)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start(t)
+    osc.stop(t + len + 0.01)
+  } catch (e) {}
+}
+
+/** Volume detent -- one notch of a stepped pot. Deliberately duller and
+ *  lower than playKeyClick(), which is already firing on the same
+ *  keypress: the click is the key under your finger, this is the knob it
+ *  is turning. */
+function playDetent() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const n = Math.floor(ctx.sampleRate * 0.01)
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n)
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.frequency.value = 900
+    filter.Q.value = 1.2
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.16, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03)
+    src.connect(filter).connect(gain).connect(ctx.destination)
+    src.start(t)
+  } catch (e) {}
+}
+
+/** Mute rocker -- a relay armature landing (low sine thud) with a
+ *  lowpassed contact snap on top, so it reads mechanical rather than as a
+ *  bass blip. Engaging sits slightly higher than releasing, the way a
+ *  switch's two directions never sound quite identical. */
+function playRelayThunk(engaged) {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const osc = ctx.createOscillator()
+    const og = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(engaged ? 132 : 104, t)
+    osc.frequency.exponentialRampToValueAtTime(engaged ? 72 : 58, t + 0.07)
+    og.gain.setValueAtTime(0.0001, t)
+    og.gain.exponentialRampToValueAtTime(0.2, t + 0.005)
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.09)
+    osc.connect(og).connect(ctx.destination)
+    osc.start(t)
+    osc.stop(t + 0.1)
+    const n = Math.floor(ctx.sampleRate * 0.02)
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n)
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    const lp = ctx.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 1600
+    const ng = ctx.createGain()
+    ng.gain.setValueAtTime(0.13, t)
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.03)
+    src.connect(lp).connect(ng).connect(ctx.destination)
+    src.start(t)
+  } catch (e) {}
+}
+
+/** Display-mode change -- a soft transformer thump (fundamental plus its
+ *  octave, both decaying fast). The picture changing colour is a supply
+ *  event in this fiction, not a menu selection, so it gets a body sound
+ *  rather than a beep. */
+function playModeThump() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const parts = [[70, 0.2], [141, 0.06]]
+    for (const [f, peak] of parts) {
+      const osc = ctx.createOscillator()
+      const g = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(f, t)
+      g.gain.setValueAtTime(0.0001, t)
+      g.gain.exponentialRampToValueAtTime(peak, t + 0.012)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16)
+      osc.connect(g).connect(ctx.destination)
+      osc.start(t)
+      osc.stop(t + 0.18)
+    }
+  } catch (e) {}
+}
+
+/** Guide overlay sliding in/out -- one short pitch sweep, up on open and
+ *  the same sweep reversed on close, so the two are obviously the same
+ *  panel moving in two directions. */
+function playPanelSound(opening) {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const osc = ctx.createOscillator()
+    const g = ctx.createGain()
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(opening ? 300 : 520, t)
+    osc.frequency.exponentialRampToValueAtTime(opening ? 520 : 300, t + 0.09)
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(0.1, t + 0.015)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12)
+    osc.connect(g).connect(ctx.destination)
+    osc.start(t)
+    osc.stop(t + 0.13)
+  } catch (e) {}
+}
+
+/** Band edge. NOTE (38th pass): the 21st pass deliberately made arrow
+ *  seeking WRAP at FREQ_MIN/FREQ_MAX rather than stop dead (Matthew:
+ *  "scrolling with arrows should be able to cycle to the other side of
+ *  the tuning band since scan can do it"), so this is not the hard
+ *  mechanical stop a real dial has -- it's the dull thud of the carriage
+ *  reaching the end of its travel, fired on the wrap itself. Keeps the
+ *  physical feedback without taking the wraparound back. */
+function playBandBump() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const osc = ctx.createOscillator()
+    const g = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(150, t)
+    osc.frequency.exponentialRampToValueAtTime(60, t + 0.09)
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(0.24, t + 0.006)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.11)
+    osc.connect(g).connect(ctx.destination)
+    osc.start(t)
+    osc.stop(t + 0.12)
+    const n = Math.floor(ctx.sampleRate * 0.03)
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n)
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    const lp = ctx.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 700
+    const ng = ctx.createGain()
+    ng.gain.setValueAtTime(0.18, t)
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.05)
+    src.connect(lp).connect(ng).connect(ctx.destination)
     src.start(t)
   } catch (e) {}
 }
@@ -1393,6 +1595,53 @@ function flashCrtGlitch(s) {
   setTimeout(() => { if (s?.crt?.params) Object.assign(s.crt.params, restore) }, 150)
 }
 
+// 38th pass: bloom bump, used per ident note (see playIdent). bloomAmt is
+// not one of the params crtDegradeForDist() drives, so restoring straight
+// to SCREEN's nominal here can't fight the tuning-distance degrade the way
+// a chroma/snow/roll bump would.
+let bloomTimer = null
+function pulseBloom(s, amt = 0.5, ms = 90) {
+  if (!s?.crt?.params) return
+  // Attack-and-decay, not hold-then-drop. FIRST CUT OF THIS WAS WRONG and
+  // it's worth recording why: it set bloom high and restored it on a
+  // setTimeout, with each new note clearing the previous timer. Verified
+  // live, that made the ident read as ONE long bloom held flat across all
+  // four notes (sampled: 1.94 for the whole motif, then back to 1.44) --
+  // the notes were 110ms apart and the hold was 120ms, so it never got a
+  // chance to fall between them. Ramping down from the peak instead, over
+  // a window deliberately shorter than the note gap, is what actually
+  // makes the glow breathe in time with the motif.
+  if (bloomTimer) { clearInterval(bloomTimer); bloomTimer = null }
+  const start = Date.now()
+  s.crt.params.bloomAmt = SCREEN.bloomAmt + amt
+  bloomTimer = setInterval(() => {
+    const k = (Date.now() - start) / ms
+    if (!s?.crt?.params || k >= 1) {
+      clearInterval(bloomTimer)
+      bloomTimer = null
+      if (s?.crt?.params) s.crt.params.bloomAmt = SCREEN.bloomAmt
+      return
+    }
+    s.crt.params.bloomAmt = SCREEN.bloomAmt + amt * (1 - k)
+  }, 16)
+}
+
+/** 38th pass: focus snap, fired on lock. The spot blooms wide and
+ *  unpeaked for an instant (a receiver that hasn't caught the carrier
+ *  yet), overshoots sharper than nominal, then settles -- the picture
+ *  visibly pulling into focus rather than simply being in focus already.
+ *  Only touches beam/sharpen, so it composes with crtDegradeForDist()'s
+ *  chroma/snow/roll rather than overwriting any of it. */
+function flashFocusSnap(s) {
+  if (!s?.crt?.params) return
+  const soft = { beam: Math.min(2, SCREEN.beam * 2), sharpen: SCREEN.sharpen * 0.2 }
+  const over = { beam: SCREEN.beam * 0.78, sharpen: Math.min(2, SCREEN.sharpen * 1.6) }
+  const home = { beam: SCREEN.beam, sharpen: SCREEN.sharpen }
+  Object.assign(s.crt.params, soft)
+  rampCrtParams(s, soft, over, 130)
+  rampCrtParams(s, over, home, 180, 140)
+}
+
 // --- program ---------------------------------------------------------------
 
 export default {
@@ -1554,8 +1803,17 @@ export default {
     // 31st pass (Matthew: "flashes the name of the color... I thought was
     // cool but now not needed") -- the antenna pane's mode strip (see
     // drawModeStrip()) is a persistent on-screen readout of the same
-    // information this transient toast used to announce, so the toast
-    // (flashDisplayMode(), removed) was just duplicating it a second time.
+    // information the old transient toast announced, so flashDisplayMode()
+    // was removed as a duplicate.
+    // 38th PASS, HEADS UP: the mode name is back in the status row via the
+    // general flashStatus() mechanism, which is arguably that same toast
+    // returning under a different name. It is here because the 38th pass
+    // brief was "every control should acknowledge itself in the status
+    // row" and display mode is a control -- but if it still reads as
+    // redundant against the mode strip, deleting the flashStatus line
+    // below is the whole revert, nothing else depends on it.
+    playModeThump()
+    this.flashStatus(s, DISPLAY_MODES[this.displayModeIndex].label)
     saveSignalState(this)
   },
   // 2026-08-22 (Matthew: "make it use a red theme when you're on that
@@ -1590,6 +1848,29 @@ export default {
     this.lastPlayback = {}
     this.scanning = false
     this.scanTimer = null
+    // 38th pass -- status row state. statusPersistent is what the row
+    // falls back to after a transient flash (see flashStatus); _statusText
+    // is what is on screen right now, and doubles as the liveness check
+    // every deferred status draw makes before painting (if it no longer
+    // matches, a newer status has already claimed the row). Every timer
+    // handle here is owned by _clearStatusTimers().
+    this.statusPersistent = null
+    this._statusText = null
+    this._statusActive = false
+    this._statusRevealTimers = []
+    this._statusAnimTimer = null
+    this._statusFlashTimer = null
+    this._statusBracketX = 0
+    this._statusBracketLen = 0
+    // Which way the last tuning input was headed, so the SEEKING sweep
+    // animation travels the same direction you are tuning.
+    this._statusSweepDir = 1
+    // 38th pass -- in-flight signal-resolve reveals, keyed by row (see
+    // resolveText). Keyed rather than a single handle so callsign, tagline
+    // and track can resolve independently and at the same time.
+    this._resolveTimers = {}
+    // 38th pass -- next rare idle CRT event, in frame()'s `t` seconds.
+    this._nextIdleEventAt = 0
     this.ready = false
     this.player = null
     this.volume = 70
@@ -1783,14 +2064,71 @@ export default {
   // once. Lock/seek state is still visible elsewhere (the LED's old jobs:
   // the dial's ▲/█ brightness and the LEVELS SIG meter), so nothing here
   // was the only place that state showed up.
-  setStatus(s, text, active) {
+  // 38th pass (Matthew: "when seeking or scanning maybe we flash that in
+  // the status area instead of just changing the text"). Everything this
+  // row did used to happen in a single tick: blank it, write the new word,
+  // done. That is what made a busy screen feel flat -- the ambient layer
+  // (VU, EQ ribbon, antenna rings, phosphor shimmer) never stops, so
+  // nothing ever punctuated it. The row is now three things instead of one
+  // label:
+  //   1. a typewriter reveal on any text CHANGE (see the `same` check --
+  //      re-setting SEEKING on every arrow tap must not restart it, or
+  //      fast seeking turns into a stutter),
+  //   2. a per-state animation living in the FAINT flanking rules the 30th
+  //      pass added -- a bright cell travelling out from the brackets,
+  //      direction matched to the way you are tuning,
+  //   3. one-shot punctuation on the two event states: LOCKED flashes the
+  //      bracket inverse on the same beat as the ident, NO SIGNAL
+  //      double-blinks.
+  // opts.transient marks a temporary readout (see flashStatus) that must
+  // not become the state the row falls back to.
+  setStatus(s, text, active, opts = {}) {
+    const same = this._statusText === text
+    this._clearStatusTimers()
+    if (!opts.transient) {
+      this.statusPersistent = { text, active }
+      // A real state change cancels a pending flash revert -- otherwise
+      // locking mid-volume-flash would get stomped ~900ms later by the
+      // flash restoring the status it captured before the lock happened.
+      if (this._statusFlashTimer) { clearTimeout(this._statusFlashTimer); this._statusFlashTimer = null }
+    }
+    this._statusText = text
+    this._statusActive = active
+    // The power sequences draw their own beats on their own timers and
+    // then clear the whole grid out from under this row, so a reveal
+    // staggered across a couple hundred ms would paint text back onto an
+    // already-collapsed picture. Instant while _powerAnimating.
+    const instant = same || this._powerAnimating || text === 'LOCKED' || text === 'NO SIGNAL'
+    if (instant) {
+      this.drawStatusRow(s, text, active, text.length)
+    } else {
+      this.drawStatusRow(s, text, active, 0)
+      for (let i = 1; i <= text.length; i++) {
+        this._statusRevealTimers.push(setTimeout(() => {
+          if (this._statusText !== text || this._powerAnimating) return
+          this.drawStatusRow(s, text, active, i)
+        }, i * STATUS_REVEAL_MS))
+      }
+    }
+    this.startStatusAnim(s, text, active)
+  },
+
+  /** Draws the whole status row -- flanking rules plus the bracketed
+   *  readout -- with the first `revealed` characters of `text` shown and
+   *  the rest blanked. The unrevealed remainder is padded with spaces
+   *  rather than shortened, so the bracket is a constant width and the
+   *  readout never shifts horizontally mid-reveal. */
+  drawStatusRow(s, text, active, revealed, opts = {}) {
     const { term } = s
     const padTotal = STATUS_TEXT_WIDTH - text.length
     const padL = Math.max(0, Math.floor(padTotal / 2))
     const padR = Math.max(0, padTotal - padL)
-    const padded = ' '.repeat(padL) + text + ' '.repeat(padR)
+    const shown = text.slice(0, revealed) + ' '.repeat(Math.max(0, text.length - revealed))
+    const padded = ' '.repeat(padL) + shown + ' '.repeat(padR)
     const bracket = `[ ${padded} ]`
     const bracketX = centerX(term.cols, bracket)
+    this._statusBracketX = bracketX
+    this._statusBracketLen = bracket.length
     for (let x = 0; x < term.cols; x++) term.put(x, STATUS_Y, ' ')
     // 30th pass (Matthew: "the 'status' ie LOCKED... shouldn't those be
     // emphasised") -- the bracket was already BRIGHT when active (same
@@ -1804,7 +2142,186 @@ export default {
     const gap = 1
     for (let x = BOX_X0; x < bracketX - gap; x++) term.put(x, STATUS_Y, '─', FAINT)
     for (let x = bracketX + bracket.length + gap; x <= BOX_X1; x++) term.put(x, STATUS_Y, '─', FAINT)
-    term.text(bracketX, STATUS_Y, bracket, active ? BRIGHT : MUTED)
+    const attr = opts.attr ?? (active ? BRIGHT : MUTED)
+    term.text(bracketX, STATUS_Y, bracket, attr, opts.inv ? 1 : 0)
+  },
+
+  /** Per-state status animation. Two one-shots (LOCKED, NO SIGNAL) and two
+   *  continuous sweeps (SEEKING, SCANNING/TUNING) -- everything else just
+   *  sits still, which is correct: a status that never changes shouldn't
+   *  be drawing the eye. */
+  startStatusAnim(s, text, active) {
+    const { term } = s
+    // Any deferred draw below has to re-check that this status is still
+    // the current one AND that nothing has taken the screen over since --
+    // these run on their own timers, so they inherit no guard from
+    // frame() (same rule the 29th pass learned with drawPlayback).
+    const alive = () => this.poweredOn && !this.guideOpen && this._statusText === text
+
+    if (text === 'LOCKED') {
+      // One-shot inverse flash, landing on the same beat as the ident and
+      // the focus snap -- lock is a single event across sound, motion,
+      // text and picture rather than four things that happen to coincide.
+      this.drawStatusRow(s, text, active, text.length, { inv: 1 })
+      this._statusRevealTimers.push(setTimeout(() => {
+        if (alive()) this.drawStatusRow(s, text, active, text.length)
+      }, 120))
+      return
+    }
+    if (text === 'NO SIGNAL') {
+      for (const [ms, attr] of [[90, FAINT], [180, MUTED], [270, FAINT], [360, MUTED]]) {
+        this._statusRevealTimers.push(setTimeout(() => {
+          if (alive()) this.drawStatusRow(s, text, active, text.length, { attr })
+        }, ms))
+      }
+      return
+    }
+
+    const sweeping = text.startsWith('SCANNING') || text.startsWith('TUNING')
+    const seeking = text === 'SEEKING'
+    if (!sweeping && !seeking) return
+    let i = 0
+    this._statusAnimTimer = setInterval(() => {
+      if (!alive()) { this._clearStatusTimers(); return }
+      const bx = this._statusBracketX
+      // Built fresh each tick rather than cached: a flashStatus revert can
+      // change the bracket width underneath this between ticks.
+      const leftCols = []
+      for (let x = bx - 2; x >= BOX_X0; x--) leftCols.push(x)
+      const rightCols = []
+      for (let x = bx + this._statusBracketLen + 1; x <= BOX_X1; x++) rightCols.push(x)
+      for (const x of leftCols) term.put(x, STATUS_Y, '─', FAINT)
+      for (const x of rightCols) term.put(x, STATUS_Y, '─', FAINT)
+      if (sweeping) {
+        // Scanning sweeps the full width, hopping over the bracket -- the
+        // same left-to-right pass the tuner itself is making.
+        const all = leftCols.slice().reverse().concat(rightCols)
+        const pos = i % all.length
+        term.put(all[pos], STATUS_Y, '─', BRIGHT)
+        if (pos + 1 < all.length) term.put(all[pos + 1], STATUS_Y, '─', DIM)
+      } else {
+        // Seeking travels outward from the bracket, on the side you are
+        // tuning toward, so the row agrees with the dial below it.
+        const cols = this._statusSweepDir < 0 ? leftCols : rightCols
+        if (cols.length) {
+          const pos = i % cols.length
+          term.put(cols[pos], STATUS_Y, '─', BRIGHT)
+          if (pos > 0) term.put(cols[pos - 1], STATUS_Y, '─', DIM)
+        }
+      }
+      i++
+    }, sweeping ? 55 : 80)
+  },
+
+  _clearStatusTimers() {
+    for (const t of this._statusRevealTimers || []) clearTimeout(t)
+    this._statusRevealTimers = []
+    if (this._statusAnimTimer) { clearInterval(this._statusAnimTimer); this._statusAnimTimer = null }
+  },
+
+  /** 38th pass -- transient status readout that reverts to whatever the
+   *  row was actually saying. This closed a real gap rather than adding
+   *  polish: volume, mute and display mode all changed state with no
+   *  acknowledgement in the status row at all, and preset digits only
+   *  showed up as the dial starting to move. */
+  flashStatus(s, text, ms = 900) {
+    this.setStatus(s, text, true, { transient: true })
+    if (this._statusFlashTimer) clearTimeout(this._statusFlashTimer)
+    this._statusFlashTimer = setTimeout(() => {
+      this._statusFlashTimer = null
+      const prev = this.statusPersistent
+      if (!prev || !this.poweredOn || this.guideOpen) return
+      this.setStatus(s, prev.text, prev.active)
+    }, ms)
+  },
+
+  // 38th pass -- signal resolve. Station and track text used to snap in
+  // whole; each character now lands out of noise on its own staggered
+  // beat, which in fiction is exactly what a receiver settling onto a
+  // signal looks like. Deliberately short (under ~300ms): the moment it
+  // reads as waiting rather than resolving, it is wrong.
+  RESOLVE_GLYPHS: '▓▒░#%&*',
+  resolveText(s, x, y, text, attr, durationMs = 250) {
+    const { term } = s
+    this._cancelResolve(y)
+    // Per-character settle times, random rather than left-to-right: a
+    // sequential wipe reads as a typewriter (which the status row already
+    // is), scattered reads as noise clearing.
+    const settleAt = []
+    for (let i = 0; i < text.length; i++) settleAt.push(durationMs * (0.12 + 0.88 * Math.random()))
+    const start = Date.now()
+    const tick = () => {
+      // Own guard, no inheritance from frame() -- see startStatusAnim.
+      if (!this.poweredOn || this.guideOpen) { this._cancelResolve(y); return }
+      const elapsed = Date.now() - start
+      let done = true
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i]
+        if (ch === ' ') { term.put(x + i, y, ' '); continue }
+        if (elapsed >= settleAt[i]) { term.put(x + i, y, ch, attr); continue }
+        done = false
+        const g = this.RESOLVE_GLYPHS[Math.floor(Math.random() * this.RESOLVE_GLYPHS.length)]
+        term.put(x + i, y, g, Math.random() < 0.4 ? FAINT : DIM)
+      }
+      if (done) this._cancelResolve(y)
+    }
+    tick()
+    this._resolveTimers[y] = setInterval(tick, 33)
+  },
+  _cancelResolve(y) {
+    const t = this._resolveTimers && this._resolveTimers[y]
+    if (t) { clearInterval(t); delete this._resolveTimers[y] }
+  },
+  _cancelAllResolves() {
+    for (const y of Object.keys(this._resolveTimers || {})) this._cancelResolve(y)
+  },
+
+  /** 38th pass -- rare idle CRT event. Two kinds: the vertical hold
+   *  drifting for about a second, or a tear (snow/chroma spike plus a
+   *  scrambled run on one panel border). Locked-only on purpose: while
+   *  seeking, crtDegradeForDist() is already driving these same params
+   *  off the tuning distance, and a random drift layered on top of that
+   *  would read as a bug rather than an event. Exposed as its own method
+   *  so it can be fired on demand from the console
+   *  (window.screen0.program.crtIdleEvent(window.screen0, 'tear')) --
+   *  at its real frequency you cannot reliably catch one to check it. */
+  crtIdleEvent(s, kind) {
+    if (!s?.crt?.params) return
+    const { term } = s
+    const { dist } = nearestStation(this.freq)
+    // Restore to what the CURRENT tuning distance calls for, not to
+    // nominal -- same reasoning as flashCrtGlitch().
+    const restore = crtDegradeForDist(dist)
+    kind = kind || (Math.random() < 0.5 ? 'roll' : 'tear')
+    if (kind === 'roll') {
+      rampCrtParams(s, { roll: restore.roll, rollSpeed: SCREEN.rollSpeed }, { roll: 0.45, rollSpeed: 0.9 }, 260)
+      rampCrtParams(s, { roll: 0.45, rollSpeed: 0.9 }, { roll: restore.roll, rollSpeed: SCREEN.rollSpeed }, 500, 700)
+      return
+    }
+    Object.assign(s.crt.params, { snow: 0.03, chroma: 1.6 })
+    setTimeout(() => { if (s?.crt?.params) Object.assign(s.crt.params, restore) }, 90)
+    // Same box-BOTTOM rows the idle shimmer restricts itself to: those are
+    // plain full-width '─' with no embedded panel label (drawBoxTop has
+    // one, drawBoxBottom does not), so a scrambled run here can never
+    // clobber something that has to stay readable.
+    const rows = [TUNER_BOT_Y, STATION_BOT_Y, NOWPLAYING_BOT_Y, METERS_BOT_Y]
+    const y = rows[Math.floor(Math.random() * rows.length)]
+    const runLen = 8 + Math.floor(Math.random() * 10)
+    const x0 = BOX_X0 + 1 + Math.floor(Math.random() * Math.max(1, BOX_X1 - BOX_X0 - runLen - 2))
+    const glyphs = '▓▒░─'
+    for (let i = 0; i < runLen; i++) {
+      term.put(x0 + i, y, glyphs[Math.floor(Math.random() * glyphs.length)], Math.random() < 0.4 ? DIM : FAINT)
+    }
+    setTimeout(() => {
+      if (!this.poweredOn || this.guideOpen) return
+      for (let i = 0; i < runLen; i++) {
+        const x = x0 + i
+        // METERS_BOT_Y carries a '┻' junction at METERS_DIVIDER_X (see
+        // drawChrome) -- the same trap the 18th pass hit with the idle
+        // shimmer, which restores a flat '─' over everything it touches.
+        term.put(x, y, y === METERS_BOT_Y && x === METERS_DIVIDER_X ? '┻' : '─', MUTED)
+      }
+    }, 90)
   },
 
   // Warm-up flicker (10th pass) -- a short beat sequence that redraws the
@@ -1875,6 +2392,11 @@ export default {
     if (!this.poweredOn) return
     this.poweredOn = false
     this._powerAnimating = true // cleared once the STANDBY beat lands below
+    // 38th pass: the status sweep and any in-flight text resolve run on
+    // their own timers and would otherwise keep painting into the collapse
+    // sequence's own beats.
+    this._clearStatusTimers()
+    this._cancelAllResolves()
     this.stopScan()
     // stopScan() no longer stops the ambient static bed on its own (12th
     // pass) -- power-down is one of the two places (with tryLock) that
@@ -1929,6 +2451,11 @@ export default {
         // Whole picture collapses to the horizontal centerline -- a CRT's
         // vertical deflection dying while the beam is still lit reads as
         // exactly this: everything not on the middle scanline disappears.
+        // 38th pass: persistence way up for the collapse, so the dying
+        // centerline smears and lingers the way a real tube's does instead
+        // of the picture cutting crisply off. Restored on the way into
+        // STANDBY below, and again defensively on power-up.
+        if (s?.crt?.params) s.crt.params.decay = 0.96
         clearAll()
         for (let x = 0; x < term.cols; x++) term.put(x, midY, '─', DIM)
       } },
@@ -1945,6 +2472,9 @@ export default {
         const hint = '[P] POWER ON'
         term.text(centerX(term.cols, hint), midY, hint, FAINT)
         this.drawStandbyClock(s)
+        // 38th pass: afterglow bleeding back down to nominal persistence
+        // across the first moments of STANDBY, rather than snapping back.
+        rampCrtParams(s, { decay: 0.96 }, { decay: SCREEN.decay }, 420)
         this._powerAnimating = false // sequence landed, ticker can resume
       } },
     ]
@@ -1962,6 +2492,10 @@ export default {
     // 19th pass: floor, not round -- see drawStandbyClock()
     const midY = Math.floor(term.rows / 2)
     playPowerOnSound()
+    // 38th pass: powerDown() raises `decay` for the afterglow smear on the
+    // way out, so a power-cycle has to come back to nominal persistence
+    // rather than inheriting a tube that never stops glowing.
+    if (s?.crt?.params) s.crt.params.decay = SCREEN.decay
 
     // 26th pass (Matthew: "a longer, better cold boot sequence... maybe like
     // cyberspace.online does") -- looked at cyberspace's actual boot live: a
@@ -2037,6 +2571,14 @@ export default {
         bootLines.forEach((line, i) => {
           setTimeout(() => {
             term.text(centerX(term.cols, line), startY + i, line, i === 0 ? BOLD : DIM)
+            // 38th pass (Matthew: "maybe some sounds as the boot happens
+            // and each item appears?") -- all 13 lines used to land in
+            // total silence, which is most of why a ~5.5s boot felt like
+            // waiting rather than watching a machine come up. A blank
+            // spacer line stays silent so the readout keeps its phrasing;
+            // an [ OK ] confirm blips brighter than a probe line; pitch
+            // creeps up across the sequence (see playBootTick).
+            if (line) playBootTick(line.startsWith('[ OK ]') ? 'ok' : 'probe', i / (bootLines.length - 1))
           }, i * LINE_STAGGER_MS)
         })
       } },
@@ -2129,11 +2671,19 @@ export default {
   // broken out from current playing song info").
   clearStation(s) {
     const { term } = s
+    // 38th pass: kill any in-flight resolve on these rows first, or its
+    // next tick paints characters back onto a row we just cleared.
+    this._cancelResolve(STATION_Y)
+    this._cancelResolve(TAGLINE_Y)
     for (const y of [STATION_Y, TAGLINE_Y]) {
       for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, y, ' ')
     }
   },
-  showStation(s, station) {
+  // 38th pass: opts.reveal === false draws instantly (no signal-resolve),
+  // opts.revealMs shortens/lengthens it. Default is the full reveal --
+  // every path that shows a station (lock, guide close, power-on resume)
+  // is a moment where a receiver settling onto a signal is the right read.
+  showStation(s, station, opts = {}) {
     const { term } = s
     this.clearStation(s)
     const maxWidth = BOX_X1 - BOX_X0 - 4
@@ -2148,16 +2698,30 @@ export default {
     const callsign = truncate(station.callsign, maxWidth - flairWidth)
     const flaired = `${FLAIR} ${callsign} ${FLAIR}`
     const tagline = truncate(station.tagline, maxWidth)
-    term.text(centerX(term.cols, flaired), STATION_Y, flaired, BRIGHT)
-    term.text(centerX(term.cols, tagline), TAGLINE_Y, tagline, MUTED)
+    const callX = centerX(term.cols, flaired)
+    const tagX = centerX(term.cols, tagline)
+    if (opts.reveal === false) {
+      term.text(callX, STATION_Y, flaired, BRIGHT)
+      term.text(tagX, TAGLINE_Y, tagline, MUTED)
+    } else {
+      const ms = opts.revealMs ?? 260
+      this.resolveText(s, callX, STATION_Y, flaired, BRIGHT, ms)
+      // Tagline settles a beat behind the callsign -- identity first, then
+      // the description, rather than both landing as one block.
+      this.resolveText(s, tagX, TAGLINE_Y, tagline, MUTED, ms + 90)
+    }
   },
 
   clearTrack(s) {
     const { term } = s
+    this._cancelResolve(TRACK_Y) // see clearStation
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, TRACK_Y, ' ')
     this.updateTabTitle()
   },
-  showTrack(s, track) {
+  // 38th pass: same reveal options as showStation(). skip() passes a
+  // shorter one -- a track change within a station you are already locked
+  // onto is a smaller event than finding the station was.
+  showTrack(s, track, opts = {}) {
     const { term } = s
     this.clearTrack(s)
     const maxWidth = BOX_X1 - BOX_X0 - 4
@@ -2177,7 +2741,9 @@ export default {
     // callsign's BRIGHT. Bumped to BOLD rather than matching BRIGHT exactly
     // so station (identity) and track (content) stay visually distinct
     // tiers instead of collapsing to the same weight.
-    term.text(centerX(term.cols, line), TRACK_Y, line, BOLD)
+    const lineX = centerX(term.cols, line)
+    if (opts.reveal === false) term.text(lineX, TRACK_Y, line, BOLD)
+    else this.resolveText(s, lineX, TRACK_Y, line, BOLD, opts.revealMs ?? 250)
     this.updateTabTitle(track)
   },
   // 21st pass (Matthew, 0.3 wishlist: "browser tab title shows now-playing")
@@ -2672,7 +3238,9 @@ export default {
     this.currentTrack = track
     // Same station, just the next track in it -- station identity (its own
     // box now) doesn't need to be touched at all, just the track line.
-    this.showTrack(s, track)
+    // 38th pass: shorter resolve than a lock's, matching the smaller VU
+    // pulse a skip already gets below.
+    this.showTrack(s, track, { revealMs: 150 })
     if (this.nowPlaying) this.nowPlaying.title = track.title
     // Re-applies volume for the new track's gain -- a skip can land on a
     // track mastered much louder/quieter than the one just playing.
@@ -2709,6 +3277,7 @@ export default {
     this.player.setVolume(eff)
   },
   adjustVolume(s, delta) {
+    const before = this.volume
     this.volume = Math.min(100, Math.max(0, this.volume + delta))
     if (this.muted) this.muted = false // touching volume un-mutes, like a real set
     if (this.ready && this.player) {
@@ -2716,6 +3285,12 @@ export default {
       if (!this.muted) this.player.unMute()
     }
     this.drawVolume(s)
+    // 38th pass: a detent per notch, and the level itself in the status
+    // row for a beat. The VOL bar was the only feedback before, and it is
+    // in the LEVELS panel at the bottom of the screen -- nowhere near
+    // where your eye is while you are tuning.
+    if (this.volume !== before) playDetent()
+    this.flashStatus(s, `VOL ${this.volume}`)
     saveSignalState(this)
   },
   toggleMute(s) {
@@ -2725,6 +3300,9 @@ export default {
       else { this.player.unMute(); this.applyVolume() }
     }
     this.drawVolume(s)
+    // 38th pass: mute is a switch, so it gets a relay rather than a beep.
+    playRelayThunk(this.muted)
+    this.flashStatus(s, this.muted ? 'MUTED' : 'UNMUTED')
     saveSignalState(this)
   },
 
@@ -2773,9 +3351,16 @@ export default {
     // the other side of the tuning band since scan can do it") -- mirror
     // startScan's wraparound instead of clampFreq's dead stop at the edges.
     let f = this.freq + delta
-    if (f > FREQ_MAX) f = FREQ_MIN
-    else if (f < FREQ_MIN) f = FREQ_MAX
+    let wrapped = false
+    if (f > FREQ_MAX) { f = FREQ_MIN; wrapped = true }
+    else if (f < FREQ_MIN) { f = FREQ_MAX; wrapped = true }
+    // 38th pass: which way the dial is moving, for the SEEKING sweep in
+    // the status row (see startStatusAnim).
+    this._statusSweepDir = delta < 0 ? -1 : 1
     this.retune(s, f)
+    // 38th pass: the band edge finally makes a sound -- see playBandBump()
+    // for why this fires on the wrap rather than replacing it with a stop.
+    if (wrapped) playBandBump()
     playSeekStatic()
     // Land-on-lock (added 2026-08-20, Matthew: "when you hit one of the
     // stations while seeking with arrows and you land on one, it locks"):
@@ -2847,7 +3432,13 @@ export default {
     // idents"): each station has its own short tone motif in STATIONS[].ident
     // so locking on COLD WAVE sounds different from locking on QUIET HOURS,
     // instead of every station announcing itself with the same generic chime.
-    playIdent(station.ident, station.identTempo || 1)
+    playIdent(station.ident, station.identTempo || 1, s)
+    // 38th pass: the picture pulls into focus on the same beat (see
+    // flashFocusSnap) -- with the ident's per-note bloom, the status
+    // bracket's inverse flash and the callsign resolving out of noise,
+    // lock is now one event across sound, light and text instead of four
+    // independent things that happen to land together.
+    flashFocusSnap(s)
     // 23rd pass: attack transient on lock, see pulseVU().
     this.pulseVU(0.5)
     this.setStatus(s, 'LOCKED', true)
@@ -2901,6 +3492,13 @@ export default {
     if (this.guideOpen) return
     this.guideOpen = true
     this.guidePage = 1
+    playPanelSound(true)
+    // 38th pass: the status row's sweep and any in-flight text resolve are
+    // both timer-driven and would keep painting into rows the guide is
+    // now using underneath it -- same class of bug as the scan timer this
+    // method has always stopped, and as the 29th pass's drawPlayback leak.
+    this._clearStatusTimers()
+    this._cancelAllResolves()
     // A scan/preset-sweep timer left running would keep punching fresh
     // dial/freq redraws into rows the guide is now using underneath it, so
     // it gets stopped outright rather than just visually covered.
@@ -3023,6 +3621,7 @@ export default {
   },
   closeGuide(s) {
     this.guideOpen = false
+    playPanelSound(false)
     // BUG FIXED (15th pass): the guide screen writes into a couple of rows
     // (the "SIGNAL -- GUIDE" header at row 1, in particular) that nothing
     // below ever redraws -- drawChrome only touches row 0, the box frames
@@ -3102,7 +3701,13 @@ export default {
     const steps = 6
     let i = 0
     this.scanning = true
-    this.setStatus(s, 'TUNING...', false)
+    // 38th pass: the preset number in the readout. Pressing a digit had no
+    // acknowledgement on screen at all beyond the dial starting to move.
+    // Falls back to the bare word for anything tuned by reference rather
+    // than by preset -- [B] back, and the secret station (deliberately not
+    // in STATION_PRESET_ORDER, so indexOf correctly returns -1 for it).
+    const presetNum = STATION_PRESET_ORDER.indexOf(station) + 1
+    this.setStatus(s, presetNum > 0 ? `TUNING ${presetNum}` : 'TUNING...', false)
     // Tune-in whoosh (14th pass, Matthew: "a fun 'tune-in' whoosh when
     // jumping straight to a preset (1-9)") -- plays once, under the sweep,
     // distinct from both the plain seek-static hiss and the ident tone
@@ -3355,6 +3960,19 @@ export default {
       // 29th pass: the antenna glyph shares the VU's redraw cadence --
       // cheap, and it's the same rate its own ring animation needs anyway.
       this.drawAntenna(s, t)
+    }
+
+    // 38th pass -- rare idle CRT events (see crtIdleEvent). A set left on
+    // one station for a couple of minutes should do SOMETHING once in a
+    // while; rare enough (90-210s apart) that it stays a surprise rather
+    // than becoming another layer of ambient texture. The first interval
+    // is seeded on the first frame after power-on rather than in init(),
+    // so the clock starts when the set does.
+    if (!this._nextIdleEventAt) {
+      this._nextIdleEventAt = t + 90 + Math.random() * 120
+    } else if (t > this._nextIdleEventAt) {
+      this._nextIdleEventAt = t + 90 + Math.random() * 120
+      if (this.mode === 'locked') this.crtIdleEvent(s)
     }
 
     // Always-on idle phosphor shimmer (14th pass, Matthew: "a subtle
