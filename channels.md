@@ -1,6 +1,6 @@
 # SIGNAL -- channel roster
 
-Generated from program.js. 9 stations, 144 tracks total.
+Generated from program.js. 9 stations, 141 tracks total.
 
 ## DISTORTION FIELD -- 137.4
 
@@ -200,29 +200,26 @@ Tracks (15):
 
 Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
 
-Tracks (24):
+Tracks (21):
 
 1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
 2. **Smack My Bitch Up** -- The Prodigy  ([youtu.be/xW17jtkjvvg](https://youtu.be/xW17jtkjvvg))
-3. **Block Rockin' Beats** -- The Chemical Brothers  ([youtu.be/iTxOKsyZ0Lw](https://youtu.be/iTxOKsyZ0Lw))
-4. **Elektrobank** -- The Chemical Brothers  ([youtu.be/L0dxByaPWhM](https://youtu.be/L0dxByaPWhM))
-5. **One More Time** -- Daft Punk  ([youtu.be/FGBhQbmPwH8](https://youtu.be/FGBhQbmPwH8))
-6. **Praise You** -- Fatboy Slim  ([youtu.be/ruAi4VBoBSM](https://youtu.be/ruAi4VBoBSM))
-7. **Weapon of Choice** -- Fatboy Slim ft. Bootsy Collins  ([youtu.be/wCDIYvFmgW8](https://youtu.be/wCDIYvFmgW8))
-8. **Halcyon** -- Orbital  ([youtu.be/3SwwljI-8JY](https://youtu.be/3SwwljI-8JY))
-9. **The Box** -- Orbital  ([youtu.be/yJnve05CnNE](https://youtu.be/yJnve05CnNE))
-10. **Teardrop** -- Massive Attack  ([youtu.be/u7K72X4eo_s](https://youtu.be/u7K72X4eo_s))
-11. **Safe from Harm** -- Massive Attack  ([youtu.be/Z15c2UineoU](https://youtu.be/Z15c2UineoU))
-12. **Song of Life** -- Leftfield  ([youtu.be/QmKE9zKYx0g](https://youtu.be/QmKE9zKYx0g))
-13. **Phat Planet** -- Leftfield  ([youtu.be/_YDyMlE5wUA](https://youtu.be/_YDyMlE5wUA))
-14. **Born Slippy .NUXX** -- Underworld  ([youtu.be/XiMrrleH_hI](https://youtu.be/XiMrrleH_hI))
-15. **Rez** -- Underworld  ([youtu.be/F6Y7lcvubhU](https://youtu.be/F6Y7lcvubhU))
-16. **Roygbiv** -- Boards of Canada  ([youtu.be/BkZroY_oERY](https://youtu.be/BkZroY_oERY))
-17. **Dayvan Cowboy** -- Boards of Canada  ([youtu.be/A2zKARkpDW4](https://youtu.be/A2zKARkpDW4))
-18. **Windowlicker** -- Aphex Twin  ([youtu.be/UBS4Gi1y_nc](https://youtu.be/UBS4Gi1y_nc))
-19. **Come to Daddy** -- Aphex Twin  ([youtu.be/h-9UvrLyj3k](https://youtu.be/h-9UvrLyj3k))
-20. **Journeyman** -- Amon Tobin  ([youtu.be/JATZS5_Qi80](https://youtu.be/JATZS5_Qi80))
-21. **Bloodstone** -- Amon Tobin  ([youtu.be/NB3MyO_RfpY](https://youtu.be/NB3MyO_RfpY))
-22. **Come On My Selector** -- Squarepusher  ([youtu.be/MWCSw_cNxKc](https://youtu.be/MWCSw_cNxKc))
-23. **Gantz Graf** -- Autechre  ([youtu.be/ev3vENli7wQ](https://youtu.be/ev3vENli7wQ))
-24. **Derezzed** -- Daft Punk (Tron: Legacy)  ([youtu.be/0te4syL3U9c](https://youtu.be/0te4syL3U9c))
+3. **Omen** -- The Prodigy  ([youtu.be/xMVTKOoy1uk](https://youtu.be/xMVTKOoy1uk))
+4. **Block Rockin' Beats** -- The Chemical Brothers  ([youtu.be/iTxOKsyZ0Lw](https://youtu.be/iTxOKsyZ0Lw))
+5. **Elektrobank** -- The Chemical Brothers  ([youtu.be/L0dxByaPWhM](https://youtu.be/L0dxByaPWhM))
+6. **One More Time** -- Daft Punk  ([youtu.be/FGBhQbmPwH8](https://youtu.be/FGBhQbmPwH8))
+7. **Praise You** -- Fatboy Slim  ([youtu.be/ruAi4VBoBSM](https://youtu.be/ruAi4VBoBSM))
+8. **Weapon of Choice** -- Fatboy Slim ft. Bootsy Collins  ([youtu.be/wCDIYvFmgW8](https://youtu.be/wCDIYvFmgW8))
+9. **Halcyon** -- Orbital  ([youtu.be/3SwwljI-8JY](https://youtu.be/3SwwljI-8JY))
+10. **The Box** -- Orbital  ([youtu.be/yJnve05CnNE](https://youtu.be/yJnve05CnNE))
+11. **Teardrop** -- Massive Attack  ([youtu.be/u7K72X4eo_s](https://youtu.be/u7K72X4eo_s))
+12. **Safe from Harm** -- Massive Attack  ([youtu.be/Z15c2UineoU](https://youtu.be/Z15c2UineoU))
+13. **Born Slippy .NUXX** -- Underworld  ([youtu.be/XiMrrleH_hI](https://youtu.be/XiMrrleH_hI))
+14. **Rez** -- Underworld  ([youtu.be/F6Y7lcvubhU](https://youtu.be/F6Y7lcvubhU))
+15. **Roygbiv** -- Boards of Canada  ([youtu.be/BkZroY_oERY](https://youtu.be/BkZroY_oERY))
+16. **Dayvan Cowboy** -- Boards of Canada  ([youtu.be/A2zKARkpDW4](https://youtu.be/A2zKARkpDW4))
+17. **Journeyman** -- Amon Tobin  ([youtu.be/JATZS5_Qi80](https://youtu.be/JATZS5_Qi80))
+18. **Bloodstone** -- Amon Tobin  ([youtu.be/NB3MyO_RfpY](https://youtu.be/NB3MyO_RfpY))
+19. **Come On My Selector** -- Squarepusher  ([youtu.be/MWCSw_cNxKc](https://youtu.be/MWCSw_cNxKc))
+20. **Gantz Graf** -- Autechre  ([youtu.be/ev3vENli7wQ](https://youtu.be/ev3vENli7wQ))
+21. **Derezzed** -- Daft Punk (Tron: Legacy)  ([youtu.be/0te4syL3U9c](https://youtu.be/0te4syL3U9c))

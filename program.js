@@ -450,12 +450,17 @@ const CHANNELS = [
     // rather than force-padding to 30 with more guesses; 2 tracks that
     // would've duplicated CIRCUIT CRUSH (Perturbator "Future Club",
     // Carpenter Brut "Turbo Killer") were deliberately left out to keep the
-    // two stations' rosters distinct. Down to 24 after this pass -- "Da
-    // Funk" pulled (its official video has audio baked over/under the
-    // studio track, not a clean listen for a radio station).
+    // two stations' rosters distinct. Down to 24 after "Da Funk" was
+    // pulled (its official video has audio baked over/under the studio
+    // track, not a clean listen for a radio station). Now at 21: dropped
+    // both Leftfield tracks (Song of Life, Phat Planet) and both Aphex
+    // Twin tracks (Windowlicker, Come to Daddy) at Matthew's request, and
+    // added The Prodigy's "Omen" (oEmbed-verified, official Prodigy
+    // channel upload).
     tracks: [
       realTrack('wmin5WkOuPw', 'Firestarter', 'The Prodigy'),
       realTrack('xW17jtkjvvg', 'Smack My Bitch Up', 'The Prodigy'),
+      realTrack('xMVTKOoy1uk', 'Omen', 'The Prodigy'),
       realTrack('iTxOKsyZ0Lw', "Block Rockin' Beats", 'The Chemical Brothers'),
       realTrack('L0dxByaPWhM', 'Elektrobank', 'The Chemical Brothers'),
       realTrack('FGBhQbmPwH8', 'One More Time', 'Daft Punk'),
@@ -465,14 +470,10 @@ const CHANNELS = [
       realTrack('yJnve05CnNE', 'The Box', 'Orbital'),
       realTrack('u7K72X4eo_s', 'Teardrop', 'Massive Attack'),
       realTrack('Z15c2UineoU', 'Safe from Harm', 'Massive Attack'),
-      realTrack('QmKE9zKYx0g', 'Song of Life', 'Leftfield'),
-      realTrack('_YDyMlE5wUA', 'Phat Planet', 'Leftfield'),
       realTrack('XiMrrleH_hI', 'Born Slippy .NUXX', 'Underworld'),
       realTrack('F6Y7lcvubhU', 'Rez', 'Underworld'),
       realTrack('BkZroY_oERY', 'Roygbiv', 'Boards of Canada'),
       realTrack('A2zKARkpDW4', 'Dayvan Cowboy', 'Boards of Canada'),
-      realTrack('UBS4Gi1y_nc', 'Windowlicker', 'Aphex Twin'),
-      realTrack('h-9UvrLyj3k', 'Come to Daddy', 'Aphex Twin'),
       realTrack('JATZS5_Qi80', 'Journeyman', 'Amon Tobin'),
       realTrack('NB3MyO_RfpY', 'Bloodstone', 'Amon Tobin'),
       realTrack('MWCSw_cNxKc', 'Come On My Selector', 'Squarepusher'),
