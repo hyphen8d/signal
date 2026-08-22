@@ -2976,6 +2976,7 @@ export default {
       state = 'paused'
     }
 
+    this.drawSnrReadout(s, startX, rows, state)
     this.drawFieldReadout(s, startX, rows, state)
     this.drawEqRibbon(s, startX, rows, state)
     // 31st pass (Matthew: "how should and could we fill that space... make
@@ -3035,6 +3036,44 @@ export default {
     const x0 = METERS_DIVIDER_X + 2
     const label = this.muted ? 'MUTE [ON ]' : 'MUTE [OFF]'
     term.text(x0, y, label, this.muted ? BRIGHT : FAINT)
+  },
+
+  /** 39th pass -- signal-to-noise, in the last free block of the antenna
+   *  pane's right margin (the row directly above FLD). The pair is the
+   *  point: FLD is how MUCH signal is arriving, S/N is how CLEAN it is, and
+   *  real receivers show both because they answer different questions.
+   *
+   *  Unlike every other readout in this pane, this one is not decorative --
+   *  it is derived from the actual tuning distance, on the same
+   *  NEAR_THRESHOLD curve the static bed (staticGainForDist) and the CRT
+   *  degrade (crtDegradeForDist) already use. So it agrees with what you
+   *  are hearing and seeing by construction rather than by coincidence:
+   *  hunting between stations reads in the teens, easing onto a carrier
+   *  climbs it, locked pins it at the top.
+   *
+   *  Deliberately NO randomness or spring, which is what separates it from
+   *  its neighbours: the rings, the EQ ribbon and FLD are all continuous
+   *  and fast, and a fourth jittering number would just add noise to the
+   *  busiest corner of the screen. This only changes when the dial does.
+   *  Fixed-width output (always "S/N " + 2 digits, same shape as FLD's), so
+   *  it can never leave a stray character behind between redraws. */
+  SNR_MAX: 56,
+  SNR_MIN: 9,
+  drawSnrReadout(s, startX, rows, state) {
+    const { term } = s
+    const y = rows[0] // VOL_Y -- directly above FLD on SIG_Y
+    const x0 = startX + this.ANTENNA_TEMPLATE[0].length + 2
+    // Locked pins to a clean reading rather than measuring. dist is 0 at a
+    // station's own frequency anyway, so this is the same number 99% of the
+    // time -- but it also means nothing (a rounding artifact, a redraw
+    // landing mid-sweep before tryLock has retuned to the exact frequency)
+    // can ever show a degraded S/N on a carrier the set is holding. Locked
+    // is locked.
+    const pct = state === 'seeking' ? Math.min(1, nearestStation(this.freq).dist / NEAR_THRESHOLD) : 0
+    const snr = Math.round(this.SNR_MAX + (this.SNR_MIN - this.SNR_MAX) * pct)
+    // Same attribute convention as drawFieldReadout() below, so the two
+    // readouts read as one stacked pair rather than two unrelated labels.
+    term.text(x0, y, `S/N ${String(snr).padStart(2, '0')}`, state === 'seeking' ? FAINT : DIM)
   },
 
   // Secondary readout, upper-right margin of the antenna pane (30th pass,
