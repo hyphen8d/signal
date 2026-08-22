@@ -6,16 +6,21 @@
 // playback feedback (playing/paused, what's on), so that's treated as a
 // real UI requirement here, not cosmetic.
 //
-// Each channel has real, verified tracks (see realTrack() below). Real
-// per-channel playlists (several hours, no near-term repeat) are still the
+// Each station has real, verified tracks (see realTrack() below). Real
+// per-station playlists (several hours, no near-term repeat) are still the
 // next real step before this goes anywhere near real people.
 
 import { NORMAL, BRIGHT, BOLD, DIM, MUTED, FAINT, BG } from './src/term.js'
+// 32nd pass: SCREEN is the CRT engine's nominal param baseline (see
+// config.js) -- needed here so the new live CRT hooks (search "32nd pass"
+// below) know what "clean picture" and "warmed up" actually mean, rather
+// than hardcoding a second copy of those numbers.
+import { SCREEN } from './config.js'
 
 // Version tag (28th pass, Matthew: "add version in upper left after
 // SIGNAL") -- shown in the title bar right next to the SIGNAL wordmark,
-// e.g. "SIGNAL v0.6". Bump on future releases.
-const VERSION_TAG = 'v0.6'
+// e.g. "SIGNAL v0.7". Bump on future releases.
+const VERSION_TAG = 'v0.7'
 
 // --- data -------------------------------------------------------------
 
@@ -52,12 +57,12 @@ const DISPLAY_MODES = [
   { key: 'bubblegum', label: 'BUBBLEGUM PINK' },
 ]
 
-/** Real, searched-and-verified (YouTube oEmbed) tracks per channel, so each
+/** Real, searched-and-verified (YouTube oEmbed) tracks per station, so each
  *  station is at least genuinely different from the others -- the 4 recycled
  *  placeholder IDs (one of them literally the Rick Astley rickroll) were the
- *  same clips on every channel, which is what made it impossible to
- *  actually evaluate. Each channel now carries 2 real tracks and nothing
- *  else; real per-channel playlists (several hours, no near-term repeat)
+ *  same clips on every station, which is what made it impossible to
+ *  actually evaluate. Each station now carries 2 real tracks and nothing
+ *  else; real per-station playlists (several hours, no near-term repeat)
  *  are the next real step. */
 function realTrack(youtubeId, title, artist) {
   return { id: `yt:${youtubeId}:real`, youtubeId, title, artist }
@@ -67,7 +72,7 @@ function realTrack(youtubeId, title, artist) {
 // short creative descriptions instead of e.g. "flow / focus". These are a
 // first draft, easy to swap.
 // `ident` is a short WebAudio tone sequence (Hz, played in order) that
-// stands in for a station ID jingle -- one per channel, so locking onto a
+// stands in for a station ID jingle -- one per station, so locking onto a
 // station sounds distinctive before you've even read the screen (added
 // 2026-08-20, 9th pass, Matthew: "let's try station idents"). Standardized
 // to exactly 4 tones each (10th pass, Matthew: "station IDS to be 4 tones
@@ -86,17 +91,19 @@ function realTrack(youtubeId, title, artist) {
 // this pass (Matthew: "add at least 4 more songs to each remaining
 // station"), on top of whatever it already had -- so QUIET HOURS actually
 // gained 6 (4 new + the 2 reassigned) and the rest gained 4.
-const CHANNELS = [
+const STATIONS = [
   { id: 'distortion-field', freq: 137.4, callsign: 'DISTORTION FIELD', tagline: "heavy guitars, raw nerve, '90s angst",
     // 28th pass (2026-08-21): renamed from STATIC BLOOM per Matthew's
     // station-naming pass -- "DISTORTION FIELD" / "heavy guitars, raw
     // nerve, '90s angst" was the locked-in choice (option 1B). Same
     // grunge/alt-rock lane, same ident, same tracks -- name/tagline only.
     like: 'Nirvana, Soundgarden, Alice In Chains', // 18th pass: guide station reference
+    // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
+    desc: 'Grunge and alternative rock from the early-to-mid 90s Seattle sound and its ripple effects -- distorted guitars, raw vocals, and radio-ready angst.',
     // Matthew 8/20: "I don't hear a station id tone for static bloom." The
     // ident itself was firing fine (confirmed by hooking createOscillator
     // in a live tab) -- it was just pitched a full octave below every other
-    // channel's ident (130.8-196 vs. 300+ everywhere else), quiet-to-silent
+    // station's ident (130.8-196 vs. 300+ everywhere else), quiet-to-silent
     // on typical laptop/built-in speakers for a 160ms burst. Same 4-note
     // shape, one octave up: still the lowest/moodiest ident of the set,
     // just actually audible.
@@ -132,6 +139,19 @@ const CHANNELS = [
       realTrack('28kAclQZLTE', "Pretend We're Dead", 'L7'),
       realTrack('q-KE9lvU810', 'Cherub Rock', 'The Smashing Pumpkins'),
       realTrack('PjsMnvqL7eY', 'Tomorrow', 'Silverchair'),
+      // 29th pass: brought to 20 tracks per Matthew's roster-wide expansion.
+      realTrack('JNZezhUkOSk', 'Jeremy', 'Pearl Jam'),
+      realTrack('V5UOC0C0x8Q', 'Plush', 'Stone Temple Pilots'),
+      realTrack('TAqZb52sgpU', 'Man in the Box', 'Alice In Chains'),
+      realTrack('T0_zzCLLRvE', 'Spoonman', 'Soundgarden'),
+      realTrack('4aeETEoNfOg', '1979', 'The Smashing Pumpkins'),
+      // 33rd pass: brought to 25 tracks per Matthew's second roster-wide
+      // expansion, oEmbed-verified same as everything else.
+      realTrack('vabnZ9-ex7o', 'Come As You Are', 'Nirvana'),
+      realTrack('EqWRaAF6_WY', 'My Hero', 'Foo Fighters'),
+      realTrack('1lfd7zeHRRs', 'Dollar Bill', 'Screaming Trees'),
+      realTrack('RD9xK9smth4', 'Doll Parts', 'Hole'),
+      realTrack('8KHwuOtcALQ', 'Freak', 'Silverchair'),
     ] },
   // RELIC SIGNAL (classical, 219.8) retired 2026-08-21 (28th pass, per
   // Matthew's station-naming pass) -- its classical lane overlapped with
@@ -154,9 +174,11 @@ const CHANNELS = [
     // 28th pass: renamed from QUIET HOURS (option 2B minus "sleep well").
     // Same ambient/drone lane, same ident, same tracks -- name/tagline only.
     like: 'Brian Eno, Sigur Rós, Grouper',
+    // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
+    desc: 'Ambient, modern classical, and drone pieces built for stillness -- slow-moving, mostly wordless, meant to fade into the room instead of demanding it.',
     // 25th pass: was a straight descent, same shape as 3 other stations --
     // now a gentle down-up-down undulation (D U D), a shape unique to this
-    // channel, and the slowest identTempo of the set.
+    // station, and the slowest identTempo of the set.
     ident: [392.0, 329.6, 370.0, 293.7],
     identTempo: 1.35,
     // 25th pass: ambient/drone masters are mastered deliberately quiet
@@ -188,9 +210,24 @@ const CHANNELS = [
       realTrack('-bc37fU36Vk', 'Requiem for Dying Mothers, Pt. 1', 'Stars of the Lid'),
       realTrack('vTaBX_FoGWk', 'Release', 'Hammock'),
       realTrack('ShW8YyueC1s', 'In the Fog I', 'Tim Hecker'),
+      // 29th pass: brought to 20 tracks per Matthew's roster-wide expansion.
+      realTrack('SwmRJQAx8eA', 'Requiem for the Static King, Pt. 1', 'A Winged Victory for the Sullen'),
+      realTrack('ngUnLL4CAck', 'A Song for Europa', 'Jóhann Jóhannsson'),
+      realTrack('mwJTwG5r5Ks', 'The Plateaux of Mirror', 'Harold Budd / Brian Eno'),
+      realTrack('2CN1qXJJODI', 'Cast of Mind', 'Kali Malone'),
+      realTrack('EFQlQHGuB20', 'Red Tide', 'Loscil'),
+      // 33rd pass: brought to 25 tracks per Matthew's second roster-wide
+      // expansion, oEmbed-verified same as everything else.
+      realTrack('nvtV4fvNJpY', 'Radio Ballet', 'Eluvium'),
+      realTrack('ONQt97F9KKI', 'Opus 23', "Dustin O'Halloran"),
+      realTrack('SDru80vHKxU', 'Keep Up the Good Work', 'Julianna Barwick'),
+      realTrack('aTcYsYZ5ZxA', 'Not At Home', 'Peter Broderick and Nils Frahm'),
+      realTrack('pygwK0sBUdM', 'andata', 'Ryuichi Sakamoto'),
     ] },
   { id: 'cold-wave', freq: 512.9, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     like: 'New Order, The Cure, Depeche Mode',
+    // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
+    desc: 'Synth-driven new wave and synthpop from the early-to-mid 80s -- drum machines, cold hooks, and neon nostalgia for a decade that never quite ended.',
     // 25th pass: was a straight ascent, same shape as 3 other stations --
     // now reaches up then falls back twice (U D D), a moodier shape that
     // suits "synthetic hearts, borrowed neon" better anyway.
@@ -219,15 +256,33 @@ const CHANNELS = [
       // 27th pass: 5 more tracks, oEmbed-verified same as everything else.
       realTrack('XZVpR3Pk-r8', 'Tainted Love', 'Soft Cell'),
       realTrack('p3j2NYZ8FKs', 'West End Girls', 'Pet Shop Boys'),
-      realTrack('hKAT3Kp56Yg', 'Vienna', 'Ultravox'),
       realTrack('nTizYn3-QN0', 'Rio', 'Duran Duran'),
-      realTrack('JJOFQ3OtJIY', 'Ghosts', 'Japan'),
+      // 33rd pass: "Vienna" (Ultravox) and "Ghosts" (Japan) pulled per
+      // Matthew's request -- replaced/expanded below.
+      // 29th pass: brought to 20 tracks per Matthew's roster-wide expansion.
+      realTrack('djV11Xbc914', 'Take On Me', 'a-ha'),
+      realTrack('tkOr12AQpnU', 'Bizarre Love Triangle', 'New Order'),
+      realTrack('6Uxc9eFcZyM', 'Save a Prayer', 'Duran Duran'),
+      realTrack('Ye7FKc1JQe4', 'Shout', 'Tears for Fears'),
+      realTrack('EPmTGFg06zA', 'If You Leave', 'Orchestral Manoeuvres in the Dark'),
+      // 33rd pass: brought to 25 tracks per Matthew's second roster-wide
+      // expansion (also covers the 2 slots freed by pulling Vienna/Ghosts),
+      // oEmbed-verified same as everything else.
+      realTrack('PAqk72wm4As', 'Fade to Grey', 'Visage'),
+      realTrack('AsMcT03cSvs', 'Only You', 'Yazoo'),
+      realTrack('tl6u2NASUzU', 'Big in Japan', 'Alphaville'),
+      realTrack('LGD9i718kBU', 'Love My Way', 'The Psychedelic Furs'),
+      realTrack('LWz0JC7afNQ', 'The Killing Moon', 'Echo & the Bunnymen'),
+      realTrack('cFH5JgyZK1I', "It's My Life", 'Talk Talk'),
+      realTrack('_6FBfAQ-NDE', "Just Can't Get Enough", 'Depeche Mode'),
     ] },
   { id: 'momentum', freq: 823.1, callsign: 'MOMENTUM', tagline: 'building blocks, deep focus, productive drift',
     // 28th pass: renamed from THE STUDY (option e, after more naming
     // options were requested). Same lofi/downtempo focus lane, same ident,
     // same tracks -- name/tagline only.
     like: 'Nujabes, Bonobo, Tycho',
+    // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
+    desc: 'Chillhop and instrumental beats built for getting things done -- sampled jazz, lo-fi drums, and just enough melody to hold focus without breaking it.',
     // 25th pass: was a straight descent, same shape as 3 other stations --
     // now descends then flicks up at the end (D D U), a small lo-fi
     // "wobble" tag instead of a flat fade-out.
@@ -257,6 +312,19 @@ const CHANNELS = [
       realTrack('oUbznuLaBRs', 'Anthem', 'Emancipator'),
       realTrack('VZBrZV3nHAA', 'Awake', 'Tycho'),
       realTrack('nhl3wfXeCzU', 'econto', 'Wun Two'),
+      // 29th pass: brought to 20 tracks per Matthew's roster-wide expansion.
+      realTrack('mc_xD6aGV5w', 'Luv(sic) Part 3 feat. Shing02', 'Nujabes'),
+      realTrack('L-kyRh7N-kE', 'Kiara', 'Bonobo'),
+      realTrack('m94Dhu8gUDw', 'Dive', 'Tycho'),
+      realTrack('fULXi348-jI', 'Minor Cause', 'Emancipator'),
+      realTrack('5nO7IA1DeeI', 'Workinonit', 'J Dilla'),
+      // 33rd pass: brought to 25 tracks per Matthew's second roster-wide
+      // expansion, oEmbed-verified same as everything else.
+      realTrack('_zMcKruOqa8', 'Luv Letter', 'DJ Okawari'),
+      realTrack('zRtN7NRFiZU', 'Somewhere (Deep In The Night)', 'Onra'),
+      realTrack('N_gGGpKrIZc', 'Fog', 'Nosaj Thing'),
+      realTrack('8oQGWJ3CwBM', 'Sheets', 'Mndsgn'),
+      realTrack('u8QhbV1Vyfs', 'Sunrise To Sunset', 'Kupla'),
     ] },
 
   // 4 new stations added 2026-08-20, tracklists as given by Matthew, all
@@ -268,6 +336,8 @@ const CHANNELS = [
     // 28th pass: renamed from HIGH RISE (option 7B). Same city pop lane,
     // same ident, same tracks -- name/tagline only.
     like: 'Tatsuro Yamashita, Anri, Mariya Takeuchi',
+    // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
+    desc: "Japanese city pop from the genre's late-70s to late-80s peak -- glossy production, funk basslines, and the sound of Tokyo lit up after dark.",
     // 25th pass: was a straight ascent, same shape as 3 other stations --
     // now a bouncy up-down-up (U D U), closer to the syncopated groove the
     // genre itself has.
@@ -300,6 +370,20 @@ const CHANNELS = [
       realTrack('4wVN8r14mT0', 'Midnight Girl', 'Toshiki Kadomatsu'),
       realTrack('WCaOX3PuKKo', 'Kimi no Heart wa Marine Blue', 'S. Kiyotaka & Omega Tribe'),
       realTrack('-YSwJh-4j1s', 'Loveland, Island', 'Tatsuro Yamashita'),
+      // 29th pass: brought to 20 tracks per Matthew's roster-wide expansion.
+      realTrack('MH-P4mXvDPE', 'Rouge no Dengon', 'Yumi Matsutoya'),
+      realTrack('ZhmiKjBEtbg', 'Sea Line', 'Toshiki Kadomatsu'),
+      realTrack('Z056hRt23Fo', 'Remember Summer Days', 'Anri'),
+      realTrack('NxfiM2SzqYo', 'Fantasy', 'Meiko Nakahara'),
+      realTrack('C58nGJ6pn8Q', 'Purple Town', 'Junko Yagami'),
+      // 33rd pass: brought to 25 tracks per Matthew's second roster-wide
+      // expansion, oEmbed-verified same as everything else. Still
+      // Japan-only city pop per the 8/20 editorial decision.
+      realTrack('QLvQFLtQyf0', 'Mizuiro no Ame', 'Junko Yagami'),
+      realTrack('pTV0dOFOtHg', 'September', 'Mariya Takeuchi'),
+      realTrack('8O8m36Jr1Uk', 'Tokai (City)', 'Taeko Onuki'),
+      realTrack('CyFTrxwviTc', 'Summer Suspicion', 'S. Kiyotaka & Omega Tribe'),
+      realTrack('1x57WiR-uVo', 'Koi no Projection', 'Momoko Kikuchi'),
     ] },
   // 22nd pass (Matthew: "drop outlaw channel completely, 9 channels is our
   // max for now") -- OUTLAW (freq 288.6, spaghetti-western/outlaw-country)
@@ -310,6 +394,8 @@ const CHANNELS = [
   // Cave, Tom Russell, Calexico) is in git history on this commit's parent.
   { id: 'circuit-crush', freq: 434.5, callsign: 'CIRCUIT CRUSH', tagline: 'analog glow, the long drive home',
     like: 'Kavinsky, GUNSHIP, Perturbator',
+    // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
+    desc: "Synthwave and retrowave for a drive that never quite ends -- arpeggios, gated drums, and every neon-lit highway from a movie that doesn't exist.",
     // 25th pass: was a straight ascent, same shape as 3 other stations --
     // now dips then double-rises (D U U), and the fastest identTempo of
     // the set, for a punchier/more aggressive announce.
@@ -335,6 +421,19 @@ const CHANNELS = [
       realTrack('Y8DekFFCE5c', 'Humans Are Such Easy Prey', 'Perturbator'),
       realTrack('0x1tidUctv4', 'Body Talk', 'Mitch Murder'),
       realTrack('VUQxsBTqh1s', 'The Wrath of Code', 'Dan Terminus'),
+      // 29th pass: brought to 20 tracks per Matthew's roster-wide expansion.
+      realTrack('Jv1ZN8c4_Gs', 'Fly For Your Life', 'GUNSHIP'),
+      realTrack('Io6TL3RQ5zw', 'Black Rain', 'Miami Nights 1984'),
+      realTrack('51qi_aNKHWk', 'Los Angeles (Live)', 'The Midnight'),
+      realTrack('2KU9i_sx4zM', 'Tonight (feat. Back In The Future)', 'Timecop1983'),
+      realTrack('G02wKufX3nw', 'In The Face Of Evil', 'Magic Sword'),
+      // 33rd pass: brought to 25 tracks per Matthew's second roster-wide
+      // expansion, oEmbed-verified same as everything else.
+      realTrack('ntTRv7XUxM8', 'Cyanide Sisters', 'Com Truise'),
+      realTrack('zYfs-bZS5Zw', 'Nightdrive With You', 'Anoraak'),
+      realTrack('O0LB9cIobXY', 'Monochrome', 'Scandroid'),
+      realTrack('LDjJ4SSPsZk', 'Time Traveler', 'Betamaxx'),
+      realTrack('IDd5JgAcLhI', 'Behemoth', 'GosT'),
     ] },
   // 23rd pass: freq nudged 878.9 -> 854.9 (Matthew: "station 8 and 9 are too
   // close to each other") -- freqToCol() rounded 878.9 and HACKBACK's 893.7
@@ -345,6 +444,8 @@ const CHANNELS = [
   // across ATOMIC/HACKBACK instead.
   { id: 'atomic', freq: 854.9, callsign: 'ATOMIC', tagline: 'swing on while the counter clicks', // 19th pass: trimmed
     like: 'The Ink Spots, Roy Brown, The Five Stars',
+    // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
+    desc: 'An in-universe atomic-age broadcast: swing, jump blues, and doo-wop from the actual 1940s-50s, playing on regardless of what the counter reads.',
     // 25th pass: was up-up-down, which HACKBACK's new ident also needed --
     // reassigned to a repeated-note doo-wop "bum-BUM" bounce (U flat U)
     // instead, since ATOMIC's genre suits a held repeated note better than
@@ -390,6 +491,24 @@ const CHANNELS = [
       realTrack('WVgCo1L9yaY', 'Mr. Sandman', 'The Chordettes'),
       realTrack('CSW64jVTDF0', 'Sixteen Tons', 'Tennessee Ernie Ford'),
       realTrack('zhSSJRuGw4c', 'Ghost Riders in the Sky', 'Sons of the Pioneers'),
+      // 29th pass: brought to 20 tracks per Matthew's roster-wide expansion.
+      // Concept-tied station -- these are genuine period recordings
+      // (1941-1954), verified via oEmbed off a reputable oldies-archive
+      // station, same discipline as the rest of this roster.
+      realTrack('P1EG__jgefA', "Choo Choo Ch'Boogie", 'Louis Jordan & His Tympany Five'),
+      realTrack('wf4nY0mLrrA', 'Boogie Woogie Bugle Boy', 'The Andrews Sisters'),
+      realTrack('MiFSYJjvgwc', 'Shake, Rattle and Roll', 'Big Joe Turner'),
+      realTrack('iYhNtOgwUho', 'All She Wants to Do Is Rock', 'Wynonie Harris'),
+      realTrack('b3iamUsIsic', 'Wheel of Fortune', 'Kay Starr'),
+      // 33rd pass: brought to 25 tracks per Matthew's second roster-wide
+      // expansion -- same concept-tied discipline as above: each confirmed
+      // as a real, well-attested atomic-age/period recording, oEmbed-
+      // verified same as everything else.
+      realTrack('eP9nD0TsqEI', "It's a Sin to Tell a Lie", 'The Ink Spots'),
+      realTrack('9A7vuGLocRw', 'Nightmare', 'Artie Shaw & His Orchestra'),
+      realTrack('V1HiJR4KkaM', 'Crazy He Calls Me', 'Billie Holiday'),
+      realTrack('F0qD-SKugUU', 'Way Back Home', 'Bob Crosby and the Bobcats'),
+      realTrack('jq2kqNTHejM', 'Uranium Rock', 'Warren Smith'),
     ] },
   // 20th pass (Matthew: "add a new channel for 0 called Hackback with music
   // like tribe called quest, de la soul, slick rick, outkast, wu tang, MF
@@ -401,8 +520,10 @@ const CHANNELS = [
   // ATOMIC and reads as its own distinct tick near the top of the band.
   // 28th pass: tagline updated to "golden age hip-hop, west coast legends,
   // deep cuts" (option 9A, tagline option b) -- name (HACKBACK) unchanged.
-  { id: 'hackback', freq: 888.7, callsign: 'HACKBACK', tagline: 'golden age hip-hop, west coast legends, deep cuts',
+  { id: 'hackback', freq: 888.7, callsign: 'HACKBACK', tagline: 'golden age hip-hop, west coast legends',
     like: 'A Tribe Called Quest, De La Soul, Wu-Tang Clan',
+    // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
+    desc: 'Golden-age hip-hop with a west coast backbone -- classic boom-bap, deep cuts, and a few legends who never needed a feature to prove it.',
     // 25th pass: was a straight descent, same shape as 3 other stations --
     // now a rise then a hard drop (U U D), like a boom-bap tag snapping
     // down on the beat, with a tight/punchy identTempo to match.
@@ -428,14 +549,29 @@ const CHANNELS = [
       realTrack('y9lNbNGbo24', 'Mass Appeal', 'Gang Starr'),
       realTrack('cM4kqL13jGM', 'Rebirth of Slick (Cool Like Dat)', 'Digable Planets'),
       realTrack('s2RhCDAMDBo', 'Respiration', 'Black Star'),
+      // 29th pass: brought to 20 tracks per Matthew's roster-wide expansion.
+      realTrack('8GliyDgAGQI', 'Nuthin\' But A "G" Thang', 'Dr. Dre'),
+      realTrack('h4UqMyldS7Q', 'It Was A Good Day', 'Ice Cube'),
+      realTrack('a-mAK3uB2_0', "Passin' Me By", 'The Pharcyde'),
+      realTrack('1plPyJdXKIY', 'Regulate', 'Warren G'),
+      realTrack('1ut9spXrkDw', 'They Reminisce Over You (T.R.O.Y.)', 'Pete Rock & C.L. Smooth'),
+      // 33rd pass: brought to 25 tracks per Matthew's second roster-wide
+      // expansion, oEmbed-verified same as everything else.
+      realTrack('KKA9rMWbygw', 'Check Yo Self', 'Ice Cube'),
+      realTrack('ru2IrTY2UG0', 'Accordion', 'MF DOOM (Madvillain)'),
+      realTrack('hI8A14Qcv68', 'N.Y. State of Mind', 'Nas'),
+      realTrack('TgelVkHEKdw', 'DWYCK', 'Gang Starr'),
+      realTrack('EuJaStSL0xM', 'Definition', 'Black Star'),
     ] },
-  { id: 'cipher', freq: 219.8, callsign: 'CIPHER', tagline: 'ghost protocol, digital infiltration, breakbeat noir',
+  { id: 'cipher', freq: 219.8, callsign: 'CIPHER', tagline: 'digital infiltration, breakbeat noir',
     // 28th pass (2026-08-21): New cyberpunk station, hacker movies/synthwave
     // aesthetic (locked-in name/tagline per Matthew's naming pass). Placed
     // at 219.8, the frequency freed by RELIC SIGNAL's retirement (see the
     // retirement comment above DRIFT MODE) -- keeps the roster at 9
     // stations total rather than growing to 10.
     like: 'The Prodigy, Chemical Brothers, Daft Punk',
+    // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
+    desc: 'Big beat and breakbeat electronica for late-night infiltration runs -- Chemical Brothers, Prodigy, and Massive Attack alongside everything that soundtracked a decade of hacker movies.',
     // Ident is a bouncy up-down-up-down (U D U D) breakbeat style.
     ident: [523.3, 349.2, 587.3, 293.7],
     identTempo: 0.9,
@@ -452,24 +588,36 @@ const CHANNELS = [
     // Carpenter Brut "Turbo Killer") were deliberately left out to keep the
     // two stations' rosters distinct. Down to 24 after "Da Funk" was
     // pulled (its official video has audio baked over/under the studio
-    // track, not a clean listen for a radio station). Now at 21: dropped
+    // track, not a clean listen for a radio station). Then 21: dropped
     // both Leftfield tracks (Song of Life, Phat Planet) and both Aphex
     // Twin tracks (Windowlicker, Come to Daddy) at Matthew's request, and
     // added The Prodigy's "Omen" (oEmbed-verified, official Prodigy
-    // channel upload).
+    // channel upload). Now 22 -- Song of Life (Leftfield) re-added at
+    // Matthew's request during the roster-wide "bring every station to
+    // ~20" pass. Note: this exact track is the one signal-dev's notes
+    // flag as having stalled at IFrame state UNSTARTED during a live
+    // verification pass despite a clean oEmbed 200 -- not dead, just
+    // worth a second look if it ever seems to hang on lock.
     tracks: [
       realTrack('wmin5WkOuPw', 'Firestarter', 'The Prodigy'),
       realTrack('xW17jtkjvvg', 'Smack My Bitch Up', 'The Prodigy'),
       realTrack('xMVTKOoy1uk', 'Omen', 'The Prodigy'),
       realTrack('iTxOKsyZ0Lw', "Block Rockin' Beats", 'The Chemical Brothers'),
       realTrack('L0dxByaPWhM', 'Elektrobank', 'The Chemical Brothers'),
-      realTrack('FGBhQbmPwH8', 'One More Time', 'Daft Punk'),
-      realTrack('ruAi4VBoBSM', 'Praise You', 'Fatboy Slim'),
-      realTrack('wCDIYvFmgW8', 'Weapon of Choice', 'Fatboy Slim ft. Bootsy Collins'),
+      // 35th pass: both Daft Punk tracks pulled per Matthew's request --
+      // "One More Time" (French house) and "Derezzed" (2010 Tron: Legacy
+      // score) read as off-genre for a station meant to capture 90s-2000s
+      // hacker-movie culture specifically. Replaced below with two tracks
+      // that are actually of that era/soundtrack lineage.
+      // 34th pass: both Fatboy Slim tracks pulled per Matthew's request,
+      // replaced below (oEmbed-verified same as everything else). One
+      // candidate replacement ("Windowlicker", Aphex Twin) was rejected --
+      // that artist was already deliberately removed from this station.
       realTrack('3SwwljI-8JY', 'Halcyon', 'Orbital'),
       realTrack('yJnve05CnNE', 'The Box', 'Orbital'),
       realTrack('u7K72X4eo_s', 'Teardrop', 'Massive Attack'),
       realTrack('Z15c2UineoU', 'Safe from Harm', 'Massive Attack'),
+      realTrack('QmKE9zKYx0g', 'Song of Life', 'Leftfield'),
       realTrack('XiMrrleH_hI', 'Born Slippy .NUXX', 'Underworld'),
       realTrack('F6Y7lcvubhU', 'Rez', 'Underworld'),
       realTrack('BkZroY_oERY', 'Roygbiv', 'Boards of Canada'),
@@ -478,22 +626,36 @@ const CHANNELS = [
       realTrack('NB3MyO_RfpY', 'Bloodstone', 'Amon Tobin'),
       realTrack('MWCSw_cNxKc', 'Come On My Selector', 'Squarepusher'),
       realTrack('ev3vENli7wQ', 'Gantz Graf', 'Autechre'),
-      realTrack('0te4syL3U9c', 'Derezzed', 'Daft Punk (Tron: Legacy)'),
+      // 35th pass: replacements for the two pulled Daft Punk tracks.
+      // "Clubbed to Death" is the lobby-shootout/subway cue from The Matrix
+      // (1999) -- no official-channel upload exists on YouTube, so this ID
+      // is the best-quality embeddable fan upload, oEmbed-verified same as
+      // everything else. "Prime Audio Soup" was used directly in The Matrix
+      // itself.
+      realTrack('DzNex7Mf1bg', 'Clubbed to Death (Kurayamino Mix)', 'Rob Dougan'),
+      realTrack('lCCQdH9dffA', 'Prime Audio Soup', 'Meat Beat Manifesto'),
+      // 33rd pass: brought to 25 tracks per Matthew's second roster-wide
+      // expansion, oEmbed-verified same as everything else.
+      realTrack('iCBL33NKvPA', 'Spybreak!', 'Propellerheads'),
+      realTrack('OjTC88oIRys', 'Busy Child', 'The Crystal Method'),
+      realTrack('s-1Y2EqThyQ', 'LFO', 'LFO'),
+      realTrack('wfWMv8Y1V5E', 'Papua New Guinea', 'The Future Sound of London'),
+      realTrack('XAlLaGhfLq4', 'B-Boy Stance', 'Freestylers'),
     ] },
 ]
 
 // Preset-key ordering (17th pass, Matthew: "presets should match the tuning
-// band left to right") -- CHANNELS above is ordered however stations were
+// band left to right") -- STATIONS above is ordered however stations were
 // added over time (original 5, then 4 more slotted into freq gaps), not by
 // frequency, so pressing 1-9 in order used to jump around the dial instead
 // of walking it left to right (e.g. preset 5, THE STUDY at 823.1, sat to
 // the RIGHT of preset 6, HIGH RISE at 650.0). Rather than reshuffle the
-// CHANNELS array itself -- which would scatter the historical comments
+// STATIONS array itself -- which would scatter the historical comments
 // documenting when/why each station and its frequency were added -- this
 // derives a separate lookup sorted by freq ascending, so preset number
 // order always matches left-to-right position on the dial regardless of
-// CHANNELS' own (chronological) order.
-const CHANNEL_PRESET_ORDER = [...CHANNELS].sort((a, b) => a.freq - b.freq)
+// STATIONS' own (chronological) order.
+const STATION_PRESET_ORDER = [...STATIONS].sort((a, b) => a.freq - b.freq)
 
 // --- layout (80x25 grid) -----------------------------------------------
 
@@ -639,6 +801,59 @@ function truncate(str, maxLen) {
   return str.slice(0, maxLen - 3) + '...'
 }
 
+/** First n tracks from a station's tracks array, deduped so no artist
+ *  repeats -- used by the guide's per-station "SAMPLE TRACKS" list (32nd
+ *  pass, Matthew: "don't list the same artist more than once"). Walks the
+ *  array in its existing order rather than reshuffling, so the sample
+ *  still reflects what's actually first in rotation -- it just skips a
+ *  repeat artist's 2nd/3rd song in favor of the next distinct one, rather
+ *  than picking artists at random.
+ *
+ *  35th pass BUG FIX (Matthew: "brian eno as a sample track doesn't work on
+ *  drift mode's guide page") -- the original dedup keyed on the exact
+ *  `artist` string, so a collaboration credit like "Brian Eno / Orchestra of
+ *  the Swan" didn't register as the same artist as a solo "Brian Eno"
+ *  credit elsewhere in the same station, and both slipped into the sample
+ *  list -- reading as the same artist listed twice. Now dedups on the
+ *  primary credited name (text before the first "/", "&", ",", "feat.",
+ *  "ft.", " x ", or " and ", with a leading "The " stripped), so
+ *  differently-billed credits for the same act collapse to one entry. */
+function primaryArtist(artist) {
+  const first = artist.split(/\s*(?:\/|,|&|\sfeat\.|\sft\.|\sx\s|\sand\s)\s*/i)[0].trim()
+  return first.replace(/^The\s+/i, '').toLowerCase()
+}
+function sampleTracks(tracks, n) {
+  const seen = new Set()
+  const out = []
+  for (const t of tracks) {
+    const key = primaryArtist(t.artist)
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(t)
+    if (out.length >= n) break
+  }
+  return out
+}
+
+/** Greedy word-wrap: splits text into lines no wider than maxWidth,
+ *  breaking only on spaces. 32nd pass, for the guide's per-station
+ *  description block -- unlike every other guide line (fixed-format
+ *  status/header text that either fits or gets truncate()'d), a
+ *  description is free-form prose, so it needs to actually wrap rather
+ *  than get cut off with "...". */
+function wordWrap(text, maxWidth) {
+  const words = text.split(' ')
+  const lines = []
+  let cur = ''
+  for (const w of words) {
+    const next = cur ? `${cur} ${w}` : w
+    if (next.length > maxWidth && cur) { lines.push(cur); cur = w }
+    else cur = next
+  }
+  if (cur) lines.push(cur)
+  return lines
+}
+
 /** Box-drawing helpers. Borders are drawn once (in init) and never touched
  *  again -- every row-content function below clears only its own interior
  *  span, not the full canvas width, so the frame stays put across redraws. */
@@ -685,13 +900,13 @@ function colToFreq(col) {
   return FREQ_MIN + pct * (FREQ_MAX - FREQ_MIN)
 }
 function clampFreq(f) { return Math.min(FREQ_MAX, Math.max(FREQ_MIN, f)) }
-function nearestChannel(freq) {
+function nearestStation(freq) {
   let best = null, bestDist = Infinity
-  for (const ch of CHANNELS) {
+  for (const ch of STATIONS) {
     const d = Math.abs(ch.freq - freq)
     if (d < bestDist) { bestDist = d; best = ch }
   }
-  return { channel: best, dist: bestDist }
+  return { station: best, dist: bestDist }
 }
 
 // --- shuffle bag ---------------------------------------------------------
@@ -714,7 +929,7 @@ function audioCtx() {
   // from inside a keydown handler -- the very first oscillator scheduled
   // on it is silent even though nothing throws and nothing looks wrong
   // (Matthew 8/20: "I don't hear a station id tone for static bloom" --
-  // it's usually the first channel tried after a fresh page load, i.e.
+  // it's usually the first station tried after a fresh page load, i.e.
   // the first sound the context ever plays). Nudging resume() on every
   // call is a no-op once running, so this just self-heals the first call
   // instead of only fixing it retroactively on the second one.
@@ -761,12 +976,12 @@ function playLockTone() {
   } catch (e) {}
 }
 
-// Station ident (added 2026-08-20, 9th pass) -- a short per-channel tone
-// motif (see CHANNELS[].ident) played on lock instead of the generic
+// Station ident (added 2026-08-20, 9th pass) -- a short per-station tone
+// motif (see STATIONS[].ident) played on lock instead of the generic
 // playLockTone(), so each station announces itself distinctly before
-// you've even read the screen. Falls back to playLockTone() if a channel
+// you've even read the screen. Falls back to playLockTone() if a station
 // somehow has no ident defined.
-// 25th pass: added the `tempo` scalar (see CHANNELS[].identTempo) so
+// 25th pass: added the `tempo` scalar (see STATIONS[].identTempo) so
 // stations are distinct by rhythm/pacing as well as by pitch contour -- a
 // slow ambient station and a punchy synthwave one shouldn't announce
 // themselves at the same clip just because their note shapes differ.
@@ -802,7 +1017,7 @@ let staticGain = null
 // from a station") -- the noise bed used to sit at one fixed gain the whole
 // time you were seeking/scanning, so tuning felt the same whether you were
 // miles off frequency or about to land on a station. Now it fades between
-// these two based on nearestChannel's dist, mirroring the SIG meter's own
+// these two based on nearestStation's dist, mirroring the SIG meter's own
 // falloff curve (NEAR_THRESHOLD), so the static visibly/audibly clears
 // right before a lock, same as a real radio easing out of the noise floor.
 const STATIC_MAX_GAIN = 0.1
@@ -851,6 +1066,37 @@ function stopStaticNoise() {
     const ctx = audioCtx()
     gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15)
     setTimeout(() => { try { src.stop() } catch (e) {} }, 200)
+  } catch (e) {}
+}
+
+// Keypress click (32nd pass, Matthew: "a keypress sound to help sell the
+// terminal vibe") -- fires once per key() call, before anything else, so
+// it clicks even for a key that ends up doing nothing (a real keyboard
+// clicks under your finger regardless of whether the machine is on or the
+// key does anything). Deliberately its own function rather than reusing
+// playClick() below: playClick is a much louder, longer relay clack meant
+// to bookend the power sequence a couple of times a session, while this
+// one can fire dozens of times in a row during a fast seek/scan burst --
+// at that rate a full relay clack would read as chattering hardware
+// rather than typing, so this is shorter, quieter, and brighter (a
+// high-passed tick rather than a full-spectrum thump).
+function playKeyClick() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const n = Math.floor(ctx.sampleRate * 0.006)
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n)
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'highpass'
+    filter.frequency.value = 2500
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.12, t)
+    src.connect(filter).connect(gain).connect(ctx.destination)
+    src.start(t)
   } catch (e) {}
 }
 
@@ -915,7 +1161,7 @@ function playPowerOnSound() {
 // jumping straight to a preset (1-9) versus the plain lock tone"). Plays
 // once at the top of presetTune(), under the sweep -- a fast rising
 // bandpass-noise sweep, distinct from both the flat seek-static hiss and
-// the per-channel ident tones that follow once the sweep lands and locks.
+// the per-station ident tones that follow once the sweep lands and locks.
 function playPresetWhoosh() {
   try {
     const ctx = audioCtx()
@@ -944,7 +1190,7 @@ function playPresetWhoosh() {
 // localStorage persistence (14th pass, Matthew: "persistence -- yes").
 // Remembers the last-locked station, its track, volume, and mute across a
 // reload -- freq is NOT restored on its own (a bare tuned-but-not-locked
-// position isn't worth remembering), only ever alongside a channel lock.
+// position isn't worth remembering), only ever alongside a station lock.
 // 23rd pass: also remembers the chosen display mode (phosphor key), same
 // reasoning as volume/mute -- a cosmetic preference the set was left in,
 // not something tied to a station lock.
@@ -953,7 +1199,7 @@ function saveSignalState(program) {
   try {
     const mode = DISPLAY_MODES[program.displayModeIndex || 0]
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      channelId: program.lockedChannel ? program.lockedChannel.id : null,
+      stationId: program.lockedStation ? program.lockedStation.id : null,
       trackId: program.currentTrack ? program.currentTrack.id : null,
       volume: program.volume,
       muted: program.muted,
@@ -998,6 +1244,70 @@ function playStaticBurst(duration, peakGain, freq) {
     src.start(t)
     src.stop(t + duration + 0.02)
   } catch (e) {}
+}
+
+// --- CRT visual hooks (32nd pass) -----------------------------------------
+//
+// The engine (src/crt.js) reads its whole SCREEN param set fresh every
+// frame off `crt.params` -- a plain, live-mutable object -- but until this
+// pass nothing after page load ever touched it: every visual param
+// (chroma, noise, snow, roll, brightness, bg, ...) sat exactly at whatever
+// config.js set once at boot for the entire session. setPhosphor() was the
+// only engine hook program.js ever called. These three hooks are the first
+// things to actually drive the picture live, using signals the app already
+// computes for other reasons (tuning distance, the power sequence beats,
+// the existing dead-video safety net) rather than adding new state.
+
+/** Same falloff shape as staticGainForDist() (see above), against visual
+ *  params instead of a gain value -- so the picture degrades at the same
+ *  rate the static hiss does while seeking/scanning, and clears the same
+ *  moment a lock does (dist is exactly 0 at a station's own freq,
+ *  including right after tryLock() calls retune(s, station.freq), so this
+ *  self-resets to a clean picture with no separate "reset" call needed). */
+function crtDegradeForDist(dist) {
+  const pct = dist == null ? 1 : Math.min(1, dist / NEAR_THRESHOLD)
+  return {
+    chroma: SCREEN.chroma + (0.9 - SCREEN.chroma) * pct,
+    snow: SCREEN.snow + (0.035 - SCREEN.snow) * pct,
+    roll: SCREEN.roll + (0.5 - SCREEN.roll) * pct,
+  }
+}
+function setCrtDegradation(s, dist) {
+  if (!s?.crt?.params) return
+  Object.assign(s.crt.params, crtDegradeForDist(dist))
+}
+
+/** Linear-ramps a set of crt.params keys from `from` to `to` over
+ *  durationMs, in a handful of discrete steps via setTimeout -- there's no
+ *  animation-frame hook exposed for this, and a dozen steps reads as
+ *  smooth enough for a param like brightness that isn't changing per-pixel.
+ *  Used for the power-on "tube warming up" ramp below. */
+function rampCrtParams(s, from, to, durationMs, startDelay = 0) {
+  if (!s?.crt?.params) return
+  const STEPS = 12
+  for (let i = 0; i <= STEPS; i++) {
+    const t = i / STEPS
+    setTimeout(() => {
+      if (!s?.crt?.params) return
+      for (const key in to) s.crt.params[key] = from[key] + (to[key] - from[key]) * t
+    }, startDelay + durationMs * t)
+  }
+}
+
+/** One-shot ~150ms chroma/roll spike for a genuine playback error (used
+ *  from the YT player's onError handler, see tuneToStation() below) -- a
+ *  visual "broadcast hiccup" alongside the existing dead-video auto-skip,
+ *  so a dead track reads as a glitch in the signal rather than a silent
+ *  swap you only notice by ear. Restores to whatever crtDegradeForDist
+ *  says the CURRENT tuning distance calls for, not necessarily nominal, so
+ *  it can't accidentally clear a real off-station degrade already active
+ *  (though in practice onError only fires while locked, i.e. dist 0). */
+function flashCrtGlitch(s) {
+  if (!s?.crt?.params) return
+  const { dist } = nearestStation(s.program.freq)
+  const restore = crtDegradeForDist(dist)
+  Object.assign(s.crt.params, { chroma: 2.4, roll: 0.5 })
+  setTimeout(() => { if (s?.crt?.params) Object.assign(s.crt.params, restore) }, 150)
 }
 
 // --- program ---------------------------------------------------------------
@@ -1170,7 +1480,7 @@ export default {
     // exactly at FREQ_MIN.
     this.freq = FREQ_MIN
     this.mode = 'seeking' // 'seeking' | 'locked'
-    this.lockedChannel = null
+    this.lockedStation = null
     this.currentTrack = null
     this.bags = {}
     this.scanning = false
@@ -1188,9 +1498,6 @@ export default {
     // so "turning it on" always means and looks like the same thing.
     this.poweredOn = false
 
-    // 28th pass: Hidden station-hopping mode (Shift+N toggles; see key()).
-    this.stationHopping = false
-
     // Scrolling-waveform VU state (11th pass -- see drawVU()).
     this.lastProgressDraw = 0
     this.vuSample = 0.03
@@ -1207,7 +1514,7 @@ export default {
     this.eqSamples = new Array(6).fill(0.08)
     this.eqVelocities = new Array(6).fill(0)
 
-    this.history = [] // stack of previously-locked channels, for [B] back
+    this.history = [] // stack of previously-locked stations, for [B] back
     this.nowPlaying = null
     // Set once below if a saved session is restored, so powerUp() knows
     // the player needs an actual loadTrack() call (fresh YT.Player, never
@@ -1234,11 +1541,11 @@ export default {
         const idx = DISPLAY_MODES.findIndex((m) => m.key === saved.phosphor)
         if (idx !== -1) this.displayModeIndex = idx
       }
-      if (saved.channelId) {
-        const ch = CHANNELS.find((c) => c.id === saved.channelId)
+      if (saved.stationId) {
+        const ch = STATIONS.find((c) => c.id === saved.stationId)
         if (ch) {
           this.mode = 'locked'
-          this.lockedChannel = ch
+          this.lockedStation = ch
           this.freq = ch.freq
           const track = saved.trackId ? ch.tracks.find((tr) => tr.id === saved.trackId) : null
           this.currentTrack = track || ch.tracks[0]
@@ -1247,18 +1554,18 @@ export default {
       }
     }
     // 28th pass (Matthew: "sometimes it doesn't automatically seek to a
-    // channel and the user has to figure out to use arrows or hit s") -- a
+    // station and the user has to figure out to use arrows or hit s") -- a
     // first-ever visit (no saved session, or a save that somehow had no
-    // channelId) landed in 'seeking' mode sitting at FREQ_MIN with nothing
+    // stationId) landed in 'seeking' mode sitting at FREQ_MIN with nothing
     // locked, so the set just sat there silently until someone thought to
     // press an arrow key or S. A real radio doesn't power on to dead air by
     // default -- lands on a random preset instead, same as if that preset
     // had been the one restored from a save (same fields, same
     // needsTrackLoad path through powerUp()).
     if (this.mode !== 'locked') {
-      const ch = CHANNELS[Math.floor(Math.random() * CHANNELS.length)]
+      const ch = STATIONS[Math.floor(Math.random() * STATIONS.length)]
       this.mode = 'locked'
-      this.lockedChannel = ch
+      this.lockedStation = ch
       this.freq = ch.freq
       this.currentTrack = this.nextTrack(ch)
       this.needsTrackLoad = true
@@ -1339,11 +1646,11 @@ export default {
   drawDial(s) {
     const { term } = s
     for (let x = DIAL_X0; x <= DIAL_X1; x++) term.put(x, DIAL_Y, '·', FAINT)
-    const { channel: near, dist } = nearestChannel(this.freq)
-    for (const ch of CHANNELS) {
+    const { station: near, dist } = nearestStation(this.freq)
+    for (const ch of STATIONS) {
       const col = freqToCol(ch.freq)
       const glow = this.mode === 'seeking' && ch === near && dist <= NEAR_THRESHOLD
-      const locked = this.mode === 'locked' && this.lockedChannel === ch
+      const locked = this.mode === 'locked' && this.lockedStation === ch
       term.put(col, DIAL_Y, '▲', locked ? BRIGHT : glow ? BOLD : NORMAL)
     }
     const cursorCol = freqToCol(this.freq)
@@ -1453,7 +1760,7 @@ export default {
   },
 
   // Power down/up (12th pass, Matthew: "let's build a power on and power
-  // down sequence"). Neither one resets freq/lockedChannel/shuffle
+  // down sequence"). Neither one resets freq/lockedStation/shuffle
   // bags/volume -- powering off and back on is meant to read as the same
   // set switching states, not a fresh boot. init() still owns the actual
   // fresh-boot path (page load) and calls drawChrome()+playBootFlicker()
@@ -1558,13 +1865,13 @@ export default {
     // receiver, not an OS, so this borrows that probe-block density and
     // key:value voice but keeps it in-fiction -- tuner/antenna/preset-table
     // diagnostics instead of kernel modules. Values are pulled from the
-    // real constants (FREQ_MIN/MAX, CHANNELS.length) so this can't drift out
+    // real constants (FREQ_MIN/MAX, STATIONS.length) so this can't drift out
     // of sync with the actual band/roster the way a hardcoded line could.
     const bootLines = [
       'MODEL SG-1  SIGNAL RECEIVER',
       '',
       `BAND        : ${FREQ_MIN.toFixed(1)} - ${FREQ_MAX.toFixed(1)} KHZ`,
-      `PRESETS     : ${CHANNELS.length} STATIONS LOADED`,
+      `PRESETS     : ${STATIONS.length} STATIONS LOADED`,
       'OSCILLATOR  : QUARTZ, CALIBRATING...',
       'ANTENNA     : DIPOLE, CONTINUITY OK',
       '',
@@ -1585,6 +1892,20 @@ export default {
     const LINE_STAGGER_MS = 240
     const BOOT_TEXT_DELAY = 1200
     const REVEAL_DELAY = BOOT_TEXT_DELAY + bootLines.length * LINE_STAGGER_MS + 700
+    // 32nd pass (Matthew: "the tube should visually warm up, not just the
+    // text reveal") -- brightness/bg ramp from a cold-tube floor up to
+    // SCREEN's nominal values across the exact same window the boot beats
+    // already use, so the picture is visibly gaining brightness right up
+    // until REVEAL_DELAY lands the full chrome. Explicit cold values here
+    // (not a fraction of whatever crt.params currently holds) so this
+    // always starts from the same "just switched on" state regardless of
+    // what a previous session left it at.
+    rampCrtParams(
+      s,
+      { brightness: 0.05, bg: 0.02 },
+      { brightness: SCREEN.brightness, bg: SCREEN.bg },
+      REVEAL_DELAY,
+    )
     const beats = [
       { delay: 0, fn: () => {
         // Same tube-off dot the collapse ended on, lighting back up first.
@@ -1616,7 +1937,7 @@ export default {
       } },
       { delay: REVEAL_DELAY, fn: () => {
         // Full picture back -- same chrome init() draws on a fresh boot,
-        // just without touching freq/lockedChannel/bags/volume/history.
+        // just without touching freq/lockedStation/bags/volume/history.
         clearAll()
         this.poweredOn = true
         this._powerAnimating = false // sequence landed, ticker can resume
@@ -1630,12 +1951,12 @@ export default {
         this.drawDial(s)
         this.drawFreq(s)
         this.drawHint(s)
-        if (this.mode === 'locked' && this.lockedChannel) {
-          // Resume exactly where it left off -- same channel, same track,
+        if (this.mode === 'locked' && this.lockedStation) {
+          // Resume exactly where it left off -- same station, same track,
           // same playback position -- rather than re-picking from the
           // shuffle bag, so it reads as the same set coming back on rather
           // than a new tune-in.
-          this.showStation(s, this.lockedChannel)
+          this.showStation(s, this.lockedStation)
           if (this.currentTrack) this.showTrack(s, this.currentTrack)
           if (this.needsTrackLoad && this.currentTrack) {
             // Persistence resume (14th pass) -- this is a fresh page load,
@@ -1678,7 +1999,7 @@ export default {
   },
 
   // Decorative, but reinforces the tuning fantasy: fills in as you approach
-  // a channel while seeking, full once locked.
+  // a station while seeking, full once locked.
   drawSignal(s) {
     const { term } = s
     for (let x = BOX_X0 + 1; x < METERS_DIVIDER_X; x++) term.put(x, SIG_Y, ' ')
@@ -1686,7 +2007,7 @@ export default {
     let pct = 0
     if (this.mode === 'locked') pct = 1
     else {
-      const { dist } = nearestChannel(this.freq)
+      const { dist } = nearestStation(this.freq)
       if (dist <= NEAR_THRESHOLD) pct = 1 - dist / NEAR_THRESHOLD
     }
     const filled = Math.round(pct * segs)
@@ -1707,12 +2028,12 @@ export default {
       for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, y, ' ')
     }
   },
-  showStation(s, channel) {
+  showStation(s, station) {
     const { term } = s
     this.clearStation(s)
     const maxWidth = BOX_X1 - BOX_X0 - 4
-    const callsign = truncate(channel.callsign, maxWidth)
-    const tagline = truncate(channel.tagline, maxWidth)
+    const callsign = truncate(station.callsign, maxWidth)
+    const tagline = truncate(station.tagline, maxWidth)
     term.text(centerX(term.cols, callsign), STATION_Y, callsign, BRIGHT)
     term.text(centerX(term.cols, tagline), TAGLINE_Y, tagline, MUTED)
   },
@@ -1753,8 +2074,8 @@ export default {
   // showTrack() sets it to callsign + track. Cheap: just a document.title
   // write, no extra DOM/animation cost.
   updateTabTitle(track) {
-    document.title = (this.lockedChannel && track)
-      ? `${this.lockedChannel.callsign} · ${track.title} — SIGNAL`
+    document.title = (this.lockedStation && track)
+      ? `${this.lockedStation.callsign} · ${track.title} — SIGNAL`
       : 'SIGNAL'
   },
 
@@ -1942,7 +2263,7 @@ export default {
     // duplicating the locked/buffering/playing checks. The ring logic
     // itself is unchanged. (31st pass: dropped the separate muted branch
     // -- see the comment above ANTENNA_TEMPLATE.)
-    const locked = this.mode === 'locked' && this.lockedChannel
+    const locked = this.mode === 'locked' && this.lockedStation
     let state
     if (!locked) {
       // Seeking -- slow symmetric blink on the innermost ring only.
@@ -1982,15 +2303,15 @@ export default {
   },
 
   // Preset position (1-9), left margin top row -- the 9 stations map
-  // directly to the [1-9] keys in frequency order (CHANNEL_PRESET_ORDER),
+  // directly to the [1-9] keys in frequency order (STATION_PRESET_ORDER),
   // same mapping the guide's station table and the [B]ack logic already
   // use. Brightness-only (no brackets) to keep it a fixed 9-column strip.
   drawPresetStrip(s, rows) {
     const { term } = s
     const y = rows[0] // VOL_Y
     const x0 = METERS_DIVIDER_X + 2
-    const idx = this.lockedChannel ? CHANNEL_PRESET_ORDER.indexOf(this.lockedChannel) : -1
-    for (let i = 0; i < CHANNEL_PRESET_ORDER.length; i++) {
+    const idx = this.lockedStation ? STATION_PRESET_ORDER.indexOf(this.lockedStation) : -1
+    for (let i = 0; i < STATION_PRESET_ORDER.length; i++) {
       term.put(x0 + i, y, String(i + 1), i === idx ? BRIGHT : FAINT)
     }
   },
@@ -2090,13 +2411,13 @@ export default {
   },
 
   // BUG/NAMING FIXED 2026-08-20: this used to log an entry on every track
-  // skip within the SAME channel, so "RECENT" was really a recent-tracks
-  // log, not a channel log. The session-stats/RECENT footer line was
+  // skip within the SAME station, so "RECENT" was really a recent-tracks
+  // log, not a station log. The session-stats/RECENT footer line was
   // removed entirely 2026-08-20 (7th pass, Matthew: "remove session
   // stats... this looks like a blob") -- this now just tracks what's
   // currently playing for skip()'s benefit, nothing gets drawn from it.
-  tuneToChannel(s, channel, track) {
-    this.nowPlaying = { channelId: channel.id, freq: channel.freq, callsign: channel.callsign, title: track.title }
+  tuneToStation(s, station, track) {
+    this.nowPlaying = { stationId: station.id, freq: station.freq, callsign: station.callsign, title: track.title }
   },
 
   // Filled-background control panel, same treatment as the title bar
@@ -2125,14 +2446,14 @@ export default {
 
   // --- bag / playback --------------------------------------------------
 
-  ensureBag(channel) {
-    if (!this.bags[channel.id]) this.bags[channel.id] = { order: shuffledIndices(channel.tracks.length), pos: 0 }
-    return this.bags[channel.id]
+  ensureBag(station) {
+    if (!this.bags[station.id]) this.bags[station.id] = { order: shuffledIndices(station.tracks.length), pos: 0 }
+    return this.bags[station.id]
   },
-  nextTrack(channel) {
-    const bag = this.ensureBag(channel)
-    if (bag.pos >= bag.order.length) { bag.order = shuffledIndices(channel.tracks.length); bag.pos = 0 }
-    const track = channel.tracks[bag.order[bag.pos]]
+  nextTrack(station) {
+    const bag = this.ensureBag(station)
+    if (bag.pos >= bag.order.length) { bag.order = shuffledIndices(station.tracks.length); bag.pos = 0 }
+    const track = station.tracks[bag.order[bag.pos]]
     bag.pos += 1
     return track
   },
@@ -2184,7 +2505,9 @@ export default {
           // just skips to another track on the same station like a manual
           // [N] would. No retry loop against the same ID, no user-facing
           // error state -- consistent with how ENDED already just skips.
-          onError: () => { if (self.mode === 'locked') self.skip(s) },
+          // 32nd pass: a one-shot chroma/roll glitch flash rides along with
+          // the existing dead-video auto-skip -- see flashCrtGlitch().
+          onError: () => { if (self.mode === 'locked') { flashCrtGlitch(s); self.skip(s) } },
         },
       })
     }
@@ -2206,9 +2529,9 @@ export default {
   },
   skip(s) {
     if (this.mode !== 'locked') return
-    const track = this.nextTrack(this.lockedChannel)
+    const track = this.nextTrack(this.lockedStation)
     this.currentTrack = track
-    // Same channel, just the next track in it -- station identity (its own
+    // Same station, just the next track in it -- station identity (its own
     // box now) doesn't need to be touched at all, just the track line.
     this.showTrack(s, track)
     if (this.nowPlaying) this.nowPlaying.title = track.title
@@ -2227,12 +2550,12 @@ export default {
   // nowhere near the same level), so switching stations could mean a real
   // jump in perceived volume even with the slider untouched. This applies
   // an optional multiplier on top of the user's own volume slider:
-  // `track.gain` if the current track has one, else `channel.gain`, else
+  // `track.gain` if the current track has one, else `station.gain`, else
   // 1 (no change). Every setVolume() call in the file should go through
   // this rather than calling player.setVolume(this.volume) directly, so
   // gain is never accidentally bypassed on some code path.
   //
-  // The channel-level gains set below are a first-pass, by-genre/by-era
+  // The station-level gains set below are a first-pass, by-genre/by-era
   // approximation (older and acoustic/orchestral masters run quieter than
   // modern compressed ones -- a well-established mastering convention, not
   // something measured per track here) rather than precisely measured
@@ -2241,7 +2564,7 @@ export default {
   // song still stands out once you've heard it.
   applyVolume() {
     if (!this.ready || !this.player) return
-    const ch = this.lockedChannel
+    const ch = this.lockedStation
     const gain = (this.currentTrack && this.currentTrack.gain) ?? (ch && ch.gain) ?? 1
     const eff = Math.round(Math.min(100, Math.max(0, this.volume * gain)))
     this.player.setVolume(eff)
@@ -2275,8 +2598,14 @@ export default {
     this.drawSignal(s)
     // 21st pass: static bed loudness tracks distance to the nearest
     // station -- no-ops if the noise bed isn't currently running (locked).
-    const { dist } = nearestChannel(this.freq)
+    const { dist } = nearestStation(this.freq)
     setStaticIntensity(dist)
+    // 32nd pass: the picture itself degrades the same way the hiss does --
+    // see crtDegradeForDist(). dist is 0 exactly at a station's own freq
+    // (including right after a lock, since tryLock() calls retune(s,
+    // station.freq)), so this naturally settles back to a clean picture on
+    // lock without a separate "reset" call.
+    setCrtDegradation(s, dist)
   },
   enterSeeking(s) {
     this.mode = 'seeking'
@@ -2292,7 +2621,7 @@ export default {
     // signals") -- reuses the same bed scanning already uses. Idempotent:
     // a no-op if it's already running, so this never restarts/stutters the
     // ramp on repeated calls.
-    startStaticNoise(nearestChannel(this.freq).dist)
+    startStaticNoise(nearestStation(this.freq).dist)
   },
   seekStep(s, delta) {
     this.stopScan()
@@ -2311,8 +2640,8 @@ export default {
     // immediately instead of requiring a separate Enter press. Skip this
     // when the step started already locked on that same station, so a
     // single arrow tap doesn't just replay the lock you're already on.
-    const { channel, dist } = nearestChannel(this.freq)
-    if (dist <= LOCK_THRESHOLD && !(wasLocked && this.lockedChannel === channel)) {
+    const { station, dist } = nearestStation(this.freq)
+    if (dist <= LOCK_THRESHOLD && !(wasLocked && this.lockedStation === station)) {
       this.tryLock(s)
       return
     }
@@ -2325,7 +2654,7 @@ export default {
     startStaticNoise(dist)
   },
   tryLock(s) {
-    const { channel, dist } = nearestChannel(this.freq)
+    const { station, dist } = nearestStation(this.freq)
     if (dist > LOCK_THRESHOLD) {
       this.setStatus(s, 'NO SIGNAL', false)
       return
@@ -2335,34 +2664,34 @@ export default {
     // bed (stopScan() itself no longer does -- see its comment) -- a signal
     // found means the hiss cuts, same as a real set.
     stopStaticNoise()
-    this.retune(s, channel.freq)
+    this.retune(s, station.freq)
     // History (14th pass, Matthew: "discovery/history -- sure") -- push
     // whatever was locked before this one so [B] can step back through
     // recently-played stations. Only real transitions count: landing back
     // on the station you're already on (e.g. an arrow-seek that re-locks
     // in place) doesn't push a duplicate. Capped so it can't grow forever
     // across a long session.
-    if (this.lockedChannel && this.lockedChannel !== channel) {
-      this.history.push(this.lockedChannel)
+    if (this.lockedStation && this.lockedStation !== station) {
+      this.history.push(this.lockedStation)
       if (this.history.length > 8) this.history.shift()
     }
     this.mode = 'locked'
-    this.lockedChannel = channel
+    this.lockedStation = station
     // Station idents (added 2026-08-20, Matthew: "yes lets try station
-    // idents"): each channel has its own short tone motif in CHANNELS[].ident
+    // idents"): each station has its own short tone motif in STATIONS[].ident
     // so locking on COLD WAVE sounds different from locking on QUIET HOURS,
     // instead of every station announcing itself with the same generic chime.
-    playIdent(channel.ident, channel.identTempo || 1)
+    playIdent(station.ident, station.identTempo || 1)
     // 23rd pass: attack transient on lock, see pulseVU().
     this.pulseVU(0.5)
     this.setStatus(s, 'LOCKED', true)
     this.drawDial(s)
-    const track = this.nextTrack(channel)
+    const track = this.nextTrack(station)
     this.currentTrack = track
-    this.showStation(s, channel)
+    this.showStation(s, station)
     this.showTrack(s, track)
-    this.tuneToChannel(s, channel, track)
-    // Re-applies volume for the new channel/track's gain (see
+    this.tuneToStation(s, station, track)
+    // Re-applies volume for the new station/track's gain (see
     // applyVolume()) -- a station switch is exactly the moment a loudness
     // jump would otherwise show up.
     this.applyVolume()
@@ -2379,8 +2708,8 @@ export default {
   // to any other preset rather than a silent instant cut.
   goBack(s) {
     if (!this.history.length) return
-    const channel = this.history.pop()
-    this.presetTune(s, channel)
+    const station = this.history.pop()
+    this.presetTune(s, station)
   },
 
   // [G] guide (15th pass, Matthew: "we also need a G for guide... a simple
@@ -2404,15 +2733,28 @@ export default {
   // 18th pass (Matthew: "add a station reference to the guide") -- the
   // about/credit/contact/controls screen was already using ~18 of 25 rows,
   // and a full 9-station table needs about 10 more, so the guide became 2
-  // pages rather than cramming both onto one. ArrowLeft/ArrowRight flip
-  // between them (see key()); any other key still closes the guide exactly
+  // pages rather than cramming both onto one.
+  // 32nd pass (Matthew: "a better stations page -- number, name, a longer
+  // description, and 5 sample tracks instead of a 3-artist 'like' line"):
+  // that much detail per station doesn't fit in a shared table row, so the
+  // station reference became its own page PER station rather than one
+  // packed table. Page 1 is About, page 2 is a quick-scan Index (one line
+  // per station, same spirit as the old table but without the "like" line
+  // that no longer has anywhere to live), and pages 3 through 11 are one
+  // detail page per station in STATION_PRESET_ORDER (dial/freq order, same
+  // as the [1-9] presets). ArrowLeft/ArrowRight walk sequentially through
+  // all of it; from the Index, a digit key jumps straight to that
+  // station's detail page instead of arrowing past the ones you don't
+  // care about (see key()). Any other key still closes the guide exactly
   // like before.
+  guideTotalPages() { return 2 + STATION_PRESET_ORDER.length },
   drawGuidePage(s) {
     const { term } = s
     for (let y = 0; y < term.rows; y++)
       for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
     if (this.guidePage === 1) this.drawGuidePageAbout(s)
-    else this.drawGuidePageStations(s)
+    else if (this.guidePage === 2) this.drawGuidePageIndex(s)
+    else this.drawGuidePageStation(s, this.guidePage - 3)
   },
   drawGuidePageAbout(s) {
     const { term } = s
@@ -2449,36 +2791,57 @@ export default {
     put(20, `SIGNAL ${VERSION_TAG}`, FAINT)
     put(22, '[->] STATIONS        [any other key] CLOSE', FAINT)
   },
-  // Station reference table -- freq/name/tagline/artists-like, one entry
-  // per 2 rows (header line, then an indented "like" line), 9 stations x 2
-  // rows = 18 rows, rows 3-20 exactly (22nd pass: back to 9 after OUTLAW was
-  // dropped and HACKBACK's `0` binding retired -- footer back at row 22).
-  // Ordered by CHANNEL_PRESET_ORDER (freq ascending, same order as the dial
-  // left-to-right and the [1-9] preset keys) rather than CHANNELS'
-  // chronological order, so the preset number shown here matches what
-  // actually tunes to that station.
-  // 21st pass (Matthew: "we need a better way of showing 'artists like:' --
-  // we should be able to see 3 examples"): the tagline used to share the
-  // detail row with the like-list, so anything past ~2 artists got cut off
-  // with "..." -- confirmed happening on ATOMIC and HACKBACK. Tagline now
-  // lives on the header row (there's plenty of width there, taglines are
-  // capped at 35 chars and callsigns are short), leaving the whole detail
-  // row just for "like: A, B, C" -- every station's 3 examples now fit with
-  // room to spare (longest is 52 chars against a ~72-char row).
-  drawGuidePageStations(s) {
+  // Quick-scan station index (32nd pass, replaces the old combined
+  // header+like table) -- one line per station: preset number (zero-padded
+  // to match the detail pages), freq, callsign, tagline. Deliberately
+  // leaner than before since the "like" detail now lives on each
+  // station's own full page; this is just for scanning/jumping. Ordered by
+  // STATION_PRESET_ORDER (freq ascending, same order as the dial
+  // left-to-right and the [1-9] preset keys), so the number shown here
+  // always matches what actually tunes to that station, and matches the
+  // digit-jump handled in key().
+  drawGuidePageIndex(s) {
     const { term } = s
     const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
     put(1, 'SIGNAL -- STATIONS', BOLD)
     const startY = 3
-    CHANNEL_PRESET_ORDER.forEach((ch, i) => {
-      const presetNum = i + 1
+    STATION_PRESET_ORDER.forEach((ch, i) => {
+      const presetNum = String(i + 1).padStart(2, '0')
       const y = startY + i * 2
-      const header = truncate(`[${presetNum}] ${ch.freq.toFixed(1)}   ${ch.callsign} -- ${ch.tagline}`, term.cols - 4)
-      term.text(4, y, header, BRIGHT)
-      const detail = truncate(`like: ${ch.like}`, term.cols - 8)
-      term.text(8, y + 1, detail, MUTED)
+      const line = truncate(`[${presetNum}] ${ch.freq.toFixed(1)}   ${ch.callsign} -- ${ch.tagline}`, term.cols - 8)
+      term.text(4, y, line, BRIGHT)
     })
-    put(22, '[<-] ABOUT        [any other key] CLOSE', FAINT)
+    put(22, '[<-] ABOUT   [1-9] JUMP   [->] NEXT   [any other key] CLOSE', FAINT)
+  },
+  // Per-station detail page (32nd pass, Matthew: "let people know the
+  // station number, name, a longer description, and 5 sample tracks
+  // instead of a 3-artist 'like' line"). One full page per station rather
+  // than a shared table row, so there's actually room for prose and a real
+  // tracklist sample. `desc` is free-form (see each station's definition
+  // above) and gets word-wrapped rather than truncate()'d, since cutting a
+  // sentence off mid-word with "..." would read badly here in a way it
+  // doesn't for a single status line. Sample tracks are the first 6
+  // entries in the station's own `tracks` array with no repeated artist
+  // (see sampleTracks()) -- deliberately not a separately hand-curated
+  // "highlights" list, so this can never drift from what's actually in
+  // rotation the way the old `like` field could.
+  drawGuidePageStation(s, i) {
+    const { term } = s
+    const ch = STATION_PRESET_ORDER[i]
+    const presetNum = String(i + 1).padStart(2, '0')
+    const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
+    put(1, `SIGNAL -- STATIONS   [${presetNum}/${String(STATION_PRESET_ORDER.length).padStart(2, '0')}]`, BOLD)
+    const contentWidth = term.cols - 8
+    term.text(4, 3, `[${presetNum}] ${ch.freq.toFixed(1)}   ${ch.callsign}`, BRIGHT)
+    term.text(4, 4, truncate(ch.tagline, contentWidth), MUTED)
+    term.text(4, 6, '-'.repeat(Math.min(72, contentWidth)), FAINT)
+    wordWrap(ch.desc, contentWidth).slice(0, 3).forEach((line, li) => term.text(4, 8 + li, line, NORMAL))
+    term.text(4, 12, 'SAMPLE TRACKS', BOLD)
+    sampleTracks(ch.tracks, 6).forEach((t, ti) => {
+      const line = truncate(`${t.title} -- ${t.artist}`, term.cols - 12)
+      term.text(8, 14 + ti, line, MUTED)
+    })
+    put(22, '[<-] PREV        [->] NEXT        [any other key] CLOSE', FAINT)
   },
   closeGuide(s) {
     this.guideOpen = false
@@ -2493,7 +2856,7 @@ export default {
       for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
     // Rebuild -- chrome, frames, meters, then resume whatever the actual
     // mode/status was before the guide opened (guide never touched
-    // freq/lockedChannel/playState, only covered them visually).
+    // freq/lockedStation/playState, only covered them visually).
     this.drawChrome(s)
     this.drawScale(s)
     this.drawVolume(s)
@@ -2503,8 +2866,8 @@ export default {
     this.drawDial(s)
     this.drawFreq(s)
     this.drawHint(s)
-    if (this.mode === 'locked' && this.lockedChannel) {
-      this.showStation(s, this.lockedChannel)
+    if (this.mode === 'locked' && this.lockedStation) {
+      this.showStation(s, this.lockedStation)
       if (this.currentTrack) this.showTrack(s, this.currentTrack)
       this.setStatus(s, 'LOCKED', true)
     } else {
@@ -2537,13 +2900,13 @@ export default {
     if (this.mode === 'locked') this.enterSeeking(s)
     this.scanning = true
     this.setStatus(s, 'SCANNING...', false)
-    startStaticNoise(nearestChannel(this.freq).dist)
+    startStaticNoise(nearestStation(this.freq).dist)
     this.scanTimer = setInterval(() => {
       let f = this.freq + SCAN_STEP
       if (f > FREQ_MAX) f = FREQ_MIN
       this.retune(s, f)
       if (Math.abs(f - startFreq) < clearance) return
-      const { dist } = nearestChannel(f)
+      const { dist } = nearestStation(f)
       if (dist <= LOCK_THRESHOLD) this.tryLock(s)
     }, 90)
   },
@@ -2553,11 +2916,11 @@ export default {
   // tuning action (Matthew: a brief scan/static beat instead of an instant
   // change). Sweeps the dial from wherever it is to the preset's frequency
   // over a handful of quick steps with the static bed under it, then locks.
-  presetTune(s, channel) {
+  presetTune(s, station) {
     this.stopScan()
     if (this.mode === 'locked') this.enterSeeking(s)
     const startFreq = this.freq
-    const target = channel.freq
+    const target = station.freq
     const steps = 6
     let i = 0
     this.scanning = true
@@ -2567,7 +2930,7 @@ export default {
     // distinct from both the plain seek-static hiss and the ident tone
     // that plays once the sweep lands and locks a few hundred ms later.
     playPresetWhoosh()
-    startStaticNoise(nearestChannel(this.freq).dist)
+    startStaticNoise(nearestStation(this.freq).dist)
     this.scanTimer = setInterval(() => {
       i += 1
       const f = i >= steps ? target : startFreq + (target - startFreq) * (i / steps)
@@ -2609,11 +2972,11 @@ export default {
     this.retune(s, this.freq + dFreq)
     this.setStatus(s, 'SEEKING', false)
     // Same continuous bed as arrow-seeking (12th pass) -- idempotent.
-    startStaticNoise(nearestChannel(this.freq).dist)
+    startStaticNoise(nearestStation(this.freq).dist)
   },
 
   // 22nd pass -- mobile has no keyboard, so it had no way to power on, lock
-  // a station, or change channels at all before this. Tap (minimal
+  // a station, or change stations at all before this. Tap (minimal
   // movement, quick) powers on when off, closes the guide if somehow open,
   // otherwise toggles play/pause; a clean horizontal swipe steps to the
   // next/previous station in dial order (same list [1-9] presets use).
@@ -2655,19 +3018,23 @@ export default {
       // Swipe left (finger moves right-to-left, dx negative) advances to
       // the next station up the dial, mirroring how a left swipe reads as
       // "forward" in a carousel; swipe right goes back one.
-      this.stepChannel(s, dx < 0 ? 1 : -1)
+      this.stepStation(s, dx < 0 ? 1 : -1)
     }
   },
-  stepChannel(s, dir) {
-    const order = CHANNEL_PRESET_ORDER
-    let idx = this.lockedChannel ? order.indexOf(this.lockedChannel) : -1
-    if (idx === -1) idx = order.indexOf(nearestChannel(this.freq).channel)
+  stepStation(s, dir) {
+    const order = STATION_PRESET_ORDER
+    let idx = this.lockedStation ? order.indexOf(this.lockedStation) : -1
+    if (idx === -1) idx = order.indexOf(nearestStation(this.freq).station)
     if (idx === -1) idx = 0
     const next = order[(idx + dir + order.length) % order.length]
     this.presetTune(s, next)
   },
 
   key(s, e) {
+    // Keypress click (32nd pass) -- fires first, unconditionally, before
+    // the power-off early-return below, so it clicks the same as a real
+    // keyboard would even on a key that ends up doing nothing.
+    playKeyClick()
     // Power toggle (12th pass) -- while off, every key except P is ignored
     // outright so nothing (seek, scan, presets, volume) can act on a set
     // that isn't switched on.
@@ -2675,15 +3042,22 @@ export default {
       if (e.key === 'p' || e.key === 'P') { e.preventDefault(); this.powerUp(s) }
       return
     }
-    // Guide overlay (15th pass; paged 18th pass) -- while open, ANY key
-    // closes it (matches the "[any other key] CLOSE" hint on both guide
-    // pages) except ArrowRight on page 1 / ArrowLeft on page 2, which flip
-    // to the other page instead. Intercepted before the switch below so
-    // nothing else (seek, lock, presets) can act underneath the overlay.
+    // Guide overlay (15th pass; paged 18th pass; expanded to per-station
+    // pages 32nd pass) -- while open, ANY key closes it (matches the "[any
+    // other key] CLOSE" hint on every guide page) except: ArrowRight/
+    // ArrowLeft, which step sequentially through all guideTotalPages()
+    // pages (About, Index, then one detail page per station) instead of
+    // closing; and, while on the Index page specifically, a preset digit
+    // (1-9), which jumps straight to that station's detail page rather
+    // than making you arrow past every station in between. Intercepted
+    // before the switch below so nothing else (seek, lock, presets) can
+    // act underneath the overlay.
     if (this.guideOpen) {
       e.preventDefault()
-      if (this.guidePage === 1 && e.key === 'ArrowRight') { this.guidePage = 2; this.drawGuidePage(s); return }
-      if (this.guidePage === 2 && e.key === 'ArrowLeft') { this.guidePage = 1; this.drawGuidePage(s); return }
+      const totalPages = this.guideTotalPages()
+      if (e.key === 'ArrowRight' && this.guidePage < totalPages) { this.guidePage++; this.drawGuidePage(s); return }
+      if (e.key === 'ArrowLeft' && this.guidePage > 1) { this.guidePage--; this.drawGuidePage(s); return }
+      if (this.guidePage === 2 && /^[1-9]$/.test(e.key)) { this.guidePage = 2 + Number(e.key); this.drawGuidePage(s); return }
       this.closeGuide(s)
       return
     }
@@ -2703,30 +3077,11 @@ export default {
       // "broadcast" currently is, exactly like turning a real radio's
       // volume back up. togglePlayPause() removed entirely; SPACE is now
       // unbound.
-      case 'n': case 'N': {
-        e.preventDefault()
-        // 28th pass: Shift+N enters hidden station-hopping mode (secret
-        // feature). In this mode, N hops to the next station up the dial
-        // (freq-sorted, wrapping, same as stepChannel()/swipe) instead of
-        // skipping within the current station. Shift+N again exits hopping
-        // mode and returns to normal.
-        // BUG FIXED 2026-08-21: the original check used `this.locked`,
-        // which doesn't exist on this object (lock state lives in
-        // `this.mode === 'locked'` + `this.lockedChannel`, see tryLock()) --
-        // that always read undefined/falsy, so hop mode could be toggled on
-        // via the status readout but N always fell through to a plain skip.
-        if (e.shiftKey) {
-          this.stationHopping = !this.stationHopping
-          this.setStatus(s, this.stationHopping ? 'HOP MODE' : 'NORMAL', this.stationHopping)
-          return
-        }
-        if (this.stationHopping && this.mode === 'locked' && this.lockedChannel) {
-          this.stepChannel(s, 1)
-        } else {
-          this.skip(s)
-        }
-        break
-      }
+      // 35th pass: Shift+N hidden station-hopping mode removed (Matthew:
+      // "doesn't work as intended") -- N is back to a plain single-purpose
+      // key, always skipping the dead/current track within the locked
+      // station.
+      case 'n': case 'N': e.preventDefault(); this.skip(s); break
       case 'ArrowUp': e.preventDefault(); this.adjustVolume(s, 10); break
       case 'ArrowDown': e.preventDefault(); this.adjustVolume(s, -10); break
       case 'm': case 'M': e.preventDefault(); this.toggleMute(s); break
@@ -2737,20 +3092,20 @@ export default {
       case 'g': case 'G': e.preventDefault(); this.openGuide(s); break
       // Display modes (23rd pass, Matthew: "let users cycle display modes").
       case 'c': case 'C': e.preventDefault(); this.cycleDisplayMode(s); break
-      // 11th pass (2026-08-20): 4 new stations brought CHANNELS back up to
+      // 11th pass (2026-08-20): 4 new stations brought STATIONS back up to
       // 9 -- preset keys match its length again, same pattern as the 10th
       // pass's drop to 5.
       // 22nd pass: back to `1`-`9` only -- HACKBACK's `0` binding (20th
       // pass) only made sense while there were 10 stations; dropping OUTLAW
       // brought the roster back to 9 (Matthew: "9 channels is our max for
       // now"), so `0` is retired and HACKBACK now falls wherever it lands
-      // in CHANNEL_PRESET_ORDER like everything else.
+      // in STATION_PRESET_ORDER like everything else.
       case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
         e.preventDefault()
-        // 17th pass: CHANNEL_PRESET_ORDER (freq-sorted), not CHANNELS
+        // 17th pass: STATION_PRESET_ORDER (freq-sorted), not STATIONS
         // (chronological add-order) -- see its definition for why -- so
         // preset number always matches left-to-right position on the dial.
-        const ch = CHANNEL_PRESET_ORDER[Number(e.key) - 1]
+        const ch = STATION_PRESET_ORDER[Number(e.key) - 1]
         if (ch) this.presetTune(s, ch)
         break
       }
@@ -2768,7 +3123,7 @@ export default {
     if (!this.poweredOn || this.guideOpen) return
 
     // Idle shimmer on the dial while seeking, so the empty band doesn't feel
-    // dead between channels. Cheap: only touch a handful of cells per frame.
+    // dead between stations. Cheap: only touch a handful of cells per frame.
     if (this.mode === 'seeking' && Math.random() < 0.15) {
       const x = DIAL_X0 + Math.floor(Math.random() * (DIAL_X1 - DIAL_X0))
       const cursorCol = freqToCol(this.freq)

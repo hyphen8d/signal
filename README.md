@@ -1,4 +1,4 @@
-# SIGNAL v0.6
+# SIGNAL v0.7
 
 A community-facing, unofficial internet-radio-style web toy: a terminal/CRT
 tuning-dial receiver with 9 curated stations, real songs, station idents,
@@ -54,7 +54,7 @@ plain `python3 -m http.server` can serve you a stale cached copy of
 | `Up` / `Down` | Volume |
 | `M` | Mute |
 | `P` | Power off / on |
-| `G` | Guide -- about, full controls reference, and a station reference (freq/name/desc/artists-like for all 9); `<-`/`->` flips between the two guide pages, any other key closes it |
+| `G` | Guide -- about/controls page, a station index, and a full detail page per station (freq/name/description/sample tracks); `<-`/`->` steps through all 11 pages, digits `1`-`9` jump straight to a station's detail page from the index, any other key closes it |
 | drag the dial | Seek with the mouse (desktop only, by design) |
 
 ### Touch (mobile)
@@ -73,14 +73,14 @@ touch alone. Known gaps, not oversights.
 
 ## Stations
 
-9 stations, 141 tracks total (most run 15, CIPHER runs 21). Full roster with taglines and track lists:
-[`channels.md`](./channels.md) — generated straight from the live
-`CHANNELS` array in `program.js` (`tools/channels-to-md.js`), so it can't
+9 stations, 225 tracks total (25 per station). Full roster with taglines and track lists:
+[`stations.md`](./stations.md) — generated straight from the live
+`STATIONS` array in `program.js` (`tools/stations-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station
 list:
 
 ```
-node tools/channels-to-md.js
+node tools/stations-to-md.js
 ```
 
 ## Content ops
@@ -90,10 +90,10 @@ endpoint before it's added — never hardcoded on faith. That discipline
 matters more now that the repo (and the Pages URL) are public: a dead ID
 isn't just an internal annoyance anymore.
 
-- **Adding tracks:** verify via oEmbed first, add to the channel's `tracks`
-  array, then re-run `node tools/channels-to-md.js` so `channels.md` stays
+- **Adding tracks:** verify via oEmbed first, add to the station's `tracks`
+  array, then re-run `node tools/stations-to-md.js` so `stations.md` stays
   in sync. No fixed cadence yet — add as you find good tracks, just don't
-  let any one channel drop below ~10.
+  let any one station drop below ~10.
 - **Station count:** 9 is the agreed ceiling for now — matches the `1`-`9`
   preset keys cleanly, no spillover digit needed. A 10th station briefly
   existed bound to `0`; if the roster grows past 9 again, decide the preset
@@ -103,12 +103,12 @@ isn't just an internal annoyance anymore.
 - **Dead videos:** the player now auto-skips on any playback error (private,
   removed, region-locked, etc.) instead of going silent mid-song — same
   behavior as pressing `[N]` manually. It doesn't retry the same ID or flag
-  it anywhere, so a channel can quietly lose a track over time. Worth an
+  it anywhere, so a station can quietly lose a track over time. Worth an
   occasional spot-check rather than waiting to notice by ear:
 
   ```
   node tools/verify-roster.js               # whole roster
-  node tools/verify-roster.js --channel=atomic   # one station only
+  node tools/verify-roster.js --station=atomic   # one station only
   ```
 
   Checks every track ID against oEmbed and prints any that are now dead,
@@ -136,7 +136,7 @@ isn't just an internal annoyance anymore.
   it `program.js`.
 - `fonts/` — Terminus bitmap font (SIL OFL 1.1, separate from the MIT
   license below — see `LICENSE`).
-- `tools/` — dev server and the channel-roster doc generator.
+- `tools/` — dev server and the station-roster doc generator.
 
 Playback is real YouTube video via the IFrame API, audio-only in practice —
 the player is docked off-screen since the terminal is the only visible UI.

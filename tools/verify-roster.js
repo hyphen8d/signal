@@ -3,7 +3,7 @@
 // restricted. Run with:
 //
 //   node tools/verify-roster.js                    # whole roster
-//   node tools/verify-roster.js --channel=atomic    # one station only
+//   node tools/verify-roster.js --station=atomic    # one station only
 //
 // oEmbed 200 confirms a video is real and embeddable at check time -- it is
 // NOT a guarantee the IFrame player will actually reach a PLAYING state in
@@ -11,23 +11,26 @@
 // handling for that side of it). This is a periodic spot-check against
 // rot, not a substitute for the app's own runtime safety net.
 //
-// Extracts CHANNELS the same way tools/channels-to-md.js does: brace-match
+// Extracts STATIONS the same way tools/stations-to-md.js does: brace-match
 // the array literal out of program.js (a browser ES module that touches
 // window/DOM and can't be require()'d directly) and eval it with a local
 // realTrack() stub.
+//
+// 36th pass: renamed --channel= to --station= (and STATIONS/station
+// throughout) -- Matthew: "these are STATIONS, that's what they're called".
 
 const fs = require('fs')
 const path = require('path')
 
 const args = process.argv.slice(2)
-const channelArg = args.find(a => a.startsWith('--channel='))
-const onlyChannel = channelArg ? channelArg.split('=')[1] : null
+const stationArg = args.find(a => a.startsWith('--station='))
+const onlyStation = stationArg ? stationArg.split('=')[1] : null
 
 const programPath = path.join(__dirname, '..', 'program.js')
 const src = fs.readFileSync(programPath, 'utf8')
 
-const constStart = src.indexOf('const CHANNELS = [')
-if (constStart === -1) throw new Error('CHANNELS array not found in program.js')
+const constStart = src.indexOf('const STATIONS = [')
+if (constStart === -1) throw new Error('STATIONS array not found in program.js')
 const braceStart = src.indexOf('[', constStart)
 let depth = 0, braceEnd = -1
 for (let i = braceStart; i < src.length; i++) {
@@ -39,14 +42,14 @@ const arrText = src.slice(braceStart, braceEnd + 1)
 function realTrack(youtubeId, title, artist) {
   return { id: `yt:${youtubeId}:real`, youtubeId, title, artist }
 }
-const CHANNELS = eval(arrText)
+const STATIONS = eval(arrText)
 
-const channels = onlyChannel
-  ? CHANNELS.filter(c => c.id === onlyChannel)
-  : CHANNELS
+const stations = onlyStation
+  ? STATIONS.filter(c => c.id === onlyStation)
+  : STATIONS
 
-if (onlyChannel && channels.length === 0) {
-  console.error(`No channel with id "${onlyChannel}". Known ids: ${CHANNELS.map(c => c.id).join(', ')}`)
+if (onlyStation && stations.length === 0) {
+  console.error(`No station with id "${onlyStation}". Known ids: ${STATIONS.map(c => c.id).join(', ')}`)
   process.exit(2)
 }
 
@@ -75,14 +78,14 @@ async function mapLimit(items, limit, fn) {
 }
 
 async function main() {
-  const total = channels.reduce((n, c) => n + c.tracks.length, 0)
-  console.log(`Checking ${total} track(s) across ${channels.length} station(s) against oEmbed...\n`)
+  const total = stations.reduce((n, c) => n + c.tracks.length, 0)
+  console.log(`Checking ${total} track(s) across ${stations.length} station(s) against oEmbed...\n`)
 
   const failures = []
   let checked = 0
 
-  for (const ch of channels) {
-    const results = await mapLimit(ch.tracks, 6, async (t) => {
+  for (const st of stations) {
+    const results = await mapLimit(st.tracks, 6, async (t) => {
       const r = await checkTrack(t.youtubeId)
       checked++
       return { track: t, ...r }
@@ -90,10 +93,10 @@ async function main() {
 
     const bad = results.filter(r => !r.ok)
     if (bad.length) {
-      console.log(`${ch.callsign} (${ch.id}) -- ${bad.length} problem(s):`)
+      console.log(`${st.callsign} (${st.id}) -- ${bad.length} problem(s):`)
       for (const b of bad) {
         console.log(`  [${b.status}] ${b.track.title} -- ${b.track.artist} (youtu.be/${b.track.youtubeId})`)
-        failures.push({ channel: ch.id, ...b })
+        failures.push({ station: st.id, ...b })
       }
       console.log('')
     }
@@ -102,7 +105,7 @@ async function main() {
   console.log(`Checked ${checked} track(s). ${failures.length} problem(s) found.`)
   if (failures.length) {
     console.log('\nFailing IDs, for quick copy/paste:')
-    failures.forEach(f => console.log(`  ${f.channel}: ${f.track.youtubeId} -- ${f.track.title}`))
+    failures.forEach(f => console.log(`  ${f.station}: ${f.track.youtubeId} -- ${f.track.title}`))
     process.exit(1)
   }
 }
