@@ -10,7 +10,7 @@
 // per-station playlists (several hours, no near-term repeat) are still the
 // next real step before this goes anywhere near real people.
 
-import { NORMAL, BRIGHT, BOLD, DIM, MUTED, FAINT, BG } from './src/term.js'
+import { NORMAL, BRIGHT, BOLD, DIM, MUTED, FAINT } from './src/term.js'
 // 32nd pass: SCREEN is the CRT engine's nominal param baseline (see
 // config.js) -- needed here so the new live CRT hooks (search "32nd pass"
 // below) know what "clean picture" and "warmed up" actually mean, rather
@@ -110,7 +110,6 @@ const STATIONS = [
     // station-naming pass -- "DISTORTION FIELD" / "heavy guitars, raw
     // nerve, '90s angst" was the locked-in choice (option 1B). Same
     // grunge/alt-rock lane, same ident, same tracks -- name/tagline only.
-    like: 'Nirvana, Soundgarden, Alice In Chains', // 18th pass: guide station reference
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: 'Grunge and alternative rock from the early-to-mid 90s Seattle sound and its ripple effects -- distorted guitars, raw vocals, and radio-ready angst.',
     // Matthew 8/20: "I don't hear a station id tone for static bloom." The
@@ -228,7 +227,6 @@ const STATIONS = [
   { id: 'drift-mode', freq: 356.2, callsign: 'DRIFT MODE', tagline: 'fade to black, ambient descent',
     // 28th pass: renamed from QUIET HOURS (option 2B minus "sleep well").
     // Same ambient/drone lane, same ident, same tracks -- name/tagline only.
-    like: 'Brian Eno, Sigur Rós, Grouper',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: 'Ambient, modern classical, and drone pieces built for stillness -- slow-moving, mostly wordless, meant to fade into the room instead of demanding it.',
     // 25th pass: was a straight descent, same shape as 3 other stations --
@@ -301,7 +299,6 @@ const STATIONS = [
       realTrack('CQ8zglIXZi8', 'Nuvole Bianche', 'Ludovico Einaudi'),
     ] },
   { id: 'cold-wave', freq: 512.9, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
-    like: 'New Order, The Cure, Depeche Mode',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: 'Synth-driven new wave and synthpop from the early-to-mid 80s -- drum machines, cold hooks, and neon nostalgia for a decade that never quite ended.',
     // 25th pass: was a straight ascent, same shape as 3 other stations --
@@ -366,7 +363,6 @@ const STATIONS = [
     // 28th pass: renamed from THE STUDY (option e, after more naming
     // options were requested). Same lofi/downtempo focus lane, same ident,
     // same tracks -- name/tagline only.
-    like: 'Nujabes, Bonobo, Tycho',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: 'Chillhop and instrumental beats built for getting things done -- sampled jazz, lo-fi drums, and just enough melody to hold focus without breaking it.',
     // 25th pass: was a straight descent, same shape as 3 other stations --
@@ -431,7 +427,6 @@ const STATIONS = [
   { id: 'city-lights', freq: 650.0, callsign: 'CITY LIGHTS', tagline: 'tokyo nights, neon groove, city pop dreams',
     // 28th pass: renamed from HIGH RISE (option 7B). Same city pop lane,
     // same ident, same tracks -- name/tagline only.
-    like: 'Tatsuro Yamashita, Anri, Mariya Takeuchi',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: "Japanese city pop from the genre's late-70s to late-80s peak -- glossy production, funk basslines, and the sound of Tokyo lit up after dark.",
     // 25th pass: was a straight ascent, same shape as 3 other stations --
@@ -499,7 +494,6 @@ const STATIONS = [
   // list (Johnny Cash, Ennio Morricone, Marty Robbins, Colter Wall, Nick
   // Cave, Tom Russell, Calexico) is in git history on this commit's parent.
   { id: 'circuit-crush', freq: 434.5, callsign: 'CIRCUIT CRUSH', tagline: 'analog glow, the long drive home',
-    like: 'Kavinsky, GUNSHIP, Perturbator',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: "Synthwave and retrowave for a drive that never quite ends -- arpeggios, gated drums, and every neon-lit highway from a movie that doesn't exist.",
     // 25th pass: was a straight ascent, same shape as 3 other stations --
@@ -559,7 +553,6 @@ const STATIONS = [
   // the tail of the band (THE STUDY 823.1 up to FREQ_MAX 900) roughly evenly
   // across ATOMIC/HACKBACK instead.
   { id: 'atomic', freq: 854.9, callsign: 'ATOMIC', tagline: 'swing on while the counter clicks', // 19th pass: trimmed
-    like: 'The Ink Spots, Roy Brown, The Five Stars',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: 'An in-universe atomic-age broadcast: swing, jump blues, and doo-wop from the actual 1940s-50s, playing on regardless of what the counter reads.',
     // 25th pass: was up-up-down, which HACKBACK's new ident also needed --
@@ -647,7 +640,6 @@ const STATIONS = [
   // 28th pass: tagline updated to "golden age hip-hop, west coast legends,
   // deep cuts" (option 9A, tagline option b) -- name (HACKBACK) unchanged.
   { id: 'hackback', freq: 888.7, callsign: 'HACKBACK', tagline: 'golden age hip-hop, west coast legends',
-    like: 'A Tribe Called Quest, De La Soul, Wu-Tang Clan',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: 'Golden-age hip-hop with a west coast backbone -- classic boom-bap, deep cuts, and a few legends who never needed a feature to prove it.',
     // 25th pass: was a straight descent, same shape as 3 other stations --
@@ -705,7 +697,6 @@ const STATIONS = [
     // at 219.8, the frequency freed by RELIC SIGNAL's retirement (see the
     // retirement comment above DRIFT MODE) -- keeps the roster at 9
     // stations total rather than growing to 10.
-    like: 'The Prodigy, Chemical Brothers, Daft Punk',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     desc: 'Big beat and breakbeat electronica for late-night infiltration runs -- Chemical Brothers, Prodigy, and Massive Attack alongside everything that soundtracked a decade of hacker movies.',
     // Ident is a bouncy up-down-up-down (U D U D) breakbeat style.
@@ -816,8 +807,6 @@ const STATION_PRESET_ORDER = [...STATIONS].sort((a, b) => a.freq - b.freq)
 // project history instead of picking an arbitrary number.
 const SECRET_STATION = {
   id: 'nin', freq: 777.7, callsign: 'NINE INCH NAILS', tagline: 'industrial rage, mechanical dread',
-  like: 'Nine Inch Nails',
-  desc: 'A hidden feed of Nine Inch Nails -- distorted synths, drum machines pushed past redline, and a quarter century of turning self-destruction into something you can dance to. Off the books; not in the Guide.',
   // Tight chromatic half-step descent (B3-Bb3-A3-Ab3) -- every other
   // station's ident jumps by a third or more, so this one's the only motif
   // on the roster that grinds down in semitones. Deliberately harsh/
@@ -948,6 +937,42 @@ const SIG_Y = 19
 const VU_DIVIDER_Y = 20
 const VU_Y = 21
 const METERS_BOT_Y = 22
+
+// The four box-bottom rows, and each one's RESTING attribute once whatever
+// touched it settles back down. Three of the four are the panel-standard
+// MUTED; NOW PLAYING is the "hero" box (see drawChrome's note) and rests one
+// notch brighter, at BOLD. Anything that flashes a cell on one of these rows
+// and later restores it -- the always-on idle phosphor shimmer, crtIdleEvent's
+// tear event -- has to look this up per row rather than hardcoding MUTED, or
+// every cell it touches on the NOW PLAYING border gets quietly downgraded to
+// MUTED and never brightens back up on its own. (Found live, 42nd pass: the
+// NOW PLAYING border was visibly losing brightness cell by cell over a
+// session, only recovering on the next power cycle's full chrome redraw --
+// exactly that. playBootFlicker() hit this same trap once already, in the
+// 30th pass, and fixed it locally for its own uniform boot-flicker settle;
+// this generalizes that fix for every other consumer of these four rows.)
+const BOX_BOTTOM_ROWS = [TUNER_BOT_Y, STATION_BOT_Y, NOWPLAYING_BOT_Y, METERS_BOT_Y]
+const BOX_BOTTOM_REST_ATTR = new Map([
+  [TUNER_BOT_Y, MUTED],
+  [STATION_BOT_Y, MUTED],
+  [NOWPLAYING_BOT_Y, BOLD],
+  [METERS_BOT_Y, MUTED],
+])
+// The idle shimmer's brief pre-restore dip, one brightness notch below each
+// row's own rest level (term.js: FAINT 100 < DIM 150 < MUTED 180 < BOLD/
+// NORMAL ~205) -- NOT a universal DIM. A flat DIM read as an invisible
+// 30-unit dip on the three MUTED rows (150 vs 180) but a much more obvious
+// 55-unit dip PLUS a momentary bold-to-normal face change on NOW PLAYING
+// (150 vs BOLD's ~205), since that row rests a full notch brighter than the
+// others (see BOX_BOTTOM_REST_ATTR). Found live, 42nd pass, right after
+// fixing the rest-attribute bug above -- same row, new symptom, same fix
+// shape: don't hardcode one attribute for all four rows.
+const BOX_BOTTOM_FLASH_ATTR = new Map([
+  [TUNER_BOT_Y, DIM],
+  [STATION_BOT_Y, DIM],
+  [NOWPLAYING_BOT_Y, MUTED],
+  [METERS_BOT_Y, DIM],
+])
 
 // LEVELS split (18th pass, Matthew: "we have room down in the levels area
 // to maybe halve that and have levels on one side and something tbd on the
@@ -1348,6 +1373,81 @@ function stopStaticNoise() {
     const ctx = audioCtx()
     gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15)
     setTimeout(() => { try { src.stop() } catch (e) {} }, 200)
+  } catch (e) {}
+}
+
+// Ambient tube hum (42nd pass, Matthew: "I may want to test that in dev
+// environment soon" -- parked at the 38th pass, built now) -- a continuous,
+// very quiet noise floor while the set is powered on: a ~60Hz fundamental
+// plus its second harmonic, with a touch of lowpassed noise underneath so it
+// reads as a chassis rather than a test tone. Mirrors startStaticNoise()/
+// stopStaticNoise()'s shape deliberately -- module-level handles, idempotent
+// start, ramped in/out rather than started/stopped hard -- but is its own
+// independent audio graph, not a mode of the static bed, since it needs to
+// keep running underneath scanning/seeking/locked alike.
+// Deliberately NOT gated on this.muted (Matthew, 2026-08-22): mute is the
+// "make the broadcast stop" control, and the hum isn't part of the
+// broadcast -- it's the set's own noise floor, on for as long as the set is
+// on, same as a real tube amp still hums after you've turned the volume
+// down. Only powerUp()/powerDown() start and stop it.
+let humNodes = null
+// 2026-08-22: doubled from the original 0.012 starting guess, per Matthew's
+// request after dev-server QA. Note this now sits slightly ABOVE
+// STATIC_MIN_GAIN (0.02) -- the original guess was deliberately kept below
+// the static bed's own floor gain so the hum would never out-read it while
+// seeking; at 0.024 the hum can now be marginally louder than a distant
+// station's static. Worth another listen specifically while seeking far
+// from any station, not just at idle/locked.
+const HUM_GAIN = 0.024
+function startTubeHum() {
+  if (humNodes) return
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0, t)
+    gain.gain.linearRampToValueAtTime(HUM_GAIN, t + 0.8) // slow fade-in: the
+    // transformer coming up, not a switch being flipped
+    const oscs = [[60, 1], [120, 0.35]].map(([f, mul]) => {
+      const osc = ctx.createOscillator()
+      const g = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(f, t)
+      g.gain.setValueAtTime(mul, t)
+      osc.connect(g).connect(gain)
+      osc.start(t)
+      return osc
+    })
+    // A touch of lowpassed noise under the tones, or it reads as a test
+    // tone rather than a chassis.
+    const n = ctx.sampleRate * 2
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    src.loop = true
+    const lp = ctx.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 220
+    const ng = ctx.createGain()
+    ng.gain.setValueAtTime(0.25, t)
+    src.connect(lp).connect(ng).connect(gain)
+    src.start(t)
+    gain.connect(ctx.destination)
+    humNodes = { gain, oscs, src }
+  } catch (e) {}
+}
+function stopTubeHum() {
+  if (!humNodes) return
+  const { gain, oscs, src } = humNodes
+  humNodes = null
+  try {
+    const ctx = audioCtx()
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5)
+    setTimeout(() => {
+      try { oscs.forEach((o) => o.stop()); src.stop() } catch (e) {}
+    }, 600)
   } catch (e) {}
 }
 
@@ -1780,13 +1880,26 @@ function setCrtDegradation(s, dist) {
  *  animation-frame hook exposed for this, and a dozen steps reads as
  *  smooth enough for a param like brightness that isn't changing per-pixel.
  *  Used for the power-on "tube warming up" ramp below. */
-function rampCrtParams(s, from, to, durationMs, startDelay = 0) {
+// `respectPower` defaults true: skip a step if the set has since powered off
+// (and isn't mid power-cycle animation) or the guide has opened, so a ramp
+// queued by a momentary effect (focus snap, an idle tear) can't keep
+// painting into STANDBY or the guide overlay after the fact. The power-cycle
+// sequences themselves (powerUp's warm-up ramp, powerDown's afterglow decay)
+// pass false -- they ARE the transition, so they must run to completion even
+// though `poweredOn` is false (powerDown) or not yet true (powerUp) for their
+// entire duration.
+function rampCrtParams(s, from, to, durationMs, startDelay = 0, respectPower = true) {
   if (!s?.crt?.params) return
   const STEPS = 12
   for (let i = 0; i <= STEPS; i++) {
     const t = i / STEPS
     setTimeout(() => {
       if (!s?.crt?.params) return
+      if (respectPower) {
+        const p = s.program
+        if (p && !p.poweredOn && !p._powerAnimating) return
+        if (p?.guideOpen) return
+      }
       for (const key in to) s.crt.params[key] = from[key] + (to[key] - from[key]) * t
     }, startDelay + durationMs * t)
   }
@@ -1805,7 +1918,11 @@ function flashCrtGlitch(s) {
   const { dist } = nearestSignal(s.program.freq)
   const restore = crtDegradeForDist(dist)
   Object.assign(s.crt.params, { chroma: 2.4, roll: 0.5 })
-  setTimeout(() => { if (s?.crt?.params) Object.assign(s.crt.params, restore) }, 150)
+  setTimeout(() => {
+    if (!s?.crt?.params) return
+    if (!s.program?.poweredOn || s.program?.guideOpen) return
+    Object.assign(s.crt.params, restore)
+  }, 150)
 }
 
 // 38th pass: bloom bump, used per ident note (see playIdent). bloomAmt is
@@ -1829,7 +1946,8 @@ function pulseBloom(s, amt = 0.5, ms = 90) {
   s.crt.params.bloomAmt = crtBase.bloomAmt + amt
   bloomTimer = setInterval(() => {
     const k = (Date.now() - start) / ms
-    if (!s?.crt?.params || k >= 1) {
+    const offOrClosed = !s.program?.poweredOn || s.program?.guideOpen
+    if (!s?.crt?.params || k >= 1 || offOrClosed) {
       clearInterval(bloomTimer)
       bloomTimer = null
       if (s?.crt?.params) s.crt.params.bloomAmt = crtBase.bloomAmt
@@ -2524,19 +2642,23 @@ export default {
       return
     }
     Object.assign(s.crt.params, { snow: 0.03, chroma: 1.6 })
-    setTimeout(() => { if (s?.crt?.params) Object.assign(s.crt.params, restore) }, 90)
+    setTimeout(() => {
+      if (!s?.crt?.params) return
+      if (!this.poweredOn || this.guideOpen) return
+      Object.assign(s.crt.params, restore)
+    }, 90)
     // Same box-BOTTOM rows the idle shimmer restricts itself to: those are
     // plain full-width '─' with no embedded panel label (drawBoxTop has
     // one, drawBoxBottom does not), so a scrambled run here can never
     // clobber something that has to stay readable.
-    const rows = [TUNER_BOT_Y, STATION_BOT_Y, NOWPLAYING_BOT_Y, METERS_BOT_Y]
-    const y = rows[Math.floor(Math.random() * rows.length)]
+    const y = BOX_BOTTOM_ROWS[Math.floor(Math.random() * BOX_BOTTOM_ROWS.length)]
     const runLen = 8 + Math.floor(Math.random() * 10)
     const x0 = BOX_X0 + 1 + Math.floor(Math.random() * Math.max(1, BOX_X1 - BOX_X0 - runLen - 2))
     const glyphs = '▓▒░─'
     for (let i = 0; i < runLen; i++) {
       term.put(x0 + i, y, glyphs[Math.floor(Math.random() * glyphs.length)], Math.random() < 0.4 ? DIM : FAINT)
     }
+    const restAttr = BOX_BOTTOM_REST_ATTR.get(y)
     setTimeout(() => {
       if (!this.poweredOn || this.guideOpen) return
       for (let i = 0; i < runLen; i++) {
@@ -2544,7 +2666,10 @@ export default {
         // METERS_BOT_Y carries a '┻' junction at METERS_DIVIDER_X (see
         // drawChrome) -- the same trap the 18th pass hit with the idle
         // shimmer, which restores a flat '─' over everything it touches.
-        term.put(x, y, y === METERS_BOT_Y && x === METERS_DIVIDER_X ? '┻' : '─', MUTED)
+        // restAttr (not a hardcoded MUTED): NOW PLAYING's border rests at
+        // BOLD -- see BOX_BOTTOM_REST_ATTR's definition for the bug this
+        // fixes.
+        term.put(x, y, y === METERS_BOT_Y && x === METERS_DIVIDER_X ? '┻' : '─', restAttr)
       }
     }, 90)
   },
@@ -2565,7 +2690,7 @@ export default {
       // mis-positioning relative to) the divider once the beats stop.
       [METERS_TOP_Y, 'LEVELS', METERS_DIVIDER_X],
     ]
-    const bottoms = [TUNER_BOT_Y, STATION_BOT_Y, NOWPLAYING_BOT_Y, METERS_BOT_Y]
+    const bottoms = BOX_BOTTOM_ROWS
     const redraw = (attr) => {
       // BUG FIXED (caught live, 20th pass): this beat sequence runs for
       // ~500ms after powerUp()'s REVEAL_DELAY fires, via its own raw
@@ -2627,6 +2752,7 @@ export default {
     // pass) -- power-down is one of the two places (with tryLock) that
     // still needs to silence it explicitly.
     stopStaticNoise()
+    stopTubeHum() // 42nd pass -- the noise floor dies with the set, same as everything else audio
     if (this.ready && this.player) this.player.pauseVideo()
     this.setPlayState(s)
     playPowerDownSound()
@@ -2699,7 +2825,7 @@ export default {
         this.drawStandbyClock(s)
         // 38th pass: afterglow bleeding back down to nominal persistence
         // across the first moments of STANDBY, rather than snapping back.
-        rampCrtParams(s, { decay: 0.96 }, { decay: crtBase.decay }, 420)
+        rampCrtParams(s, { decay: 0.96 }, { decay: crtBase.decay }, 420, 0, false)
         this._powerAnimating = false // sequence landed, ticker can resume
       } },
     ]
@@ -2774,6 +2900,8 @@ export default {
       { brightness: 0.05, bg: 0.02 },
       { brightness: crtBase.brightness, bg: crtBase.bg },
       REVEAL_DELAY,
+      0,
+      false,
     )
     const beats = [
       { delay: 0, fn: () => {
@@ -2818,6 +2946,7 @@ export default {
         clearAll()
         this.poweredOn = true
         this._powerAnimating = false // sequence landed, ticker can resume
+        startTubeHum() // 42nd pass -- comes up with the picture, not before it
         this.drawChrome(s)
         this.drawScale(s)
         this.setStatus(s, 'SYSTEM READY', false)
@@ -4380,10 +4509,17 @@ export default {
     // locked or not. Only ever touches a box-BOTTOM border row: those are
     // plain '─' the full width (drawBoxBottom has no embedded label, unlike
     // drawBoxTop), so a random cell can never clobber a panel title. Briefly
-    // brightens one cell, then a timer fades it back to the resting MUTED.
+    // dips one cell a notch below rest, then a timer fades it back up to
+    // that row's own resting attribute (BOX_BOTTOM_REST_ATTR -- NOT a
+    // hardcoded MUTED: NOW PLAYING's border rests at BOLD, see its
+    // definition, and restoring to MUTED there was a real bug found live in
+    // the 42nd pass -- see the same note). The dip itself is likewise
+    // BOX_BOTTOM_FLASH_ATTR, one notch below THAT row's rest, not a flat
+    // DIM for all four -- a flat DIM read as invisible on the MUTED rows but
+    // a much bigger, face-changing dip on NOW PLAYING's brighter BOLD rest
+    // (found live right after the rest-attribute fix, same session).
     if (Math.random() < 0.05) {
-      const rows = [TUNER_BOT_Y, STATION_BOT_Y, NOWPLAYING_BOT_Y, METERS_BOT_Y]
-      const y = rows[Math.floor(Math.random() * rows.length)]
+      const y = BOX_BOTTOM_ROWS[Math.floor(Math.random() * BOX_BOTTOM_ROWS.length)]
       let x = BOX_X0 + 1 + Math.floor(Math.random() * (BOX_X1 - BOX_X0 - 1))
       // 18th pass: METERS_BOT_Y now has a '┻' T-junction at
       // METERS_DIVIDER_X (see drawChrome) -- this shimmer assumed every
@@ -4391,8 +4527,9 @@ export default {
       // junction with a dash if it ever landed there (writes '─' both for
       // the flash and the fade-back). Nudge off that one column instead.
       if (y === METERS_BOT_Y && x === METERS_DIVIDER_X) x += x < BOX_X1 - 1 ? 1 : -1
-      s.term.put(x, y, '─', DIM)
-      setTimeout(() => { if (this.poweredOn) s.term.put(x, y, '─', MUTED) }, 90 + Math.random() * 80)
+      const restAttr = BOX_BOTTOM_REST_ATTR.get(y)
+      s.term.put(x, y, '─', BOX_BOTTOM_FLASH_ATTR.get(y))
+      setTimeout(() => { if (this.poweredOn) s.term.put(x, y, '─', restAttr) }, 90 + Math.random() * 80)
     }
   },
 }

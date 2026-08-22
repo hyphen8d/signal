@@ -2,7 +2,7 @@
 
 A community-facing, unofficial internet-radio-style web toy: a terminal/CRT
 tuning-dial receiver with 9 curated stations, real songs, station idents,
-scanning, presets, and a power switch.
+scanning, presets, an ambient tube hum, and a power switch.
 
 Built on top of [`cyberspace-crt`](https://github.com/unremarkablegarden/cyberspace-crt),
 the WebGL2 CRT text-grid engine open-sourced from [cyberspace.online](https://cyberspace.online).
@@ -55,6 +55,7 @@ plain `python3 -m http.server` can serve you a stale cached copy of
 | `M` | Mute |
 | `P` | Power off / on |
 | `G` | Guide -- about/controls page, a station index, and a full detail page per station (freq/name/description/sample tracks); `<-`/`->` steps through all 11 pages, digits `1`-`9` jump straight to a station's detail page from the index, any other key closes it |
+| `C` | Cycle display mode (Green Phosphor, Classic Amber, Cyber Blue, Monochrome, Bubblegum Pink) |
 | drag the dial | Seek with the mouse (desktop only, by design) |
 
 ### Touch (mobile)
@@ -67,7 +68,7 @@ the full control surface above:
 | tap | Power on (when off) / mute toggle (when on and locked) |
 | swipe left / right | Step to the next / previous station, in dial order |
 
-Everything else (scan, presets, back, guide, volume, mute) has no touch
+Everything else (scan, presets, back, guide, volume) has no touch
 equivalent yet -- there's also currently no way to power back *off* on
 touch alone. Known gaps, not oversights.
 
@@ -95,9 +96,9 @@ isn't just an internal annoyance anymore.
   in sync. No fixed cadence yet — add as you find good tracks, just don't
   let any one station drop below ~10.
 - **Station count:** 9 is the agreed ceiling for now — matches the `1`-`9`
-  preset keys cleanly, no spillover digit needed. A 10th station briefly
-  existed bound to `0`; if the roster grows past 9 again, decide the preset
-  scheme deliberately rather than defaulting back to that. RELIC SIGNAL was
+  preset keys cleanly, no spillover digit needed. `0` is not part of the
+  public preset scheme; if the roster ever grows past 9, decide how presets
+  work deliberately rather than assuming `0` is available. RELIC SIGNAL was
   retired in v0.6 and CIPHER moved into its frequency slot, keeping the
   count at 9.
 - **Dead videos:** the player now auto-skips on any playback error (private,
