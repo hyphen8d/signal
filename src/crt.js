@@ -13,7 +13,18 @@
 // Uniform values come from ../config.js. The constructor also takes an override
 // object, so the module works without it.
 
-import { SCREEN, PHOSPHORS, PHOSPHOR } from '../config.js'
+// 2026-08-22: dynamic, cache-busted import instead of a static one -- the
+// same GitHub-Pages-serves-max-age=600 staleness that hit program.js in
+// the 28th pass (see main.js's comment) also hits this file, just less
+// visibly since config.js changes far more rarely. A returning visitor's
+// browser could keep running a stale PHOSPHORS map (missing a just-added
+// tint, e.g. the secret NIN station's 'red') for up to 10 minutes after a
+// deploy, with no way to notice short of a hard refresh. A literal static
+// import can't take a per-load cache-buster (import specifiers must be a
+// string literal), so this is a top-level-await dynamic import instead --
+// every page load gets the actual current config.js, same fix shape as
+// main.js's program.js load.
+const { SCREEN, PHOSPHORS, PHOSPHOR } = await import(`../config.js?t=${Date.now()}`)
 
 const VERT = `#version 300 es
 void main() {

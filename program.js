@@ -964,9 +964,18 @@ function colToFreq(col) {
   return FREQ_MIN + pct * (FREQ_MAX - FREQ_MIN)
 }
 function clampFreq(f) { return Math.min(FREQ_MAX, Math.max(FREQ_MIN, f)) }
+// 2026-08-22 (Matthew: "let's make it so you can lock into the station
+// using the tuner by going to 777.7 even though it is a 'hidden' station")
+// -- includes SECRET_STATION alongside STATIONS, so seeking/dragging/
+// scanning the dial onto 777.7 can land and lock on it same as any real
+// preset. It's still "hidden" in every other sense: not in
+// STATION_PRESET_ORDER, so it never appears in the Guide, stations.md, the
+// 1-9 preset keys, or the preset-position strip -- this is the one place
+// that intentionally makes it reachable by tuning alone, on top of the
+// dedicated 0 key.
 function nearestStation(freq) {
   let best = null, bestDist = Infinity
-  for (const ch of STATIONS) {
+  for (const ch of [...STATIONS, SECRET_STATION]) {
     const d = Math.abs(ch.freq - freq)
     if (d < bestDist) { bestDist = d; best = ch }
   }

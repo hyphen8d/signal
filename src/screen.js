@@ -4,7 +4,10 @@
 import { parseBDF } from './bdf.js'
 import { Term } from './term.js'
 import { CRT } from './crt.js'
-import { FONT, GRID, RENDER, PHOSPHOR } from '../config.js'
+// 2026-08-22: dynamic, cache-busted import -- see crt.js's identical fix
+// for why (GitHub Pages' max-age=600 can serve a stale config.js to a
+// returning visitor for up to 10 minutes after a deploy).
+const { FONT, GRID, RENDER, PHOSPHOR } = await import(`../config.js?t=${Date.now()}`)
 
 async function loadFont(url) {
   const res = await fetch(url)
