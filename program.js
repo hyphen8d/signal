@@ -53,6 +53,14 @@ const SCAN_STEP = 6
 // simulating each station's timeline continuously in the background.
 const RESUME_CUTOFF_MS = 3 * 60 * 1000
 
+// Visualizer (43rd/44th pass, Matthew: "music screensaver... when idle for
+// awhile or when toggled" -- renamed from "screensaver" the same pass it
+// shipped: "breaks immersion a bit"). 4:20 was Matthew's own pick, not a
+// default worth second-guessing. Only ever armed while locked and playing
+// -- see frame()'s idle check -- so there's nothing to idle into while
+// seeking or scanning.
+const VISUALIZER_IDLE_MS = 4 * 60 * 1000 + 20 * 1000
+
 // Display modes (23rd pass, Matthew: "let users cycle display modes") --
 // the CRT engine (src/crt.js) already ships a full set of named phosphor
 // tints (see PHOSPHORS in config.js) and a setPhosphor(name) hook on both
@@ -243,6 +251,10 @@ const STATIONS = [
     static: 700,
     crt: { decay: 0.88, brightness: 1.12, bloomAmt: 1.7, scanMax: 0.6 },
     meter: { spring: 0.16, damping: 0.72, swing: 0.55 },
+    // 44th pass -- the Visualizer's DRIFT mode (see VISUAL_METHODS) is
+    // explicitly paired with the one station it's named after, not just
+    // landing here as everyone's fallback.
+    visual: 'drift',
     tracks: [
       realTrack('UfcAVejslrU', 'Weightless', 'Marconi Union'),
       realTrack('TJ6Mzvh3XCc', 'Spiegel im Spiegel', 'Arvo Pärt'),
@@ -1469,7 +1481,7 @@ function stopTubeHum() {
 // the page happens to see.
 const MAPPED_KEYS = new Set([
   'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter',
-  's', 'S', 'n', 'N', 'm', 'M', 'p', 'P', 'b', 'B', 'g', 'G', 'c', 'C',
+  's', 'S', 'n', 'N', 'm', 'M', 'p', 'P', 'b', 'B', 'g', 'G', 'c', 'C', 'v', 'V',
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 ])
 function playKeyClick() {
@@ -1973,6 +1985,41 @@ function flashFocusSnap(s) {
   rampCrtParams(s, over, home, 180, 140)
 }
 
+// Visualizer (43rd/44th pass) -- DRIFT mode. A layered sine-wave density
+// field, same "decorative but structured" idiom as the VU meter and antenna
+// glyph: no real audio analysis anywhere (WebAudio can't see inside the
+// YouTube iframe), just deterministic synthetic motion. Character density
+// (this ramp) plus the beam-level tier below give it more apparent gradient
+// than the 5 discrete attribute tiers alone would.
+//
+// Built as the first of what's meant to become a per-station roster (44th
+// pass, Matthew: "since we know we can't have it impacted by audio we CAN
+// have it be themed to each station... eventually have 10 visuals") --
+// VISUAL_METHODS just below is the dispatch table that idea hangs off of.
+// DRIFT is wired to the DRIFT MODE station explicitly (see STATIONS'
+// `visual` field), not just landing there by default -- the two sharing a
+// name is meant to be a real pairing. Every other station falls back to
+// DRIFT purely because nothing themed exists for them yet. Matthew's
+// floated something hacking/code-based for CIPHER and a synthwave/
+// vaporwave treatment for CIRCUIT CRUSH as the next two builds; RIPPLE and
+// SCOPE (see the original screensaver mockup artifact) are other candidate
+// directions for stations further down the roster.
+const DRIFT_RAMP = ' .:-=+*#%@'
+
+/** Maps a 0..1 density value to term.js's discrete beam-intensity tiers. */
+function visualizerLevelAttr(v) {
+  if (v < 0.2) return FAINT
+  if (v < 0.4) return DIM
+  if (v < 0.6) return MUTED
+  if (v < 0.85) return NORMAL
+  return BRIGHT
+}
+
+// station.visual -> the drawing method it dispatches to. Falls back to
+// 'drift' for any station with no visual field, or one that doesn't match
+// a built entry here yet.
+const VISUAL_METHODS = { drift: 'drawDriftEffect' }
+
 // --- program ---------------------------------------------------------------
 
 export default {
@@ -1980,10 +2027,14 @@ export default {
   // brackets. Drawn once at boot and again after a power-up (12th pass);
   // extracted out of init() so both call sites stay in sync instead of
   // duplicating ~60 lines of box-drawing.
-  drawChrome(s) {
+  // Title bar, inverse plane -- SIGNAL wordmark, version tag, clock,
+  // brand-plate. Split out of drawChrome() (43rd pass) so the visualizer
+  // can put up the exact same row 0 without dragging the panel frames along
+  // with it -- and so this._clockTimer's 1s ticker (which just calls
+  // drawClock() unconditionally whenever powered on) keeps working
+  // unmodified whether the visualizer is up or not.
+  drawTitleBar(s) {
     const { term } = s
-
-    // Title bar, inverse plane.
     for (let x = 0; x < term.cols; x++) term.put(x, 0, ' ', NORMAL, 1)
     term.text(2, 0, 'SIGNAL', BOLD, 1)
     // Version tag (28th pass, revised: Matthew wanted it same font/weight
@@ -2010,6 +2061,12 @@ export default {
     // title text) -- see setStatus().
     const brand = 'MODEL SG-1  -  SIGNAL RECEIVER'
     term.text(centerX(term.cols, brand), 0, brand, FAINT, 1)
+  },
+
+  drawChrome(s) {
+    const { term } = s
+
+    this.drawTitleBar(s)
 
     // Panel frames -- drawn once, never redrawn. Every content function
     // below only clears its own interior span, so these stay put.
@@ -2222,6 +2279,12 @@ export default {
     // so "turning it on" always means and looks like the same thing.
     this.poweredOn = false
 
+    // Visualizer (43rd pass) -- see VISUALIZER_IDLE_MS, enterVisualizer().
+    // _lastInputAt seeds to "now" so a fresh page load doesn't idle straight
+    // into it before anyone's had a chance to touch anything.
+    this.visualizerActive = false
+    this._lastInputAt = Date.now()
+
     // Scrolling-waveform VU state (11th pass -- see drawVU()).
     this.lastProgressDraw = 0
     this.vuSample = 0.03
@@ -2340,17 +2403,13 @@ export default {
 
     this.initPlayer(s)
 
-    this.dragging = false
-    this.dragLastX = 0
-    document.addEventListener('pointerdown', (e) => this.onPointerDown(s, e))
-    document.addEventListener('pointermove', (e) => this.onPointerMove(s, e))
-    document.addEventListener('pointerup', () => { this.dragging = false })
     // 22nd pass (Matthew: "semi mobile functionality -- tapping screen can
-    // 'power on', swipe left/right for channels") -- separate gesture layer
-    // from the pointer-drag seeking above (onPointerDown ignores
-    // pointerType 'touch' now, see there) rather than trying to derive
-    // tap/swipe from the continuous drag math, which is tuned for a mouse
-    // dragging the dial, not a thumb flicking the whole screen.
+    // 'power on', swipe left/right for channels") -- touch's own gesture
+    // layer, tap/swipe read directly off touchstart/touchend rather than a
+    // continuous drag. Mouse-drag-to-seek (the desktop equivalent this used
+    // to sit next to) was removed in the 44th pass -- see its old spot's
+    // note in drawHint() -- so this is the only pointer input SIGNAL reads
+    // now, and only on touch devices.
     this._touchActive = false
     this._touchStartX = 0
     this._touchStartY = 0
@@ -2742,6 +2801,12 @@ export default {
     if (!this.poweredOn) return
     this.poweredOn = false
     this._powerAnimating = true // cleared once the STANDBY beat lands below
+    // 43rd pass: cleared silently, not via exitVisualizer() -- the collapse
+    // sequence below already clears and redraws the whole grid itself, so
+    // there's no normal-view chrome to restore first. Left set, frame()
+    // would keep painting the drift effect over STANDBY forever after the
+    // next power-up.
+    this.visualizerActive = false
     // 38th pass: the status sweep and any in-flight text resolve run on
     // their own timers and would otherwise keep painting into the collapse
     // sequence's own beats.
@@ -3547,8 +3612,6 @@ export default {
   // Filled-background control panel, same treatment as the title bar
   // (Matthew, 8/20: distinguish the controls from the rest of the screen
   // the same way SIGNAL/v0.2 stand out up top, not as dim floating text).
-  // "drag to sweep" deliberately left off -- it's a hidden/discoverable
-  // control, not one of the primary listed ones.
   drawHint(s) {
     const { term } = s
     // 29th pass (Matthew: "top row = radio-esque, bottom row = things a
@@ -3562,7 +3625,12 @@ export default {
     // short for the same reason now that GUIDE joined this line too (the
     // fixed hint row has broken before on an over-length string, see
     // centerX()'s own clamping comment).
-    const line2 = '[N] SKIP   [UP/DOWN] VOL   [M] MUTE   [P] POWER   [G] GUIDE   [C] MODE'
+    // 43rd/44th pass: gaps tightened 3sp->2sp across this whole line to make
+    // room for [V] VIZ without breaking 80 cols (centerX() clamps silently
+    // on overflow -- see its own comment -- so this was worth getting
+    // right). "VIZ" not "SAVER" -- Matthew: calling it a screensaver "breaks
+    // immersion a bit"; the feature is the Visualizer.
+    const line2 = '[N] SKIP  [UP/DOWN] VOL  [M] MUTE  [P] POWER  [G] GUIDE  [C] MODE  [V] VIZ'
     for (let x = 0; x < term.cols; x++) { term.put(x, HINT_Y1, ' ', NORMAL, 1); term.put(x, HINT_Y2, ' ', NORMAL, 1) }
     term.text(centerX(term.cols, line1), HINT_Y1, line1, BOLD, 1)
     term.text(centerX(term.cols, line2), HINT_Y2, line2, NORMAL, 1)
@@ -4247,36 +4315,14 @@ export default {
     }, 55)
   },
 
-  // Absolute click-to-position would need to invert the tube's fill/curve
-  // geometry to be accurate, so instead the dial behaves like a real tuning
-  // knob: drag distance maps to a frequency delta, not a screen position.
-  onPointerDown(s, e) {
-    // 22nd pass: touch now has its own dedicated tap/swipe gesture layer
-    // (onTouchStart/onTouchEnd below) instead of being derived from this
-    // continuous drag math, which is tuned for a mouse dragging the dial a
-    // few pixels at a time -- ignoring touch here keeps this path
-    // desktop-mouse-only, same as it's always been.
-    if (e.pointerType === 'touch') return
-    if (e.target && e.target.closest('#ytDock')) return
-    this.dragging = true
-    this.dragLastX = e.clientX
-  },
-  onPointerMove(s, e) {
-    if (!this.dragging) return
-    if (!this.poweredOn) return
-    if (this.guideOpen) return
-    const rect = s.canvas.getBoundingClientRect()
-    const dx = e.clientX - this.dragLastX
-    this.dragLastX = e.clientX
-    const dFreq = (dx / rect.width) * (FREQ_MAX - FREQ_MIN)
-    this.stopScan()
-    if (this.mode === 'locked') this.enterSeeking(s)
-    this.retune(s, this.freq + dFreq)
-    this.setStatus(s, 'SEEKING', false)
-    // Same continuous bed as arrow-seeking (12th pass) -- idempotent.
-    const sig = nearestSignal(this.freq)
-    startStaticNoise(sig.dist, sig.station && sig.station.static)
-  },
+  // Mouse-drag-to-seek (drag distance -> frequency delta) was removed here
+  // in the 44th pass (Matthew: "remove the mouse ability to scan from the
+  // app" -- alongside dropping mouse input as a visualizer-wake source, see
+  // key()'s comment, so a mouse can sit idle on top of a running SIGNAL tab
+  // without either scanning the dial by accident or knocking the visualizer
+  // down). Touch keeps its own separate tap/swipe gesture layer just below
+  // -- that was never mouse input and still needs a way in on a device with
+  // no keyboard at all.
 
   // 22nd pass -- mobile has no keyboard, so it had no way to power on, lock
   // a station, or change stations at all before this. Tap (minimal
@@ -4287,6 +4333,8 @@ export default {
   // seek math above -- a thumb swipe covering the whole screen width isn't
   // the same gesture as a precise mouse drag on the dial.
   onTouchStart(s, e) {
+    if (this.poweredOn) this._lastInputAt = Date.now()
+    if (this.visualizerActive) { this.exitVisualizer(s); e.preventDefault(); return }
     if (e.target && e.target.closest && e.target.closest('#ytDock')) return
     if (e.touches.length !== 1) { this._touchActive = false; return } // ignore pinch/multi-touch
     this._touchActive = true
@@ -4333,6 +4381,129 @@ export default {
     this.presetTune(s, next)
   },
 
+  // Visualizer (43rd pass). Full-screen takeover of rows 1-22 -- same
+  // clearAll-and-redraw approach as the Guide and the power sequences --
+  // with row 0 (drawTitleBar) and the HINT_Y1/Y2 footer repurposed for
+  // live station/track info rather than duplicated. Only ever entered while
+  // locked and playing (see the idle check in frame() and the [V] case in
+  // key()), so there's always a station to show on the way in.
+  enterVisualizer(s) {
+    if (this.visualizerActive) return
+    this.visualizerActive = true
+    this._vizEnterAt = Date.now()
+    this._vizLastInfoDraw = 0
+    const { term } = s
+    for (let y = 0; y < term.rows; y++)
+      for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
+    this.drawTitleBar(s)
+    this.drawVisualizerInfo(s)
+    playPanelSound(true)
+  },
+  exitVisualizer(s) {
+    if (!this.visualizerActive) return
+    this.visualizerActive = false
+    this._lastInputAt = Date.now()
+    playPanelSound(false)
+    // Same rebuild closeGuide() uses: full clear, then chrome/frames/meters,
+    // then whatever the actual lock/status state was underneath (the
+    // visualizer never touched freq/lockedStation/playState, only covered
+    // them visually).
+    const { term } = s
+    for (let y = 0; y < term.rows; y++)
+      for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
+    this.drawChrome(s)
+    this.drawScale(s)
+    this.drawVolume(s)
+    this.drawSignal(s)
+    this.drawVU(s)
+    this.drawAntenna(s, 0)
+    this.drawDial(s)
+    this.drawFreq(s)
+    this.drawHint(s)
+    if (this.mode === 'locked' && this.lockedStation) {
+      this.showStation(s, this.lockedStation)
+      if (this.currentTrack) this.showTrack(s, this.currentTrack)
+      this.setStatus(s, 'LOCKED', true)
+    } else {
+      this.clearStation(s)
+      this.clearTrack(s)
+      this.setStatus(s, 'SEEKING', false)
+    }
+    this.setPlayState(s, this.playState)
+  },
+  // HINT_Y1/Y2 repurposed as a live station/track readout while the
+  // visualizer is up, instead of the control legend that normally lives
+  // there -- same inverse two-line treatment, so it still reads as "system
+  // chrome" rather than new content bolted onto the effect canvas.
+  drawVisualizerInfo(s) {
+    const { term } = s
+    const station = this.lockedStation
+    for (let x = 0; x < term.cols; x++) { term.put(x, HINT_Y1, ' ', NORMAL, 1); term.put(x, HINT_Y2, ' ', NORMAL, 1) }
+    if (!station) return
+    // 44th pass, Matthew: glyph flanks both sides, matching showStation()'s
+    // "GLYPH NAME GLYPH" treatment in the STATION box rather than a single
+    // leading marker.
+    const flair = station.glyph || '●'
+    const line1 = ` ${flair} ${station.callsign} ${flair} · ${station.freq.toFixed(1)} KHZ`
+    const exitHint = '[ANY KEY] EXIT '
+    term.text(0, HINT_Y1, line1, BOLD, 1)
+    term.text(Math.max(line1.length + 2, term.cols - exitHint.length), HINT_Y1, exitHint, NORMAL, 1)
+
+    const track = this.currentTrack
+    let line2 = track ? ` ${track.title}  --  ${track.artist}` : ''
+    let timePart = ''
+    if (this.ready && this.player) {
+      let cur, dur
+      try { cur = this.player.getCurrentTime(); dur = this.player.getDuration() } catch (e) {}
+      if (dur && isFinite(dur) && dur > 0) {
+        const fmt = (sec) => { sec = Math.max(0, Math.floor(sec)); return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` }
+        timePart = `${fmt(cur)} / ${fmt(dur)} `
+      }
+    }
+    const maxLine2 = term.cols - timePart.length - 1
+    if (line2.length > maxLine2) line2 = truncate(line2, maxLine2)
+    term.text(0, HINT_Y2, line2, NORMAL, 1)
+    if (timePart) term.text(term.cols - timePart.length, HINT_Y2, timePart, NORMAL, 1)
+  },
+  // DRIFT effect -- rows 1-22 (between the title bar and the info footer).
+  // Four overlapping sine terms (a horizontal drift, a vertical drift, a
+  // diagonal drift, and a slow ripple out from a fixed center) rather than
+  // one -- a single sine field reads as stripes; layering a few at different
+  // angles and speeds is what makes it read as weather instead of wallpaper.
+  drawDriftEffect(s, t) {
+    const { term } = s
+    const cx = term.cols / 2
+    const cy = 11.5
+    for (let y = 1; y < HINT_Y1; y++) {
+      for (let x = 0; x < term.cols; x++) {
+        let v = Math.sin(x * 0.16 + t * 0.7)
+        v += Math.sin(y * 0.32 - t * 0.5)
+        v += Math.sin((x + y) * 0.11 + t * 0.35)
+        const dx = x - cx, dy = (y - cy) * 2.1
+        v += Math.sin(Math.sqrt(dx * dx + dy * dy) * 0.28 - t * 0.9)
+        v = (v + 4) / 8 // normalize the 4-term sum (range -4..4) to ~0..1
+        if (v < 0.08) { term.put(x, y, ' '); continue }
+        const idx = Math.min(DRIFT_RAMP.length - 1, Math.floor(v * DRIFT_RAMP.length))
+        const ch = DRIFT_RAMP[idx]
+        term.put(x, y, ch, visualizerLevelAttr(v))
+      }
+    }
+  },
+  // 44th pass -- dispatches on the locked station's own `visual` field
+  // (VISUAL_METHODS) rather than always drawing DRIFT, so a themed station
+  // (today just DRIFT MODE) gets its own effect the moment one exists for
+  // it, with no change needed here.
+  drawVisualizerFrame(s, t) {
+    const key = this.lockedStation && VISUAL_METHODS[this.lockedStation.visual] ? this.lockedStation.visual : 'drift'
+    this[VISUAL_METHODS[key]](s, (Date.now() - this._vizEnterAt) / 1000)
+    // Info footer updates on the same cadence drawPlayback() already uses
+    // for the normal progress bar -- plenty for a running clock, and cheap
+    // (two 80-wide inverse rows) next to the effect's own per-frame cost.
+    if (t - (this._vizLastInfoDraw || 0) > 0.25) {
+      this._vizLastInfoDraw = t
+      this.drawVisualizerInfo(s)
+    }
+  },
   // 2026-08-22: mirrors the exact three-way branching key() itself does
   // (powered-off, guide-open, normal) so "does this key do something"
   // matches "does this key click" precisely, without executing any of
@@ -4341,11 +4512,15 @@ export default {
     if (!this.poweredOn) return e.key === 'p' || e.key === 'P'
     // The guide overlay closes on any key at all (see the "[any other
     // key] CLOSE" hint on every guide page) -- so while it's open, every
-    // key is a real command, not just the ones in MAPPED_KEYS.
-    if (this.guideOpen) return true
+    // key is a real command, not just the ones in MAPPED_KEYS. Visualizer
+    // (43rd pass) is the same deal -- any key wakes it.
+    if (this.guideOpen || this.visualizerActive) return true
     return MAPPED_KEYS.has(e.key)
   },
   key(s, e) {
+    // 43rd pass -- any key counts as activity for the idle-visualizer
+    // clock, whether or not it does anything else below.
+    this._lastInputAt = Date.now()
     // Keypress click (32nd pass; scoped to mapped keys only 2026-08-22,
     // Matthew: "hearing sound when I command tab between programs, that
     // should not happen") -- the listener sits on window (see
@@ -4366,6 +4541,12 @@ export default {
       if (e.key === 'p' || e.key === 'P') { e.preventDefault(); this.powerUp(s) }
       return
     }
+    // Visualizer (43rd pass) -- standard visualizer manners: ANY key
+    // wakes it, and that keypress is consumed by the wake rather than also
+    // running its normal action (so waking on an arrow key doesn't also
+    // seek, waking on N doesn't also skip a track). Second press does
+    // whatever it always did.
+    if (this.visualizerActive) { e.preventDefault(); this.exitVisualizer(s); return }
     // Guide overlay (15th pass; paged 18th pass; expanded to per-station
     // pages 32nd pass) -- while open, ANY key closes it (matches the "[any
     // other key] CLOSE" hint on every guide page) except: ArrowRight/
@@ -4416,6 +4597,15 @@ export default {
       case 'g': case 'G': e.preventDefault(); this.openGuide(s); break
       // Display modes (23rd pass, Matthew: "let users cycle display modes").
       case 'c': case 'C': e.preventDefault(); this.cycleDisplayMode(s); break
+      // Visualizer (43rd pass, Matthew: "'V' for saVer" -- the mnemonic
+      // still works after the 44th pass rename to "Visualizer") -- manual
+      // toggle in, any time you're locked. Silently no-ops otherwise
+      // (mirrors [B] BACK with empty history) -- getting in is only
+      // meaningful once there's a station/track to show on the info bar.
+      case 'v': case 'V':
+        e.preventDefault()
+        if (this.mode === 'locked' && this.lockedStation) this.enterVisualizer(s)
+        break
       // 11th pass (2026-08-20): 4 new stations brought STATIONS back up to
       // 9 -- preset keys match its length again, same pattern as the 10th
       // pass's drop to 5.
@@ -4449,6 +4639,20 @@ export default {
     // the guide overlay (15th pass) -- it's a full-screen takeover of the
     // same grid, so per-frame redraws would punch holes in it too.
     if (!this.poweredOn || this.guideOpen) return
+
+    // Visualizer (43rd pass) -- idle trigger. Only arms while locked and
+    // actually playing; there's nothing worth idling into while seeking,
+    // scanning, or between stations. Manual entry is the [V] case in key().
+    if (!this.visualizerActive && this.mode === 'locked' && this.lockedStation &&
+        Date.now() - this._lastInputAt > VISUALIZER_IDLE_MS) {
+      this.enterVisualizer(s)
+    }
+    // Early return, same shape as the poweredOn/guideOpen bail above --
+    // this is a full-screen takeover of its own, so none of the normal
+    // per-frame draws (including the rare idle CRT tear/roll and the
+    // always-on border shimmer, both further down) should run underneath
+    // it. Matthew: "no idle/shimmer tear ... does not stay active".
+    if (this.visualizerActive) { this.drawVisualizerFrame(s, t); return }
 
     // Idle shimmer on the dial while seeking, so the empty band doesn't feel
     // dead between stations. Cheap: only touch a handful of cells per frame.

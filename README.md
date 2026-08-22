@@ -95,7 +95,7 @@ plain `python3 -m http.server` can serve you a stale cached copy of
 | `P` | Power off / on |
 | `G` | Guide -- about/controls page, a station index, and a full detail page per station (freq/name/description/sample tracks); `<-`/`->` steps through all 11 pages, digits `1`-`9` jump straight to a station's detail page from the index, any other key closes it |
 | `C` | Cycle display mode (Green Phosphor, Classic Amber, Cyber Blue, Monochrome, Bubblegum Pink) |
-| drag the dial | Seek with the mouse (desktop only, by design) |
+| `V` | Visualizer -- toggle a full-screen procedural display while a station is locked (also kicks in on its own after a few minutes idle); any key exits |
 
 ### Touch (mobile)
 
