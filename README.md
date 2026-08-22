@@ -73,7 +73,7 @@ touch alone. Known gaps, not oversights.
 
 ## Stations
 
-9 stations, 145 tracks total (most run 15, CIPHER runs 25). Full roster with taglines and track lists:
+9 stations, 144 tracks total (most run 15, CIPHER runs 24). Full roster with taglines and track lists:
 [`channels.md`](./channels.md) — generated straight from the live
 `CHANNELS` array in `program.js` (`tools/channels-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station

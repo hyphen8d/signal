@@ -450,14 +450,15 @@ const CHANNELS = [
     // rather than force-padding to 30 with more guesses; 2 tracks that
     // would've duplicated CIRCUIT CRUSH (Perturbator "Future Club",
     // Carpenter Brut "Turbo Killer") were deliberately left out to keep the
-    // two stations' rosters distinct.
+    // two stations' rosters distinct. Down to 24 after this pass -- "Da
+    // Funk" pulled (its official video has audio baked over/under the
+    // studio track, not a clean listen for a radio station).
     tracks: [
       realTrack('wmin5WkOuPw', 'Firestarter', 'The Prodigy'),
       realTrack('xW17jtkjvvg', 'Smack My Bitch Up', 'The Prodigy'),
       realTrack('iTxOKsyZ0Lw', "Block Rockin' Beats", 'The Chemical Brothers'),
       realTrack('L0dxByaPWhM', 'Elektrobank', 'The Chemical Brothers'),
       realTrack('FGBhQbmPwH8', 'One More Time', 'Daft Punk'),
-      realTrack('mmi60Bd4jSs', 'Da Funk', 'Daft Punk'),
       realTrack('ruAi4VBoBSM', 'Praise You', 'Fatboy Slim'),
       realTrack('wCDIYvFmgW8', 'Weapon of Choice', 'Fatboy Slim ft. Bootsy Collins'),
       realTrack('3SwwljI-8JY', 'Halcyon', 'Orbital'),
