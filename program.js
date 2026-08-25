@@ -4336,6 +4336,25 @@ export default {
     // power-on hint, and the clock, laid out and centered together by
     // standbyLayout().
     this.drawStandbyScreen(s)
+    // 68th pass -- the one genuinely cold "tube coming to life" moment,
+    // ever, once per page load -- everything else (every later STANDBY a
+    // power-off returns to, every later power-on) treats the tube as
+    // already warm. Content's already drawn above at full brightness;
+    // ramps brightness/bg up from a dim floor so the picture visibly gains
+    // brightness right after it appears, then settles. Silent, deliberately
+    // -- there's been no user gesture yet for a page-load sound to survive
+    // autoplay policy anyway.
+    this._powerAnimating = true // false again in COLD_OPEN_MS, below
+    const COLD_OPEN_MS = 500
+    rampCrtParams(
+      s,
+      { brightness: SCREEN.brightness * 0.15, bg: SCREEN.bg * 0.15 },
+      { brightness: SCREEN.brightness, bg: SCREEN.bg },
+      COLD_OPEN_MS,
+      0,
+      false,
+    )
+    setTimeout(() => { this._powerAnimating = false }, COLD_OPEN_MS)
 
     // Guide overlay (15th pass -- a G key for guide, added).
     this.guideOpen = false
@@ -4346,18 +4365,21 @@ export default {
     // because the set itself is off). Skipped entirely while the guide
     // overlay is open, since that's a full-screen takeover with nothing to
     // tick into.
-    // 16th pass -- date/time removed during cold boot -- the boot
-    // and shutdown beat sequences both flip this.poweredOn to its end state
-    // immediately (see powerUp()/powerDown()) and then spend ~3s animating
-    // toward the final picture with their own setTimeout beats. Without a
-    // guard, this 1s ticker would independently redraw the clock on top of
-    // whatever the animation currently has on screen (the boot-text POST
-    // readout, the collapsing centerline, etc.) -- it doesn't know an
-    // animation is mid-flight, it just sees poweredOn=false and draws the
-    // standby clock over it. this._powerAnimating is set for the duration
-    // of both sequences so the ticker skips a beat instead of stomping on
-    // them.
-    this._powerAnimating = false
+    // 16th pass -- date/time removed during cold boot -- the boot and
+    // power-down beats both flip this.poweredOn to its end state
+    // immediately (see powerUp()/powerDown()) and then spend a beat or two
+    // animating toward the final picture with their own setTimeout beats.
+    // Without a guard, this 1s ticker would independently redraw the clock
+    // on top of whatever the animation currently has on screen (the boot-
+    // text POST readout, the cold-open flourish just above, etc.) -- it
+    // doesn't know an animation is mid-flight, it just sees poweredOn=false
+    // and draws the standby clock over it. this._powerAnimating is set for
+    // the duration of all three (cold-open, boot, power-down) so the ticker
+    // skips a beat instead of stomping on them.
+    // 68th pass -- NOT reset to false here: the cold-open flourish just
+    // above already set it true and owns clearing it itself via its own
+    // setTimeout. Resetting it unconditionally on this line, synchronously,
+    // would clear it before that timeout ever got a chance to fire.
     this._clockTimer = setInterval(() => {
       if (this.guideOpen || this._powerAnimating) return
       if (this.poweredOn) this.drawClock(s)
@@ -4856,19 +4878,31 @@ export default {
   // fresh-boot path (page load) and calls drawChrome()+playBootFlicker()
   // directly; these two reuse the same building blocks for the same look
   // on every power cycle after that.
+  // 68th pass, rethought -- this used to be a ~900ms, seven-beat "the tube
+  // is dying" spectacle (voltage surge, content going dark, a signal-loss
+  // glitch, a collapse to the centerline, a collapse to a point) ending on
+  // STANDBY. That whole sequence was also the source of two separate live-
+  // QA races this same evening: async beats scheduled on their own timers
+  // that a well-timed [I] (or, in principle, another P) could land in the
+  // middle of. Reframed: STANDBY isn't "off," it's the receiver's resting
+  // idle state -- the tube stays lit the whole time, so "power off" is just
+  // stepping back to it, not switching anything off. Snaps back in one
+  // beat, no death spiral, no reboot on the way back either -- see
+  // powerUp()'s pacing note. Removing nearly all the timer surface here
+  // also removes nearly all the room for a race like the [I] one to recur.
   powerDown(s) {
     if (!this.poweredOn) return
     this.poweredOn = false
-    this._powerAnimating = true // cleared once the STANDBY beat lands below
-    // 43rd pass: cleared silently, not via exitVisualizer() -- the collapse
-    // sequence below already clears and redraws the whole grid itself, so
-    // there's no normal-view chrome to restore first. Left set, frame()
-    // would keep painting the drift effect over STANDBY forever after the
-    // next power-up.
+    this._powerAnimating = true // cleared once the STANDBY beat lands below, ~120ms
+    // 43rd pass: cleared silently, not via exitVisualizer() -- the beat
+    // below already clears and redraws the whole grid itself, so there's no
+    // normal-view chrome to restore first. Left set, frame() would keep
+    // painting the drift effect over STANDBY forever after the next
+    // power-up.
     this.visualizerActive = false
     // 38th pass: the status sweep and any in-flight text resolve run on
-    // their own timers and would otherwise keep painting into the collapse
-    // sequence's own beats.
+    // their own timers and would otherwise keep painting into STANDBY right
+    // after it lands.
     this._clearStatusTimers()
     this._cancelAllResolves()
     this.stopScan()
@@ -4879,75 +4913,25 @@ export default {
     stopTubeHum() // 42nd pass -- the noise floor dies with the set, same as everything else audio
     if (this.ready && this.player) this.player.pauseVideo()
     this.setPlayState(s)
-    playPowerDownSound()
+    // 68th pass -- was playPowerDownSound(), a ~0.6s falling 660Hz->40Hz
+    // sweep built for the old "dying tube" collapse. Stepping back to an
+    // idle receiver isn't that -- reused playPanelSound(false)'s quick,
+    // gentle closing click instead (same one the guide overlay already
+    // closes on).
+    playPanelSound(false)
 
     const { term } = s
     const clearAll = () => {
       for (let y = 0; y < term.rows; y++)
         for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
     }
-    // 19th pass: floor, not round -- see drawStandbyClock()
-    const midY = Math.floor(term.rows / 2)
 
     const beats = [
-      { delay: 0, fn: () => {
-        // Voltage surge on the way out -- borders flash bright once before
-        // the collapse starts, same beat playBootFlicker opens on, in
-        // reverse intent (dying rather than warming up).
-        this.setStatus(s, 'POWERING DOWN', true)
-      } },
-      { delay: 90, fn: () => {
-        // Content goes dark first -- station/track/meters cut before the
-        // frame itself does, like the signal chain losing power before the
-        // tube does.
-        this.clearStation(s)
-        this.clearTrack(s)
-        for (let x = BOX_X0 + 1; x < BOX_X1; x++) {
-          term.put(x, VOL_Y, ' '); term.put(x, SIG_Y, ' '); term.put(x, VU_Y, ' ')
-        }
-        this.setStatus(s, 'POWERING DOWN', false)
-      } },
-      { delay: 140, fn: () => {
-        // Signal-loss glitch (13th pass, "fun shutdown") -- a scatter of
-        // random block/noise glyphs across the dial and tuning rows right
-        // before the picture collapses, like the tuner losing lock a beat
-        // before the tube itself dies. Paired with a short filtered-noise
-        // burst so it reads/sounds like the same event.
-        const glitchChars = '▓▒░#%&*'
-        for (let x = BOX_X0 + 1; x < BOX_X1; x++) {
-          if (Math.random() < 0.55) {
-            const ch = glitchChars[Math.floor(Math.random() * glitchChars.length)]
-            term.put(x, DIAL_Y, ch, Math.random() < 0.3 ? BRIGHT : FAINT)
-          }
-        }
-        playStaticBurst(0.12, 0.16, 2200)
-      } },
-      { delay: 170, fn: () => {
-        // Whole picture collapses to the horizontal centerline -- a CRT's
-        // vertical deflection dying while the beam is still lit reads as
-        // exactly this: everything not on the middle scanline disappears.
-        // 38th pass: persistence way up for the collapse, so the dying
-        // centerline smears and lingers the way a real tube's does instead
-        // of the picture cutting crisply off. Restored on the way into
-        // STANDBY below, and again defensively on power-up.
-        if (s?.crt?.params) s.crt.params.decay = 0.96
-        clearAll()
-        for (let x = 0; x < term.cols; x++) term.put(x, midY, '─', DIM)
-      } },
-      { delay: 260, fn: () => {
-        // Centerline collapses to a single point -- the classic tube-off
-        // dot -- then that point goes dark too.
-        clearAll()
-        term.put(Math.floor(term.cols / 2), midY, '·', BRIGHT)
-      } },
-      { delay: 320, fn: () => {
+      { delay: 120, fn: () => {
         clearAll()
         // 63rd pass -- see drawStandbyScreen(): same logo/version/STANDBY/
         // hint/clock layout the first-ever paint in init() draws.
         this.drawStandbyScreen(s)
-        // 38th pass: afterglow bleeding back down to nominal persistence
-        // across the first moments of STANDBY, rather than snapping back.
-        rampCrtParams(s, { decay: 0.96 }, { decay: crtBase.decay }, 420, 0, false)
         this._powerAnimating = false // sequence landed, ticker can resume
         // 54th pass -- small mechanical touches, including a phosphor
         // burn-in ghost -- a real tube briefly holds a faint afterimage of
@@ -4965,6 +4949,10 @@ export default {
         // just skip this one ghost on the rare draw where it would land on
         // top of the wordmark -- a stronger, reliably-centered STANDBY
         // screen is worth more than one transient afterimage.
+        // 68th pass -- kept even though the shutdown spectacle it was part
+        // of is gone: it reads at least as well, arguably better, as "you
+        // were just listening to this" on a receiver that never really
+        // powered off, as it did as one beat in a fake death sequence.
         const L = standbyLayout(term, this.mobile)
         const ghostClear = STATION_Y < L.logoTop || STATION_Y > L.logoBottom
         if (!this.mobile && this.lockedStation && ghostClear) {
@@ -4975,11 +4963,11 @@ export default {
           term.text(centerX(term.cols, flaired), STATION_Y, flaired, FAINT)
         }
       } },
-      { delay: 900, fn: () => {
-        // Fades out on its own before the set would plausibly be turned
-        // back on for anything but an instant re-power -- guarded on
-        // _powerAnimating so a fast power-up's own boot beats (which
-        // clearAll() this row anyway) never race this stray erase.
+      { delay: 4000, fn: () => {
+        // Fades out on its own after a few seconds of actually sitting on
+        // STANDBY -- guarded on _powerAnimating so a fast re-power's own
+        // boot beats (which clearAll() this row anyway) never race this
+        // stray erase.
         if (this.mobile || this._powerAnimating) return
         for (let x = 0; x < term.cols; x++) term.put(x, STATION_Y, ' ', NORMAL, 0)
       } },
@@ -5065,20 +5053,21 @@ export default {
     playPowerOnSound()
     // 2026-08-23 (live audio tap) -- the capture attempt rides the power-on
     // gesture, HERE and not later: getDisplayMedia requires-and-consumes
-    // transient activation, which expires (~5s) before the REVEAL beat lands
-    // at ~5.6s, so the share picker necessarily overlaps the boot animation.
-    // Deliberately after the YT priming block above so nothing here can
-    // disturb the round-4 mobile unmute invariants. Idempotent -- a later
-    // power cycle with a live tap is a no-op; a declined one retries.
+    // transient activation (~5s), which comfortably outlasts the now-much-
+    // shorter REVEAL_DELAY below (68th pass -- was ~5.6s, now under 2s), so
+    // the share picker still overlaps the boot readout fine. Deliberately
+    // after the YT priming block above so nothing here can disturb the
+    // round-4 mobile unmute invariants. Idempotent -- a later power cycle
+    // with a live tap is a no-op; a declined one retries.
     startAudioTap(this, s)
     // 41st pass: re-establish the baseline for whatever station is being
-    // resumed BEFORE the warm-up ramp below reads crtBase.brightness/bg off
-    // it -- otherwise a set resuming onto DRIFT MODE warms up to the nominal
-    // brightness and only drops to the station's dimmer picture afterwards.
+    // resumed, so drawChrome/setCrtDegradation etc. below read the right
+    // crtBase.brightness/bg for it rather than whatever a previous session
+    // left crtBase pointed at.
     setCrtCharacter(s, this.mode === 'locked' ? this.lockedStation : null)
-    // 38th pass: powerDown() raises `decay` for the afterglow smear on the
-    // way out, so a power-cycle has to come back to nominal persistence
-    // rather than inheriting a tube that never stops glowing.
+    // 68th pass -- powerDown() no longer raises `decay` for a collapse
+    // afterglow (that whole sequence is gone, see there), but this reset
+    // stays as a cheap defensive no-op in case anything else ever nudges it.
     if (s?.crt?.params) s.crt.params.decay = crtBase.decay
 
     // 26th pass -- a longer, better cold boot sequence, along the lines of
@@ -5114,47 +5103,38 @@ export default {
       '[ OK ] SIGNAL LOCK ARMED',
       '[ OK ] AUDIO PATH READY',
     ]
-    // Pacing (15th pass -- an even longer cold boot -- a
-    // second pass after the 14th pass already slowed this down once; 26th
-    // pass grew bootLines further on top of that, so the same per-line
-    // stagger now runs ~5.5s total rather than ~3s). Still one-shot on every
-    // power-on, not just the very first cold one, so it stays worth the wait
-    // rather than becoming an annoyance to click through on every session.
-    const DOT_MS = 500
-    const LINE_STAGGER_MS = 240
-    const BOOT_TEXT_DELAY = 1200
-    const REVEAL_DELAY = BOOT_TEXT_DELAY + bootLines.length * LINE_STAGGER_MS + 700
-    // 32nd pass -- the tube should visually warm up, not just the
-    // text reveal -- brightness/bg ramp from a cold-tube floor up to
-    // SCREEN's nominal values across the exact same window the boot beats
-    // already use, so the picture is visibly gaining brightness right up
-    // until REVEAL_DELAY lands the full chrome. Explicit cold values here
-    // (not a fraction of whatever crt.params currently holds) so this
-    // always starts from the same "just switched on" state regardless of
-    // what a previous session left it at.
-    rampCrtParams(
-      s,
-      { brightness: 0.05, bg: 0.02 },
-      { brightness: crtBase.brightness, bg: crtBase.bg },
-      REVEAL_DELAY,
-      0,
-      false,
-    )
+    // Pacing -- 68th pass, rethought (was a ~5.5s cold-boot POST on every
+    // single power-on, 15th/26th passes). STANDBY is now the receiver's
+    // resting "on" state, not "off" -- the tube's already warm and lit the
+    // instant before P is pressed, so a long cold-boot readout no longer
+    // fits the moment. This is "tuning in," not "switching on a dead set":
+    // still the same POST-flavored readout (kept -- it's a nice touch,
+    // Matthew's call), just compressed to something you'd actually want to
+    // watch every time rather than wait through. The one genuinely cold
+    // "tube coming to life" flourish now lives in init(), once, on first
+    // page load only -- see there.
+    const LINE_STAGGER_MS = 90
+    const BOOT_TEXT_DELAY = 300
+    const REVEAL_DELAY = BOOT_TEXT_DELAY + bootLines.length * LINE_STAGGER_MS + 300
     const beats = [
       { delay: 0, fn: () => {
-        // Same tube-off dot the collapse ended on, lighting back up first.
-        clearAll()
-        term.put(Math.floor(term.cols / 2), midY, '·', DIM)
-      } },
-      { delay: DOT_MS, fn: () => {
-        // Dot expands to the centerline -- deflection coming back before
-        // the rest of the picture does, reverse of the power-down collapse.
-        clearAll()
-        for (let x = 0; x < term.cols; x++) term.put(x, midY, '─', NORMAL)
-        // Light static crackle as the tube catches, same texture the
-        // power-down glitch beat used, quieter and higher-pitched (coming
-        // up clean rather than dying).
-        playStaticBurst(0.18, 0.08, 2600)
+        // 68th pass -- no more dot/centerline reboot theatrics (that
+        // mirrored powerDown()'s old collapse ending, which is also gone --
+        // see there). STANDBY's picture is already on screen; this is a
+        // brief signal-acquisition glitch scattered over the wordmark
+        // itself, reading as "locking on" rather than "coming back from
+        // dead," before the boot readout takes over.
+        const L = standbyLayout(term, this.mobile)
+        const glitchChars = '▓▒░#%&*'
+        for (let y = L.logoTop; y <= L.logoBottom; y++) {
+          for (let x = 0; x < term.cols; x++) {
+            if (Math.random() < 0.12) {
+              const ch = glitchChars[Math.floor(Math.random() * glitchChars.length)]
+              term.put(x, y, ch, Math.random() < 0.3 ? BRIGHT : FAINT)
+            }
+          }
+        }
+        playStaticBurst(0.15, 0.08, 2600)
       } },
       { delay: BOOT_TEXT_DELAY, fn: () => {
         // Boot-text beat (13th pass, "fun startup/shutdown") -- a short

@@ -238,6 +238,40 @@ UI since these are same-evening follow-up tweaks, not a new release.
   smear reproduces identically on the old `[G]` guide-open path from the
   normal powered-on screen, so no change was needed there.
 
+  **Power on/off rethought entirely, same evening (68th pass).** Matthew's
+  framing: STANDBY was still being treated as "off" underneath, complete
+  with a ~5.5s cold-boot POST readout on every single power-on and, on the
+  way back down, a ~900ms "the tube is dying" spectacle (voltage surge,
+  signal-loss glitch, a collapse to the centerline, to a point, to STANDBY).
+  That collapse sequence was also the actual source of the race just above
+  -- async beats on their own timers, exactly the kind of thing a
+  well-timed keypress can land in the middle of. Reframed: STANDBY is the
+  receiver's resting *on* state, not off -- the tube stays lit the whole
+  time, `[P]` is "tune in" / "step back to idle," not "switch the set on
+  and off." Concretely: `init()` now plays a genuinely cold "tube coming to
+  life" flourish (a quick brightness ramp up from a dim floor, silent --
+  there's no user gesture yet for a sound to survive autoplay policy
+  anyway) exactly once, ever, on first page load; every later `[P]` never
+  replays it. `powerUp()`'s boot POST is kept (Matthew's call -- it's a nice
+  touch) but compressed from ~5.5s to well under 2s, and no longer opens on
+  a "tube-off dot lighting back up" -- there's no dot to light back up from
+  anymore, so it opens on a brief signal-acquisition glitch scattered over
+  the STANDBY wordmark itself instead, reading as "locking on" rather than
+  "coming back from dead." `powerDown()` lost the entire collapse sequence
+  -- one beat, ~120ms, straight to STANDBY, with `playPowerDownSound()`'s
+  ~0.6s dying-tube sweep swapped for `playPanelSound(false)`'s quick,
+  gentle closing click. The phosphor burn-in ghost (54th pass) survives the
+  cut -- arguably reads better now, as "you were just listening to this" on
+  a set that never really powered off, than as one beat in a fake shutdown.
+  Removing nearly all of powerDown()'s timer surface also removes nearly
+  all the room for a race like the one just above to recur -- the `[I]`
+  guard still holds (verified directly against `_powerAnimating` timing at
+  the new, much smaller window), but there's now much less clock to race
+  against in the first place. The mobile-critical synchronous
+  audio-unlock/live-tap logic at the top of `powerUp()` (rounds 4/5/8) was
+  deliberately left untouched -- only the animation timing and visuals
+  wrapped around it changed.
+
 ### Bug fixes
 
 - Pressing the preset for a station you're already locked to and
