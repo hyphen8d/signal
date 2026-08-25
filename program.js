@@ -2263,6 +2263,9 @@ function saveSignalState(program) {
       volume: program.volume,
       muted: program.muted,
       phosphor: mode ? mode.key : undefined,
+      // 65th pass -- per-station [Shift+C] visualizer picks, same
+      // treatment as the phosphor/volume/mute preferences above.
+      visualOverrides: program.visualOverrides || {},
     }))
   } catch (e) {}
 }
@@ -3396,6 +3399,24 @@ function syntheticAudio(t) {
   }
 }
 
+// 64th pass -- true silence for the four syntheticAudio(t) fallback effects
+// (FROST, BUBBLE TUBES, FLAME, BREACH) while muted. Muting used to leave
+// these dancing to the fake signal exactly as if a track were still
+// playing -- the tab-capture tap genuinely goes quiet on mute, which used
+// to trip the "no real signal" gate and hand off to syntheticAudio(t),
+// so the effect kept moving on fake data with no sound behind it at all.
+// A same-shaped all-zero object (not null -- these call sites dereference
+// A.treble/A.bands9 etc directly, which would throw on null) settles each
+// effect at its own real-audio "quiet passage" floor via auMul's lo bound,
+// the same calm-idle look already shipped for an actual silent moment in a
+// real track, rather than adding a separate dead-state branch per effect.
+const SILENT_AUDIO = {
+  level: 0, bass: 0, mid: 0, treble: 0,
+  bands9: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  onset: false,
+  pulse: 0,
+}
+
 // FLAME (46th pass, DISTORTION FIELD) -- replaces HOWL outright (which had
 // itself replaced the original FEEDBACK concept). Live QA: "fire 'flame'
 // living thing." Classic bottom-up fire propagation -- a heat value per
@@ -3495,6 +3516,21 @@ const VISUAL_METHODS = {
   // fallout dust at a random point, silent field with no tap. See the
   // BLAST_* tuning constants and drawBlastFieldEffect below drawGeigerEffect.
   blastfield: 'drawBlastFieldEffect',
+}
+// 65th pass -- lets [Shift+C] cycle any station's visualizer through every
+// built effect, not just the one it ships with (including the ones
+// unassigned above, e.g. GEIGER, SKYLINE, ISOTOPE MAP -- "any effect,
+// anywhere" rather than a curated per-station shortlist). Object.keys()
+// preserves insertion order for string keys, so this walks VISUAL_METHODS
+// in the same order it's declared above; DREAD (the secret station's own
+// effect) is included, same "any effect, anywhere" scope, not carved out.
+const VISUAL_KEYS = Object.keys(VISUAL_METHODS)
+const VISUAL_LABELS = {
+  drift: 'DRIFT', flame: 'FLAME', breach: 'BREACH', outrun: 'OUTRUN',
+  ripple: 'RIPPLE', stack: 'STACK', skyline: 'SKYLINE', flowfield: 'FLOW FIELD',
+  neonsign: 'NEON SIGN', bubbletubes: 'BUBBLE TUBES', boombap: 'BOOM BAP',
+  dread: 'DREAD', frost: 'FROST', geiger: 'GEIGER', pulse: 'PULSE',
+  counter: 'COUNTER', isotope: 'ISOTOPE MAP', blastfield: 'BLAST FIELD',
 }
 const BREACH_HEX = '0123456789ABCDEF'
 // A resolved fragment briefly holds legible mid-column before dissolving
@@ -4258,6 +4294,11 @@ export default {
     // into it before anyone's had a chance to touch anything.
     this.visualizerActive = false
     this._lastInputAt = Date.now()
+    // 65th pass -- per-station visualizer effect override, keyed by
+    // station.id. Empty until [Shift+C] cycles a station off its default;
+    // restored from saved.visualOverrides in the session-restore block
+    // below and read by drawVisualizerFrame() ahead of station.visual.
+    this.visualOverrides = {}
     // 54th pass -- warm-up drift (see frame()/powerUp()). Both explicit
     // here even though powerUp() always sets _warmupUntil before frame()
     // could ever read it -- matches how every other per-instance field in
@@ -4507,6 +4548,9 @@ export default {
       if (typeof saved.phosphor === 'string') {
         const idx = DISPLAY_MODES.findIndex((m) => m.key === saved.phosphor)
         if (idx !== -1) this.displayModeIndex = idx
+      }
+      if (saved.visualOverrides && typeof saved.visualOverrides === 'object') {
+        this.visualOverrides = saved.visualOverrides
       }
       if (saved.stationId) {
         const ch = STATIONS.find((c) => c.id === saved.stationId)
@@ -7820,6 +7864,31 @@ export default {
     this.drawVisualizerInfo(s)
     playPanelSound(true)
   },
+  // 65th pass -- shared with drawVisualizerFrame() so the flash label
+  // Shift+C shows and the effect actually drawn can never disagree: an
+  // override in this.visualOverrides (see cycleVisualEffect below) wins
+  // over the locked station's own station.visual default.
+  activeVisualKey() {
+    const override = this.lockedStation && this.visualOverrides[this.lockedStation.id]
+    if (override && VISUAL_METHODS[override]) return override
+    if (this.lockedStation && VISUAL_METHODS[this.lockedStation.visual]) return this.lockedStation.visual
+    return 'drift'
+  },
+  // 65th pass -- [Shift+C] in the visualizer. Advances the locked
+  // station's effect one step through VISUAL_KEYS (every built effect,
+  // including the ones no station ships with by default -- "any effect,
+  // anywhere" per the design call), wrapping past the end. Stored per
+  // station.id in this.visualOverrides and persisted immediately, same as
+  // volume/mute/phosphor -- the pick sticks until cycled again, it does
+  // not reset the next time this station's visualizer opens.
+  cycleVisualEffect(s) {
+    if (!this.lockedStation) return
+    const current = this.activeVisualKey()
+    const idx = VISUAL_KEYS.indexOf(current)
+    const next = VISUAL_KEYS[(idx + 1) % VISUAL_KEYS.length]
+    this.visualOverrides[this.lockedStation.id] = next
+    saveSignalState(this)
+  },
   exitVisualizer(s) {
     if (!this.visualizerActive) return
     this.visualizerActive = false
@@ -8069,22 +8138,30 @@ export default {
     for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) term.put(x, y, ' ')
     const gCols = COLD_GRID_COLS, gRows = COLD_GRID_ROWS
     const cellW = cols / gCols, cellH = (VIZ_BOT - 2) / gRows
-    const A = this._au || syntheticAudio(t)
+    const A = this.muted ? SILENT_AUDIO : (this._au || syntheticAudio(t))
     {
       // Treble drives the ambient ignition rate; a real onset always lands
-      // at least one ignition even on a quiet passage, so the grid never
-      // goes fully dead mid-track.
-      const flashRate = auMul(A, A.treble, 0.02, 0.28)
+      // a small burst of ignitions even on a quiet passage, so the grid
+      // never goes fully dead mid-track.
+      // 65th pass -- widened 0.02-0.28 -> 0.015-0.5 and the onset burst
+      // from 1 cell to 3: a loud treble passage barely moved the needle at
+      // the old ceiling, and a single onset cell was easy to miss against
+      // a 144-cell field.
+      const flashRate = auMul(A, A.treble, 0.015, 0.5)
       for (let i = 0; i < this._coldGridCells.length; i++) {
         if (this._coldGridCells[i] > 0) this._coldGridCells[i] = Math.max(0, this._coldGridCells[i] - 0.05)
         else if (Math.random() < flashRate) this._coldGridCells[i] = 1
       }
-      if (A.onset) this._coldGridCells[Math.floor(Math.random() * this._coldGridCells.length)] = 1
+      if (A.onset) {
+        for (let k = 0; k < 3; k++) this._coldGridCells[Math.floor(Math.random() * this._coldGridCells.length)] = 1
+      }
     }
     // Wireframe: dotted lines connecting every intersection. A live tap
-    // nudges the line brightness with overall level; idle it just sits at
-    // one fixed dim tier.
-    const lineAttr = A ? (A.level > 0.55 ? DIM : FAINT) : FAINT
+    // nudges the line brightness with overall level.
+    // 65th pass -- was a single DIM/FAINT threshold at 0.55, which meant
+    // most of a real track's dynamic range only ever showed FAINT; three
+    // tiers instead so a loud passage visibly lights the whole wireframe.
+    const lineAttr = !A ? FAINT : A.level > 0.7 ? NORMAL : A.level > 0.35 ? DIM : FAINT
     for (let gy = 0; gy <= gRows; gy++) {
       const y = Math.round(1 + gy * cellH)
       if (y < 1 || y >= VIZ_BOT) continue
@@ -8364,7 +8441,7 @@ export default {
     const { term } = s
     const cols = term.cols
     for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) term.put(x, y, ' ')
-    const A = this._au || syntheticAudio(t)
+    const A = this.muted ? SILENT_AUDIO : (this._au || syntheticAudio(t))
 
     const fieldTop = 1, fieldBot = VIZ_BOT - 1
     const fieldH = fieldBot - fieldTop + 1
@@ -8553,7 +8630,7 @@ export default {
     // Falls back to syntheticAudio(t) now (see its own note near
     // auMul) -- the physics step below is unchanged, it just always has a
     // signal to read, so the fire never goes fully cold.
-    const A = this._au || syntheticAudio(t)
+    const A = this.muted ? SILENT_AUDIO : (this._au || syntheticAudio(t))
     // 47th pass: live QA said "too fast, make more organic." At 60fps the
     // whole buffer recomputed fresh every render frame read as a flicker
     // rather than a living flame. Two fixes: step the physics on its own
@@ -8640,17 +8717,25 @@ export default {
   // resolve logic below is unchanged, it just always has a signal to read.
   drawBreachEffect(s, t) {
     const { term } = s
-    const A = this._au || syntheticAudio(t)
+    const A = this.muted ? SILENT_AUDIO : (this._au || syntheticAudio(t))
     if (t < this._breachLastT) this._breachLastT = t
     const bdt = Math.min(0.1, Math.max(0, t - this._breachLastT))
     this._breachLastT = t
-    const surge = 1 + A.pulse * 0.6
+    // 65th pass -- CIPHER needed to feel more reactive: surge (the
+    // whole-screen brightness pulse) widened 0.6 -> 1.1, scroll-speed's
+    // band range widened 0.7-2.6 -> 0.5-3.2 so quiet vs loud bands read
+    // as clearly different speeds, a per-column brightness term now leans
+    // on that same column's band value (a hot band reads hot, not just
+    // fast), and the glitch-word trigger chance on a peak doubled so peaks
+    // visibly do something more often.
+    const surge = 1 + A.pulse * 1.1
     for (let x = 0; x < term.cols; x++) {
       const col = this._breachCols[x]
-      const bandMul = auMul(A, A.bands9[x % 9], 0.7, 2.6)
+      const band = A.bands9[x % 9]
+      const bandMul = auMul(A, band, 0.5, 3.2)
       col.head = (col.head + bdt * col.speed * bandMul) % 30
       if (col.resolveAt < 0) col.resolveAt = t + 2 + Math.random() * 5
-      if (A.pulse > 0.6 && !col.word && Math.random() < 0.03) col.resolveAt = t
+      if (A.pulse > 0.6 && !col.word && Math.random() < 0.06) col.resolveAt = t
       if (t > col.resolveAt && !col.word) {
         col.word = BREACH_WORDS[Math.floor(Math.random() * BREACH_WORDS.length)]
         col.wordRow = 2 + Math.floor(Math.random() * 18)
@@ -8659,12 +8744,13 @@ export default {
       }
       if (col.word && t > col.wordUntil) col.word = null
       const headY = col.head - 4
+      const bandGlow = auMul(A, band, 0.6, 1.4)
       for (let y = 1; y < VIZ_BOT; y++) {
         const dist = headY - y
         if (dist < 0 || dist > 14) { term.put(x, y, ' '); continue }
         const alpha = Math.max(0, 1 - dist / 14)
         const ch = BREACH_HEX[Math.floor((x * 7 + y * 3 + t * 20) % BREACH_HEX.length)]
-        term.put(x, y, ch, visualizerLevelAttr(Math.min(1, alpha * surge)))
+        term.put(x, y, ch, visualizerLevelAttr(Math.min(1, alpha * surge * bandGlow)))
       }
       if (col.word) {
         for (let wi = 0; wi < col.word.length; wi++) {
@@ -8707,9 +8793,16 @@ export default {
     // calls this the slowest, most hypnotic effect on purpose, and a
     // per-beat flash would strobe it; tempo shows as road speed instead,
     // plus the sun's glow leaning on the bass.
+    // 65th pass -- CIRCUIT CRUSH needed to feel more reactive without
+    // losing the hypnotic pacing: road-speed range widened 0.5-1.5 ->
+    // 0.3-2.2 (quiet passages coast noticeably slower, loud ones surge
+    // rather than just nudging the needle), and the sun's bass lean
+    // widened below. Still no onset hook anywhere in this effect -- a
+    // per-beat flash would strobe it, tempo stays expressed as road speed
+    // and sun glow only.
     const A = this._au
     if (t < this._outrunPhaseT) this._outrunPhaseT = t
-    this._outrunPhase += Math.min(0.1, t - this._outrunPhaseT) * 0.6 * auMul(A, A ? A.level : 0, 0.5, 1.5)
+    this._outrunPhase += Math.min(0.1, t - this._outrunPhaseT) * 0.6 * auMul(A, A ? A.level : 0, 0.3, 2.2)
     this._outrunPhaseT = t
     // 46th pass: sun radius 6.5 -> 7.5 (live QA: "closer... but I think
     // need less unused space, make elements larger").
@@ -8734,7 +8827,7 @@ export default {
     // toward the bottom.
     // (tap) heavy bass leans the sun's core toward '█', quiet cools it --
     // centered on mid-bass so the neutral pulse is exactly what it was.
-    const pulse = Math.min(1, 0.75 + 0.25 * Math.sin(t * 0.5) + (A ? (A.bass - 0.5) * 0.18 : 0))
+    const pulse = Math.min(1, 0.75 + 0.25 * Math.sin(t * 0.5) + (A ? (A.bass - 0.5) * 0.4 : 0))
     for (let y = Math.ceil(horizonY - sunR); y < horizonY; y++) {
       const dy = horizonY - y
       if (dy > sunR) { for (let x = 0; x < term.cols; x++) term.put(x, y, ' '); continue }
@@ -9479,7 +9572,11 @@ export default {
   // (today just DRIFT MODE) gets its own effect the moment one exists for
   // it, with no change needed here.
   drawVisualizerFrame(s, t) {
-    const key = this.lockedStation && VISUAL_METHODS[this.lockedStation.visual] ? this.lockedStation.visual : 'drift'
+    // 65th pass -- activeVisualKey() folds in any [Shift+C] override (see
+    // cycleVisualEffect) ahead of the station's own station.visual default;
+    // shared with the flash label so what's drawn and what's announced can
+    // never disagree.
+    const key = this.activeVisualKey()
     // 2026-08-23 (live audio tap) -- the vetted per-frame view every effect
     // reads instead of the raw bus: null unless capture is live AND ungated.
     // Mute, ads, dead air and the headphones-on-mic case all trip the tap's
@@ -9629,11 +9726,14 @@ export default {
     // 50th pass -- added some controls, with one carve-out
     // list. These five keys act IN the visualizer instead of dismissing it,
     // so you can change the tint, skip a track, mute, or ride the volume
-    // without dropping back to the main screen and re-entering. Everything
-    // else still exits on first press, unchanged: the carve-outs are
-    // deliberately the controls that don't move you off the station (no
-    // seek, no presets, no scan -- those all imply "I want the dial back"
-    // and reading them as anything but an exit would be wrong).
+    // without dropping back to the main screen and re-entering. The
+    // carve-outs are deliberately the controls that don't move you off the
+    // station (no seek, no presets, no scan -- those all imply "I want the
+    // dial back" and reading them as anything but an exit would be wrong).
+    // 64th pass -- only [V], [E], and Escape exit now; every other
+    // unmapped key is a no-op instead of closing the visualizer. The
+    // footer legend already only ever named [E]XIT, so the visible
+    // control surface is unchanged, this just makes the input match it.
     // These call the same methods the main screen does, which also draw
     // their normal chrome (the VOL bar in LEVELS, flashStatus at STATUS_Y)
     // into rows the visualizer is covering. That's safe rather than the
@@ -9649,6 +9749,17 @@ export default {
       }
       switch (e.key) {
         case 'c': case 'C':
+          // 65th pass -- Shift+C cycles the effect itself (any built
+          // effect, on any station -- see cycleVisualEffect), plain C
+          // keeps its original job cycling the CRT tint. Checked on
+          // e.shiftKey rather than the key case: e.key is 'C' for both
+          // Shift+c and Caps-Lock+c, and a Caps-Lock user's plain [C]
+          // press needs to keep doing exactly what it always did.
+          if (e.shiftKey) {
+            this.cycleVisualEffect(s)
+            vizFlash(VISUAL_LABELS[this.activeVisualKey()])
+            return
+          }
           this.cycleDisplayMode(s)
           vizFlash(DISPLAY_MODES[this.displayModeIndex].label)
           return
@@ -9683,8 +9794,12 @@ export default {
           this.lyricsViewOpen = !this.lyricsViewOpen
           this.drawVisualizerInfo(s)
           return
+        case 'v': case 'V':
+        case 'e': case 'E':
+        case 'Escape':
+          this.exitVisualizer(s)
+          return
       }
-      this.exitVisualizer(s)
       return
     }
     // Guide overlay (15th pass; paged 18th pass; expanded to per-station
