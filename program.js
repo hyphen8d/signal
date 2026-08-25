@@ -3941,10 +3941,13 @@ export default {
     term.text(centerX(term.cols, VERSION_TAG), L.versionY, VERSION_TAG, DIM)
     const label = 'STANDBY'
     term.text(centerX(term.cols, label), L.standbyY, label, FAINT)
-    // 67th pass -- [I] INFO added alongside the power-on hint, desktop
-    // only (see key()'s STANDBY branch) -- the one other control a
-    // powered-off set still answers.
-    const hint = this.mobile ? 'TAP TO POWER ON' : '[P] POWER ON   [I] INFO'
+    // 67th pass -- an info/guide hint added alongside the power-on hint,
+    // desktop only (see key()'s STANDBY branch) -- the one other control a
+    // powered-off set still answers. 69th pass -- relabeled [I] INFO to
+    // [G] GUIDE, matching the key the in-app Guide overlay already answers
+    // to everywhere else (see the 15th-pass G binding below) -- STANDBY was
+    // the one place still teaching a different key for the same thing.
+    const hint = this.mobile ? 'TAP TO POWER ON' : '[P] POWER ON   [G] GUIDE'
     term.text(centerX(term.cols, hint), L.hintY, hint, FAINT)
     this.drawStandbyClock(s)
   },
@@ -7223,9 +7226,10 @@ export default {
     const { term } = s
     for (let y = 0; y < term.rows; y++)
       for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
-    // 67th pass -- [I] from STANDBY (see openGuide/key()) means the set is
-    // still off underneath; land back on STANDBY rather than rebuilding
-    // powered-on chrome that was never actually there.
+    // 67th pass -- the guide key from STANDBY (see openGuide/key(); rebound
+    // [I] -> [G] the 69th pass) means the set is still off underneath; land
+    // back on STANDBY rather than rebuilding powered-on chrome that was
+    // never actually there.
     if (this._guideFromStandby) {
       this._guideFromStandby = false
       this.drawStandbyScreen(s)
@@ -8997,13 +9001,16 @@ export default {
     // 67th pass, live QA fix -- poweredOn flips false the instant powerDown()
     // is called, but its collapse beats keep painting the screen for another
     // ~900ms (see powerDown()'s beats array), and powerUp() has its own
-    // multi-second boot animation before poweredOn flips true. [I] pressed
-    // during either window opened the guide overlay on top of a screen that
-    // was still being redrawn out from under it -- the exact same double-
-    // animation trap powerUp() itself already guards against for a fast
-    // double P-press (see its 50th-pass comment). Gated on _powerAnimating
-    // too, same fix, so [I] only ever lands on a settled STANDBY screen.
-    if (!this.poweredOn) return e.key === 'p' || e.key === 'P' || (!this.mobile && !this._powerAnimating && (e.key === 'i' || e.key === 'I'))
+    // multi-second boot animation before poweredOn flips true. The STANDBY
+    // guide key pressed during either window opened the guide overlay on top
+    // of a screen that was still being redrawn out from under it -- the
+    // exact same double-animation trap powerUp() itself already guards
+    // against for a fast double P-press (see its 50th-pass comment). Gated
+    // on _powerAnimating too, same fix, so the guide key only ever lands on
+    // a settled STANDBY screen. 69th pass -- rebound from [I] to [G], same
+    // key the guide already answers to powered-on (see key()'s 15th-pass G
+    // binding) -- STANDBY no longer teaches a second key for the same thing.
+    if (!this.poweredOn) return e.key === 'p' || e.key === 'P' || (!this.mobile && !this._powerAnimating && (e.key === 'g' || e.key === 'G'))
     // Visualizer (43rd pass) -- any key wakes it.
     if (this.visualizerActive) return true
     return MAPPED_KEYS.has(e.key)
@@ -9058,12 +9065,14 @@ export default {
     if (!this.poweredOn && !this.guideOpen) {
       if (e.key === 'p' || e.key === 'P') { e.preventDefault(); this.powerUp(s); return }
       // 67th pass, live QA fix -- also gated on !_powerAnimating (see
-      // isMappedKey() above): without it, [I] pressed during powerDown()'s
-      // ~900ms collapse beats (poweredOn is already false, but the screen
-      // is still mid-animation) opened the guide on top of a screen still
-      // being redrawn out from under it, producing a garbled overlap of
-      // both. Confirmed live before adding the guard.
-      if (!this.mobile && !this._powerAnimating && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); this.openGuide(s, true) }
+      // isMappedKey() above): without it, the STANDBY guide key pressed
+      // during powerDown()'s ~900ms collapse beats (poweredOn is already
+      // false, but the screen is still mid-animation) opened the guide on
+      // top of a screen still being redrawn out from under it, producing a
+      // garbled overlap of both. Confirmed live before adding the guard.
+      // 69th pass -- rebound from [I] to [G] (see the hint text in
+      // drawStandbyScreen() and isMappedKey() above).
+      if (!this.mobile && !this._powerAnimating && (e.key === 'g' || e.key === 'G')) { e.preventDefault(); this.openGuide(s, true) }
       return
     }
     // Visualizer (43rd pass) -- standard visualizer manners: ANY key
