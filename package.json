@@ -8,6 +8,7 @@
     "stamp": "node tools/stamp.js",
     "stations": "node tools/stations-to-md.js",
     "lint": "node tools/lint-roster.js",
-    "verify": "node tools/verify-roster.js"
+    "verify": "node tools/verify-roster.js",
+    "audition": "node tools/audition.js"
   }
 }

@@ -22,6 +22,7 @@ node tools/lint-roster.js           # npm run lint — offline roster rules
 node tools/verify-roster.js         # npm run verify — lint + oEmbed check of every track (network)
 node tools/stations-to-md.js        # npm run stations — regenerate stations.md (never hand-edit it)
 node tools/stamp.js                 # npm run stamp — bump build.json; RUN BEFORE EVERY DEPLOY
+node tools/audition.js --station=<id> # npm run audition — vet candidate tracks (network)
 ```
 
 `file://` does not work — the BDF font fetch needs a real origin. Use
@@ -156,5 +157,18 @@ pure helpers; `tests/roster.test.mjs` runs `tools/lint-roster.js`.
 - `tools/station-profiles.json` holds the qualitative curation constraints and
   past rejections; read it before proposing tracks. `tools/pending-tracks.json`
   is the proposal queue reviewed through `tools/network.html`.
+- **`tools/audition.js` is the candidate-side counterpart to `verify-roster.js`**
+  — that one checks tracks already on the roster, this one checks tracks that
+  aren't yet. `--search="..."` (repeatable) ranks candidates; re-run with the
+  IDs you picked to write `tools/audition.html` (gitignored), which embeds each
+  one through `youtube.com/embed/`, the same path `#ytDock` uses. It prints the
+  target station's profile constraints and past rejections, and flags what an
+  oEmbed 200 cannot see: duration (an album master vs. a live take, an edit or a
+  rework), region-locking and embed-blocking, IDs already on the roster, title
+  collisions, and whether the channel is one this station already uses. Channel
+  provenance is per-station, not global — DISTORTION FIELD is VEVO throughout,
+  MIDNIGHT NEON is mostly `- Topic`, CITY LIGHTS leans on archive channels
+  because the catalogue was never officially uploaded. The tool checks the
+  mechanical half; the judgment is still yours.
 - Verify feel changes in a browser against the dev server as well as in the
   suite — timing, sound and texture are most of what matters here.
