@@ -72,8 +72,9 @@ export default {
   // intervals: those are state machines with their own explicit lifecycle
   // (stopScan), not cosmetics, and they should keep going in a background
   // tab where rAF -- and so these queues -- pause. For the queues, init()
-  // sets up a coarse fallback ticker that runs only while the tab is hidden,
-  // so a power-on followed by a tab switch still completes.
+  // sets up a coarse fallback ticker that takes over whenever frame() stops
+  // arriving (hidden, occluded or throttled tab), so a power-on followed by
+  // a tab switch still completes.
   fxAfter(tag, ms, fn, { always = false } = {}) {
     return this._fxAdd({ tag, kind: 'after', at: performance.now() + ms, fn }, always)
   },
@@ -201,13 +202,25 @@ export default {
 
     // 2026-08-25 audit -- the effects queues (see fxAfter and friends at the
     // top of this object) exist before anything below can schedule onto
-    // them. The fallback ticker only does anything while the tab is hidden
-    // (rAF paused, so frame() isn't ticking the queues); at 250ms it is
-    // coarse on purpose -- what matters in a background tab is that a boot
-    // or a status revert completes, not when to the millisecond.
+    // them. The fallback ticker only does anything while frame() has gone
+    // quiet -- no rAF tick in the last 200ms -- and at 250ms it is coarse on
+    // purpose: what matters in a starved tab is that a boot or a status
+    // revert completes, not when to the millisecond.
+    // Keyed on rAF starvation, NOT document.hidden (the first cut was, and
+    // it stranded the set on the live site the same day): Chrome throttles
+    // rAF to ~2/s for a tab in a background WINDOW too, and on Wayland/
+    // Linux it reports no occlusion, so visibilityState stays 'visible'
+    // while nothing is painted. With the queues frozen, the cold-open's
+    // _powerAnimating never cleared and [P] was ignored until the window
+    // came forward. Measuring frame() directly covers hidden, occluded and
+    // throttled alike.
     this._fx = []
     this._fxAlways = []
-    this._fxFallback = setInterval(() => { if (document.hidden) this._tickFx(performance.now()) }, 250)
+    this._lastFrameAt = 0
+    this._fxFallback = setInterval(() => {
+      const now = performance.now()
+      if (now - this._lastFrameAt > 200) this._tickFx(now)
+    }, 250)
 
     // 53rd pass -- kicked off here, not lazily on first powerUp(), so the
     // fetch/decode has the whole time-to-first-power-on to finish. Harmless
@@ -1956,7 +1969,9 @@ export default {
     // 2026-08-25 audit -- tick the effects queues first. The always-queue
     // runs in every state; the normal queue only while powered on with no
     // guide up (see _tickFx), which is exactly the bail-out just below.
-    this._tickFx(performance.now())
+    // _lastFrameAt is what the fallback ticker in init() watches.
+    this._lastFrameAt = performance.now()
+    this._tickFx(this._lastFrameAt)
 
     // Power toggle (12th pass) -- the collapse/warm-up sequences draw
     // everything themselves on their own timers, so the normal per-frame

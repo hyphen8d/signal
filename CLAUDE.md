@@ -117,9 +117,11 @@ program):
   deferred draw or `crt.params` change goes on it, never on `setTimeout`. The
   normal queue ticks only while powered on with no guide up, so nothing can
   paint through an overlay; `powerDown` empties it; cancelled tweens settle at
-  their end value. The always-queue is for the power sequences only. What
-  stays on real timers on purpose: audio scheduling, the scan/preset sweeps,
-  the clock.
+  their end value. The always-queue is for the power sequences only. A
+  250ms fallback ticker drains the queues whenever `frame()` hasn't run in
+  200ms — keyed on rAF starvation, never on `document.hidden` (a background
+  window on Wayland is throttled but reports `visible`). What stays on real
+  timers on purpose: audio scheduling, the scan/preset sweeps, the clock.
 - **Playback** is the YouTube IFrame API into an off-screen `#ytDock`;
   `index.html` defines `SIGNAL_YT_QUEUE` before the API loads. Every effect
   must look right with **no** audio tap (`this._au || syntheticAudio(t)`,

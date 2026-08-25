@@ -138,6 +138,12 @@ export async function boot({ saved = null, mobile = false } = {}) {
     tap() { h.touch(100, 100, 100, 100) },
     /** dir > 0 swipes right (next station), < 0 left. */
     swipe(dir) { h.touch(100, 200, 100 + dir * 120, 200) },
+    /** Like advance(), but with rAF starved: timers run, frame() never
+     *  does -- a hidden, occluded or throttled tab. */
+    idle(ms, step = 16) {
+      const end = now + ms
+      while (now < end) { now = Math.min(end, now + step); runDueTimers() }
+    },
     /** Pending fake timers, for assertions. */
     timers() { return [...timers.values()] },
     row(y) {

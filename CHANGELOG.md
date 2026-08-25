@@ -29,8 +29,8 @@ and tooling. Full write-up in the audit notes; the short version:
   nothing can paint through STANDBY, the guide or the visualizer, and a
   power-off drops every in-flight effect in one place (ramps settle to
   rest). Audio scheduling and the scan/preset sweeps stay on their own
-  clocks on purpose; a hidden tab keeps the queue moving via a coarse
-  fallback ticker.
+  clocks on purpose; a tab that isn't being painted (hidden, occluded or
+  rAF-throttled) keeps the queue moving via a coarse fallback ticker.
 - **Engine: per-row damage tracking.** Only changed rows are rasterised
   and uploaded (~4 rows per pass in the main view instead of all 25);
   identical re-puts are free; the canvas is measured via `ResizeObserver`

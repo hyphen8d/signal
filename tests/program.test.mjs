@@ -205,3 +205,23 @@ test('mobile lite: 42x22 grid, tap powers on, swipe steps the station', async ()
     for (const [y, r] of h.rows().entries()) assert.ok(!/[�?]{3,}/.test(r), `row ${y} has no glyph fallbacks`)
   } finally { h.shutdown() }
 })
+
+test('a tab that never gets a frame still completes the cold-open and a power-on (fallback ticker)', async () => {
+  // Found on the live site the day the queue shipped: Chrome throttles rAF
+  // for a background WINDOW while visibilityState stays 'visible' on
+  // Wayland, so a document.hidden-gated fallback never fired and [P] was
+  // ignored. The ticker keys on frame() going quiet instead.
+  const h = await boot()
+  try {
+    assert.equal(h.program._powerAnimating, true)
+    h.idle(1000) // timers only -- no frame() at all
+    assert.equal(h.program._powerAnimating, false, 'cold-open cleared by the fallback ticker')
+    h.key('p')
+    assert.equal(h.program._powerAnimating, true, 'power-on accepted')
+    h.idle(4500)
+    assert.equal(h.program.poweredOn, true, 'boot completed with rAF starved')
+    h.advance(200) // first real frames after the window comes forward
+    assert.ok(h.row(3).includes('TUNING BAND'))
+    assert.ok(h.row(9).includes(h.program.lockedStation.callsign))
+  } finally { h.shutdown() }
+})
