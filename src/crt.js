@@ -10,21 +10,18 @@
 // Everything upstream of the composite is monochrome beam intensity; colour is
 // applied in the last pass only.
 //
-// Uniform values come from ../config.js. The constructor also takes an override
-// object, so the module works without it.
-
-// 2026-08-22: dynamic, cache-busted import instead of a static one -- the
-// same GitHub-Pages-serves-max-age=600 staleness that hit program.js in
-// the 28th pass (see main.js's comment) also hits this file, just less
-// visibly since config.js changes far more rarely. A returning visitor's
-// browser could keep running a stale PHOSPHORS map (missing a just-added
-// tint, e.g. the secret NIN station's 'red') for up to 10 minutes after a
-// deploy, with no way to notice short of a hard refresh. A literal static
-// import can't take a per-load cache-buster (import specifiers must be a
-// string literal), so this is a top-level-await dynamic import instead --
-// every page load gets the actual current config.js, same fix shape as
-// main.js's program.js load.
-const { SCREEN, PHOSPHORS, PHOSPHOR } = await import(`../config.js?t=${Date.now()}`)
+// Uniform values (the SCREEN param set) and the phosphor table are passed
+// into the constructor -- this module imports nothing from config.js.
+//
+// 2026-08-25 audit: it used to `await import('../config.js?t=' +
+// Date.now())` (2026-08-22, chasing the same GitHub-Pages max-age=600
+// staleness main.js was already dodging for program.js). That made this
+// file's PHOSPHORS a DIFFERENT object from program.js's copy, so
+// setPhosphor()'s `tint === this.phosphor` short-circuit below never
+// matched a tint program.js had just assigned, and clearPersist() ran on
+// every lock, unlock and colour cycle. One config instance now lives in
+// main.js and comes in through mount() -- see main.js for the stamping
+// scheme that replaced the per-load timestamp.
 
 const VERT = `#version 300 es
 void main() {
@@ -267,11 +264,17 @@ export class CRT {
    * @param {HTMLCanvasElement} canvas
    * @param {number} srcW framebuffer width, from Term.w
    * @param {number} srcH framebuffer height, from Term.h
-   * @param {number} superSample beam and persistence buffer size as a multiple
-   *   of the source
-   * @param {object} [params] uniform overrides on top of SCREEN
+   * @param {object} [opts]
+   * @param {number} [opts.superSample=2] beam and persistence buffer size as
+   *   a multiple of the source
+   * @param {object} [opts.params] the full uniform set (config.js's SCREEN).
+   *   Copied, and then read live every frame -- program code mutates
+   *   `crt.params` directly to drive the picture.
+   * @param {Object<string, number[]>} [opts.phosphors] name -> vec3 tint
+   *   table (config.js's PHOSPHORS), for setPhosphor()
+   * @param {string} [opts.phosphor] starting tint name
    */
-  constructor(canvas, srcW, srcH, superSample = 2, params = null) {
+  constructor(canvas, srcW, srcH, { superSample = 2, params = {}, phosphors = {}, phosphor = null } = {}) {
     const gl = canvas.getContext('webgl2', {
       alpha: false, antialias: false, preserveDrawingBuffer: false,
     })
@@ -284,9 +287,24 @@ export class CRT {
     this.superSample = superSample
     this.cw = srcW * superSample
     this.ch = srcH * superSample
-    this.params = { ...SCREEN, ...(params ?? {}) }
-    this.phosphor = PHOSPHORS[PHOSPHOR]
+    this.params = { ...params }
+    this.phosphors = phosphors
+    this.phosphor = phosphors[phosphor] ?? [1, 1, 1]
     this.dpr = 1
+
+    // resize() used to read canvas.clientWidth/Height every frame -- a
+    // forced style/layout flush per rAF for a box that changes only when the
+    // window does. A ResizeObserver flips this flag instead; resize() then
+    // re-measures only when it is set (or the device pixel ratio moved,
+    // which the observer does not report on every browser). 2026-08-25 audit.
+    this._sizeDirty = true
+    this._lastDpr = 0
+    this._lastBudget = 0
+    this._ro = null
+    if (typeof ResizeObserver !== 'undefined') {
+      this._ro = new ResizeObserver(() => { this._sizeDirty = true })
+      this._ro.observe(canvas)
+    }
 
     // Every GL object created, so dispose() can free them.
     this.textures = []
@@ -306,9 +324,11 @@ export class CRT {
     this.build()
   }
 
-  /** Set the beam tint by name. See PHOSPHORS in config.js. */
+  /** Set the beam tint by name (a key of the phosphors table passed to the
+   *  constructor). A no-op if that exact tint is already up, so callers can
+   *  re-assert the current tint freely without the persistence clear below. */
   setPhosphor(name) {
-    const tint = PHOSPHORS[name]
+    const tint = this.phosphors[name]
     if (!tint || tint === this.phosphor) return
     this.phosphor = tint
     // 2026-08-22 (bug report: locking the secret NIN station left the old
@@ -442,12 +462,24 @@ export class CRT {
     return { tex, fbo, w, h }
   }
 
-  /** Upload one frame of beam bytes. `fb` is Term.fb. */
-  upload(fb) {
+  /**
+   * Upload beam bytes. `fb` is Term.fb. `bands`, when given, is the list of
+   * [y0, y1) framebuffer pixel rows Term.raster() reports as redrawn; only
+   * those rows go over the bus (2026-08-25 audit). Without it the whole
+   * frame does.
+   */
+  upload(fb, bands = null) {
     const gl = this.gl
     gl.bindTexture(gl.TEXTURE_2D, this.src)
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, this.srcW, this.srcH,
-                     gl.RED, gl.UNSIGNED_BYTE, fb)
+    if (!bands) {
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, this.srcW, this.srcH,
+                       gl.RED, gl.UNSIGNED_BYTE, fb)
+      return
+    }
+    for (const [y0, y1] of bands) {
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, y0, this.srcW, y1 - y0,
+                       gl.RED, gl.UNSIGNED_BYTE, fb, y0 * this.srcW)
+    }
   }
 
   /**
@@ -459,6 +491,11 @@ export class CRT {
    */
   resize(budget = 2.6e6) {
     const dpr = Math.min(devicePixelRatio || 1, 2)
+    // Nothing moved since the last measure: skip the layout read entirely.
+    if (!this._sizeDirty && dpr === this._lastDpr && budget === this._lastBudget) return
+    this._sizeDirty = false
+    this._lastDpr = dpr
+    this._lastBudget = budget
     // An unlaid-out canvas answers 0, and a zero-sized drawing buffer is a GL
     // error.
     const cw = this.canvas.clientWidth || innerWidth
@@ -583,6 +620,7 @@ export class CRT {
     for (const t of this.textures) gl.deleteTexture(t)
     for (const f of this.framebuffers) gl.deleteFramebuffer(f)
     gl.deleteVertexArray(this.vao)
+    this._ro?.disconnect()
     this.programs = []
     this.textures = []
     this.framebuffers = []

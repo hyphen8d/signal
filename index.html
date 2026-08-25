@@ -65,7 +65,11 @@
       window.SIGNAL_YT_QUEUE = [];
     };
   </script>
-  <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- async (2026-08-25 audit): this was parser-blocking ahead of main.js,
+       so first paint waited on youtube.com. The SIGNAL_YT_QUEUE handshake
+       above already copes with the API landing before OR after program.js
+       (see initPlayer), so load order genuinely doesn't matter. -->
+  <script src="https://www.youtube.com/iframe_api" async></script>
   <script type="module" src="./main.js"></script>
 </body>
 </html>

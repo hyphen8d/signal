@@ -1,42 +1,29 @@
 // Generates a human-readable Markdown snapshot of STATIONS straight from
-// program.js -- not a hand-maintained duplicate, so it can never drift from
+// stations.js -- not a hand-maintained duplicate, so it can never drift from
 // the actual source of truth. Run with: node tools/stations-to-md.js
 //
-// Extracts the STATIONS array literal by brace-matching (program.js is a
-// browser ES module -- './src/term.js' touches window/DOM, so it can't be
-// require()'d directly in Node) and evals it with a local stub for
-// realTrack(), then formats it as Markdown.
+// 2026-08-25 audit: the roster now lives in stations.js, a pure-data ES
+// module with no DOM imports, so this just imports it. Before that it had
+// to brace-match the `const STATIONS = [` literal out of program.js's source
+// text and eval() it with a realTrack() stub, because program.js imports
+// ./src/term.js (which touches window) and couldn't be loaded in Node.
 //
 // 36th pass: renamed from channels-to-md.js/channels.md to match the
 // STATIONS naming -- program.js's CHANNELS array
 // and channel-prefixed identifiers were renamed to STATIONS/station-prefixed
 // at the same time, so this generator and its output file follow suit.
 
-const fs = require('fs')
-const path = require('path')
+import { writeFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
+import { STATIONS } from '../stations.js'
 
-const programPath = path.join(__dirname, '..', 'program.js')
-const src = fs.readFileSync(programPath, 'utf8')
-
-const constStart = src.indexOf('const STATIONS = [')
-if (constStart === -1) throw new Error('STATIONS array not found in program.js')
-const braceStart = src.indexOf('[', constStart)
-let depth = 0, braceEnd = -1
-for (let i = braceStart; i < src.length; i++) {
-  if (src[i] === '[') depth++
-  else if (src[i] === ']') { depth--; if (depth === 0) { braceEnd = i; break } }
-}
-const arrText = src.slice(braceStart, braceEnd + 1)
-
-function realTrack(youtubeId, title, artist) {
-  return { id: `yt:${youtubeId}:real`, youtubeId, title, artist }
-}
-const STATIONS = eval(arrText)
+const here = path.dirname(fileURLToPath(import.meta.url))
 
 const lines = []
 lines.push('# SIGNAL -- station roster')
 lines.push('')
-lines.push(`Generated from program.js. ${STATIONS.length} stations, ${STATIONS.reduce((n, c) => n + c.tracks.length, 0)} tracks total.`)
+lines.push(`Generated from stations.js. ${STATIONS.length} stations, ${STATIONS.reduce((n, c) => n + c.tracks.length, 0)} tracks total.`)
 lines.push('')
 
 for (const st of STATIONS) {
@@ -54,6 +41,6 @@ for (const st of STATIONS) {
   lines.push('')
 }
 
-const outPath = path.join(__dirname, '..', 'stations.md')
-fs.writeFileSync(outPath, lines.join('\n'))
+const outPath = path.join(here, '..', 'stations.md')
+writeFileSync(outPath, lines.join('\n'))
 console.log(`Wrote ${outPath}`)

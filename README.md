@@ -75,19 +75,18 @@ things easy to miss from a screenshot alone:
   you're listening or not. That test still governs what does and doesn't
   get added.
 - **Every station's visualizer is its own procedural effect, not a shared
-  template with a palette swap.** Cellular-automaton frost creeping in from
-  the edges of the screen for COLD WAVE, a spring-damper Geiger needle for
-  ATOMIC, a synthwave sun-and-grid drive (with roadside palm trees and a
-  distant skyline) for CIRCUIT CRUSH, a real MPC-style 16-step sequencer
-  driving both a boombox's sound rings and a lit pad grid for HACKBACK —
-  each one built from the station's own identity, not a generic spectrum
-  analyzer wearing nine different colors.
+  template with a palette swap.** A neon wireframe grid whose nodes ignite
+  and decay for COLD WAVE, a field of drifting isotope sources for ATOMIC,
+  a synthwave sun-and-grid drive (with roadside palm trees and a distant
+  skyline) for CIRCUIT CRUSH, a boombox with sound rings, a VU bank and an
+  LED ladder for HACKBACK — each one built from the station's own
+  identity, not a generic spectrum analyzer wearing nine different colors.
 - **The meters and visualizers react to the actual music.** With the audio
   tap live (see "The live audio tap" below), the VU/EQ/FLD readouts and
   every visualizer follow the real signal: the flame flares on bass hits,
-  frost tips sparkle on the beat, OUTRUN's road drives at the track's
-  intensity, and HACKBACK's pad grid learns the playing track's real
-  rhythm. Each effect keeps its own identity — the music modulates the
+  COLD WAVE's grid nodes ignite on the beat, OUTRUN's road drives at the
+  track's intensity, and HACKBACK's boombox fires a ring on every real
+  onset. Each effect keeps its own identity — the music modulates the
   process, it never replaces it — and without the tap everything falls
   back to the synthetic motion it always had.
 
@@ -105,6 +104,24 @@ Then open `http://localhost:8000`. That server sends `Cache-Control:
 no-store` on every response, which matters if you're actively editing —
 plain `python3 -m http.server` can serve you a stale cached copy of
 `program.js` mid-edit.
+
+**Before pushing a deploy, run `node tools/stamp.js`.** It bumps
+`build.json`, the cache-busting stamp `main.js` reads on every load: all the
+app modules are imported as `?v=<stamp>`, so a returning visitor gets a
+fully consistent fresh build the moment the stamp changes, and a cached one
+until then. (Forget it and GitHub Pages' 10-minute cache can keep someone on
+the previous build for up to 10 minutes — the window the old per-load `?t=`
+bust avoided by making `program.js` uncacheable on every visit.)
+
+There's a headless test suite — no dependencies, just Node:
+
+```
+node --test tests/*.test.mjs     # or: npm test
+```
+
+`tests/harness.mjs` boots the real program against a real text grid with a
+fake clock, so the tests power the set on, open the guide mid-boot, cycle
+every visualizer effect, and assert on what's on the grid.
 
 ## Controls
 
@@ -144,7 +161,7 @@ no way to power back *off* on touch alone. Known gaps, not oversights.
 
 9 stations, 250 tracks total (22-30 per station -- counts are uneven by design, curation over symmetry -- plus a 25-track secret station). Full roster with taglines and track lists:
 [`stations.md`](./stations.md) — generated straight from the live
-`STATIONS` array in `program.js` (`tools/stations-to-md.js`), so it can't
+`STATIONS` array in `stations.js` (`tools/stations-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station
 list:
 
@@ -154,7 +171,7 @@ node tools/stations-to-md.js
 
 ## Content ops
 
-Every track ID in `program.js` is manually verified against YouTube's oEmbed
+Every track ID in `stations.js` is manually verified against YouTube's oEmbed
 endpoint before it's added — never hardcoded on faith. That discipline
 matters more now that the repo (and the Pages URL) are public: a dead ID
 isn't just an internal annoyance anymore.
@@ -176,13 +193,18 @@ isn't just an internal annoyance anymore.
   occasional spot-check rather than waiting to notice by ear:
 
   ```
-  node tools/verify-roster.js               # whole roster
+  node tools/verify-roster.js               # whole roster, secret stations included
   node tools/verify-roster.js --station=atomic   # one station only
+  node tools/lint-roster.js                 # offline: the rules below, no network
   ```
 
   Checks every track ID against oEmbed and prints any that are now dead,
   private, or region/embed-restricted, with a nonzero exit code if anything
-  failed (so it's CI/cron-friendly if that's ever wanted).
+  failed (so it's CI/cron-friendly if that's ever wanted). It runs the
+  offline rules first — station count, track minimums, ident length, dial
+  glyphs present in the font, `visual` keys that exist, unique IDs and
+  frequency spacing — and `tests/roster.test.mjs` asserts the same rules,
+  so `npm test` catches a malformed roster before it ships.
 - **Concept-tied stations:** if a station's premise points at a real source
   (e.g. ATOMIC being an in-universe Fallout radio station), verify tracks
   against *that* source's actual tracklist, not just oEmbed -- oEmbed only
@@ -190,18 +212,34 @@ isn't just an internal annoyance anymore.
   the station claims to be playing. ATOMIC shipped with 5 tracks that were
   genuine oldies but never actually on Fallout's Diamond City/Appalachia
   Radio before this got caught and fixed.
-- **Taglines:** keep to 35 characters or under -- they're reused verbatim in
-  the guide's station reference table (`[G]` -> `->`), which has much less
-  room per station than the STATION box on the main screen does.
+- **Taglines:** they're reused verbatim in the guide's station index
+  (`[G]` -> `->`), one line per station with the callsign in front, so the
+  real limit is **52 minus the callsign's length** (35 is always safe;
+  `tools/lint-roster.js` checks the exact fit). The STATION box on the main
+  screen and the mobile layout have more room than that.
 
 ## How it's built
 
-- `program.js` — the whole app: tuning, stations, playback, sound effects,
-  power sequence, all the CRT-panel drawing. Implements the engine's
-  `{ init, frame, key, keyUp }` program contract, plus `{ onTouchStart,
-  onTouchEnd }` for the mobile gesture set.
+- `program.js` — the state machine: the frame-driven effects queue, init,
+  power on/off, the YouTube player, tuning/lock, scan/presets, and input.
+  Implements the engine's `{ init, frame, key, keyUp }` program contract,
+  plus `{ onTouchStart, onTouchEnd }` for the mobile gesture set, and
+  composes the rest of the app from mixins:
+  - `ui/desktop.js` / `ui/mobile.js` / `ui/guide.js` — the 80x25 screen,
+    the 42x22 mobile-lite screen and its gestures, and the `[G]` guide.
+  - `visualizer.js` + `visuals/<effect>.js` — the full-screen visualizer
+    shell and one module per effect (`{ key, label, init, reset, draw }`,
+    registered in `visuals/index.js` in `[V]`-cycle order).
+  - `audio/sfx.js` (synthesized control sounds, static bed, hum, the
+    hard-mute speaker bus), `audio/voice.js` (station IDs, liners, lyrics
+    lookup), `audio/tap.js` (the live audio tap and `AUDIO_BUS`).
+  - `stations.js` (the roster — pure data), `layout.js` (grid geometry and
+    text helpers), `tuning.js` (the band and the nearest-station model),
+    `crt-hooks.js` (live `crt.params` drives), `constants.js`, `state.js`.
+  Every app module imports its siblings as `?v=<build stamp>` — see
+  `main.js` — so a deploy can never mix a fresh module with a stale one.
 - `src/` — the `cyberspace-crt` engine itself (WebGL2 renderer, CRT shader
-  passes, the text grid, bitmap font parser).
+  passes, the text grid with per-row damage tracking, bitmap font parser).
 - `config.js` — tunable CRT/render parameters, phosphor tints, and
   `MOBILE_LITE`: an off-detection check (coarse pointer + narrow portrait)
   that swaps the grid from the desktop 80x25 down to a compact 42x22 for
@@ -210,7 +248,9 @@ isn't just an internal annoyance anymore.
   it `program.js`.
 - `fonts/` — Terminus bitmap font (SIL OFL 1.1, separate from the MIT
   license below — see `LICENSE`).
-- `tools/` — dev server and the station-roster doc generator.
+- `tools/` — dev server, the build-stamp bumper, the roster doc generator
+  and roster checks, and `network.html` (a roster-editing dashboard).
+- `tests/` — the headless harness and the test suite.
 
 Playback is real YouTube video via the IFrame API, audio-only in practice —
 the player is docked off-screen since the terminal is the only visible UI.
@@ -229,6 +269,11 @@ start silently). Decline either prompt and nothing breaks: every meter and
 visualizer simply keeps the synthetic animation it always had. The capture
 is analysis-only — it feeds an AnalyserNode and nothing else, nothing is
 recorded, and nothing leaves the page.
+
+One thing does leave the page, and it's unrelated to the tap: the
+visualizer's `[L]` synced-lyrics view looks each track up on
+[LRCLIB](https://lrclib.net) by title and artist when the track loads, so
+that service sees what's playing. No account, no key, nothing else sent.
 
 ## Credits
 

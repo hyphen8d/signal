@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from program.js. 9 stations, 264 tracks total.
+Generated from stations.js. 9 stations, 264 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 

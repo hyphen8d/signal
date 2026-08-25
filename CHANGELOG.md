@@ -8,6 +8,46 @@ everything before that lived only in git history (`git log`).
 Landed on `main` after the `v0.9` tag; still version-tagged `v0.9` in the
 UI since these are same-evening follow-up tweaks, not a new release.
 
+### Engineering (2026-08-25 audit)
+
+No visible or audible change; everything below is structure, performance
+and tooling. Full write-up in the audit notes; the short version:
+
+- **Caching fixed.** `program.js` was re-downloaded on every visit (a
+  per-load `?t=` cache-buster). Modules now load as `?v=<build stamp>` from
+  `build.json`; bump it with `node tools/stamp.js` before a deploy. Fixing
+  this also fixed a real bug: `config.js` was instanced three times, which
+  defeated the engine's phosphor identity check and cleared the persistence
+  buffer on every lock, unlock and colour cycle.
+- **`program.js` split into modules** -- `stations.js` (the roster, pure
+  data), `layout.js`, `tuning.js`, `crt-hooks.js`, `audio/`, `ui/`,
+  `visualizer.js` + `visuals/` -- composed as mixins. 9,472 lines became a
+  2,190-line state machine plus 24 focused files; every comment moved with
+  its code.
+- **Frame-driven effects queue.** The 36 `setTimeout`/`setInterval` sites
+  that drew to the grid or drove `crt.params` now run from `frame()`, so
+  nothing can paint through STANDBY, the guide or the visualizer, and a
+  power-off drops every in-flight effect in one place (ramps settle to
+  rest). Audio scheduling and the scan/preset sweeps stay on their own
+  clocks on purpose; a hidden tab keeps the queue moving via a coarse
+  fallback ticker.
+- **Engine: per-row damage tracking.** Only changed rows are rasterised
+  and uploaded (~4 rows per pass in the main view instead of all 25);
+  identical re-puts are free; the canvas is measured via `ResizeObserver`
+  instead of a layout read every frame.
+- **Tooling and tests.** `tools/verify-roster.js` now imports the roster
+  directly (no more brace-matching `program.js`) and covers the secret
+  station -- NIN's tracks had never been checked. `tools/lint-roster.js`
+  enforces the content-ops rules offline. `tests/` is a headless harness
+  that boots the real program against a real text grid with a fake clock;
+  `npm test` runs 24 tests in about a second.
+- Dedupe and dead code: one main-screen rebuild path (was three copies),
+  one grid clear (was seven), one track-selection routine, one TRI readout;
+  removed `playPowerDownSound`, `tuneToStation`/`nowPlaying`,
+  `drawTriBand`, `_outrunRedline`, the MPC sequencer constants.
+- README: visualizer descriptions caught up with what shipped; the `[L]`
+  lyrics lookup is now disclosed next to the tap's privacy note.
+
 ### Live audio (branch: david-visualizer)
 
 - **The meters and visualizers are real now.** A live "audio tap" captures

@@ -57,6 +57,10 @@ export class Term extends CellGrid {
      */
     this.alt = null
 
+    /** Where the cursor was last stamped ({x, y}), or null, so a partial
+     *  raster() can un-stamp it. See raster(). */
+    this._cursorStamp = null
+
     // Assigned by setFont.
     this.w = 0
     this.h = 0
@@ -87,13 +91,45 @@ export class Term extends CellGrid {
     this.dirty = true
   }
 
-  /** Rasterise the whole grid. ~300k byte writes. Call only when dirty. */
+  /**
+   * Rasterise the dirty rows (2026-08-25 audit -- was the whole grid, ~300k
+   * byte writes, on any change at all; see CellGrid.dirtyRows). ~12k byte
+   * writes per row. Call only when dirty.
+   *
+   * @returns {Array<[number, number]>} framebuffer pixel-row bands [y0, y1)
+   *   that were redrawn, merged where adjacent, for CRT.upload() to send
+   *   just those. Empty if nothing was dirty.
+   */
   raster() {
-    const { cols, rows, font, fb, w } = this
+    const { cols, rows, font, fb, w, dirtyRows } = this
     const { cellH, glyphs } = font
-    fb.fill(0)
 
+    // The cursor is an inversion stamped over the text after it is drawn.
+    // When it moves or blinks, the row it was on has to be redrawn (to erase
+    // the old stamp) and the row it is on now too; when it has not moved,
+    // the stamp from last time is still in the framebuffer and only needs
+    // re-applying if its row is being redrawn anyway.
+    const wantStamp = this.showCursor && this.cursorVisible && !this.view
+    const prev = this._cursorStamp
+    const moved = wantStamp ? (!prev || prev.x !== this.cx || prev.y !== this.cy) : !!prev
+    if (moved) {
+      if (prev && prev.y < rows) dirtyRows[prev.y] = 1
+      if (wantStamp && this.cy < rows) dirtyRows[this.cy] = 1
+    }
+    const restamp = wantStamp && this.cy < rows && dirtyRows[this.cy] === 1
+
+    const bands = []
     for (let gy = 0; gy < rows; gy++) {
+      if (!dirtyRows[gy]) continue
+      const oy = this.padY + gy * cellH
+      // Clear just this row's band of the framebuffer, then draw into it.
+      // The padding rows above and below the grid are never written, so
+      // they stay at the zero the buffer was allocated with.
+      fb.fill(0, oy * w, (oy + cellH) * w)
+      const last = bands[bands.length - 1]
+      if (last && last[1] === oy) last[1] = oy + cellH
+      else bands.push([oy, oy + cellH])
+
       // Scrolled back: rows above the live grid come from the history planes.
       // `back` is how far above the grid this row sits. view is clamped by
       // scrollView, so the index is in range.
@@ -141,7 +177,6 @@ export class Term extends CellGrid {
         const gnd = attr & BG ? BG_LEVEL : 0
         const adv = this.advance
         const ox = this.padX + gx * adv
-        const oy = this.padY + gy * cellH
         // Whether to extend the glyph's rightmost pixel across the advance gap.
         // VGA did this for its line-graphics range so rules and fills joined
         // across cells; U+2500..259F covers box drawing, blocks and shades.
@@ -182,9 +217,11 @@ export class Term extends CellGrid {
       }
     }
 
-    // No cursor while scrolled back.
-    if (this.showCursor && this.cursorVisible && !this.view) this.stampCursor()
-    this.dirty = false
+    // No cursor while scrolled back (wantStamp is false then).
+    if (restamp) this.stampCursor()
+    this._cursorStamp = wantStamp ? { x: this.cx, y: this.cy } : null
+    this.clearDirty()
+    return bands
   }
 
   stampCursor() {

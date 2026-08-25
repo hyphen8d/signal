@@ -1,9 +1,9 @@
-// Spot-checks every track ID in program.js against YouTube's oEmbed
+// Spot-checks every track ID in stations.js against YouTube's oEmbed
 // endpoint and reports any that are now dead, private, or region/embed
 // restricted. Run with:
 //
-//   node tools/verify-roster.js                    # whole roster
-//   node tools/verify-roster.js --station=atomic    # one station only
+//   node tools/verify-roster.js                    # whole roster, secret stations included
+//   node tools/verify-roster.js --station=atomic    # one station only (secret ids work too)
 //
 // oEmbed 200 confirms a video is real and embeddable at check time -- it is
 // NOT a guarantee the IFrame player will actually reach a PLAYING state in
@@ -11,45 +11,27 @@
 // handling for that side of it). This is a periodic spot-check against
 // rot, not a substitute for the app's own runtime safety net.
 //
-// Extracts STATIONS the same way tools/stations-to-md.js does: brace-match
-// the array literal out of program.js (a browser ES module that touches
-// window/DOM and can't be require()'d directly) and eval it with a local
-// realTrack() stub.
+// 2026-08-25 audit: imports the roster from stations.js (a pure-data ES
+// module) instead of brace-matching `const STATIONS = [` out of program.js
+// and eval'ing it. That older extraction only ever saw STATIONS, so the
+// secret stations' tracks had never been through this check at all --
+// SECRET_STATIONS is walked here now, same as the public roster.
 //
 // 36th pass: renamed --channel= to --station= (and STATIONS/station
 // throughout) to match the STATIONS naming.
 
-const fs = require('fs')
-const path = require('path')
+import { STATIONS, SECRET_STATIONS } from '../stations.js'
+import { lintRoster } from './lint-roster.js'
 
 const args = process.argv.slice(2)
 const stationArg = args.find(a => a.startsWith('--station='))
 const onlyStation = stationArg ? stationArg.split('=')[1] : null
 
-const programPath = path.join(__dirname, '..', 'program.js')
-const src = fs.readFileSync(programPath, 'utf8')
-
-const constStart = src.indexOf('const STATIONS = [')
-if (constStart === -1) throw new Error('STATIONS array not found in program.js')
-const braceStart = src.indexOf('[', constStart)
-let depth = 0, braceEnd = -1
-for (let i = braceStart; i < src.length; i++) {
-  if (src[i] === '[') depth++
-  else if (src[i] === ']') { depth--; if (depth === 0) { braceEnd = i; break } }
-}
-const arrText = src.slice(braceStart, braceEnd + 1)
-
-function realTrack(youtubeId, title, artist) {
-  return { id: `yt:${youtubeId}:real`, youtubeId, title, artist }
-}
-const STATIONS = eval(arrText)
-
-const stations = onlyStation
-  ? STATIONS.filter(c => c.id === onlyStation)
-  : STATIONS
+const ALL = [...STATIONS, ...SECRET_STATIONS]
+const stations = onlyStation ? ALL.filter(c => c.id === onlyStation) : ALL
 
 if (onlyStation && stations.length === 0) {
-  console.error(`No station with id "${onlyStation}". Known ids: ${STATIONS.map(c => c.id).join(', ')}`)
+  console.error(`No station with id "${onlyStation}". Known ids: ${ALL.map(c => c.id).join(', ')}`)
   process.exit(2)
 }
 
@@ -78,6 +60,16 @@ async function mapLimit(items, limit, fn) {
 }
 
 async function main() {
+  // Offline rules first (tools/lint-roster.js) -- cheap, and a broken roster
+  // shape isn't worth 286 network requests to discover.
+  const lint = await lintRoster()
+  for (const w of lint.warnings) console.log(`  ! ${w}`)
+  if (lint.problems.length) {
+    console.log(`Roster rules: ${lint.problems.length} problem(s):`)
+    for (const p of lint.problems) console.log(`  - ${p}`)
+    process.exitCode = 1
+  }
+  if (lint.warnings.length || lint.problems.length) console.log('')
   const total = stations.reduce((n, c) => n + c.tracks.length, 0)
   console.log(`Checking ${total} track(s) across ${stations.length} station(s) against oEmbed...\n`)
 
@@ -93,7 +85,7 @@ async function main() {
 
     const bad = results.filter(r => !r.ok)
     if (bad.length) {
-      console.log(`${st.callsign} (${st.id}) -- ${bad.length} problem(s):`)
+      console.log(`${st.callsign} (${st.id}${st.secret ? ', secret' : ''}) -- ${bad.length} problem(s):`)
       for (const b of bad) {
         console.log(`  [${b.status}] ${b.track.title} -- ${b.track.artist} (youtu.be/${b.track.youtubeId})`)
         failures.push({ station: st.id, ...b })

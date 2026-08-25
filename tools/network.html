@@ -159,7 +159,7 @@
 
 <div id="connect-screen">
   <div class="connect-box">
-    <p>This page reads and writes <code>program.js</code> directly on your disk via Chrome's File System Access API — no server, no terminal. First time here (or after a browser restart), grant access to the <code>signal-radio-engine</code> repo folder.</p>
+    <p>This page reads and writes <code>stations.js</code> directly on your disk via Chrome's File System Access API — no server, no terminal. First time here (or after a browser restart), grant access to the <code>signal-radio-engine</code> repo folder.</p>
     <button class="primary" id="btn-connect">connect signal-radio-engine folder</button>
     <div class="fatal" id="connect-error"></div>
   </div>
@@ -200,15 +200,23 @@
 
 <script>
 // ---------------------------------------------------------------------
+// 2026-08-25 audit: the roster moved out of program.js into stations.js (a
+// pure-data ES module). Every read/patch/write below now targets
+// stations.js -- the parsing is unchanged, since the `const STATIONS = [`
+// and `const NIN_STATION = {` literals it brace-matches moved verbatim.
+// (Older comments in this file that name the roster file were rewritten
+// mechanically; where one says stations.js "used to have" something, read
+// that as program.js-at-the-time.)
+//
 // SIGNAL network ops -- serverless rebuild (55th pass, moved off a running
 // server in favor of a plain file). Everything the
 // Node version (network-server.js + tools/lib/roster.js) did now runs in
-// this one HTML file's own JS, reading and writing program.js directly via
+// this one HTML file's own JS, reading and writing stations.js directly via
 // Chrome's File System Access API instead of a Node process + HTTP API.
 // Open by double-clicking this file, or bookmark it -- no terminal step.
 //
 // The extraction/patch logic below is a straight port of tools/lib/roster.js
-// (brace-match STATIONS/SECRET_STATION out of program.js's source text,
+// (brace-match STATIONS/SECRET_STATION out of stations.js's source text,
 // eval with a local realTrack() stub, surgically patch one station's
 // `tracks: [...]` block). See that file's own comments for the reasoning;
 // nothing about the parsing logic changed, only where it runs.
@@ -221,7 +229,7 @@
 // approved or rejected. Approving a pending entry adds it to that station's normal
 // (dirty) in-memory edit state -- same path as the manual add-track form --
 // so it still goes through the existing save/verify/write flow rather than
-// writing straight to program.js. Rejecting moves it to the file's
+// writing straight to stations.js. Rejecting moves it to the file's
 // `rejected` list (with a reason) so Claude doesn't re-propose it later.
 // ---------------------------------------------------------------------
 
@@ -263,7 +271,7 @@ async function idbDel(key) {
   })
 }
 
-// ---- program.js parsing / patching (ported from tools/lib/roster.js) --
+// ---- stations.js parsing / patching (ported from tools/lib/roster.js) --
 function matchBracket(src, openIdx, openCh, closeCh) {
   let depth = 0
   for (let i = openIdx; i < src.length; i++) {
@@ -274,7 +282,7 @@ function matchBracket(src, openIdx, openCh, closeCh) {
 }
 function extractLiteral(src, declNeedle, openCh, closeCh) {
   const declIdx = src.indexOf(declNeedle)
-  if (declIdx === -1) throw new Error(`"${declNeedle}" not found in program.js`)
+  if (declIdx === -1) throw new Error(`"${declNeedle}" not found in stations.js`)
   const openIdx = src.indexOf(openCh, declIdx)
   const closeIdx = matchBracket(src, openIdx, openCh, closeCh)
   if (closeIdx === -1) throw new Error(`Unbalanced ${openCh}${closeCh} reading "${declNeedle}"`)
@@ -286,18 +294,18 @@ function realTrack(youtubeId, title, artist) {
 function loadRosterFromText(src) {
   const stationsText = extractLiteral(src, 'const STATIONS = [', '[', ']')
   const STATIONS = eval(stationsText)
-  // 2026-08-24: program.js used to have one `const SECRET_STATION = {...}`;
+  // 2026-08-24: stations.js used to have one `const SECRET_STATION = {...}`;
   // it's now named secret stations (currently just NIN_STATION -- a second,
   // GREEN_HOUSE_STATION, was built and pulled before shipping, see
-  // program.js's own SECRET_STATIONS comment) combined into
+  // stations.js's own SECRET_STATIONS comment) combined into
   // `const SECRET_STATIONS = [NIN_STATION]`. That combining line is just a
   // reference array, not a literal one, so it can't be eval'd standalone --
   // extract each named object the same way STATIONS is extracted instead,
   // then build the array here. Each extraction is optional (try/catch, not
   // a hard failure) specifically so this dashboard doesn't break again the
-  // way it did when GREEN_HOUSE_STATION disappeared from program.js --
+  // way it did when GREEN_HOUSE_STATION disappeared from stations.js --
   // that exact class of bug (a hardcoded name here going stale against
-  // program.js's real contents) is what broke this file once already this
+  // stations.js's real contents) is what broke this file once already this
   // session; add a new secret station's own name to `names` below rather
   // than hardcoding another required extractLiteral call.
   const names = ['NIN_STATION', 'GREEN_HOUSE_STATION']
@@ -306,14 +314,14 @@ function loadRosterFromText(src) {
     try {
       const text = extractLiteral(src, `const ${name} = {`, '{', '}')
       SECRET_STATIONS.push(eval('(' + text + ')'))
-    } catch (e) { /* not present in program.js right now -- skip it */ }
+    } catch (e) { /* not present in stations.js right now -- skip it */ }
   }
   return { STATIONS, SECRET_STATIONS }
 }
 function findStationObjectRange(src, stationId) {
   const idNeedle = `id: '${stationId}'`
   const idIdx = src.indexOf(idNeedle)
-  if (idIdx === -1) throw new Error(`No station with id "${stationId}" found in program.js`)
+  if (idIdx === -1) throw new Error(`No station with id "${stationId}" found in stations.js`)
   if (src.indexOf(idNeedle, idIdx + 1) !== -1) {
     throw new Error(`"${idNeedle}" appears more than once -- refusing to guess which station`)
   }
@@ -377,7 +385,7 @@ function buildStationsMd(STATIONS) {
   const lines = []
   lines.push('# SIGNAL -- station roster')
   lines.push('')
-  lines.push(`Generated from program.js. ${STATIONS.length} stations, ${STATIONS.reduce((n, c) => n + c.tracks.length, 0)} tracks total.`)
+  lines.push(`Generated from stations.js. ${STATIONS.length} stations, ${STATIONS.reduce((n, c) => n + c.tracks.length, 0)} tracks total.`)
   lines.push('')
   for (const st of STATIONS) {
     lines.push(`## ${st.callsign} -- ${st.freq.toFixed(1)}`)
@@ -483,7 +491,7 @@ async function writeFileText(name, text, create = false) {
 }
 
 // pending-tracks.json lives in tools/ (alongside this dashboard), not the
-// repo root where program.js/stations.md live -- it's a dev-tool file, not
+// repo root where stations.js/stations.md live -- it's a dev-tool file, not
 // a roster file. getFileText/writeFileText assume root-relative paths, so
 // this needs its own directory handle into tools/.
 async function getToolsDirHandle() {
@@ -515,17 +523,17 @@ async function connectWith(handle) {
   dirHandle = handle
   document.getElementById('connect-error').textContent = ''
   try {
-    programText = await getFileText('program.js')
+    programText = await getFileText('stations.js')
   } catch (err) {
     document.getElementById('connect-error').textContent =
-      'Could not find program.js in that folder -- pick the signal-radio-engine repo root. (' + err.message + ')'
+      'Could not find stations.js in that folder -- pick the signal-radio-engine repo root. (' + err.message + ')'
     document.getElementById('connect-screen').style.display = 'block'
     document.getElementById('app').style.display = 'none'
     return
   }
   document.getElementById('connect-screen').style.display = 'none'
   document.getElementById('app').style.display = 'block'
-  document.getElementById('conn-status').innerHTML = `connected: <b>${handle.name}</b> — reads/writes program.js on save`
+  document.getElementById('conn-status').innerHTML = `connected: <b>${handle.name}</b> — reads/writes stations.js on save`
   roster = buildRosterPayload(programText)
   await loadPendingQueue()
   render()
@@ -667,7 +675,7 @@ function renderPendingCard(entry) {
   return card
 }
 
-// Approving does NOT write program.js directly -- it pushes the candidate
+// Approving does NOT write stations.js directly -- it pushes the candidate
 // into that station's normal in-memory edit state (same as the manual
 // add-track form), so it flows through the exact same dirty/save/verify
 // path as any other roster edit. It's removed from the pending file right
@@ -681,7 +689,7 @@ async function approvePending(entry) {
   await writePendingQueue()
   renderPending()
   document.getElementById('panel-' + st.id).classList.add('open')
-  g.textContent = `approved "${entry.title}" onto ${st.callsign} -- unsaved, use "save to program.js" (or "save all changed stations") to commit it.`
+  g.textContent = `approved "${entry.title}" onto ${st.callsign} -- unsaved, use "save to stations.js" (or "save all changed stations") to commit it.`
   g.style.color = 'var(--green)'
 }
 
@@ -897,7 +905,7 @@ function renderStationActions(st) {
   const sortTitleBtn = el('button', { class: 'small' }, 'sort by title')
   sortTitleBtn.addEventListener('click', () => sortTracks(st, t => t.title))
   wrap.appendChild(sortTitleBtn)
-  const saveBtn = el('button', { class: dirty ? 'primary' : '' }, 'save to program.js')
+  const saveBtn = el('button', { class: dirty ? 'primary' : '' }, 'save to stations.js')
   saveBtn.disabled = !dirty
   saveBtn.addEventListener('click', () => saveStation(st))
   wrap.appendChild(saveBtn)
@@ -940,7 +948,7 @@ async function saveStationToDisk(st) {
     return { ok: false, error: String(err.message ?? err) }
   }
   try {
-    await writeFileText('program.js', newText)
+    await writeFileText('stations.js', newText)
     programText = newText
     const { STATIONS } = loadRosterFromText(programText)
     await writeFileText('stations.md', buildStationsMd(STATIONS), true)
@@ -960,7 +968,7 @@ async function saveStation(st) {
     render()
     document.getElementById('panel-' + st.id).classList.add('open')
     document.getElementById('global-msg').textContent =
-      `saved ${st.callsign} (${res.trackCount} tracks) to program.js — stations.md regenerated. Run this through signal-ship (QA, commit, push) when ready.`
+      `saved ${st.callsign} (${res.trackCount} tracks) to stations.js — stations.md regenerated. Run this through signal-ship (QA, commit, push) when ready.`
   } else if (msgEl) {
     msgEl.textContent = 'save failed: ' + res.error
     msgEl.style.color = 'var(--red)'
@@ -986,7 +994,7 @@ async function saveAllChanged() {
   render()
   g.textContent = failures.length
     ? `saved ${ok}/${dirtyIds.length} — failed: ${failures.join('; ')}`
-    : `saved ${ok} station(s) to program.js — stations.md regenerated. Run through signal-ship (QA, commit, push) when ready.`
+    : `saved ${ok} station(s) to stations.js — stations.md regenerated. Run through signal-ship (QA, commit, push) when ready.`
   g.style.color = failures.length ? 'var(--red)' : 'var(--green)'
 }
 
@@ -995,7 +1003,7 @@ document.getElementById('btn-save-all').addEventListener('click', saveAllChanged
 document.getElementById('btn-refresh').addEventListener('click', async () => {
   if (Object.keys(edits).length && !confirm('Discard unsaved edits and reload from disk?')) return
   for (const k of Object.keys(edits)) delete edits[k]
-  programText = await getFileText('program.js')
+  programText = await getFileText('stations.js')
   roster = buildRosterPayload(programText)
   await loadPendingQueue()
   render()

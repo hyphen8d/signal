@@ -4,10 +4,14 @@
 import { parseBDF } from './bdf.js'
 import { Term } from './term.js'
 import { CRT } from './crt.js'
-// 2026-08-22: dynamic, cache-busted import -- see crt.js's identical fix
-// for why (GitHub Pages' max-age=600 can serve a stale config.js to a
-// returning visitor for up to 10 minutes after a deploy).
-const { FONT, GRID, RENDER, PHOSPHOR } = await import(`../config.js?t=${Date.now()}`)
+
+// 2026-08-25 audit: config is passed in by the caller (see mount) rather
+// than imported here. This file used to `await import('../config.js?t=' +
+// Date.now())` -- one of three separate config imports in the pre-audit
+// build, each a separate module instance, which is what broke CRT's
+// phosphor identity check (see main.js's comment). The engine now takes
+// its config as a plain object and never touches config.js itself, which
+// also makes it usable standalone with any config shape.
 
 async function loadFont(url) {
   const res = await fetch(url)
@@ -17,11 +21,12 @@ async function loadFont(url) {
 
 /** A running tube. Construct via mount(). */
 export class Screen {
-  constructor(canvas, term, crt, program) {
+  constructor(canvas, term, crt, program, config) {
     this.canvas = canvas
     this.term = term
     this.crt = crt
     this.program = program
+    this.config = config
     this.cols = term.cols
     this.rows = term.rows
 
@@ -48,21 +53,25 @@ export class Screen {
     if (this.stopped) return
     if (!this.t0) this.t0 = t
     const { term, crt } = this
+    const { RENDER } = this.config
 
     if (RENDER.cursor && t - this.blinkAt > RENDER.blinkMs) {
       this.blinkAt = t
       term.cursorVisible = !term.cursorVisible
-      term.dirty = true
+      // Just the cursor's row: raster() works out which rows a blink or a
+      // move actually touches (see Term.raster's cursor note).
+      term.markRow(term.cy)
     }
     term.showCursor = RENDER.cursor
 
     this.program?.frame?.(this, (t - this.t0) / 1000)
 
     // The tube renders every frame (noise, roll bar and persistence are all
-    // per-frame); the rasteriser runs only when a cell changed.
+    // per-frame); the rasteriser runs only over the rows whose cells changed,
+    // and only those rows are uploaded (see CellGrid.dirtyRows).
     if (term.dirty) {
-      term.raster()
-      crt.upload(term.fb)
+      const bands = term.raster()
+      if (bands.length) crt.upload(term.fb, bands)
     }
 
     crt.resize(RENDER.pixelBudget)
@@ -85,21 +94,29 @@ export class Screen {
  *
  * @param {HTMLCanvasElement} canvas
  * @param {{init?: Function, frame?: Function, key?: Function, keyUp?: Function}} program
+ * @param {{FONT: object, GRID: object, RENDER: object, SCREEN: object,
+ *   PHOSPHORS: object, PHOSPHOR: string}} config the config.js module (or
+ *   any object of the same shape)
  * @returns {Promise<Screen>}
  */
-export async function mount(canvas, program) {
+export async function mount(canvas, program, config) {
+  const { FONT, GRID, RENDER, SCREEN, PHOSPHORS, PHOSPHOR } = config
   const font = await loadFont(FONT.regular)
 
   const term = new Term(font, GRID.cols, GRID.rows, GRID.padX, GRID.padY)
-  const crt = new CRT(canvas, term.w, term.h, RENDER.superSample)
-  crt.setPhosphor(PHOSPHOR)
+  const crt = new CRT(canvas, term.w, term.h, {
+    superSample: RENDER.superSample,
+    params: SCREEN,
+    phosphors: PHOSPHORS,
+    phosphor: PHOSPHOR,
+  })
 
   // Cuts load behind the roman. Until one arrives BOLD is the smear and ITALIC
   // is roman, as on a family that has neither.
   if (FONT.bold) loadFont(FONT.bold).then(f => { term.bold = f; term.dirty = true }).catch(() => {})
   if (FONT.italic) loadFont(FONT.italic).then(f => { term.italic = f; term.dirty = true }).catch(() => {})
 
-  const screen = new Screen(canvas, term, crt, program)
+  const screen = new Screen(canvas, term, crt, program, config)
   screen.start()
   return screen
 }

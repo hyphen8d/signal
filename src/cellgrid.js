@@ -56,7 +56,23 @@ export class CellGrid {
      * Filled rather than sparse: the plane is copied whole.
      */
     this.gfx = new Array(cols * rows).fill(undefined)
-    this.dirty = true
+
+    /**
+     * Damage tracking, per grid row (2026-08-25 audit). A single grid-wide
+     * flag used to be the only granularity: any put() anywhere meant the
+     * whole grid was re-rasterised and the whole framebuffer re-uploaded.
+     * A program that touches a few cells several times a second -- meters,
+     * a clock, a shimmer -- paid for all 2,000 cells every time. Now each
+     * mutator marks only the rows it touched, raster() redraws just those,
+     * and the upload covers just those bands.
+     *
+     * `dirty` keeps its old meaning and its old API on top of this: reading
+     * it asks "is anything dirty", assigning true marks every row (a font
+     * swap, a cursor blink -- things that change the whole picture), and
+     * raster() assigns false once it has consumed the flags.
+     */
+    this.dirtyRows = new Uint8Array(rows).fill(1)
+    this._anyDirty = true
 
     // Rows scrolled off the top, oldest first, across the three text planes.
     // Read by Term.raster() for a scrolled-back view.
@@ -72,6 +88,27 @@ export class CellGrid {
     this.showCursor = true
   }
 
+  get dirty() { return this._anyDirty }
+  set dirty(v) { if (v) this.markAll(); else this.clearDirty() }
+
+  /** Mark one grid row for re-rasterising. */
+  markRow(y) {
+    this.dirtyRows[y] = 1
+    this._anyDirty = true
+  }
+
+  /** Mark the whole grid. */
+  markAll() {
+    this.dirtyRows.fill(1)
+    this._anyDirty = true
+  }
+
+  /** Consume the flags. raster() calls this once it has redrawn the rows. */
+  clearDirty() {
+    this.dirtyRows.fill(0)
+    this._anyDirty = false
+  }
+
   /** Blank the screen. The scrollback survives. */
   clear() {
     this.chars.fill(32)
@@ -81,37 +118,49 @@ export class CellGrid {
     this.cx = 0
     this.cy = 0
     this.view = 0
-    this.dirty = true
+    this.markAll()
   }
 
+  /**
+   * Write one cell. A no-op -- no dirty row, no raster -- when the cell
+   * already holds exactly this character, attribute and inverse state, so a
+   * program can redraw a whole widget every tick and only the cells that
+   * actually changed cost anything.
+   */
   put(x, y, ch, attr = NORMAL, inv = 0) {
     if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return
     this.snapToLive()
     const i = y * this.cols + x
-    this.chars[i] = typeof ch === 'string' ? (ch.codePointAt(0) ?? 32) : ch
+    const code = typeof ch === 'string' ? (ch.codePointAt(0) ?? 32) : ch
+    if (this.chars[i] === code && this.attrs[i] === attr && this.inverse[i] === inv &&
+        this.gfx[i] === undefined) return
+    this.chars[i] = code
     this.attrs[i] = attr
     this.inverse[i] = inv
     // A character clears the cell's bitmap.
     this.gfx[i] = undefined
-    this.dirty = true
+    this.markRow(y)
   }
 
   /**
    * Put a bitmap in a cell. See `gfx`.
    *
    * `bits` is one word per row, bit (cellW-1) leftmost. Not copied — the grid
-   * holds the reference for as long as the cell is on screen.
+   * holds the reference for as long as the cell is on screen. Same-reference
+   * re-puts are no-ops, like put(); a bitmap mutated in place must be re-put
+   * under a fresh reference (or the row marked by hand) to be seen.
    */
   putGlyph(x, y, bits, attr = NORMAL, inv = 0) {
     if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return
     this.snapToLive()
     const i = y * this.cols + x
+    if (this.gfx[i] === bits && this.attrs[i] === attr && this.inverse[i] === inv) return
     // Space, so the character plane stays valid text.
     this.chars[i] = 32
     this.attrs[i] = attr
     this.inverse[i] = inv
     this.gfx[i] = bits
-    this.dirty = true
+    this.markRow(y)
   }
 
   text(x, y, str, attr = NORMAL, inv = 0) {
@@ -130,7 +179,7 @@ export class CellGrid {
     const next = Math.max(0, Math.min(this.view + delta, this.histChars.length))
     if (next === this.view) return false
     this.view = next
-    this.dirty = true
+    this.markAll()
     return true
   }
 
@@ -138,7 +187,7 @@ export class CellGrid {
   snapToLive() {
     if (!this.view) return
     this.view = 0
-    this.dirty = true
+    this.markAll()
   }
 
   scroll() {
@@ -161,7 +210,7 @@ export class CellGrid {
     this.attrs.fill(NORMAL, cols * (rows - 1))
     this.inverse.fill(0, cols * (rows - 1))
     this.gfx.fill(undefined, cols * (rows - 1))
-    this.dirty = true
+    this.markAll()
   }
 
   newline() {

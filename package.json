@@ -1,0 +1,13 @@
+{
+  "name": "signal",
+  "private": true,
+  "type": "module",
+  "description": "No dependencies and no build step -- this file only exists so Node treats the repo's .js files (stations.js, tools/, tests/) as ES modules.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "stamp": "node tools/stamp.js",
+    "stations": "node tools/stations-to-md.js",
+    "lint": "node tools/lint-roster.js",
+    "verify": "node tools/verify-roster.js"
+  }
+}
