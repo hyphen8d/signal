@@ -19,24 +19,6 @@
       "rationale": "Checked against station-profiles.json (cold-wave): early-80s synth new wave, iconic and squarely in-lane, new artist. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (Kim Wilde's own channel)"
     },
     {
-      "stationId": "momentum",
-      "youtubeId": "mc_xD6aGV5w",
-      "title": "Luv(sic) Part 3 feat. Shing02 [Official Audio]",
-      "artist": "Nujabes",
-      "proposedBy": "claude",
-      "proposedAt": "2026-08-23",
-      "rationale": "Checked against station-profiles.json (momentum): light, melodic instrumental hip-hop, exactly this station's lane, second track for an artist already there. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (Nujabes's own posthumous official channel)"
-    },
-    {
-      "stationId": "momentum",
-      "youtubeId": "S0Q4gqBUs7c",
-      "title": "Kerala (Official Audio)",
-      "artist": "Bonobo",
-      "proposedBy": "claude",
-      "proposedAt": "2026-08-23",
-      "rationale": "Checked against station-profiles.json (momentum): downtempo/chillhop, fits the light focus vibe. Note Bonobo already has 3 tracks on this station (Kong, Cirrus, Kiara) -- this would be a 4th, so treat as optional depth rather than a must-add if you'd rather diversify artists instead. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (Bonobo's own channel)"
-    },
-    {
       "stationId": "drift-mode",
       "youtubeId": "25zpPS_OdhQ",
       "title": "Virginal II",
@@ -206,51 +188,6 @@
       "proposedBy": "claude",
       "proposedAt": "2026-08-24",
       "rationale": "Checked against tools/station-profiles.json (cold-wave) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
-    },
-    {
-      "stationId": "momentum",
-      "youtubeId": "f7KFVBtt1io",
-      "title": "Spacesuits",
-      "artist": "Kupla",
-      "proposedBy": "claude",
-      "proposedAt": "2026-08-24",
-      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
-    },
-    {
-      "stationId": "momentum",
-      "youtubeId": "V5Id5cVofPI",
-      "title": "quintal",
-      "artist": "FloFilz",
-      "proposedBy": "claude",
-      "proposedAt": "2026-08-24",
-      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
-    },
-    {
-      "stationId": "momentum",
-      "youtubeId": "WS09cCI05oQ",
-      "title": "Closer",
-      "artist": "Aso",
-      "proposedBy": "claude",
-      "proposedAt": "2026-08-24",
-      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
-    },
-    {
-      "stationId": "momentum",
-      "youtubeId": "ZKvuDkGH1lA",
-      "title": "Staying There",
-      "artist": "L'Indecis",
-      "proposedBy": "claude",
-      "proposedAt": "2026-08-24",
-      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
-    },
-    {
-      "stationId": "momentum",
-      "youtubeId": "BNRr9s7B8qc",
-      "title": "Parasol",
-      "artist": "Plusma & Guillaume Muschalle",
-      "proposedBy": "claude",
-      "proposedAt": "2026-08-24",
-      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
     },
     {
       "stationId": "city-lights",
@@ -559,6 +496,83 @@
       "rationale": "Checked against station-profiles.json (distortion-field): squarely 90s grunge/alt-rock, same lane as the existing roster, and a genuinely iconic single from the era not yet represented. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (BlindMelonVEVO)",
       "rejectedAt": "2026-08-24",
       "rejectedReason": "not radio version, music video"
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "mc_xD6aGV5w",
+      "title": "Luv(sic) Part 3 feat. Shing02 [Official Audio]",
+      "artist": "Nujabes",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (momentum): light, melodic instrumental hip-hop, exactly this station's lane, second track for an artist already there. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (Nujabes's own posthumous official channel)",
+      "rejectedAt": "2026-08-25",
+      "rejectedReason": "Station retired -- MOMENTUM was replaced by MIDNIGHT NEON in the 60th pass (2026-08-24), so there is no station left to approve this into and the chillhop/lofi lane has no home on the current roster. Filed as rejected rather than deleted so the oEmbed-verified ID and the original rationale survive, and so it is not re-proposed; tools/station-profiles.json keeps MOMENTUM's profile flagged retired for the same reason. Not a judgment on the track -- revisit if a station ever reopens this lane."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "S0Q4gqBUs7c",
+      "title": "Kerala (Official Audio)",
+      "artist": "Bonobo",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (momentum): downtempo/chillhop, fits the light focus vibe. Note Bonobo already has 3 tracks on this station (Kong, Cirrus, Kiara) -- this would be a 4th, so treat as optional depth rather than a must-add if you'd rather diversify artists instead. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (Bonobo's own channel)",
+      "rejectedAt": "2026-08-25",
+      "rejectedReason": "Station retired -- MOMENTUM was replaced by MIDNIGHT NEON in the 60th pass (2026-08-24), so there is no station left to approve this into and the chillhop/lofi lane has no home on the current roster. Filed as rejected rather than deleted so the oEmbed-verified ID and the original rationale survive, and so it is not re-proposed; tools/station-profiles.json keeps MOMENTUM's profile flagged retired for the same reason. Not a judgment on the track -- revisit if a station ever reopens this lane."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "f7KFVBtt1io",
+      "title": "Spacesuits",
+      "artist": "Kupla",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-25",
+      "rejectedReason": "Station retired -- MOMENTUM was replaced by MIDNIGHT NEON in the 60th pass (2026-08-24), so there is no station left to approve this into and the chillhop/lofi lane has no home on the current roster. Filed as rejected rather than deleted so the oEmbed-verified ID and the original rationale survive, and so it is not re-proposed; tools/station-profiles.json keeps MOMENTUM's profile flagged retired for the same reason. Not a judgment on the track -- revisit if a station ever reopens this lane."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "V5Id5cVofPI",
+      "title": "quintal",
+      "artist": "FloFilz",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-25",
+      "rejectedReason": "Station retired -- MOMENTUM was replaced by MIDNIGHT NEON in the 60th pass (2026-08-24), so there is no station left to approve this into and the chillhop/lofi lane has no home on the current roster. Filed as rejected rather than deleted so the oEmbed-verified ID and the original rationale survive, and so it is not re-proposed; tools/station-profiles.json keeps MOMENTUM's profile flagged retired for the same reason. Not a judgment on the track -- revisit if a station ever reopens this lane."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "WS09cCI05oQ",
+      "title": "Closer",
+      "artist": "Aso",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-25",
+      "rejectedReason": "Station retired -- MOMENTUM was replaced by MIDNIGHT NEON in the 60th pass (2026-08-24), so there is no station left to approve this into and the chillhop/lofi lane has no home on the current roster. Filed as rejected rather than deleted so the oEmbed-verified ID and the original rationale survive, and so it is not re-proposed; tools/station-profiles.json keeps MOMENTUM's profile flagged retired for the same reason. Not a judgment on the track -- revisit if a station ever reopens this lane."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "ZKvuDkGH1lA",
+      "title": "Staying There",
+      "artist": "L'Indecis",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-25",
+      "rejectedReason": "Station retired -- MOMENTUM was replaced by MIDNIGHT NEON in the 60th pass (2026-08-24), so there is no station left to approve this into and the chillhop/lofi lane has no home on the current roster. Filed as rejected rather than deleted so the oEmbed-verified ID and the original rationale survive, and so it is not re-proposed; tools/station-profiles.json keeps MOMENTUM's profile flagged retired for the same reason. Not a judgment on the track -- revisit if a station ever reopens this lane."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "BNRr9s7B8qc",
+      "title": "Parasol",
+      "artist": "Plusma & Guillaume Muschalle",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-25",
+      "rejectedReason": "Station retired -- MOMENTUM was replaced by MIDNIGHT NEON in the 60th pass (2026-08-24), so there is no station left to approve this into and the chillhop/lofi lane has no home on the current roster. Filed as rejected rather than deleted so the oEmbed-verified ID and the original rationale survive, and so it is not re-proposed; tools/station-profiles.json keeps MOMENTUM's profile flagged retired for the same reason. Not a judgment on the track -- revisit if a station ever reopens this lane."
     }
   ]
 }
