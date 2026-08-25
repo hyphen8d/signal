@@ -193,6 +193,23 @@ export const STATIONS = [
       realTrack('JXkN3nJyWEA', 'Feel the Pain', 'Dinosaur Jr'),
       realTrack('oFD88EyZ80E', 'Backwater', 'Meat Puppets'),
       realTrack('ht672-wYelc', 'Vasoline', 'Stone Temple Pilots'),
+      // 2026-08-25: +8, all new artists (the roster had 23 artists across 32
+      // tracks and was leaning on repeats -- STP x3, four others x2). Picked
+      // to widen the "ripple effects" half of the desc rather than deepen the
+      // Seattle core: the Sub Pop label-mates (Afghan Whigs), the Aberdeen
+      // progenitor the scene grew out of (Melvins), the NYC noise-rock root
+      // that made it possible (Sonic Youth), and the era's radio angst from
+      // outside the northwest. Every ID oEmbed-verified on the artist's own
+      // channel or VEVO -- no fan uploads in this batch, which the Blind
+      // Melon rejection ("not radio version") argues for.
+      realTrack('fxvkI9MTQw4', 'Cannonball', 'The Breeders'),
+      realTrack('SDTSUwIZdMk', 'Kool Thing', 'Sonic Youth'),
+      realTrack('jC9AUR-iTo0', 'Seether', 'Veruca Salt'),
+      realTrack('o9mJ82x_l-E', 'Hey Man, Nice Shot', 'Filter'),
+      realTrack('jBfygUiS50g', 'Unsung', 'Helmet'),
+      realTrack('oJwWmz8Mp3U', 'Debonair', 'The Afghan Whigs'),
+      realTrack('3RMmIJn_4FA', 'Honey Bucket', 'Melvins'),
+      realTrack('XFkzRNyygfk', 'Creep', 'Radiohead'),
     ] },
   // RELIC SIGNAL (classical, 219.8) retired 2026-08-21 (28th pass, per
   // the station-naming pass) -- its classical lane overlapped with

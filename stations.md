@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 264 tracks total.
+Generated from stations.js. 9 stations, 272 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -8,7 +8,7 @@ Generated from stations.js. 9 stations, 264 tracks total.
 
 Ident tones (Hz): 392, 349.2, 311.2, 261.6
 
-Tracks (32):
+Tracks (40):
 
 1. **Smells Like Teen Spirit** -- Nirvana  ([youtu.be/hTWKbfoikeg](https://youtu.be/hTWKbfoikeg))
 2. **Black Hole Sun** -- Soundgarden  ([youtu.be/3mbBbFH9fAg](https://youtu.be/3mbBbFH9fAg))
@@ -42,6 +42,14 @@ Tracks (32):
 30. **Feel the Pain** -- Dinosaur Jr  ([youtu.be/JXkN3nJyWEA](https://youtu.be/JXkN3nJyWEA))
 31. **Backwater** -- Meat Puppets  ([youtu.be/oFD88EyZ80E](https://youtu.be/oFD88EyZ80E))
 32. **Vasoline** -- Stone Temple Pilots  ([youtu.be/ht672-wYelc](https://youtu.be/ht672-wYelc))
+33. **Cannonball** -- The Breeders  ([youtu.be/fxvkI9MTQw4](https://youtu.be/fxvkI9MTQw4))
+34. **Kool Thing** -- Sonic Youth  ([youtu.be/SDTSUwIZdMk](https://youtu.be/SDTSUwIZdMk))
+35. **Seether** -- Veruca Salt  ([youtu.be/jC9AUR-iTo0](https://youtu.be/jC9AUR-iTo0))
+36. **Hey Man, Nice Shot** -- Filter  ([youtu.be/o9mJ82x_l-E](https://youtu.be/o9mJ82x_l-E))
+37. **Unsung** -- Helmet  ([youtu.be/jBfygUiS50g](https://youtu.be/jBfygUiS50g))
+38. **Debonair** -- The Afghan Whigs  ([youtu.be/oJwWmz8Mp3U](https://youtu.be/oJwWmz8Mp3U))
+39. **Honey Bucket** -- Melvins  ([youtu.be/3RMmIJn_4FA](https://youtu.be/3RMmIJn_4FA))
+40. **Creep** -- Radiohead  ([youtu.be/XFkzRNyygfk](https://youtu.be/XFkzRNyygfk))
 
 ## DRIFT MODE -- 321.0
 
