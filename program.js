@@ -3535,25 +3535,25 @@ const STANDBY_LOGO_GAP = 1
 // this same function on every independent per-second tick (it doesn't
 // redraw the rest of the screen), so the two can never drift apart.
 const STANDBY_BLOCK_TAIL_ROWS = 7
-// 63rd-pass live QA fix: naively centering left the logo's bright rows
-// straddling STATION_Y on desktop, and powerDown()'s phosphor burn-in
-// ghost (54th pass) draws the last-locked callsign directly onto that
-// row on its way into STANDBY -- sliced right through the middle of the
-// wordmark, turning it into an illegible double-exposure. That ghost's
-// whole point is to land somewhere the STANDBY layout doesn't reach (its
-// own comment says so), so the fix belongs here, not there: if the
-// naturally-centered logo would straddle STATION_Y, nudge the block up
-// just far enough that the logo's bright rows end a row above it.
-// Mobile never draws that ghost (see powerDown()'s `!this.mobile` guard),
-// so it stays purely centered.
+// 63rd pass -- live QA found naively centering left the logo's bright rows
+// straddling STATION_Y on desktop, which collided with powerDown()'s
+// phosphor burn-in ghost (54th pass): it draws the last-locked callsign
+// at that fixed row on its way into STANDBY, and sliced right through the
+// middle of the wordmark. The 63rd pass fixed it by nudging this whole
+// layout up whenever that collision was possible -- but that nudge ran
+// unconditionally, every time STANDBY is drawn (fresh page load included,
+// not just the power-down transition), which is why STANDBY always sat
+// noticeably above true center instead of just during that one beat.
+// 67th pass -- reversed: this layout is now always true-centered, full
+// stop, and the collision is instead handled where it actually happens --
+// powerDown() itself skips drawing that one ghost on the rare occasion it
+// would land on the logo. A stronger, reliably-centered STANDBY screen
+// matters more than one rare transient ghost frame.
 function standbyLayout(term, mobile) {
-  let top = Math.floor((term.rows - (STANDBY_LOGO_LETTER_H + STANDBY_BLOCK_TAIL_ROWS)) / 2)
-  if (!mobile) {
-    const bottom = top + STANDBY_LOGO_LETTER_H - 1
-    if (top <= STATION_Y && STATION_Y <= bottom) top = STATION_Y - STANDBY_LOGO_LETTER_H
-  }
+  const top = Math.floor((term.rows - (STANDBY_LOGO_LETTER_H + STANDBY_BLOCK_TAIL_ROWS)) / 2)
   return {
     logoTop: top,
+    logoBottom: top + STANDBY_LOGO_LETTER_H - 1,
     versionY: top + STANDBY_LOGO_LETTER_H + 1,
     standbyY: top + STANDBY_LOGO_LETTER_H + 3,
     hintY: top + STANDBY_LOGO_LETTER_H + 4,
@@ -3941,7 +3941,10 @@ export default {
     term.text(centerX(term.cols, VERSION_TAG), L.versionY, VERSION_TAG, DIM)
     const label = 'STANDBY'
     term.text(centerX(term.cols, label), L.standbyY, label, FAINT)
-    const hint = this.mobile ? 'TAP TO POWER ON' : '[P] POWER ON'
+    // 67th pass -- [I] INFO added alongside the power-on hint, desktop
+    // only (see key()'s STANDBY branch) -- the one other control a
+    // powered-off set still answers.
+    const hint = this.mobile ? 'TAP TO POWER ON' : '[P] POWER ON   [I] INFO'
     term.text(centerX(term.cols, hint), L.hintY, hint, FAINT)
     this.drawStandbyClock(s)
   },
@@ -4955,7 +4958,16 @@ export default {
         // not this fixed constant, and doesn't have a STANDBY-vs-content
         // gap to bleed into the same way). Nothing to ghost if the set was
         // never locked to begin with.
-        if (!this.mobile && this.lockedStation) {
+        // 67th pass -- STANDBY is now always true-centered (see
+        // standbyLayout()'s note), so the logo's own rows can land on
+        // STATION_Y depending on term.rows. Rather than nudge the whole
+        // screen off-center to dodge that (the 63rd pass's fix, reversed),
+        // just skip this one ghost on the rare draw where it would land on
+        // top of the wordmark -- a stronger, reliably-centered STANDBY
+        // screen is worth more than one transient afterimage.
+        const L = standbyLayout(term, this.mobile)
+        const ghostClear = STATION_Y < L.logoTop || STATION_Y > L.logoBottom
+        if (!this.mobile && this.lockedStation && ghostClear) {
           const st = this.lockedStation
           const FLAIR = st.glyph || '●'
           const maxWidth = term.cols - 8
@@ -6981,10 +6993,15 @@ export default {
   // the power sequences already use. Any keypress closes it (see key()) --
   // there's no separate "close" key to remember, same idea as the STANDBY
   // screen only listening for P.
-  openGuide(s) {
+  // 67th pass -- fromStandby is true only for the new [I] STANDBY entry
+  // point (see key()); closeGuide() checks it to land back on STANDBY
+  // instead of rebuilding the powered-on chrome underneath, since the set
+  // is still off.
+  openGuide(s, fromStandby) {
     if (this.guideOpen) return
     this.guideOpen = true
     this.guidePage = 1
+    this._guideFromStandby = !!fromStandby
     playPanelSound(true)
     // 38th pass: the status row's sweep and any in-flight text resolve are
     // both timer-driven and would keep painting into rows the guide is
@@ -7178,6 +7195,14 @@ export default {
     const { term } = s
     for (let y = 0; y < term.rows; y++)
       for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
+    // 67th pass -- [I] from STANDBY (see openGuide/key()) means the set is
+    // still off underneath; land back on STANDBY rather than rebuilding
+    // powered-on chrome that was never actually there.
+    if (this._guideFromStandby) {
+      this._guideFromStandby = false
+      this.drawStandbyScreen(s)
+      return
+    }
     // Rebuild -- chrome, frames, meters, then resume whatever the actual
     // mode/status was before the guide opened (guide never touched
     // freq/lockedStation/playState, only covered them visually).
@@ -8934,12 +8959,25 @@ export default {
   // matches "does this key click" precisely, without executing any of
   // key()'s actual side effects to find out.
   isMappedKey(e) {
-    if (!this.poweredOn) return e.key === 'p' || e.key === 'P'
+    // 67th pass -- checked ahead of the poweredOn branch now: [I] on
+    // STANDBY (see key() below) can open the guide while still powered
+    // off, so guideOpen no longer implies poweredOn the way it used to.
     // The guide overlay closes on any key at all (see the "[any other
     // key] CLOSE" hint on every guide page) -- so while it's open, every
-    // key is a real command, not just the ones in MAPPED_KEYS. Visualizer
-    // (43rd pass) is the same deal -- any key wakes it.
-    if (this.guideOpen || this.visualizerActive) return true
+    // key is a real command, not just the ones in MAPPED_KEYS.
+    if (this.guideOpen) return true
+    // 67th pass, live QA fix -- poweredOn flips false the instant powerDown()
+    // is called, but its collapse beats keep painting the screen for another
+    // ~900ms (see powerDown()'s beats array), and powerUp() has its own
+    // multi-second boot animation before poweredOn flips true. [I] pressed
+    // during either window opened the guide overlay on top of a screen that
+    // was still being redrawn out from under it -- the exact same double-
+    // animation trap powerUp() itself already guards against for a fast
+    // double P-press (see its 50th-pass comment). Gated on _powerAnimating
+    // too, same fix, so [I] only ever lands on a settled STANDBY screen.
+    if (!this.poweredOn) return e.key === 'p' || e.key === 'P' || (!this.mobile && !this._powerAnimating && (e.key === 'i' || e.key === 'I'))
+    // Visualizer (43rd pass) -- any key wakes it.
+    if (this.visualizerActive) return true
     return MAPPED_KEYS.has(e.key)
   },
   key(s, e) {
@@ -8981,8 +9019,23 @@ export default {
     // Power toggle (12th pass) -- while off, every key except P is ignored
     // outright so nothing (seek, scan, presets, volume) can act on a set
     // that isn't switched on.
-    if (!this.poweredOn) {
-      if (e.key === 'p' || e.key === 'P') { e.preventDefault(); this.powerUp(s) }
+    // 67th pass -- [I] is a deliberate second exception, desktop only: an
+    // info placard on the front of a dark receiver isn't power-gated on a
+    // real radio either, unlike tuning/presets/volume, which all need the
+    // tube alive to mean anything (the same "would a real analog radio
+    // have this?" test the 29th pass used to drop play/pause). Guarded on
+    // !this.guideOpen so this branch is skipped once the guide is actually
+    // open -- see the guideOpen block further down, which then owns paging
+    // and closing it, same as it always has while powered on.
+    if (!this.poweredOn && !this.guideOpen) {
+      if (e.key === 'p' || e.key === 'P') { e.preventDefault(); this.powerUp(s); return }
+      // 67th pass, live QA fix -- also gated on !_powerAnimating (see
+      // isMappedKey() above): without it, [I] pressed during powerDown()'s
+      // ~900ms collapse beats (poweredOn is already false, but the screen
+      // is still mid-animation) opened the guide on top of a screen still
+      // being redrawn out from under it, producing a garbled overlap of
+      // both. Confirmed live before adding the guard.
+      if (!this.mobile && !this._powerAnimating && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); this.openGuide(s, true) }
       return
     }
     // Visualizer (43rd pass) -- standard visualizer manners: ANY key

@@ -205,6 +205,38 @@ UI since these are same-evening follow-up tweaks, not a new release.
   the block up on desktop when the natural centering would collide,
   landing the ghost row in the shadow buffer below the logo instead
   (mobile never draws that ghost, so it stays purely centered).
+  **Reversed the next evening**: that nudge ran on every STANDBY paint,
+  not just the power-down transition, which is why the whole screen sat
+  noticeably above true center on a fresh page load too. `standbyLayout()`
+  is now always true-centered on desktop; the collision is instead handled
+  where it actually happens -- `powerDown()` just skips drawing that one
+  ghost line on the rare frame where it would land on the wordmark. On the
+  live 80x25 grid that collision is permanent given today's fixed layout
+  constants, so in practice the ghost no longer draws on desktop at all --
+  a stronger, reliably-centered STANDBY screen was judged worth more than
+  that one small mechanical touch. Also added **`[I] INFO`** next to the
+  power-on hint (desktop only) -- a deliberate second exception to "a
+  powered-off set ignores every key but P" (same "would a real analog
+  radio have this?" test the 29th pass used for play/pause: an info
+  placard on a dark receiver isn't power-gated either). Opens the Guide
+  straight to the About page; closing it lands back on STANDBY rather than
+  rebuilding chrome that was never actually there.
+
+  **Live QA caught a race the same evening**: `poweredOn` flips false the
+  instant `powerDown()` is called, but its collapse animation keeps painting
+  the screen for another ~900ms on its own timers (see `powerDown()`'s beats
+  array). Pressing `[I]` in that window opened the guide on top of a screen
+  that was still mid-collapse underneath it -- both kept drawing into the
+  same buffer, producing a garbled overlap. This is the exact same trap
+  `powerUp()` already guards against for an impatient double-`P` press (its
+  50th-pass fix), so `[I]` now uses the same guard: gated on `_powerAnimating`
+  in both `isMappedKey()` and `key()`, not just `poweredOn`. Verified against
+  `program.poweredOn`/`._powerAnimating`/`.guideOpen` directly (not just
+  screenshots) that `[I]` is now a no-op mid-collapse and opens cleanly once
+  STANDBY actually lands. Separately confirmed the CRT ghosting seen while
+  investigating this is unrelated and pre-existing -- the same phosphor-decay
+  smear reproduces identically on the old `[G]` guide-open path from the
+  normal powered-on screen, so no change was needed there.
 
 ### Bug fixes
 
