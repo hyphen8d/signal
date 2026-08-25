@@ -696,9 +696,9 @@ const STATIONS = [
     // effect over several passes. 65th pass -- ISOTOPE MAP (the pulsing-
     // blobs lissajous effect, originally shelved unassigned back in the
     // 52nd pass) is promoted to ATOMIC's default here, with a reactivity
-    // pass to match. CLOUDS and GEIGER are gone for good (see the 65th-pass
-    // note above VISUAL_METHODS); BLAST FIELD survives, just unassigned,
-    // per the project's normal "never delete a superseded effect" rule.
+    // pass to match. CLOUDS, GEIGER, and BLAST FIELD (67th pass, the last
+    // of the three -- see the removal note above drawVisualizerFrame) are
+    // all gone for good now.
     visual: 'isotope',
     // v0.8: "Wheel of Fortune" (Kay Starr) swapped out for "Sixty Minute
     // Man" below -- genuinely Fallout-radio-tied (Diamond City Radio),
@@ -3430,9 +3430,7 @@ const VISUAL_METHODS = {
   boombap: 'drawBoomBapEffect',
   dread: 'drawDreadEffect',
   frost: 'drawFrostEffect',
-  pulse: 'drawPulseEffect',
   isotope: 'drawIsotopeEffect',
-  blastfield: 'drawBlastFieldEffect',
 }
 // 65th pass -- live QA on the new [Shift+C]/[V] cycling below resurfaced
 // five long-unassigned effects (STACK, SKYLINE, NEON SIGN, GEIGER,
@@ -3444,8 +3442,10 @@ const VISUAL_METHODS = {
 // outright rather than left unassigned. ISOTOPE MAP is the one exception:
 // resurfaced alongside them, but liked ("looks cool, just needs more
 // reactivity"), so it's kept, given a reactivity pass, and promoted to
-// ATOMIC's new default in place of BLAST FIELD (which stays, unassigned,
-// under the normal convention -- it just isn't the one that stuck).
+// ATOMIC's new default in place of BLAST FIELD.
+// 67th pass -- BLAST FIELD and PULSE removed outright too, same
+// reasoning as the 65th pass: both had sat unassigned for passes with no
+// station shipping them, so there was nothing left keeping them around.
 // 65th pass -- lets [Shift+C] (and [V], inside the visualizer) cycle any
 // station's visualizer through every built effect, not just the one it
 // ships with -- "any effect, anywhere" rather than a curated per-station
@@ -3457,8 +3457,8 @@ const VISUAL_KEYS = Object.keys(VISUAL_METHODS)
 const VISUAL_LABELS = {
   drift: 'DRIFT', flame: 'FLAME', breach: 'BREACH', outrun: 'OUTRUN',
   ripple: 'RIPPLE', flowfield: 'FLOW FIELD', bubbletubes: 'BUBBLE TUBES',
-  boombap: 'BOOM BAP', dread: 'DREAD', frost: 'FROST', pulse: 'PULSE',
-  isotope: 'ISOTOPE MAP', blastfield: 'BLAST FIELD',
+  boombap: 'BOOM BAP', dread: 'DREAD', frost: 'FROST',
+  isotope: 'ISOTOPE MAP',
 }
 const BREACH_HEX = '0123456789ABCDEF'
 // A resolved fragment briefly holds legible mid-column before dissolving
@@ -3497,22 +3497,6 @@ const ISOTOPE_RING_MAX = 3
 const ISOTOPE_RING_LIFE = 1.6
 const ISOTOPE_RING_HALF_LIFE = 0.4
 const ISOTOPE_RING_SPEED = 7.5
-
-// 59th pass -- BLAST FIELD tuning (ATOMIC, replaces GEIGER). A bass onset
-// spawns a detonation at a random point on the field: a bright core flash
-// for its first instant, a fast shockwave ring expanding outward, and a
-// wider, dimmer "fallout" band trailing just inside the ring so debris
-// reads as settling rather than the blast just vanishing. BLAST_MAX caps
-// concurrent blasts so a busy passage doesn't wash the field to solid
-// white; BLAST_SPEED is deliberately far faster than ISOTOPE_RING_SPEED
-// above (22 vs 7.5) -- a detonation should read as sudden, not a slow
-// isotope ripple.
-const BLAST_MAX = 6
-const BLAST_LIFE = 1.3
-const BLAST_HALFLIFE = 0.35
-const BLAST_SPEED = 22
-const BLAST_RING_BAND = 1.6
-const BLAST_DUST_BAND = 6.0
 
 // 65th pass -- SKYLINE (MOMENTUM's growing-towers effect, built via
 // makeSkylineTowers()) and NEON SIGN (MIDNIGHT NEON's word-sign effect,
@@ -3613,40 +3597,9 @@ const BOOMBAP_STEPS = 16
 const BOOMBAP_PATTERN = [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0]
 const BOOMBAP_BPM = 92
 
-// PULSE (45th pass, COLD WAVE) -- "synthetic hearts, borrowed neon" made
-// literal: a fixed lattice of neon nodes, not a smooth organic field like
-// DRIFT or RIPPLE. Square (Chebyshev) rings expand outward from center,
-// continuously, and their overall brightness is gated by a synthetic
-// two-beat "lub-dub" heart rhythm rather than a steady glow -- cold and
-// mechanical instead of ambient, which is what keeps it distinct from
-// RIPPLE's organic circular rain.
-// 47th pass: cycle shortened 1.9 -> 1.4 and each beat widened 0.16 -> 0.22
-// (live QA: "larger pulses ... happen a little quicker").
-const PULSE_CYCLE = 1.4
-function pulseBeatEnvelope(tc) {
-  const lub = Math.max(0, 1 - Math.abs(tc - 0.0) / 0.22)
-  const dub = Math.max(0, 1 - Math.abs(tc - 0.24) / 0.22)
-  return Math.max(lub, dub * 0.75)
-}
-// 46th pass -- live QA on PULSE: "closer... but need less unused space,"
-// and separately "5 could look better too." The lattice-plus-small-core
-// from the 45th pass was still reading thin. This adds a full-width
-// scrolling EKG-style trace across the middle band -- an actual
-// recognizable heart-monitor waveform (P bump, sharp QRS spike, T bump,
-// flat rest) instead of an abstract pulsing block -- the single most
-// literal way to draw "synthetic hearts" this roster has. u is phase
-// (0..1) through one PULSE_BEAT_COLS-wide beat.
-const PULSE_BEAT_COLS = 22
-function pulseEkgOffset(u) {
-  if (u < 0.08) return 0.05 * Math.sin((u / 0.08) * Math.PI)
-  if (u < 0.12) return 0
-  if (u < 0.14) return -0.15 * ((u - 0.12) / 0.02)
-  if (u < 0.16) return -0.15 + 1.15 * ((u - 0.14) / 0.02)
-  if (u < 0.18) return 1.0 - 1.3 * ((u - 0.16) / 0.02)
-  if (u < 0.2) return -0.3 + 0.3 * ((u - 0.18) / 0.02)
-  if (u < 0.35) return 0.15 * Math.sin(((u - 0.2) / 0.15) * Math.PI)
-  return 0
-}
+// 67th pass -- PULSE (COLD WAVE's old neon-lattice-and-EKG effect, and its
+// PULSE_CYCLE/pulseBeatEnvelope/PULSE_BEAT_COLS/pulseEkgOffset tuning)
+// permanently removed. See the removal note above drawVisualizerFrame.
 
 // DREAD (45th pass, the secret station) -- a coarse panel grid flickering
 // erratically with occasional full-row tears, more hostile than anything
@@ -4225,9 +4178,6 @@ export default {
     // a driver, spawned on a strong treble onset, layered on top of the
     // existing boombox look.
     this._scratchFlashes = []
-    // 59th pass -- BLAST FIELD's live detonations (ATOMIC). See BLAST_*
-    // tuning constants and drawBlastFieldEffect.
-    this._blasts = []
     // DREAD's panel grid (45th pass, the secret station).
     this._dreadGrid = Array.from({ length: DREAD_CELLS_X * DREAD_CELLS_Y }, () => Math.random() < 0.5)
     this._dreadTear = { active: false, row: 0, until: 0 }
@@ -7603,12 +7553,6 @@ export default {
     // that `t - startT > 1.3` can't expire until t climbs back past them.
     this._fireLastStep = 0
     this._boomWaves = []
-    // 59th pass -- BLAST FIELD (ATOMIC) carries the same clock-restart
-    // exposure FLAME's re-arm above describes: absolute spawnT/flashUntil
-    // timestamps compared against a clock that restarts at 0 on every
-    // entry, so blasts just clear on re-entry rather than carrying stale
-    // timestamps across visits.
-    this._blasts = []
     // 57th pass, 2nd rewrite -- COLD WAVE's neon grid starts fully dark on
     // every visualizer entry.
     this._coldGridCells.fill(0)
@@ -7788,16 +7732,15 @@ export default {
     // compact.
     // 66th pass -- [V] added for the new cycle-effect binding (see the key
     // switch's 'v'/'V' case), right after [C]OLOR since both are cosmetic
-    // cycling controls, with [E]XIT staying last. Left bare rather than
-    // spelled out ("[V]ISUAL" etc. all ran long against the CIPHER-length
-    // names already on the roster) -- exactly matches the pre-existing
-    // Shift+C binding it doubles, so a bare bracket is enough to place it.
-    // Computed against DISTORTION FIELD (the longest callsign): adding
-    // '[V]' to legendFull and tightening its separator from two spaces to
-    // one lands at the exact same 42-column width the five-entry legend
-    // already used, so this costs zero extra fit risk against the 80-col
-    // budget -- no fallback-to-compact threshold moved.
-    const legendFull = [['[N]', 'EXT'], ['[L]', 'YRICS'], ['[M]', 'UTE'], ['[C]', 'OLOR'], ['[V]', ''], ['[E]', 'XIT']]
+    // cycling controls, with [E]XIT staying last. Separator tightened from
+    // two spaces to one to make room. 67th pass -- spelled out as [V]IZ,
+    // matching every other full-legend entry's bracket-fold convention
+    // (was left bare in the 66th pass, but that read as inconsistent next
+    // to [N]EXT/[L]YRICS/etc). Computed against DISTORTION FIELD (the
+    // longest callsign): [V]IZ plus the one-space separator lands at 44
+    // columns against a 45-column budget -- one column of headroom, no
+    // fallback-to-compact threshold moved.
+    const legendFull = [['[N]', 'EXT'], ['[L]', 'YRICS'], ['[M]', 'UTE'], ['[C]', 'OLOR'], ['[V]', 'IZ'], ['[E]', 'XIT']]
     const legendCompact = [['[N]', ''], ['[L]', ''], ['[M]', ''], ['[C]', ''], ['[V]', ''], ['[E]', '']]
     // Width of a rendered legend, including one trailing space of margin.
     const legendW = (items, sep) =>
@@ -7964,79 +7907,9 @@ export default {
   // 65th pass -- GEIGER (ATOMIC's analogue rate-meter effect, needle +
   // scale + click state) permanently removed. See the 65th-pass note above
   // VISUAL_METHODS for why.
-  // BLAST FIELD (59th pass, ATOMIC) -- was GEIGER's replacement, which along with
-  // MOMENTUM's flow field wasn't obviously reacting to the music; rebuilt
-  // from the ground up to be impressive and shifting.
-  // GEIGER above was a real, working instrument -- but a small one pinned
-  // to screen center, the opposite scale of FLAME/RIPPLE, which are the
-  // two effects that were called out as working. This fills the whole field
-  // instead: a real bass onset detonates at a random point -- a bright
-  // core flash for its first instant, a fast shockwave ring (BLAST_SPEED
-  // is 3x ISOTOPE_RING_SPEED -- a detonation should read as sudden, not a
-  // slow isotope ripple), then a wider, dimmer "fallout" band trailing
-  // just inside the ring so debris reads as settling rather than the
-  // blast just vanishing. A sparse, audio-independent background-radiation
-  // twinkle keeps the field from reading as literally dead at rest, but
-  // its threshold also loosens gently with overall level, and with no tap
-  // at all it drops back to its quietest, sparsest setting -- no blasts,
-  // ever, same "no activity without audio" contract as FLAME.
-  drawBlastFieldEffect(s, t) {
-    const { term } = s
-    const cols = term.cols
-    const A = this._au
-
-    if (A && A.onset && A.bass > 0.3) {
-      const bx = Math.random() * cols
-      const by = 1 + Math.random() * (VIZ_BOT - 2)
-      this._blasts.push({ x: bx, y: by, spawnT: t, strength: 0.6 + Math.min(1, A.bass) * 0.4 })
-      if (this._blasts.length > BLAST_MAX) this._blasts.shift()
-    }
-    this._blasts = this._blasts.filter((b) => t - b.spawnT < BLAST_LIFE)
-
-    // Background radiation: rare single-cell twinkles, independent of
-    // audio in kind but not in rate -- the threshold loosens slightly with
-    // overall level so a loud passage feels a touch more alive even
-    // between hits, same blend FLAME uses (continuous fuel + discrete
-    // flare) rather than picking one or the other.
-    const bgThresh = A ? 0.94 - 0.08 * Math.min(1, A.level) : 0.94
-
-    for (let y = 1; y < VIZ_BOT; y++) {
-      for (let x = 0; x < cols; x++) {
-        const bgPhase = hash2(x, y) * Math.PI * 2
-        const bgFreq = 0.5 + hash2(y, x) * 1.5
-        const bg = 0.5 + 0.5 * Math.sin(t * bgFreq + bgPhase)
-        let v = bg > bgThresh ? 0.14 : 0
-
-        for (const b of this._blasts) {
-          const age = t - b.spawnT
-          const radius = age * BLAST_SPEED
-          const dx = x - b.x, dy = (y - b.y) * 2.1
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          const decay = Math.pow(0.5, age / BLAST_HALFLIFE)
-          // Core flash -- everything inside a small radius during the
-          // blast's first instant reads as a detonation, not a thin ring.
-          if (age < 0.06) {
-            const core = Math.max(0, 1 - dist / 3)
-            v = Math.max(v, core * b.strength)
-          }
-          // Shockwave ring.
-          const ringDist = Math.abs(dist - radius)
-          if (ringDist < BLAST_RING_BAND) {
-            v = Math.max(v, (1 - ringDist / BLAST_RING_BAND) * decay * b.strength)
-          }
-          // Fallout dust -- a wide, dim band trailing just inside the ring.
-          if (dist < radius && radius - dist < BLAST_DUST_BAND) {
-            const dust = (1 - (radius - dist) / BLAST_DUST_BAND) * decay * 0.35 * b.strength
-            v = Math.max(v, dust)
-          }
-        }
-
-        if (v < 0.08) { term.put(x, y, ' '); continue }
-        const ch = v > 0.85 ? '@' : v > 0.6 ? '▓' : v > 0.4 ? '▒' : v > 0.2 ? '+' : '·'
-        term.put(x, y, ch, visualizerLevelAttr(v))
-      }
-    }
-  },
+  // 67th pass -- BLAST FIELD (ATOMIC's detonation-field effect, GEIGER's
+  // own former replacement) permanently removed in turn, alongside PULSE
+  // below. See the 67th-pass note above drawVisualizerFrame for why.
   // 65th pass -- NEON SIGN (MIDNIGHT NEON's word-sign effect, built on
   // NEON_FONT/buildNeonSegments) permanently removed. See the 65th-pass
   // note above VISUAL_METHODS for why.
@@ -8955,67 +8828,12 @@ export default {
       for (let x = 0; x < term.cols; x++) term.put(x, tear.row, Math.random() < 0.5 ? '█' : ' ', BRIGHT)
     }
   },
-  // PULSE effect (45th pass) -- for COLD WAVE. See the PULSE_CYCLE/
-  // pulseBeatEnvelope field notes above VISUAL_METHODS for why this is a
-  // quantized lattice with a synthetic heartbeat rather than an organic
-  // field.
-  drawPulseEffect(s, t) {
-    const { term } = s
-    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
-    const cx = term.cols / 2, cy = 11.5
-    const tc = t % PULSE_CYCLE
-    const beatV = pulseBeatEnvelope(tc)
-    // 45th pass: live QA said "don't understand or see much" -- the
-    // lattice was too sparse (5x3 cell gaps) and too faint (idle floor
-    // topped out at FAINT) to register at a glance. Denser grid (3x2
-    // gaps), a brighter idle floor, and a clear central pulse core fix
-    // that -- the core alone should read the beat even if the lattice
-    // itself goes unnoticed.
-    for (let gy = 2; gy < VIZ_BOT; gy += 2) {
-      for (let gx = 2; gx < term.cols; gx += 3) {
-        const dx = Math.abs(gx - cx), dy = Math.abs(gy - cy) * 1.7
-        const dist = Math.max(dx, dy)
-        // 48th pass: ring band widened 2.4 -> 3.2 (live QA: "larger
-        // pulses") and travel speed bumped 7 -> 10 to match the shorter
-        // PULSE_CYCLE above.
-        const ringPos = ((dist - t * 10) % 9 + 9) % 9
-        const ringDist = Math.min(ringPos, 9 - ringPos)
-        const ringV = ringDist > 3.2 ? 0 : (1 - ringDist / 3.2) * beatV
-        const idleFlicker = 0.12 + 0.06 * Math.sin(gx * 0.7 + gy * 0.5 + t * 0.4)
-        const v = Math.max(ringV, idleFlicker)
-        if (v < 0.06) continue
-        const ch = v > 0.75 ? '#' : v > 0.5 ? '+' : v > 0.25 ? '.' : '·'
-        term.put(gx, gy, ch, visualizerLevelAttr(Math.min(1, v)))
-      }
-    }
-    // Scrolling EKG trace across the middle band -- see the field notes
-    // above PULSE_BEAT_COLS/pulseEkgOffset. Replaces the small static
-    // pulse-core block from the 45th pass; this reads as an actual
-    // heartbeat line instead of a blinking square, and fills what was a
-    // dead band down the middle of the screen.
-    // 47th pass: bigger swing (amp 4 -> 6) and a two-row-thick trace --
-    // live QA, applied broadly this round ("we need larger objects/
-    // characters" plus "5 could look better") -- reads as a bold heartbeat
-    // line instead of a thin scribble. 48th pass: amp 6 -> 8 and scroll
-    // speed 9 -> 13 ("larger pulses ... happen a little quicker").
-    const baseRow = Math.round(cy)
-    const amp = 8
-    let prevY = null
-    for (let x = 0; x < term.cols; x++) {
-      const u = (((x - t * 13) / PULSE_BEAT_COLS) % 1 + 1) % 1
-      const off = pulseEkgOffset(u)
-      const y = Math.max(2, Math.min(VIZ_BOT - 2, Math.round(baseRow - off * amp)))
-      const spike = Math.abs(off) > 0.5
-      term.put(x, y, spike ? '*' : '●', spike ? BRIGHT : NORMAL)
-      const shadowY = y + 1
-      if (shadowY < VIZ_BOT - 1) term.put(x, shadowY, '·', DIM)
-      if (prevY !== null && Math.abs(y - prevY) > 1) {
-        const step = y > prevY ? 1 : -1
-        for (let yy = prevY + step; yy !== y; yy += step) term.put(x, yy, '|', spike ? NORMAL : DIM)
-      }
-      prevY = y
-    }
-  },
+  // 67th pass -- PULSE (COLD WAVE's old neon-lattice-and-EKG effect)
+  // permanently removed, alongside BLAST FIELD above. Both had sat
+  // unassigned for passes with no station shipping them and no plan to
+  // bring them back; the 65th pass already broke the "never delete a
+  // superseded effect" convention for five other long-unassigned effects
+  // on the same reasoning, and these two get the same treatment now.
   // 44th pass -- dispatches on the locked station's own `visual` field
   // (VISUAL_METHODS) rather than always drawing DRIFT, so a themed station
   // (today just DRIFT MODE) gets its own effect the moment one exists for
