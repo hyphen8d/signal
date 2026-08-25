@@ -272,6 +272,51 @@ UI since these are same-evening follow-up tweaks, not a new release.
   deliberately left untouched -- only the animation timing and visuals
   wrapped around it changed.
 
+  **Same evening, round 2 (69th pass) -- live QA (Matthew's screenshots)
+  found three things.** First, the cold-open flourish in `init()` was
+  silent; added `playPowerOnSound()` alongside it so the very first "tube
+  coming to life" moment on page load has the same sound as every later
+  power-on (with the one honest caveat that a truly fresh, unclicked load
+  may still render it silently the first time -- browser autoplay policy
+  generally keeps a fresh `AudioContext` suspended until a user gesture,
+  and there isn't one yet at that exact instant; every real power-on
+  afterward is a real gesture and unaffected).
+
+  Second, the POST readout from the 68th pass's first cut (compressed to
+  under 2s) read as too fast to actually watch once verified live -- slowed
+  back to a calmer ~3.2s middle ground, still well under the original
+  ~5.5s cold boot.
+
+  Third, and the real fix: **the STANDBY wordmark could still come up
+  visibly broken/doubled after powering off**, exactly as the screenshots
+  showed. Chased two wrong hypotheses first -- a decay-ramp-down and then
+  `crt.js`'s `clearPersist()` (the right tool for an analogous tint-switch
+  bleed bug, 2026-08-22) -- both shipped, both retested live, neither
+  changed anything, which was the tell that this wasn't a phosphor-
+  persistence artifact at all. Root cause was two genuine stray writes
+  landing on top of the finished STANDBY picture, both the same bug class
+  the 20th/29th passes had already caught and fixed for `guideOpen` on
+  this exact code, just never extended to `poweredOn`:
+  `drawPlayback()` -- `player.pauseVideo()` (called from `powerDown()`)
+  triggers the YT iframe's PAUSED state change *asynchronously*; its
+  `onStateChange` handler routes through `setPlayState()` into
+  `drawPlayback()`, which only guarded `guideOpen`, so a callback landing
+  after STANDBY was already drawn painted a stale "|| PAUSED" + progress
+  bar straight into a row that falls inside STANDBY's centered layout on
+  some grid sizes. And `playBootFlicker()` -- its own ~500ms tail of
+  `setTimeout`-scheduled chrome-box-border redraws (run from `powerUp()`'s
+  reveal beat) already had a 20th-pass `guideOpen` guard with a comment
+  describing this exact "doesn't know what happened after it was
+  scheduled" trap, but likewise never extended to `poweredOn` -- so
+  powering off during that tail let its stray redraws land on STANDBY too.
+  Neither ever showed up as a CRT persistence artifact; they were real
+  second writes into the term buffer, which is exactly why the buffer-level
+  fixes (`!this.poweredOn` added to both) hold under repeated live
+  power-on/off testing -- both the settled case and the tight-timing case
+  (power-off fired deliberately inside `playBootFlicker`'s tail) -- verified
+  clean via direct `term.chars[]` dumps and, more importantly, via real
+  click/keypress-driven screenshots, not just state inspection.
+
 ### Bug fixes
 
 - Pressing the preset for a station you're already locked to and

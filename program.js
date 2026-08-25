@@ -4341,9 +4341,17 @@ export default {
     // power-off returns to, every later power-on) treats the tube as
     // already warm. Content's already drawn above at full brightness;
     // ramps brightness/bg up from a dim floor so the picture visibly gains
-    // brightness right after it appears, then settles. Silent, deliberately
-    // -- there's been no user gesture yet for a page-load sound to survive
-    // autoplay policy anyway.
+    // brightness right after it appears, then settles.
+    // 69th pass -- Matthew wants the turning-on sound here too, not just
+    // the visual. Called anyway despite the real caveat: a fresh page load
+    // has had no user gesture yet, and browser autoplay policy generally
+    // keeps a freshly-created AudioContext suspended until one happens
+    // (audioCtx()'s own resume() is a no-op with nothing to resume) -- so
+    // on a true cold, unclicked load this may render silently the first
+    // time, same as any other sound attempted before the first click/key.
+    // Every later power-on (a real gesture, powerUp()'s own sound) is
+    // unaffected either way.
+    playPowerOnSound()
     this._powerAnimating = true // false again in COLD_OPEN_MS, below
     const COLD_OPEN_MS = 500
     rampCrtParams(
@@ -4830,7 +4838,15 @@ export default {
       // powering on and controls first respond), these box-border redraws
       // punch straight through the guide's full-screen text, since they
       // never checked guideOpen. Bail out here instead.
-      if (this.guideOpen) return
+      // 69th pass -- same bug, second instance, caught live: powering back
+      // off during this same ~500ms tail used to leave these same box-
+      // border redraws punching straight through STANDBY instead -- read as
+      // a broken, doubled-looking wordmark once powerDown() stopped taking
+      // ~900ms of its own collapse beats to get there (this tail used to
+      // land mid-collapse, visually lost in the noise; a clean, static
+      // STANDBY has nowhere for it to hide anymore). Added !poweredOn
+      // alongside the existing guideOpen guard.
+      if (!this.poweredOn || this.guideOpen) return
       for (const [y, label, labelX1] of tops) drawBoxTop(term, y, BOX_X0, BOX_X1, label, attr, labelX1)
       for (const y of bottoms) drawBoxBottom(term, y, BOX_X0, BOX_X1, attr)
       // 18th pass: drawBoxTop/Bottom redraw the LEVELS row as a plain
@@ -4863,7 +4879,8 @@ export default {
     // for it (see the "hero box" note there). Restore it once the beats
     // land, same as it's already drawn everywhere else.
     setTimeout(() => {
-      if (this.guideOpen) return
+      // 69th pass -- same !poweredOn guard as redraw() above, same reason.
+      if (!this.poweredOn || this.guideOpen) return
       drawBoxTop(term, NOWPLAYING_TOP_Y, BOX_X0, BOX_X1, 'NOW PLAYING', BOLD)
       drawBoxSide(term, TRACK_Y, BOX_X0, BOX_X1, BOLD)
       drawBoxSide(term, PLAYBACK_Y, BOX_X0, BOX_X1, BOLD)
@@ -4893,7 +4910,7 @@ export default {
   powerDown(s) {
     if (!this.poweredOn) return
     this.poweredOn = false
-    this._powerAnimating = true // cleared once the STANDBY beat lands below, ~120ms
+    this._powerAnimating = true // cleared once the STANDBY beat lands below, ~130ms
     // 43rd pass: cleared silently, not via exitVisualizer() -- the beat
     // below already clears and redraws the whole grid itself, so there's no
     // normal-view chrome to restore first. Left set, frame() would keep
@@ -4925,13 +4942,27 @@ export default {
       for (let y = 0; y < term.rows; y++)
         for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
     }
+    // 69th pass -- live QA (Matthew's screenshots) found the direct swap
+    // from a fully-lit, saturated ON screen straight to STANDBY read as a
+    // broken, doubled-looking wordmark: the CRT's phosphor persistence
+    // buffer (crt.js's ping-pong `max(total, prev*decay)`) was still
+    // holding the ON screen's accumulated brightness when STANDBY's very
+    // different picture landed on top of it. Tried a decay-ramp-down first
+    // -- worked in principle, but depends on enough real animation frames
+    // actually rendering in the gap to converge, which isn't guaranteed.
+    // `crt.js` already has the actual right tool for exactly this: a
+    // second bug (2026-08-22, secret-station tint switches bleeding the old
+    // phosphor tint's afterglow into the new one) got fixed the same way --
+    // `setPhosphor()` calls `s.crt.clearPersist()`, a hard zero of the
+    // persistence buffer, no frames-elapsing required. Same fix here.
+    clearAll()
 
     const beats = [
-      { delay: 120, fn: () => {
-        clearAll()
+      { delay: 130, fn: () => {
         // 63rd pass -- see drawStandbyScreen(): same logo/version/STANDBY/
         // hint/clock layout the first-ever paint in init() draws.
         this.drawStandbyScreen(s)
+        s.crt?.clearPersist?.()
         this._powerAnimating = false // sequence landed, ticker can resume
         // 54th pass -- small mechanical touches, including a phosphor
         // burn-in ghost -- a real tube briefly holds a faint afterimage of
@@ -5109,13 +5140,15 @@ export default {
     // instant before P is pressed, so a long cold-boot readout no longer
     // fits the moment. This is "tuning in," not "switching on a dead set":
     // still the same POST-flavored readout (kept -- it's a nice touch,
-    // Matthew's call), just compressed to something you'd actually want to
-    // watch every time rather than wait through. The one genuinely cold
-    // "tube coming to life" flourish now lives in init(), once, on first
-    // page load only -- see there.
-    const LINE_STAGGER_MS = 90
-    const BOOT_TEXT_DELAY = 300
-    const REVEAL_DELAY = BOOT_TEXT_DELAY + bootLines.length * LINE_STAGGER_MS + 300
+    // Matthew's call). 69th pass -- the first cut of this (under 2s) read
+    // as too fast to actually watch; slowed back down to a middle ground,
+    // ~3.2s -- noticeably calmer than the rushed first pass, still well
+    // under the original ~5.5s cold boot. The one genuinely cold "tube
+    // coming to life" flourish now lives in init(), once, on first page
+    // load only -- see there.
+    const LINE_STAGGER_MS = 150
+    const BOOT_TEXT_DELAY = 600
+    const REVEAL_DELAY = BOOT_TEXT_DELAY + bootLines.length * LINE_STAGGER_MS + 500
     const beats = [
       { delay: 0, fn: () => {
         // 68th pass -- no more dot/centerline reboot theatrics (that
@@ -5556,7 +5589,22 @@ export default {
   // routes to mobileDrawPlayback for a condensed version inside the NOW
   // PLAYING box's own extra row instead of desktop's fixed PLAYBACK_Y.
   drawPlayback(s) {
-    if (this.guideOpen) return
+    // 69th pass -- found live: player.pauseVideo() (called from
+    // powerDown()) triggers the YT iframe's PAUSED state change
+    // ASYNCHRONOUSLY, same "outside frame()'s own guards" class of bug the
+    // 29th pass fixed for guideOpen -- onStateChange -> setPlayState ->
+    // here can land well after STANDBY has already drawn, painting stale
+    // "|| PAUSED" + a progress bar straight into PLAYBACK_Y regardless.
+    // Harmless-looking on the old multi-beat collapse (that row was usually
+    // mid-glitch/collapsed by the time this landed); with powerDown() now
+    // snapping straight to a static STANDBY and staying there, that stray
+    // write landed squarely on the finished picture and stuck -- read as a
+    // broken, doubled-looking wordmark, since PLAYBACK_Y falls inside
+    // STANDBY's centered layout on some grid sizes. The actual bug, not a
+    // CRT persistence artifact -- a decay/clearPersist() workaround in
+    // powerDown() couldn't have fixed this either way, since nothing here
+    // was reading persistence; it was a genuine second write to the buffer.
+    if (!this.poweredOn || this.guideOpen) return
     if (this.mobile) { this.mobileDrawPlayback(s); return }
     const { term } = s
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, PLAYBACK_Y, ' ')
