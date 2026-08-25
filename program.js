@@ -691,24 +691,15 @@ const STATIONS = [
     crt: { noise: 0.17, flicker: 0.1, decay: 0.7, brightness: 1.2, maskAmt: 0.55 },
     meter: { spring: 0.5, damping: 0.45, swing: 0.85 },
     // 45th pass -- originally sparse Geiger clicks/hot-zone bursts (the
-    // tagline's own "counter clicks" made literal). Redesigned in the 47th
-    // pass into drifting blocky pixel clouds per live QA; dispatch key
-    // ('counter'/drawCounterEffect) kept as-is, only the visual changed.
-    // Replaced by GEIGER (50th pass), which is in turn replaced here
-    // (52nd pass -- atomic needed an isotope map, picked from the
-    // 4-concept atomic-concepts.html prototype). See VISUAL_METHODS' note
-    // near ISOTOPE for why. 57th pass, 2nd rewrite: "Geiger
-    // Click" picked instead off the visualizer-lab mock -- swapped to GEIGER
-    // (drawGeigerEffect, rebuilt audio-reactive this pass). ISOTOPE stays
-    // defined but unassigned, same as GEIGER sat unassigned before this.
-    // 59th pass -- GEIGER replaced in turn by BLAST FIELD: not
-    // reacting obviously enough to the music, needed something more
-    // impressive and shifting, rebuilt from the ground up. GEIGER was a real
-    // instrument (needle + arc + click) but a small one pinned to screen
-    // center; BLAST FIELD fills the whole visualizer field with detonation
-    // events keyed to real bass onsets. See VISUAL_METHODS' note near
-    // blastfield for why, and the BLAST_* constants for tuning.
-    visual: 'blastfield',
+    // tagline's own "counter clicks" made literal). Went through CLOUDS
+    // (47th), GEIGER (50th), and BLAST FIELD (59th) as ATOMIC's assigned
+    // effect over several passes. 65th pass -- ISOTOPE MAP (the pulsing-
+    // blobs lissajous effect, originally shelved unassigned back in the
+    // 52nd pass) is promoted to ATOMIC's default here, with a reactivity
+    // pass to match. CLOUDS and GEIGER are gone for good (see the 65th-pass
+    // note above VISUAL_METHODS); BLAST FIELD survives, just unassigned,
+    // per the project's normal "never delete a superseded effect" rule.
+    visual: 'isotope',
     // v0.8: "Wheel of Fortune" (Kay Starr) swapped out for "Sixty Minute
     // Man" below -- genuinely Fallout-radio-tied (Diamond City Radio),
     // same concept-tied discipline as the rest of this roster.
@@ -3434,103 +3425,40 @@ const VISUAL_METHODS = {
   breach: 'drawBreachEffect',
   outrun: 'drawOutrunEffect',
   ripple: 'drawRippleEffect',
-  stack: 'drawStackEffect',
-  skyline: 'drawSkylineEffect',   // unassigned (was MOMENTUM) -- see 60th pass note near neonsign
-  // 59th pass -- REBUILT. The 51st pass's towers were deliberately dropped
-  // for Flow Field in the 57th (a fresh, off-theme direction -- see
-  // drawFlowFieldEffect's header below), but init()'s tower-array
-  // construction and this comment block were never cleaned up after that
-  // swap, so _momentumTowers sat built every visualizer entry and never
-  // read -- harmless orphaned state, same class of loose end as g.strip on
-  // GEIGER, just cleaned up along the way here.
-  // 59th pass: MOMENTUM (and ATOMIC) rebuilt again from the ground up for a
-  // more obviously reactive, impressive, shifting look. This brought the
-  // towers back on purpose, wired differently this time: real
-  // bass onsets visibly add a floor to a tower, rather than either the old
-  // towers' timer-driven climb or Flow Field's continuous drift.
-  // 60th pass -- MOMENTUM itself retired in favor of MIDNIGHT NEON (see the
-  // retirement comment above that station), so SKYLINE is unassigned again
-  // after one pass of use -- kept below exactly as built, same treatment
-  // every other superseded effect gets, in case a future station wants a
-  // "climbing towers" picture. Flow Field's code is kept below too, as
-  // drawFlowFieldEffect, unassigned since the 59th pass already.
-  flowfield: 'drawFlowFieldEffect',   // unassigned (was MOMENTUM, until the 59th pass)
-  // 60th pass -- NEON SIGN, built for MIDNIGHT NEON. A single centered word
-  // read as a static logo card rather than a scene, especially next to
-  // something full-field like FLAME, so it didn't hold up on review.
-  // Unassigned in turn, one pass after landing -- see the 61st pass note
-  // near bubbletubes below for what replaced it. Kept exactly as built.
-  neonsign: 'drawNeonSignEffect',
-  // 61st pass -- BUBBLE TUBES, MIDNIGHT NEON's second visualizer. Chosen
-  // over a smoke-and-spotlight direction (also discussed) from a
-  // "jukebox bubble tubes / VU bars" pitch. Nine glowing tubes span the
-  // full width, one per real spectrum band (A.bands9, the same 9-band tap
-  // CIPHER's drawBreachEffect already reads) -- an honest spectrum readout
-  // rather than decoration, filled from the base up like a VU bar with
-  // bubbles drifting upward through the glass. Always lit at a low idle
-  // floor even with no tap (same "lit hardware" contract NEON SIGN's
-  // ambient flicker used) rather than going dark, and a real bass onset
-  // kicks every tube brighter at once with a burst of fresh bubbles -- the
-  // whole machine responding to the beat, not just one column. See JUKE_*
-  // constants and drawBubbleTubesEffect below drawNeonSignEffect.
+  flowfield: 'drawFlowFieldEffect',
   bubbletubes: 'drawBubbleTubesEffect',
   boombap: 'drawBoomBapEffect',
   dread: 'drawDreadEffect',
-  // 50th pass: FROST replaces PULSE on COLD WAVE and GEIGER replaces
-  // COUNTER on ATOMIC -- COLD WAVE's visualizer wasn't landing and neither
-  // replacement direction was obvious at the time. Both old
-  // methods are kept below but are now UNASSIGNED -- same treatment RELIC
-  // SIGNAL's tracklist got, so a future session can see what was tried
-  // rather than re-inventing it. Why they were replaced, since neither was
-  // a tuning problem:
-  //   PULSE   -- three competing images at once (lattice + expanding rings
-  //              + EKG trace), tuned across the 45th/47th/48th passes and
-  //              still unsatisfying. Every effect that landed is ONE
-  //              watchable process; this was three, and an EKG is medical
-  //              rather than '80s synthpop anyway.
-  //   COUNTER -- did not do what its own name said. The station's tagline
-  //              promises "swing on while the counter clicks" and the
-  //              effect was drifting mushroom clouds: nothing ticked,
-  //              nothing registered, nothing clicked.
   frost: 'drawFrostEffect',
-  geiger: 'drawGeigerEffect',   // unassigned (was ATOMIC) -- see 59th pass note below
-  pulse: 'drawPulseEffect',   // unassigned (was COLD WAVE)
-  counter: 'drawCounterEffect2',
-  // 52nd pass: ISOTOPE MAP replaced GEIGER on ATOMIC, selected from a
-  // 4-concept prototype round; GEIGER was concept 3 of that same round and
-  // had already replaced COUNTER.
-  // 57th pass, 2nd rewrite: "Geiger Click" selected off the newer
-  // visualizer-lab mock, so GEIGER is back assigned to ATOMIC -- rebuilt
-  // audio-reactive this pass (discrete click events off the tap, near-
-  // silent with no signal) rather than its original unconditional random
-  // wander. ISOTOPE MAP's code is kept below, now unassigned in turn, same
-  // treatment PULSE/COUNTER got.
-  isotope: 'drawIsotopeEffect',   // unassigned (was ATOMIC)
-  // 59th pass -- ATOMIC and MOMENTUM's effects didn't obviously react to
-  // the music, so both were rebuilt from the ground up. GEIGER
-  // was a real instrument-style widget (needle + arc + click sparks) but
-  // small and center-pinned rather than filling the field the way
-  // FLAME/RIPPLE do -- unassigned in turn, same treatment ISOTOPE MAP got
-  // from it. BLAST FIELD replaces it: a full-field detonation effect, bass
-  // onsets spawn a bright core flash + fast shockwave ring + trailing
-  // fallout dust at a random point, silent field with no tap. See the
-  // BLAST_* tuning constants and drawBlastFieldEffect below drawGeigerEffect.
+  pulse: 'drawPulseEffect',
+  isotope: 'drawIsotopeEffect',
   blastfield: 'drawBlastFieldEffect',
 }
-// 65th pass -- lets [Shift+C] cycle any station's visualizer through every
-// built effect, not just the one it ships with (including the ones
-// unassigned above, e.g. GEIGER, SKYLINE, ISOTOPE MAP -- "any effect,
-// anywhere" rather than a curated per-station shortlist). Object.keys()
-// preserves insertion order for string keys, so this walks VISUAL_METHODS
-// in the same order it's declared above; DREAD (the secret station's own
-// effect) is included, same "any effect, anywhere" scope, not carved out.
+// 65th pass -- live QA on the new [Shift+C]/[V] cycling below resurfaced
+// five long-unassigned effects (STACK, SKYLINE, NEON SIGN, GEIGER,
+// COUNTER/CLOUDS) that had only ever been kept around under this project's
+// usual "never delete a superseded effect" convention. All five were
+// rejected outright once actually seen again -- not a tuning problem, just
+// not wanted -- so this pass breaks that convention for these five only:
+// their code (and any state/constants used only by them) is deleted
+// outright rather than left unassigned. ISOTOPE MAP is the one exception:
+// resurfaced alongside them, but liked ("looks cool, just needs more
+// reactivity"), so it's kept, given a reactivity pass, and promoted to
+// ATOMIC's new default in place of BLAST FIELD (which stays, unassigned,
+// under the normal convention -- it just isn't the one that stuck).
+// 65th pass -- lets [Shift+C] (and [V], inside the visualizer) cycle any
+// station's visualizer through every built effect, not just the one it
+// ships with -- "any effect, anywhere" rather than a curated per-station
+// shortlist. Object.keys() preserves insertion order for string keys, so
+// this walks VISUAL_METHODS in the same order it's declared above; DREAD
+// (the secret station's own effect) is included, same "any effect,
+// anywhere" scope, not carved out.
 const VISUAL_KEYS = Object.keys(VISUAL_METHODS)
 const VISUAL_LABELS = {
   drift: 'DRIFT', flame: 'FLAME', breach: 'BREACH', outrun: 'OUTRUN',
-  ripple: 'RIPPLE', stack: 'STACK', skyline: 'SKYLINE', flowfield: 'FLOW FIELD',
-  neonsign: 'NEON SIGN', bubbletubes: 'BUBBLE TUBES', boombap: 'BOOM BAP',
-  dread: 'DREAD', frost: 'FROST', geiger: 'GEIGER', pulse: 'PULSE',
-  counter: 'COUNTER', isotope: 'ISOTOPE MAP', blastfield: 'BLAST FIELD',
+  ripple: 'RIPPLE', flowfield: 'FLOW FIELD', bubbletubes: 'BUBBLE TUBES',
+  boombap: 'BOOM BAP', dread: 'DREAD', frost: 'FROST', pulse: 'PULSE',
+  isotope: 'ISOTOPE MAP', blastfield: 'BLAST FIELD',
 }
 const BREACH_HEX = '0123456789ABCDEF'
 // A resolved fragment briefly holds legible mid-column before dissolving
@@ -3586,112 +3514,19 @@ const BLAST_SPEED = 22
 const BLAST_RING_BAND = 1.6
 const BLAST_DUST_BAND = 6.0
 
-// 59th pass -- SKYLINE towers (MOMENTUM). Pulled out into its own function
-// because it's now called from two places: init() (first boot) and
-// enterVisualizer() (every re-entry rebuilds fresh, same "process begins,
-// doesn't resume" contract GEIGER's needle-at-rest already uses -- see
-// enterVisualizer's note). 13 towers spanning the full width; each climbs
-// toward its own capH one or more floors at a time, only on a real bass
-// onset -- see drawSkylineEffect.
-function makeSkylineTowers(cols) {
-  const n = 13
-  const spacing = cols / n
-  return Array.from({ length: n }, (_, i) => ({
-    x: Math.round(spacing * i + spacing / 2 - 1),
-    w: 2 + (i % 2),
-    h: 1 + Math.floor(Math.random() * 3),
-    capH: 6 + Math.floor(Math.random() * 14),
-    flashUntil: 0,
-    topFlashUntil: 0,
-  }))
-}
-
-// 60th pass -- NEON SIGN (MIDNIGHT NEON). The word BLUES in a hand-authored
-// 5x7 pixel font, one entry per letter this station's word actually needs
-// (not a full alphabet -- nothing else on the roster spells anything out).
-// '#' is a lit segment, '.' is dark. Same 5x7 block-letter convention as
-// classic dot-matrix signage.
-const NEON_FONT = {
-  B: ['####.', '#...#', '#...#', '####.', '#...#', '#...#', '####.'],
-  L: ['#....', '#....', '#....', '#....', '#....', '#....', '#####'],
-  U: ['#...#', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'],
-  E: ['#####', '#....', '#....', '####.', '#....', '#....', '#####'],
-  S: ['.####', '#....', '#....', '.###.', '....#', '....#', '####.'],
-}
-const NEON_WORD = 'BLUES'
-const NEON_LETTER_W = 5
-const NEON_LETTER_H = 7
-const NEON_GAP = 1
-// Ambient flicker -- always running, independent of audio: a neon sign
-// hums and gutters a little even with the room quiet, a deliberate
-// departure from FLAME's fully-dead-on-silence contract (see VISUAL_METHODS'
-// note above neonsign) because this reads as lit hardware, not a flame.
-// Probability is per segment per frame, so total flicker rate scales with
-// how many segments the word actually has.
-const NEON_FLICKER_PROB = 0.0015
-const NEON_FLICKER_MIN = 0.08
-const NEON_FLICKER_MAX = 0.3
-// Bass-onset buzz cascade -- a bigger, audio-driven burst of segments
-// knocked dark together, sized by how hard the onset hit (A.bass).
-const NEON_BUZZ_BASE = 3
-const NEON_BUZZ_SCALE = 10
-const NEON_BUZZ_MIN_DUR = 0.15
-const NEON_BUZZ_MAX_DUR = 0.5
-
-// 60th pass -- builds the segment list once per (station entry, column
-// count) rather than every frame: a fixed word doesn't need per-frame
-// layout math, only per-frame on/off state (see drawNeonSignEffect). Also
-// returns glowCells -- every empty cell orthogonally adjacent to a lit
-// segment, each carrying the indices of the lit segments that light it, so
-// the glow halo pass can check "is any neighbour currently on" in O(1)
-// rather than rescanning the word every frame.
-function buildNeonSegments(cols) {
-  const letters = NEON_WORD.split('')
-  const totalWidth = letters.length * NEON_LETTER_W + (letters.length - 1) * NEON_GAP
-  const startX = Math.max(0, Math.floor((cols - totalWidth) / 2))
-  const startY = 1 + Math.floor((VIZ_BOT - 1 - NEON_LETTER_H) / 2)
-  const segments = []
-  const indexByKey = new Map()
-  let lx = startX
-  for (const ch of letters) {
-    const glyph = NEON_FONT[ch]
-    for (let row = 0; row < NEON_LETTER_H; row++) {
-      for (let col = 0; col < NEON_LETTER_W; col++) {
-        if (glyph[row][col] === '#') {
-          const x = lx + col, y = startY + row
-          indexByKey.set(x + ',' + y, segments.length)
-          segments.push({ x, y })
-        }
-      }
-    }
-    lx += NEON_LETTER_W + NEON_GAP
-  }
-  const glowCells = []
-  const glowSeen = new Set()
-  for (const seg of segments) {
-    const nbrs = [[seg.x - 1, seg.y], [seg.x + 1, seg.y], [seg.x, seg.y - 1], [seg.x, seg.y + 1]]
-    for (const [nx, ny] of nbrs) {
-      const key = nx + ',' + ny
-      if (indexByKey.has(key) || glowSeen.has(key)) continue
-      glowSeen.add(key)
-      const litIdxs = []
-      for (const [gx, gy] of [[nx - 1, ny], [nx + 1, ny], [nx, ny - 1], [nx, ny + 1]]) {
-        const gk = gx + ',' + gy
-        if (indexByKey.has(gk)) litIdxs.push(indexByKey.get(gk))
-      }
-      glowCells.push({ x: nx, y: ny, litIdxs })
-    }
-  }
-  return { segments, glowCells }
-}
+// 65th pass -- SKYLINE (MOMENTUM's growing-towers effect, built via
+// makeSkylineTowers()) and NEON SIGN (MIDNIGHT NEON's word-sign effect,
+// built via NEON_FONT/buildNeonSegments()) permanently removed, along with
+// their supporting constants and helper functions. See the 65th-pass note
+// above VISUAL_METHODS for why.
 
 // 63rd pass -- STANDBY splash wordmark, built for a better standby screen:
 // SIGNAL wordmark, then version number, then standby state, then power-on
-// hint. Same hand-authored 5x7 block-letter convention as NEON_FONT
-// above -- a separate font rather than extending NEON_FONT, since this one
-// belongs to the app chrome, not a station effect, even though S and L are
-// drawn the same way in both. Static and always fully lit, clean, over an
-// ambient flicker -- reads as a stable logo, not a scene.
+// hint. Same hand-authored 5x7 block-letter convention NEON SIGN's font
+// once used (that effect was removed in the 65th pass) -- a separate font
+// since this one belongs to the app chrome, not a station effect. Static
+// and always fully lit, clean, over an ambient flicker -- reads as a
+// stable logo, not a scene.
 // No per-letter colour: the CRT is single-tint beam intensity (see
 // term.js), so the depth/impact of the reference image comes from an offset
 // shadow duplicate (drawn one cell down-right, FAINT) behind the bright
@@ -4390,53 +4225,9 @@ export default {
     // a driver, spawned on a strong treble onset, layered on top of the
     // existing boombox look.
     this._scratchFlashes = []
-    // ATOMIC's clouds (47th pass, full redesign of the old COUNTER/Geiger
-    // concept -- live QA asked to try clouds drifting along instead, with
-    // a reference image of blocky, two-tone pixel clouds: a stepped
-    // staircase ribbon, thicker and brighter at one end, trailing off
-    // thinner. makeCloudShape() below builds that shape once per cloud;
-    // drawCounterEffect() just slides it sideways.
-    this._clouds = Array.from({ length: 6 }, () => ({
-      shape: this.makeCloudShape(),
-      y: 7 + Math.floor(Math.random() * 14),
-      baseX: Math.random() * term.cols,
-      speed: 1.2 + Math.random() * 1.8,
-    }))
-    // STACK's building-block bars (45th pass, MOMENTUM; reworked later the
-    // same pass -- live QA: "bars need to be across the whole screen and
-    // should animate up and down randomly like data ... they didn't
-    // move"). 19 columns spanning the full width instead of 9 clustered in
-    // the middle, each on a much shorter reroll/rise timer plus its own
-    // jitter phase so movement reads as live-analytics noise rather than a
-    // slow calm build.
-    this._stackBars = Array.from({ length: 19 }, () => ({
-      level: Math.random(),
-      target: Math.random(),
-      speed: 0.15 + Math.random() * 0.15,
-      holdUntil: 0,
-      jitterPhase: Math.random() * 10,
-    }))
-    // SKYLINE's towers ("momentum a" -- rising skyline instead of
-    // a bar-chart ticker). unassigned STACK's old bars stay above, kept
-    // for the same reason PULSE/COUNTER were kept -- see VISUAL_METHODS.
-    // 13 towers spanning the full width, each climbing toward its own
-    // target floor by floor; on reaching it, most add another few floors
-    // (the build keeps going), some reset short (a new build breaks
-    // ground) -- reads as a skyline under constant, uneven construction
-    // rather than a synchronized bounce.
-    // 59th pass -- towers are back (see VISUAL_METHODS' note on
-    // 'skyline'/'flowfield' for the full history). Pulled the actual array
-    // construction into makeSkylineTowers() since enterVisualizer() now
-    // also calls it (towers rebuild fresh on every visualizer entry).
-    this._momentumTowers = makeSkylineTowers(term.cols)
-    this._momentumNextTower = 0
     // 59th pass -- BLAST FIELD's live detonations (ATOMIC). See BLAST_*
     // tuning constants and drawBlastFieldEffect.
     this._blasts = []
-    // 60th pass -- NEON SIGN's segment layout/flicker state (MIDNIGHT
-    // NEON). See buildNeonSegments and drawNeonSignEffect.
-    this._neon = null
-    this._neonOff = new Map()
     // DREAD's panel grid (45th pass, the secret station).
     this._dreadGrid = Array.from({ length: DREAD_CELLS_X * DREAD_CELLS_Y }, () => Math.random() < 0.5)
     this._dreadTear = { active: false, row: 0, until: 0 }
@@ -4467,13 +4258,6 @@ export default {
     // recomputed from cols/COLD_GRID_COLS every frame), so this array is a
     // fixed size regardless of terminal width.
     this._coldGridCells = new Float32Array(COLD_GRID_COLS * COLD_GRID_ROWS)
-    // GEIGER's needle + strip-chart state (50th pass, ATOMIC). `v` is the
-    // needle position 0..1 with `vel` its velocity -- a spring-damper, the
-    // same ballistics model drawVU()/STATIONS[].meter already use, because
-    // a real moving-coil needle overshoots and settles rather than
-    // snapping. `strip` is the rolling chart-recorder trace, one count per
-    // column, scrolled left one column per step.
-    this._geiger = null
 
     // Scrolling-waveform VU state (11th pass -- see drawVU()).
     this.lastProgressDraw = 0
@@ -7819,26 +7603,14 @@ export default {
     // that `t - startT > 1.3` can't expire until t climbs back past them.
     this._fireLastStep = 0
     this._boomWaves = []
-    // GEIGER (50th pass) is a stepped simulation with the same exposure to
-    // the restarting clock, so it gets re-armed here for the same reason
-    // FLAME does -- and deliberately starts from scratch (needle at rest)
-    // so opening the visualizer always shows the process beginning rather
-    // than resuming. 59th pass: GEIGER is unassigned now (replaced by BLAST
-    // FIELD, see VISUAL_METHODS) but this reset is left in place -- the
-    // object is still referenced by the kept-but-unassigned drawGeigerEffect.
-    this._geiger = null
-    // 59th pass -- BLAST FIELD (ATOMIC) and the rebuilt SKYLINE (MOMENTUM)
-    // carry the same clock-restart exposure the note above describes:
-    // absolute spawnT/flashUntil timestamps compared against a clock that
-    // restarts at 0 on every entry. Towers rebuild from scratch (same
-    // "process begins, doesn't resume" contract as GEIGER's needle) rather
-    // than carrying a partially-built skyline across visits; blasts just
-    // clear.
-    this._momentumTowers = makeSkylineTowers(s.term.cols)
-    this._momentumNextTower = 0
+    // 59th pass -- BLAST FIELD (ATOMIC) carries the same clock-restart
+    // exposure FLAME's re-arm above describes: absolute spawnT/flashUntil
+    // timestamps compared against a clock that restarts at 0 on every
+    // entry, so blasts just clear on re-entry rather than carrying stale
+    // timestamps across visits.
     this._blasts = []
     // 57th pass, 2nd rewrite -- COLD WAVE's neon grid starts fully dark on
-    // every visualizer entry, same reasoning as GEIGER's needle above.
+    // every visualizer entry.
     this._coldGridCells.fill(0)
     // 2026-08-23 (live audio tap) -- the audio-reactive additions carry
     // their own bare-t / learned state, reset here for the same reasons as
@@ -7848,15 +7620,6 @@ export default {
     this._outrunRedline = 0
     this._isotopeRings = []
     this._breachLastT = 0
-    // 60th pass -- NEON SIGN (MIDNIGHT NEON) carries the same clock-restart
-    // exposure as BLAST FIELD/SKYLINE above: this._neonOff stores absolute
-    // offUntil timestamps against the effect clock. Segment layout
-    // (this._neon) is cheap to rebuild and rebuilt anyway if cols changed,
-    // but the flicker/buzz state always starts fresh -- sign fully lit on
-    // entry, same "process begins, doesn't resume" contract as everything
-    // else this pass.
-    this._neon = null
-    this._neonOff = new Map()
     const { term } = s
     for (let y = 0; y < term.rows; y++)
       for (let x = 0; x < term.cols; x++) term.put(x, y, ' ', NORMAL, 0)
@@ -8023,8 +7786,19 @@ export default {
     // bracket-fold convention ("[C]OLOR", "[M]UTE"); legendCompact stays
     // bracket-only for all five entries on purpose, that's what makes it
     // compact.
-    const legendFull = [['[N]', 'EXT'], ['[L]', 'YRICS'], ['[M]', 'UTE'], ['[C]', 'OLOR'], ['[E]', 'XIT']]
-    const legendCompact = [['[N]', ''], ['[L]', ''], ['[M]', ''], ['[C]', ''], ['[E]', '']]
+    // 66th pass -- [V] added for the new cycle-effect binding (see the key
+    // switch's 'v'/'V' case), right after [C]OLOR since both are cosmetic
+    // cycling controls, with [E]XIT staying last. Left bare rather than
+    // spelled out ("[V]ISUAL" etc. all ran long against the CIPHER-length
+    // names already on the roster) -- exactly matches the pre-existing
+    // Shift+C binding it doubles, so a bare bracket is enough to place it.
+    // Computed against DISTORTION FIELD (the longest callsign): adding
+    // '[V]' to legendFull and tightening its separator from two spaces to
+    // one lands at the exact same 42-column width the five-entry legend
+    // already used, so this costs zero extra fit risk against the 80-col
+    // budget -- no fallback-to-compact threshold moved.
+    const legendFull = [['[N]', 'EXT'], ['[L]', 'YRICS'], ['[M]', 'UTE'], ['[C]', 'OLOR'], ['[V]', ''], ['[E]', 'XIT']]
+    const legendCompact = [['[N]', ''], ['[L]', ''], ['[M]', ''], ['[C]', ''], ['[V]', ''], ['[E]', '']]
     // Width of a rendered legend, including one trailing space of margin.
     const legendW = (items, sep) =>
       items.reduce((n, [k, l]) => n + k.length + l.length, 0) + sep.length * (items.length - 1) + 1
@@ -8035,7 +7809,7 @@ export default {
       const fx = Math.max(line1.length + 2, term.cols - text.length)
       if (fx + text.length <= term.cols) term.text(fx, VIZ_INFO_Y1, text, MUTED | BOLD, 1)
     } else {
-      let items = legendFull, sep = '  '
+      let items = legendFull, sep = ' '
       if (line1.length + 2 + legendW(items, sep) > term.cols) { items = legendCompact; sep = ' ' }
       const w = legendW(items, sep)
       let cx = Math.max(line1.length + 2, term.cols - w)
@@ -8187,116 +7961,10 @@ export default {
       }
     }
   },
-  // GEIGER (50th pass, ATOMIC) -- replaces COUNTER; see VISUAL_METHODS.
-  // The station's tagline has always promised "swing on while the counter
-  // clicks", so this is that counter: an analogue rate meter with a real
-  // moving needle, a scale it sweeps, and a chart-recorder strip scrolling
-  // underneath it. Fits the skeuomorphic-receiver direction the rest of
-  // the app commits to, and nothing else on the roster is an instrument.
-  // 57th pass, 2nd rewrite -- Geiger Click, picked off the newer
-  // visualizer-lab mock, replacing ISOTOPE MAP on ATOMIC, rebuilt from
-  // scratch. This also fixes a latent bug in the old
-  // code: `g.v` (the needle's actual position) was read every frame but
-  // never written anywhere -- only `g.target` moved, so with no caller
-  // ever wired up to advance one toward the other, the needle was frozen
-  // at its 0.06 rest value forever. Rebuilt as discrete click events
-  // instead of a scripted random wander: real "clicks" (an onset, or a
-  // per-frame probability that scales with overall level) each KICK the
-  // needle -- sharp attack -- which decays back toward rest on its own,
-  // the actual response shape of a moving-coil meter driven by counts.
-  // No tap, no clicks, ever, and the needle settles to dead rest and stays
-  // there -- "no activity if there's no audio."
-  drawGeigerEffect(s, t) {
-    const { term } = s
-    const cols = term.cols
-    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) term.put(x, y, ' ')
-    if (!this._geiger) {
-      this._geiger = { v: 0, last: t, strip: new Array(cols).fill(0), stripLast: 0, lastClickAt: -1, count: 0 }
-    }
-    const g = this._geiger
-    if (t < g.last) g.last = t                    // rewound-clock guard
-    const dt = Math.min(0.1, Math.max(0, t - g.last))
-    g.last = t
-    const A = this._au
-
-    // --- scale arc (fixed geometry, drawn every frame either way) ------
-    const cx = cols / 2, py = 14, rx = 33, ry = 11
-    const TICKS = 49
-    const seen = new Set()
-    for (let k = 0; k < TICKS; k++) {
-      const frac = k / (TICKS - 1)
-      const a = Math.PI - frac * Math.PI
-      const x = Math.round(cx + Math.cos(a) * rx)
-      const y = Math.round(py - Math.sin(a) * ry)
-      if (x < 0 || x >= cols || y < 1 || y >= VIZ_BOT) continue
-      const key = x + ',' + y
-      if (seen.has(key)) continue          // rounding collapses neighbours near the flanks
-      seen.add(key)
-      const major = k % 12 === 0
-      // The top of the scale is hot: ticks past ~75% sit brighter, so the
-      // danger end of the dial is legible before the needle ever gets there.
-      const hot = frac > 0.75
-      term.put(x, y, major ? '┼' : hot ? '+' : '·',
-        major ? (hot ? BRIGHT : NORMAL) : (hot ? NORMAL : DIM))
-    }
-
-    // 57th pass, 3rd pass -- a real Geiger counter never reads zero; it
-    // always ticks a little off background radiation. Same "always there,
-    // different metered level" language as the tach: with no tap this
-    // becomes a slow, tiny background click rate instead of dead silence,
-    // and with a tap the count rate scales up with the music on top of it.
-    const clickProb = A ? auMul(A, A.level, 0.015, 0.55) : 0.006
-    if ((A && A.onset) || Math.random() < clickProb) {
-      const kick = A ? 0.22 + A.bass * 0.55 + (A.onset ? 0.25 : 0) : 0.12
-      g.v = Math.min(1, g.v + kick)
-      g.lastClickAt = t
-      g.count++
-    }
-    g.v = Math.max(0, g.v - dt * 0.7)   // always decaying back toward rest
-
-    // --- needle ----------------------------------------------------------
-    // Line glyph chosen from the needle's own angle rather than a solid
-    // block per cell. A staircase of '█' reads as a wedge or a bar; '/',
-    // '\\', '|' and '─' read as a drawn pointer, which is what a needle
-    // is. Slope is measured in CELLS, not geometry -- cells are about
-    // twice as tall as they are wide, so the visual angle is not the
-    // maths angle and picking the glyph off the raw angle looks wrong.
-    const na = Math.PI - g.v * Math.PI
-    const dxc = Math.cos(na) * rx, dyc = -Math.sin(na) * ry
-    const slope = Math.abs(dxc) < 0.001 ? 99 : dyc / dxc
-    const needleCh = Math.abs(slope) > 1.6 ? '|' : Math.abs(slope) < 0.35 ? '─' : (slope < 0 ? '/' : '\\')
-    const steps = 26
-    for (let k = 3; k <= steps; k++) {
-      const r = k / steps
-      const x = Math.round(cx + Math.cos(na) * rx * r * 0.92)
-      const y = Math.round(py - Math.sin(na) * ry * r * 0.92)
-      if (x < 0 || x >= cols || y < 1 || y >= VIZ_BOT) continue
-      term.put(x, y, k === steps ? '●' : needleCh, k === steps ? BRIGHT : visualizerLevelAttr(0.4 + r * 0.55))
-    }
-    term.put(Math.round(cx), py, '█', BRIGHT)              // pivot
-    for (let x = Math.round(cx) - 4; x <= Math.round(cx) + 4; x++) {
-      if (x >= 0 && x < cols) term.put(x, py + 1, '─', MUTED)   // meter body
-    }
-    // A click's spark: a brief bright burst around the pivot, gone in
-    // ~0.1s -- the "click" itself, distinct from the needle's own motion.
-    // Fires for background clicks too, not just live ones.
-    if (t - g.lastClickAt < 0.1) {
-      term.put(Math.round(cx) - 1, py, '*', BRIGHT)
-      term.put(Math.round(cx) + 1, py, '*', BRIGHT)
-      term.put(Math.round(cx), py - 1, '*', BRIGHT)
-    }
-    // Digital count readout -- the explicit "counter" the station's own
-    // tagline promises, separate from the needle's analogue read.
-    const countText = 'CT ' + String(g.count % 100000).padStart(5, '0')
-    term.text(Math.round(cx) - Math.floor(countText.length / 2), py + 3, countText, MUTED)
-
-    // 57th pass, 4th rewrite -- chart-recorder strip removed entirely,
-    // eliminating a horizontal moving artifact in ATOMIC. g.strip/g.stripLast are left as harmless dead state on the
-    // _geiger object rather than torn out of its init shape.
-    // 59th pass -- unassigned (was ATOMIC), replaced by BLAST FIELD below.
-    // See VISUAL_METHODS' note near blastfield for why.
-  },
-  // BLAST FIELD (59th pass, ATOMIC) -- replaces GEIGER, which along with
+  // 65th pass -- GEIGER (ATOMIC's analogue rate-meter effect, needle +
+  // scale + click state) permanently removed. See the 65th-pass note above
+  // VISUAL_METHODS for why.
+  // BLAST FIELD (59th pass, ATOMIC) -- was GEIGER's replacement, which along with
   // MOMENTUM's flow field wasn't obviously reacting to the music; rebuilt
   // from the ground up to be impressive and shifting.
   // GEIGER above was a real, working instrument -- but a small one pinned
@@ -8369,62 +8037,10 @@ export default {
       }
     }
   },
-  // NEON SIGN (60th pass, MIDNIGHT NEON) -- built for the station that
-  // replaced MOMENTUM; see VISUAL_METHODS' note above neonsign for the
-  // full brief. The word BLUES, centered, rendered from the NEON_FONT
-  // segment list buildNeonSegments() lays out once per entry. Two things
-  // make it read as a sign and not just static text: segments gutter
-  // independently (ambient flicker, always running, silence included --
-  // the one deliberate exception to FLAME's no-audio-no-activity rule,
-  // because hardware left on hums even in a quiet room) and a real bass
-  // onset knocks a whole burst dark at once (the buzz cascade), which self-
-  // heals within NEON_BUZZ_MAX_DUR the same way FLAME's embers cool back
-  // rather than needing an explicit "relight" step. A soft one-cell glow
-  // halo bleeds into the dark cells touching a currently-lit segment.
-  drawNeonSignEffect(s, t) {
-    const { term } = s
-    const cols = term.cols
-    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) term.put(x, y, ' ')
-    if (!this._neon || this._neon.cols !== cols) {
-      this._neon = Object.assign({ cols }, buildNeonSegments(cols))
-    }
-    const { segments, glowCells } = this._neon
-    if (!this._neonOff) this._neonOff = new Map()
-    const A = this._au
-
-    if (Math.random() < NEON_FLICKER_PROB * segments.length) {
-      const i = Math.floor(Math.random() * segments.length)
-      this._neonOff.set(i, t + NEON_FLICKER_MIN + Math.random() * (NEON_FLICKER_MAX - NEON_FLICKER_MIN))
-    }
-    if (A && A.onset && A.bass > 0.3) {
-      const n = Math.min(segments.length, NEON_BUZZ_BASE + Math.floor(A.bass * NEON_BUZZ_SCALE))
-      for (let k = 0; k < n; k++) {
-        const i = Math.floor(Math.random() * segments.length)
-        this._neonOff.set(i, t + NEON_BUZZ_MIN_DUR + Math.random() * (NEON_BUZZ_MAX_DUR - NEON_BUZZ_MIN_DUR))
-      }
-    }
-
-    const isOn = (i) => {
-      const off = this._neonOff.get(i)
-      return off === undefined || t >= off
-    }
-
-    // Glow halo first -- lit segments are drawn on top of it below, so a
-    // cell that's both a glow neighbour and (via a different letter's
-    // overhang) something else always ends up showing the brighter one.
-    for (const g of glowCells) {
-      let hot = false
-      for (const idx of g.litIdxs) if (isOn(idx)) { hot = true; break }
-      if (hot) term.put(g.x, g.y, '·', DIM)
-    }
-    for (let i = 0; i < segments.length; i++) {
-      const seg = segments[i]
-      if (!isOn(i)) continue
-      const bright = A && A.level > 0.55
-      term.put(seg.x, seg.y, '█', bright ? BRIGHT : NORMAL)
-    }
-  },
-  // BUBBLE TUBES (61st pass, MIDNIGHT NEON) -- replaces NEON SIGN; see
+  // 65th pass -- NEON SIGN (MIDNIGHT NEON's word-sign effect, built on
+  // NEON_FONT/buildNeonSegments) permanently removed. See the 65th-pass
+  // note above VISUAL_METHODS for why.
+  // BUBBLE TUBES (61st pass, MIDNIGHT NEON) -- was NEON SIGN's replacement; see
   // VISUAL_METHODS' note above bubbletubes for the full brief. Nine tubes
   // span the full width, one per real spectrum band off A.bands9 (the same
   // 9-band tap CIPHER's drawBreachEffect reads), each filled from the base
@@ -8477,11 +8093,12 @@ export default {
       }
     }
   },
-  // ISOTOPE MAP (52nd pass, ATOMIC) -- replaces GEIGER; see VISUAL_METHODS'
-  // note above and the "2. ISOTOPE MAP" panel in atomic-concepts.html,
-  // which this ports faithfully: every cell on the grid flickers on its
-  // own independent sine cycle (its own phase and frequency), and hotter
-  // regions drift across the field in lissajous paths, brightening
+  // ISOTOPE MAP (52nd pass, ATOMIC) -- shelved unassigned since the 57th
+  // pass, promoted back to ATOMIC's default in the 65th when GEIGER,
+  // CLOUDS, and the rest of the old roster got removed for good (see the
+  // 65th-pass note above VISUAL_METHODS). Every cell on the grid flickers
+  // on its own independent sine cycle (its own phase and frequency), and
+  // hotter regions drift across the field in lissajous paths, brightening
   // whatever they currently sit over. No needle, no gauge, no scripted
   // event -- "a field of sources" rather than a single detector, which
   // suits an atomic-age station better than one instrument does. Started
@@ -8494,6 +8111,15 @@ export default {
   // per-cell buffer, so there's no persistent state to reset on re-entry
   // and nothing here can hit the FLAME-class re-entry-freeze bug (see
   // Design Notes) -- the whole effect is a pure function of (x, y, t).
+  // 65th pass -- promotion to ATOMIC's default came with a note that it
+  // "looks cool, just needs more reactivity": the 52nd/57th-pass tuning
+  // barely moved with the music (glow radius swing was 0.7-1.3, the click
+  // bump was a flat +0.1, and rings needed a hard A.bass > 0.45 onset).
+  // Widened the same way CIPHER/COLD WAVE/CIRCUIT CRUSH were earlier this
+  // pass: a much wider glow-radius swing so sources visibly bloom and
+  // shrink with level, a stronger pulse click, a lower onset bar so rings
+  // fire more readily, and a second ring on a hard hit so a big onset
+  // reads as two sources going critical at once instead of one.
   drawIsotopeEffect(s, t) {
     const { term } = s
     const cols = term.cols
@@ -8514,8 +8140,8 @@ export default {
     // function of (x, y, t, this-frame's bus reading), which preserves the
     // property the statelessness note above actually cares about.
     const A = this._au
-    const rMul = auMul(A, A ? A.level : 0, 0.7, 1.3)
-    const click = A ? A.pulse * 0.1 : 0
+    const rMul = auMul(A, A ? A.level : 0, 0.5, 1.9)
+    const click = A ? A.pulse * 0.28 : 0
     const sources = ISOTOPE_SOURCES.map((src) => ({
       hx: cols / 2 + Math.sin(t * src.fx + src.ph) * ampX * src.amp,
       hy: cy + Math.cos(t * src.fy + src.ph) * ampY * src.amp,
@@ -8523,11 +8149,17 @@ export default {
     // 57th pass -- Half-Life Ring. A strong bass onset spawns a ring at a
     // random source's current position (reads as that source "going
     // critical"); the ring then just carries its own fixed spawn position
-    // and time, independent of the sources' ongoing roam.
-    if (A && A.onset && A.bass > 0.45) {
-      const src = sources[Math.floor(Math.random() * sources.length)]
-      this._isotopeRings.push({ x: src.hx, y: src.hy, spawnT: t })
-      if (this._isotopeRings.length > ISOTOPE_RING_MAX) this._isotopeRings.shift()
+    // and time, independent of the sources' ongoing roam. 65th pass --
+    // threshold lowered so rings fire on more onsets, and a hard hit
+    // (bass > 0.7) spawns a second ring at a different source the same
+    // frame, same "growCount" idea BLAST FIELD uses for its own onsets.
+    if (A && A.onset && A.bass > 0.28) {
+      const ringCount = A.bass > 0.7 ? 2 : 1
+      for (let i = 0; i < ringCount; i++) {
+        const src = sources[Math.floor(Math.random() * sources.length)]
+        this._isotopeRings.push({ x: src.hx, y: src.hy, spawnT: t })
+        if (this._isotopeRings.length > ISOTOPE_RING_MAX) this._isotopeRings.shift()
+      }
     }
     this._isotopeRings = this._isotopeRings.filter((r) => t - r.spawnT < ISOTOPE_RING_LIFE)
     for (let y = 1; y < VIZ_BOT; y++) {
@@ -8552,7 +8184,7 @@ export default {
         const phase = hash2(x, y) * Math.PI * 2
         const freq = 0.6 + hash2(y, x) * 2.2   // args swapped from phase's hash to decorrelate
         const base = 0.5 + 0.5 * Math.sin(t * freq + phase)
-        const v = Math.max(base * (0.12 + click + heat * 0.88), ring * 0.9)
+        const v = Math.max(base * (0.1 + click + heat * 0.95), ring * 0.95)
         if (v < 0.1) { term.put(x, y, ' '); continue }
         const ch = ring > 0.5 ? 'O' : v > 0.85 ? '▓' : v > 0.6 ? '▒' : v > 0.4 ? '+' : v > 0.22 ? ':' : '·'
         term.put(x, y, ch, visualizerLevelAttr(v))
@@ -9055,68 +8687,9 @@ export default {
       }
     }
   },
-  // Builds one blocky, two-tone cloud silhouette for ATOMIC's CLOUDS
-  // effect. 47th pass tried a hand-authored staircase ribbon; live QA
-  // asked for another pass, suggesting procedural. This 48th-pass version
-  // is a real metaball union: 4-7 overlapping circular "puffs" of varying
-  // radius baked into a fixed pixel mask, which is what actually produces
-  // the rounded, lumpy cumulus silhouette the reference image has (a
-  // staircase can only ever look like a ribbon, not a cloud). Shading
-  // reads as light on top, darker along the underside and any cell close
-  // to an edge, for a little volume. Built once at spawn and reused every
-  // frame; only the cloud's x position moves.
-  makeCloudShape() {
-    const puffCount = 4 + Math.floor(Math.random() * 4)
-    const puffs = []
-    let cursor = 0
-    for (let i = 0; i < puffCount; i++) {
-      const r = 1.8 + Math.random() * 2.4
-      cursor += r * (0.55 + Math.random() * 0.35)
-      puffs.push({ cx: cursor, cy: (Math.random() - 0.5) * 2.2, r })
-      cursor += r * 0.5
-    }
-    const w = Math.ceil(cursor + 4)
-    const h = 7
-    const cells = []
-    for (let ry = 0; ry < h; ry++) {
-      const py = ry - h / 2
-      for (let rx = 0; rx < w; rx++) {
-        let minEdge = Infinity
-        for (const p of puffs) {
-          const dx = rx - p.cx, dy = (py - p.cy) * 1.7
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < p.r) minEdge = Math.min(minEdge, p.r - dist)
-        }
-        if (minEdge === Infinity) continue
-        const shade = (py > 0.3 || minEdge < 0.9) ? 'dark' : 'light'
-        cells.push({ dx: rx, dy: ry - Math.round(h / 2), shade })
-      }
-    }
-    return { cells, w }
-  },
-  // CLOUDS effect (47th pass, full redesign of ATOMIC's old Geiger-counter
-  // concept; regenerated procedurally in the 48th) -- live QA: "let's try
-  // clouds? something like this where they kind of just move along." A
-  // handful of the metaball pixel-cloud shapes above, each at its own row
-  // and drift speed, sliding right and wrapping around once fully
-  // offscreen.
-  // unassigned (was ATOMIC) -- see VISUAL_METHODS' note.
-  drawCounterEffect2(s, t) {
-    const { term } = s
-    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
-    for (const c of this._clouds) {
-      const span = term.cols + c.shape.w + 10
-      const x0 = ((c.baseX + t * c.speed) % span + span) % span - c.shape.w - 5
-      for (const cell of c.shape.cells) {
-        const px = Math.round(x0 + cell.dx)
-        const py = c.y + cell.dy
-        if (px < 0 || px >= term.cols || py < 1 || py >= VIZ_BOT) continue
-        const v = cell.shade === 'light' ? 0.85 : 0.5
-        const ch = cell.shade === 'light' ? '█' : '▓'
-        term.put(px, py, ch, visualizerLevelAttr(v))
-      }
-    }
-  },
+  // 65th pass -- CLOUDS (ATOMIC's old Geiger-counter-replacement effect,
+  // drifting metaball clouds via makeCloudShape()) permanently removed.
+  // See the 65th-pass note above VISUAL_METHODS for why.
   // 57th pass, 3rd rewrite -- Flow Field, MOMENTUM's visual rebuilt from
   // scratch, chasing a scene that reacts to the music -- just a fun
   // visual, doesn't
@@ -9163,134 +8736,10 @@ export default {
       }
     }
   },
-  // 59th pass -- SKYLINE, REBUILT because MOMENTUM wasn't obviously
-  // reacting to the music. Rebuilt from the ground up to be impressive,
-  // shifting" like FLAME/RIPPLE). Full history in VISUAL_METHODS' note on
-  // 'skyline'/'flowfield' above drawFlowFieldEffect. This is the towers
-  // concept, done for real this time: 13 towers (makeSkylineTowers()) span
-  // the width, and a real bass onset visibly adds one or two floors to a
-  // tower -- a discrete, legible event, not a continuous parameter warp.
-  // The newest floor and the tower's own top-out celebration both get a
-  // bright flash; a quiet construction spark rides just above a tower
-  // while its flash is live. No tap: no growth, ever (same "no activity
-  // without audio" contract as FLAME) -- but a slow, audio-independent
-  // window-twinkle keeps the skyline visibly alive rather than a dead
-  // silhouette, since a real skyline doesn't go dark just because the
-  // radio's off. On reaching its own capH, a tower has a 70% chance to
-  // raise the ceiling and keep building, 30% to reset short and break
-  // ground on a fresh, shorter build -- the "most keep building, some
-  // reset short" texture from the original 51st-pass concept.
-  drawSkylineEffect(s, t) {
-    const { term } = s
-    const cols = term.cols
-    const floorY = VIZ_BOT - 1
-    const top = 1
-    const maxH = floorY - top + 1
-    const A = this._au
-    for (let y = top; y <= floorY; y++) for (let x = 0; x < cols; x++) term.put(x, y, ' ')
-    const towers = this._momentumTowers
-
-    // A real bass onset adds a floor to one or two towers below their own
-    // cap -- round-robin start point so growth doesn't always favor the
-    // same tower when several fire back to back.
-    if (A && A.onset) {
-      const growCount = 1 + (A.bass > 0.65 ? 1 : 0)
-      for (let g = 0; g < growCount; g++) {
-        let idx = -1
-        for (let k = 0; k < towers.length; k++) {
-          const cand = (this._momentumNextTower + k) % towers.length
-          if (towers[cand].h < towers[cand].capH) { idx = cand; break }
-        }
-        this._momentumNextTower = (this._momentumNextTower + 1) % towers.length
-        if (idx === -1) continue
-        const tw = towers[idx]
-        tw.h = Math.min(tw.capH, tw.h + 1 + (A.bass > 0.6 ? 1 : 0))
-        tw.flashUntil = t + 0.35
-        if (tw.h >= tw.capH) tw.topFlashUntil = t + 0.5
-      }
-    }
-
-    // A tower whose top-out celebration just finished either keeps
-    // building (raise the ceiling) or breaks ground on a fresh, shorter
-    // build -- see the header comment for the split.
-    for (const tw of towers) {
-      if (tw.topFlashUntil && t > tw.topFlashUntil) {
-        tw.topFlashUntil = 0
-        if (Math.random() < 0.3) {
-          tw.h = 1 + Math.floor(Math.random() * 3)
-          tw.capH = 6 + Math.floor(Math.random() * 14)
-        } else {
-          tw.capH = Math.min(maxH, tw.capH + 4 + Math.floor(Math.random() * 6))
-        }
-      }
-    }
-
-    for (const tw of towers) {
-      const flashing = t < tw.flashUntil
-      const topping = t < tw.topFlashUntil
-      for (let f = 0; f < tw.h; f++) {
-        const y = floorY - f
-        if (y < top) break
-        const isTopFloor = f === tw.h - 1
-        for (let dx = 0; dx < tw.w; dx++) {
-          const x = tw.x + dx
-          if (x < 0 || x >= cols) continue
-          // Window texture: a slow twinkle independent of audio, so the
-          // skyline reads as alive even at dead silence.
-          const lit = hash2(x, f) > 0.62
-          const twinkle = lit && Math.sin(t * 0.6 + hash2(f, x) * 6.28) > 0.2
-          let attr = lit ? (twinkle ? NORMAL : DIM) : MUTED
-          if (topping) attr = BRIGHT
-          else if (isTopFloor && flashing) attr = BRIGHT
-          term.put(x, y, '█', attr)
-        }
-      }
-      // Construction spark riding just above the newest floor while it's
-      // still flashing -- a welding-spark beat that reads as "still
-      // building" distinct from the tower body itself.
-      if (flashing && tw.h < maxH) {
-        const sparkY = floorY - tw.h
-        if (sparkY >= top) term.put(tw.x + Math.floor(tw.w / 2), sparkY, '+', BRIGHT)
-      }
-    }
-  },
-  // STACK effect (45th pass, reworked later the same pass) -- for
-  // MOMENTUM. Originally 9 slow bars clustered mid-screen; live QA called
-  // for the full width and visible up/down motion ("like data or
-  // analytics changing"), so this is now 19 columns spanning edge to edge,
-  // each rerolling its target and rising/falling toward it on a much
-  // shorter cycle, with a small continuous jitter layered on top so a bar
-  // is never perfectly still even mid-transition -- reads as a live
-  // ticker rather than a calm progress bar.
-  // unassigned (was MOMENTUM) -- see VISUAL_METHODS' note on SKYLINE above.
-  drawStackEffect(s, t) {
-    const { term } = s
-    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
-    const left = 2, spacingX = 4, barW = 3, floor = VIZ_BOT - 2, top = 2, height = floor - top
-    for (let i = 0; i < this._stackBars.length; i++) {
-      const bar = this._stackBars[i]
-      if (t > bar.holdUntil) {
-        if (Math.abs(bar.level - bar.target) < 0.02) {
-          bar.target = 0.1 + Math.random() * 0.85
-          bar.holdUntil = t + 0.4 + Math.random() * 0.8
-        }
-        bar.level += (bar.target - bar.level) * bar.speed
-      }
-      const jitter = 0.03 * Math.sin(t * 3.2 + bar.jitterPhase)
-      const displayLevel = Math.max(0, Math.min(1, bar.level + jitter))
-      const filled = Math.round(displayLevel * height)
-      const colX = left + i * spacingX
-      for (let w = 0; w < barW; w++) {
-        const cx = colX + w
-        if (cx >= term.cols) continue
-        for (let f = 0; f < filled; f++) {
-          const yy = floor - f
-          term.put(cx, yy, f === filled - 1 ? '▀' : '█', f === filled - 1 ? NORMAL : MUTED)
-        }
-        term.put(cx, floor + 1, '─', DIM)
-      }
-    }
-  },
+  // 65th pass -- SKYLINE (the growing-towers effect built off
+  // makeSkylineTowers()) and STACK (the 19-bar full-width equalizer
+  // effect) permanently removed. See the 65th-pass note above
+  // VISUAL_METHODS for why.
   // 57th pass, 4th rewrite -- BOOM BAP rebuilt from scratch around exactly
   // the design brief: a boom box with sound waves coming out of it
   // and pulsing lights and meters to the music. Dropped the MPC
@@ -9755,6 +9204,9 @@ export default {
           // e.shiftKey rather than the key case: e.key is 'C' for both
           // Shift+c and Caps-Lock+c, and a Caps-Lock user's plain [C]
           // press needs to keep doing exactly what it always did.
+          // Kept as a secondary binding alongside [V] below (66th pass) --
+          // same action either way, so nothing regresses for anyone who'd
+          // learned Shift+C already.
           if (e.shiftKey) {
             this.cycleVisualEffect(s)
             vizFlash(VISUAL_LABELS[this.activeVisualKey()])
@@ -9795,6 +9247,14 @@ export default {
           this.drawVisualizerInfo(s)
           return
         case 'v': case 'V':
+          // 66th pass -- [V] opened the visualizer, but had also exited
+          // it, which meant there was no key that cycled effects without
+          // leaving the mnemonic on double duty; live QA asked for V to
+          // just cycle once inside, and only [E]/Escape to exit. Same
+          // action and flash as Shift+C above.
+          this.cycleVisualEffect(s)
+          vizFlash(VISUAL_LABELS[this.activeVisualKey()])
+          return
         case 'e': case 'E':
         case 'Escape':
           this.exitVisualizer(s)
