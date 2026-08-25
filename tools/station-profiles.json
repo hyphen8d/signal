@@ -1,0 +1,368 @@
+{
+  "_readme": [
+    "Vibe profiles for SIGNAL's station roster -- what each station actually",
+    "wants and doesn't, distilled from the rejection/correction history",
+    "scattered across program.js's comments (50+ passes of it) plus session",
+    "context that's already been lost from the file itself (the network-ops",
+    "dashboard's tracks: [] rewrite necessarily strips inline comments on",
+    "save -- see tools/network.html's own header comment).",
+    "",
+    "`acceptedArtists` is mechanical and goes stale the moment the roster",
+    "changes -- treat it as a snapshot, not a source of truth; re-derive from",
+    "program.js directly (or regenerate this block) before relying on it.",
+    "`constraints` and `rejections` are the actual value here: qualitative",
+    "judgment calls that took real back-and-forth to establish and are NOT",
+    "recoverable from the current file alone. Update this by hand (or ask",
+    "Claude to) whenever a curation pass removes tracks with a stated",
+    "reason -- capture the reason here before it's gone.",
+    "",
+    "Built 2026-08-23 (55th pass) as the first half of the pending-track-",
+    "queue feature for proposing new tracks -- this is what a suggestion gets",
+    "checked against before it's proposed."
+  ],
+  "stations": {
+    "distortion-field": {
+      "callsign": "DISTORTION FIELD",
+      "genre": "90s grunge and alternative rock -- the Seattle sound and its ripple effects",
+      "eraLane": "early-to-mid 1990s",
+      "acceptedArtists": [
+        "Nirvana",
+        "Soundgarden",
+        "Alice In Chains",
+        "Pearl Jam",
+        "Stone Temple Pilots",
+        "Screaming Trees",
+        "Hole",
+        "Temple of the Dog",
+        "Mudhoney",
+        "Bush",
+        "The Cranberries",
+        "L7",
+        "The Smashing Pumpkins",
+        "Silverchair",
+        "Foo Fighters",
+        "Toadies",
+        "Weezer",
+        "Mad Season",
+        "Beck",
+        "Everclear"
+      ],
+      "constraints": [
+        "Stay in grunge/alt-rock proper -- guitars, raw vocals, radio-ready angst. Not pop-rock crossover, not post-grunge (2000s) unless it's genuinely of-era."
+      ],
+      "rejections": []
+    },
+    "drift-mode": {
+      "callsign": "DRIFT MODE",
+      "genre": "Ambient, modern classical, and drone -- built for stillness",
+      "eraLane": "no strict era; contemporary ambient/drone plus modern-classical-adjacent pieces",
+      "acceptedArtists": [
+        "Marconi Union",
+        "Olafur Arnalds",
+        "Stars of the Lid",
+        "Sigur Rós",
+        "Grouper",
+        "William Basinski",
+        "Brian Eno",
+        "Hammock",
+        "Tim Hecker",
+        "A Winged Victory for the Sullen",
+        "Jóhann Jóhannsson",
+        "Harold Budd",
+        "Kali Malone",
+        "Eluvium",
+        "Dustin O'Halloran",
+        "Julianna Barwick",
+        "Ryuichi Sakamoto",
+        "Poppy Ackroyd",
+        "Ludovico Einaudi"
+      ],
+      "constraints": [
+        "Modern-classical-ADJACENT ambient is welcome (Arnalds, O'Halloran, Einaudi are already on the roster) -- but a piece that reads as straightforwardly classical/neoclassical, rather than ambient-with-classical-texture, is the wrong lane for this station specifically."
+      ],
+      "rejections": [
+        {
+          "artist": "Max Richter",
+          "track": "On the Nature of Daylight",
+          "reason": "Read as classical/neoclassical proper rather than ambient -- too close to RELIC SIGNAL's retired all-classical lane. Source comment stripped by a later dashboard edit; captured from session context 2026-08-23."
+        },
+        {
+          "artist": "Nils Frahm",
+          "track": "Says",
+          "reason": "Same call as the Richter track above -- too straightforwardly classical for this station's ambient/drone lane."
+        }
+      ]
+    },
+    "cold-wave": {
+      "callsign": "COLD WAVE",
+      "genre": "Synth-driven new wave and synthpop",
+      "eraLane": "early-to-mid 1980s",
+      "acceptedArtists": [
+        "New Order",
+        "The Cure",
+        "Depeche Mode",
+        "Tears for Fears",
+        "The Human League",
+        "Simple Minds",
+        "Eurythmics",
+        "Gary Numan",
+        "A Flock of Seagulls",
+        "Soft Cell",
+        "Pet Shop Boys",
+        "Duran Duran",
+        "a-ha",
+        "Orchestral Manoeuvres in the Dark",
+        "Visage",
+        "Alphaville",
+        "The Psychedelic Furs",
+        "Echo & the Bunnymen",
+        "Talk Talk",
+        "Howard Jones",
+        "Men Without Hats",
+        "Peter Schilling",
+        "Modern English"
+      ],
+      "constraints": [
+        "Strictly synth-driven new wave/synthpop of the era -- drum machines and cold hooks. Not later-80s pop-rock crossover, not synthwave (that's a modern retro genre and belongs on CIRCUIT CRUSH instead)."
+      ],
+      "rejections": []
+    },
+    "momentum": {
+      "callsign": "MOMENTUM",
+      "genre": "Chillhop and instrumental beats for focus -- sampled jazz, lo-fi drums",
+      "eraLane": "no strict era; instrumental hip-hop/downtempo/lo-fi beats scene, roughly 2000s-present",
+      "acceptedArtists": [
+        "Nujabes",
+        "DJ Shadow",
+        "Bonobo",
+        "Tycho",
+        "Idealism",
+        "Kupla",
+        "J Dilla",
+        "Emancipator",
+        "Flawed Mangoes",
+        "Wun Two",
+        "DJ Okawari",
+        "Nosaj Thing",
+        "FloFilz",
+        "Jinsang",
+        "L'Indécis",
+        "Aso"
+      ],
+      "constraints": [
+        "Meant to hold focus without breaking it -- \"just enough melody,\" light and unobtrusive. Heavier/moodier downtempo or trip-hop proper is an adjacent but wrong-weight lane; keep it light."
+      ],
+      "rejections": [
+        {
+          "artist": "Massive Attack",
+          "track": "Teardrop",
+          "reason": "Reads as trip-hop/downtempo proper -- heavier lane than this station's lofi-chillhop winddown vibe. Source comment stripped by a later dashboard edit; captured from session context 2026-08-23."
+        },
+        {
+          "artist": "Portishead",
+          "track": "Glory Box",
+          "reason": "Same call as Massive Attack above -- too heavy/moody for MOMENTUM's light focus vibe."
+        }
+      ]
+    },
+    "city-lights": {
+      "callsign": "CITY LIGHTS",
+      "genre": "Japanese city pop -- glossy production, funk basslines, Tokyo after dark",
+      "eraLane": "late 1970s to late 1980s",
+      "acceptedArtists": [
+        "Miki Matsubara",
+        "Tatsuro Yamashita",
+        "Taeko Onuki",
+        "Yasuha",
+        "Anri",
+        "Hiroshi Sato",
+        "Minako Yoshida",
+        "Mariya Takeuchi",
+        "Junko Ohashi",
+        "Miharu Koshi",
+        "Momoko Kikuchi",
+        "Toshiki Kadomatsu",
+        "S. Kiyotaka & Omega Tribe",
+        "Yumi Matsutoya",
+        "Meiko Nakahara",
+        "Junko Yagami",
+        "EPO",
+        "Makoto Matsushita",
+        "Kingo Hamada",
+        "Hi-Fi Set"
+      ],
+      "constraints": [
+        "HARD RULE, explicit editorial decision 2026-08-20: Japanese artists only. Western yacht-rock/AOR that sounds similar (Steely Dan, Toto, etc.) does NOT belong here even though it's genre-adjacent -- this is specifically a Japan-only lane.",
+        "Verify original-artist credit carefully -- a song has been mis-credited to the wrong artist before (a listed \"Casiio\" cover turned out to actually be Yasuha's original)."
+      ],
+      "rejections": []
+    },
+    "circuit-crush": {
+      "callsign": "CIRCUIT CRUSH",
+      "genre": "Synthwave and retrowave -- arpeggios, gated drums, a drive that never ends",
+      "eraLane": "modern retro genre (2010s-present), evoking 1980s aesthetics",
+      "acceptedArtists": [
+        "Kavinsky",
+        "The Midnight",
+        "GUNSHIP",
+        "FM-84",
+        "Perturbator",
+        "Carpenter Brut",
+        "Electric Youth",
+        "Timecop1983",
+        "Dance With The Dead",
+        "Power Glove",
+        "Lazerhawk",
+        "Mitch Murder",
+        "Dan Terminus",
+        "Miami Nights 1984",
+        "Magic Sword",
+        "Com Truise",
+        "Anoraak",
+        "Scandroid",
+        "GosT",
+        "NINA",
+        "Robert Parker",
+        "SelloRekt & LA Dreams"
+      ],
+      "constraints": [
+        "Owns the darker/harder end of synthwave -- Perturbator, Carpenter Brut, GosT and similar belong here specifically, NOT on CIPHER, even though CIPHER is also electronic. This boundary has been deliberately enforced before (see CIPHER's rejections below)."
+      ],
+      "rejections": []
+    },
+    "atomic": {
+      "callsign": "ATOMIC",
+      "genre": "In-universe atomic-age broadcast -- swing, jump blues, doo-wop",
+      "eraLane": "genuine 1940s-1950s recordings only",
+      "acceptedArtists": [
+        "The Ink Spots",
+        "Sheldon Allman",
+        "Roy Brown",
+        "Dion",
+        "Skeeter Davis",
+        "The Five Stars",
+        "Elton Britt",
+        "Andrews Sisters & Danny Kaye",
+        "Louis Jordan",
+        "Bing Crosby & The Andrews Sisters",
+        "Nat King Cole",
+        "The Chordettes",
+        "Tennessee Ernie Ford",
+        "Sons of the Pioneers",
+        "Big Joe Turner",
+        "Billy Ward and His Dominoes",
+        "Artie Shaw & His Orchestra",
+        "Billie Holiday",
+        "Bob Crosby and the Bobcats",
+        "Warren Smith",
+        "The Chords",
+        "Clyde McPhatter & The Drifters",
+        "Jackie Brenston & His Delta Cats"
+      ],
+      "constraints": [
+        "TIGHTEST constraint on the roster: not just \"any genuine 40s/50s classic\" -- must be verifiably a real track that actually plays on Fallout 4's Diamond City Radio or Fallout 76's Appalachia Radio. A track has been pulled before for being period-correct but NOT actually on those in-game stations (checked against the Fallout Wiki tracklists).",
+        "Attribution precision matters -- credit the actual original recording artist, not a more-famous cover (e.g. \"Good Rocking Tonight\" is Roy Brown's original, not the Wynonie Harris version some sources list)."
+      ],
+      "rejections": [
+        {
+          "artist": "various",
+          "track": "Jump Jive An' Wail / Minnie the Moocher / Choo Choo Ch'Boogie / Boogie Woogie Bugle Boy (original selection)",
+          "reason": "Genuine 40s/50s classics but not actually on Diamond City Radio or Appalachia Radio -- replaced with tracks verified against the real in-game tracklists (19th pass)."
+        }
+      ]
+    },
+    "hackback": {
+      "callsign": "HACKBACK",
+      "genre": "Golden-age and underground hip-hop -- boom-bap, deep cuts",
+      "eraLane": "primarily late 1980s-1990s golden age, some adjacent-era classics",
+      "acceptedArtists": [
+        "A Tribe Called Quest",
+        "De La Soul",
+        "Outkast",
+        "Wu-Tang Clan",
+        "MF DOOM",
+        "Nas",
+        "Gang Starr",
+        "Digable Planets",
+        "Dr. Dre",
+        "Ice Cube",
+        "The Pharcyde",
+        "Warren G",
+        "Pete Rock & C.L. Smooth",
+        "Black Star",
+        "Souls of Mischief",
+        "Cypress Hill",
+        "2Pac"
+      ],
+      "constraints": [
+        "Genuinely coast-to-coast -- NY is if anything the heavier side (Tribe/De La/Wu-Tang/Nas/Gang Starr/Pete Rock/Digable Planets/MF DOOM/Black Star) alongside West Coast (Dre/Ice Cube/Warren G/2Pac/Cypress Hill) and Outkast (Atlanta). A \"west coast legends\" framing was checked against the actual tracklist and found wrong (52nd pass) -- don't skew additions toward any one coast without checking the balance first."
+      ],
+      "rejections": [
+        {
+          "artist": "Snoop Dogg (as Snoop Doggy Dogg)",
+          "track": "Gin and Juice",
+          "reason": "Removed in the 2026-08-23 curation pass. No stated reason was captured -- worth confirming whether this reflects a real boundary (e.g. steering away from more mainstream/radio-famous tracks in favor of deeper cuts) or was a one-off taste call, before treating it as a pattern."
+        }
+      ]
+    },
+    "cipher": {
+      "callsign": "CIPHER",
+      "genre": "Big beat and breakbeat electronica -- late-night hacker-movie soundtrack energy",
+      "eraLane": "primarily late 1990s-2000s big beat/breakbeat",
+      "acceptedArtists": [
+        "The Prodigy",
+        "The Chemical Brothers",
+        "Orbital",
+        "Massive Attack",
+        "Leftfield",
+        "Underworld",
+        "Rob Dougan",
+        "Meat Beat Manifesto",
+        "Propellerheads",
+        "The Crystal Method",
+        "Freestylers",
+        "Fatboy Slim",
+        "Groove Armada",
+        "Portishead"
+      ],
+      "constraints": [
+        "Big-beat/breakbeat energy specifically -- upbeat, propulsive, \"hacker movie soundtrack.\" NOT the darker synthwave/electronic lane (that's CIRCUIT CRUSH's territory, enforced deliberately -- see its profile) and NOT moodier IDM/glitch (Aphex Twin has been rejected from this station twice, see below).",
+        "Audio-quality bar, not just genre fit: a track has been pulled purely for having dialogue/interview audio baked into the official video, even though the song itself fit (\"Da Funk\" precedent) -- check the actual video, not just that a clean studio version exists somewhere."
+      ],
+      "rejections": [
+        {
+          "artist": "Aphex Twin",
+          "track": "Windowlicker",
+          "reason": "Rejected once explicitly (34th pass, too IDM/experimental for this station's big-beat lane), accidentally re-added in a later pass without noticing the earlier rejection, caught by the network-ops dashboard's overlap checker, removed again in the 2026-08-23 curation pass. Treat Aphex Twin as firmly off-limits for this station going forward -- it's been tried and rejected twice now."
+        },
+        {
+          "artist": "Aphex Twin",
+          "track": "Come to Daddy",
+          "reason": "Same rejection as Windowlicker above, same pass."
+        },
+        {
+          "artist": "Leftfield",
+          "track": "Phat Planet",
+          "reason": "Pulled alongside the Aphex Twin tracks in the same pass -- likely the same too-heavy/experimental call, though the exact reasoning for this specific track wasn't separately documented."
+        },
+        {
+          "artist": "Daft Punk",
+          "track": "Da Funk",
+          "reason": "Not a genre rejection -- pulled because the official video's audio has dialogue/interview footage baked in, not a clean listen for a radio station."
+        }
+      ]
+    },
+    "nin": {
+      "callsign": "NINE INCH NAILS",
+      "genre": "Industrial rage, mechanical dread",
+      "eraLane": "Nine Inch Nails' catalog specifically",
+      "acceptedArtists": [
+        "Nine Inch Nails"
+      ],
+      "constraints": [
+        "Single-artist station by design -- 100% Nine Inch Nails. Do not propose other industrial/NIN-adjacent artists (Ministry, Skinny Puppy, etc.) without confirming first; this station's whole identity is being NIN's own dedicated frequency."
+      ],
+      "rejections": []
+    }
+  }
+}

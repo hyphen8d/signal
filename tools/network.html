@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SIGNAL — network ops</title>
+<style>
+  :root {
+    --bg: #0b0d0a;
+    --panel: #12160f;
+    --line: #2a3324;
+    --ink: #c9e8b8;
+    --ink-dim: #7f9670;
+    --ink-faint: #4a5a42;
+    --amber: #e8b84a;
+    --red: #e8604a;
+    --green: #6ad46a;
+    --mono: "SF Mono", "Menlo", "Consolas", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
+    padding: 24px 32px 80px;
+  }
+  h1 {
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--amber);
+    margin: 0 0 4px;
+    text-transform: uppercase;
+  }
+  h1 .sub { color: var(--ink-dim); font-weight: normal; text-transform: none; letter-spacing: normal; }
+  .totals { color: var(--ink-dim); margin-bottom: 20px; }
+  .totals b { color: var(--ink); }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  button {
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  button:hover { border-color: var(--ink-dim); }
+  button:disabled { opacity: 0.35; cursor: default; }
+  button.primary { border-color: var(--amber); color: var(--amber); }
+  button.danger { border-color: var(--red); color: var(--red); }
+  button.small { padding: 2px 8px; font-size: 11px; }
+  input[type=text] {
+    background: #080a06;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 5px 8px;
+    border-radius: 2px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .panel-head:hover { background: #161c11; }
+  .callsign { font-weight: bold; color: var(--ink); min-width: 190px; }
+  .secret .callsign { color: var(--red); }
+  .glyph { color: var(--amber); width: 1.4em; display: inline-block; text-align: center; }
+  .freq { color: var(--ink-dim); min-width: 64px; }
+  .tagline { color: var(--ink-dim); flex: 1; font-style: italic; }
+  .badges { display: flex; gap: 6px; }
+  .badge {
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .badge.ok { color: var(--green); border-color: #2e5a2e; }
+  .badge.warn { color: var(--red); border-color: #5a2e2e; }
+  .chevron { color: var(--ink-faint); width: 1em; }
+  .panel-body { display: none; border-top: 1px solid var(--line); padding: 12px 14px; }
+  .panel.open .panel-body { display: block; }
+  .panel.open .chevron { transform: rotate(90deg); }
+  .desc { color: var(--ink-dim); margin-bottom: 10px; font-size: 12px; }
+  table.tracks { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.tracks td { padding: 4px 6px; border-bottom: 1px solid #1a2116; vertical-align: middle; }
+  table.tracks tr:hover td { background: #161c11; }
+  .idx { color: var(--ink-faint); width: 2.4em; }
+  .t-title { color: var(--ink); }
+  .t-artist { color: var(--ink-dim); }
+  .t-id { color: var(--ink-faint); font-size: 11px; }
+  .row-actions { white-space: nowrap; text-align: right; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .status-dot.ok { background: var(--green); }
+  .status-dot.bad { background: var(--red); }
+  .status-dot.unknown { background: var(--ink-faint); }
+  .preview-row td { padding: 0 6px 8px; }
+  .preview-row iframe { width: 320px; height: 180px; border: 1px solid var(--line); }
+  .add-track { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+  .add-track input { flex: 1; min-width: 120px; }
+  .station-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+  .dirty-flag { color: var(--amber); font-size: 11px; }
+  .save-msg { font-size: 11px; color: var(--ink-dim); }
+  .overlap-row, .dupe-row { padding: 3px 0; font-size: 12px; }
+  .overlap-row .artist, .dupe-row .yid { color: var(--ink); }
+  .overlap-row .stations, .dupe-row .titles { color: var(--ink-dim); }
+  .empty { color: var(--ink-faint); font-style: italic; }
+  .loading { color: var(--ink-dim); padding: 40px; text-align: center; }
+  .connect-box {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 3px;
+    padding: 24px;
+    max-width: 560px;
+  }
+  .connect-box p { color: var(--ink-dim); margin: 0 0 14px; }
+  .connect-box code {
+    background: #080a06; border: 1px solid var(--line); padding: 1px 5px; border-radius: 2px; color: var(--ink);
+  }
+  .conn-status { color: var(--ink-dim); font-size: 12px; margin-bottom: 16px; }
+  .conn-status b { color: var(--green); }
+  .fatal { color: var(--red); margin-top: 10px; font-size: 12px; }
+  #app { display: none; }
+  .pending-card {
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: #0e120c;
+  }
+  .pending-card .pc-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pending-card .pc-station { color: var(--amber); font-weight: bold; }
+  .pending-card .pc-title { color: var(--ink); }
+  .pending-card .pc-artist { color: var(--ink-dim); }
+  .pending-card .pc-rationale { color: var(--ink-dim); font-size: 12px; margin: 6px 0; font-style: italic; }
+  .pending-card .pc-meta { color: var(--ink-faint); font-size: 11px; }
+  .pending-card .pc-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+</style>
+</head>
+<body>
+
+<h1>SIGNAL <span class="sub">— network ops (local file, no server)</span></h1>
+
+<div id="connect-screen">
+  <div class="connect-box">
+    <p>This page reads and writes <code>program.js</code> directly on your disk via Chrome's File System Access API — no server, no terminal. First time here (or after a browser restart), grant access to the <code>signal-radio-engine</code> repo folder.</p>
+    <button class="primary" id="btn-connect">connect signal-radio-engine folder</button>
+    <div class="fatal" id="connect-error"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="conn-status" id="conn-status"></div>
+
+  <div class="totals" id="totals"></div>
+
+  <div class="toolbar">
+    <button class="primary" id="btn-check-all">check all for dead links</button>
+    <button id="btn-save-all">save all changed stations</button>
+    <button id="btn-refresh">reload from disk</button>
+    <span class="save-msg" id="global-msg"></span>
+  </div>
+
+  <div class="panel" id="panel-pending">
+    <div class="panel-head" onclick="togglePanel('panel-pending')">
+      <span class="chevron">▶</span>
+      <span class="callsign">PENDING QUEUE</span>
+      <span class="tagline" id="pending-summary"></span>
+    </div>
+    <div class="panel-body" id="pending-body"></div>
+  </div>
+
+  <div class="panel" id="panel-overlaps">
+    <div class="panel-head" onclick="togglePanel('panel-overlaps')">
+      <span class="chevron">▶</span>
+      <span class="callsign">ARTIST OVERLAP &amp; DUPLICATES</span>
+      <span class="tagline" id="overlap-summary"></span>
+    </div>
+    <div class="panel-body" id="overlap-body"></div>
+  </div>
+
+  <div id="stations"></div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------
+// SIGNAL network ops -- serverless rebuild (55th pass, moved off a running
+// server in favor of a plain file). Everything the
+// Node version (network-server.js + tools/lib/roster.js) did now runs in
+// this one HTML file's own JS, reading and writing program.js directly via
+// Chrome's File System Access API instead of a Node process + HTTP API.
+// Open by double-clicking this file, or bookmark it -- no terminal step.
+//
+// The extraction/patch logic below is a straight port of tools/lib/roster.js
+// (brace-match STATIONS/SECRET_STATION out of program.js's source text,
+// eval with a local realTrack() stub, surgically patch one station's
+// `tracks: [...]` block). See that file's own comments for the reasoning;
+// nothing about the parsing logic changed, only where it runs.
+//
+// PENDING QUEUE (added 56th pass): tools/pending-tracks.json holds track
+// candidates proposed for a station but not yet committed. Claude proposes
+// entries into that file directly on disk, on request (see
+// tools/station-profiles.json for the vibe-fit reasoning behind a
+// suggestion) -- this dashboard is where pending entries get reviewed and
+// approved or rejected. Approving a pending entry adds it to that station's normal
+// (dirty) in-memory edit state -- same path as the manual add-track form --
+// so it still goes through the existing save/verify/write flow rather than
+// writing straight to program.js. Rejecting moves it to the file's
+// `rejected` list (with a reason) so Claude doesn't re-propose it later.
+// ---------------------------------------------------------------------
+
+// ---- IndexedDB: remember the granted folder handle across reloads -----
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('signal-network-ops', 1)
+    req.onupgradeneeded = () => req.result.createObjectStore('handles')
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+}
+async function idbGet(key) {
+  const db = await idbOpen()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('handles', 'readonly')
+    const req = tx.objectStore('handles').get(key)
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+}
+async function idbSet(key, value) {
+  const db = await idbOpen()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('handles', 'readwrite')
+    tx.objectStore('handles').put(value, key)
+
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+}
+async function idbDel(key) {
+  const db = await idbOpen()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('handles', 'readwrite')
+    tx.objectStore('handles').delete(key)
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+}
+
+// ---- program.js parsing / patching (ported from tools/lib/roster.js) --
+function matchBracket(src, openIdx, openCh, closeCh) {
+  let depth = 0
+  for (let i = openIdx; i < src.length; i++) {
+    if (src[i] === openCh) depth++
+    else if (src[i] === closeCh) { depth--; if (depth === 0) return i }
+  }
+  return -1
+}
+function extractLiteral(src, declNeedle, openCh, closeCh) {
+  const declIdx = src.indexOf(declNeedle)
+  if (declIdx === -1) throw new Error(`"${declNeedle}" not found in program.js`)
+  const openIdx = src.indexOf(openCh, declIdx)
+  const closeIdx = matchBracket(src, openIdx, openCh, closeCh)
+  if (closeIdx === -1) throw new Error(`Unbalanced ${openCh}${closeCh} reading "${declNeedle}"`)
+  return src.slice(openIdx, closeIdx + 1)
+}
+function realTrack(youtubeId, title, artist) {
+  return { id: `yt:${youtubeId}:real`, youtubeId, title, artist }
+}
+function loadRosterFromText(src) {
+  const stationsText = extractLiteral(src, 'const STATIONS = [', '[', ']')
+  const STATIONS = eval(stationsText)
+  // 2026-08-24: program.js used to have one `const SECRET_STATION = {...}`;
+  // it's now named secret stations (currently just NIN_STATION -- a second,
+  // GREEN_HOUSE_STATION, was built and pulled before shipping, see
+  // program.js's own SECRET_STATIONS comment) combined into
+  // `const SECRET_STATIONS = [NIN_STATION]`. That combining line is just a
+  // reference array, not a literal one, so it can't be eval'd standalone --
+  // extract each named object the same way STATIONS is extracted instead,
+  // then build the array here. Each extraction is optional (try/catch, not
+  // a hard failure) specifically so this dashboard doesn't break again the
+  // way it did when GREEN_HOUSE_STATION disappeared from program.js --
+  // that exact class of bug (a hardcoded name here going stale against
+  // program.js's real contents) is what broke this file once already this
+  // session; add a new secret station's own name to `names` below rather
+  // than hardcoding another required extractLiteral call.
+  const names = ['NIN_STATION', 'GREEN_HOUSE_STATION']
+  const SECRET_STATIONS = []
+  for (const name of names) {
+    try {
+      const text = extractLiteral(src, `const ${name} = {`, '{', '}')
+      SECRET_STATIONS.push(eval('(' + text + ')'))
+    } catch (e) { /* not present in program.js right now -- skip it */ }
+  }
+  return { STATIONS, SECRET_STATIONS }
+}
+function findStationObjectRange(src, stationId) {
+  const idNeedle = `id: '${stationId}'`
+  const idIdx = src.indexOf(idNeedle)
+  if (idIdx === -1) throw new Error(`No station with id "${stationId}" found in program.js`)
+  if (src.indexOf(idNeedle, idIdx + 1) !== -1) {
+    throw new Error(`"${idNeedle}" appears more than once -- refusing to guess which station`)
+  }
+  const objStart = src.lastIndexOf('{', idIdx)
+  if (objStart === -1) throw new Error(`Could not find opening brace before ${idNeedle}`)
+  const objEnd = matchBracket(src, objStart, '{', '}')
+  if (objEnd === -1) throw new Error(`Unbalanced braces for station "${stationId}"`)
+  return { objStart, objEnd }
+}
+function findTracksRange(src, objStart, objEnd) {
+  const objText = src.slice(objStart, objEnd + 1)
+  const needle = 'tracks: ['
+  const relIdx = objText.indexOf(needle)
+  if (relIdx === -1) throw new Error('No "tracks: [" found in station object')
+  const openIdx = objStart + relIdx + needle.length - 1
+  const closeIdx = matchBracket(src, openIdx, '[', ']')
+  if (closeIdx === -1 || closeIdx > objEnd) throw new Error('Unbalanced tracks array')
+  return { openIdx, closeIdx }
+}
+function quoteJs(str) {
+  const s = String(str)
+  if (!s.includes("'")) return `'${s.replace(/\\/g, '\\\\')}'`
+  if (!s.includes('"')) return `"${s.replace(/\\/g, '\\\\')}"`
+  return JSON.stringify(s)
+}
+function formatTracksBlock(tracks) {
+  const ITEM_INDENT = '      '
+  const CLOSE_INDENT = '    '
+  const lines = tracks.map(t =>
+    `${ITEM_INDENT}realTrack(${quoteJs(t.youtubeId)}, ${quoteJs(t.title)}, ${quoteJs(t.artist)}),`
+  )
+  return '[\n' + lines.join('\n') + '\n' + CLOSE_INDENT + ']'
+}
+// Pure function: text in, patched text out. No file IO here -- the caller
+// decides when (and whether, after the safety check below) to write it.
+function patchStationTracks(src, stationId, tracks) {
+  const { objStart, objEnd } = findStationObjectRange(src, stationId)
+  const { openIdx, closeIdx } = findTracksRange(src, objStart, objEnd)
+  return src.slice(0, openIdx) + formatTracksBlock(tracks) + src.slice(closeIdx + 1)
+}
+// Replaces `node --check` from the server version -- there's no way to
+// syntax-check arbitrary JS in-browser without eval'ing the whole module
+// (which touches window/DOM and has real side effects), so instead this
+// re-runs the SAME extraction used to read the roster against the patched
+// text. If that round-trips cleanly and the edited station's track count
+// matches what we just wrote, the patch is structurally sound. Throws on
+// any mismatch -- callers must not write to disk if this throws.
+function verifyPatch(newSrc, stationId, expectedTrackCount) {
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(newSrc)
+  const all = [...STATIONS, ...SECRET_STATIONS]
+  const st = all.find(s => s.id === stationId)
+  if (!st) throw new Error(`Post-patch check: station "${stationId}" not found`)
+  if (st.tracks.length !== expectedTrackCount) {
+    throw new Error(`Post-patch check: expected ${expectedTrackCount} tracks, found ${st.tracks.length}`)
+  }
+  return true
+}
+
+// stations.md generator -- port of tools/stations-to-md.js.
+function buildStationsMd(STATIONS) {
+  const lines = []
+  lines.push('# SIGNAL -- station roster')
+  lines.push('')
+  lines.push(`Generated from program.js. ${STATIONS.length} stations, ${STATIONS.reduce((n, c) => n + c.tracks.length, 0)} tracks total.`)
+  lines.push('')
+  for (const st of STATIONS) {
+    lines.push(`## ${st.callsign} -- ${st.freq.toFixed(1)}`)
+    lines.push('')
+    lines.push(`*${st.tagline}*`)
+    lines.push('')
+    lines.push(`Ident tones (Hz): ${st.ident.join(', ')}`)
+    lines.push('')
+    lines.push(`Tracks (${st.tracks.length}):`)
+    lines.push('')
+    st.tracks.forEach((t, i) => {
+      lines.push(`${i + 1}. **${t.title}** -- ${t.artist}  ([youtu.be/${t.youtubeId}](https://youtu.be/${t.youtubeId}))`)
+    })
+    lines.push('')
+  }
+  return lines.join('\n')
+}
+
+// ---- roster stats (ported from network-server.js) ---------------------
+const TAGLINE_RE = /^[^,]+,\s*[^,]+$/
+function statsFor(station) {
+  const artists = new Set(station.tracks.map(t => t.artist))
+  return {
+    trackCount: station.tracks.length,
+    artistCount: artists.size,
+    taglineOk: TAGLINE_RE.test((station.tagline || '').trim()),
+    hasFreqNote: !!station.freqNote,
+    hasGlyph: !!station.glyph,
+    visual: station.visual || null,
+  }
+}
+function buildRosterPayload(src) {
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(src)
+  const all = [...STATIONS, ...SECRET_STATIONS]
+  const artistIndex = new Map()
+  const idIndex = new Map()
+  for (const st of all) {
+    for (const t of st.tracks) {
+      if (!artistIndex.has(t.artist)) artistIndex.set(t.artist, new Set())
+      artistIndex.get(t.artist).add(st.id)
+      if (!idIndex.has(t.youtubeId)) idIndex.set(t.youtubeId, [])
+      idIndex.get(t.youtubeId).push({ stationId: st.id, title: t.title })
+    }
+  }
+  const overlaps = [...artistIndex.entries()]
+    .filter(([, ids]) => ids.size > 1)
+    .map(([artist, ids]) => ({ artist, stations: [...ids] }))
+    .sort((a, b) => b.stations.length - a.stations.length)
+  const dupeIds = [...idIndex.entries()]
+    .filter(([, hits]) => hits.length > 1)
+    .map(([youtubeId, hits]) => ({ youtubeId, hits }))
+  return {
+    stations: STATIONS.map(st => ({ ...st, secret: false, stats: statsFor(st) })),
+    secretStations: SECRET_STATIONS.map(st => ({ ...st, secret: true, stats: statsFor(st) })),
+    totals: {
+      stationCount: STATIONS.length + SECRET_STATIONS.length,
+      trackCount: all.reduce((n, s) => n + s.tracks.length, 0),
+      uniqueArtists: artistIndex.size,
+    },
+    overlaps,
+    dupeIds,
+  }
+}
+
+// ---- oEmbed checks -- direct fetch, no proxy needed --------------------
+async function checkOembed(youtubeId) {
+  const url = `https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${youtubeId}`)}&format=json`
+  try {
+    const res = await fetch(url)
+    let meta = null
+    if (res.status === 200) { try { meta = await res.json() } catch (e) {} }
+    return { youtubeId, ok: res.status === 200, status: res.status, title: meta?.title, author: meta?.author_name }
+  } catch (err) {
+    return { youtubeId, ok: false, status: 'ERR', error: String(err?.message ?? err) }
+  }
+}
+async function mapLimit(items, limit, fn) {
+  const results = new Array(items.length)
+  let next = 0
+  async function worker() { while (next < items.length) { const i = next++; results[i] = await fn(items[i], i) } }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  return results
+}
+
+// ---- connection state ---------------------------------------------------
+let dirHandle = null
+let programText = ''
+let roster = null
+const edits = {}
+const linkStatus = {}
+let pendingData = { pending: [], rejected: [] }
+
+async function getFileText(name) {
+  const fh = await dirHandle.getFileHandle(name)
+  const file = await fh.getFile()
+  return file.text()
+}
+async function writeFileText(name, text, create = false) {
+  const fh = await dirHandle.getFileHandle(name, { create })
+  const w = await fh.createWritable()
+  await w.write(text)
+  await w.close()
+}
+
+// pending-tracks.json lives in tools/ (alongside this dashboard), not the
+// repo root where program.js/stations.md live -- it's a dev-tool file, not
+// a roster file. getFileText/writeFileText assume root-relative paths, so
+// this needs its own directory handle into tools/.
+async function getToolsDirHandle() {
+  return dirHandle.getDirectoryHandle('tools', { create: true })
+}
+// Optional -- a fresh checkout, or a repo Claude hasn't proposed anything
+// into yet, just won't have the file. Missing or unparseable both fall back
+// to an empty queue rather than blocking connect.
+async function loadPendingQueue() {
+  try {
+    const toolsDir = await getToolsDirHandle()
+    const fh = await toolsDir.getFileHandle('pending-tracks.json')
+    const text = await (await fh.getFile()).text()
+    const parsed = JSON.parse(text)
+    pendingData = { pending: parsed.pending || [], rejected: parsed.rejected || [] }
+  } catch (err) {
+    pendingData = { pending: [], rejected: [] }
+  }
+}
+async function writePendingQueue() {
+  const toolsDir = await getToolsDirHandle()
+  const fh = await toolsDir.getFileHandle('pending-tracks.json', { create: true })
+  const w = await fh.createWritable()
+  await w.write(JSON.stringify(pendingData, null, 2))
+  await w.close()
+}
+
+async function connectWith(handle) {
+  dirHandle = handle
+  document.getElementById('connect-error').textContent = ''
+  try {
+    programText = await getFileText('program.js')
+  } catch (err) {
+    document.getElementById('connect-error').textContent =
+      'Could not find program.js in that folder -- pick the signal-radio-engine repo root. (' + err.message + ')'
+    document.getElementById('connect-screen').style.display = 'block'
+    document.getElementById('app').style.display = 'none'
+    return
+  }
+  document.getElementById('connect-screen').style.display = 'none'
+  document.getElementById('app').style.display = 'block'
+  document.getElementById('conn-status').innerHTML = `connected: <b>${handle.name}</b> — reads/writes program.js on save`
+  roster = buildRosterPayload(programText)
+  await loadPendingQueue()
+  render()
+}
+
+async function tryAutoConnect() {
+  let handle
+  try { handle = await idbGet('repoRoot') } catch (e) { handle = null }
+  if (!handle) return
+  try {
+    const perm = await handle.queryPermission({ mode: 'readwrite' })
+    if (perm === 'granted') { await connectWith(handle); return }
+  } catch (e) { /* handle may be stale (folder moved/renamed) -- fall through to manual connect */ }
+  // Permission lapsed or needs a fresh grant -- show the connect button
+  // pre-labelled so one click re-requests rather than re-picking.
+  const btn = document.getElementById('btn-connect')
+  btn.textContent = `reconnect "${handle.name}"`
+  btn.addEventListener('click', async function reconnectOnce(e) {
+    e.stopImmediatePropagation()
+    try {
+      const perm = await handle.requestPermission({ mode: 'readwrite' })
+      if (perm === 'granted') { await connectWith(handle); return }
+      document.getElementById('connect-error').textContent = 'Permission not granted.'
+    } catch (err) {
+      document.getElementById('connect-error').textContent = String(err.message ?? err)
+    }
+  }, { once: true })
+}
+
+document.getElementById('btn-connect').addEventListener('click', async () => {
+  try {
+    const handle = await window.showDirectoryPicker({ mode: 'readwrite' })
+    await idbSet('repoRoot', handle)
+    await connectWith(handle)
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      document.getElementById('connect-error').textContent = String(err.message ?? err)
+    }
+  }
+})
+
+tryAutoConnect()
+
+// ---- everything below is UI rendering + edit state, same shape as the --
+// ---- server version, just talking to programText/dirHandle instead of -
+// ---- fetch('/api/...'). -------------------------------------------------
+
+function el(tag, attrs, ...children) {
+  const e = document.createElement(tag)
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'onclick') e.addEventListener('click', v)
+    else if (k === 'html') e.innerHTML = v
+    else e.setAttribute(k, v)
+  }
+  for (const c of children) {
+    if (c == null) continue
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c)
+  }
+  return e
+}
+function togglePanel(id) { document.getElementById(id).classList.toggle('open') }
+window.togglePanel = togglePanel
+
+function tracksFor(station) { return edits[station.id] || station.tracks }
+function isDirty(station) { return !!edits[station.id] }
+
+function render() {
+  const t = roster.totals
+  document.getElementById('totals').innerHTML =
+    `<b>${t.stationCount}</b> stations &middot; <b>${t.trackCount}</b> tracks &middot; <b>${t.uniqueArtists}</b> unique artists`
+  renderPending()
+  renderOverlaps()
+  renderStations()
+}
+
+function callsignFor(stationId) {
+  const st = [...(roster?.stations || []), ...(roster?.secretStations || [])].find(s => s && s.id === stationId)
+  return st ? st.callsign : stationId
+}
+
+function renderPending() {
+  const summary = document.getElementById('pending-summary')
+  const body = document.getElementById('pending-body')
+  const n = pendingData.pending.length
+  summary.textContent = n
+    ? `${n} candidate${n === 1 ? '' : 's'} awaiting review`
+    : 'nothing queued -- ask Claude to propose tracks for a station'
+  body.innerHTML = ''
+  if (!n) { body.appendChild(el('div', { class: 'empty' }, 'no pending candidates')); return }
+  const sorted = [...pendingData.pending].sort((a, b) => (a.stationId || '').localeCompare(b.stationId || ''))
+  for (const entry of sorted) body.appendChild(renderPendingCard(entry))
+}
+
+function renderPendingCard(entry) {
+  const card = el('div', { class: 'pending-card' })
+  const head = el('div', { class: 'pc-head' },
+    el('span', { class: 'pc-station' }, callsignFor(entry.stationId)),
+    statusDotFor(entry.youtubeId),
+    el('span', { class: 'pc-title' }, entry.title),
+    el('span', { class: 'pc-artist' }, '— ' + entry.artist),
+  )
+  card.appendChild(head)
+  if (entry.rationale) card.appendChild(el('div', { class: 'pc-rationale' }, entry.rationale))
+  card.appendChild(el('div', { class: 'pc-meta' },
+    `${entry.youtubeId} · proposed ${entry.proposedBy || 'claude'}${entry.proposedAt ? ' on ' + entry.proposedAt : ''}`
+  ))
+  const previewWrap = el('div', {})
+  card.appendChild(previewWrap)
+  const actions = el('div', { class: 'pc-actions' })
+  const previewBtn = el('button', { class: 'small' }, 'preview')
+  previewBtn.addEventListener('click', () => {
+    if (previewWrap.firstChild) { previewWrap.innerHTML = ''; previewBtn.textContent = 'preview'; return }
+    previewWrap.appendChild(el('iframe', {
+      src: `https://www.youtube-nocookie.com/embed/${entry.youtubeId}`,
+      style: 'width:320px;height:180px;border:1px solid var(--line);margin:6px 0;display:block',
+      allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+      allowfullscreen: 'true',
+    }))
+    previewBtn.textContent = 'hide preview'
+  })
+  actions.appendChild(previewBtn)
+  const checkBtn = el('button', { class: 'small' }, 'check link')
+  checkBtn.addEventListener('click', async () => {
+    checkBtn.textContent = 'checking…'
+    const res = await checkOembed(entry.youtubeId)
+    linkStatus[entry.youtubeId] = res
+    renderPending()
+  })
+  actions.appendChild(checkBtn)
+  const approveBtn = el('button', { class: 'small primary' }, 'approve → add to station')
+  approveBtn.addEventListener('click', () => approvePending(entry))
+  actions.appendChild(approveBtn)
+  const rejectBtn = el('button', { class: 'small danger' }, 'reject')
+  rejectBtn.addEventListener('click', () => rejectPending(entry))
+  actions.appendChild(rejectBtn)
+  const msg = el('span', { class: 'save-msg' })
+  actions.appendChild(msg)
+  card.appendChild(actions)
+  return card
+}
+
+// Approving does NOT write program.js directly -- it pushes the candidate
+// into that station's normal in-memory edit state (same as the manual
+// add-track form), so it flows through the exact same dirty/save/verify
+// path as any other roster edit. It's removed from the pending file right
+// away, since its job (getting reviewed) is done either way.
+async function approvePending(entry) {
+  const st = [...roster.stations, ...roster.secretStations].find(s => s.id === entry.stationId)
+  const g = document.getElementById('global-msg')
+  if (!st) { g.textContent = `approve failed: no station "${entry.stationId}" found`; g.style.color = 'var(--red)'; return }
+  addTrack(st, { youtubeId: entry.youtubeId, title: entry.title, artist: entry.artist })
+  pendingData.pending = pendingData.pending.filter(e => e !== entry)
+  await writePendingQueue()
+  renderPending()
+  document.getElementById('panel-' + st.id).classList.add('open')
+  g.textContent = `approved "${entry.title}" onto ${st.callsign} -- unsaved, use "save to program.js" (or "save all changed stations") to commit it.`
+  g.style.color = 'var(--green)'
+}
+
+async function rejectPending(entry) {
+  const reason = prompt(`Reject "${entry.title}" -- ${entry.artist} for ${callsignFor(entry.stationId)}?\nOptional reason (helps Claude avoid re-proposing it):`, '')
+  if (reason === null) return
+  pendingData.pending = pendingData.pending.filter(e => e !== entry)
+  pendingData.rejected.push({ ...entry, rejectedAt: new Date().toISOString().slice(0, 10), rejectedReason: reason || undefined })
+  await writePendingQueue()
+  renderPending()
+  document.getElementById('global-msg').textContent = `rejected "${entry.title}" -- logged to pending-tracks.json so it isn't re-proposed.`
+}
+
+function renderOverlaps() {
+  const summary = document.getElementById('overlap-summary')
+  const body = document.getElementById('overlap-body')
+  const n = roster.overlaps.length, d = roster.dupeIds.length
+  summary.textContent = `${n} artist${n === 1 ? '' : 's'} on multiple stations, ${d} duplicate track id${d === 1 ? '' : 's'}`
+  body.innerHTML = ''
+  if (!n && !d) { body.appendChild(el('div', { class: 'empty' }, 'nothing to flag')); return }
+  if (n) {
+    body.appendChild(el('div', { style: 'color:var(--ink-dim);margin-bottom:4px' }, 'Artists appearing on more than one station:'))
+    for (const o of roster.overlaps) {
+      body.appendChild(el('div', { class: 'overlap-row' },
+        el('span', { class: 'artist' }, o.artist + '  '),
+        el('span', { class: 'stations' }, '— ' + o.stations.join(', '))
+      ))
+    }
+  }
+  if (d) {
+    body.appendChild(el('div', { style: 'color:var(--ink-dim);margin:10px 0 4px' }, 'Duplicate YouTube IDs:'))
+    for (const dup of roster.dupeIds) {
+      body.appendChild(el('div', { class: 'dupe-row' },
+        el('span', { class: 'yid' }, dup.youtubeId + '  '),
+        el('span', { class: 'titles' }, '— ' + dup.hits.map(h => `${h.stationId}: ${h.title}`).join(' / '))
+      ))
+    }
+  }
+}
+
+function renderStations() {
+  const container = document.getElementById('stations')
+  container.innerHTML = ''
+  const all = [...roster.stations].sort((a, b) => a.freq - b.freq).concat(roster.secretStations)
+  for (const st of all) container.appendChild(renderStationPanel(st))
+}
+
+function badgeFor(stats) {
+  const b = []
+  b.push(el('span', { class: 'badge' }, `${stats.trackCount} trk`))
+  b.push(el('span', { class: 'badge' }, `${stats.artistCount} art`))
+  b.push(el('span', { class: `badge ${stats.taglineOk ? 'ok' : 'warn'}` }, stats.taglineOk ? 'tagline ok' : 'tagline!'))
+  if (!stats.hasFreqNote) b.push(el('span', { class: 'badge warn' }, 'no freqNote'))
+  if (!stats.hasGlyph) b.push(el('span', { class: 'badge warn' }, 'no glyph'))
+  return b
+}
+
+function renderStationPanel(st) {
+  const panelId = 'panel-' + st.id
+  const panel = el('div', { class: 'panel' + (st.secret ? ' secret' : ''), id: panelId })
+  const head = el('div', { class: 'panel-head', onclick: () => panel.classList.toggle('open') },
+    el('span', { class: 'chevron' }, '▶'),
+    el('span', { class: 'freq' }, st.secret ? '(secret)' : st.freq.toFixed(1)),
+    el('span', { class: 'glyph' }, st.glyph || (st.secret ? '●' : '·')),
+    el('span', { class: 'callsign' }, st.callsign),
+    el('span', { class: 'tagline' }, st.tagline || ''),
+    el('div', { class: 'badges' }, ...badgeFor(st.stats))
+  )
+  const body = el('div', { class: 'panel-body' })
+  body.appendChild(renderStationBody(st))
+  panel.appendChild(head)
+  panel.appendChild(body)
+  return panel
+}
+
+function renderStationBody(st) {
+  const wrap = el('div', {})
+  if (st.desc) wrap.appendChild(el('div', { class: 'desc' }, st.desc))
+  const table = el('table', { class: 'tracks' })
+  const tracks = tracksFor(st)
+  tracks.forEach((t, i) => table.appendChild(renderTrackRow(st, t, i, tracks)))
+  wrap.appendChild(table)
+  wrap.appendChild(renderAddForm(st))
+  wrap.appendChild(renderStationActions(st))
+  return wrap
+}
+
+function statusDotFor(youtubeId) {
+  const s = linkStatus[youtubeId]
+  if (!s) return el('span', { class: 'status-dot unknown', title: 'not checked' })
+  return el('span', { class: `status-dot ${s.ok ? 'ok' : 'bad'}`, title: s.ok ? 'oEmbed OK' : `oEmbed ${s.status}` })
+}
+
+function renderTrackRow(st, t, i, tracks) {
+  const tr = el('tr', {})
+  tr.appendChild(el('td', { class: 'idx' }, String(i + 1)))
+  tr.appendChild(el('td', {}, statusDotFor(t.youtubeId)))
+  tr.appendChild(el('td', { class: 't-title' }, t.title))
+  tr.appendChild(el('td', { class: 't-artist' }, t.artist))
+  tr.appendChild(el('td', { class: 't-id' }, t.youtubeId))
+  const actions = el('td', { class: 'row-actions' })
+  actions.appendChild(el('button', { class: 'small', onclick: () => togglePreview(st.id, i) }, 'preview'))
+  actions.appendChild(el('button', { class: 'small', onclick: () => moveTrack(st, i, -1) }, '↑'))
+  actions.appendChild(el('button', { class: 'small', onclick: () => moveTrack(st, i, 1) }, '↓'))
+  actions.appendChild(el('button', { class: 'small danger', onclick: () => removeTrack(st, i) }, 'remove'))
+  tr.appendChild(actions)
+  tr.dataset.previewFor = `${st.id}:${i}`
+  return tr
+}
+
+function togglePreview(stationId, i) {
+  const row = document.querySelector(`tr[data-preview-for="${stationId}:${i}"]`)
+  if (!row) return
+  const existing = row.nextElementSibling
+  if (existing && existing.classList.contains('preview-row')) { existing.remove(); return }
+  const st = [...roster.stations, ...roster.secretStations].find(s => s.id === stationId)
+  const track = tracksFor(st)[i]
+  const previewRow = el('tr', { class: 'preview-row' },
+    el('td', { colspan: '6' },
+      el('iframe', {
+        src: `https://www.youtube-nocookie.com/embed/${track.youtubeId}`,
+        allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+        allowfullscreen: 'true',
+      })
+    )
+  )
+  row.after(previewRow)
+}
+window.togglePreview = togglePreview
+
+function ensureEditable(station) {
+  if (!edits[station.id]) edits[station.id] = station.tracks.map(t => ({ ...t }))
+  return edits[station.id]
+}
+function moveTrack(station, i, dir) {
+  const arr = ensureEditable(station)
+  const j = i + dir
+  if (j < 0 || j >= arr.length) return
+  ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  rerenderStation(station)
+}
+function sortTracks(station, keyFn) {
+  const arr = ensureEditable(station)
+  arr.sort((a, b) => keyFn(a).localeCompare(keyFn(b), undefined, { sensitivity: 'base' }))
+  rerenderStation(station)
+}
+function removeTrack(station, i) {
+  const arr = ensureEditable(station)
+  arr.splice(i, 1)
+  rerenderStation(station)
+}
+function addTrack(station, track) {
+  const arr = ensureEditable(station)
+  arr.push(track)
+  rerenderStation(station)
+}
+function revertStation(station) {
+  delete edits[station.id]
+  rerenderStation(station)
+}
+function rerenderStation(station) {
+  const panel = document.getElementById('panel-' + station.id)
+  const wasOpen = panel.classList.contains('open')
+  const fresh = renderStationPanel(station)
+  if (wasOpen) fresh.classList.add('open')
+  panel.replaceWith(fresh)
+}
+
+function renderAddForm(st) {
+  const idInput = el('input', { type: 'text', placeholder: 'youtube id' })
+  const titleInput = el('input', { type: 'text', placeholder: 'title' })
+  const artistInput = el('input', { type: 'text', placeholder: 'artist' })
+  const msg = el('span', { class: 'save-msg' })
+  const verifyBtn = el('button', { class: 'small' }, 'verify + autofill')
+  verifyBtn.addEventListener('click', async () => {
+    const id = idInput.value.trim()
+    if (!id) return
+    msg.textContent = 'checking…'
+    const res = await checkOembed(id)
+    linkStatus[id] = res
+    if (res.ok) {
+      if (res.title && !titleInput.value) titleInput.value = res.title
+      if (res.author && !artistInput.value) artistInput.value = res.author
+      msg.textContent = 'oEmbed OK — review title/artist, then Add'
+      msg.style.color = 'var(--green)'
+    } else {
+      msg.textContent = `oEmbed ${res.status} — this id does not resolve`
+      msg.style.color = 'var(--red)'
+    }
+  })
+  const addBtn = el('button', { class: 'small primary' }, 'add')
+  addBtn.addEventListener('click', () => {
+    const youtubeId = idInput.value.trim(), title = titleInput.value.trim(), artist = artistInput.value.trim()
+    if (!youtubeId || !title || !artist) {
+      msg.textContent = 'youtube id, title and artist are all required'
+      msg.style.color = 'var(--red)'
+      return
+    }
+    addTrack(st, { youtubeId, title, artist })
+  })
+  return el('div', { class: 'add-track' }, idInput, titleInput, artistInput, verifyBtn, addBtn, msg)
+}
+
+function renderStationActions(st) {
+  const dirty = isDirty(st)
+  const wrap = el('div', { class: 'station-actions' })
+  const checkBtn = el('button', { class: 'small' }, 'check this station’s links')
+  checkBtn.addEventListener('click', () => checkStationLinks(st))
+  wrap.appendChild(checkBtn)
+  const sortArtistBtn = el('button', { class: 'small' }, 'sort by artist')
+  sortArtistBtn.addEventListener('click', () => sortTracks(st, t => t.artist))
+  wrap.appendChild(sortArtistBtn)
+  const sortTitleBtn = el('button', { class: 'small' }, 'sort by title')
+  sortTitleBtn.addEventListener('click', () => sortTracks(st, t => t.title))
+  wrap.appendChild(sortTitleBtn)
+  const saveBtn = el('button', { class: dirty ? 'primary' : '' }, 'save to program.js')
+  saveBtn.disabled = !dirty
+  saveBtn.addEventListener('click', () => saveStation(st))
+  wrap.appendChild(saveBtn)
+  if (dirty) {
+    const revertBtn = el('button', { class: 'small' }, 'revert')
+    revertBtn.addEventListener('click', () => revertStation(st))
+    wrap.appendChild(revertBtn)
+    wrap.appendChild(el('span', { class: 'dirty-flag' }, 'unsaved changes'))
+  }
+  wrap.appendChild(el('span', { class: 'save-msg', id: 'msg-' + st.id }))
+  return wrap
+}
+
+async function checkStationLinks(st) {
+  const ids = tracksFor(st).map(t => t.youtubeId)
+  const msgEl = document.getElementById('msg-' + st.id)
+  if (msgEl) msgEl.textContent = `checking ${ids.length}…`
+  const results = await mapLimit(ids, 6, checkOembed)
+  for (const r of results) linkStatus[r.youtubeId] = r
+  const bad = results.filter(r => !r.ok)
+  rerenderStation(st)
+  document.getElementById('panel-' + st.id).classList.add('open')
+  const freshMsg = document.getElementById('msg-' + st.id)
+  if (freshMsg) {
+    freshMsg.textContent = bad.length ? `${bad.length} problem(s) found` : 'all clear'
+    freshMsg.style.color = bad.length ? 'var(--red)' : 'var(--green)'
+  }
+}
+
+// Applies one station's pending edit against the in-memory programText,
+// verifies the patch, and (only if that passes) writes the file. Returns
+// {ok, error?}. Does NOT touch the DOM/roster -- callers reload after.
+async function saveStationToDisk(st) {
+  const tracks = tracksFor(st)
+  let newText
+  try {
+    newText = patchStationTracks(programText, st.id, tracks)
+    verifyPatch(newText, st.id, tracks.length)
+  } catch (err) {
+    return { ok: false, error: String(err.message ?? err) }
+  }
+  try {
+    await writeFileText('program.js', newText)
+    programText = newText
+    const { STATIONS } = loadRosterFromText(programText)
+    await writeFileText('stations.md', buildStationsMd(STATIONS), true)
+  } catch (err) {
+    return { ok: false, error: 'Write failed: ' + String(err.message ?? err) }
+  }
+  delete edits[st.id]
+  return { ok: true, trackCount: tracks.length }
+}
+
+async function saveStation(st) {
+  const msgEl = document.getElementById('msg-' + st.id)
+  if (msgEl) msgEl.textContent = 'saving…'
+  const res = await saveStationToDisk(st)
+  if (res.ok) {
+    roster = buildRosterPayload(programText)
+    render()
+    document.getElementById('panel-' + st.id).classList.add('open')
+    document.getElementById('global-msg').textContent =
+      `saved ${st.callsign} (${res.trackCount} tracks) to program.js — stations.md regenerated. Run this through signal-ship (QA, commit, push) when ready.`
+  } else if (msgEl) {
+    msgEl.textContent = 'save failed: ' + res.error
+    msgEl.style.color = 'var(--red)'
+  }
+}
+
+async function saveAllChanged() {
+  const dirtyIds = Object.keys(edits)
+  const g = document.getElementById('global-msg')
+  if (!dirtyIds.length) { g.textContent = 'nothing unsaved'; return }
+  const all = [...roster.stations, ...roster.secretStations]
+  let ok = 0
+  const failures = []
+  for (const id of dirtyIds) {
+    const st = all.find(s => s.id === id)
+    if (!st) continue
+    g.textContent = `saving ${st.callsign}… (${ok + failures.length + 1}/${dirtyIds.length})`
+    const res = await saveStationToDisk(st)
+    if (res.ok) ok++
+    else failures.push(`${st.callsign}: ${res.error}`)
+  }
+  roster = buildRosterPayload(programText)
+  render()
+  g.textContent = failures.length
+    ? `saved ${ok}/${dirtyIds.length} — failed: ${failures.join('; ')}`
+    : `saved ${ok} station(s) to program.js — stations.md regenerated. Run through signal-ship (QA, commit, push) when ready.`
+  g.style.color = failures.length ? 'var(--red)' : 'var(--green)'
+}
+
+document.getElementById('btn-save-all').addEventListener('click', saveAllChanged)
+
+document.getElementById('btn-refresh').addEventListener('click', async () => {
+  if (Object.keys(edits).length && !confirm('Discard unsaved edits and reload from disk?')) return
+  for (const k of Object.keys(edits)) delete edits[k]
+  programText = await getFileText('program.js')
+  roster = buildRosterPayload(programText)
+  await loadPendingQueue()
+  render()
+})
+
+document.getElementById('btn-check-all').addEventListener('click', async () => {
+  const g = document.getElementById('global-msg')
+  const all = [...roster.stations, ...roster.secretStations]
+  let totalBad = 0, totalChecked = 0
+  for (const st of all) {
+    const ids = tracksFor(st).map(t => t.youtubeId)
+    g.textContent = `checking ${st.callsign}… (${totalChecked}/${roster.totals.trackCount} so far)`
+    const results = await mapLimit(ids, 6, checkOembed)
+    for (const r of results) linkStatus[r.youtubeId] = r
+    totalChecked += ids.length
+    totalBad += results.filter(r => !r.ok).length
+  }
+  g.textContent = `checked ${totalChecked} tracks — ${totalBad} problem(s) found`
+  g.style.color = totalBad ? 'var(--red)' : 'var(--green)'
+  renderStations()
+})
+</script>
+</body>
+</html>

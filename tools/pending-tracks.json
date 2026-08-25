@@ -1,0 +1,564 @@
+{
+  "pending": [
+    {
+      "stationId": "distortion-field",
+      "youtubeId": "fTqyUz_jSIo",
+      "title": "Far Behind (Official Music Video)",
+      "artist": "Candlebox",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (distortion-field): grunge-adjacent alt-rock single, new artist for the station, fits the era and tone exactly. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (RHINO, the label that owns the Candlebox catalog)"
+    },
+    {
+      "stationId": "cold-wave",
+      "youtubeId": "80TfG7C9azA",
+      "title": "Kids in America (Official Music Video)",
+      "artist": "Kim Wilde",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (cold-wave): early-80s synth new wave, iconic and squarely in-lane, new artist. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (Kim Wilde's own channel)"
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "mc_xD6aGV5w",
+      "title": "Luv(sic) Part 3 feat. Shing02 [Official Audio]",
+      "artist": "Nujabes",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (momentum): light, melodic instrumental hip-hop, exactly this station's lane, second track for an artist already there. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (Nujabes's own posthumous official channel)"
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "S0Q4gqBUs7c",
+      "title": "Kerala (Official Audio)",
+      "artist": "Bonobo",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (momentum): downtempo/chillhop, fits the light focus vibe. Note Bonobo already has 3 tracks on this station (Kong, Cirrus, Kiara) -- this would be a 4th, so treat as optional depth rather than a must-add if you'd rather diversify artists instead. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (Bonobo's own channel)"
+    },
+    {
+      "stationId": "drift-mode",
+      "youtubeId": "25zpPS_OdhQ",
+      "title": "Virginal II",
+      "artist": "Tim Hecker",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (drift-mode): textured ambient/drone, not straightforwardly classical (avoids the Richter/Frahm boundary this station has flagged before), new artist. oEmbed verified live (title/artist match) but on a non-official/fan channel, not the artist's own -- worth a quick listen before approving."
+    },
+    {
+      "stationId": "drift-mode",
+      "youtubeId": "Vi3bSG3jL_M",
+      "title": "Vital",
+      "artist": "Grouper",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (drift-mode): hazy ambient/drone, second track for an existing artist (Heavy Water / I'd Rather Be Sleeping). oEmbed verified live (title/artist match) but on a non-official/fan channel, not the artist's own -- worth a quick listen before approving."
+    },
+    {
+      "stationId": "drift-mode",
+      "youtubeId": "bFNbOvzvvYI",
+      "title": "Oro Oro",
+      "artist": "Celer",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (drift-mode): slow-moving ambient drone, new artist, well within the station's stillness-focused lane. oEmbed verified live (title/artist match) but on a non-official/fan channel, not the artist's own -- worth a quick listen before approving."
+    },
+    {
+      "stationId": "nin",
+      "youtubeId": "wOoWkXEz-5E",
+      "title": "Sin",
+      "artist": "Nine Inch Nails",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (nin): Pretty Hate Machine-era track not yet on the roster. oEmbed verified live (title/artist match) but on a non-official/fan channel, not the artist's own -- worth a quick listen before approving."
+    },
+    {
+      "stationId": "nin",
+      "youtubeId": "GJ-w0TAE-mQ",
+      "title": "Reptile - Woodstock '94 Official Video",
+      "artist": "Nine Inch Nails",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (nin): Downward Spiral-era track not yet on the roster, this is an officially released live performance video rather than a studio video. Channel is \"NineInchNails on MV\", an official video channel."
+    },
+    {
+      "stationId": "nin",
+      "youtubeId": "FvVDlbzsKR4",
+      "title": "\"Survivalism\" Official Music Video (Uncut) [4K Upscale] - Year Zero, 2007",
+      "artist": "Nine Inch Nails",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (nin): Year Zero-era track not yet on the roster. Channel is Rob Sheridan, NIN's longtime creative director -- official-adjacent, he directed this video."
+    },
+    {
+      "stationId": "nin",
+      "youtubeId": "yA281OuU3rk",
+      "title": "Copy of a (VEVO Presents)",
+      "artist": "Nine Inch Nails",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (nin): Hesitation Marks-era track not yet on the roster. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (NineInchNailsVEVO)"
+    },
+    {
+      "stationId": "nin",
+      "youtubeId": "1RN6pT3zL44",
+      "title": "Came Back Haunted",
+      "artist": "Nine Inch Nails",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (nin): Hesitation Marks-era track not yet on the roster, David Lynch-directed video. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (NineInchNailsVEVO)"
+    },
+    {
+      "stationId": "nin",
+      "youtubeId": "gDV-dOvqKzQ",
+      "title": "LESS THAN",
+      "artist": "Nine Inch Nails",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (nin): Add Violence-era track not yet on the roster. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (\"Nine Inch Nails\" own channel)"
+    },
+    {
+      "stationId": "nin",
+      "youtubeId": "yzQrdX-E2iY",
+      "title": "God Break Down the Door",
+      "artist": "Nine Inch Nails",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (nin): Bad Witch-era track not yet on the roster. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (\"Nine Inch Nails - Topic\", official auto-generated channel)"
+    },
+    {
+      "stationId": "distortion-field",
+      "youtubeId": "ah5gAkna3jI",
+      "title": "Hey Jealousy",
+      "artist": "Gin Blossoms",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (distortion-field) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "distortion-field",
+      "youtubeId": "xsJ4O-nSveg",
+      "title": "Lightning Crashes",
+      "artist": "Live",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (distortion-field) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "drift-mode",
+      "youtubeId": "osA0Wl_-EHU",
+      "title": "Reprisal",
+      "artist": "Rafael Anton Irisarri",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (drift-mode) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "cold-wave",
+      "youtubeId": "9wyzRycjNH4",
+      "title": "Don't Go",
+      "artist": "Yazoo",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cold-wave) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "cold-wave",
+      "youtubeId": "mScWSckEzew",
+      "title": "Christian",
+      "artist": "China Crisis",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cold-wave) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "cold-wave",
+      "youtubeId": "8o2XHjvaEWE",
+      "title": "Smalltown Boy",
+      "artist": "Bronski Beat",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cold-wave) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "cold-wave",
+      "youtubeId": "QW_m8lhZbQQ",
+      "title": "Living on the Ceiling",
+      "artist": "Blancmange",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cold-wave) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "cold-wave",
+      "youtubeId": "7zzLU1ato2w",
+      "title": "Ghosts",
+      "artist": "Japan",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cold-wave) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "cold-wave",
+      "youtubeId": "IasCZL072fQ",
+      "title": "Words",
+      "artist": "Missing Persons",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cold-wave) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "f7KFVBtt1io",
+      "title": "Spacesuits",
+      "artist": "Kupla",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "V5Id5cVofPI",
+      "title": "quintal",
+      "artist": "FloFilz",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "WS09cCI05oQ",
+      "title": "Closer",
+      "artist": "Aso",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "ZKvuDkGH1lA",
+      "title": "Staying There",
+      "artist": "L'Indecis",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "momentum",
+      "youtubeId": "BNRr9s7B8qc",
+      "title": "Parasol",
+      "artist": "Plusma & Guillaume Muschalle",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "city-lights",
+      "youtubeId": "r63lZvPsj5U",
+      "title": "Neat na Gogo San-ji",
+      "artist": "Miki Matsubara",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (city-lights) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "circuit-crush",
+      "youtubeId": "X3wVDrc8000",
+      "title": "Launcher",
+      "artist": "Highway Superstar",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (circuit-crush) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "circuit-crush",
+      "youtubeId": "jsE7RFs7bHk",
+      "title": "Never Sleep Again (feat. Vandal Moon)",
+      "artist": "Betamaxx",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (circuit-crush) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "circuit-crush",
+      "youtubeId": "9EJJlr7Dopk",
+      "title": "Ignition",
+      "artist": "Meteor",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (circuit-crush) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "circuit-crush",
+      "youtubeId": "HJti6_oiR1A",
+      "title": "Feral",
+      "artist": "Dan Terminus",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (circuit-crush) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "hackback",
+      "youtubeId": "gNoDgHnB1Hk",
+      "title": "Ebonics",
+      "artist": "Big L",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (hackback) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "hackback",
+      "youtubeId": "5aCYQ1fRQc8",
+      "title": "Strictly Business",
+      "artist": "EPMD",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (hackback) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "hackback",
+      "youtubeId": "Yid-UtHPpeI",
+      "title": "Come Clean",
+      "artist": "Jeru The Damaja",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (hackback) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "hackback",
+      "youtubeId": "TMZi25Pq3T8",
+      "title": "Straight Outta Compton",
+      "artist": "N.W.A",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (hackback) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "hackback",
+      "youtubeId": "MnP1XmxyqxA",
+      "title": "Pocket Full of Stones",
+      "artist": "UGK",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (hackback) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "hackback",
+      "youtubeId": "OGy4bmG5SJw",
+      "title": "Cell Therapy",
+      "artist": "Goodie Mob",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (hackback) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24."
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "kQ_sSs8pr1g",
+      "title": "Ruffneck",
+      "artist": "Freestylers",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cipher) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24. Different Freestylers track than the previously-rejected \"Push Up\" (too bright/pop -- this is a harder, punchier cut)."
+    }
+  ],
+  "rejected": [
+    {
+      "stationId": "cipher",
+      "youtubeId": "ruAi4VBoBSM",
+      "title": "Praise You [Official Video]",
+      "artist": "Fatboy Slim",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against tools/station-profiles.json (cipher): squarely big-beat, and Fatboy Slim already has one track here (Right Here, Right Now), so this adds depth on an artist the station already trusts rather than a cold add. Flagging the audio-quality constraint from the Da Funk precedent for a human check anyway -- the official video is the Torrance Community Dance Group performance piece, which I believe has no spoken dialogue baked into the track audio, but worth a listen before approving since that check has burned this station before. oEmbed verified live: resolves on Fatboy Slim's own channel, title matches.",
+      "rejectedAt": "2026-08-23",
+      "rejectedReason": "not into this track from this artist"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "HXU5Rxc3vBQ",
+      "title": "Chime (12\" version)",
+      "artist": "Orbital",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (cipher): breakbeat/big-beat, third track for an existing artist (Halcyon, The Box), and one of their most iconic early singles. oEmbed verified live (title/artist match) but on a non-official/fan channel, not the artist's own -- worth a quick listen before approving. Also note this is the extended 12\" mix, not the radio edit -- confirm the length is what you want for rotation.",
+      "rejectedAt": "2026-08-23",
+      "rejectedReason": "not interested in extended mix"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "_43N5XxXths",
+      "title": "King Of Snake (Official Video)",
+      "artist": "Underworld",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (cipher): breakbeat/big-beat energy, third track for an existing artist (Born Slippy .NUXX, Rez). oEmbed verified live (title/artist match) but on a non-official/fan channel, not the artist's own -- worth a quick listen before approving.",
+      "rejectedAt": "2026-08-23",
+      "rejectedReason": "i don't like this song"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "_kE0pxRkMtQ",
+      "title": "Superstylin' (Official Music Video)",
+      "artist": "Groove Armada",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (cipher): big-beat-adjacent breakbeat, second track for an existing artist (At the River). oEmbed verified live, resolves on the artist's own/VEVO/label channel. (GrooveArmadaVEVO)",
+      "rejectedAt": "2026-08-23",
+      "rejectedReason": "music video has extended dialog at start"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "F5nzwqj3utY",
+      "title": "Dirge (Official Video)",
+      "artist": "Death In Vegas",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (cipher): big-beat-era electronica with the right late-night, cinematic weight, new artist. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (DeathInVegasVEVO)",
+      "rejectedAt": "2026-08-23",
+      "rejectedReason": "not available in my country"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "yXMjn-vve-E",
+      "title": "Fallen [Official Video]",
+      "artist": "Cut La Roc",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (cipher): straight big-beat, new artist, from the same UK big-beat scene (Skint Records) as several artists already on the station. oEmbed verified live on Skint Records' own channel -- the label that also released Fatboy Slim and Bentley Rhythm Ace, official-adjacent.",
+      "rejectedAt": "2026-08-23",
+      "rejectedReason": "not a fan of the song and too mellow"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "qB_I1YBAozE",
+      "title": "Lazy [OFFICIAL VIDEO]",
+      "artist": "X-Press 2 Ft. David Byrne",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (cipher): big-beat-era club classic, new artist, same Skint Records lineage. oEmbed verified live on Skint Records' own channel, official-adjacent.",
+      "rejectedAt": "2026-08-23",
+      "rejectedReason": "didn't like the song"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "VU01OK3EKvw",
+      "title": "Push Up (Official Video)",
+      "artist": "Freestylers",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (cipher): breakbeat, second track for an existing artist (B-Boy Stance). oEmbed verified live (title/artist match) but on a non-official/fan channel, not the artist's own -- worth a quick listen before approving. (channel appears to be the track's reissue label, not the band directly)",
+      "rejectedAt": "2026-08-23",
+      "rejectedReason": "not the right vibe, too bright and pop"
+    },
+    {
+      "stationId": "circuit-crush",
+      "youtubeId": "DX9Yk_B3cwY",
+      "title": "ProtoVision (Official Music Video)",
+      "artist": "Kavinsky",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (circuit-crush): squarely synthwave, second track for an artist already on this station (Nightcall). oEmbed verified live on \"Record Makers\" -- Kavinsky's own record label channel, official-adjacent.",
+      "rejectedAt": "2026-08-23",
+      "rejectedReason": "video had extended outro with credits"
+    },
+    {
+      "stationId": "nin",
+      "youtubeId": "h_j8zTnCW_M",
+      "title": "Every Day is Exactly the Same [Live at Rehearsals] 2005 - Directed by Rob Sheridan",
+      "artist": "Nine Inch Nails",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (nin): With Teeth-era track not yet on the roster. Channel is Rob Sheridan, NIN's longtime creative director who directed this -- official-adjacent, though it's a rehearsal performance rather than a studio video.",
+      "rejectedAt": "2026-08-23",
+      "rejectedReason": "live version"
+    },
+    {
+      "stationId": "atomic",
+      "youtubeId": "_NeMoCQlrYg",
+      "title": "Grandma Plays the Numbers",
+      "artist": "Wynonie Harris",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (atomic) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-24",
+      "rejectedReason": "not available in country"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "FMrIy9zm7QY",
+      "title": "The Rockafeller Skank",
+      "artist": "Fatboy Slim",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cipher) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-24",
+      "rejectedReason": "not a fan of the song"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "ADa9UBHqveA",
+      "title": "Bug Powder Dust",
+      "artist": "Bomb the Bass",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cipher) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-24",
+      "rejectedReason": "didn't like the song"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "dnp-VyGNtcI",
+      "title": "Purple Haze",
+      "artist": "Groove Armada",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cipher) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-24",
+      "rejectedReason": "too rock"
+    },
+    {
+      "stationId": "cipher",
+      "youtubeId": "SJyhZ-3Z8A8",
+      "title": "Red Alert",
+      "artist": "Basement Jaxx",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cipher) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-24",
+      "rejectedReason": "not music only version"
+    },
+    {
+      "stationId": "hackback",
+      "youtubeId": "y7_eA6NZ9VQ",
+      "title": "Tha Crossroads",
+      "artist": "Bone Thugs-n-Harmony",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (hackback) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-24",
+      "rejectedReason": "don't like song"
+    },
+    {
+      "stationId": "cold-wave",
+      "youtubeId": "d5XJ2GiR6Bo",
+      "title": "Enola Gay",
+      "artist": "Orchestral Manoeuvres in the Dark",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-24",
+      "rationale": "Checked against tools/station-profiles.json (cold-wave) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
+      "rejectedAt": "2026-08-24",
+      "rejectedReason": "don't like song"
+    },
+    {
+      "stationId": "distortion-field",
+      "youtubeId": "3qVPNONdF58",
+      "title": "No Rain",
+      "artist": "Blind Melon",
+      "proposedBy": "claude",
+      "proposedAt": "2026-08-23",
+      "rationale": "Checked against station-profiles.json (distortion-field): squarely 90s grunge/alt-rock, same lane as the existing roster, and a genuinely iconic single from the era not yet represented. oEmbed verified live, resolves on the artist's own/VEVO/label channel. (BlindMelonVEVO)",
+      "rejectedAt": "2026-08-24",
+      "rejectedReason": "not radio version, music video"
+    }
+  ]
+}

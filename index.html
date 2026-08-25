@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIGNAL</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: none;
+    /* 22nd pass -- basic mobile functionality: tap to power on,
+       swipe left/right for channels. Without this, iOS/Android treat
+       swipes on the canvas as page-pan/pinch-zoom gestures (there's no
+       scrollable content, but touch-action defaults to allowing them
+       anyway), which fights the custom tap/swipe handling in program.js
+       and can trigger Safari's edge-swipe back/forward navigation. */
+    touch-action: none;
+  }
+  #fault {
+    position: fixed;
+    inset: 0;
+    display: none;
+    padding: 2rem;
+    color: #ffb000;
+    font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: pre-wrap;
+  }
+  /* Docked off-screen rather than display:none -- this is an audio-focused
+     experience, so the video itself is never meant to be seen, only heard,
+     with the terminal as the only visible UI. Off-screen (not
+     display:none/visibility:hidden) rather than fully hidden, since some
+     browsers pause or throttle iframed video once it's completely hidden
+     rather than just moved out of the viewport. */
+  #ytDock {
+    position: fixed;
+    left: -9999px;
+    top: -9999px;
+    width: 260px;
+    height: 200px;
+  }
+</style>
+</head>
+<body>
+  <canvas id="tube"></canvas>
+  <div id="ytDock"></div>
+  <pre id="fault"></pre>
+  <script>
+    // Must exist before the iframe_api script below finishes its own async
+    // load, or the callback fires into nothing and no player is ever built.
+    // program.js queues its player-creation function here instead of
+    // assigning this global itself, so timing can't race it.
+    window.SIGNAL_YT_READY = false;
+    window.SIGNAL_YT_QUEUE = [];
+    window.onYouTubeIframeAPIReady = function () {
+      window.SIGNAL_YT_READY = true;
+      window.SIGNAL_YT_QUEUE.forEach(fn => fn());
+      window.SIGNAL_YT_QUEUE = [];
+    };
+  </script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
