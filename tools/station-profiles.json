@@ -138,6 +138,58 @@
       ],
       "rejections": []
     },
+    "midnight-neon": {
+      "callsign": "MIDNIGHT NEON",
+      "genre": "late-night electric blues -- minor-key slow burns, lush horns, reverberant guitar solos",
+      "eraLane": "no fixed decade; the first 28 tracks run 1947 -> 2012, weighted to classic electric blues",
+      "acceptedArtists": [
+        "B.B. King",
+        "Tedeschi Trucks Band",
+        "Albert King",
+        "Susan Tedeschi",
+        "Buddy Guy",
+        "Otis Rush",
+        "Gary Clark Jr.",
+        "Stevie Ray Vaughan",
+        "Etta James",
+        "Bobby \"Blue\" Bland",
+        "Ann Peebles",
+        "Robert Cray",
+        "Howlin’ Wolf",
+        "Freddie King",
+        "The Black Keys",
+        "Jimmy Reed",
+        "Muddy Waters",
+        "B.B. King & Eric Clapton",
+        "T-Bone Walker",
+        "Charles Brown",
+        "Elmore James",
+        "Big Mama Thornton",
+        "Albert Collins",
+        "Roy Buchanan",
+        "Z.Z. Hill",
+        "Gary Moore"
+      ],
+      "constraints": [
+        "The brief is a mood, not a decade: dark highways and low-lit lounges after hours. Slow burns are welcome at length -- the roster already carries 7-9 minute cuts (Tin Pan Alley, If Trouble Was Money), so runtime is not a reason to reject.",
+        "Electric blues, not acoustic/Delta country blues -- the desc says electric and the whole station leans on amplified tone and reverb.",
+        "Sourcing differs from the guitar-rock stations: pre-1970 blues catalog has no official video, so artist \"- Topic\" channels (label-delivered Art Tracks) are the norm and are fine. Fan/compilation uploads are not -- all 28 are Topic, label, artist-official or VEVO.",
+        "Nearly every classic here has multiple near-identical Topic uploads across compilations. Check duration before picking: it is the only cheap way to catch a live take, a single edit or a modern rework (an EDM \"rework\" of a John Lee Hooker cut sits on his own Topic channel)."
+      ],
+      "rejections": [
+        {
+          "artist": "Koko Taylor",
+          "track": "I'd Rather Go Blind",
+          "reason": "Song collision -- Etta James already holds this song on the station. The artist is otherwise in-lane; a different track would be fine."
+        },
+        {
+          "artist": "John Lee Hooker",
+          "track": "It Serves Me Right to Suffer",
+          "reason": "Not a lane call -- dropped from the 2026-08-25 batch because its Topic uploads run 3:29 / 5:03 / 5:50 and none could be pinned to the album master without listening. Worth revisiting with a confirmed ID."
+        }
+      ],
+      "notes": "Introduced 60th pass (2026-08-24) from a pasted 40-track playlist + persona brief; 20 taken then, 8 more added 2026-08-25 against the brief alone -- the original 40-track list was never committed and is gone."
+    },
     "momentum": {
       "callsign": "MOMENTUM",
       "genre": "Chillhop and instrumental beats for focus -- sampled jazz, lo-fi drums",
@@ -174,7 +226,8 @@
           "track": "Glory Box",
           "reason": "Same call as Massive Attack above -- too heavy/moody for MOMENTUM's light focus vibe."
         }
-      ]
+      ],
+      "retired": "Replaced by MIDNIGHT NEON (60th pass, 2026-08-24) -- same dial slot and glyph, new format. Kept for the rejection history below; do not propose against this profile."
     },
     "city-lights": {
       "callsign": "CITY LIGHTS",

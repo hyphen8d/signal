@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 272 tracks total.
+Generated from stations.js. 9 stations, 280 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -129,7 +129,7 @@ Tracks (30):
 
 Ident tones (Hz): 293.7, 349.2, 415.3, 466.2
 
-Tracks (20):
+Tracks (28):
 
 1. **The Thrill Is Gone** -- B.B. King  ([youtu.be/CzUgX-HB9tA](https://youtu.be/CzUgX-HB9tA))
 2. **Midnight in Harlem** -- Tedeschi Trucks Band  ([youtu.be/gy5-EQ7Ae_0](https://youtu.be/gy5-EQ7Ae_0))
@@ -151,6 +151,14 @@ Tracks (20):
 18. **Long Distance Call** -- Muddy Waters  ([youtu.be/ZzANjy5tGPM](https://youtu.be/ZzANjy5tGPM))
 19. **Riding with the King** -- B.B. King & Eric Clapton  ([youtu.be/L7Ls8ceHxhc](https://youtu.be/L7Ls8ceHxhc))
 20. **Lenny** -- Stevie Ray Vaughan  ([youtu.be/4yB1Pj2r5s4](https://youtu.be/4yB1Pj2r5s4))
+21. **Call It Stormy Monday** -- T-Bone Walker  ([youtu.be/UhzAmBG96ZU](https://youtu.be/UhzAmBG96ZU))
+22. **Black Night** -- Charles Brown  ([youtu.be/-iwKH86SwdM](https://youtu.be/-iwKH86SwdM))
+23. **The Sky Is Crying** -- Elmore James  ([youtu.be/U-T394Ak2HU](https://youtu.be/U-T394Ak2HU))
+24. **Ball and Chain** -- Big Mama Thornton  ([youtu.be/dzZyt6m2v64](https://youtu.be/dzZyt6m2v64))
+25. **If Trouble Was Money** -- Albert Collins  ([youtu.be/pSTZxtvMKDQ](https://youtu.be/pSTZxtvMKDQ))
+26. **The Messiah Will Come Again** -- Roy Buchanan  ([youtu.be/MVrV-Bk8mvg](https://youtu.be/MVrV-Bk8mvg))
+27. **Down Home Blues** -- Z.Z. Hill  ([youtu.be/n0_RGIcIfZ4](https://youtu.be/n0_RGIcIfZ4))
+28. **Still Got the Blues** -- Gary Moore  ([youtu.be/0dWDM0k3OE8](https://youtu.be/0dWDM0k3OE8))
 
 ## CITY LIGHTS -- 780.0
 

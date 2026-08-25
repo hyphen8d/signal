@@ -429,6 +429,35 @@ export const STATIONS = [
       realTrack('ZzANjy5tGPM', 'Long Distance Call', 'Muddy Waters'),
       realTrack('L7Ls8ceHxhc', 'Riding with the King', "B.B. King & Eric Clapton"),
       realTrack('4yB1Pj2r5s4', 'Lenny', 'Stevie Ray Vaughan'),
+      // 2026-08-25: 20 -> 28. The 60th pass took 20 of a pasted 40-track
+      // playlist and that source list is gone (it lived in session context,
+      // never in the repo), so this second cut is picked against the brief in
+      // the field notes above rather than the original 40 -- expect no overlap
+      // with whatever the deferred 20 were.
+      //
+      // Chosen to fill what the first cut under-served: the "lush horns" and
+      // "low-lit lounge" half of the desc (T-Bone Walker's 1947 archetype,
+      // Charles Brown's after-hours piano, Z.Z. Hill's Malaco soul-blues),
+      // and the reverberant-solo half (Albert Collins, Roy Buchanan, Gary
+      // Moore). Big Mama Thornton is the fourth woman on a station that had
+      // three. All 8 are new artists; era spread runs 1947 -> 1990.
+      //
+      // Sourced as Topic (label-delivered) uploads, which is this station's
+      // norm -- 11 of the first 20 are Topic, because pre-1970 blues catalog
+      // has no official video to point at. Every one of these songs has
+      // several near-identical Topic uploads across compilations, so picks
+      // were made on duration to avoid a live take, an edit or a rework
+      // (John Lee Hooker was dropped from this batch for exactly that
+      // ambiguity, and Koko Taylor's "I'd Rather Go Blind" for colliding
+      // with the Etta James cut already above).
+      realTrack('UhzAmBG96ZU', 'Call It Stormy Monday', 'T-Bone Walker'),
+      realTrack('-iwKH86SwdM', 'Black Night', 'Charles Brown'),
+      realTrack('U-T394Ak2HU', 'The Sky Is Crying', 'Elmore James'),
+      realTrack('dzZyt6m2v64', 'Ball and Chain', 'Big Mama Thornton'),
+      realTrack('pSTZxtvMKDQ', 'If Trouble Was Money', 'Albert Collins'),
+      realTrack('MVrV-Bk8mvg', 'The Messiah Will Come Again', 'Roy Buchanan'),
+      realTrack('n0_RGIcIfZ4', 'Down Home Blues', 'Z.Z. Hill'),
+      realTrack('0dWDM0k3OE8', 'Still Got the Blues', 'Gary Moore'),
     ] },
 
   // 4 new stations added 2026-08-20, tracklists as given, all
