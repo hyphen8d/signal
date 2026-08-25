@@ -532,6 +532,35 @@ export const STATIONS = [
       realTrack('uWqnsVMc8CQ', 'Last Summer Whisper', 'Anri'),
       realTrack('5a8BD7qNMZM', 'Silhouette Romance', 'Junko Ohashi'),
       realTrack('htXinB1eZYA', 'Manatsu no Sequence', 'Momoko Kikuchi'),
+      // 2026-08-25: 32 -> 40, all 8 new artists. This station was the most
+      // repeat-heavy on the roster -- 32 tracks across only 20 artists, with
+      // nine of them carrying 2-3 each -- so depth was the wrong axis and
+      // every pick here is a name the station didn't already have.
+      //
+      // Sourcing is the inverse of the guitar stations: only ~9 of the first
+      // 32 are artist/label/Topic, the rest fan and archive channels, because
+      // most of this catalogue was never officially uploaded. These 8 land
+      // better than that average -- 5 Topic, Victor and Sony Music (Japan)
+      // direct, and MUSIC Liverary, already trusted here for EPO's "Down
+      // Town". That matters for the profile's mis-credit rule (a "Casiio"
+      // cover once turned out to be Yasuha's original): label-delivered
+      // uploads carry reliable artist credit, fan re-uploads don't.
+      //
+      // Checked for region-locking as well as oEmbed, which this station
+      // needs and the others don't -- Japanese label uploads are commonly
+      // geo-fenced, and a 200 from oEmbed says nothing about it. All 8 are
+      // US-available, embeddable and status OK. Dodged in the process: a
+      // Night Tempo "Showa Groove Mix" (modern remix), a Terao live cut, a
+      // bossa-nova cover, and an Ohtaki "Original Basic Track" that is a
+      // backing-track outtake rather than the song.
+      realTrack('WQ-fuYZnVCE', 'Midnight Pretenders', 'Tomoko Aran'),
+      realTrack('E3HBwtJNplQ', 'Blue Lagoon', 'Masayoshi Takanaka'),
+      realTrack('_-TMxqEZE5s', 'Dress Down', 'Kaoru Akimoto'),
+      realTrack('gIAHxr8RwVA', 'Exotic Yokogao', 'Hitomi Tohyama'),
+      realTrack('L-hyY-1luHs', 'Kimi wa Tennen Shoku', 'Eiichi Ohtaki'),
+      realTrack('ZYeVfKtIH4c', 'Ruby no Yubiwa', 'Akira Terao'),
+      realTrack('2tiLgAG02QM', 'L.A. Night', 'Yasuko Agawa'),
+      realTrack('AD3sEAGRGv4', 'Just a Joke', 'Yurie Kokubu'),
     ] },
   // 22nd pass -- outlaw channel dropped completely, 9 channels being the
   // max for now. OUTLAW (freq 288.6, spaghetti-western/outlaw-country)

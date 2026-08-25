@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 280 tracks total.
+Generated from stations.js. 9 stations, 288 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -166,7 +166,7 @@ Tracks (28):
 
 Ident tones (Hz): 523.3, 784, 659.3, 987.8
 
-Tracks (32):
+Tracks (40):
 
 1. **Stay With Me** -- Miki Matsubara  ([youtu.be/5zTkTlj2h9E](https://youtu.be/5zTkTlj2h9E))
 2. **Sparkle** -- Tatsuro Yamashita  ([youtu.be/tWqZASIxlqs](https://youtu.be/tWqZASIxlqs))
@@ -200,6 +200,14 @@ Tracks (32):
 30. **Last Summer Whisper** -- Anri  ([youtu.be/uWqnsVMc8CQ](https://youtu.be/uWqnsVMc8CQ))
 31. **Silhouette Romance** -- Junko Ohashi  ([youtu.be/5a8BD7qNMZM](https://youtu.be/5a8BD7qNMZM))
 32. **Manatsu no Sequence** -- Momoko Kikuchi  ([youtu.be/htXinB1eZYA](https://youtu.be/htXinB1eZYA))
+33. **Midnight Pretenders** -- Tomoko Aran  ([youtu.be/WQ-fuYZnVCE](https://youtu.be/WQ-fuYZnVCE))
+34. **Blue Lagoon** -- Masayoshi Takanaka  ([youtu.be/E3HBwtJNplQ](https://youtu.be/E3HBwtJNplQ))
+35. **Dress Down** -- Kaoru Akimoto  ([youtu.be/_-TMxqEZE5s](https://youtu.be/_-TMxqEZE5s))
+36. **Exotic Yokogao** -- Hitomi Tohyama  ([youtu.be/gIAHxr8RwVA](https://youtu.be/gIAHxr8RwVA))
+37. **Kimi wa Tennen Shoku** -- Eiichi Ohtaki  ([youtu.be/L-hyY-1luHs](https://youtu.be/L-hyY-1luHs))
+38. **Ruby no Yubiwa** -- Akira Terao  ([youtu.be/ZYeVfKtIH4c](https://youtu.be/ZYeVfKtIH4c))
+39. **L.A. Night** -- Yasuko Agawa  ([youtu.be/2tiLgAG02QM](https://youtu.be/2tiLgAG02QM))
+40. **Just a Joke** -- Yurie Kokubu  ([youtu.be/AD3sEAGRGv4](https://youtu.be/AD3sEAGRGv4))
 
 ## CIRCUIT CRUSH -- 488.0
 

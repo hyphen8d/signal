@@ -253,11 +253,21 @@
         "EPO",
         "Makoto Matsushita",
         "Kingo Hamada",
-        "Hi-Fi Set"
+        "Hi-Fi Set",
+        "Tomoko Aran",
+        "Masayoshi Takanaka",
+        "Kaoru Akimoto",
+        "Hitomi Tohyama",
+        "Eiichi Ohtaki",
+        "Akira Terao",
+        "Yasuko Agawa",
+        "Yurie Kokubu"
       ],
       "constraints": [
         "HARD RULE, explicit editorial decision 2026-08-20: Japanese artists only. Western yacht-rock/AOR that sounds similar (Steely Dan, Toto, etc.) does NOT belong here even though it's genre-adjacent -- this is specifically a Japan-only lane.",
-        "Verify original-artist credit carefully -- a song has been mis-credited to the wrong artist before (a listed \"Casiio\" cover turned out to actually be Yasuha's original)."
+        "Verify original-artist credit carefully -- a song has been mis-credited to the wrong artist before (a listed \"Casiio\" cover turned out to actually be Yasuha's original).",
+        "Sourcing runs opposite to the guitar stations: most of this catalogue was never officially uploaded, so fan and archive channels carry roughly two thirds of the roster and are accepted here out of necessity. Prefer artist \"- Topic\", label channels (Victor, Sony Music (Japan), VAP, PANAM, MUSIC Liverary) and artist-official where they exist -- they are also the defence against the mis-credit rule above, since fan re-uploads are where covers get labelled as originals.",
+        "Check region-locking, not just oEmbed -- unique to this station. Japanese label uploads are commonly geo-fenced and an oEmbed 200 says nothing about it; confirm the video is US-available and embeddable before proposing. Watch for Night Tempo \"Showa Groove\" mixes (modern remixes), live cuts, and \"Original Basic Track\" uploads that are backing-track outtakes."
       ],
       "rejections": []
     },
