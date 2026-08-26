@@ -1934,6 +1934,26 @@ export default {
           this.cycleVisualEffect(s)
           vizFlash(VISUALS[this.activeVisualKey()].label)
           return
+        // 2026-08-26 (issue #7) -- [A] was reachable only from the main
+        // screen, so declining the card on first [V] entry left you with
+        // synthetic meters and no way back until you exited. The card is
+        // built for exactly this: openTapConsent's `then` runs in place of
+        // the main-screen redraw, and closeTapConsent already knew how to
+        // land a status note in the visualizer's own legend slot when one
+        // is set (see its `note` handling) -- that path existed before
+        // anything could reach it. Repaints the chrome rather than
+        // re-entering: enterVisualizer() would re-arm every effect clock.
+        case 'a': case 'A':
+          e.preventDefault()
+          this.openTapConsent(s, () => this.repaintVisualizerChrome(s))
+          break
+        // 2026-08-26 (issue #8) -- [F] works here as well as on the main
+        // screen. Someone running the visualizer on a second monitor is
+        // precisely who asked for it.
+        case 'f': case 'F':
+          e.preventDefault()
+          this.toggleFullscreen()
+          break
         case 'e': case 'E':
         case 'Escape':
           this.exitVisualizer(s)
@@ -1991,6 +2011,12 @@ export default {
       case 'g': case 'G': e.preventDefault(); this.openGuide(s); break
       // Display modes (23rd pass) -- lets users cycle display modes.
       case 'c': case 'C': e.preventDefault(); this.cycleDisplayMode(s); break
+      // 2026-08-26 (issue #8) -- [F] fullscreen, for running SIGNAL on a
+      // spare monitor with no browser chrome around it. Toggles, so the same
+      // key gets you out. NOT a substitute for Chrome's "Sharing this tab"
+      // capture indicator, which the page cannot remove -- that one is the
+      // browser telling the truth about [A], and it should.
+      case 'f': case 'F': e.preventDefault(); this.toggleFullscreen(); break
       // Visualizer (43rd pass) -- "V" for saVer, the mnemonic
       // still works after the 44th pass rename to "Visualizer" -- manual
       // toggle in, any time you're locked. Silently no-ops otherwise
@@ -2073,6 +2099,26 @@ export default {
       case ')': e.preventDefault(); this.presetTune(s, GREEN_ROOM_STATION); break
     }
     } finally { this._inUserGesture = false }
+  },
+
+  /** 2026-08-26 (issue #8). Guarded rather than assumed: the Fullscreen API
+   *  is absent in the headless harness's document stub, and requestFullscreen
+   *  REJECTS (it does not throw) when the browser refuses -- without the catch
+   *  that surfaces as an unhandled rejection in the console of anyone whose
+   *  browser declines. Returns false when there is no fullscreen path at all,
+   *  so a caller could say so; today nothing needs to. */
+  toggleFullscreen() {
+    const doc = globalThis.document
+    const el = doc && doc.documentElement
+    if (!doc || !el || typeof el.requestFullscreen !== 'function') return false
+    if (doc.fullscreenElement) {
+      const p = doc.exitFullscreen && doc.exitFullscreen()
+      if (p && p.catch) p.catch(() => {})
+    } else {
+      const p = el.requestFullscreen()
+      if (p && p.catch) p.catch(() => {})
+    }
+    return true
   },
 
   frame(s, t) {

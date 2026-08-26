@@ -38,6 +38,8 @@ export const MAPPED_KEYS = new Set([
   // Consent pass (2026-08-25) -- [A] opens the LINE INPUT card. See key().
   'a', 'A',
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  // 2026-08-26 (issue #8) -- [F] fullscreen, main screen and visualizer.
+  'f', 'F',
   // 2026-08-26 -- Shift+0 (')' on a standard layout), GREEN ROOM's way in.
   // Here for the same reason every other command key is: isMappedKey()
   // gates playKeyClick(), so without this the one keypress that reaches

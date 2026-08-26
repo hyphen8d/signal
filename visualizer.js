@@ -43,11 +43,20 @@ export default {
     // previous visit would otherwise wait on a timestamp from the future --
     // the 50th pass's frozen-FLAME bug. 2026-08-25 audit: was inline here.
     for (const fx of Object.values(VISUALS)) fx.reset?.(this)
+    this.repaintVisualizerChrome(s)
+    playPanelSound(true)
+  },
+  // 2026-08-26 (issue #7) -- the clear + chrome half of entry, split out so
+  // it can be replayed WITHOUT re-entering. enterVisualizer() early-returns
+  // when already active and re-arms every effect's clocks, so it is the wrong
+  // tool for "the LINE INPUT card just came down, put the visualizer back".
+  // The effect canvas itself needs nothing here: drawVisualizerFrame() repaints
+  // it on the very next frame().
+  repaintVisualizerChrome(s) {
     const { term } = s
     clearGrid(term)
     this.drawTitleBar(s)
     this.drawVisualizerInfo(s)
-    playPanelSound(true)
   },
   // 65th pass -- shared with drawVisualizerFrame() so the flash label
   // Shift+C shows and the effect actually drawn can never disagree: an

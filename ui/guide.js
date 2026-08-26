@@ -128,7 +128,9 @@ export default {
   GUIDE_CONTROL_GROUPS: [
     { head: 'TUNING', rows: [['[<-/->]', 'SEEK'], ['[ENTER]', 'LOCK'], ['[S]', 'SCAN'], ['[1-9]', 'PRESETS'], ['[B]', 'BACK']] },
     { head: 'RECEIVER', rows: [['[UP/DN]', 'VOLUME'], ['[M]', 'MUTE'], ['[N]', 'NEXT TRACK'], ['[P]', 'POWER']] },
-    { head: 'DISPLAY', rows: [['[C]', 'COLOR'], ['[V]', 'VISUALIZER'], ['[G]', 'GUIDE']] },
+    // [F] added 2026-08-26 (issue #8). 'FULLSCREEN' is the same 10 chars as
+    // 'VISUALIZER', so the column keeps its width and the block its centring.
+    { head: 'DISPLAY', rows: [['[C]', 'COLOR'], ['[V]', 'VISUALIZER'], ['[F]', 'FULLSCREEN'], ['[G]', 'GUIDE']] },
   ],
   // Three groups across on the 80-col grid; stacked two-across on anything
   // narrower. The narrow path is not reachable today -- mobile has no touch
