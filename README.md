@@ -36,6 +36,30 @@ The full-screen visualizer (`[V]`), with its own transport controls and a per-st
 
 ![The visualizer, running DISTORTION FIELD's fire effect](./screenshots/visualizer.jpg)
 
+## Feedback, bugs and station requests
+
+SIGNAL is one person's project and it gets better mostly when someone else
+says what's wrong with it. All of these are welcome, and none of them need
+you to know anything about the code:
+
+- **[Suggest a track or a station](https://github.com/hyphen8d/signal/issues/new?template=track_suggestion.yml)**
+  — the roster is hand-curated, and the best additions have come from people
+  who know a lane better than I do. Every station's list is in
+  [`stations.md`](./stations.md).
+- **[Report a bug](https://github.com/hyphen8d/signal/issues/new?template=bug_report.yml)**
+  — a track that won't play, a station that sounds wrong, anything that
+  stutters or draws strangely. Which station and which track it happened on
+  is a real clue, not a detail worth trimming.
+- **[Request a feature](https://github.com/hyphen8d/signal/issues/new?template=feature_request.yml)**
+  — worth knowing what you're arguing against first: *"would a real radio
+  have this?"* is the test that governs what gets added, and it's already
+  killed a play/pause button.
+- **[Ask something else](https://github.com/hyphen8d/signal/issues/new?template=question.yml)**
+  — or just email <matt@gial.co> if an issue feels like too much ceremony.
+
+Nothing is too small. "This one track is quieter than the rest of the
+station" is exactly the kind of thing that's invisible from the inside.
+
 ## The little touches
 
 A tuning-dial radio lives or dies on texture, not just function. A few
