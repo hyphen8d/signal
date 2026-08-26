@@ -1,0 +1,95 @@
+name: Bug report
+description: Something in SIGNAL isn't behaving the way it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file this. The more precisely you can
+        pin down *when* it happens, the faster it gets fixed -- a bug that
+        only shows up on one station or one track is a real clue, not a
+        detail worth trimming.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you see or hear, and what did you expect instead?
+      placeholder: |
+        Playback stops for 0.1-1 seconds, then resumes.
+        Expected continuous playback.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: >
+        The key sequence that gets there, if you can retrace it. If it only
+        happens sometimes, say roughly how often.
+      placeholder: |
+        1. Power on with [P]
+        2. Jump to station 4 with [4]
+        3. Let it play for ~30 seconds
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of SIGNAL
+      description: Best guess is fine -- pick "Not sure" if it doesn't fit.
+      options:
+        - Tuning / dial / station lock
+        - Audio playback (a track, an ident, static, the hum)
+        - Visualizer ([V])
+        - Lyrics view ([L])
+        - LINE INPUT / audio capture ([A])
+        - Guide overlay ([G])
+        - Display / CRT rendering / colors ([C])
+        - Fullscreen ([F])
+        - Mobile / touch "lite" layout
+        - Boot or power sequence ([P])
+        - Not sure
+    validations:
+      required: false
+
+  - type: input
+    id: station-track
+    attributes:
+      label: Station and track
+      description: >
+        If it happens on a specific station or a specific song, name them.
+        A bug that follows one track around is usually a different animal
+        from one that follows the app around.
+      placeholder: 'CIPHER (133.7) -- The Crystal Method, "Keep Hope Alive"'
+    validations:
+      required: false
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 148.0.7778.179 (arm64)
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS and version
+      placeholder: macOS Sequoia 15.6.1
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: >
+        Anything in the browser console (right-click, Inspect, Console).
+        "Nothing relevant" is a useful answer too -- it rules things out.
+      render: text
+    validations:
+      required: false

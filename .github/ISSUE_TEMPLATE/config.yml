@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Controls and station reference
+    url: https://github.com/hyphen8d/signal/wiki
+    about: The full controls reference and station roster live on the wiki.
+  - name: cyberspace-crt (the rendering engine)
+    url: https://github.com/unremarkablegarden/cyberspace-crt
+    about: >
+      SIGNAL renders on top of cyberspace-crt but is a separate, unaffiliated
+      project. Bugs in the CRT engine itself belong over there.
