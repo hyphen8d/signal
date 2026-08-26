@@ -515,10 +515,21 @@
       "constraints": [
         "The ONLY membership test is that the song is literally, lyrically about cannabis -- named, described, or the whole premise. Genre is not a constraint here and must not become one: doom metal, G-funk, roots reggae, outlaw country and power pop all belong precisely because the mix is incoherent. That incoherence IS the station.",
         "Literal, not adjacent. 'Stoner rock' as a genre does not qualify a track -- Kyuss instrumentals, psychedelia, and 'good to smoke to' songs are the single most likely wrong proposal here. If you cannot quote the line, it does not go on.",
-        "One track per artist unless there is a real reason -- the roster is 30 songs about one subject and the same voice twice makes the joke feel thin rather than broad.",
+        "One track per artist unless there is a real reason -- the roster is 28 songs about one subject and the same voice twice makes the joke feel thin rather than broad.",
         "Innuendo and drug-general songs are out. 'Because I Got High' territory is fine; 'Purple Haze' (about a woman, whatever the myth says) and cocaine/pill songs are not, however famous."
       ],
-      "rejections": []
+      "rejections": [
+        {
+          "artist": "Three 6 Mafia",
+          "track": "Gotta Stay High",
+          "reason": "No such recording exists. Briefed 2026-08-26 as a literal weed track; every search resolves to \"Stay Fly\" (hook is \"I gotta stay FLY\", not about weed, so it fails this station's membership test) or to fan re-uploads that mislabel that same song \"Stay High\". \"Da Summa\" was offered as the genuine Three 6 weed track and declined -- the slot was dropped rather than filled, so the station currently carries no Memphis entry. Do not re-propose the title; it is not a recording."
+        },
+        {
+          "artist": "Queens of the Stone Age",
+          "track": "Feel Good Hit of the Summer",
+          "reason": "Fits the station perfectly on content (the chorus is a drug inventory naming marijuana first) and was still dropped, so it WILL look like an oversight later. The only official upload (QueensStoneAgeVEVO, bAXPUN2z2CE) is age-gated -- playabilityStatus LOGIN_REQUIRED, which the IFrame player cannot satisfy, so it would have been dead air. No Topic upload of the album track exists; Topic carries only the Reprise. Unofficial uploads were offered and declined. Re-propose only if a non-gated official source appears."
+        }
+      ]
     }
   }
 }

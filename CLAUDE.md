@@ -17,7 +17,7 @@ to name these scripts:
 
 ```bash
 python3 tools/dev-server.py 8000    # dev server (no-store headers); open http://localhost:8000
-node --test tests/*.test.mjs        # npm test — headless suite, ~1s, no network
+node --test tests/*.test.mjs        # npm test — headless suite, ~2s, no network
 node tools/lint-roster.js           # npm run lint — offline roster rules
 node tools/verify-roster.js         # npm run verify — lint + oEmbed check of every track (network)
 node tools/stations-to-md.js        # npm run stations — regenerate stations.md (never hand-edit it)
@@ -111,6 +111,18 @@ program):
   desc freqNote ident identTempo gain glyph static crt meter idleEvent grind
   visual tracks`; secret stations carry `secret: true` and `forcedPhosphor`
   and are read generically — don't reintroduce id comparisons.
+- **Adding a secret station** is five edits and no new call sites, because
+  `SECRET_STATIONS` is walked rather than indexed and every secret behaviour
+  keys on `station.secret` / `station.forcedPhosphor`: the object literal in
+  `stations.js`, one entry in `SECRET_STATIONS`, one `case` in `program.js`'s
+  `key()` calling `presetTune()` on the object directly, the key in
+  `MAPPED_KEYS` (else it's the one command that lands with no click), and the
+  tint in `config.js`'s `PHOSPHORS`. **A `forcedPhosphor` that isn't in
+  `PHOSPHORS` fails silently** — `setPhosphor()` no-ops on an unknown name, so
+  the station just never changes colour and nothing throws.
+  `tests/helpers.test.mjs` guards that. Don't force a tint the tube may
+  already be in either (`setPhosphor()` no-ops on an identical tint, so the
+  reveal lands as nothing happening for anyone already in that mode).
 - **Tuning distance is one shared quantity** feeding the static bed
   (`staticGainForDist`), the S/N readout and the CRT degrade
   (`crtDegradeForDist`), so what you hear, see and read agree by construction.
@@ -149,14 +161,32 @@ pure helpers; `tests/roster.test.mjs` runs `tools/lint-roster.js`.
 - **"Would a real radio have this?"** is the governing design test (play/pause
   was built and removed under it).
 - `stations.md` is generated; edit `stations.js`, then re-run the generator.
-- **Never add a YouTube ID unverified** (oEmbed; for concept-tied stations,
-  also against the source's real tracklist). `tools/lint-roster.js` enforces
-  the mechanical rules: 9 public stations, ≥10 tracks, 4-tone idents, glyphs
-  present in the font, `visual` keys that exist, unique IDs, frequency spacing,
-  and taglines that fit the guide index line (`≤ 52 − callsign.length`).
-- `tools/station-profiles.json` holds the qualitative curation constraints and
-  past rejections; read it before proposing tracks. `tools/pending-tracks.json`
-  is the proposal queue reviewed through `tools/network.html`.
+- **Never add a YouTube ID unverified**, and **oEmbed 200 is not the bar** —
+  it only proves a video exists. Check `playabilityStatus`, `playableInEmbed`
+  and `availableCountries` too — two of those caught something the GREEN ROOM
+  pass would otherwise have shipped (2026-08-26). An age-gated track
+  (`LOGIN_REQUIRED`) cannot be satisfied by the IFrame player and plays as
+  dead air. And what matters about `availableCountries` is **its size, not
+  merely whether the US is in it**: four tracks on that pass had `- Topic`
+  uploads licensed in 1–4 countries, every one of them listing the US, so a
+  US-only check passed all four while they would have failed for everyone
+  else. Expect the better channel to hold the narrower licence; that trade
+  comes up constantly. For a station tied to a concept, also check against
+  whatever defines it — a source tracklist where there is one, the lyric
+  itself where the concept is a subject rather than a source. `tools/lint-roster.js` enforces the mechanical rules: 9 public
+  stations, ≥10 tracks, 4-tone idents, glyphs present in the font, `visual`
+  keys that exist, unique IDs, frequency spacing, and taglines that fit the
+  guide index line (`≤ 52 − callsign.length`; secret stations are exempt from
+  that one and from the glyph rule, since neither is ever drawn).
+- **Rejections live in two files and neither reads the other.**
+  `tools/station-profiles.json`'s `rejections` is the one that matters when
+  you are picking tracks — `audition.js` prints it back at you as "x rejected
+  before". It is hand-maintained, so a curation pass that drops a track has to
+  write it there or the reason is lost; a comment in `stations.js` alone will
+  not surface it. `tools/pending-tracks.json`'s `rejected` is written and read
+  only by `tools/network.html`, for proposals declined out of the queue. Same
+  file's `constraints` holds the qualitative rules; read both before
+  proposing.
 - **`tools/audition.js` is the candidate-side counterpart to `verify-roster.js`**
   — that one checks tracks already on the roster, this one checks tracks that
   aren't yet. `--search="..."` (repeatable) ranks candidates; re-run with the
@@ -170,5 +200,19 @@ pure helpers; `tests/roster.test.mjs` runs `tools/lint-roster.js`.
   MIDNIGHT NEON is mostly `- Topic`, CITY LIGHTS leans on archive channels
   because the catalogue was never officially uploaded. The tool checks the
   mechanical half; the judgment is still yours.
+- **`--station=<id>` must already exist in the roster**, so a brand-new
+  station is a chicken-and-egg: commit the identity object with `tracks: []`
+  first (lint will complain about the 10-track minimum until you fill it),
+  then audition against it.
+- **A rate-limited audition run used to look like a clean one.** YouTube
+  throttles the watch endpoint after a few hundred requests — HTTP 429,
+  redirecting to `google.com/sorry` — and that page carries none of the
+  player fields, so every probe missed and the old fail-open defaults left
+  nothing to flag. Fixed 2026-08-26: an unparseable probe is now
+  `UNVERIFIED(<reason>)` per row, a loud run-level warning, and a nonzero
+  exit. **If you see `UNVERIFIED`, nothing beyond oEmbed was checked** —
+  waiting is the fix, not retrying harder; the limit clears on its own in
+  tens of minutes. A narrow licence flags as `NARROW-LICENCE:<n>` below 20
+  countries (observed counts split cleanly: 1–8 bad, 115–249 healthy).
 - Verify feel changes in a browser against the dev server as well as in the
   suite — timing, sound and texture are most of what matters here.
