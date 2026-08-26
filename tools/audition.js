@@ -90,18 +90,41 @@ async function oembed(id) {
 
 // The watch page carries what oEmbed doesn't: length, region availability and
 // whether the IFrame player is allowed to have it at all.
+//
+// 2026-08-26 -- this used to fail OPEN, and a GREEN ROOM curation pass proved
+// how badly that reads. YouTube rate-limits the watch endpoint after a few
+// hundred requests: it answers 429 and redirects to google.com/sorry, a real
+// page containing none of the fields below. Every regex then missed, and the
+// old defaults (`embeddable: true`, `status: '?'`, `countries/us: null`) meant
+// assess() had nothing to flag -- so an ENTIRE throttled run printed clean,
+// indistinguishable from a genuinely clean one except for `?` in the duration
+// column. That is the worst possible shape for a tool whose only job is
+// catching what oEmbed can't see. It now fails CLOSED: anything short of a
+// 200 with real player data comes back `probed: false` and is flagged
+// UNVERIFIED, and `embeddable` is null (unknown) rather than true.
+//
+// `lengthSeconds` is the liveness probe for the parse, not just a datum -- a
+// page that yields no duration yielded nothing else either.
 async function playability(id) {
+  const unprobed = (reason) => ({
+    probed: false, reason, seconds: 0, countries: null, us: null, embeddable: null, status: '?',
+  })
   try {
-    const html = await (await fetch(`https://www.youtube.com/watch?v=${id}`, { headers: UA })).text()
+    const res = await fetch(`https://www.youtube.com/watch?v=${id}`, { headers: UA })
+    const html = await res.text()
+    if (res.status !== 200) return unprobed(`HTTP ${res.status}`)
+    const seconds = +(html.match(/"lengthSeconds":"(\d+)"/)?.[1] ?? 0)
+    if (!seconds) return unprobed('no player data')
     const countries = html.match(/"availableCountries":\[([^\]]*)\]/)?.[1]
     return {
-      seconds: +(html.match(/"lengthSeconds":"(\d+)"/)?.[1] ?? 0),
+      probed: true,
+      seconds,
       countries: countries ? countries.split(',').length : null,
       us: countries ? countries.includes('"US"') : null,
       embeddable: !/"playableInEmbed":false/.test(html),
       status: html.match(/"playabilityStatus":\{"status":"(\w+)"/)?.[1] ?? '?',
     }
-  } catch { return { seconds: 0, countries: null, us: null, embeddable: true, status: '?' } }
+  } catch (err) { return unprobed(String(err?.message ?? err)) }
 }
 
 async function search(query, n) {
@@ -132,8 +155,20 @@ async function assess(id, stationChannels) {
   if (!e.ok) return { id, dead: true, status: e.status, flags: [`DEAD ${e.status}${e.error ? ` (${e.error})` : ''}`] }
   const p = await playability(id)
   const flags = []
+  // Loudest first: without this the row below reads as "checked, nothing
+  // wrong" when in fact nothing was checked at all. See playability().
+  if (!p.probed) flags.push(`UNVERIFIED(${p.reason})`)
   if (p.us === false) flags.push('NOT-US')
-  if (!p.embeddable) flags.push('NO-EMBED')
+  // 2026-08-26 -- a US-available check is NOT enough, which four GREEN ROOM
+  // tracks demonstrated in one pass: their "- Topic" uploads were licensed in
+  // 1, 2, 2 and 4 countries respectively and every one of them listed the US,
+  // so a US-only check passed all four while they would have failed for
+  // everyone else. Observed counts split cleanly -- the narrow ones came in
+  // at 1-8, everything healthy at 115-249 -- so 20 sits in open space rather
+  // than on a judgement call. The better channel keeps turning out to hold the
+  // narrower licence; that is the trade this roster meets constantly.
+  if (p.countries !== null && p.countries < 20) flags.push(`NARROW-LICENCE:${p.countries}`)
+  if (p.embeddable === false) flags.push('NO-EMBED')
   if (p.status !== 'OK' && p.status !== '?') flags.push(p.status)
   if (SUSPECT.test(e.title)) flags.push('CHECK-VERSION')
 
@@ -198,6 +233,21 @@ async function main() {
       `${r.id}  ${mmss(r.seconds).padStart(5)}  ${String(r.source ?? '-').padEnd(11)}` +
       `${(r.channel ?? '').slice(0, 26).padEnd(27)}${(r.title ?? '').slice(0, 46)}`)
     if (r.flags.length) console.log(`${' '.repeat(14)}${r.flags.join('  ')}`)
+  }
+
+  // Run-level verdict on the probe itself. Per-row UNVERIFIED flags are easy
+  // to skim past when every row carries one; a throttled run is a property of
+  // the RUN, so it gets said once, loudly, at the bottom where the next
+  // instruction is. Rate limits here clear on their own -- waiting is the fix,
+  // not retrying harder.
+  const unprobed = rows.filter(r => !r.dead && r.probed === false)
+  if (unprobed.length) {
+    console.log(`\n!! ${unprobed.length}/${rows.filter(r => !r.dead).length} candidate(s) could NOT be checked ` +
+      `beyond oEmbed -- duration, region and embeddability are all UNKNOWN for them.`)
+    console.log(`   ${[...new Set(unprobed.map(r => r.reason))].join('; ')}`)
+    console.log(`   An HTTP 429 here is YouTube throttling the watch endpoint (it redirects to`)
+    console.log(`   google.com/sorry). Wait it out and re-run; do not treat the rows above as clean.`)
+    process.exitCode = 1
   }
 
   if (searches.length) {
