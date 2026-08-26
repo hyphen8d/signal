@@ -281,6 +281,36 @@ export const STATIONS = [
       realTrack('5nCRNIKkKSs', 'Rain', 'Poppy Ackroyd'),
       realTrack('CQ8zglIXZi8', 'Nuvole Bianche', 'Ludovico Einaudi'),
       realTrack('l81XVNzdZts', 'Everything Is a Memory', 'Slow Meadow'),
+      // 2026-08-26: 24 -> 30, all 6 new artists. The last public station left
+      // at its original size. Unlike the four widened before it, this one was
+      // never repeat-heavy (24 tracks / 22 artists), so these are additions to
+      // a healthy roster rather than a correction to a skewed one.
+      //
+      // All six sit unambiguously in ambient/drone, deliberately nowhere near
+      // the neoclassical boundary this station has drawn twice (Max Richter's
+      // "On the Nature of Daylight" and Nils Frahm's "Says" were both rejected
+      // as too straightforwardly classical). Worth flagging that the boundary
+      // is not actually settled: "Says" is still on the roster above, and
+      // Einaudi's "Nuvole Bianche" sits beside it while the profile blesses
+      // Einaudi by name. Nothing here depends on resolving that -- these are
+      // drone, environmental ambient and minimal techno-ambient, not piano.
+      //
+      // Widens the geography too, which the roster was thin on: Japanese
+      // environmental ambient (Yoshimura, Takada), Norwegian arctic ambient
+      // (Biosphere), German minimal (Gas) and Canadian (Loscil).
+      //
+      // All six are "- Topic", i.e. label-delivered. Skipped the four already
+      // queued in pending-tracks.json for this station (Tim Hecker, Grouper,
+      // Celer, Rafael Anton Irisarri) so this batch can't collide with that
+      // review. Aphex Twin's is catalogued "#3" -- Selected Ambient Works
+      // Volume II is formally untitled -- but every listener knows it as
+      // "Rhubarb", so that is what the dial says.
+      realTrack('TvGXQXN5CQ4', 'Green', 'Hiroshi Yoshimura'),
+      realTrack('csnryqUpO-g', 'Kobresia', 'Biosphere'),
+      realTrack('75O11W5EZAU', 'Rhubarb', 'Aphex Twin'),
+      realTrack('bWw6hMgRILQ', 'Pop 1', 'Gas'),
+      realTrack('MYtX2zYlfdA', 'Estuarine', 'Loscil'),
+      realTrack('g7Jgc1bVWbo', "Mr. Henri Rousseau's Dream", 'Midori Takada'),
     ] },
   { id: 'cold-wave', freq: 273.0, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).

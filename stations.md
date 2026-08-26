@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 296 tracks total.
+Generated from stations.js. 9 stations, 302 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -57,7 +57,7 @@ Tracks (40):
 
 Ident tones (Hz): 392, 329.6, 370, 293.7
 
-Tracks (24):
+Tracks (30):
 
 1. **Weightless** -- Marconi Union  ([youtu.be/UfcAVejslrU](https://youtu.be/UfcAVejslrU))
 2. **Near Light** -- Olafur Arnalds  ([youtu.be/0kYc55bXJFI](https://youtu.be/0kYc55bXJFI))
@@ -83,6 +83,12 @@ Tracks (24):
 22. **Rain** -- Poppy Ackroyd  ([youtu.be/5nCRNIKkKSs](https://youtu.be/5nCRNIKkKSs))
 23. **Nuvole Bianche** -- Ludovico Einaudi  ([youtu.be/CQ8zglIXZi8](https://youtu.be/CQ8zglIXZi8))
 24. **Everything Is a Memory** -- Slow Meadow  ([youtu.be/l81XVNzdZts](https://youtu.be/l81XVNzdZts))
+25. **Green** -- Hiroshi Yoshimura  ([youtu.be/TvGXQXN5CQ4](https://youtu.be/TvGXQXN5CQ4))
+26. **Kobresia** -- Biosphere  ([youtu.be/csnryqUpO-g](https://youtu.be/csnryqUpO-g))
+27. **Rhubarb** -- Aphex Twin  ([youtu.be/75O11W5EZAU](https://youtu.be/75O11W5EZAU))
+28. **Pop 1** -- Gas  ([youtu.be/bWw6hMgRILQ](https://youtu.be/bWw6hMgRILQ))
+29. **Estuarine** -- Loscil  ([youtu.be/MYtX2zYlfdA](https://youtu.be/MYtX2zYlfdA))
+30. **Mr. Henri Rousseau's Dream** -- Midori Takada  ([youtu.be/g7Jgc1bVWbo](https://youtu.be/g7Jgc1bVWbo))
 
 ## COLD WAVE -- 273.0
 

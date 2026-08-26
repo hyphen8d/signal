@@ -74,22 +74,33 @@
         "Sigur Rós",
         "Grouper",
         "William Basinski",
+        "Brian Eno / Orchestra of the Swan",
         "Brian Eno",
+        "Nils Frahm",
         "Hammock",
         "Tim Hecker",
         "A Winged Victory for the Sullen",
         "Jóhann Jóhannsson",
-        "Harold Budd",
+        "Harold Budd / Brian Eno",
         "Kali Malone",
         "Eluvium",
         "Dustin O'Halloran",
         "Julianna Barwick",
         "Ryuichi Sakamoto",
         "Poppy Ackroyd",
-        "Ludovico Einaudi"
+        "Ludovico Einaudi",
+        "Slow Meadow",
+        "Hiroshi Yoshimura",
+        "Biosphere",
+        "Aphex Twin",
+        "Gas",
+        "Loscil",
+        "Midori Takada"
       ],
       "constraints": [
-        "Modern-classical-ADJACENT ambient is welcome (Arnalds, O'Halloran, Einaudi are already on the roster) -- but a piece that reads as straightforwardly classical/neoclassical, rather than ambient-with-classical-texture, is the wrong lane for this station specifically."
+        "Modern-classical-ADJACENT ambient is welcome (Arnalds, O'Halloran, Einaudi are already on the roster) -- but a piece that reads as straightforwardly classical/neoclassical, rather than ambient-with-classical-texture, is the wrong lane for this station specifically.",
+        "OPEN QUESTION, found 2026-08-26: the neoclassical boundary below is not actually settled. Nils Frahm's \"Says\" is listed as rejected for being too straightforwardly classical, yet it is still on the roster, and Einaudi's \"Nuvole Bianche\" sits beside it while the constraint blesses Einaudi by name. Either the rejection was recorded and never acted on, or the line moved. Resolve it before leaning on the Richter/Frahm precedent to reject anything new -- and prefer unambiguous ambient/drone meanwhile, which is what the 2026-08-26 batch did to sidestep the question entirely.",
+        "Sourcing is easy here compared with the other stations: contemporary ambient and drone is well served by artist \"- Topic\" channels, and all six of the 2026-08-26 additions are Topic with no flags at all. The real hazard is length -- full-album streams dominate search results for this genre (43, 59, 66 and 185-minute uploads all surfaced), so check duration and take the single-track upload."
       ],
       "rejections": [
         {
