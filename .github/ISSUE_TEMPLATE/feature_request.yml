@@ -1,0 +1,71 @@
+name: Feature request
+description: Suggest something SIGNAL should do
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two things worth knowing before you write this up, so you know what
+        you're arguing against:
+
+        - **"Would a real radio have this?"** SIGNAL had a play/pause button
+          once, and it got removed -- a real broadcast can't be paused, only
+          muted or turned off. That test still governs what gets added, so
+          it's worth saying why yours passes it (or why it's worth an
+          exception).
+        - **The mobile "lite" layout is deliberately pared down.** No scan,
+          presets, back, volume, or way to power off on touch alone. Those
+          are known gaps, not oversights -- a request to close one is fair,
+          but say what it'd buy on a phone specifically.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What you'd like
+      description: Describe the feature as you'd want to use it.
+      placeholder: |
+        I've got SIGNAL open on a second monitor and I'd love a fullscreen
+        mode -- no browser bar, just the SIGNAL canvas itself.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: What it would let you do
+      description: >
+        The situation you're in when you want this. Concrete beats abstract:
+        the use case usually suggests the right shape for the fix.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of SIGNAL
+      description: Best guess is fine -- pick "Not sure" if it doesn't fit.
+      options:
+        - Tuning / dial / station lock
+        - Audio playback (a track, an ident, static, the hum)
+        - Visualizer ([V])
+        - Lyrics view ([L])
+        - LINE INPUT / audio capture ([A])
+        - Guide overlay ([G])
+        - Display / CRT rendering / colors ([C])
+        - Fullscreen ([F])
+        - Mobile / touch "lite" layout
+        - Boot or power sequence ([P])
+        - Stations or track roster
+        - Not sure
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: >
+            I've checked the controls table in the README -- this isn't
+            already bound to a key I missed.
+          required: false
