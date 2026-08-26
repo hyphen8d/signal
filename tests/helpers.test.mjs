@@ -27,18 +27,46 @@ test('freqToCol/colToFreq: band edges land on the dial edges and round-trip', ()
 
 test('nearestStation never finds a secret station; nearestSignal/nearestLockable do', () => {
   const { nearestStation, nearestSignal, nearestLockable } = tuning
-  const { NIN_STATION } = stations
-  assert.notEqual(nearestStation(NIN_STATION.freq).station, NIN_STATION)
-  assert.equal(nearestSignal(NIN_STATION.freq).station, NIN_STATION)
-  assert.equal(nearestSignal(NIN_STATION.freq).dist, 0)
-  assert.equal(nearestLockable(NIN_STATION.freq).station, NIN_STATION)
+  // 2026-08-26: was NIN_STATION alone; walks SECRET_STATIONS now that
+  // GREEN ROOM shipped as the second entry. The three-question split is
+  // the whole reason a secret station can be swept past and heard but
+  // never seeked to, so it has to hold for EVERY entry, not just the
+  // first one anybody wrote a test for.
+  assert.ok(stations.SECRET_STATIONS.length >= 2, 'both secret stations are in the array')
+  for (const secret of stations.SECRET_STATIONS) {
+    assert.notEqual(nearestStation(secret.freq).station, secret, `${secret.callsign} is unreachable by seek/scan`)
+    assert.equal(nearestSignal(secret.freq).station, secret, `${secret.callsign} still shows a carrier`)
+    assert.equal(nearestSignal(secret.freq).dist, 0)
+    assert.equal(nearestLockable(secret.freq).station, secret, `${secret.callsign} is lockable when parked on it`)
+  }
   for (const st of stations.STATIONS) assert.equal(nearestStation(st.freq).station, st)
 })
 
-test('STATION_COLS: every public station has its own dial column; the secret one is absent', () => {
+test('STATION_COLS: every public station has its own dial column; the secret ones are absent', () => {
   const { STATION_COLS, freqToCol } = tuning
   assert.equal(STATION_COLS.size, stations.STATIONS.length, 'no two public stations share a column')
-  assert.ok(!STATION_COLS.has(freqToCol(stations.NIN_STATION.freq)))
+  for (const secret of stations.SECRET_STATIONS) {
+    assert.ok(!STATION_COLS.has(freqToCol(secret.freq)), `${secret.callsign} draws no dial tick`)
+  }
+})
+
+// 2026-08-26, shipped with GREEN ROOM. The array/`station.secret` refactor
+// (2026-08-23) exists so a second secret station needs no new call sites,
+// which is only true while every entry actually carries the fields the
+// generic paths read. A future entry that forgets `secret: true` would be
+// seekable, and one naming a tint that isn't in PHOSPHORS would fail
+// silently -- setPhosphor() no-ops on an unknown name, so the station
+// would just never change colour and nothing would throw.
+test('every SECRET_STATIONS entry carries what the generic secret paths read', async () => {
+  const config = await import('../config.js?v=helpers')
+  const presetFreqs = new Set(stations.STATION_PRESET_ORDER.map((s) => s.freq))
+  for (const secret of stations.SECRET_STATIONS) {
+    assert.equal(secret.secret, true, `${secret.callsign}: secret flag`)
+    assert.ok(config.PHOSPHORS[secret.forcedPhosphor], `${secret.callsign}: forcedPhosphor '${secret.forcedPhosphor}' is a real tint`)
+    assert.ok(!stations.STATIONS.includes(secret), `${secret.callsign} is not in the public roster`)
+    assert.ok(!presetFreqs.has(secret.freq), `${secret.callsign} has no preset slot`)
+    assert.ok(!secret.glyph, `${secret.callsign} draws no dial glyph`)
+  }
 })
 
 test('shuffledIndices is a permutation', () => {

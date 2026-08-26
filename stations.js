@@ -1261,6 +1261,174 @@ export const NIN_STATION = {
     ],
 }
 
+// GREEN_ROOM_STATION (2026-08-26) -- the second secret station, and the
+// first one to actually ship since the machinery below was generalized for
+// a second entry back on 2026-08-23. Everything that generalization
+// promised is what this station needed and nothing more: the object
+// literal here, one line in SECRET_STATIONS, one key case in program.js,
+// one MAPPED_KEYS entry, one forced-only tint in config.js. No call site
+// needed changing -- SECRET_STATIONS is walked, not indexed, and every
+// secret behaviour is keyed on `station.secret` / `station.forcedPhosphor`
+// rather than on an id.
+//
+// Reachable only by Shift+0 -- the exact key GREEN HOUSE was going to use
+// before it was pulled (see SECRET_STATIONS' comment below), left unbound
+// and documented as reserved ever since. Not a coincidence and not a
+// collision: the reserved slot is being spent.
+//
+// FREQUENCY: 420.0, which is the entire joke and was fixed before anything
+// else about the station was. It happens to land in the widest empty
+// stretch of the band -- 99.0 KHz clear of DRIFT MODE (321.0) below and
+// 68.0 clear of CIRCUIT CRUSH (488.0) above, against a LOCK_THRESHOLD*2
+// minimum of 12 -- so no tease bleed, no lock ambiguity, and no reshuffle
+// of anything else. The one frequency on the roster picked for a reason
+// that has nothing to do with the dial and got away with it.
+//
+// FORMAT: not a genre station. Every track is *literally, lyrically* about
+// cannabis, which puts doom metal, G-funk, roots reggae, outlaw country,
+// a Weezer single and Kacey Musgraves on the same rotation. The other
+// nine stations are each one coherent sound; this one is one coherent
+// SUBJECT and a deliberately incoherent sound. That is the bit. Tracks
+// are held to the subject, not to a genre -- see tools/station-profiles.json
+// for what that admits and what it rules out.
+export const GREEN_ROOM_STATION = {
+  id: 'green-room', freq: 420.0, callsign: 'GREEN ROOM', tagline: 'backstage haze, one subject only',
+  freqNote: '420.0 -- it was never going to be anything else',
+  desc: "Songs about exactly one thing, spread across fifty years and every genre that ever got around to writing one -- doom metal, G-funk, roots reggae, outlaw country, power pop. The dial found the subject, not the sound.",
+  // Whole-tone descent (G4-F4-Eb4-Db4). Every other ident on the roster
+  // sits in a key -- this one deliberately doesn't: a whole-tone run has
+  // no leading tone and no tonal centre, so it never resolves and just
+  // sags. The only unmoored motif on the roster, and the point of picking
+  // it over another minor-third drift.
+  ident: [392.0, 349.2, 311.1, 277.2],
+  // Slowest announce on the roster (DRIFT MODE's 1.35 held it before this).
+  // Higher is slower here -- see playIdent's tempo note in audio/sfx.js.
+  identTempo: 1.5,
+  // The era spread is the problem: 70s rock and reggae masters sit well
+  // under the modern hip-hop entries on the same rotation. A modest lift,
+  // same as the other mixed-era stations (COLD WAVE, MIDNIGHT NEON).
+  gain: 1.15,
+  secret: true,
+  // No glyph -- never drawn on the dial, same as NIN. See its note.
+  //
+  // The inverse of NIN's profile on purpose. That station is the one you
+  // aren't supposed to find and it fights you: high static, hostile
+  // idle events, a grind layer. This one is the room you're let into, so
+  // it is the softest carrier on the roster instead -- low static, a wide
+  // unfocused spot, peaking almost off, heavy bloom and a long persistence
+  // tail, so text blooms and smears rather than snapping. Grain is kept
+  // LOW deliberately: the haze here should read as glow, not as noise.
+  static: 800,
+  crt: { beam: 0.95, sharpen: 0.35, bloomAmt: 2.1, decay: 0.88, noise: 0.08, flicker: 0.05 },
+  // Sluggish needle, and the smallest swing on the roster. Sits right next
+  // to DRIFT MODE's 0.16/0.72 -- the two laziest needles on the dial are
+  // the ambient station and this one -- but damped harder and swung
+  // shorter, so it settles late and barely overshoots at all.
+  meter: { spring: 0.18, damping: 0.74, swing: 0.7 },
+  // Rarer than the roster default (90-210s) rather than more frequent --
+  // again the inverse of NIN, and no grind layer at all. Nothing here
+  // should feel like an interruption.
+  idleEvent: { minS: 150, maxS: 330 },
+  // FLOW FIELD, orphaned since MOMENTUM was replaced by MIDNIGHT NEON and
+  // kept in the registry against exactly this ("in case a future pass
+  // wants it again" -- flowfield.js's own note). A slow drifting angle
+  // field rendered as streak glyphs is already smoke; it did not need a
+  // new effect built for it, and it keeps its baseline motion with no
+  // audio tap, which matters more here than on most stations.
+  visual: 'flowfield',
+  // Forced-only tint, read generically by applyPhosphor()/applySecretTease().
+  // See config.js's PHOSPHORS for why it isn't just 'matrix'.
+  forcedPhosphor: 'haze',
+  tracks: [
+    // Curated 2026-08-26 from a 30-title brief, all of it built on the
+    // one rule in tools/station-profiles.json: the song has to be
+    // literally about cannabis, not merely smoke-adjacent. 28 shipped.
+    //
+    // TWO DROPPED, deliberately and not backfilled (same convention as
+    // the 50th-pass curation note near the top of this file -- record the
+    // rejection so a later session doesn't re-add it as a fresh idea):
+    //
+    //   Three 6 Mafia, "Gotta Stay High" -- no such recording. Every
+    //     search resolves to "Stay Fly" (hook is "I gotta stay FLY," not
+    //     about weed, so it fails the station's own membership test) or
+    //     to fan re-uploads that mislabel it "Stay High". "Da Summa" was
+    //     offered as the real Three 6 weed track and declined; the slot
+    //     was dropped rather than filled.
+    //   Queens of the Stone Age, "Feel Good Hit of the Summer" -- the
+    //     only official upload (QueensStoneAgeVEVO, bAXPUN2z2CE) is
+    //     age-gated: LOGIN_REQUIRED, which the IFrame player cannot
+    //     satisfy, so it would have been dead air. No Topic upload of the
+    //     album track exists -- only the Reprise. Unofficial uploads were
+    //     offered and declined. This is the exact failure oEmbed cannot
+    //     see and tools/audition.js exists to catch.
+    //
+    // FOUR SOURCE SWAPS driven by availableCountries, not by provenance
+    // -- in each case the first pick was the *better* channel and the
+    // narrower licence, which is the trade this roster keeps meeting:
+    //   Sweet Leaf   Black Sabbath - Topic   2 countries -> RHINO      249
+    //   Mary Jane    Rick James - Topic      1 country   -> Topic      123
+    //   How High     Redman - Topic          2 countries -> UPROXX     249
+    //   Medicated    Wiz Khalifa - Topic     4 countries -> own channel 249
+    // All four originals listed the US, so they would have passed a
+    // naive US-only check and silently failed for everyone else.
+    //
+    // Every ID below: oEmbed 200, playabilityStatus OK, US-available,
+    // embeddable, no duplicate on the roster and no title collision.
+    realTrack('pZcMp40ZMwc', 'Sweet Leaf', 'Black Sabbath'),
+    realTrack('eMK4cfXj5c0', 'Hits from the Bong', 'Cypress Hill'),
+    realTrack('6cIePqdz03A', 'Legalize It', 'Peter Tosh'),
+    realTrack('xBD6aStamvo', 'Mary Jane', 'Rick James'),
+    realTrack('AMUaWc46_0U', "Marijuanaut's Theme", 'Sleep'),
+    realTrack('O_BSg1ccGUM', 'Smoke Two Joints', 'Sublime'),
+    // 4:20 exactly, which is the reason this one is on the brief at all.
+    // The Topic upload is the only source that runs it to length -- the
+    // official video edit is 4:50.
+    realTrack('zx40kMDZaL0', 'Marijuana', 'Kid Cudi'),
+    realTrack('QZXc39hT8t4', 'The Next Episode', 'Dr. Dre ft. Snoop Dogg'),
+    // 4:14 -- the album cut. The other Topic entry (agJ6zyTB5ng, 5:09) is
+    // a longer version; picked on duration, not on channel, since both
+    // carry identical Topic provenance and identical titles.
+    realTrack('Dsct-TZ26Pw', 'I Got 5 On It', 'Luniz'),
+    realTrack('ewcl9zWUMfk', "You Don't Know How It Feels", 'Tom Petty'),
+    realTrack('oDP6i4kUXvE', 'Weed Song', 'Bone Thugs-N-Harmony'),
+    realTrack('VcEJyFjBwrs', 'How High', 'Redman & Method Man'),
+    realTrack('vbED91NU4vE', 'Kaya', 'Bob Marley & The Wailers'),
+    realTrack('3tnb2o-cV_0', 'Sativa', 'Jhené Aiko ft. Swae Lee'),
+    realTrack('dV3AziKTBUo', 'The Joker', 'Steve Miller Band'),
+    realTrack('OF3EUFnafp8', 'One Toke Over the Line', 'Brewer & Shipley'),
+    // The Topic upload's own title misspells it "Doubie Ashtray". Spelled
+    // correctly here on purpose -- the title field is what draws on the
+    // status row, and verify-roster.js compares IDs, not titles, so this
+    // will not read as drift.
+    realTrack('XMjO4plTlb4', 'Doobie Ashtray', 'Devin the Dude'),
+    // Topic carries this as plain "Good Times"; the parenthetical is the
+    // name it is actually known by. Worth one listen against the dev
+    // server to confirm it is the album cut and not a radio edit -- the
+    // labelled "(Edited)" variants on this Topic channel are album-level
+    // entries, so an unlabelled track should be the standard master.
+    realTrack('dhVmXaUz5z0', 'Good Times (I Get High)', 'Styles P'),
+    realTrack('EsyUa63NM1E', 'Pass the Dutchie', 'Musical Youth'),
+    realTrack('Useh3zHVQXo', "Crumblin' Erb", 'OutKast'),
+    realTrack('jLPvmwfklp8', 'Medicated', 'Wiz Khalifa'),
+    realTrack('_9BGLtqqkVI', 'Hash Pipe', 'Weezer'),
+    // The song, not the film -- the 1978 soundtrack's title track, 2:31,
+    // off RHINO's official vinyl series. Searching the title alone returns
+    // the movie, clips from it, and Yesca's instrumental theme; none of
+    // those are what the brief asked for.
+    realTrack('9_H1_8-CKls', 'Up in Smoke', 'Cheech & Chong'),
+    realTrack('uBvzphvt8RA', 'Roll Another Number (For the Road)', 'Neil Young'),
+    realTrack('WXSaCJrPNhU', 'Amerijuanican', 'Bongzilla'),
+    realTrack('GY4HueJheFw', 'Illegal Smile', 'John Prine'),
+    // 7:14 -- the full version, and the longest track on the roster. Kept
+    // over the 4:55 single edit because the edit only exists on unknown
+    // channels, and because this station already carries Sleep at 6:40
+    // and Bongzilla at 6:46; long is on-brand here in a way it would not
+    // be anywhere else on the dial.
+    realTrack('49qZ4VLLjC8', 'One Draw', 'Rita Marley'),
+    realTrack('ofsvcA-2XmE', 'Follow Your Arrow', 'Kacey Musgraves'),
+  ],
+}
+
 // 2026-08-24: GREEN HOUSE dropped, passed on for now, pending further
 // consideration -- a second secret station (GREEN HOUSE, UK jungle/
 // dub, reachable by Shift+0) was built and QA'd here but pulled before
@@ -1274,4 +1442,11 @@ export const NIN_STATION = {
 // would just mean redoing this same refactor if a second station comes
 // back later. Adding one back is a single object literal plus one line
 // here, whenever that decision is made.
-export const SECRET_STATIONS = [NIN_STATION]
+//
+// 2026-08-26: that decision was made, and the estimate held exactly --
+// GREEN ROOM went in as one object literal and one array entry, with no
+// call site touched. GREEN HOUSE itself is still parked; it is a
+// different station that happened to want the same key, and the key went
+// to GREEN ROOM. If jungle/dub ever comes back it needs a new binding,
+// not this one.
+export const SECRET_STATIONS = [NIN_STATION, GREEN_ROOM_STATION]

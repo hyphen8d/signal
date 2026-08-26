@@ -27,7 +27,7 @@ const { DISPLAY_MODES, MAPPED_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
-const { NIN_STATION, SECRET_STATIONS, STATIONS, STATION_PRESET_ORDER } = await import(`./stations.js?v=${V}`)
+const { GREEN_ROOM_STATION, NIN_STATION, SECRET_STATIONS, STATIONS, STATION_PRESET_ORDER } = await import(`./stations.js?v=${V}`)
 const { FREQ_MAX, FREQ_MIN, LOCK_THRESHOLD, NEAR_THRESHOLD, RESUME_CUTOFF_MS, SCAN_STEP, SEEK_STEP, STATION_COLS, VISUALIZER_IDLE_MS, WARMUP_MS, clampFreq, freqToCol, nearestLockable, nearestSignal, nearestStation, shuffledIndices } = await import(`./tuning.js?v=${V}`)
 const { VISUALS } = await import(`./visuals/index.js?v=${V}`)
 const { default: desktopUi } = await import(`./ui/desktop.js?v=${V}`)
@@ -2061,9 +2061,16 @@ export default {
       case '0': e.preventDefault(); this.presetTune(s, NIN_STATION); break
       // 2026-08-24: Shift+0 (')' e.key on a standard layout) was bound the
       // same way to a second secret station, GREEN HOUSE -- pulled before
-      // shipping for now, so this key is
-      // unbound again. See SECRET_STATIONS' own comment for the station
-      // itself; re-adding this case is the only other step if it returns.
+      // shipping, leaving this key documented as reserved rather than
+      // free.
+      // 2026-08-26: reserved slot spent. GREEN ROOM ships on it -- same
+      // shape as '0' above, presetTune() against the station object
+      // directly, since it is deliberately not in STATIONS either. Bound
+      // on e.key rather than on e.code + shiftKey so a layout where ')'
+      // sits elsewhere still reaches it; the tradeoff is that a layout
+      // with no ')' at all has no way in, which is acceptable for an
+      // easter egg and matches how '0' already behaves.
+      case ')': e.preventDefault(); this.presetTune(s, GREEN_ROOM_STATION); break
     }
     } finally { this._inUserGesture = false }
   },
