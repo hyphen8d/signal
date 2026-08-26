@@ -363,13 +363,28 @@
         "The Pharcyde",
         "Warren G",
         "Pete Rock & C.L. Smooth",
+        "MF DOOM (Madvillain)",
         "Black Star",
         "Souls of Mischief",
         "Cypress Hill",
-        "2Pac"
+        "2Pac feat. Dr. Dre & Roger Troutman",
+        "Beastie Boys",
+        "Eric B. & Rakim",
+        "Organized Konfusion",
+        "Public Enemy",
+        "The Notorious B.I.G.",
+        "Big Daddy Kane",
+        "Queen Latifah",
+        "Geto Boys",
+        "Common",
+        "Digital Underground",
+        "The Roots"
       ],
       "constraints": [
-        "Genuinely coast-to-coast -- NY is if anything the heavier side (Tribe/De La/Wu-Tang/Nas/Gang Starr/Pete Rock/Digable Planets/MF DOOM/Black Star) alongside West Coast (Dre/Ice Cube/Warren G/2Pac/Cypress Hill) and Outkast (Atlanta). A \"west coast legends\" framing was checked against the actual tracklist and found wrong (52nd pass) -- don't skew additions toward any one coast without checking the balance first."
+        "Genuinely coast-to-coast -- NY is if anything the heavier side (Tribe/De La/Wu-Tang/Nas/Gang Starr/Pete Rock/Digable Planets/MF DOOM/Black Star) alongside West Coast (Dre/Ice Cube/Warren G/2Pac/Cypress Hill) and Outkast (Atlanta). A \"west coast legends\" framing was checked against the actual tracklist and found wrong (52nd pass) -- don't skew additions toward any one coast without checking the balance first.",
+        "Coast balance, measured 2026-08-25 rather than assumed: before this pass roughly half the roster was New York. The 8-track addition was weighted away from it on purpose (3 NY, plus New Jersey, Houston, Chicago, Oakland and Philadelphia). Re-measure before the next batch instead of trusting this number -- it is a snapshot, like acceptedArtists.",
+        "Before 2026-08-25 the station had no women across 21 artists. Queen Latifah is the first. Golden-age canon has plenty more (MC Lyte, Salt-N-Pepa, Lauryn Hill/Fugees, Roxanne Shante) and none are represented yet.",
+        "On the open question under the Snoop Dogg rejection -- whether this station steers away from radio-famous tracks toward deeper cuts -- the roster itself argues against it: C.R.E.A.M., Ms. Jackson, California Love, Regulate, Insane in the Brain and It Was A Good Day are all canon hits. Treat that removal as a taste call on the track until something else suggests otherwise."
       ],
       "rejections": [
         {

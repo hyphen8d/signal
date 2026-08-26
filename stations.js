@@ -837,6 +837,35 @@ export const STATIONS = [
       realTrack('z5rRZdiu1UE', 'Sabotage (Official Music Video)', 'Beastie Boys'),
       realTrack('E7t8eoA_1jQ', 'Paid In Full', 'Eric B. & Rakim'),
       realTrack('O0uoB45_Uns', 'Stray Bullet', 'Organized Konfusion'),
+      // 2026-08-25: 29 -> 37, all 8 new artists. This station had become the
+      // repeat-heaviest on the roster after CITY LIGHTS was widened -- 29
+      // tracks across 21 artists, eight of them doubled up -- so breadth, not
+      // depth.
+      //
+      // Weighted deliberately away from New York. The coast-balance note above
+      // says not to skew without checking first, and the check says the roster
+      // was already NY-heavy (roughly half of it), so only three of these are
+      // NY: Public Enemy, Biggie, Big Daddy Kane. The rest spread the map the
+      // desc claims -- New Jersey (Queen Latifah), Houston (Geto Boys),
+      // Chicago (Common), Oakland (Digital Underground) and Philadelphia
+      // (The Roots).
+      //
+      // Queen Latifah is the first woman on the station, which had none across
+      // 21 artists -- a real hole in any golden-age roster, not a quota.
+      //
+      // Deliberately skipped: the six artists already sitting in
+      // pending-tracks.json for this station (Big L, EPMD, Jeru the Damaja,
+      // N.W.A, UGK, Goodie Mob), so this batch can't collide with that review.
+      // Vetted with tools/audition.js, which caught a 2020 Fight The Power
+      // remix and several live cuts before they got as far as the page.
+      realTrack('mmo3HFa2vjg', 'Fight the Power', 'Public Enemy'),
+      realTrack('7Y8VPQcPHhY', 'Juicy', 'The Notorious B.I.G.'),
+      realTrack('nqPlF5Mn32M', "Ain't No Half-Steppin'", 'Big Daddy Kane'),
+      realTrack('f8cHxydDb7o', 'U.N.I.T.Y.', 'Queen Latifah'),
+      realTrack('7vHA5lqrMMI', 'Mind Playing Tricks on Me', 'Geto Boys'),
+      realTrack('TrUERC2Zk64', 'I Used to Love H.E.R.', 'Common'),
+      realTrack('PBsjggc5jHM', 'The Humpty Dance', 'Digital Underground'),
+      realTrack('_qzacv8dtb4', 'What They Do', 'The Roots'),
     ] },
   // 52nd pass -- stations 1, 6, and 9 needed similar short descriptions to
   // fit the format the others have. Was a bare two-word tagline; added

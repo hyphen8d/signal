@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 288 tracks total.
+Generated from stations.js. 9 stations, 296 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -292,7 +292,7 @@ Tracks (30):
 
 Ident tones (Hz): 220, 293.7, 349.2, 293.7
 
-Tracks (29):
+Tracks (37):
 
 1. **Can I Kick It?** -- A Tribe Called Quest  ([youtu.be/D-uV8TGjaGU](https://youtu.be/D-uV8TGjaGU))
 2. **Award Tour** -- A Tribe Called Quest  ([youtu.be/P800UWoE9xs](https://youtu.be/P800UWoE9xs))
@@ -323,6 +323,14 @@ Tracks (29):
 27. **Sabotage (Official Music Video)** -- Beastie Boys  ([youtu.be/z5rRZdiu1UE](https://youtu.be/z5rRZdiu1UE))
 28. **Paid In Full** -- Eric B. & Rakim  ([youtu.be/E7t8eoA_1jQ](https://youtu.be/E7t8eoA_1jQ))
 29. **Stray Bullet** -- Organized Konfusion  ([youtu.be/O0uoB45_Uns](https://youtu.be/O0uoB45_Uns))
+30. **Fight the Power** -- Public Enemy  ([youtu.be/mmo3HFa2vjg](https://youtu.be/mmo3HFa2vjg))
+31. **Juicy** -- The Notorious B.I.G.  ([youtu.be/7Y8VPQcPHhY](https://youtu.be/7Y8VPQcPHhY))
+32. **Ain't No Half-Steppin'** -- Big Daddy Kane  ([youtu.be/nqPlF5Mn32M](https://youtu.be/nqPlF5Mn32M))
+33. **U.N.I.T.Y.** -- Queen Latifah  ([youtu.be/f8cHxydDb7o](https://youtu.be/f8cHxydDb7o))
+34. **Mind Playing Tricks on Me** -- Geto Boys  ([youtu.be/7vHA5lqrMMI](https://youtu.be/7vHA5lqrMMI))
+35. **I Used to Love H.E.R.** -- Common  ([youtu.be/TrUERC2Zk64](https://youtu.be/TrUERC2Zk64))
+36. **The Humpty Dance** -- Digital Underground  ([youtu.be/PBsjggc5jHM](https://youtu.be/PBsjggc5jHM))
+37. **What They Do** -- The Roots  ([youtu.be/_qzacv8dtb4](https://youtu.be/_qzacv8dtb4))
 
 ## CIPHER -- 133.7
 
