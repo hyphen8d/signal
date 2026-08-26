@@ -56,7 +56,10 @@
         "Helmet",
         "The Afghan Whigs",
         "Melvins",
-        "Radiohead"
+        "Radiohead",
+        "Candlebox",
+        "Gin Blossoms",
+        "Live"
       ],
       "constraints": [
         "Stay in grunge/alt-rock proper -- guitars, raw vocals, radio-ready angst. Not pop-rock crossover, not post-grunge (2000s) unless it's genuinely of-era."
@@ -95,7 +98,9 @@
         "Aphex Twin",
         "Gas",
         "Loscil",
-        "Midori Takada"
+        "Midori Takada",
+        "Celer",
+        "Rafael Anton Irisarri"
       ],
       "constraints": [
         "Modern-classical-ADJACENT ambient is welcome (Arnalds, O'Halloran, Einaudi are already on the roster) -- but a piece that reads as straightforwardly classical/neoclassical, rather than ambient-with-classical-texture, is the wrong lane for this station specifically.",
@@ -142,7 +147,17 @@
         "Howard Jones",
         "Men Without Hats",
         "Peter Schilling",
-        "Modern English"
+        "Modern English",
+        "Thomas Dolby",
+        "Ultravox",
+        "Naked Eyes",
+        "Kim Wilde",
+        "Yazoo",
+        "China Crisis",
+        "Bronski Beat",
+        "Blancmange",
+        "Japan",
+        "Missing Persons"
       ],
       "constraints": [
         "Strictly synth-driven new wave/synthpop of the era -- drum machines and cold hooks. Not later-80s pop-rock crossover, not synthwave (that's a modern retro genre and belongs on CIRCUIT CRUSH instead)."
@@ -290,10 +305,10 @@
         "Kavinsky",
         "The Midnight",
         "GUNSHIP",
-        "FM-84",
+        "FM-84 feat. Ollie Wride",
         "Perturbator",
         "Carpenter Brut",
-        "Electric Youth",
+        "Electric Youth ft. College",
         "Timecop1983",
         "Dance With The Dead",
         "Power Glove",
@@ -308,7 +323,12 @@
         "GosT",
         "NINA",
         "Robert Parker",
-        "SelloRekt & LA Dreams"
+        "SelloRekt & LA Dreams",
+        "FM-84",
+        "Volkor X",
+        "Highway Superstar",
+        "Betamaxx",
+        "Meteor"
       ],
       "constraints": [
         "Owns the darker/harder end of synthwave -- Perturbator, Carpenter Brut, GosT and similar belong here specifically, NOT on CIPHER, even though CIPHER is also electronic. This boundary has been deliberately enforced before (see CIPHER's rejections below)."
@@ -334,6 +354,8 @@
         "The Chordettes",
         "Tennessee Ernie Ford",
         "Sons of the Pioneers",
+        "Louis Jordan & His Tympany Five",
+        "The Andrews Sisters",
         "Big Joe Turner",
         "Billy Ward and His Dominoes",
         "Artie Shaw & His Orchestra",
@@ -342,7 +364,8 @@
         "Warren Smith",
         "The Chords",
         "Clyde McPhatter & The Drifters",
-        "Jackie Brenston & His Delta Cats"
+        "Jackie Brenston & His Delta Cats",
+        "The Ink Spots & Ella Fitzgerald"
       ],
       "constraints": [
         "TIGHTEST constraint on the roster: not just \"any genuine 40s/50s classic\" -- must be verifiably a real track that actually plays on Fallout 4's Diamond City Radio or Fallout 76's Appalachia Radio. A track has been pulled before for being period-correct but NOT actually on those in-game stations (checked against the Fallout Wiki tracklists).",
@@ -389,7 +412,13 @@
         "Geto Boys",
         "Common",
         "Digital Underground",
-        "The Roots"
+        "The Roots",
+        "Big L",
+        "EPMD",
+        "Jeru the Damaja",
+        "N.W.A",
+        "UGK",
+        "Goodie Mob"
       ],
       "constraints": [
         "Genuinely coast-to-coast -- NY is if anything the heavier side (Tribe/De La/Wu-Tang/Nas/Gang Starr/Pete Rock/Digable Planets/MF DOOM/Black Star) alongside West Coast (Dre/Ice Cube/Warren G/2Pac/Cypress Hill) and Outkast (Atlanta). A \"west coast legends\" framing was checked against the actual tracklist and found wrong (52nd pass) -- don't skew additions toward any one coast without checking the balance first.",
@@ -422,8 +451,22 @@
         "The Crystal Method",
         "Freestylers",
         "Fatboy Slim",
-        "Groove Armada",
-        "Portishead"
+        "Portishead",
+        "Bentley Rhythm Ace",
+        "Way Out West",
+        "Fluke",
+        "Lunatic Calm",
+        "Apollo 440",
+        "Future Sound of London",
+        "Overseer",
+        "Sneaker Pimps",
+        "Junkie XL",
+        "DJ Shadow",
+        "Photek",
+        "Death in Vegas",
+        "UNKLE",
+        "Tricky",
+        "Pitchshifter"
       ],
       "constraints": [
         "Big-beat/breakbeat energy specifically -- upbeat, propulsive, \"hacker movie soundtrack.\" NOT the darker synthwave/electronic lane (that's CIRCUIT CRUSH's territory, enforced deliberately -- see its profile) and NOT moodier IDM/glitch (Aphex Twin has been rejected from this station twice, see below).",

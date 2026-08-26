@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 302 tracks total.
+Generated from stations.js. 9 stations, 328 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -8,7 +8,7 @@ Generated from stations.js. 9 stations, 302 tracks total.
 
 Ident tones (Hz): 392, 349.2, 311.2, 261.6
 
-Tracks (40):
+Tracks (43):
 
 1. **Smells Like Teen Spirit** -- Nirvana  ([youtu.be/hTWKbfoikeg](https://youtu.be/hTWKbfoikeg))
 2. **Black Hole Sun** -- Soundgarden  ([youtu.be/3mbBbFH9fAg](https://youtu.be/3mbBbFH9fAg))
@@ -50,6 +50,9 @@ Tracks (40):
 38. **Debonair** -- The Afghan Whigs  ([youtu.be/oJwWmz8Mp3U](https://youtu.be/oJwWmz8Mp3U))
 39. **Honey Bucket** -- Melvins  ([youtu.be/3RMmIJn_4FA](https://youtu.be/3RMmIJn_4FA))
 40. **Creep** -- Radiohead  ([youtu.be/XFkzRNyygfk](https://youtu.be/XFkzRNyygfk))
+41. **Far Behind** -- Candlebox  ([youtu.be/fTqyUz_jSIo](https://youtu.be/fTqyUz_jSIo))
+42. **Hey Jealousy** -- Gin Blossoms  ([youtu.be/ah5gAkna3jI](https://youtu.be/ah5gAkna3jI))
+43. **Lightning Crashes** -- Live  ([youtu.be/xsJ4O-nSveg](https://youtu.be/xsJ4O-nSveg))
 
 ## DRIFT MODE -- 321.0
 
@@ -57,7 +60,7 @@ Tracks (40):
 
 Ident tones (Hz): 392, 329.6, 370, 293.7
 
-Tracks (30):
+Tracks (34):
 
 1. **Weightless** -- Marconi Union  ([youtu.be/UfcAVejslrU](https://youtu.be/UfcAVejslrU))
 2. **Near Light** -- Olafur Arnalds  ([youtu.be/0kYc55bXJFI](https://youtu.be/0kYc55bXJFI))
@@ -89,6 +92,10 @@ Tracks (30):
 28. **Pop 1** -- Gas  ([youtu.be/bWw6hMgRILQ](https://youtu.be/bWw6hMgRILQ))
 29. **Estuarine** -- Loscil  ([youtu.be/MYtX2zYlfdA](https://youtu.be/MYtX2zYlfdA))
 30. **Mr. Henri Rousseau's Dream** -- Midori Takada  ([youtu.be/g7Jgc1bVWbo](https://youtu.be/g7Jgc1bVWbo))
+31. **Virginal II** -- Tim Hecker  ([youtu.be/25zpPS_OdhQ](https://youtu.be/25zpPS_OdhQ))
+32. **Vital** -- Grouper  ([youtu.be/Vi3bSG3jL_M](https://youtu.be/Vi3bSG3jL_M))
+33. **Oro Oro** -- Celer  ([youtu.be/bFNbOvzvvYI](https://youtu.be/bFNbOvzvvYI))
+34. **Reprisal** -- Rafael Anton Irisarri  ([youtu.be/osA0Wl_-EHU](https://youtu.be/osA0Wl_-EHU))
 
 ## COLD WAVE -- 273.0
 
@@ -96,7 +103,7 @@ Tracks (30):
 
 Ident tones (Hz): 440, 659.3, 554.4, 440
 
-Tracks (30):
+Tracks (37):
 
 1. **Blue Monday '88** -- New Order  ([youtu.be/9GMjH1nR0ds](https://youtu.be/9GMjH1nR0ds))
 2. **Just Like Heaven** -- The Cure  ([youtu.be/1ASpBpT8bRQ](https://youtu.be/1ASpBpT8bRQ))
@@ -128,6 +135,13 @@ Tracks (30):
 28. **She Blinded Me With Science (Official Video - HD Remaster)** -- Thomas Dolby  ([youtu.be/V83JR2IoI8k](https://youtu.be/V83JR2IoI8k))
 29. **Vienna (Official Music Video)** -- Ultravox  ([youtu.be/xJeWySiuq1I](https://youtu.be/xJeWySiuq1I))
 30. **Always Something There to Remind Me** -- Naked Eyes  ([youtu.be/lVrELhxOFnM](https://youtu.be/lVrELhxOFnM))
+31. **Kids in America** -- Kim Wilde  ([youtu.be/80TfG7C9azA](https://youtu.be/80TfG7C9azA))
+32. **Don't Go** -- Yazoo  ([youtu.be/9wyzRycjNH4](https://youtu.be/9wyzRycjNH4))
+33. **Christian** -- China Crisis  ([youtu.be/mScWSckEzew](https://youtu.be/mScWSckEzew))
+34. **Smalltown Boy** -- Bronski Beat  ([youtu.be/8o2XHjvaEWE](https://youtu.be/8o2XHjvaEWE))
+35. **Living on the Ceiling** -- Blancmange  ([youtu.be/QW_m8lhZbQQ](https://youtu.be/QW_m8lhZbQQ))
+36. **Ghosts** -- Japan  ([youtu.be/7zzLU1ato2w](https://youtu.be/7zzLU1ato2w))
+37. **Words** -- Missing Persons  ([youtu.be/IasCZL072fQ](https://youtu.be/IasCZL072fQ))
 
 ## MIDNIGHT NEON -- 567.8
 
@@ -172,7 +186,7 @@ Tracks (28):
 
 Ident tones (Hz): 523.3, 784, 659.3, 987.8
 
-Tracks (40):
+Tracks (41):
 
 1. **Stay With Me** -- Miki Matsubara  ([youtu.be/5zTkTlj2h9E](https://youtu.be/5zTkTlj2h9E))
 2. **Sparkle** -- Tatsuro Yamashita  ([youtu.be/tWqZASIxlqs](https://youtu.be/tWqZASIxlqs))
@@ -214,6 +228,7 @@ Tracks (40):
 38. **Ruby no Yubiwa** -- Akira Terao  ([youtu.be/ZYeVfKtIH4c](https://youtu.be/ZYeVfKtIH4c))
 39. **L.A. Night** -- Yasuko Agawa  ([youtu.be/2tiLgAG02QM](https://youtu.be/2tiLgAG02QM))
 40. **Just a Joke** -- Yurie Kokubu  ([youtu.be/AD3sEAGRGv4](https://youtu.be/AD3sEAGRGv4))
+41. **Neat na Gogo San-ji** -- Miki Matsubara  ([youtu.be/r63lZvPsj5U](https://youtu.be/r63lZvPsj5U))
 
 ## CIRCUIT CRUSH -- 488.0
 
@@ -221,7 +236,7 @@ Tracks (40):
 
 Ident tones (Hz): 587.3, 466.2, 698.5, 932.3
 
-Tracks (29):
+Tracks (33):
 
 1. **Nightcall** -- Kavinsky  ([youtu.be/ZVS6Q_lbKQ0](https://youtu.be/ZVS6Q_lbKQ0))
 2. **Sunset** -- The Midnight  ([youtu.be/URma_gu1aNE](https://youtu.be/URma_gu1aNE))
@@ -252,6 +267,10 @@ Tracks (29):
 27. **Days of Thunder** -- The Midnight  ([youtu.be/UiSB2Fbw9gs](https://youtu.be/UiSB2Fbw9gs))
 28. **Arcade Summer** -- FM-84  ([youtu.be/ssdA6IiP3r4](https://youtu.be/ssdA6IiP3r4))
 29. **Prelude to War** -- Volkor X  ([youtu.be/hd9xGlXGNh0](https://youtu.be/hd9xGlXGNh0))
+30. **Launcher** -- Highway Superstar  ([youtu.be/X3wVDrc8000](https://youtu.be/X3wVDrc8000))
+31. **Never Sleep Again** -- Betamaxx  ([youtu.be/jsE7RFs7bHk](https://youtu.be/jsE7RFs7bHk))
+32. **Ignition** -- Meteor  ([youtu.be/9EJJlr7Dopk](https://youtu.be/9EJJlr7Dopk))
+33. **Feral** -- Dan Terminus  ([youtu.be/HJti6_oiR1A](https://youtu.be/HJti6_oiR1A))
 
 ## ATOMIC -- 529.0
 
@@ -298,7 +317,7 @@ Tracks (30):
 
 Ident tones (Hz): 220, 293.7, 349.2, 293.7
 
-Tracks (37):
+Tracks (43):
 
 1. **Can I Kick It?** -- A Tribe Called Quest  ([youtu.be/D-uV8TGjaGU](https://youtu.be/D-uV8TGjaGU))
 2. **Award Tour** -- A Tribe Called Quest  ([youtu.be/P800UWoE9xs](https://youtu.be/P800UWoE9xs))
@@ -337,6 +356,12 @@ Tracks (37):
 35. **I Used to Love H.E.R.** -- Common  ([youtu.be/TrUERC2Zk64](https://youtu.be/TrUERC2Zk64))
 36. **The Humpty Dance** -- Digital Underground  ([youtu.be/PBsjggc5jHM](https://youtu.be/PBsjggc5jHM))
 37. **What They Do** -- The Roots  ([youtu.be/_qzacv8dtb4](https://youtu.be/_qzacv8dtb4))
+38. **Ebonics** -- Big L  ([youtu.be/gNoDgHnB1Hk](https://youtu.be/gNoDgHnB1Hk))
+39. **Strictly Business** -- EPMD  ([youtu.be/5aCYQ1fRQc8](https://youtu.be/5aCYQ1fRQc8))
+40. **Come Clean** -- Jeru the Damaja  ([youtu.be/Yid-UtHPpeI](https://youtu.be/Yid-UtHPpeI))
+41. **Straight Outta Compton** -- N.W.A  ([youtu.be/TMZi25Pq3T8](https://youtu.be/TMZi25Pq3T8))
+42. **Pocket Full of Stones** -- UGK  ([youtu.be/MnP1XmxyqxA](https://youtu.be/MnP1XmxyqxA))
+43. **Cell Therapy** -- Goodie Mob  ([youtu.be/OGy4bmG5SJw](https://youtu.be/OGy4bmG5SJw))
 
 ## CIPHER -- 133.7
 
@@ -344,7 +369,7 @@ Tracks (37):
 
 Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
 
-Tracks (38):
+Tracks (39):
 
 1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
 2. **Omen** -- The Prodigy  ([youtu.be/xMVTKOoy1uk](https://youtu.be/xMVTKOoy1uk))
@@ -384,3 +409,4 @@ Tracks (38):
 36. **Genius** -- Pitchshifter  ([youtu.be/sGcdcVblZ-8](https://youtu.be/sGcdcVblZ-8))
 37. **Voodoo People** -- The Prodigy  ([youtu.be/YV78vobCyIo](https://youtu.be/YV78vobCyIo))
 38. **Absurd** -- Fluke  ([youtu.be/DAQISes7iXU](https://youtu.be/DAQISes7iXU))
+39. **Ruffneck** -- Freestylers  ([youtu.be/kQ_sSs8pr1g](https://youtu.be/kQ_sSs8pr1g))

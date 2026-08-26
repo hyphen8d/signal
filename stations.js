@@ -210,6 +210,15 @@ export const STATIONS = [
       realTrack('oJwWmz8Mp3U', 'Debonair', 'The Afghan Whigs'),
       realTrack('3RMmIJn_4FA', 'Honey Bucket', 'Melvins'),
       realTrack('XFkzRNyygfk', 'Creep', 'Radiohead'),
+      // 2026-08-26: pending queue approved wholesale and drained -- all 33
+      // proposals across 8 stations landed at once, so these arrived as a
+      // batch rather than a curated pass. Every one was re-verified at
+      // approval time (alive, US-available, embeddable, no duplicate ID and
+      // no title collision) rather than trusted from its 2026-08-23/24
+      // proposal check.
+      realTrack('fTqyUz_jSIo', 'Far Behind', 'Candlebox'),
+      realTrack('ah5gAkna3jI', 'Hey Jealousy', 'Gin Blossoms'),
+      realTrack('xsJ4O-nSveg', 'Lightning Crashes', 'Live'),
     ] },
   // RELIC SIGNAL (classical, 219.8) retired 2026-08-21 (28th pass, per
   // the station-naming pass) -- its classical lane overlapped with
@@ -311,6 +320,16 @@ export const STATIONS = [
       realTrack('bWw6hMgRILQ', 'Pop 1', 'Gas'),
       realTrack('MYtX2zYlfdA', 'Estuarine', 'Loscil'),
       realTrack('g7Jgc1bVWbo', "Mr. Henri Rousseau's Dream", 'Midori Takada'),
+      // 2026-08-26: pending queue approved wholesale and drained -- all 33
+      // proposals across 8 stations landed at once, so these arrived as a
+      // batch rather than a curated pass. Every one was re-verified at
+      // approval time (alive, US-available, embeddable, no duplicate ID and
+      // no title collision) rather than trusted from its 2026-08-23/24
+      // proposal check.
+      realTrack('25zpPS_OdhQ', 'Virginal II', 'Tim Hecker'),
+      realTrack('Vi3bSG3jL_M', 'Vital', 'Grouper'),
+      realTrack('bFNbOvzvvYI', 'Oro Oro', 'Celer'),
+      realTrack('osA0Wl_-EHU', 'Reprisal', 'Rafael Anton Irisarri'),
     ] },
   { id: 'cold-wave', freq: 273.0, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
@@ -371,6 +390,19 @@ export const STATIONS = [
       realTrack('V83JR2IoI8k', 'She Blinded Me With Science (Official Video - HD Remaster)', 'Thomas Dolby'),
       realTrack('xJeWySiuq1I', 'Vienna (Official Music Video)', 'Ultravox'),
       realTrack('lVrELhxOFnM', 'Always Something There to Remind Me', 'Naked Eyes'),
+      // 2026-08-26: pending queue approved wholesale and drained -- all 33
+      // proposals across 8 stations landed at once, so these arrived as a
+      // batch rather than a curated pass. Every one was re-verified at
+      // approval time (alive, US-available, embeddable, no duplicate ID and
+      // no title collision) rather than trusted from its 2026-08-23/24
+      // proposal check.
+      realTrack('80TfG7C9azA', 'Kids in America', 'Kim Wilde'),
+      realTrack('9wyzRycjNH4', 'Don\'t Go', 'Yazoo'),
+      realTrack('mScWSckEzew', 'Christian', 'China Crisis'),
+      realTrack('8o2XHjvaEWE', 'Smalltown Boy', 'Bronski Beat'),
+      realTrack('QW_m8lhZbQQ', 'Living on the Ceiling', 'Blancmange'),
+      realTrack('7zzLU1ato2w', 'Ghosts', 'Japan'),
+      realTrack('IasCZL072fQ', 'Words', 'Missing Persons'),
     ] },
   // MOMENTUM (chillhop/downtempo focus, 567.8) retired 2026-08-24, replaced
   // with MIDNIGHT NEON -- late-night
@@ -591,6 +623,13 @@ export const STATIONS = [
       realTrack('ZYeVfKtIH4c', 'Ruby no Yubiwa', 'Akira Terao'),
       realTrack('2tiLgAG02QM', 'L.A. Night', 'Yasuko Agawa'),
       realTrack('AD3sEAGRGv4', 'Just a Joke', 'Yurie Kokubu'),
+      // 2026-08-26: pending queue approved wholesale and drained -- all 33
+      // proposals across 8 stations landed at once, so these arrived as a
+      // batch rather than a curated pass. Every one was re-verified at
+      // approval time (alive, US-available, embeddable, no duplicate ID and
+      // no title collision) rather than trusted from its 2026-08-23/24
+      // proposal check.
+      realTrack('r63lZvPsj5U', 'Neat na Gogo San-ji', 'Miki Matsubara'),
     ] },
   // 22nd pass -- outlaw channel dropped completely, 9 channels being the
   // max for now. OUTLAW (freq 288.6, spaghetti-western/outlaw-country)
@@ -666,6 +705,16 @@ export const STATIONS = [
       realTrack('UiSB2Fbw9gs', 'Days of Thunder', 'The Midnight'),
       realTrack('ssdA6IiP3r4', 'Arcade Summer', 'FM-84'),
       realTrack('hd9xGlXGNh0', 'Prelude to War', 'Volkor X'),
+      // 2026-08-26: pending queue approved wholesale and drained -- all 33
+      // proposals across 8 stations landed at once, so these arrived as a
+      // batch rather than a curated pass. Every one was re-verified at
+      // approval time (alive, US-available, embeddable, no duplicate ID and
+      // no title collision) rather than trusted from its 2026-08-23/24
+      // proposal check.
+      realTrack('X3wVDrc8000', 'Launcher', 'Highway Superstar'),
+      realTrack('jsE7RFs7bHk', 'Never Sleep Again', 'Betamaxx'),
+      realTrack('9EJJlr7Dopk', 'Ignition', 'Meteor'),
+      realTrack('HJti6_oiR1A', 'Feral', 'Dan Terminus'),
     ] },
   // 23rd pass: freq nudged 878.9 -> 854.9 -- stations 8 and 9 were too
   // close to each other. freqToCol() rounded 878.9 and HACKBACK's 893.7
@@ -896,6 +945,18 @@ export const STATIONS = [
       realTrack('TrUERC2Zk64', 'I Used to Love H.E.R.', 'Common'),
       realTrack('PBsjggc5jHM', 'The Humpty Dance', 'Digital Underground'),
       realTrack('_qzacv8dtb4', 'What They Do', 'The Roots'),
+      // 2026-08-26: pending queue approved wholesale and drained -- all 33
+      // proposals across 8 stations landed at once, so these arrived as a
+      // batch rather than a curated pass. Every one was re-verified at
+      // approval time (alive, US-available, embeddable, no duplicate ID and
+      // no title collision) rather than trusted from its 2026-08-23/24
+      // proposal check.
+      realTrack('gNoDgHnB1Hk', 'Ebonics', 'Big L'),
+      realTrack('5aCYQ1fRQc8', 'Strictly Business', 'EPMD'),
+      realTrack('Yid-UtHPpeI', 'Come Clean', 'Jeru the Damaja'),
+      realTrack('TMZi25Pq3T8', 'Straight Outta Compton', 'N.W.A'),
+      realTrack('MnP1XmxyqxA', 'Pocket Full of Stones', 'UGK'),
+      realTrack('OGy4bmG5SJw', 'Cell Therapy', 'Goodie Mob'),
     ] },
   // 52nd pass -- stations 1, 6, and 9 needed similar short descriptions to
   // fit the format the others have. Was a bare two-word tagline; added
@@ -1009,6 +1070,13 @@ export const STATIONS = [
       realTrack('sGcdcVblZ-8', 'Genius', 'Pitchshifter'),
       realTrack('YV78vobCyIo', 'Voodoo People', 'The Prodigy'),
       realTrack('DAQISes7iXU', 'Absurd', 'Fluke'),
+      // 2026-08-26: pending queue approved wholesale and drained -- all 33
+      // proposals across 8 stations landed at once, so these arrived as a
+      // batch rather than a curated pass. Every one was re-verified at
+      // approval time (alive, US-available, embeddable, no duplicate ID and
+      // no title collision) rather than trusted from its 2026-08-23/24
+      // proposal check.
+      realTrack('kQ_sSs8pr1g', 'Ruffneck', 'Freestylers'),
     ] },
 ]
 
@@ -1115,6 +1183,19 @@ export const NIN_STATION = {
       realTrack('wwvLlEtxX3o', 'Only', 'Nine Inch Nails'),
       realTrack('pDXSTAqVwo8', 'Piggy (VEVO Presents)', 'Nine Inch Nails'),
       realTrack('QrrEo3hZABU', 'Down In It', 'Nine Inch Nails'),
+      // 2026-08-26: pending queue approved wholesale and drained -- all 33
+      // proposals across 8 stations landed at once, so these arrived as a
+      // batch rather than a curated pass. Every one was re-verified at
+      // approval time (alive, US-available, embeddable, no duplicate ID and
+      // no title collision) rather than trusted from its 2026-08-23/24
+      // proposal check.
+      realTrack('wOoWkXEz-5E', 'Sin', 'Nine Inch Nails'),
+      realTrack('GJ-w0TAE-mQ', 'Reptile (Woodstock 94)', 'Nine Inch Nails'),
+      realTrack('FvVDlbzsKR4', 'Survivalism', 'Nine Inch Nails'),
+      realTrack('yA281OuU3rk', 'Copy of A (VEVO Presents)', 'Nine Inch Nails'),
+      realTrack('1RN6pT3zL44', 'Came Back Haunted', 'Nine Inch Nails'),
+      realTrack('gDV-dOvqKzQ', 'Less Than', 'Nine Inch Nails'),
+      realTrack('yzQrdX-E2iY', 'God Break Down the Door', 'Nine Inch Nails'),
     ],
 }
 
