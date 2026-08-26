@@ -87,8 +87,14 @@ export default {
     // may not have.
     // 45th pass: 2-finger tap (display mode/tint) added to the legend
     // alongside the original three.
+    // 2026-08-26: line 2 was '[<-/->] STATION   [^/v] TRACK'. Still ASCII,
+    // still no risky glyphs -- but it borrowed the DESKTOP bracket idiom,
+    // which reads as "press this key" on a device with no keys. Line 1 was
+    // already speaking touch ("TAP", "2-TAP") and line 2 was not. Says SWIPE
+    // now, which is the actual gesture and costs one column over the
+    // brackets it replaces.
     const line1 = 'TAP MUTE   2-TAP COLOR'
-    const line2 = '[<-/->] STATION   [^/v] TRACK'
+    const line2 = 'SWIPE L/R STATION   SWIPE U/D TRACK'
     for (let x = 0; x < term.cols; x++) { term.put(x, L.hint1, ' ', NORMAL, 1); term.put(x, L.hint2, ' ', NORMAL, 1) }
     term.text(centerX(term.cols, line1), L.hint1, line1, BOLD, 1)
     term.text(centerX(term.cols, line2), L.hint2, line2, NORMAL, 1)

@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 Unremarkable Garden
+Copyright (c) 2026 Matthew Arevalo
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,24 @@ SOFTWARE.
 
 ---
 
-The bitmap fonts in fonts/ are NOT covered by the above. Terminus Font is
-Copyright (C) 2014 Dimitar Toshkov Zhekov, licensed under the SIL Open Font
-License 1.1 — see fonts/OFL.txt.
+Third-party components, which the notice above does not replace.
+
+src/ — cyberspace-crt
+
+    Copyright (c) 2026 Unremarkable Garden
+
+    The WebGL2 CRT text-grid engine SIGNAL renders on, vendored here rather
+    than written here, and open-sourced from cyberspace.online. Licensed
+    under the MIT License on the same terms as the notice above, and that
+    copyright notice is retained here as those terms require. SIGNAL is a
+    standalone project and is not affiliated with, endorsed by, or hosted by
+    Cyberspace.
+
+    Upstream: https://github.com/unremarkablegarden/cyberspace-crt
+
+fonts/ — Terminus Font
+
+    Copyright (C) 2014 Dimitar Toshkov Zhekov
+
+    NOT covered by the MIT notice above. Licensed under the SIL Open Font
+    License 1.1 — see fonts/OFL.txt.
