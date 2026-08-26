@@ -35,10 +35,21 @@ export async function boot({ saved = null, mobile = false, tap = null } = {}) {
   if (saved) store.set('signal:state:v1', JSON.stringify(saved))
 
   globalThis.window = globalThis
-  globalThis.document = {
+  // 2026-08-26 (issue #8) -- enough of the Fullscreen API for
+  // toggleFullscreen() to be exercised headlessly, recorded in h.fsCalls.
+  // requestFullscreen resolves here; in a real browser it REJECTS when the
+  // browser declines, which is why the caller catches (see toggleFullscreen).
+  const fsCalls = []
+  const doc = {
     hidden: false, visibilityState: 'visible', title: '', activeElement: null,
     addEventListener() {}, removeEventListener() {},
+    fullscreenElement: null,
+    exitFullscreen() { fsCalls.push('exit'); doc.fullscreenElement = null; return Promise.resolve() },
   }
+  doc.documentElement = {
+    requestFullscreen() { fsCalls.push('request'); doc.fullscreenElement = doc.documentElement; return Promise.resolve() },
+  }
+  globalThis.document = doc
   globalThis.localStorage = {
     getItem: (k) => (store.has(k) ? store.get(k) : null),
     setItem: (k, v) => store.set(k, String(v)),
@@ -180,6 +191,8 @@ export async function boot({ saved = null, mobile = false, tap = null } = {}) {
     /** Every capture call the program has made, in order -- see the tap
      *  stub above. Empty is the assertion that matters most. */
     tapCalls,
+    /** Fullscreen API calls the program has made, in order. See the doc stub. */
+    fsCalls,
     row(y) {
       let s = ''
       for (let x = 0; x < term.cols; x++) s += String.fromCodePoint(term.chars[y * term.cols + x])

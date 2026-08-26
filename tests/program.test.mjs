@@ -519,14 +519,15 @@ test('guide page 1: every control row shares its group\'s column origin', async 
     // second column at 36, 33, 34 and 24. Nothing lined up. Exact-equality on
     // the origin is the whole point -- a "close enough" assertion would pass
     // the very layout being fixed.
-    for (const [group, keys] of [
-      ['TUNING', ['[<-/->]', '[ENTER]', '[S]', '[1-9]', '[B]']],
-      ['RECEIVER', ['[UP/DN]', '[M]', '[N]', '[P]']],
-      ['DISPLAY', ['[C]', '[V]', '[G]']],
-    ]) {
-      const x = rows[head].indexOf(group)
-      keys.forEach((key, i) => {
-        assert.equal(rows[head + 1 + i].indexOf(key), x, `${key} aligns under ${group}`)
+    // Driven off the table itself rather than a copy of it -- a hardcoded key
+    // list broke the moment [F] was added (issue #8) for no reason other than
+    // being a duplicate. What is being asserted is the alignment, not the
+    // contents.
+    for (const group of h.program.GUIDE_CONTROL_GROUPS) {
+      const x = rows[head].indexOf(group.head)
+      assert.ok(x > 0, `${group.head} header drawn`)
+      group.rows.forEach(([key], i) => {
+        assert.equal(rows[head + 1 + i].indexOf(key), x, `${key} aligns under ${group.head}`)
       })
     }
   } finally { h.shutdown() }
@@ -566,5 +567,86 @@ test('guide page 1 fits the lite grid: nothing truncated, footer on-grid', async
       assert.ok(h.find(whole) >= 0, `not truncated: ${whole}`)
     }
     for (const head of ['TUNING', 'RECEIVER', 'DISPLAY']) assert.ok(h.find(head) >= 0, `${head} group present`)
+  } finally { h.shutdown() }
+})
+
+// --- issue #7 -------------------------------------------------------------
+test('[A] re-opens the LINE INPUT card from inside the visualizer', async () => {
+  // The reported bug: decline the card on first [V] entry and there was no
+  // way back to it without leaving the visualizer, because key()'s visualizer
+  // branch is self-contained and had no 'a' case -- the main-screen binding
+  // below it was unreachable.
+  // { tap: 'tab' } is what gives tapPromptTier() something to offer -- a bare
+  // boot() has no navigator.mediaDevices, so the card correctly declines to
+  // open at all and there is nothing to re-open.
+  const h = await boot({ tap: 'tab' })
+  try {
+    h.powerOn()
+    h.key('v')                       // first [V] offers the card
+    assert.equal(h.program.tapConsentOpen, true, 'the card is offered on first [V]')
+    h.key('n')                       // decline it
+    h.advance(200)
+    assert.equal(h.program.visualizerActive, true, 'declining still lands in the visualizer')
+    assert.equal(h.program.tapConsentOpen, false)
+    h.key('a')
+    assert.equal(h.program.tapConsentOpen, true, '[A] raises it again without leaving')
+    h.key('n')
+    h.advance(200)
+    assert.equal(h.program.tapConsentOpen, false)
+    assert.equal(h.program.visualizerActive, true, 'and hands back to the visualizer, not the main screen')
+    assert.equal(h.find('TUNING BAND'), -1, 'no main-screen chrome bled through')
+  } finally { h.shutdown() }
+})
+
+test('the visualizer is repainted, not re-entered, when the card comes down', async () => {
+  // repaintVisualizerChrome() exists because enterVisualizer() early-returns
+  // while active AND re-arms every effect's clocks -- replaying it here would
+  // restart the effect mid-watch. _vizEnterAt is the clock that would move.
+  const h = await boot({ tap: 'tab' })
+  try {
+    h.powerOn()
+    h.key('v')
+    h.key('n')
+    h.advance(400)
+    assert.equal(h.program.visualizerActive, true)
+    const enteredAt = h.program._vizEnterAt
+    h.key('a')
+    h.key('n')
+    h.advance(200)
+    assert.equal(h.program._vizEnterAt, enteredAt, 'the effect clock did not restart')
+  } finally { h.shutdown() }
+})
+
+// --- issue #8 -------------------------------------------------------------
+test('[F] toggles fullscreen from the main screen and from the visualizer', async () => {
+  const h = await boot({ tap: 'tab' })
+  try {
+    h.powerOn()
+    assert.deepEqual(h.fsCalls, [])
+    h.key('f')
+    assert.deepEqual(h.fsCalls, ['request'])
+    h.key('f')
+    assert.deepEqual(h.fsCalls, ['request', 'exit'], 'the same key toggles back out')
+    h.key('v')
+    h.key('n')                       // clear the consent card
+    h.advance(200)
+    assert.equal(h.program.visualizerActive, true)
+    h.key('f')
+    assert.deepEqual(h.fsCalls, ['request', 'exit', 'request'], 'and works inside the visualizer')
+  } finally { h.shutdown() }
+})
+
+test('toggleFullscreen reports false rather than throwing where the API is absent', async () => {
+  // Old browsers, and the harness stub before issue #8 added one. The guard
+  // matters because this runs off a keypress: an exception here would take
+  // out the whole key() call, not just the fullscreen request.
+  const h = await boot()
+  try {
+    h.powerOn()
+    const real = globalThis.document.documentElement
+    globalThis.document.documentElement = {}
+    assert.equal(h.program.toggleFullscreen(), false)
+    globalThis.document.documentElement = real
+    assert.equal(h.program.toggleFullscreen(), true)
   } finally { h.shutdown() }
 })
