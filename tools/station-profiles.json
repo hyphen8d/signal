@@ -506,6 +506,19 @@
         "Single-artist station by design -- 100% Nine Inch Nails. Do not propose other industrial/NIN-adjacent artists (Ministry, Skinny Puppy, etc.) without confirming first; this station's whole identity is being NIN's own dedicated frequency."
       ],
       "rejections": []
+    },
+    "green-room": {
+      "callsign": "GREEN ROOM",
+      "genre": "No genre. The subject is the format.",
+      "eraLane": "1970 to now, deliberately unbounded -- Black Sabbath and Kacey Musgraves are on the same rotation.",
+      "acceptedArtists": [],
+      "constraints": [
+        "The ONLY membership test is that the song is literally, lyrically about cannabis -- named, described, or the whole premise. Genre is not a constraint here and must not become one: doom metal, G-funk, roots reggae, outlaw country and power pop all belong precisely because the mix is incoherent. That incoherence IS the station.",
+        "Literal, not adjacent. 'Stoner rock' as a genre does not qualify a track -- Kyuss instrumentals, psychedelia, and 'good to smoke to' songs are the single most likely wrong proposal here. If you cannot quote the line, it does not go on.",
+        "One track per artist unless there is a real reason -- the roster is 30 songs about one subject and the same voice twice makes the joke feel thin rather than broad.",
+        "Innuendo and drug-general songs are out. 'Because I Got High' territory is fine; 'Purple Haze' (about a woman, whatever the myth says) and cocaine/pill songs are not, however famous."
+      ],
+      "rejections": []
     }
   }
 }

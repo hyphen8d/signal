@@ -428,3 +428,70 @@ test('visualizer: Shift+C in the lyrics view drops the view AND cycles', async (
     assert.notEqual(h.program.activeVisualKey(), effect, 'cycled, and visibly so')
   } finally { h.shutdown() }
 })
+
+// 2026-08-26, shipped with GREEN ROOM -- the second secret station, and the
+// first real exercise of the SECRET_STATIONS generalization written back on
+// 2026-08-23 for a station (GREEN HOUSE) that was then pulled. Everything
+// below was built and left untested against a second entry for three days:
+// the dedicated key, the forced tint applying AND releasing, and the
+// station staying out of every public path while locked to it.
+//
+// Asserted on callsign/freq rather than object identity on purpose -- the
+// harness boots each module graph under its own `?v=` tag, so a station
+// object imported here would be a different instance from the one the
+// program is holding. See main.js on why that is by design.
+test('GREEN ROOM: Shift+0 reaches the second secret station and forces its own tint', async () => {
+  const h = await boot()
+  try {
+    h.powerOn()
+    // shiftKey: true is what a real Shift+0 keydown carries. Asserted
+    // explicitly because the binding is on e.key alone -- if a future pass
+    // ever adds a shift guard to the main key() path (the visualizer
+    // already reads e.shiftKey for Shift+C), this is the only key on the
+    // roster that would silently stop working.
+    h.key(')', { shiftKey: true })
+    h.advance(340)
+    const locked = h.program.lockedStation
+    assert.ok(locked, 'Shift+0 tuned and locked something')
+    assert.equal(locked.callsign, 'GREEN ROOM')
+    assert.equal(locked.freq, 420.0)
+    assert.equal(locked.secret, true)
+    assert.equal(h.crt.phosphor, h.config.PHOSPHORS.haze, 'locked: the forced haze tint is up')
+    h.advance(600)
+    assert.ok(h.row(9).includes('GREEN ROOM'), 'status row names it')
+    // Tuning away has to give the tint back -- applyPhosphor's 2026-08-22
+    // note records the release half as the one that got missed first time.
+    h.key('1')
+    h.advance(400)
+    assert.notEqual(h.program.lockedStation, locked, 'preset 1 moved off it')
+    assert.equal(h.crt.phosphor, h.config.PHOSPHORS.matrix, 'tint released back to the display mode')
+  } finally { h.shutdown() }
+})
+
+test('GREEN ROOM stays out of the presets and out of the guide', async () => {
+  const h = await boot()
+  try {
+    h.powerOn()
+    h.key(')', { shiftKey: true })
+    h.advance(940)
+    assert.equal(h.program.lockedStation.callsign, 'GREEN ROOM')
+    // No preset key reaches it: 1-9 walk STATION_PRESET_ORDER, which it is
+    // deliberately absent from.
+    for (const k of '123456789') {
+      h.key(k)
+      h.advance(400)
+      assert.notEqual(h.program.lockedStation.callsign, 'GREEN ROOM', `preset ${k} is a public station`)
+    }
+    // And it gets no guide page. Walked page by page rather than asserting
+    // a page count, so this still catches it if a future pass changes how
+    // the guide is paginated.
+    h.key('g')
+    h.advance(300)
+    assert.equal(h.program.guideOpen, true)
+    for (let i = 0; i < h.program.guideTotalPages(); i++) {
+      assert.equal(h.rows().join('').includes('GREEN ROOM'), false, `guide page ${i} does not list it`)
+      h.key('ArrowRight')
+      h.advance(120)
+    }
+  } finally { h.shutdown() }
+})

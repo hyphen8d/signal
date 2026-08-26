@@ -106,6 +106,27 @@ export const PHOSPHORS = {
   // clear of 'bubblegum' (the only other pink/purple-adjacent tint on the
   // roster) by dropping red and pushing blue.
   purple:    [0.52, 0.24, 1.00],
+  // 2026-08-26 -- forced-only tint for GREEN ROOM, the second secret
+  // station (stations.js). Same pattern as 'red'/'purple' above: not in
+  // DISPLAY_MODES, never in the [C] cycle, only ever set by
+  // applyPhosphor() while locked to that station.
+  //
+  // Deliberately NOT 'matrix'. A green station forcing the green the tube
+  // already boots in would be a no-op for most visitors -- setPhosphor()
+  // literally no-ops when the tint is already up -- so anyone sitting in
+  // GREEN PHOSPHOR would get no tint change at all and the reveal would
+  // land on them as nothing happening. This is a warm yellow-green
+  // against matrix's cool spring green ([0.18, 1.00, 0.36]): red up from
+  // 0.18 to 0.62, blue down from 0.36 to 0.24, so the hue swings toward
+  // gold and reads as the tube glowing THROUGH something rather than as a
+  // different phosphor.
+  //
+  // Luminance is ~.85 against the .63-.91 band the cycle tints sit in --
+  // slightly hot, and the only tint here that departs upward ('red' .31
+  // and 'purple' .36 both go dark). That is the intent: this station's
+  // whole CRT profile is soft and bloomed rather than hostile, and a
+  // brighter ground is what makes the haze read as glow instead of grime.
+  haze:      [0.62, 1.00, 0.24],
 }
 
 /** Which tint the tube starts in. */
