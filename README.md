@@ -322,5 +322,11 @@ is the work of **End Dream**.
 
 ## License
 
-MIT — see `LICENSE`. The bitmap fonts in `fonts/` are separately licensed
-(SIL Open Font License 1.1); see `fonts/OFL.txt`.
+MIT — see [`LICENSE`](./LICENSE). SIGNAL itself is Copyright (c) 2026
+Matthew Arevalo.
+
+Two things in the tree are not SIGNAL's to license and keep their own
+notices, both listed in `LICENSE`: `src/` is `cyberspace-crt`, Copyright (c)
+2026 Unremarkable Garden, MIT on the same terms; and the bitmap fonts in
+`fonts/` are Copyright (C) 2014 Dimitar Toshkov Zhekov under the SIL Open
+Font License 1.1 (see `fonts/OFL.txt`).
