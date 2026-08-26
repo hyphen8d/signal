@@ -35,5 +35,7 @@ export const DISPLAY_MODES = [
 export const MAPPED_KEYS = new Set([
   'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter',
   's', 'S', 'n', 'N', 'm', 'M', 'p', 'P', 'b', 'B', 'g', 'G', 'c', 'C', 'v', 'V',
+  // Consent pass (2026-08-25) -- [A] opens the LINE INPUT card. See key().
+  'a', 'A',
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 ])

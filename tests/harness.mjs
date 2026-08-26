@@ -28,7 +28,7 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 let bootCount = 0
 let font = null
 
-export async function boot({ saved = null, mobile = false } = {}) {
+export async function boot({ saved = null, mobile = false, tap = null } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
   const store = new Map()
@@ -46,6 +46,37 @@ export async function boot({ saved = null, mobile = false } = {}) {
   }
   // config.js decides MOBILE_LITE once at import from matchMedia; force it.
   globalThis.matchMedia = () => ({ matches: mobile })
+  // 2026-08-25 (the consent pass) -- navigator is stubbed on EVERY boot, not
+  // just the tap ones, so a capture-capable boot can't leak its stub into the
+  // next test through the real Node global. Default is a browser with no
+  // capture at all: audio/tap.js's IS_CHROMIUM_DESKTOP goes false and every
+  // path short-circuits on the missing mediaDevices, which is exactly what
+  // the suite saw before this option existed.
+  //
+  // `tap: 'tab' | 'mic'` gives it the one capability that tier needs, and
+  // records every capture call in h.tapCalls. Both stubs REJECT: the point of
+  // the consent pass is WHEN a prompt is raised, not what a granted stream
+  // does, and a resolved stream would drag a real AudioContext in through
+  // wireTapAnalyser() for no extra coverage. NotAllowedError is also the
+  // interesting rejection -- it's the user closing the picker, the case that
+  // must NOT escalate into a second prompt.
+  const realNavigator = globalThis.navigator
+  const tapCalls = []
+  const declined = (name) => () => {
+    tapCalls.push(name)
+    return Promise.reject(Object.assign(new Error('declined'), { name: 'NotAllowedError' }))
+  }
+  const mediaDevices = tap === 'tab'
+    ? { getDisplayMedia: declined('getDisplayMedia'), getUserMedia: declined('getUserMedia') }
+    : tap === 'mic' ? { getUserMedia: declined('getUserMedia') } : undefined
+  Object.defineProperty(globalThis, 'navigator', {
+    // userAgentData IS the Chromium check in audio/tap.js -- only the tab
+    // tier gets it, so a 'mic' boot models Firefox/Safari desktop honestly
+    // rather than by hiding getDisplayMedia from a Chromium-shaped browser.
+    value: { userAgentData: tap === 'tab' ? { mobile: false } : undefined, mediaDevices },
+    configurable: true,
+    writable: true,
+  })
   globalThis.SIGNAL_YT_READY = false
   globalThis.SIGNAL_YT_QUEUE = []
   globalThis.SIGNAL_BUILD = tag
@@ -146,6 +177,9 @@ export async function boot({ saved = null, mobile = false } = {}) {
     },
     /** Pending fake timers, for assertions. */
     timers() { return [...timers.values()] },
+    /** Every capture call the program has made, in order -- see the tap
+     *  stub above. Empty is the assertion that matters most. */
+    tapCalls,
     row(y) {
       let s = ''
       for (let x = 0; x < term.cols; x++) s += String.fromCodePoint(term.chars[y * term.cols + x])
@@ -165,6 +199,9 @@ export async function boot({ saved = null, mobile = false } = {}) {
       timers.clear()
       Object.assign(globalThis, real)
       Date.now = realDateNow
+      Object.defineProperty(globalThis, 'navigator', {
+        value: realNavigator, configurable: true, writable: true,
+      })
     },
   }
   return h

@@ -225,3 +225,168 @@ test('a tab that never gets a frame still completes the cold-open and a power-on
     assert.ok(h.row(9).includes(h.program.lockedStation.callsign))
   } finally { h.shutdown() }
 })
+
+// --- the LINE INPUT consent card (2026-08-25, the consent pass) ----------
+//
+// The pass's whole claim is about WHEN a browser permission prompt can be
+// raised, so that's what these assert: h.tapCalls is the record of every
+// getDisplayMedia/getUserMedia the program made, and most of these tests
+// are about it staying empty.
+
+test('consent pass: power-on raises no capture prompt at all', async () => {
+  const h = await boot({ tap: 'tab' })
+  try {
+    h.powerOn()
+    // The regression this pass exists to prevent: a tab-share picker landing
+    // over the boot readout, three seconds into a first visit.
+    assert.deepEqual(h.tapCalls, [], 'nothing prompted during power-on')
+    assert.equal(h.program.tapConsentOpen, false, 'and no card either')
+  } finally { h.shutdown() }
+})
+
+test('consent pass: first [V] opens the card instead of the visualizer', async () => {
+  const h = await boot({ tap: 'tab' })
+  try {
+    h.powerOn()
+    h.key('v')
+    assert.equal(h.program.tapConsentOpen, true, 'card took the screen')
+    assert.equal(h.program.visualizerActive, false, 'visualizer held back')
+    assert.deepEqual(h.tapCalls, [], 'the card alone prompts nothing')
+    assert.ok(h.find('SIGNAL -- LINE INPUT') >= 0, 'card header drawn')
+    // It has to name the dialog this browser will actually raise.
+    assert.ok(h.find('share this tab') >= 0, 'tab tier names the tab picker')
+    assert.ok(h.find('Nothing is recorded') >= 0, 'privacy posture is on the card')
+    assert.ok(h.find('[Y] PATCH IN') >= 0, 'both answers offered')
+  } finally { h.shutdown() }
+})
+
+test('consent pass: the mic tier names the microphone, not the tab picker', async () => {
+  const h = await boot({ tap: 'mic' })
+  try {
+    h.powerOn()
+    h.key('v')
+    assert.equal(h.program.tapConsentOpen, true)
+    assert.ok(h.find('asks for the microphone') >= 0, 'mic tier names the mic')
+    assert.equal(h.find('share this tab'), -1, 'and does not promise a tab picker')
+  } finally { h.shutdown() }
+})
+
+test('consent pass: only [Y]/[N]/Escape answer the card; strays are swallowed', async () => {
+  const h = await boot({ tap: 'tab' })
+  try {
+    h.powerOn()
+    h.key('v')
+    // Every one of these closes the GUIDE. On a permission card, a stray
+    // keypress must not be able to answer in either direction.
+    for (const k of ['g', 'c', 'p', 'ArrowRight', '3', 'x']) {
+      h.key(k)
+      assert.equal(h.program.tapConsentOpen, true, `[${k}] left the card up`)
+    }
+    assert.deepEqual(h.tapCalls, [], 'and prompted nothing')
+    assert.equal(h.program.tapConsent, null, 'and answered nothing')
+  } finally { h.shutdown() }
+})
+
+test('consent pass: [N] declines, remembers it, and hands off to the visualizer', async () => {
+  const h = await boot({ tap: 'tab' })
+  try {
+    h.powerOn()
+    h.key('v')
+    h.key('n')
+    assert.deepEqual(h.tapCalls, [], 'a decline prompts nothing')
+    assert.equal(h.program.tapConsent, 'no')
+    assert.equal(h.program.tapConsentOpen, false, 'card came down')
+    assert.equal(h.program.visualizerActive, true, '[V] still got its visualizer')
+    assert.equal(JSON.parse(globalThis.localStorage.getItem('signal:state:v1')).tapConsent, 'no',
+      'the answer is persisted, so the card is put to a visitor once')
+  } finally { h.shutdown() }
+})
+
+test('consent pass: [Y] raises exactly one prompt, and a declined picker never reaches for the mic', async () => {
+  const h = await boot({ tap: 'tab' })
+  try {
+    h.powerOn()
+    h.key('v')
+    h.key('y')
+    h.advance(200) // let the rejected getDisplayMedia settle
+    // THE regression: tier 1's .catch used to chain straight into
+    // startMicCapture(), so saying "no, don't watch my screen" was answered
+    // with "then may I have your microphone?".
+    assert.deepEqual(h.tapCalls, ['getDisplayMedia'], 'declining ends it -- no mic escalation')
+    assert.equal(h.program.tapConsent, 'yes', 'they did agree to be asked')
+    assert.equal(h.program.visualizerActive, true)
+  } finally { h.shutdown() }
+})
+
+test('consent pass: an answered visitor goes straight into the visualizer next visit', async () => {
+  const h = await boot({ tap: 'tab', saved: { tapConsent: 'no', volume: 60, muted: true } })
+  try {
+    h.powerOn()
+    h.key('v')
+    assert.equal(h.program.tapConsentOpen, false, 'no second card')
+    assert.equal(h.program.visualizerActive, true)
+    assert.deepEqual(h.tapCalls, [], 'and still no prompt')
+  } finally { h.shutdown() }
+})
+
+test('consent pass: a consenting visitor gets the picker re-raised once per power cycle', async () => {
+  const h = await boot({ tap: 'tab', saved: { tapConsent: 'yes', volume: 60, muted: true } })
+  try {
+    h.powerOn()
+    // getDisplayMedia has no silent resume -- it raises its picker every
+    // time -- so a stored yes re-raises it at [V], the moment of value,
+    // never at power-on.
+    assert.deepEqual(h.tapCalls, [], 'still nothing at power-on')
+    h.key('v')
+    h.advance(200)
+    assert.deepEqual(h.tapCalls, ['getDisplayMedia'], 'raised on [V] instead')
+    assert.equal(h.program.visualizerActive, true)
+    h.key('e')
+    h.key('v')
+    h.advance(200)
+    assert.deepEqual(h.tapCalls, ['getDisplayMedia'], 'a dismissed picker does not come back on the next [V]')
+  } finally { h.shutdown() }
+})
+
+test('consent pass: [A] re-opens the card after a decline', async () => {
+  const h = await boot({ tap: 'tab', saved: { tapConsent: 'no', volume: 60, muted: true } })
+  try {
+    h.powerOn()
+    h.key('a')
+    assert.equal(h.program.tapConsentOpen, true, '[A] re-opens it on demand')
+    assert.ok(h.find('SIGNAL -- LINE INPUT') >= 0)
+    h.key('Escape')
+    assert.equal(h.program.tapConsentOpen, false)
+    assert.equal(h.program.visualizerActive, false, '[A] is not a way into the visualizer')
+    assert.ok(h.find('TUNING BAND') >= 0, 'main screen rebuilt underneath')
+  } finally { h.shutdown() }
+})
+
+test('consent pass: nothing paints through the card', async () => {
+  const h = await boot({ tap: 'tab' })
+  try {
+    h.powerOn()
+    h.key('v')
+    const before = h.rows().join('\n')
+    // The guide has been punched through by a deferred draw at least twice in
+    // this file's history; the card takes the same bail in frame()/_tickFx.
+    h.advance(3000)
+    assert.equal(h.rows().join('\n'), before, 'card is pixel-identical after 3s of frames')
+    assert.equal(h.find('TUNING BAND'), -1, 'no main-screen chrome bleeding through')
+  } finally { h.shutdown() }
+})
+
+test('consent pass: mobile never asks for the microphone', async () => {
+  const h = await boot({ mobile: true, tap: 'mic' })
+  try {
+    h.advance(600)
+    h.tap()
+    h.advance(4000)
+    assert.equal(h.program.poweredOn, true)
+    // Mobile's only tap consumer is the shape of the VU trace, which is not
+    // worth a microphone permission -- and mobile can't reach [V] to be
+    // offered the card, so it is never asked at all.
+    assert.deepEqual(h.tapCalls, [], 'no mic prompt anywhere in a mobile session')
+    assert.equal(h.program.tapConsentOpen, false)
+  } finally { h.shutdown() }
+})

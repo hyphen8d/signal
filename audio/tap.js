@@ -18,15 +18,18 @@ const { audioCtx } = await import(`./sfx.js?v=${V}`)
 // iframe and WebAudio cannot see inside it. This section is the workaround:
 // capture the audio OUTSIDE the iframe and analyse that.
 //
-// Capture ladder, tried on every power-on while nothing is live:
+// Capture ladder -- entered ONLY from an explicit in-app [Y], never on its
+// own (see the consent pass below, and ui/tap-consent.js):
 //   1. getDisplayMedia tab-audio capture -- the wired signal. Desktop
 //      Chromium only (Firefox has ignored the audio constraint since 2019,
 //      bugzilla 1541425; Safari's getDisplayMedia has no audio at all).
 //      The user picks "This tab" + "Also share tab audio" in the picker.
-//   2. getUserMedia microphone -- everyone else, including mobile: the mic
-//      hears the music acoustically via the speakers. Real analysis, just
+//   2. getUserMedia microphone -- non-Chromium desktop: the mic hears the
+//      music acoustically via the speakers. Real analysis, just
 //      air-coupled. Mic permission persists per-origin, so later sessions
-//      auto-start this tier with no prompt at all.
+//      auto-start this tier with no prompt at all -- that resume is what
+//      resumeAudioTapIfGranted() below does, and the only thing powerUp()
+//      is still allowed to call.
 //   3. Nothing -- every meter/effect keeps its synthetic behavior, exactly
 //      as before this section existed. Hard requirement: with no capture
 //      the app must be visually indistinguishable from the pre-tap build,
@@ -38,6 +41,37 @@ const { audioCtx } = await import(`./sfx.js?v=${V}`)
 // Privacy posture, stated once: analysis only. The stream connects to an
 // AnalyserNode and NOTHING else -- never to the destination (no echo, no
 // feedback), nothing is recorded, nothing leaves the page.
+
+// --- the consent pass (2026-08-25) --------------------------------------
+//
+// The ladder above used to run unannounced from inside powerUp(), and tier
+// 1's decline chained straight into tier 2. Both halves of that were wrong:
+//
+//   - getDisplayMedia's picker is the most alarming dialog on the web
+//     ("wants to share the contents of your screen"), and it landed about
+//     three seconds into a first visit, over a black boot screen, before
+//     the visitor had seen a single meter move or had any idea what it was
+//     for. The cost of that isn't a decline, it's a closed tab.
+//   - Chaining tier 2 into tier 1's .catch meant someone who had just said
+//     "no, don't watch my screen" was immediately asked "then may I have
+//     your microphone?" -- whatever the intent, that reads as a nag.
+//
+// So this module now prompts for NOTHING on its own. powerUp() calls
+// resumeAudioTapIfGranted(), which can only ever restart a tier that needs
+// no dialog. The first prompt of a session comes from the user pressing [Y]
+// on SIGNAL's own consent card -- drawn in the receiver's own voice, naming
+// the dialog the browser is about to raise and what it's for, stating the
+// analysis-only posture above somewhere it can actually be read, and
+// reachable on demand with [A]. A decline stops the ladder where it stands;
+// it never escalates to the next tier (see startTabCapture's .catch).
+//
+// The card is offered on first [V], which is desktop-only by construction,
+// so mobile no longer prompts for the microphone at all. That is deliberate,
+// not an oversight: mobile's only tap consumer is the SHAPE of the VU trace
+// (drawVU() owns the physics for both screens; mobileDrawVU just renders
+// this.vuTrace), and a microphone permission is far too much to ask for a
+// meter's wiggle. An already-granted mic from before this pass still resumes
+// silently, so nobody loses a tap they had already agreed to.
 
 // navigator.userAgentData only exists in Chromium -- it IS the Chromium
 // check, and covers Chrome/Edge/Brave/Arc/Opera alike. Tier 1 additionally
@@ -124,20 +158,50 @@ export const AUDIO_BUS = {
 // running, nothing playing" instead of amplified room hiss.
 export function audioSignalLive() { return AUDIO_BUS.active && !AUDIO_BUS.gated }
 
-/** The ladder's entry point. Idempotent; called from powerUp() inside the
- *  power-on gesture (getDisplayMedia requires-and-consumes transient
- *  activation; getUserMedia does NOT on Chromium/Firefox, which is what
- *  makes chaining the mic tier inside the tab tier's .catch legal -- the
- *  only browsers that gesture-gate getUserMedia never run tier 1 at all,
- *  so their mic call happens synchronously in the gesture here). */
+/** The ladder's entry point. Idempotent. Called ONLY from the consent
+ *  card's [Y] handler, synchronously inside that keypress -- which is what
+ *  satisfies getDisplayMedia's requires-and-consumes transient activation,
+ *  the same way the power-on gesture used to. A keypress is a full-value
+ *  user activation; nothing about moving the call here weakens it. */
 export function startAudioTap(program, s) {
   if (tapState !== 'idle') return
   if (!navigator.mediaDevices) return
   tapUI = { program, s }
   tapState = 'pending'
-  if (!program.mobile && IS_CHROMIUM_DESKTOP &&
-      navigator.mediaDevices.getDisplayMedia && !tapBlockedTab) startTabCapture(false)
+  if (tapPromptTier(program) === 'tab') startTabCapture(false)
   else startMicCapture()
+}
+
+/** Which dialog a consent would actually raise on THIS browser, so the card
+ *  can name it rather than describe a generic "permission prompt" -- the
+ *  tab-share picker and a bare microphone request need very different
+ *  sentences in front of them. 'live' means a tap is already running (the
+ *  card then offers to unpatch instead); 'none' means there is nothing left
+ *  to offer, and the card declines to open at all rather than promising
+ *  something that would fail. */
+export function tapPromptTier(program) {
+  if (tapState === 'live') return 'live'
+  if (!navigator.mediaDevices) return 'none'
+  if (!program.mobile && IS_CHROMIUM_DESKTOP &&
+      navigator.mediaDevices.getDisplayMedia && !tapBlockedTab) return 'tab'
+  if (!navigator.mediaDevices.getUserMedia || tapBlockedMic || micPermState === 'denied') return 'none'
+  return 'mic'
+}
+
+/** The power-on path, and the ONLY tap call powerUp() still makes. Prompts
+ *  nothing, ever -- see the consent pass above. A mic grant persists
+ *  per-origin, so a visitor who agreed once gets their tap back silently on
+ *  every later power-on, which is the one piece of the old power-on
+ *  behaviour worth keeping. The tab tier can never resume this way and no
+ *  amount of stored consent changes that: getDisplayMedia raises its picker
+ *  every single time by design, so a silent tab tap does not exist. */
+export function resumeAudioTapIfGranted(program, s) {
+  if (tapState !== 'idle') return
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return
+  if (micPermState !== 'granted' || tapBlockedMic) return
+  tapUI = { program, s }
+  tapState = 'pending'
+  startMicCapture()
 }
 
 export function startTabCapture(minimal) {
@@ -171,10 +235,14 @@ export function startTabCapture(minimal) {
       // pattern; the audio track and Chrome's sharing pill both survive it.
       stream.getVideoTracks().forEach((tr) => { try { tr.stop() } catch (e) {} })
       if (!stream.getAudioTracks().length) {
-        // Picked a window, or unticked "Also share tab audio" -- no audio
-        // exists on this surface, so treat as declined and fall to the mic.
+        // Picked a window, or left "Also share tab audio" unticked -- no
+        // audio exists on this surface. That is a choice made inside the
+        // picker, so the consent pass treats it as a decline like any
+        // other: stop here, do NOT reach for the microphone. [A] re-opens
+        // the card for another go, which is the honest recovery.
         stream.getTracks().forEach((tr) => { try { tr.stop() } catch (e) {} })
-        startMicCapture()
+        tapState = 'idle'
+        notifyTap('NO TAB AUDIO')
         return
       }
       wireTapAnalyser(stream, 'tab')
@@ -184,7 +252,18 @@ export function startTabCapture(minimal) {
       // rejects one of the newer display-surface options -- retry once bare
       // before writing the tier off for the session.
       if (!minimal && err && err.name === 'TypeError') { startTabCapture(true); return }
-      if (err && err.name !== 'NotAllowedError') tapBlockedTab = true
+      // NotAllowedError is the visitor closing the picker: a decision, not
+      // a fault, and the consent pass's whole point is that it ends the
+      // conversation instead of escalating into a microphone prompt. Any
+      // OTHER error is the tier being structurally unavailable on this
+      // browser -- nobody chose that, so the mic tier they already
+      // consented to is still fair game and the ladder falls through.
+      if (err && err.name === 'NotAllowedError') {
+        tapState = 'idle'
+        notifyTap('LINE DECLINED')
+        return
+      }
+      tapBlockedTab = true
       startMicCapture()
     })
   } catch (e) { tapBlockedTab = true; startMicCapture() }
@@ -345,6 +424,10 @@ export function notifyTap(text) {
   if (!u || !u.program) return
   const p = u.program
   if (!p.poweredOn || p._powerAnimating || p.guideOpen || p.visualizerActive) return
+  // 2026-08-25 consent pass -- the card is a full-screen takeover of the
+  // same grid, exactly like the guide above it, so a flash landing mid-card
+  // would punch a hole in it.
+  if (p.tapConsentOpen) return
   try { p.flashStatus(u.s, text) } catch (e) {}
 }
 
