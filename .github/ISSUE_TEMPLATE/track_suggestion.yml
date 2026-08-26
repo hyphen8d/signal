@@ -1,0 +1,87 @@
+name: Track or station suggestion
+description: Propose a song for a station, or a whole station that doesn't exist yet
+labels: ["track suggestion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggestions are genuinely wanted -- the roster is hand-curated, and
+        the best additions have come from people who know a lane better than
+        I do. Three things that will get a proposal accepted faster:
+
+        - **Every station has a lane, and the lane is narrower than the
+          genre.** COLD WAVE is not "synth music", it's synthetic hearts and
+          borrowed neon. Say why yours belongs on *that* station rather than
+          on a different one. If it fits three stations equally well, it
+          probably fits none of them.
+        - **One track per artist, roughly.** Stations already carrying an
+          artist will usually stay that way -- breadth is the point.
+        - **It has to be on YouTube, playable, and embeddable.** Every ID on
+          the roster is verified before it lands (alive, US-available,
+          embeddable, the right recording and not a live take or an edit).
+          A link saves me guessing which upload you meant.
+
+        The full roster, with every station's taglines and track list, is in
+        [stations.md](https://github.com/hyphen8d/signal/blob/main/stations.md).
+        Worth a skim so you don't propose something already on there.
+
+  - type: dropdown
+    id: station
+    attributes:
+      label: Which station
+      description: >
+        Pick "A new station" if this doesn't belong on any of the nine. Fair
+        warning -- nine is the current ceiling, since the presets are the
+        `1`-`9` keys, so a new one means retiring an existing one.
+      options:
+        - 01 CIPHER -- digital infiltration, late-night breakbeat
+        - 02 DISTORTION FIELD -- raw nerve, '90s angst
+        - 03 COLD WAVE -- synthetic hearts, borrowed neon
+        - 04 DRIFT MODE -- fade to black, ambient descent
+        - 05 CIRCUIT CRUSH -- analog glow, the long drive home
+        - 06 ATOMIC -- atomic swing, radioactive nostalgia
+        - 07 MIDNIGHT NEON -- late-night blues, neon glow
+        - 08 CITY LIGHTS -- tokyo nights, city pop dreams
+        - 09 HACKBACK -- golden age hip-hop, coast to coast legends
+        - A new station
+    validations:
+      required: true
+
+  - type: textarea
+    id: tracks
+    attributes:
+      label: The track(s)
+      description: >
+        Artist and title. A YouTube link each if you have them -- prefer the
+        artist's own channel, a VEVO upload or a "- Topic" upload over a fan
+        re-upload, since those are what survive.
+      placeholder: |
+        Blue Monday '88 -- New Order
+        https://www.youtube.com/watch?v=...
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it fits that station
+      description: >
+        The useful part. What does it have in common with what's already
+        there -- the sound, the era, the mood it puts you in at 2am?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: >
+            I've checked stations.md -- this artist isn't already on the
+            station I'm suggesting it for.
+          required: false
+        - label: >
+            I know SIGNAL plays real YouTube video, so this needs to be
+            something that's actually up there and embeddable.
+          required: false
