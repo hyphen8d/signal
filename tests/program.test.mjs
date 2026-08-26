@@ -390,3 +390,41 @@ test('consent pass: mobile never asks for the microphone', async () => {
     assert.equal(h.program.tapConsentOpen, false)
   } finally { h.shutdown() }
 })
+
+test('visualizer: [V] in the lyrics view returns to the effect instead of cycling under it', async () => {
+  const h = await boot()
+  try {
+    h.powerOn()
+    h.key('v')
+    assert.equal(h.program.visualizerActive, true)
+    const effect = h.program.activeVisualKey()
+    // Driven through the flag rather than [L]: lyricsStateFor() needs a
+    // resolved LRCLIB lookup and the harness has no network, so [L] itself
+    // can never open the view here. The defect was in the key handler, and
+    // this is the state that handler sees. No advance() between the two
+    // presses -- drawVisualizerFrame's own per-tick check would close the
+    // view on an unavailable lookup and hide the thing being tested.
+    h.program.lyricsViewOpen = true
+    h.key('v')
+    assert.equal(h.program.lyricsViewOpen, false, '[V] came back to the effect')
+    assert.equal(h.program.activeVisualKey(), effect, 'and did not cycle underneath it')
+    h.key('v')
+    assert.notEqual(h.program.activeVisualKey(), effect, 'the next [V] cycles as it always did')
+    assert.equal(h.program.visualizerActive, true, 'neither press exited the visualizer')
+  } finally { h.shutdown() }
+})
+
+test('visualizer: Shift+C in the lyrics view drops the view AND cycles', async () => {
+  const h = await boot()
+  try {
+    h.powerOn()
+    h.key('v')
+    const effect = h.program.activeVisualKey()
+    h.program.lyricsViewOpen = true
+    h.key('C', { shiftKey: true })
+    // Unlike [V], cycling is all Shift+C does, so it lands on the new
+    // effect rather than merely back on the old one.
+    assert.equal(h.program.lyricsViewOpen, false)
+    assert.notEqual(h.program.activeVisualKey(), effect, 'cycled, and visibly so')
+  } finally { h.shutdown() }
+})

@@ -1865,6 +1865,14 @@ export default {
           // same action either way, so nothing regresses for anyone who'd
           // learned Shift+C already.
           if (e.shiftKey) {
+            // 2026-08-26 -- same dead-feedback bug as [V] below, same fix,
+            // one deliberate difference: cycling IS Shift+C's only job, so
+            // it drops the lyrics view and cycles in the same press. That
+            // lands you on the new effect, where [V]'s first press only
+            // lands you back on the old one -- each key still does the
+            // thing it's named for, and neither can change something
+            // you're unable to see.
+            this.lyricsViewOpen = false
             this.cycleVisualEffect(s)
             vizFlash(VISUALS[this.activeVisualKey()].label)
             return
@@ -1909,6 +1917,20 @@ export default {
           // leaving the mnemonic on double duty; live QA asked for V to
           // just cycle once inside, and only [E]/Escape to exit. Same
           // action and flash as Shift+C above.
+          // 2026-08-26 -- [V] out of the lyrics view comes back to the
+          // effect instead of cycling under it. Live QA: pressing it inside
+          // [L] flashed the next effect's name while the screen carried on
+          // drawing lyrics -- drawVisualizerFrame() skips the effect call
+          // entirely while lyricsViewOpen (see its own comment), so the
+          // only visible response was a label for something you couldn't
+          // see, and the cycle silently ate a step of VISUAL_KEYS. [V] acts
+          // on the view you're actually looking at: first press returns to
+          // the canvas, the next one cycles it exactly as before.
+          if (this.lyricsViewOpen) {
+            this.lyricsViewOpen = false
+            this.drawVisualizerInfo(s)
+            return
+          }
           this.cycleVisualEffect(s)
           vizFlash(VISUALS[this.activeVisualKey()].label)
           return

@@ -138,7 +138,7 @@ every visualizer effect, and assert on what's on the grid.
 | `P` | Power off / on |
 | `G` | Guide -- about/controls page, a station index, and a full detail page per station (freq/name/description/sample tracks); `<-`/`->` steps through all 11 pages, digits `1`-`9` jump straight to a station's detail page from the index, any other key closes it |
 | `C` | Cycle color (Green Phosphor, Classic Amber, Cyber Blue, Monochrome, Bubblegum Pink) |
-| `V` | Visualizer -- toggle a full-screen procedural display while a station is locked (also kicks in on its own after a few minutes idle). Inside it, `C` cycles color, `N` skips to the next track, `M` mutes, `Up`/`Down` set volume, and a track position bar runs along the bottom; `E` -- or any other key -- exits |
+| `V` | Visualizer -- open a full-screen procedural display while a station is locked (also kicks in on its own after a few minutes idle). Inside it, `C` cycles color, `Shift+C` or `V` cycles the effect itself, `L` opens the synced-lyrics view (`V` or `L` comes back out), `N` skips to the next track, `M` mutes, `Up`/`Down` set volume, and a track position bar runs along the bottom; `E` or `Escape` exits -- other keys are no-ops |
 | `A` | LINE INPUT -- the audio-capture consent card. Patch a live feed into the meters, or pull it back out. Offered once on your first `[V]`; this key re-opens it on demand |
 
 ### Touch (mobile)
