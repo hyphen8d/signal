@@ -68,13 +68,24 @@ async function mapLimit(items, n, fn) {
   return out
 }
 
-const UA = { 'accept-language': 'en-US,en;q=0.9', 'user-agent': 'Mozilla/5.0' }
+// CONSENT=YES+1 short-circuits YouTube's consent interstitial, which otherwise
+// bounces a cookie-less client between redirects until undici gives up with
+// "redirect count exceeded" (hit for real on a DRIFT MODE search, 2026-08-26).
+const UA = {
+  'accept-language': 'en-US,en;q=0.9',
+  'user-agent': 'Mozilla/5.0',
+  cookie: 'CONSENT=YES+1',
+}
 
 async function oembed(id) {
-  const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`)
-  if (r.status !== 200) return { ok: false, status: r.status }
-  const j = await r.json()
-  return { ok: true, status: 200, title: j.title, channel: j.author_name }
+  try {
+    const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`, { headers: UA })
+    if (r.status !== 200) return { ok: false, status: r.status }
+    const j = await r.json()
+    return { ok: true, status: 200, title: j.title, channel: j.author_name }
+  } catch (err) {
+    return { ok: false, status: 'ERR', error: String(err?.message ?? err) }
+  }
 }
 
 // The watch page carries what oEmbed doesn't: length, region availability and
@@ -95,10 +106,18 @@ async function playability(id) {
 
 async function search(query, n) {
   // sp=EgIQAQ%3D%3D restricts to videos, so playlists/channels don't crowd out
-  // the results.
+  // the results. Failures are isolated per query -- a single bad search used to
+  // abort the whole run, losing every other search with it.
   const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=EgIQAQ%253D%253D`
-  const html = await (await fetch(url, { headers: UA })).text()
-  return [...new Set([...html.matchAll(/"videoId":"([\w-]{11})"/g)].map(m => m[1]))].slice(0, n)
+  try {
+    const html = await (await fetch(url, { headers: UA })).text()
+    const hits = [...new Set([...html.matchAll(/"videoId":"([\w-]{11})"/g)].map(m => m[1]))].slice(0, n)
+    if (!hits.length) console.error(`  ! no results for "${query}"`)
+    return hits
+  } catch (err) {
+    console.error(`  ! search failed for "${query}": ${err?.message ?? err}`)
+    return []
+  }
 }
 
 const mmss = s => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '?')
@@ -110,7 +129,7 @@ const SUSPECT = /\b(live|remix|rework|cover|karaoke|sped ?up|slowed|nightcore|8d
 
 async function assess(id, stationChannels) {
   const e = await oembed(id)
-  if (!e.ok) return { id, dead: true, status: e.status, flags: [`DEAD ${e.status}`] }
+  if (!e.ok) return { id, dead: true, status: e.status, flags: [`DEAD ${e.status}${e.error ? ` (${e.error})` : ''}`] }
   const p = await playability(id)
   const flags = []
   if (p.us === false) flags.push('NOT-US')
