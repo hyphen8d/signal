@@ -1,0 +1,32 @@
+SIGNAL
+Copyright (c) 2026 Matthew Arevalo
+
+This file accompanies LICENSE and does not modify it. LICENSE covers SIGNAL
+itself; the components below are vendored into this repository, are not
+SIGNAL's to license, and keep their own copyright notices and terms. It is
+kept separate from LICENSE so that LICENSE remains the MIT text and nothing
+else -- automated license detection (GitHub's included) reads a file with
+anything appended to it as a custom license rather than as MIT.
+
+--------------------------------------------------------------------------
+src/ -- cyberspace-crt
+
+    Copyright (c) 2026 Unremarkable Garden
+
+    The WebGL2 CRT text-grid engine SIGNAL renders on, vendored here rather
+    than written here, and open-sourced from cyberspace.online. Licensed
+    under the MIT License on the same terms as LICENSE, and that copyright
+    notice is reproduced here as those terms require.
+
+    SIGNAL is a standalone project and is not affiliated with, endorsed by,
+    or hosted by Cyberspace.
+
+    Upstream: https://github.com/unremarkablegarden/cyberspace-crt
+
+--------------------------------------------------------------------------
+fonts/ -- Terminus Font
+
+    Copyright (C) 2014 Dimitar Toshkov Zhekov
+
+    NOT covered by the MIT terms in LICENSE. Licensed under the SIL Open
+    Font License 1.1; the full text is in fonts/OFL.txt.
