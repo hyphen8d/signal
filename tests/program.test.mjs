@@ -60,8 +60,14 @@ test('guide opened during the boot-flicker tail is not punched through', async (
     h.key('g')
     assert.equal(h.program.guideOpen, true)
     h.advance(1500)
-    assert.ok(h.row(1).includes('SIGNAL -- GUIDE'))
-    for (const y of [2, 5, 11, 13, 21, 23, 24]) {
+    // 2026-08-26 -- the About page rebuild moved both of these. The title
+    // carries VERSION_TAG now, matched by shape rather than by a literal so
+    // this cannot drift on the next version bump (the same reasoning that put
+    // VERSION_TAG there in the first place -- see the 28th-pass note). The
+    // blank-row list is the page's actual gaps under the new layout; rows 5,
+    // 11 and 21 carry content now, and 4, 6 and 17 do not.
+    assert.match(h.row(1).trim(), /^SIGNAL .+ -- GUIDE$/)
+    for (const y of [2, 4, 6, 13, 17, 23, 24]) {
       assert.equal(h.row(y).trim(), '', `row ${y} must stay blank under the guide`)
     }
     h.key('x') // any other key closes it
@@ -493,5 +499,72 @@ test('GREEN ROOM stays out of the presets and out of the guide', async () => {
       h.key('ArrowRight')
       h.advance(120)
     }
+  } finally { h.shutdown() }
+})
+
+// 2026-08-26 -- the About page rebuild. Both assertions below are the two
+// defects it fixed, written so they cannot come back quietly: neither showed
+// up as an error, a warning or a failing test, only as a page that read badly.
+test('guide page 1: every control row shares its group\'s column origin', async () => {
+  const h = await boot()
+  try {
+    h.powerOn()
+    h.key('g')
+    h.advance(300)
+    const rows = h.rows()
+    const head = rows.findIndex((r) => r.includes('TUNING') && r.includes('RECEIVER') && r.includes('DISPLAY'))
+    assert.ok(head > 0, 'all three group heads share one row')
+    // The page this replaced centred each of its four control rows on its own
+    // string, so the left edges landed at columns 16, 13, 14 and 9 and the
+    // second column at 36, 33, 34 and 24. Nothing lined up. Exact-equality on
+    // the origin is the whole point -- a "close enough" assertion would pass
+    // the very layout being fixed.
+    for (const [group, keys] of [
+      ['TUNING', ['[<-/->]', '[ENTER]', '[S]', '[1-9]', '[B]']],
+      ['RECEIVER', ['[UP/DN]', '[M]', '[N]', '[P]']],
+      ['DISPLAY', ['[C]', '[V]', '[G]']],
+    ]) {
+      const x = rows[head].indexOf(group)
+      keys.forEach((key, i) => {
+        assert.equal(rows[head + 1 + i].indexOf(key), x, `${key} aligns under ${group}`)
+      })
+    }
+  } finally { h.shutdown() }
+})
+
+test('guide page 1: [A] is its own callout, not one cell of the control grid', async () => {
+  const h = await boot()
+  try {
+    h.powerOn()
+    h.key('g')
+    h.advance(300)
+    const rows = h.rows()
+    const y = rows.findIndex((r) => r.includes('[A] LINE IN'))
+    assert.ok(y > 0, '[A] has a row of its own')
+    // It used to sit third on a DIM grid row and be explained at FAINT -- the
+    // same register as the ads disclaimer -- despite being the only control
+    // that raises a browser permission prompt. Sharing its row with another
+    // bracketed key would mean it had been folded back into the table.
+    assert.equal((rows[y].match(/\[[^\]]+\]/g) || []).length, 1, 'no other control shares the [A] row')
+    assert.ok(rows[y + 1].includes('Optional'), 'the consent line sits directly under it')
+  } finally { h.shutdown() }
+})
+
+test('guide page 1 fits the lite grid: nothing truncated, footer on-grid', async () => {
+  // Not reachable by touch today (no gesture opens the guide -- README "Known
+  // gaps"), but the page is shared code and the old one was broken here: wide
+  // rows truncated mid-word and the row-22 footer fell off a 22-row grid, so
+  // there was no close hint at all.
+  const h = await boot({ mobile: true })
+  try {
+    h.powerOn()
+    h.key('g')
+    h.advance(300)
+    assert.equal(h.term.cols, 42)
+    assert.ok(h.find('[->] STATIONS') >= 0, 'footer lands inside the grid')
+    for (const whole of ['A tuning-dial radio, rendered as text.', 'Optional. Meters stay synthetic if not.', '[A] LINE IN -- live audio to meters']) {
+      assert.ok(h.find(whole) >= 0, `not truncated: ${whole}`)
+    }
+    for (const head of ['TUNING', 'RECEIVER', 'DISPLAY']) assert.ok(h.find(head) >= 0, `${head} group present`)
   } finally { h.shutdown() }
 })

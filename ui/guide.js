@@ -85,63 +85,136 @@ export default {
   // are this app's marker for "this is a control", and singling that one
   // out as an exception would read as an inconsistency, not a nuance.
   drawGuideKeyLine(s, y, text, base = FAINT, keyAttr = BOLD) {
+    this.drawKeyLineAt(s, centerX(s.term.cols, text), y, text, base, keyAttr)
+  },
+  // 2026-08-26 -- the same two-pass bracket lift at a caller-chosen x, so the
+  // About page's control table can align on fixed column stops instead of
+  // centring every row on its own string. drawGuideKeyLine() is now just this
+  // with the centred x, so the footers and every existing caller are
+  // byte-identical.
+  drawKeyLineAt(s, x0, y, text, base = FAINT, keyAttr = BOLD) {
     const { term } = s
-    const x0 = centerX(term.cols, text)
     term.text(x0, y, text, base)
     const re = /\[[^\]]*\]/g
     let m
     while ((m = re.exec(text))) term.text(x0 + m.index, y, m[0], keyAttr)
   },
+  // 2026-08-26 -- About page rebuilt. Three things were wrong with the
+  // version this replaces, all of them structural rather than cosmetic:
+  //
+  //   1. The CONTROLS block was four rows each centred on its OWN string, so
+  //      the key column wandered across them -- left edges at columns 16, 13,
+  //      14 and 9, second columns at 36, 33, 34 and 24. It read as four
+  //      unrelated sentences rather than a reference you scan down. It is one
+  //      centred BLOCK with fixed column stops now (see drawKeyLineAt).
+  //   2. The grouping the 29th-pass comment claimed ("rows 14-16 tuning/
+  //      receiver, row 17 the not-a-real-radio trio") had stopped matching the
+  //      rows: [P] POWER is not a tuning control, [A] LINE IN is the least
+  //      real-radio thing on the page, and row 17 held four items, not three.
+  //      The groups are labelled now, so the claim and the layout cannot
+  //      drift apart again.
+  //   3. [A] was drawn third on a DIM grid row and explained at FAINT -- the
+  //      same register as the ads disclaimer and the version string. That is
+  //      the quietest treatment available on this page, given to the only
+  //      control that raises a browser permission prompt. It has its own
+  //      fenced panel now, at NORMAL, above the caveats rather than among
+  //      them.
+  //
+  // Row 4's prose ("Power it on, spin the dial, lock onto a station") became
+  // the START HERE line: same row, but it names the keys in the order you
+  // press them instead of describing them. VERSION_TAG folded into the title
+  // to buy back the row the panel costs -- see the 28th-pass note on why it
+  // is read from there and not hardcoded.
+  GUIDE_CONTROL_GROUPS: [
+    { head: 'TUNING', rows: [['[<-/->]', 'SEEK'], ['[ENTER]', 'LOCK'], ['[S]', 'SCAN'], ['[1-9]', 'PRESETS'], ['[B]', 'BACK']] },
+    { head: 'RECEIVER', rows: [['[UP/DN]', 'VOLUME'], ['[M]', 'MUTE'], ['[N]', 'NEXT TRACK'], ['[P]', 'POWER']] },
+    { head: 'DISPLAY', rows: [['[C]', 'COLOR'], ['[V]', 'VISUALIZER'], ['[G]', 'GUIDE']] },
+  ],
+  // Three groups across on the 80-col grid; stacked two-across on anything
+  // narrower. The narrow path is not reachable today -- mobile has no touch
+  // trigger that OPENS the guide (README "Known gaps") -- but the page is
+  // shared code and the old one was already broken there: every wide row
+  // truncated mid-word and the row-22 footer fell off a 22-row grid entirely.
+  // Degrading properly costs a branch, so it gets one rather than inheriting
+  // that.
+  drawGuideControls(s, y0) {
+    const { term } = s
+    const groups = this.GUIDE_CONTROL_GROUPS
+    const widths = groups.map(g => ({
+      k: Math.max(...g.rows.map(r => r[0].length)),
+      l: Math.max(...g.rows.map(r => r[1].length)),
+    }))
+    const cell = (i) => Math.max(widths[i].k + 1 + widths[i].l, groups[i].head.length)
+    const GUTTER = 7
+    const across = groups.length
+    const blockW = groups.reduce((n, _, i) => n + cell(i), 0) + GUTTER * (across - 1)
+    if (blockW + 4 <= term.cols) {
+      let x = centerX(term.cols, 'x'.repeat(blockW))
+      for (let gi = 0; gi < across; gi++) {
+        term.text(x, y0, groups[gi].head, BOLD)
+        groups[gi].rows.forEach((r, ri) => {
+          this.drawKeyLineAt(s, x, y0 + 1 + ri, r[0].padEnd(widths[gi].k + 1) + r[1], DIM)
+        })
+        x += cell(gi) + GUTTER
+      }
+      return y0 + 1 + Math.max(...groups.map(g => g.rows.length))
+    }
+    // Narrow: one group per block, keys packed two to a row.
+    let y = y0
+    for (let gi = 0; gi < groups.length; gi++) {
+      term.text(2, y++, groups[gi].head, BOLD)
+      const pairs = groups[gi].rows
+      for (let i = 0; i < pairs.length; i += 2) {
+        const a = `${pairs[i][0]} ${pairs[i][1]}`.padEnd(19)
+        const b = pairs[i + 1] ? `${pairs[i + 1][0]} ${pairs[i + 1][1]}` : ''
+        this.drawKeyLineAt(s, 2, y++, (a + b).trimEnd(), DIM)
+      }
+    }
+    return y
+  },
   drawGuidePageAbout(s) {
     const { term } = s
     const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
-    put(1, 'SIGNAL -- GUIDE', BOLD)
-    put(3, 'A tuning-dial internet radio, rendered entirely as text.', NORMAL)
-    put(4, 'Power it on, spin the dial, lock onto a station, and let it play.', NORMAL)
-    put(6, 'Made by Hyphen8d -- inspired by my own music taste,', MUTED)
-    put(7, 'built for anyone who wants a weird little radio to leave on.', MUTED)
-    // 2026-08-23 (live audio tap) -- credit for the visualizer audio-sync
-    // work, same MUTED register as the "Made by" lines above.
-    put(8, 'Live audio sync by End Dream.', MUTED)
-    put(9, 'Got an idea, a station request, or found something broken?', NORMAL)
-    put(10, 'Reach out -- matt@gial.co', BRIGHT)
-    put(12, 'CONTROLS', BOLD)
-    // 29th pass: reflowed after PLAY/PAUSE was removed (see key()) --
-    // rows 14-16 are tuning/receiver controls, row 17 is the "not a real
-    // radio" trio (skip, guide, display mode), matching the same grouping
-    // now used in the on-screen hint bar (drawHint()).
-    this.drawGuideKeyLine(s, 14, '[<-/->] SEEK        [ENTER] LOCK        [S] SCAN', DIM)
-    this.drawGuideKeyLine(s, 15, '[1-9] PRESETS       [B] BACK            [UP/DOWN] VOL', DIM)
-    // Consent pass (2026-08-25) -- [A] LINE IN joins the receiver-controls
-    // block here rather than the on-screen hint bar, which had no columns
-    // left (see drawHint()'s 50th-pass note: line2 is 75 of 80). Same 20-col
-    // gutter as the two rows above it.
-    this.drawGuideKeyLine(s, 16, '[M] MUTE            [P] POWER           [A] LINE IN', DIM)
-    // 49th pass: the Guide's own controls reference was missing [V] VIZ --
-    // the on-screen hint bar (drawHint()) picked it up back in the
-    // 43rd/44th pass but this page never did. Caught in the 0.9 QA pass.
-    this.drawGuideKeyLine(s, 17, '[N] NEXT       [G] GUIDE       [C] COLOR       [V] VISUALIZER', DIM)
-    // 2026-08-23 (live audio tap) -- same honest-caveat register as the
-    // ads line below: one plain sentence saying what the capture is for and
-    // that saying no costs nothing (the meters just stay synthetic).
-    // 2026-08-25 (the consent pass) -- rewritten now that nothing prompts at
-    // power-on any more. This line no longer has to warn about a dialog
-    // landing unannounced; it names the key that raises one on purpose.
-    put(18, '[A] feeds real audio to the meters -- optional, never automatic', FAINT)
+    const wide = term.cols >= 72
+    // 28th pass: VERSION_TAG, not a second hardcoded string that can drift
+    // out of sync with the title bar. Same reason, new home.
+    put(1, `SIGNAL ${VERSION_TAG} -- GUIDE`, BOLD)
+    put(3, wide
+      ? 'A tuning-dial internet radio, rendered entirely as text.'
+      : 'A tuning-dial radio, rendered as text.', NORMAL)
+    this.drawGuideKeyLine(s, 5, wide
+      ? 'START HERE   [P] power on   ->   [<-/->] find a carrier   ->   [ENTER] lock'
+      : 'START HERE  [P] on  [ENTER] lock', NORMAL)
+    const afterControls = this.drawGuideControls(s, 7)
+    // Consent pass (2026-08-25) -- [A] is the ONLY way audio capture is ever
+    // requested; nothing prompts at power-on any more. 2026-08-26: promoted
+    // out of the control grid into its own fenced panel, using the same faint
+    // rule the station detail pages draw at row 6. The copy says what it does
+    // and that declining costs nothing, in that order -- the old FAINT line
+    // said the same thing in the register readers skip.
+    if (!wide) {
+      // 22 rows total, so the panel is the last thing before the footer and
+      // the credits do not fit at all. Every string on this branch is
+      // measured against 42 cols -- the wide ones truncate mid-word here,
+      // which is exactly what the page this replaced did on every row.
+      this.drawGuideKeyLine(s, afterControls + 1, '[A] LINE IN -- live audio to meters', NORMAL)
+      put(afterControls + 2, 'Optional. Meters stay synthetic if not.', MUTED)
+      this.drawGuideKeyLine(s, term.rows - 1, '[->] STATIONS   [any key] CLOSE')
+      return
+    }
+    put(14, '-'.repeat(64), FAINT)
+    this.drawGuideKeyLine(s, 15, '[A] LINE IN -- feed live audio into the meters', NORMAL)
+    put(16, 'Optional and never automatic. Decline and the meters stay synthetic.', MUTED)
+    put(18, 'Made by Hyphen8d -- inspired by my own music taste, built for anyone', MUTED)
+    put(19, 'who wants a weird little radio to leave on.  Live audio sync by End Dream.', MUTED)
+    put(20, 'Got an idea, a station request, or found something broken? -- matt@gial.co', BRIGHT)
     // 20th pass -- addresses viewers without YouTube Premium hearing ads.
-    // Decided against anything that tries to
-    // detect/suppress the ad itself (that's ad-blocking circumvention
-    // against YouTube's ToS, not something to build around even here) or a
-    // bigger re-sourcing effort. This is the cheap, honest middle ground:
-    // just tell people up front so an ad reads as expected rather than as
-    // SIGNAL being broken.
-    put(19, "Playback is real YouTube video -- ads may play without Premium", FAINT)
-    // 28th pass: was hardcoded 'SIGNAL v0.5' -- a second, separate version
-    // string that had drifted out of sync with the title bar (which was
-    // last bumped at some earlier pass without this one following). Now
-    // driven off the same VERSION_TAG the title bar uses, so the two can't
-    // drift apart again.
-    put(20, `SIGNAL ${VERSION_TAG}`, FAINT)
+    // Decided against anything that tries to detect/suppress the ad itself
+    // (that's ad-blocking circumvention against YouTube's ToS, not something
+    // to build around even here) or a bigger re-sourcing effort. This is the
+    // cheap, honest middle ground: just tell people up front so an ad reads
+    // as expected rather than as SIGNAL being broken.
+    put(21, 'Playback is real YouTube video -- ads may play without Premium.', FAINT)
     this.drawGuideKeyLine(s, 22, '[->] STATIONS        [any other key] CLOSE')
   },
   // Quick-scan station index (32nd pass, replaces the old combined
