@@ -273,7 +273,7 @@ isn't just an internal annoyance anymore.
 - `index.html` / `main.js` — thin bootstrap that mounts the engine and hands
   it `program.js`.
 - `fonts/` — Terminus bitmap font (SIL OFL 1.1, separate from the MIT
-  license below — see `LICENSE`).
+  license below — see [`NOTICE`](./NOTICE)).
 - `tools/` — dev server, the build-stamp bumper, the roster doc generator
   and roster checks, and `network.html` (a roster-editing dashboard).
 - `tests/` — the headless harness and the test suite.
@@ -326,7 +326,7 @@ MIT — see [`LICENSE`](./LICENSE). SIGNAL itself is Copyright (c) 2026
 Matthew Arevalo.
 
 Two things in the tree are not SIGNAL's to license and keep their own
-notices, both listed in `LICENSE`: `src/` is `cyberspace-crt`, Copyright (c)
-2026 Unremarkable Garden, MIT on the same terms; and the bitmap fonts in
-`fonts/` are Copyright (C) 2014 Dimitar Toshkov Zhekov under the SIL Open
-Font License 1.1 (see `fonts/OFL.txt`).
+copyright notices, both reproduced in [`NOTICE`](./NOTICE): `src/` is
+`cyberspace-crt`, Copyright (c) 2026 Unremarkable Garden, MIT on the same
+terms; and the bitmap fonts in `fonts/` are Copyright (C) 2014 Dimitar
+Toshkov Zhekov under the SIL Open Font License 1.1 (see `fonts/OFL.txt`).
