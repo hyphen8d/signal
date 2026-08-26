@@ -112,16 +112,22 @@ export default {
     // now used in the on-screen hint bar (drawHint()).
     this.drawGuideKeyLine(s, 14, '[<-/->] SEEK        [ENTER] LOCK        [S] SCAN', DIM)
     this.drawGuideKeyLine(s, 15, '[1-9] PRESETS       [B] BACK            [UP/DOWN] VOL', DIM)
-    this.drawGuideKeyLine(s, 16, '[M] MUTE            [P] POWER', DIM)
+    // Consent pass (2026-08-25) -- [A] LINE IN joins the receiver-controls
+    // block here rather than the on-screen hint bar, which had no columns
+    // left (see drawHint()'s 50th-pass note: line2 is 75 of 80). Same 20-col
+    // gutter as the two rows above it.
+    this.drawGuideKeyLine(s, 16, '[M] MUTE            [P] POWER           [A] LINE IN', DIM)
     // 49th pass: the Guide's own controls reference was missing [V] VIZ --
     // the on-screen hint bar (drawHint()) picked it up back in the
     // 43rd/44th pass but this page never did. Caught in the 0.9 QA pass.
     this.drawGuideKeyLine(s, 17, '[N] NEXT       [G] GUIDE       [C] COLOR       [V] VISUALIZER', DIM)
     // 2026-08-23 (live audio tap) -- same honest-caveat register as the
-    // ads line below: the power-on share/mic prompt is unexpected enough
-    // to deserve one plain sentence saying what it's for and that saying
-    // no costs nothing (the meters just stay synthetic).
-    put(18, 'The audio-share prompt at power-on feeds the live meters -- optional', FAINT)
+    // ads line below: one plain sentence saying what the capture is for and
+    // that saying no costs nothing (the meters just stay synthetic).
+    // 2026-08-25 (the consent pass) -- rewritten now that nothing prompts at
+    // power-on any more. This line no longer has to warn about a dialog
+    // landing unannounced; it names the key that raises one on purpose.
+    put(18, '[A] feeds real audio to the meters -- optional, never automatic', FAINT)
     // 20th pass -- addresses viewers without YouTube Premium hearing ads.
     // Decided against anything that tries to
     // detect/suppress the ad itself (that's ad-blocking circumvention

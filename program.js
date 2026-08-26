@@ -20,7 +20,7 @@
 const V = globalThis.SIGNAL_BUILD ?? ''
 import { BOLD, BRIGHT, DIM, FAINT, MUTED, NORMAL } from './src/term.js'
 const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent, playKeyClick, playModeThump, playPanelSound, playPowerOnSound, playPresetClick, playPresetWhoosh, playRelayThunk, playSeekStatic, playStaticBurst, setSpeakerMuted, setStaticIntensity, startStaticNoise, startTubeHum, stopStaticNoise, stopTubeHum } = await import(`./audio/sfx.js?v=${V}`)
-const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
+const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
 const { DISPLAY_MODES, MAPPED_KEYS } = await import(`./constants.js?v=${V}`)
@@ -33,6 +33,7 @@ const { VISUALS } = await import(`./visuals/index.js?v=${V}`)
 const { default: desktopUi } = await import(`./ui/desktop.js?v=${V}`)
 const { default: mobileUi } = await import(`./ui/mobile.js?v=${V}`)
 const { default: guide } = await import(`./ui/guide.js?v=${V}`)
+const { default: tapConsentUi } = await import(`./ui/tap-consent.js?v=${V}`)
 const { default: visualizer } = await import(`./visualizer.js?v=${V}`)
 
 // --- program ---------------------------------------------------------------
@@ -46,6 +47,7 @@ export default {
   ...desktopUi,
   ...mobileUi,
   ...guide,
+  ...tapConsentUi,
   ...visualizer,
 
   // --- fx: frame-driven scheduled effects (2026-08-25 audit) --------------
@@ -111,7 +113,7 @@ export default {
   },
   _tickFx(now) {
     this._runFx(this._fxAlways, now)
-    if (this.poweredOn && !this.guideOpen) this._runFx(this._fx, now)
+    if (this.poweredOn && !this.guideOpen && !this.tapConsentOpen) this._runFx(this._fx, now)
   },
   _runFx(q, now) {
     // Snapshot what's due first: an entry's fn may add or cancel others.
@@ -301,6 +303,16 @@ export default {
     this._lastInputAt = Date.now()
     // 65th pass -- per-station visualizer effect override, keyed by
     // station.id. Empty until [Shift+C] cycles a station off its default;
+    // Consent pass (2026-08-25) -- the visitor's answer to the LINE INPUT
+    // card: 'yes', 'no', or null for never asked. Only null opens the card
+    // on its own (first [V]); the other two mean the question has been put
+    // to them once already, which is enough. Restored from saved.tapConsent
+    // in the session-restore block below, same as the preferences around it.
+    this.tapConsent = null
+    // Cleared on every power-on: an agreed-but-idle tab tap gets ONE
+    // automatic re-raise of the picker per power cycle (see key()'s [V]),
+    // never one per keypress.
+    this._tapAutoAsked = false
     // restored from saved.visualOverrides in the session-restore block
     // below and read by drawVisualizerFrame() ahead of station.visual.
     this.visualOverrides = {}
@@ -398,6 +410,7 @@ export default {
       if (saved.visualOverrides && typeof saved.visualOverrides === 'object') {
         this.visualOverrides = saved.visualOverrides
       }
+      if (saved.tapConsent === 'yes' || saved.tapConsent === 'no') this.tapConsent = saved.tapConsent
       if (saved.stationId) {
         const ch = STATIONS.find((c) => c.id === saved.stationId)
         if (ch) {
@@ -474,6 +487,9 @@ export default {
 
     // Guide overlay (15th pass -- a G key for guide, added).
     this.guideOpen = false
+    // Consent pass (2026-08-25) -- the LINE INPUT card. Same overlay
+    // contract as guideOpen above: while it's true, nothing else may paint.
+    this.tapConsentOpen = false
 
     // Date/time module ticker (15th pass) -- one interval for the whole
     // page lifetime, since the clock needs to keep ticking on the STANDBY
@@ -497,7 +513,7 @@ export default {
     // setTimeout. Resetting it unconditionally on this line, synchronously,
     // would clear it before that timeout ever got a chance to fire.
     this._clockTimer = setInterval(() => {
-      if (this.guideOpen || this._powerAnimating) return
+      if (this.guideOpen || this.tapConsentOpen || this._powerAnimating) return
       if (this.poweredOn) this.drawClock(s)
       else this.drawStandbyClock(s)
     }, 1000)
@@ -723,15 +739,24 @@ export default {
     // 19th pass: floor, not round -- see drawStandbyClock()
     const midY = Math.floor(term.rows / 2)
     playPowerOnSound()
-    // 2026-08-23 (live audio tap) -- the capture attempt rides the power-on
-    // gesture, HERE and not later: getDisplayMedia requires-and-consumes
-    // transient activation (~5s), which comfortably outlasts the now-much-
-    // shorter REVEAL_DELAY below (68th pass -- was ~5.6s, now under 2s), so
-    // the share picker still overlaps the boot readout fine. Deliberately
-    // after the YT priming block above so nothing here can disturb the
-    // round-4 mobile unmute invariants. Idempotent -- a later power cycle
-    // with a live tap is a no-op; a declined one retries.
-    startAudioTap(this, s)
+    // 2026-08-25 (the consent pass) -- this used to be startAudioTap(),
+    // raising a tab-share picker (or a mic request) over the boot readout on
+    // every single power-on. It doesn't any more: see audio/tap.js's consent
+    // note for why that was the wrong place to ask, and ui/tap-consent.js
+    // for where the asking moved to. What survives here is the half that
+    // never needed a dialog -- a microphone already granted on a previous
+    // visit resumes silently, exactly as it always did. Everything that
+    // would raise a prompt now waits for a [Y] the visitor typed.
+    this._tapAutoAsked = false
+    resumeAudioTapIfGranted(this, s)
+    // queryMicPermission() (see init) is async, and a fast [P] can beat it --
+    // leaving micPermState 'unknown' and skipping a mic this visitor already
+    // granted on an earlier visit. The old code never hit this because it ran
+    // the ladder regardless of what was known. One re-check after the boot
+    // lands closes it; resumeAudioTapIfGranted is idempotent (tapState guard)
+    // so the common case where the query already resolved costs nothing.
+    // On the always-queue because the normal one doesn't tick during boot.
+    this.fxAfter('tapResume', 2500, () => resumeAudioTapIfGranted(this, s), { always: true })
     // 41st pass: re-establish the baseline for whatever station is being
     // resumed, so drawChrome/setCrtDegradation etc. below read the right
     // crtBase.brightness/bg for it rather than whatever a previous session
@@ -1704,6 +1729,10 @@ export default {
     // key] CLOSE" hint on every guide page) -- so while it's open, every
     // key is a real command, not just the ones in MAPPED_KEYS.
     if (this.guideOpen) return true
+    // Consent pass (2026-08-25) -- the opposite treatment to the guide's
+    // above: on the LINE INPUT card only the three keys that actually answer
+    // it are commands, so a stray keypress gets no click either. See key().
+    if (this.tapConsentOpen) return e.key === 'y' || e.key === 'Y' || e.key === 'n' || e.key === 'N' || e.key === 'Escape'
     // 67th pass, live QA fix -- poweredOn flips false the instant powerDown()
     // is called, but its collapse beats keep painting the screen for another
     // ~900ms (see powerDown()'s beats array), and powerUp() has its own
@@ -1781,6 +1810,20 @@ export default {
       if (!this.mobile && !this._powerAnimating && (e.key === 'g' || e.key === 'G')) { e.preventDefault(); this.openGuide(s, true) }
       return
     }
+    // Consent pass (2026-08-25) -- the LINE INPUT card owns every key while
+    // it's up: [Y] agrees, [N]/[Escape] declines, and everything else is
+    // swallowed. Deliberately NOT the guide's "any other key closes" rule --
+    // this card is the difference between a browser permission prompt
+    // appearing and not appearing, so a stray keypress must not be able to
+    // answer it in either direction. Checked ahead of the visualizer block
+    // below because the [V] path opens the card INSTEAD of the visualizer,
+    // and hands off to it on close (see openTapConsent's `then`).
+    if (this.tapConsentOpen) {
+      e.preventDefault()
+      if (e.key === 'y' || e.key === 'Y') this.acceptTapConsent(s)
+      else if (e.key === 'n' || e.key === 'N' || e.key === 'Escape') this.declineTapConsent(s)
+      return
+    }
     // Visualizer (43rd pass) -- standard visualizer manners: ANY key
     // wakes it, and that keypress is consumed by the wake rather than also
     // running its normal action (so waking on an arrow key doesn't also
@@ -1822,6 +1865,14 @@ export default {
           // same action either way, so nothing regresses for anyone who'd
           // learned Shift+C already.
           if (e.shiftKey) {
+            // 2026-08-26 -- same dead-feedback bug as [V] below, same fix,
+            // one deliberate difference: cycling IS Shift+C's only job, so
+            // it drops the lyrics view and cycles in the same press. That
+            // lands you on the new effect, where [V]'s first press only
+            // lands you back on the old one -- each key still does the
+            // thing it's named for, and neither can change something
+            // you're unable to see.
+            this.lyricsViewOpen = false
             this.cycleVisualEffect(s)
             vizFlash(VISUALS[this.activeVisualKey()].label)
             return
@@ -1866,6 +1917,20 @@ export default {
           // leaving the mnemonic on double duty; live QA asked for V to
           // just cycle once inside, and only [E]/Escape to exit. Same
           // action and flash as Shift+C above.
+          // 2026-08-26 -- [V] out of the lyrics view comes back to the
+          // effect instead of cycling under it. Live QA: pressing it inside
+          // [L] flashed the next effect's name while the screen carried on
+          // drawing lyrics -- drawVisualizerFrame() skips the effect call
+          // entirely while lyricsViewOpen (see its own comment), so the
+          // only visible response was a label for something you couldn't
+          // see, and the cycle silently ate a step of VISUAL_KEYS. [V] acts
+          // on the view you're actually looking at: first press returns to
+          // the canvas, the next one cycles it exactly as before.
+          if (this.lyricsViewOpen) {
+            this.lyricsViewOpen = false
+            this.drawVisualizerInfo(s)
+            return
+          }
           this.cycleVisualEffect(s)
           vizFlash(VISUALS[this.activeVisualKey()].label)
           return
@@ -1933,7 +1998,45 @@ export default {
       // meaningful once there's a station/track to show on the info bar.
       case 'v': case 'V':
         e.preventDefault()
-        if (this.mode === 'locked' && this.lockedStation) this.enterVisualizer(s)
+        if (this.mode === 'locked' && this.lockedStation) {
+          // Consent pass (2026-08-25) -- the first [V] of a visitor's life
+          // offers the LINE INPUT card instead of going straight in, and
+          // hands off to enterVisualizer() when the card comes down either
+          // way. This is the moment the ask finally makes sense: they just
+          // asked for the visualizer, so "this is what makes it follow the
+          // real music" answers a question they're already holding.
+          // Note the idle auto-entry in frame() deliberately does NOT come
+          // through here -- no gesture behind it, so no card and no prompt.
+          if (!this.tapConsent) {
+            if (this.openTapConsent(s, () => this.enterVisualizer(s))) break
+          } else if (this.tapConsent === 'yes' && !this._tapAutoAsked) {
+            // Already agreed, once, for good. The tab tier still has no
+            // silent resume (getDisplayMedia raises its picker every time --
+            // see resumeAudioTapIfGranted), so it gets re-raised HERE, in
+            // this keypress, instead of at power-on where it used to ambush
+            // people. No card second time round: they've read it and said
+            // yes. Once per power cycle, not once per [V] -- a picker they
+            // dismissed shouldn't come back on the next press.
+            this._tapAutoAsked = true
+            startAudioTap(this, s)
+          }
+          this.enterVisualizer(s)
+        }
+        break
+      // Consent pass (2026-08-25) -- [A] opens the LINE INPUT card on
+      // demand: patch the tap in after saying no, or pull it back out
+      // again. It exists because a permission ought to be revocable from
+      // inside the thing that asked for it, without hunting through browser
+      // settings. Silently no-ops when there's no capture path at all on
+      // this browser (openTapConsent returns false), same restraint as [B]
+      // with an empty history. Deliberately NOT added to drawHint()'s
+      // footer: line2 is already 75 of 80 columns (see its own note), and
+      // this is a settings-shaped control rather than a tuning one -- the
+      // Guide's controls list carries it, and declineTapConsent() teaches
+      // it at the one moment it's relevant.
+      case 'a': case 'A':
+        e.preventDefault()
+        this.openTapConsent(s)
         break
       // 11th pass (2026-08-20): 4 new stations brought STATIONS back up to
       // 9 -- preset keys match its length again, same pattern as the 10th
@@ -1980,7 +2083,10 @@ export default {
     // onto what's supposed to read as a dark screen). Same reasoning for
     // the guide overlay (15th pass) -- it's a full-screen takeover of the
     // same grid, so per-frame redraws would punch holes in it too.
-    if (!this.poweredOn || this.guideOpen) return
+    // Consent pass (2026-08-25) -- the LINE INPUT card joins the guide on
+    // this bail for the same reason: it's a full-screen takeover of the same
+    // grid, and a per-frame redraw would punch holes straight through it.
+    if (!this.poweredOn || this.guideOpen || this.tapConsentOpen) return
 
     // 2026-08-23 (live audio tap) -- refill the signal bus once per rAF,
     // before anything below reads it. After the bail above on purpose: in

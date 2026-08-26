@@ -138,7 +138,8 @@ every visualizer effect, and assert on what's on the grid.
 | `P` | Power off / on |
 | `G` | Guide -- about/controls page, a station index, and a full detail page per station (freq/name/description/sample tracks); `<-`/`->` steps through all 11 pages, digits `1`-`9` jump straight to a station's detail page from the index, any other key closes it |
 | `C` | Cycle color (Green Phosphor, Classic Amber, Cyber Blue, Monochrome, Bubblegum Pink) |
-| `V` | Visualizer -- toggle a full-screen procedural display while a station is locked (also kicks in on its own after a few minutes idle). Inside it, `C` cycles color, `N` skips to the next track, `M` mutes, `Up`/`Down` set volume, and a track position bar runs along the bottom; `E` -- or any other key -- exits |
+| `V` | Visualizer -- open a full-screen procedural display while a station is locked (also kicks in on its own after a few minutes idle). Inside it, `C` cycles color, `Shift+C` or `V` cycles the effect itself, `L` opens the synced-lyrics view (`V` or `L` comes back out), `N` skips to the next track, `M` mutes, `Up`/`Down` set volume, and a track position bar runs along the bottom; `E` or `Escape` exits -- other keys are no-ops |
+| `A` | LINE INPUT -- the audio-capture consent card. Patch a live feed into the meters, or pull it back out. Offered once on your first `[V]`; this key re-opens it on demand |
 
 ### Touch (mobile)
 
@@ -260,15 +261,28 @@ SIGNAL controls or attempts to suppress. The in-app Guide (`[G]`) says so.
 
 **The live audio tap.** Browsers won't let a page read audio out of a
 cross-origin iframe, so the meters/visualizers get their signal by
-capturing it outside the player instead: at power-on, desktop Chrome/Edge
-ask to share this tab with audio (pick "This tab" + "Also share tab
-audio"; the boot readout then reports `AUDIO TAP: LINE`), and every other
-browser — mobile included — falls back to the microphone hearing your
-speakers (`AUDIO TAP: MIC`; that grant is remembered, so later visits
-start silently). Decline either prompt and nothing breaks: every meter and
-visualizer simply keeps the synthetic animation it always had. The capture
-is analysis-only — it feeds an AnalyserNode and nothing else, nothing is
-recorded, and nothing leaves the page.
+capturing it outside the player instead. **SIGNAL never raises a capture
+prompt on its own.** The first time you press `[V]` for the visualizer it
+shows a LINE INPUT card in its own chrome — what the browser is about to
+ask, what the signal is used for, and that saying no costs nothing — and
+only a deliberate `[Y]` there raises the dialog. `[A]` re-opens that card
+any time, to patch the tap in later or pull it back out.
+
+On desktop Chrome/Edge the card raises a tab-share picker (choose "This
+tab", tick "Also share tab audio"; the status row then reports `TAP:
+LINE`). On other desktop browsers it asks for the microphone instead,
+which hears the music through your speakers (`TAP: MIC`) — that grant is
+remembered by the browser, so later visits start it silently with no card
+and no dialog. Declining stops there: it never escalates from one prompt
+to another. Every meter and visualizer simply keeps the synthetic
+animation it always had, which is what the app looks like by default.
+
+Mobile doesn't ask at all. Its only use for the tap is the shape of the VU
+trace, which isn't worth a microphone permission; an already-granted mic
+from an older build still resumes silently.
+
+The capture is analysis-only — it feeds an AnalyserNode and nothing else,
+nothing is recorded, and nothing leaves the page.
 
 One thing does leave the page, and it's unrelated to the tap: the
 visualizer's `[L]` synced-lyrics view looks each track up on

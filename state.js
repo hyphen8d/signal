@@ -1,5 +1,6 @@
 // SIGNAL -- localStorage persistence: what survives a reload (station,
-// track, volume, mute, colour, per-station visual picks). Split out in the 2026-08-25 audit.
+// track, volume, mute, colour, per-station visual picks, the LINE INPUT
+// answer). Split out in the 2026-08-25 audit.
 //
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
@@ -27,6 +28,11 @@ export function saveSignalState(program) {
       // 65th pass -- per-station [Shift+C] visualizer picks, same
       // treatment as the phosphor/volume/mute preferences above.
       visualOverrides: program.visualOverrides || {},
+      // Consent pass (2026-08-25) -- 'yes' | 'no' | null. Persisted so the
+      // LINE INPUT card is put to a visitor once, not once per session; the
+      // capture grant itself is NOT ours to remember (the browser owns
+      // that), this only remembers whether we've asked and what they said.
+      tapConsent: program.tapConsent || undefined,
     }))
   } catch (e) {}
 }
