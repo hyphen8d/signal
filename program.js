@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { BREAK_DURATION_SLACK, BREAK_POLL_MS, DISPLAY_MODES, MAPPED_KEYS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
+const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, MAPPED_KEYS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -364,12 +364,14 @@ export default {
     // Peak-hold on top of AUDIO_BUS.pulse's own fast decay, own state.
     this._pulseDisplay = 0
 
-    // COMMERCIAL BREAK (2026-08-27). breakActive is the only piece of this
-    // anything else reads; the other two are what the detector needs to do
-    // its job -- the duration the player gave us for the track we asked for
-    // (captured at CUED, see initPlayer) and the last time we asked.
+    // STATION BREAK (2026-08-27, 22nd pass). breakActive is the only piece
+    // of this anything else reads. The other two are the hold: whether the
+    // content we asked for has actually started, and when we started
+    // waiting for it. No ad detection -- see detectBreak() for why there
+    // cannot be any.
     this.breakActive = false
-    this._trackDuration = null
+    this._contentStarted = false
+    this._loadStartedAt = 0
     this._breakCheckedAt = 0
     this._breakDebugLast = ''
 
@@ -602,6 +604,8 @@ export default {
     // minutes into the next listen.
     this.clearSleepTimer()
     this.breakActive = false
+    this._contentStarted = false
+    this._loadStartedAt = 0
     this.poweredOn = false
     this._powerAnimating = true // cleared once the STANDBY beat lands below, ~130ms
     // 43rd pass: cleared silently, not via exitVisualizer() -- the beat
@@ -1031,13 +1035,12 @@ export default {
             if (e.data === YT.PlayerState.CUED && self.pendingMidSongSeek) {
               self.pendingMidSongSeek = false
               const dur = self.player.getDuration()
-              // 2026-08-27 -- the COMMERCIAL BREAK detector's baseline, taken
-              // here because this is the one moment the player has certainly
-              // told us about the TRACK: the video is cued and nothing has
-              // started playing over it yet. Once playback begins, the same
-              // call can just as easily be describing an ad, which is the
-              // whole point of comparing against this.
-              self._trackDuration = (dur && isFinite(dur)) ? dur : null
+              // 22nd pass: the duration baseline that used to be captured
+              // here is gone with the detector that read it. A live capture
+              // showed getDuration() reports the TRACK's own length right
+              // through a preroll, so comparing against a baseline could
+              // never have found an advert -- there was nothing to differ
+              // from. The seek below is all this branch does now.
               // 36th pass: a remembered resumeAt (see tryLock()'s
               // within-cutoff path) seeks to a specific position instead of
               // a random one -- same outro-buffer clamp either way, so a
@@ -1060,6 +1063,14 @@ export default {
             }
             if (e.data === YT.PlayerState.ENDED) { self.skip(s); return }
             if (e.data === YT.PlayerState.PLAYING) {
+              // 22nd pass -- the whole basis of the STATION BREAK hold, and
+              // the one thing the player says that a live capture showed to
+              // be true: PLAYING means the content we asked for has actually
+              // started. A preroll never reaches this event; the requested
+              // video sits UNSTARTED underneath it for the advert's whole
+              // length. So this is where the set earns the right to claim
+              // the track, and detectBreak() holds the readout until it.
+              self._contentStarted = true
               self.setPlayState(s, 'playing')
               // 2026-08-22, round 4 -- loadTrack() now resolves the
               // mute-for-autoplay/unmute decision itself, synchronously, at
@@ -1099,11 +1110,12 @@ export default {
     // request, and it means a lock-in-progress-before-Guide-was-open or a
     // background/foreground resume still ends up with lyrics ready.
     ensureLyricsFetched(track)
-    // 2026-08-27 -- a new piece of video means the COMMERCIAL BREAK
-    // detector's baseline is stale until the player hands us a fresh one at
-    // CUED. Null means "no opinion", and the detector says no rather than
-    // guessing (see detectBreak).
-    this._trackDuration = null
+    // 2026-08-27, 22nd pass -- a new piece of video has been asked for and
+    // has certainly not started yet, so the hold re-arms here. Everything
+    // between now and the player's PLAYING event is time the set does not
+    // get to claim this track is playing (see detectBreak).
+    this._contentStarted = false
+    this._loadStartedAt = Date.now()
     // 2026-08-22 (bug report: "on load after power on, nothing plays...
     // even changing stations doesn't play audio. I have to mute and
     // unmute" -- classic mobile autoplay block. cueVideoById()'s later
@@ -1338,7 +1350,7 @@ export default {
     saveSignalState(this)
   },
 
-  // --- commercial break (2026-08-27) -------------------------------------
+  // --- station break (2026-08-27) ----------------------------------------
   //
   // SIGNAL plays real YouTube video, so visitors without Premium get real
   // prerolls -- and the set used to sit there with "> PLAYING" and the
@@ -1349,32 +1361,46 @@ export default {
   // SIGNAL neither controls nor suppresses those ads. It can at least stop
   // pretending they are the music.
   //
-  // The detector is deliberately biased toward saying no. Two positive
-  // signals, both of which mean "the player is not playing the thing we
-  // asked for", and no heuristic that could fire on a genuinely short
-  // track: a wrong BREAK over real music would be a new lie in place of the
-  // old one. It can fail to notice an ad; it should never invent one.
+  // 22nd pass: THERE IS NO ADVERT DETECTION HERE, and there cannot be.
   //
-  //   1. getVideoData().video_id is not the id we asked to play. Precise
-  //      where the player exposes it.
-  //   2. getDuration() has drifted from the duration the player gave us for
-  //      this track at CUED. A 15-second advert under a four-minute track
-  //      is unmistakable.
+  // The 20th pass built one on two signals -- a getVideoData() id that did
+  // not match what we asked for, and a getDuration() that had drifted from
+  // the duration captured at CUED. The 21st pass had to gate both behind
+  // the player reporting PLAYING, because mid-load YouTube answers with the
+  // OUTGOING track's id and the first signal was firing STATION BREAK over
+  // ordinary track changes. Then a capture from a browser that actually
+  // gets adverts (this one is Premium and served none in seventeen loads)
+  // settled it, and the answer killed the approach outright:
   //
-  // What neither covers is a plain [N] skip, which loads rather than cues
-  // and so never produces the CUED baseline. SIGNAL_BREAK_DEBUG settled
-  // that against a live player on 2026-08-27 and the answer was worse than
-  // the open question: signal 2 is not merely absent on the skip path
-  // (confirmed -- every post-skip line reads base=null), signal 1 actively
-  // MISFIRES there. See the 21st-pass note in detectBreak() for the reading
-  // and the state gate that fixes it.
+  //     id=XZVpR3Pk-r8  want=XZVpR3Pk-r8  same
+  //     state=UNSTARTED  dur=181.0  t=9.5   <- 181s IS the track's length
   //
-  // The same capture retired a quieter assumption. The CUED baseline is not
-  // exact: YouTube hands back a rounded integer at CUE and a precise float
-  // once playing (base=221 against dur=220.441 on the same track), so
-  // BREAK_DURATION_SLACK is absorbing a real drift and not just guarding a
-  // theoretical one. 0.56s observed against 2s of slack. Do not tighten it
-  // toward zero on the assumption the two numbers agree -- they do not.
+  // Through a real preroll the player reports the requested video's own id
+  // and the requested video's own duration. Signal 1 has nothing to differ
+  // from; signal 2 has nothing to drift from. Both were blind, and no
+  // tuning of either could have found an advert. That is almost certainly
+  // deliberate on YouTube's part -- an embedder that could see an advert
+  // could skip one -- so it should be treated as permanent, not as a gap to
+  // probe at again later.
+  //
+  // What the same capture DID show is a question the player answers
+  // honestly. A healthy track reached PLAYING about a second after its cue.
+  // The advert never reached it at all: the requested video sat UNSTARTED
+  // underneath for the advert's whole length. So the feature stops asking
+  // "is an advert running?" and asks "has the content we asked for started
+  // yet?" -- and simply declines to name a track it has no evidence is
+  // playing. The break is a HOLD, not a detection.
+  //
+  // This is honest by construction in a way the detector never was. It
+  // cannot invent an advert, because it never claims one exists; it claims
+  // only that this track has not started, which is precisely what it knows.
+  // The failure mode inverts too, and inverts the right way: a genuinely
+  // slow load shows a break over silence, where the old bug showed the
+  // track title over an audible advert. Saying nothing is playing when
+  // nothing is playing is not a lie in any direction.
+  //
+  // It catches midrolls not at all, which is a real limitation and an
+  // acceptable one -- nothing in the API exposes those either.
 
   /** The synthetic "track" a break puts in the NOW PLAYING slot. Shaped like
    *  a real one on purpose: every draw path -- desktop, mobile lite, the
@@ -1390,46 +1416,19 @@ export default {
   },
 
   detectBreak() {
-    // An escape hatch for looking at it: the break is rare, unpredictable
-    // and impossible to summon on demand, so reviewing the DESIGN of this
-    // screen would otherwise mean sitting on a station waiting for an
-    // advert to turn up. Set it in the console.
+    // An escape hatch for looking at the screen: a break cannot be summoned
+    // on demand, so reviewing its DESIGN would otherwise mean sitting on a
+    // station waiting for one. Set it in the console.
     if (globalThis.SIGNAL_FORCE_BREAK) return true
     if (!this.ready || !this.player) return false
-    // 21st pass, off a live capture rather than a test -- the reading this
-    // whole feature was waiting for, and it came back bad. During
-    // loadVideoById() (the [N] skip path) getVideoData() keeps reporting the
-    // OUTGOING track for a beat after currentTrack has already advanced to
-    // the incoming one, so signal 1 saw an id that did not match and
-    // concluded the player was running something we never asked for. It put
-    // STATION BREAK over an ordinary track change -- five times in about
-    // forty skips, caught in the tab title as "HACKBACK - STATION BREAK"
-    // with no advert within a mile of it. That is exactly the lie this
-    // feature exists to delete, reintroduced one layer up, and it is the
-    // worse direction of the two: a missed advert is a screen that stays
-    // quiet, an invented one is a screen that lies about music you can hear
-    // playing.
-    //
-    // The tell is the player state, and it separates the two cases cleanly.
-    // A load transition sits at UNSTARTED (-1) -- nothing is coming out of
-    // the speaker, so there is nothing to be honest OR dishonest about. An
-    // advert, whatever else is true of it, PLAYS: it is the sound in the
-    // room. So neither signal is allowed to answer unless the player says it
-    // is playing, which puts the bias back where the 20th pass set it -- it
-    // may fail to notice an advert, it must never invent one. The cost is a
-    // real advert going unflagged for the fraction of a second it spends
-    // BUFFERING before it starts, which is the cheap side of this trade.
-    let st = null
-    try { st = this.player.getPlayerState && this.player.getPlayerState() } catch (e) {}
-    if (st !== YT.PlayerState.PLAYING) return false
-    let id = null
-    try { id = this.player.getVideoData && this.player.getVideoData().video_id } catch (e) {}
-    const want = this.currentTrack && this.currentTrack.youtubeId
-    if (id && want && id !== want) return true
-    let dur = 0
-    try { dur = this.player.getDuration() } catch (e) {}
-    if (!dur || !isFinite(dur) || !this._trackDuration) return false
-    return Math.abs(dur - this._trackDuration) > BREAK_DURATION_SLACK
+    // The whole feature, and deliberately this small. _contentStarted is
+    // set by the player's own PLAYING event (see initPlayer) and re-armed
+    // by every loadTrack(); until it lands, the set has not earned the
+    // right to name the track. BREAK_HOLD_MS is the grace that keeps an
+    // ordinary load from flashing a break on its way to playing.
+    if (this._contentStarted) return false
+    if (!this._loadStartedAt) return false
+    return (Date.now() - this._loadStartedAt) >= BREAK_HOLD_MS
   },
 
   /** Called once per frame; polls at BREAK_POLL_MS. Runs inside the
@@ -1480,12 +1479,10 @@ export default {
    *  to. Read this off a real preroll and the detector above can stop
    *  guessing. */
   logBreakSignals(inBreak) {
-    let dur = 0, id = null, st = null
-    try { dur = this.player.getDuration() } catch (e) {}
-    try { id = this.player.getVideoData && this.player.getVideoData().video_id } catch (e) {}
+    let st = null
     try { st = this.player.getPlayerState && this.player.getPlayerState() } catch (e) {}
-    const want = this.currentTrack && this.currentTrack.youtubeId
-    const line = `dur=${dur} base=${this._trackDuration} id=${id} want=${want} state=${st} break=${inBreak}`
+    const held = this._loadStartedAt ? Date.now() - this._loadStartedAt : -1
+    const line = `state=${st} started=${this._contentStarted} heldMs=${Math.round(held)} break=${inBreak}`
     if (line === this._breakDebugLast) return
     this._breakDebugLast = line
     console.log(`[SIGNAL break] ${line}`)

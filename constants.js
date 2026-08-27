@@ -63,15 +63,27 @@ export const SLEEP_STEPS = [60, 30, 15]
 // speaker isn't at.
 export const SLEEP_FADE_MS = 30_000
 
-// COMMERCIAL BREAK (2026-08-27) -- how often the player is asked whether an
-// ad is running under us, and how far the reported duration has to drift
-// from the one we were given before that counts as a different piece of
-// video. 250ms is four times a second: fast enough that a 6-second bumper
-// is not half over before the screen admits it, cheap enough that it is
-// noise next to a frame. The slack absorbs the player rounding a duration
-// it has already told us once, not a real change.
+// STATION BREAK (2026-08-27, 22nd pass) -- how often the question is asked,
+// and how long the set waits for a track to actually start before it stops
+// claiming that track is playing.
+//
+// The detector this replaces asked "is an advert running?" and could not be
+// answered: a live capture proved the IFrame API reports the requested
+// video's own id and the requested video's own duration all the way through
+// a preroll, which is consistent with YouTube withholding ad state from
+// embedders on purpose. Both signals were blind. So the question changed to
+// one the player does answer honestly -- "has the content we asked for
+// actually started?" -- which needs no ad detection at all.
+//
+// HOLD_MS is the grace before silence becomes a STATION BREAK. In the
+// capture, a healthy load reached PLAYING one second after the cue; an
+// advert sat there for its whole length and never reached it. 4s clears a
+// normal load with room to spare while still catching a 15-second preroll
+// early enough to be worth showing. Erring long is the safe direction: the
+// cost of waiting is a beat of stale title, the cost of firing early is a
+// break over a track that was merely slow to load.
 export const BREAK_POLL_MS = 250
-export const BREAK_DURATION_SLACK = 2
+export const BREAK_HOLD_MS = 4000
 
 // 2026-08-27 (dead-feedback audit) -- the visualizer's own command set, the
 // counterpart to MAPPED_KEYS above. isMappedKey() returned true for EVERY key

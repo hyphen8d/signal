@@ -187,38 +187,37 @@ and tooling. Full write-up in the audit notes; the short version:
 
 ### Commercial break
 
-- **An ad is a `STATION BREAK` now, not a lie.** SIGNAL plays real YouTube
-  video, so listeners without Premium get real prerolls -- and the set used
-  to sit there showing `> PLAYING` and the track's own title over the top of
-  an advert. When the player is running something other than the track it was
-  asked for, NOW PLAYING becomes `STATION BREAK -- <CALLSIGN> RETURNS
-  SHORTLY`, the play state reads `COMMERCIAL`, and the position bar becomes
-  the ad's own countdown. The visualizer's footer, its lyrics view and the
+- **An ad is a `STATION BREAK` now, not a lie — and it needs no ad
+  detection.** SIGNAL plays real YouTube video, so listeners without Premium
+  get real prerolls, and the set used to sit there showing `> PLAYING` and
+  the track's own title over the top of an advert. It now holds the readout
+  instead: NOW PLAYING becomes `STATION BREAK -- <CALLSIGN> RETURNS SHORTLY`
+  and the play state reads `COMMERCIAL` until the player confirms the track
+  has actually started. The visualizer's footer, its lyrics view and the
   browser tab title all pick it up, because the break is shaped like a track
   and every draw path already knows how to render one.
-- The detector is biased toward saying **no**: two positive signals, both
-  meaning "the player is not playing what we asked for" (a `getVideoData`
-  id that doesn't match, or a duration that has drifted from the one the
-  player gave us at CUED), and no heuristic that could fire on a genuinely
-  short track. A wrong `BREAK` over real music would be a new lie in place
-  of the old one. It can fail to notice an ad; it should never invent one.
+- **Two detectors were built and thrown away first, and the record is worth
+  keeping.** The original read an advert out of a mismatched `getVideoData`
+  id or a drifted duration; that put `STATION BREAK` over five ordinary `[N]`
+  skips in forty, because mid-load YouTube reports the *outgoing* track's id.
+  Gating both signals on the player reporting PLAYING fixed the false
+  positives — and then a capture from a browser that actually gets adverts
+  showed the approach could never have worked at all: through a real preroll
+  the player reports the requested video's own id **and** its own duration
+  (`id=XZVpR3Pk-r8 want=XZVpR3Pk-r8 same, dur=181.0` on a 3:01 track). Both
+  signals were blind. That is almost certainly deliberate on YouTube's part.
+- **So the question changed.** Not "is an advert running?", which has no
+  answer, but "has the content we asked for started?", which the player
+  answers honestly — a healthy track reached PLAYING about a second after its
+  cue, while the advert never reached it at all. The break is now a *hold*,
+  and it is honest by construction: it never claims an advert exists, only
+  that this track has not started. The failure mode inverts with it — a slow
+  load shows a break over silence, where the old bug showed a track title
+  over audible advertising.
 - **Nothing is suppressed.** The ad is not blocked, skipped, muted, hidden
   or seeked past -- it plays in full exactly as YouTube served it. This
   revisits the detection half of the 20th pass's decision and leaves the
   suppression half untouched; the Guide still says so on its own page.
-- **A track change is no longer mistaken for one.** Read off a live player,
-  which is the half the tests could never cover: mid-`loadVideoById()` --
-  the `[N]` skip path -- YouTube keeps reporting the *outgoing* track's id
-  after the app has moved on to the incoming one, so the id-mismatch signal
-  fired with no advert anywhere near it and put `STATION BREAK` over five
-  ordinary skips in about forty. Neither signal may answer now unless the
-  player says it is actually PLAYING; a load transition sits at UNSTARTED,
-  and an advert, whatever else is true of it, plays. Exactly the lie the
-  feature exists to delete, caught one layer up before it shipped.
-- The same capture retired an assumption worth writing down: the CUED
-  baseline is **not** exact. YouTube hands back a rounded integer at cue and
-  a precise float once playing (`221` against `220.441` on one track), so
-  the 2-second slack is absorbing real drift, not a theoretical one.
 
 ### Sleep timer
 
