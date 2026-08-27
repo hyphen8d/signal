@@ -283,11 +283,27 @@ export const STATION_LINER_FILES = {
   // MIDNIGHT NEON in STATIONS). Its liner clip (audio/liner-momentum-01.mp3,
   // voiced as "MOMENTUM") is left on disk but dropped from this map rather
   // than remapped to 'midnight-neon' -- the clip's own spoken content would
-  // be wrong for the new callsign. maybePlayLinerDrop() already no-ops
-  // cleanly for any station with no entry here (same path secret stations
-  // take), so MIDNIGHT NEON simply has no liner drop until a real one is
-  // recorded for it. Its station ID clip is real, though -- see
-  // audio/station-id-midnight-neon.mp3 and loadStationIdBuffer().
+  // be wrong for the new callsign. Its station ID clip is real, though --
+  // see audio/station-id-midnight-neon.mp3 and loadStationIdBuffer().
+  //
+  // 2026-08-27 -- that retirement cost more than it meant to, and the entry
+  // below is the fix. Dropping the key entirely did not just remove the
+  // station-specific liner: LINER_FILES is built by iterating THIS map, so
+  // a missing key means no entry in LINER_FILES at all, and
+  // maybePlayLinerDrop()'s `if (!files ...) return` fired before it could
+  // reach the four GENERAL one-liners. The 57th pass folded those into
+  // "every station's pool" deliberately; MIDNIGHT NEON was silently the one
+  // station excluded from them, which nobody intended and nothing caught.
+  //
+  // An explicit empty array rather than a general-pool fallback in
+  // maybePlayLinerDrop: secret stations rely on the missing-key path to opt
+  // OUT of liners entirely (GREEN ROOM is meant to be silent here), so a
+  // fallback would hand them drops they should never play. Empty-and-present
+  // says "no station clip yet, general pool still applies" and leaves
+  // absent-and-missing meaning "no liners at all". tests/helpers.test.mjs
+  // now asserts every public station has a non-empty pool and that every
+  // secret one has none, so the next retirement cannot reopen this quietly.
+  'midnight-neon': [],
   'city-lights': ['audio/liner-city-lights-01.mp3'],
   hackback: ['audio/liner-hackback-01.mp3'],
 }
