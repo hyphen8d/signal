@@ -176,18 +176,27 @@ own small gesture set rather than the full control surface above:
 
 | Gesture | Action |
 |---|---|
-| tap | Power on (when off) / mute toggle (when on and locked) |
-| swipe left / right | Step to the next / previous station, in dial order |
+| tap | Power on (when off) / mute toggle (when on and locked) / close the guide |
+| hold | Power off |
+| swipe left / right | Step to the next / previous station, in dial order — pages the guide while it's open |
 | swipe up / down | Next track on the current station |
 | two-finger tap | Cycle color |
+| two-finger hold | Open the guide |
 
-Scan, presets, back, and volume still have no touch equivalent, and the
-guide (`[G]`) has no touch trigger to *open* it -- there's also currently
-no way to power back *off* on touch alone. Known gaps, not oversights.
+A first-ever visit on a phone starts **muted**, so nothing plays out loud
+before you've touched anything -- the hint row says `TAP TO UNMUTE` until
+you do. The guide speaks touch on this tier: it lists gestures rather than
+the keys a phone doesn't have, and it's where the full set lives now that
+the hint rows only have room for four of them.
+
+Scan, presets and back still have no touch equivalent. Neither does volume,
+and that one is deliberate rather than pending -- phones have hardware
+buttons for it, and a real set's knob is the thing your hand already knows.
+Known gaps, not oversights.
 
 ## Stations
 
-9 stations, 371 tracks total (30-71 per station -- counts are uneven by design, curation over symmetry -- plus two secret stations carrying 57 more between them). Full roster with taglines and track lists:
+9 stations, 377 tracks total (30-71 per station -- counts are uneven by design, curation over symmetry -- plus two secret stations carrying 57 more between them). Full roster with taglines and track lists:
 [`stations.md`](./stations.md) — generated straight from the live
 `STATIONS` array in `stations.js` (`tools/stations-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station

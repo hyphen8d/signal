@@ -176,3 +176,29 @@ test('speakerGain: mute wins, the slider scales linearly, junk clamps (issue #18
   assert.equal(speakerGain(false, undefined), 1, 'a missing volume is full, not silent')
   assert.equal(speakerGain(false, NaN), 1)
 })
+
+test('every public station has a liner pool; every secret one has none', () => {
+  // MIDNIGHT NEON had neither, and not on purpose. The 57th pass folded the
+  // general one-liners into "every station's pool"; the 60th pass retired
+  // MOMENTUM by deleting its key from STATION_LINER_FILES, and since
+  // LINER_FILES is built by iterating that map, deleting the key removed the
+  // station from the general pool too. maybePlayLinerDrop() then bailed on
+  // the missing entry, so one station played no liners at all and nothing
+  // said so.
+  //
+  // The two halves matter equally: secret stations rely on the SAME missing
+  // key to opt out (GREEN ROOM is meant to be silent here), which is why the
+  // fix is an explicit empty array rather than a general-pool fallback --
+  // and why the absence is asserted rather than just the presence.
+  const { LINER_FILES, GENERAL_LINER_FILES } = voice
+  for (const st of stations.STATIONS) {
+    const pool = LINER_FILES[st.id]
+    assert.ok(Array.isArray(pool) && pool.length > 0, `${st.callsign}: has a liner pool`)
+    for (const g of GENERAL_LINER_FILES) {
+      assert.ok(pool.includes(g), `${st.callsign}: general one-liners ride its pool (${g})`)
+    }
+  }
+  for (const st of stations.SECRET_STATIONS) {
+    assert.equal(LINER_FILES[st.id], undefined, `${st.callsign}: stays out of the liner rotation`)
+  }
+})
