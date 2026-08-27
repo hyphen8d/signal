@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SIGNAL -- voice clip audition</title>
+<!--
+  Audition bench for the voice assets: station IDs, liner drops, the general
+  one-liners and the welcome line. Hand-written tooling, committed like
+  tools/network.html (tools/audition.html is the GENERATED one, gitignored).
+
+  Written 2026-08-27, when a recorded drop arrived and the only way to hear it
+  the way SIGNAL actually plays it was to skip tracks hoping for a 1-in-4
+  liner roll, or to paste module imports into the browser console. Neither
+  scales to a batch of twenty.
+
+  Two things it does that listening to the raw mp3 cannot:
+
+    1. Plays through the REAL chain. It imports audio/voice.js and calls
+       playProcessedVoiceClip() -- the same band-limit, mid EQ, grit shaper,
+       wow/flutter and hiss bed the app uses -- at the same LINER_DROP_GAIN_MULT
+       a drop gets. An ElevenLabs render sounds materially different once it
+       has been through that, and that is the version listeners hear.
+    2. Checks the trailing silence, which is the one thing that has actually
+       bitten. The envelope starts its fade at (duration - 0.4), so a clip
+       with less than 0.4s of tail is faded down while the speaker is still
+       talking. The set on disk all sits at 0.47-0.57s; a drop arriving at
+       0.31s clipped its last word and nothing caught it until it was pasted
+       into a console by hand.
+
+  The clip list is derived from voice.js's own exports and stations.js, never
+  hand-listed here, so a clip added to a pool shows up on this page by
+  construction rather than by remembering to add it twice.
+
+  Serve the repo and open http://localhost:8000/tools/liner-audition.html
+  (it needs a real origin -- the module imports and the mp3 fetches both do).
+-->
+<style>
+  :root { color-scheme: dark; }
+  body {
+    background: #0b0d0b; color: #b8f0c0; margin: 0; padding: 24px 20px 60px;
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  h1 { font-size: 15px; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 4px; }
+  .sub { color: #5f8f68; margin: 0 0 22px; max-width: 70ch; }
+  h2 {
+    font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
+    color: #7fd08a; margin: 26px 0 6px; border-bottom: 1px solid #1e2a20; padding-bottom: 4px;
+  }
+  table { border-collapse: collapse; width: 100%; max-width: 1000px; }
+  th, td { text-align: left; padding: 5px 10px 5px 0; vertical-align: middle; white-space: nowrap; }
+  th { color: #5f8f68; font-weight: normal; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+  td.file { color: #d8ffe0; width: 100%; white-space: normal; word-break: break-all; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  button {
+    background: #14301a; color: #b8f0c0; border: 1px solid #2c5c37; border-radius: 3px;
+    padding: 3px 9px; font: inherit; cursor: pointer; margin-right: 4px;
+  }
+  button:hover { background: #1d4526; }
+  button:disabled { opacity: .4; cursor: default; }
+  .ok   { color: #7fd08a; }
+  .warn { color: #e8c07a; }
+  .bad  { color: #ff8b7a; }
+  .miss { color: #7a6a6a; font-style: italic; }
+  #err { color: #ff8b7a; white-space: pre-wrap; margin-bottom: 16px; }
+  .legend { color: #5f8f68; margin-top: 30px; max-width: 78ch; }
+  code { color: #d8ffe0; }
+</style>
+</head>
+<body>
+<h1>SIGNAL — voice clip audition</h1>
+<p class="sub">
+  Every clip, played through the real processing chain at the gain it actually
+  gets. <strong>TAIL</strong> is the trailing silence: the envelope begins
+  fading at <code>duration&nbsp;−&nbsp;0.4s</code>, so anything under
+  <code>0.40s</code> is faded while the speaker is still talking.
+</p>
+<div id="err"></div>
+<div id="out">loading…</div>
+
+<p class="legend">
+  <strong>PROC</strong> plays it as the app does — band-limited 280–3400 Hz,
+  mid-forward EQ, grit shaper, wow/flutter and a hiss bed under it.
+  <strong>RAW</strong> plays the file untouched, for A/B. Liner drops also ride
+  a <code>LINER_DROP_GAIN_MULT</code> trim so they sit under a playing track;
+  station IDs and the welcome line do not.
+</p>
+
+<script type="module">
+const errEl = document.getElementById('err')
+const outEl = document.getElementById('out')
+const fail = (m) => { errEl.textContent = String(m && m.stack || m); outEl.textContent = '' }
+
+try {
+  // Same bootstrap as main.js: the stamp decides the module URLs, and every
+  // import has to use the SAME one or we get a second instance of the audio
+  // graph (see CLAUDE.md, "Module identity matters").
+  const stamp = await fetch(`../build.json?t=${Date.now()}`).then((r) => r.json())
+  const V = stamp.build
+  globalThis.SIGNAL_BUILD = V
+  globalThis.matchMedia = globalThis.matchMedia || (() => ({ matches: false }))
+
+  const sfx = await import(`../audio/sfx.js?v=${V}`)
+  const voice = await import(`../audio/voice.js?v=${V}`)
+  const { STATIONS } = await import(`../stations.js?v=${V}`)
+
+  // Derived, never hand-listed -- a clip added to a pool appears here by
+  // construction. Paths in voice.js are repo-root relative; this page is one
+  // directory down.
+  const rel = (p) => `../${p}`
+  const groups = [
+    { head: 'Welcome line', gain: 1, files: [voice.WELCOME_LINE_FILE] },
+    { head: 'General drops — these ride every station’s pool', gain: voice.LINER_DROP_GAIN_MULT, files: voice.GENERAL_LINER_FILES },
+    {
+      head: 'Station liner drops', gain: voice.LINER_DROP_GAIN_MULT,
+      files: STATIONS.flatMap((s) => (voice.STATION_LINER_FILES[s.id] || []).map((f) => f)),
+      empties: STATIONS.filter((s) => !(voice.STATION_LINER_FILES[s.id] || []).length).map((s) => s.callsign),
+    },
+    { head: 'Station IDs', gain: 1, files: STATIONS.map((s) => `audio/station-id-${s.id}.mp3`) },
+  ]
+
+  const ctx = sfx.audioCtx()
+  const TAIL_MIN = 0.4          // the envelope's own fade start, dur - 0.4
+  const SILENCE = 10 ** (-45 / 20) // -45 dBFS, same threshold as the ffmpeg check
+
+  /** Peak level and trailing silence, measured off the decoded samples. */
+  function measure(buf) {
+    const d = buf.getChannelData(0)
+    let peak = 0
+    for (let i = 0; i < d.length; i++) { const a = Math.abs(d[i]); if (a > peak) peak = a }
+    let last = 0
+    for (let i = d.length - 1; i >= 0; i--) { if (Math.abs(d[i]) > SILENCE) { last = i; break } }
+    return { peak, tail: buf.duration - last / buf.sampleRate }
+  }
+
+  const dbfs = (v) => (v > 0 ? (20 * Math.log10(v)).toFixed(1) : '-inf')
+
+  async function row(path, gain) {
+    const tr = document.createElement('tr')
+    const cells = ['file', 'num', 'num', 'num', ''].map((c) => {
+      const td = document.createElement('td'); if (c) td.className = c; tr.appendChild(td); return td
+    })
+    cells[0].textContent = path.replace(/^audio\//, '')
+    let buf
+    try {
+      const ab = await fetch(rel(path)).then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer() })
+      buf = await ctx.decodeAudioData(ab)
+    } catch (e) {
+      cells[1].innerHTML = '<span class="miss">missing</span>'
+      return tr
+    }
+    const { peak, tail } = measure(buf)
+    cells[1].textContent = `${buf.duration.toFixed(2)}s`
+    cells[2].textContent = `${dbfs(peak)} dB`
+    const cls = tail >= TAIL_MIN ? 'ok' : tail >= TAIL_MIN - 0.1 ? 'warn' : 'bad'
+    cells[3].innerHTML = `<span class="${cls}">${tail.toFixed(2)}s</span>`
+    if (peak > 0.999) cells[2].innerHTML = `<span class="bad">${dbfs(peak)} dB clip</span>`
+
+    const proc = document.createElement('button')
+    proc.textContent = 'PROC'
+    proc.onclick = () => { ctx.resume(); voice.playProcessedVoiceClip(buf, ctx, ctx.currentTime, gain) }
+    const raw = document.createElement('button')
+    raw.textContent = 'RAW'
+    raw.onclick = () => {
+      ctx.resume()
+      const src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination); src.start()
+    }
+    cells[4].append(proc, raw)
+    return tr
+  }
+
+  outEl.textContent = ''
+  for (const g of groups) {
+    const h = document.createElement('h2'); h.textContent = g.head; outEl.appendChild(h)
+    if (g.empties && g.empties.length) {
+      const p = document.createElement('p')
+      p.className = 'sub'
+      p.innerHTML = `<span class="warn">No station clip yet:</span> ${g.empties.join(', ')} — these play the general pool only.`
+      outEl.appendChild(p)
+    }
+    const table = document.createElement('table')
+    table.innerHTML = '<tr><th>clip</th><th>dur</th><th>peak</th><th>tail</th><th>play</th></tr>'
+    outEl.appendChild(table)
+    for (const f of g.files) table.appendChild(await row(f, g.gain))
+  }
+} catch (e) { fail(e) }
+</script>
+</body>
+</html>
