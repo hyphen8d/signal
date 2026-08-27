@@ -61,6 +61,19 @@ export default {
   // care about (see key()). Any other key still closes the guide exactly
   // like before.
   guideTotalPages() { return 2 + STATION_PRESET_ORDER.length },
+  /** Step the guide one page and redraw, clamped at both ends. Extracted
+   *  2026-08-27 when touch gained guide paging (swipe L/R, ui/mobile.js):
+   *  the arrow-key version had been inline in key(), and a second inline
+   *  copy is exactly the fork CLAUDE.md's design-record note warns about.
+   *  Returns whether it actually moved, so a caller can tell a no-op at the
+   *  first or last page from a real step. */
+  stepGuidePage(s, dir) {
+    const target = this.guidePage + dir
+    if (target < 1 || target > this.guideTotalPages()) return false
+    this.guidePage = target
+    this.drawGuidePage(s)
+    return true
+  },
   drawGuidePage(s) {
     const { term } = s
     clearGrid(term)
@@ -125,6 +138,21 @@ export default {
   // press them instead of describing them. VERSION_TAG folded into the title
   // to buy back the row the panel costs -- see the 28th-pass note on why it
   // is read from there and not hardcoded.
+  // The touch vocabulary, for the narrow branch of drawGuideControls. Order
+  // is the order you meet them: the two swipes that move you around the
+  // band, then the press that does the one thing you want first (sound),
+  // then the held and two-finger variants. Kept beside the key table it
+  // stands in for so a gesture added to ui/mobile.js has an obvious place
+  // to be documented -- the touch hint rows only have space for four of
+  // these six, and this page is where the rest now live.
+  GUIDE_TOUCH_ROWS: [
+    ['SWIPE L/R', 'STATION'],
+    ['SWIPE U/D', 'NEXT TRACK'],
+    ['TAP', 'MUTE'],
+    ['HOLD', 'POWER OFF'],
+    ['2-TAP', 'COLOR'],
+    ['2-HOLD', 'GUIDE'],
+  ],
   GUIDE_CONTROL_GROUPS: [
     { head: 'TUNING', rows: [['[<-/->]', 'SEEK'], ['[ENTER]', 'LOCK'], ['[S]', 'SCAN'], ['[1-9]', 'PRESETS'], ['[B]', 'BACK']] },
     { head: 'RECEIVER', rows: [['[UP/DN]', 'VOLUME'], ['[M]', 'MUTE'], ['[N]', 'NEXT TRACK'], ['[P]', 'POWER']] },
@@ -161,16 +189,26 @@ export default {
       }
       return y0 + 1 + Math.max(...groups.map(g => g.rows.length))
     }
-    // Narrow: one group per block, keys packed two to a row.
+    // 2026-08-27 -- narrow draws GESTURES, not keys. This branch used to
+    // render the same bracketed key table as the wide one, which was
+    // harmless while nothing could open the guide by touch and became
+    // actively wrong the moment something could: a phone has no [ENTER],
+    // no [<-/->] and no [P], so the one screen that exists to explain the
+    // controls was explaining controls that device does not have. Exactly
+    // the fault ui/mobile.js's own note records fixing in the hint rows --
+    // "borrowed the DESKTOP bracket idiom, which reads as 'press this key'
+    // on a device with no keys" -- reappearing one layer up.
+    //
+    // No group heads here either. Wide has room to label TUNING / RECEIVER
+    // / DISPLAY and benefits from it at three columns across; six gesture
+    // rows in one column are already scannable, and the heads would cost
+    // three of the rows this grid does not have. Fixed column stop rather
+    // than the bracket lift, since there are no brackets left to lift.
     let y = y0
-    for (let gi = 0; gi < groups.length; gi++) {
-      term.text(2, y++, groups[gi].head, BOLD)
-      const pairs = groups[gi].rows
-      for (let i = 0; i < pairs.length; i += 2) {
-        const a = `${pairs[i][0]} ${pairs[i][1]}`.padEnd(19)
-        const b = pairs[i + 1] ? `${pairs[i + 1][0]} ${pairs[i + 1][1]}` : ''
-        this.drawKeyLineAt(s, 2, y++, (a + b).trimEnd(), DIM)
-      }
+    for (const [gesture, action] of this.GUIDE_TOUCH_ROWS) {
+      term.text(2, y, gesture, BOLD)
+      term.text(14, y, action, DIM)
+      y++
     }
     return y
   },
@@ -184,9 +222,16 @@ export default {
     put(3, wide
       ? 'A tuning-dial internet radio, rendered entirely as text.'
       : 'A tuning-dial radio, rendered as text.', NORMAL)
-    this.drawGuideKeyLine(s, 5, wide
-      ? 'START HERE   [P] power on   ->   [<-/->] find a carrier   ->   [ENTER] lock'
-      : 'START HERE  [P] on  [ENTER] lock', NORMAL)
+    // 2026-08-27: the narrow line speaks touch. It used to read
+    // "START HERE  [P] on  [ENTER] lock" -- two keys a phone does not have,
+    // for a tier that locks by swiping rather than by pressing anything.
+    if (wide) {
+      this.drawGuideKeyLine(s, 5, 'START HERE   [P] power on   ->   [<-/->] find a carrier   ->   [ENTER] lock', NORMAL)
+    } else {
+      const line = 'START HERE   TAP to power on'
+      term.text(centerX(term.cols, line), 5, line, NORMAL)
+      term.text(centerX(term.cols, line), 5, 'START HERE', BOLD)
+    }
     const afterControls = this.drawGuideControls(s, 7)
     // Consent pass (2026-08-25) -- [A] is the ONLY way audio capture is ever
     // requested; nothing prompts at power-on any more. 2026-08-26: promoted
@@ -199,9 +244,15 @@ export default {
       // the credits do not fit at all. Every string on this branch is
       // measured against 42 cols -- the wide ones truncate mid-word here,
       // which is exactly what the page this replaced did on every row.
-      this.drawGuideKeyLine(s, afterControls + 1, '[A] LINE IN -- live audio to meters', NORMAL)
-      put(afterControls + 2, 'Optional. Meters stay synthetic if not.', MUTED)
-      this.drawGuideKeyLine(s, term.rows - 1, '[->] STATIONS   [any key] CLOSE')
+      // 2026-08-27: the [A] LINE IN panel is gone from the narrow page, not
+      // reworded. Mobile never raises a capture prompt at all -- the tab
+      // tier is desktop-Chromium only and the mic tier is deliberately not
+      // offered here (tests/program.test.mjs: "consent pass: mobile never
+      // asks for the microphone") -- so this was a phone being told about
+      // a control that tier does not have and cannot get. The rows it frees
+      // are what let the six gesture rows above breathe.
+      const foot = 'SWIPE STATIONS   TAP CLOSE'
+      term.text(centerX(term.cols, foot), term.rows - 1, foot, FAINT)
       return
     }
     put(14, '-'.repeat(64), FAINT)
@@ -278,7 +329,10 @@ export default {
         term.text(11, y, ch.freq.toFixed(1), MUTED)
         term.text(17, y, truncate(ch.callsign, term.cols - 18), BRIGHT)
       })
-      this.drawGuideKeyLine(s, term.rows - 1, '[<-] ABOUT  [1-9] JUMP  [->] NEXT')
+      // Touch footer: no arrows to press and no digits to jump with, so it
+      // names the gesture that actually pages this overlay (2026-08-27).
+      const foot = 'SWIPE PAGES   TAP CLOSE'
+      term.text(centerX(term.cols, foot), term.rows - 1, foot, FAINT)
       return
     }
     term.text(C.preset, 3, 'PRESET', BOLD)
@@ -453,9 +507,12 @@ export default {
     // no nav line at all down there. Same fault the About page's narrow
     // branch already avoided and the index page just had fixed -- this was
     // the last copy of it.
-    this.drawGuideKeyLine(s, term.rows - 1, wide
-      ? '[<-] PREV        [->] NEXT        [any other key] CLOSE'
-      : '[<-] PREV   [->] NEXT')
+    if (wide) {
+      this.drawGuideKeyLine(s, term.rows - 1, '[<-] PREV        [->] NEXT        [any other key] CLOSE')
+    } else {
+      const foot = 'SWIPE PAGES   TAP CLOSE'
+      term.text(centerX(term.cols, foot), term.rows - 1, foot, FAINT)
+    }
   },
   closeGuide(s) {
     this.guideOpen = false

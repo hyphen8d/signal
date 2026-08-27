@@ -201,7 +201,17 @@ test('mobile lite: 42x22 grid, tap powers on, swipe steps the station', async ()
     assert.equal(h.program.poweredOn, true)
     assert.ok(h.row(0).includes('SIGNAL v'), 'mobile title bar')
     assert.ok(h.find('STATION') >= 0 && h.find('NOW PLAYING') >= 0, 'mobile boxes')
-    assert.ok(h.find('TAP MUTE') >= 0, 'touch legend')
+    // 2026-08-27: a first-ever mobile visit boots MUTED on purpose, so the
+    // legend's first line is the instruction, not the label. This is the
+    // whole point of making it state-aware -- "TAP MUTE" told someone
+    // looking at a silent radio nothing about how to fix it.
+    assert.equal(h.program.muted, true, 'first-ever mobile visit boots muted')
+    assert.ok(h.find('TAP TO UNMUTE') >= 0, 'legend instructs rather than labels while muted')
+    h.tap()
+    h.advance(400)
+    assert.equal(h.program.muted, false)
+    assert.ok(h.find('TAP MUTE') >= 0, 'and flips back to the label once unmuted')
+    assert.ok(h.find('2-HOLD GUIDE') >= 0, 'guide is advertised now that touch can open it')
     const before = h.program.lockedStation
     h.swipe(1)
     h.advance(400)
@@ -551,22 +561,36 @@ test('guide page 1: [A] is its own callout, not one cell of the control grid', a
   } finally { h.shutdown() }
 })
 
-test('guide page 1 fits the lite grid: nothing truncated, footer on-grid', async () => {
-  // Not reachable by touch today (no gesture opens the guide -- README "Known
-  // gaps"), but the page is shared code and the old one was broken here: wide
-  // rows truncated mid-word and the row-22 footer fell off a 22-row grid, so
-  // there was no close hint at all.
+test('guide page 1 on the lite grid teaches gestures, not keys', async () => {
+  // Reachable by touch as of 2026-08-27 (two-finger hold), which is what
+  // made this page's content wrong rather than merely unused: it rendered
+  // the same bracketed [P]/[ENTER]/[<-/->] table as desktop, so the screen
+  // whose whole job is explaining the controls was naming controls a phone
+  // does not have.
   const h = await boot({ mobile: true })
   try {
     h.powerOn()
     h.key('g')
     h.advance(300)
     assert.equal(h.term.cols, 42)
-    assert.ok(h.find('[->] STATIONS') >= 0, 'footer lands inside the grid')
-    for (const whole of ['A tuning-dial radio, rendered as text.', 'Optional. Meters stay synthetic if not.', '[A] LINE IN -- live audio to meters']) {
-      assert.ok(h.find(whole) >= 0, `not truncated: ${whole}`)
+    assert.ok(h.find('A tuning-dial radio, rendered as text.') >= 0, 'pitch not truncated')
+    assert.ok(h.find('START HERE   TAP to power on') >= 0, 'start line speaks touch')
+    // Matched at the column stop rather than with find(): a bare
+    // find('TAP') hits the START HERE line above the block first, and
+    // find('HOLD') would happily match the '2-HOLD' row. Anchoring at
+    // column 2 asserts the alignment at the same time.
+    const rows = h.rows()
+    for (const [gesture, action] of [['SWIPE L/R', 'STATION'], ['SWIPE U/D', 'NEXT TRACK'], ['TAP', 'MUTE'], ['HOLD', 'POWER OFF'], ['2-TAP', 'COLOR'], ['2-HOLD', 'GUIDE']]) {
+      const row = rows.find((r) => r.slice(2).startsWith(gesture) && r.includes(action))
+      assert.ok(row, `${gesture} -> ${action} listed at the control block's column stop`)
     }
-    for (const head of ['TUNING', 'RECEIVER', 'DISPLAY']) assert.ok(h.find(head) >= 0, `${head} group present`)
+    assert.ok(h.find('SWIPE STATIONS   TAP CLOSE') >= 0, 'footer lands inside the grid and names gestures')
+    // Every keyboard idiom should be gone from this tier.
+    for (const y of h.rows()) {
+      for (const key of ['[P]', '[ENTER]', '[<-/->]', '[A]', '[1-9]']) {
+        assert.ok(!y.includes(key), `no keyboard idiom on the lite guide: ${key}`)
+      }
+    }
   } finally { h.shutdown() }
 })
 
@@ -824,6 +848,82 @@ test('guide station header: tagline joins the callsign on the wide grid, stacks 
   } finally { lite.shutdown() }
 })
 
+/** A two-finger gesture held for `dt` ms. Not in the harness because only
+ *  these tests need it: two fingers means touchend fires TWICE (real fingers
+ *  never lift in sync), and the second one -- the event where touches.length
+ *  finally reaches 0 -- is the one that resolves the gesture. */
+function twoFinger(h, dt) {
+  const ev = (touches, changed) => ({ touches, changedTouches: changed, target: null, preventDefault() {} })
+  const a = { clientX: 100, clientY: 100 }
+  const b = { clientX: 140, clientY: 100 }
+  h.program.onTouchStart(h.screen, ev([a, b], []))
+  h.advance(dt)
+  h.program.onTouchEnd(h.screen, ev([a], [b]))
+  h.program.onTouchEnd(h.screen, ev([], [a]))
+  h.advance(200)
+}
+
+test('mobile: hold powers the set off, tap still only mutes', async () => {
+  // The gap that actually failed "would a real radio have this?" -- touch
+  // could switch the set on and never off. Hold and tap are the same
+  // gesture separated by duration, so the tap path has to stay intact.
+  const h = await boot({ mobile: true })
+  try {
+    h.powerOn()
+    assert.equal(h.program.poweredOn, true)
+    const muted = h.program.muted
+    h.touch(100, 100, 100, 100, 80)   // quick tap
+    h.advance(300)
+    assert.equal(h.program.poweredOn, true, 'a tap must not power the set down')
+    assert.equal(h.program.muted, !muted, 'a tap still toggles mute')
+    h.touch(100, 100, 100, 100, 700)  // held
+    h.advance(3000)
+    assert.equal(h.program.poweredOn, false, 'a held press powers off')
+    assert.ok(h.find('STANDBY') >= 0, 'and lands on STANDBY')
+    h.touch(100, 100, 100, 100, 700)  // held, from off
+    h.advance(4000)
+    assert.equal(h.program.poweredOn, true, 'a held press powers back on -- no way to get stuck off')
+  } finally { h.shutdown() }
+})
+
+test('mobile: two-finger hold opens the guide, two-finger tap still cycles colour', async () => {
+  const h = await boot({ mobile: true })
+  try {
+    h.powerOn()
+    const mode = h.program.displayModeIndex
+    twoFinger(h, 120)
+    assert.equal(h.program.guideOpen, false, 'a quick two-finger tap is still colour')
+    assert.notEqual(h.program.displayModeIndex, mode, 'and it cycled')
+    twoFinger(h, 700)
+    assert.equal(h.program.guideOpen, true, 'held, it opens the guide')
+    h.tap()
+    h.advance(300)
+    assert.equal(h.program.guideOpen, false, 'and a tap closes it again')
+  } finally { h.shutdown() }
+})
+
+test('mobile: swiping pages the guide, and running off the end does not dismiss it', async () => {
+  // Opening the guide was only half a feature: [<-]/[->] page it on
+  // desktop, so without this touch reached page 1 and nothing else -- the
+  // index and all nine station pages were unreachable from a phone.
+  const h = await boot({ mobile: true })
+  try {
+    h.powerOn()
+    twoFinger(h, 700)
+    assert.equal(h.program.guidePage, 1)
+    h.swipe(1); h.advance(200)
+    assert.equal(h.program.guidePage, 2, 'swipe right pages forward')
+    h.swipe(-1); h.advance(200)
+    assert.equal(h.program.guidePage, 1, 'swipe left pages back')
+    // At page 1 there is nowhere left to go. An ARROW here closes the guide
+    // (it is "any other key"); a swipe must not -- it reads as a scroll
+    // that hit the end, and dismissing for it would feel like a misfire.
+    h.swipe(-1); h.advance(200)
+    assert.equal(h.program.guideOpen, true, 'a swipe off the end leaves the guide up')
+    assert.equal(h.program.guidePage, 1)
+  } finally { h.shutdown() }
+})
+
 test('guide index and station pages keep their footers on the lite grid', async () => {
   // The index footer and the station-page footer were both hardcoded to row
   // 22 on a grid that is 22 ROWS (0-21), so both fell off entirely and the
@@ -833,11 +933,11 @@ test('guide index and station pages keep their footers on the lite grid', async 
     h.powerOn()
     assert.equal(h.term.rows, 22)
     await openIndex(h)
-    assert.ok(h.row(h.term.rows - 1).includes('[->] NEXT'), 'index footer lands inside the grid')
+    assert.ok(h.row(h.term.rows - 1).includes('TAP CLOSE'), 'index footer lands inside the grid')
     for (const cs of ['CIPHER', 'DISTORTION FIELD', 'HACKBACK']) {
       assert.ok(h.find(cs) >= 0, `${cs} not truncated on the lite index`)
     }
     h.key('ArrowRight'); h.advance(200)
-    assert.ok(h.row(h.term.rows - 1).includes('[->] NEXT'), 'station footer lands inside the grid')
+    assert.ok(h.row(h.term.rows - 1).includes('TAP CLOSE'), 'station footer lands inside the grid')
   } finally { h.shutdown() }
 })
