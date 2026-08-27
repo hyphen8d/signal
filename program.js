@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { DISPLAY_MODES, MAPPED_KEYS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
+const { BREAK_DURATION_SLACK, BREAK_POLL_MS, DISPLAY_MODES, MAPPED_KEYS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -364,6 +364,15 @@ export default {
     // Peak-hold on top of AUDIO_BUS.pulse's own fast decay, own state.
     this._pulseDisplay = 0
 
+    // COMMERCIAL BREAK (2026-08-27). breakActive is the only piece of this
+    // anything else reads; the other two are what the detector needs to do
+    // its job -- the duration the player gave us for the track we asked for
+    // (captured at CUED, see initPlayer) and the last time we asked.
+    this.breakActive = false
+    this._trackDuration = null
+    this._breakCheckedAt = 0
+    this._breakDebugLast = ''
+
     // Sleep timer (2026-08-27). Three pieces of state and no persistence:
     // an absolute deadline so a throttled tab cannot make it drift (the
     // clock ticker that drives it is a real interval, and a background tab
@@ -592,6 +601,7 @@ export default {
     // first, where leaving it armed would switch the set off again some
     // minutes into the next listen.
     this.clearSleepTimer()
+    this.breakActive = false
     this.poweredOn = false
     this._powerAnimating = true // cleared once the STANDBY beat lands below, ~130ms
     // 43rd pass: cleared silently, not via exitVisualizer() -- the beat
@@ -1021,6 +1031,13 @@ export default {
             if (e.data === YT.PlayerState.CUED && self.pendingMidSongSeek) {
               self.pendingMidSongSeek = false
               const dur = self.player.getDuration()
+              // 2026-08-27 -- the COMMERCIAL BREAK detector's baseline, taken
+              // here because this is the one moment the player has certainly
+              // told us about the TRACK: the video is cued and nothing has
+              // started playing over it yet. Once playback begins, the same
+              // call can just as easily be describing an ad, which is the
+              // whole point of comparing against this.
+              self._trackDuration = (dur && isFinite(dur)) ? dur : null
               // 36th pass: a remembered resumeAt (see tryLock()'s
               // within-cutoff path) seeks to a specific position instead of
               // a random one -- same outro-buffer clamp either way, so a
@@ -1082,6 +1099,11 @@ export default {
     // request, and it means a lock-in-progress-before-Guide-was-open or a
     // background/foreground resume still ends up with lyrics ready.
     ensureLyricsFetched(track)
+    // 2026-08-27 -- a new piece of video means the COMMERCIAL BREAK
+    // detector's baseline is stale until the player hands us a fresh one at
+    // CUED. Null means "no opinion", and the detector says no rather than
+    // guessing (see detectBreak).
+    this._trackDuration = null
     // 2026-08-22 (bug report: "on load after power on, nothing plays...
     // even changing stations doesn't play audio. I have to mute and
     // unmute" -- classic mobile autoplay block. cueVideoById()'s later
@@ -1314,6 +1336,111 @@ export default {
     if (this.mode === 'locked') this.statusPersistent = { text: this.muted ? 'MUTED' : 'LOCKED', active: true }
     this.flashStatus(s, this.muted ? 'MUTED' : 'UNMUTED')
     saveSignalState(this)
+  },
+
+  // --- commercial break (2026-08-27) -------------------------------------
+  //
+  // SIGNAL plays real YouTube video, so visitors without Premium get real
+  // prerolls -- and the set used to sit there with "> PLAYING" and the
+  // track's own title over the top of an advert for car insurance. That is
+  // the biggest untruth left on the screen, and the fiction does not merely
+  // tolerate the fix, it WANTS it: a station going to a break is the most
+  // radio thing that can happen to a broadcast. The README has always said
+  // SIGNAL neither controls nor suppresses those ads. It can at least stop
+  // pretending they are the music.
+  //
+  // The detector is deliberately biased toward saying no. Two positive
+  // signals, both of which mean "the player is not playing the thing we
+  // asked for", and no heuristic that could fire on a genuinely short
+  // track: a wrong BREAK over real music would be a new lie in place of the
+  // old one. It can fail to notice an ad; it should never invent one.
+  //
+  //   1. getVideoData().video_id is not the id we asked to play. Precise
+  //      where the player exposes it.
+  //   2. getDuration() has drifted from the duration the player gave us for
+  //      this track at CUED. A 15-second advert under a four-minute track
+  //      is unmistakable.
+  //
+  // What neither covers is a plain [N] skip, which loads rather than cues
+  // and so never produces the CUED baseline. Whether signal 1 carries that
+  // case depends on what real YouTube actually reports during an ad, which
+  // is the one thing that cannot be settled from here -- see
+  // SIGNAL_BREAK_DEBUG below, which exists to be read off a live preroll
+  // and settle it.
+
+  /** The synthetic "track" a break puts in the NOW PLAYING slot. Shaped like
+   *  a real one on purpose: every draw path -- desktop, mobile lite, the
+   *  visualizer's footer, the browser tab title -- already knows how to
+   *  render {title, artist}, so the break needs no branch in any of them. */
+  breakTrack() {
+    const cs = this.lockedStation ? this.lockedStation.callsign : 'SIGNAL'
+    return { title: 'STATION BREAK', artist: `${cs} RETURNS SHORTLY` }
+  },
+  /** What the NOW PLAYING slot should be showing right now. */
+  displayTrack() {
+    return this.breakActive ? this.breakTrack() : this.currentTrack
+  },
+
+  detectBreak() {
+    // An escape hatch for looking at it: the break is rare, unpredictable
+    // and impossible to summon on demand, so reviewing the DESIGN of this
+    // screen would otherwise mean sitting on a station waiting for an
+    // advert to turn up. Set it in the console.
+    if (globalThis.SIGNAL_FORCE_BREAK) return true
+    if (!this.ready || !this.player) return false
+    let id = null
+    try { id = this.player.getVideoData && this.player.getVideoData().video_id } catch (e) {}
+    const want = this.currentTrack && this.currentTrack.youtubeId
+    if (id && want && id !== want) return true
+    let dur = 0
+    try { dur = this.player.getDuration() } catch (e) {}
+    if (!dur || !isFinite(dur) || !this._trackDuration) return false
+    return Math.abs(dur - this._trackDuration) > BREAK_DURATION_SLACK
+  },
+
+  /** Called once per frame; polls at BREAK_POLL_MS. Runs inside the
+   *  visualizer too -- its footer carries the same readout. */
+  checkForBreak(s) {
+    if (this.mode !== 'locked' || !this.lockedStation) {
+      // Tuning away ends a break by definition -- you are not on that
+      // station any more. Cleared rather than left set, or the next lock
+      // would come up wearing a STATION BREAK readout it inherited from
+      // wherever you just were (displayTrack() reads this).
+      this.breakActive = false
+      return
+    }
+    const now = Date.now()
+    if (now - this._breakCheckedAt < BREAK_POLL_MS) return
+    this._breakCheckedAt = now
+    const inBreak = this.detectBreak()
+    if (globalThis.SIGNAL_BREAK_DEBUG) this.logBreakSignals(inBreak)
+    if (inBreak === this.breakActive) return
+    this.breakActive = inBreak
+    // showTrack() does the rest, including the tab title and the resolve
+    // animation -- the readout re-settling is exactly right for a break
+    // starting, so it gets the same treatment a track change does.
+    this.showTrack(s, this.displayTrack(), { revealMs: 150 })
+    this.drawPlayback(s)
+    if (this.visualizerActive) this.drawVisualizerInfo(s)
+  },
+
+  /** `SIGNAL_BREAK_DEBUG = true` in the console prints the raw signals
+   *  whenever any of them changes. This exists because the one question
+   *  this feature turns on -- what the IFrame API actually reports while an
+   *  advert is running -- cannot be answered from a test: there is no ad in
+   *  the harness, and the harness's fake player only reports what we told it
+   *  to. Read this off a real preroll and the detector above can stop
+   *  guessing. */
+  logBreakSignals(inBreak) {
+    let dur = 0, id = null, st = null
+    try { dur = this.player.getDuration() } catch (e) {}
+    try { id = this.player.getVideoData && this.player.getVideoData().video_id } catch (e) {}
+    try { st = this.player.getPlayerState && this.player.getPlayerState() } catch (e) {}
+    const want = this.currentTrack && this.currentTrack.youtubeId
+    const line = `dur=${dur} base=${this._trackDuration} id=${id} want=${want} state=${st} break=${inBreak}`
+    if (line === this._breakDebugLast) return
+    this._breakDebugLast = line
+    console.log(`[SIGNAL break] ${line}`)
   },
 
   // --- sleep timer (2026-08-27) ------------------------------------------
@@ -2379,6 +2506,11 @@ export default {
     // STANDBY/guide nothing consumes the bus, so nothing samples either
     // (this is also why the capture surviving power cycles costs nothing).
     sampleAudioTap()
+
+    // 2026-08-27 -- polled here rather than driven by an event because the
+    // IFrame API has no ad event to listen for. Above the visualizer branch
+    // below on purpose: the break shows in its footer too.
+    this.checkForBreak(s)
 
     // Visualizer (43rd pass) -- idle trigger. Only arms while locked and
     // actually playing; there's nothing worth idling into while seeking,

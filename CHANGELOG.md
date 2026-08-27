@@ -185,6 +185,28 @@ and tooling. Full write-up in the audit notes; the short version:
   (NY acts if anything outweigh the West Coast side, plus Outkast
   repping Atlanta).
 
+### Commercial break
+
+- **An ad is a `STATION BREAK` now, not a lie.** SIGNAL plays real YouTube
+  video, so listeners without Premium get real prerolls -- and the set used
+  to sit there showing `> PLAYING` and the track's own title over the top of
+  an advert. When the player is running something other than the track it was
+  asked for, NOW PLAYING becomes `STATION BREAK -- <CALLSIGN> RETURNS
+  SHORTLY`, the play state reads `COMMERCIAL`, and the position bar becomes
+  the ad's own countdown. The visualizer's footer, its lyrics view and the
+  browser tab title all pick it up, because the break is shaped like a track
+  and every draw path already knows how to render one.
+- The detector is biased toward saying **no**: two positive signals, both
+  meaning "the player is not playing what we asked for" (a `getVideoData`
+  id that doesn't match, or a duration that has drifted from the one the
+  player gave us at CUED), and no heuristic that could fire on a genuinely
+  short track. A wrong `BREAK` over real music would be a new lie in place
+  of the old one. It can fail to notice an ad; it should never invent one.
+- **Nothing is suppressed.** The ad is not blocked, skipped, muted, hidden
+  or seeked past -- it plays in full exactly as YouTube served it. This
+  revisits the detection half of the 20th pass's decision and leaves the
+  suppression half untouched; the Guide still says so on its own page.
+
 ### Sleep timer
 
 - **`[T]` arms a sleep timer** -- 60 / 30 / 15 minutes and off again, stepping

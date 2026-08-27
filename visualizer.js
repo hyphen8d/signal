@@ -243,7 +243,12 @@ export default {
     // row, putting the elapsed time on the same row as the bar, which
     // is where it belongs anyway: the numbers and the bar are the same
     // reading, and splitting them across two rows made you look twice.
-    const track = this.currentTrack
+    // 2026-08-27 -- displayTrack(), so a COMMERCIAL BREAK reads the same in
+    // here as it does on the main screen. The position bar below needs no
+    // such branch: it reads the player directly, and during a break what
+    // the player is playing IS the advert, so the bar honestly becomes its
+    // countdown.
+    const track = this.displayTrack()
     let timePart = ''
     let progress = null
     if (this.ready && this.player) {
@@ -372,6 +377,15 @@ export default {
     }
     const midY = Math.floor((1 + VIZ_BOT) / 2)
     const track = this.currentTrack
+    // 2026-08-27 -- a break takes this view too. Without it the crawl runs
+    // off the ADVERT's clock (drawLyricsView reads the player's current
+    // time, which during a break is the ad's), so it would sit there
+    // confidently showing the first line of a song nobody is hearing.
+    if (this.breakActive) {
+      const label = this.breakTrack().title
+      term.text(centerX(term.cols, label), midY, label, FAINT)
+      return
+    }
     const entry = track ? lyricsCache[track.youtubeId] : null
     if (!entry || entry.state === 'pending') {
       const label = 'TUNING IN LYRICS...'

@@ -220,7 +220,16 @@ export default {
     // to build around even here) or a bigger re-sourcing effort. This is the
     // cheap, honest middle ground: just tell people up front so an ad reads
     // as expected rather than as SIGNAL being broken.
-    put(21, 'Playback is real YouTube video -- ads may play without Premium.', FAINT)
+    // 2026-08-27 -- half of that decision is revisited, deliberately and
+    // narrowly. SIGNAL now DETECTS an ad, and still does nothing whatsoever
+    // to suppress one: it does not block, skip, mute, seek past or hide it,
+    // and the advert plays in full exactly as YouTube served it. The only
+    // thing that changes is what the screen SAYS while it runs -- claiming
+    // "> PLAYING" over a track title that isn't playing was the last real
+    // untruth left on this readout. Detection for the purpose of labelling
+    // is not circumvention; the suppression half of the 20th pass's call
+    // stands untouched, and this line still tells people up front.
+    put(21, 'Playback is real YouTube video -- ads show as a STATION BREAK.', FAINT)
     this.drawGuideKeyLine(s, 22, '[->] STATIONS        [any other key] CLOSE')
   },
   // Quick-scan station index (32nd pass, replaces the old combined

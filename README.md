@@ -287,6 +287,15 @@ Because of that, listeners without YouTube Premium may see a YouTube ad
 before a track starts — that's YouTube's embed behavior, not something
 SIGNAL controls or attempts to suppress. The in-app Guide (`[G]`) says so.
 
+What SIGNAL does do is **stop pretending the ad is the music**. When the
+player is running something other than the track it was asked for, NOW
+PLAYING becomes a `STATION BREAK`, the play state reads `COMMERCIAL`, and the
+position bar honestly becomes the ad's own countdown — the same readout the
+visualizer's footer and the browser tab title pick up. The ad still plays in
+full, unskipped and unmuted; nothing is blocked, hidden or seeked past. A
+station going to a break is the most radio thing that can happen to a
+broadcast, so the fiction takes it rather than tolerating it.
+
 **The live audio tap.** Browsers won't let a page read audio out of a
 cross-origin iframe, so the meters/visualizers get their signal by
 capturing it outside the player instead. **SIGNAL never raises a capture

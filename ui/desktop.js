@@ -108,7 +108,11 @@ export default {
   redrawLockState(s) {
     if (this.mode === 'locked' && this.lockedStation) {
       this.showStation(s, this.lockedStation)
-      if (this.currentTrack) this.showTrack(s, this.currentTrack)
+      // 2026-08-27 -- displayTrack(), not currentTrack: coming back from the
+      // guide or the visualizer mid-break has to restore the break readout,
+      // not the track it is covering.
+      const shown = this.displayTrack()
+      if (shown) this.showTrack(s, shown)
       // 2026-08-22, round 9 -- LOCKED is replaced with a persistent MUTED
       // state (not a flash) while muted, so it stays obvious that unmuting
       // is required to begin the experience -- a locked-but-muted set shows
@@ -986,8 +990,17 @@ export default {
       }
     }
 
-    const labels = { playing: ['> PLAYING', BRIGHT], paused: ['|| PAUSED', MUTED], buffering: ['BUFFERING...', DIM] }
-    const entry = labels[this.playState]
+    const labels = {
+      playing: ['> PLAYING', BRIGHT],
+      paused: ['|| PAUSED', MUTED],
+      buffering: ['BUFFERING...', DIM],
+      // 2026-08-27 -- derived from breakActive rather than stored in
+      // this.playState, which belongs to the YouTube player: a PLAYING
+      // event arriving mid-advert (they do) would otherwise stomp it back
+      // to "> PLAYING" and put the lie straight back on the screen.
+      break: ['COMMERCIAL', BOLD],
+    }
+    const entry = labels[this.breakActive ? 'break' : this.playState]
     const labelPart = entry ? entry[0] : ''
     const sep = barPart && labelPart ? '   ' : ''
     const full = barPart + sep + labelPart
