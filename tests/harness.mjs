@@ -210,6 +210,7 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         const ev = (opts && opts.events) || {}
         let base = 0, startedAt = 0, playing = false, ended = false
         let adDur = 0, adAt = 0
+        let staleId = null
         const pos = () => base + (playing ? (now - startedAt) / 1000 : 0)
         const fire = (state) => setTimeout(() => ev.onStateChange && ev.onStateChange({ data: state }), 0)
         const load = (videoId, cue) => {
@@ -239,13 +240,28 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         // preroll; see SIGNAL_BREAK_DEBUG.
         this.startAd = (secs = 15) => { adDur = secs; adAt = now }
         this.endAd = () => { adDur = 0 }
-        this.getVideoData = () => ({ video_id: adDur ? 'ad00000000' : this.videoId })
+        this.getVideoData = () => ({
+          video_id: staleId || (adDur ? 'ad00000000' : this.videoId),
+        })
         this.getPlayerState = () => (
-          ended ? YT.PlayerState.ENDED
-            : playing ? YT.PlayerState.PLAYING
-              : this.videoId ? YT.PlayerState.CUED
-                : YT.PlayerState.UNSTARTED
+          staleId ? YT.PlayerState.UNSTARTED
+            : ended ? YT.PlayerState.ENDED
+              : playing ? YT.PlayerState.PLAYING
+                : this.videoId ? YT.PlayerState.CUED
+                  : YT.PlayerState.UNSTARTED
         )
+        // 2026-08-27, modelled FROM a live capture rather than from the
+        // spec -- the one thing in this fake that a real player taught us.
+        // Mid-loadVideoById(), YouTube keeps answering getVideoData() with
+        // the OUTGOING video's id while the state is still UNSTARTED: the
+        // incoming one has not started, so the id it reports is the one on
+        // its way out. Left unmodelled, that gap read as "the player is
+        // running something we did not ask for" and put a STATION BREAK
+        // over an ordinary [N] skip. The advert model above says what an
+        // advert looks like; this says what an advert must not be confused
+        // WITH, and the detector has to tell them apart.
+        this.beginTransition = (outgoingId) => { staleId = outgoingId }
+        this.endTransition = () => { staleId = null }
         this.mute = () => { this.muted = true }
         this.unMute = () => { this.muted = false }
         this.setVolume = (v) => { this.volume = v; playerCalls.push(`volume:${v}`) }

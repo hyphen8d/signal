@@ -1362,11 +1362,19 @@ export default {
   //      is unmistakable.
   //
   // What neither covers is a plain [N] skip, which loads rather than cues
-  // and so never produces the CUED baseline. Whether signal 1 carries that
-  // case depends on what real YouTube actually reports during an ad, which
-  // is the one thing that cannot be settled from here -- see
-  // SIGNAL_BREAK_DEBUG below, which exists to be read off a live preroll
-  // and settle it.
+  // and so never produces the CUED baseline. SIGNAL_BREAK_DEBUG settled
+  // that against a live player on 2026-08-27 and the answer was worse than
+  // the open question: signal 2 is not merely absent on the skip path
+  // (confirmed -- every post-skip line reads base=null), signal 1 actively
+  // MISFIRES there. See the 21st-pass note in detectBreak() for the reading
+  // and the state gate that fixes it.
+  //
+  // The same capture retired a quieter assumption. The CUED baseline is not
+  // exact: YouTube hands back a rounded integer at CUE and a precise float
+  // once playing (base=221 against dur=220.441 on the same track), so
+  // BREAK_DURATION_SLACK is absorbing a real drift and not just guarding a
+  // theoretical one. 0.56s observed against 2s of slack. Do not tighten it
+  // toward zero on the assumption the two numbers agree -- they do not.
 
   /** The synthetic "track" a break puts in the NOW PLAYING slot. Shaped like
    *  a real one on purpose: every draw path -- desktop, mobile lite, the
@@ -1388,6 +1396,32 @@ export default {
     // advert to turn up. Set it in the console.
     if (globalThis.SIGNAL_FORCE_BREAK) return true
     if (!this.ready || !this.player) return false
+    // 21st pass, off a live capture rather than a test -- the reading this
+    // whole feature was waiting for, and it came back bad. During
+    // loadVideoById() (the [N] skip path) getVideoData() keeps reporting the
+    // OUTGOING track for a beat after currentTrack has already advanced to
+    // the incoming one, so signal 1 saw an id that did not match and
+    // concluded the player was running something we never asked for. It put
+    // STATION BREAK over an ordinary track change -- five times in about
+    // forty skips, caught in the tab title as "HACKBACK - STATION BREAK"
+    // with no advert within a mile of it. That is exactly the lie this
+    // feature exists to delete, reintroduced one layer up, and it is the
+    // worse direction of the two: a missed advert is a screen that stays
+    // quiet, an invented one is a screen that lies about music you can hear
+    // playing.
+    //
+    // The tell is the player state, and it separates the two cases cleanly.
+    // A load transition sits at UNSTARTED (-1) -- nothing is coming out of
+    // the speaker, so there is nothing to be honest OR dishonest about. An
+    // advert, whatever else is true of it, PLAYS: it is the sound in the
+    // room. So neither signal is allowed to answer unless the player says it
+    // is playing, which puts the bias back where the 20th pass set it -- it
+    // may fail to notice an advert, it must never invent one. The cost is a
+    // real advert going unflagged for the fraction of a second it spends
+    // BUFFERING before it starts, which is the cheap side of this trade.
+    let st = null
+    try { st = this.player.getPlayerState && this.player.getPlayerState() } catch (e) {}
+    if (st !== YT.PlayerState.PLAYING) return false
     let id = null
     try { id = this.player.getVideoData && this.player.getVideoData().video_id } catch (e) {}
     const want = this.currentTrack && this.currentTrack.youtubeId
@@ -1399,7 +1433,21 @@ export default {
   },
 
   /** Called once per frame; polls at BREAK_POLL_MS. Runs inside the
-   *  visualizer too -- its footer carries the same readout. */
+   *  visualizer too -- its footer carries the same readout.
+   *
+   *  Frame-driven and deliberately NOT on the fallback ticker, unlike the
+   *  effects queue. Verifying the 21st pass turned up a tab pinned at
+   *  literally 0fps -- one frame in 25 seconds -- while document.hidden was
+   *  false, visibilityState was 'visible' and hasFocus() was true: the same
+   *  shape as the Wayland case the ticker exists for, this time an occluded
+   *  Chrome window on macOS. Break detection stops dead under that, and
+   *  that is the right outcome rather than a bug to fix: this readout only
+   *  ever describes what is ON THE SCREEN, and a screen nothing is painting
+   *  cannot be telling anyone a lie. It re-settles within one poll of the
+   *  first real frame. What it does mean is that you cannot verify any of
+   *  this through a browser window that is not actually in front of you --
+   *  a run against a covered window measures nothing and reports it as
+   *  clean, which is the same failure mode as a rate-limited audition. */
   checkForBreak(s) {
     if (this.mode !== 'locked' || !this.lockedStation) {
       // Tuning away ends a break by definition -- you are not on that

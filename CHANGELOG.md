@@ -206,6 +206,19 @@ and tooling. Full write-up in the audit notes; the short version:
   or seeked past -- it plays in full exactly as YouTube served it. This
   revisits the detection half of the 20th pass's decision and leaves the
   suppression half untouched; the Guide still says so on its own page.
+- **A track change is no longer mistaken for one.** Read off a live player,
+  which is the half the tests could never cover: mid-`loadVideoById()` --
+  the `[N]` skip path -- YouTube keeps reporting the *outgoing* track's id
+  after the app has moved on to the incoming one, so the id-mismatch signal
+  fired with no advert anywhere near it and put `STATION BREAK` over five
+  ordinary skips in about forty. Neither signal may answer now unless the
+  player says it is actually PLAYING; a load transition sits at UNSTARTED,
+  and an advert, whatever else is true of it, plays. Exactly the lie the
+  feature exists to delete, caught one layer up before it shipped.
+- The same capture retired an assumption worth writing down: the CUED
+  baseline is **not** exact. YouTube hands back a rounded integer at cue and
+  a precise float once playing (`221` against `220.441` on one track), so
+  the 2-second slack is absorbing real drift, not a theoretical one.
 
 ### Sleep timer
 

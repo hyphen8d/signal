@@ -1229,6 +1229,40 @@ test('the detector says no rather than guessing when it has nothing to go on', a
   } finally { h.shutdown() }
 })
 
+test('a track change is not an advert, however stale the id it reports', async () => {
+  // The regression that a live capture found and no test could have: real
+  // YouTube answers getVideoData() with the OUTGOING track's id for a beat
+  // after loadVideoById(), while currentTrack has already moved on. That is
+  // an id mismatch -- signal 1 -- arriving with no advert anywhere near it,
+  // and it put STATION BREAK over five ordinary [N] skips in about forty.
+  //
+  // The gate is the player state: a transition sits at UNSTARTED, an advert
+  // plays. Asserted on a REAL roster id rather than a sentinel, because the
+  // false positives all named actual tracks -- one HACKBACK song claiming
+  // to be a commercial for the next one.
+  const h = await lockedPlaying()
+  try {
+    const outgoing = h.program.currentTrack.youtubeId
+    h.key('n')
+    h.advance(400)
+    const incoming = h.program.currentTrack.youtubeId
+    assert.notEqual(incoming, outgoing, 'test setup: [N] actually moved the track on')
+    h.player.beginTransition(outgoing)
+    h.advance(1200)
+    assert.equal(
+      h.program.breakActive, false,
+      'a stale id from the outgoing track is a load in flight, not a commercial',
+    )
+    assert.ok(h.find('STATION BREAK') < 0, 'and nothing said so on the screen')
+    // The gate must not cost a real advert: once the player is PLAYING and
+    // the id is genuinely foreign, the break still lands.
+    h.player.endTransition()
+    h.player.startAd(30)
+    h.advance(600)
+    assert.equal(h.program.breakActive, true, 'a playing advert still reads as one')
+  } finally { h.shutdown() }
+})
+
 test('SIGNAL_FORCE_BREAK shows the break on demand, for looking at it', async () => {
   const h = await lockedPlaying()
   try {
