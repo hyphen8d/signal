@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 371 tracks total.
+Generated from stations.js. 9 stations, 377 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -412,7 +412,7 @@ Tracks (43):
 
 Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
 
-Tracks (39):
+Tracks (45):
 
 1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
 2. **Omen** -- The Prodigy  ([youtu.be/xMVTKOoy1uk](https://youtu.be/xMVTKOoy1uk))
@@ -425,7 +425,7 @@ Tracks (39):
 9. **Rez** -- Underworld  ([youtu.be/F6Y7lcvubhU](https://youtu.be/F6Y7lcvubhU))
 10. **Clubbed to Death (Kurayamino Mix)** -- Rob Dougan  ([youtu.be/DzNex7Mf1bg](https://youtu.be/DzNex7Mf1bg))
 11. **Prime Audio Soup** -- Meat Beat Manifesto  ([youtu.be/7xI8mCKLiRM](https://youtu.be/7xI8mCKLiRM))
-12. **Spybreak!** -- Propellerheads  ([youtu.be/iCBL33NKvPA](https://youtu.be/iCBL33NKvPA))
+12. **Spybreak! (Short One)** -- Propellerheads  ([youtu.be/Agbn4NzOj04](https://youtu.be/Agbn4NzOj04))
 13. **Busy Child** -- The Crystal Method  ([youtu.be/OjTC88oIRys](https://youtu.be/OjTC88oIRys))
 14. **B-Boy Stance** -- Freestylers  ([youtu.be/XAlLaGhfLq4](https://youtu.be/XAlLaGhfLq4))
 15. **Right Here, Right Now** -- Fatboy Slim  ([youtu.be/ub747pprmJ8](https://youtu.be/ub747pprmJ8))
@@ -453,3 +453,9 @@ Tracks (39):
 37. **Voodoo People** -- The Prodigy  ([youtu.be/YV78vobCyIo](https://youtu.be/YV78vobCyIo))
 38. **Absurd** -- Fluke  ([youtu.be/DAQISes7iXU](https://youtu.be/DAQISes7iXU))
 39. **Ruffneck** -- Freestylers  ([youtu.be/kQ_sSs8pr1g](https://youtu.be/kQ_sSs8pr1g))
+40. **Ultrasonic Sound** -- Hive  ([youtu.be/lGqzRmDcC14](https://youtu.be/lGqzRmDcC14))
+41. **Godzilla Dub** -- ZeroFG  ([youtu.be/mloHngTITZ8](https://youtu.be/mloHngTITZ8))
+42. **Born In '94** -- Unglued  ([youtu.be/VHqc2Yqwwu4](https://youtu.be/VHqc2Yqwwu4))
+43. **Take California** -- Propellerheads  ([youtu.be/81bG15gsl70](https://youtu.be/81bG15gsl70))
+44. **Y'all Ready For Dis** -- Y U QT  ([youtu.be/OTvB4XMsg1U](https://youtu.be/OTvB4XMsg1U))
+45. **Firestarter (Empirion Mix)** -- The Prodigy  ([youtu.be/Hy4T6zvQ6jk](https://youtu.be/Hy4T6zvQ6jk))
