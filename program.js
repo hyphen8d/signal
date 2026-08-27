@@ -2159,9 +2159,17 @@ export default {
     // act underneath the overlay.
     if (this.guideOpen) {
       e.preventDefault()
-      const totalPages = this.guideTotalPages()
-      if (e.key === 'ArrowRight' && this.guidePage < totalPages) { this.guidePage++; this.drawGuidePage(s); return }
-      if (e.key === 'ArrowLeft' && this.guidePage > 1) { this.guidePage--; this.drawGuidePage(s); return }
+      // 2026-08-27: the step itself moved to stepGuidePage (ui/guide.js) so
+      // the touch swipe path shares it rather than keeping a second copy of
+      // the clamp. Behaviour preserved exactly: an arrow that CANNOT move
+      // (right on the last page, left on page 1) used to fail both guards
+      // and fall through to closeGuide() at the bottom of this block, so it
+      // still does. That is consistent with the guide's "any other key
+      // closes" model -- an arrow with nowhere to go is just another key.
+      // Touch does NOT inherit it (see ui/mobile.js): a swipe that runs off
+      // the end of a page stack should not dismiss the overlay.
+      if (e.key === 'ArrowRight') { if (!this.stepGuidePage(s, 1)) this.closeGuide(s); return }
+      if (e.key === 'ArrowLeft') { if (!this.stepGuidePage(s, -1)) this.closeGuide(s); return }
       if (this.guidePage === 2 && /^[1-9]$/.test(e.key)) { this.guidePage = 2 + Number(e.key); this.drawGuidePage(s); return }
       this.closeGuide(s)
       return
