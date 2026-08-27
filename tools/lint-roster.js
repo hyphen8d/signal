@@ -8,10 +8,16 @@
 //
 // Rules (each cites where it comes from):
 //   - exactly 9 public stations (README "Station count": the 1-9 preset keys)
-//   - tagline fits the guide's index line (README "Taglines"). That line is
-//     `[NN] G  FFF.F   CALLSIGN -- tagline`, truncated at term.cols - 8 = 72,
-//     so the real limit is 52 minus the callsign length (35 was the old flat
-//     rule -- the safe number for the longest callsign; relaxed 2026-08-25)
+//   - tagline fits the guide index's LANE column (README "Taglines").
+//     History: a flat 35 (safe for the longest callsign), then 2026-08-25's
+//     `52 - callsign.length`, which was right while the index drew one joined
+//     line -- a long callsign ate the tagline's budget because they shared a
+//     row. 2026-08-27 the index moved to fixed column stops, so they no
+//     longer share anything: the LANE column starts at x=37 on the 80-col
+//     grid and runs to the edge, giving every station the same flat 43
+//     regardless of callsign. Short-callsign stations lose a little headroom
+//     (CIPHER could have had 46), long-callsign ones gain a lot
+//     (DISTORTION FIELD had 36). See GUIDE_INDEX_COLS in ui/guide.js.
 //   - at least 10 tracks per station (README "Adding tracks")
 //   - 4 ident tones per station (10th pass: "station IDs set to 4 tones long")
 //   - every dial glyph actually exists in fonts/ter-u16n.bdf (an unmapped
@@ -32,6 +38,13 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 globalThis.SIGNAL_BUILD ??= 'lint'
 globalThis.matchMedia ??= () => ({ matches: false })
 
+// The guide index's LANE column: 80 - GUIDE_INDEX_COLS.tagline (37). Kept as
+// a literal rather than imported from ui/guide.js on purpose -- that module
+// pulls in the WebAudio sfx chain at load, which Node has no business
+// touching for a roster lint. tests/helpers.test.mjs asserts the two agree,
+// so the duplication cannot drift silently.
+export const TAGLINE_MAX = 43
+
 export async function lintRoster() {
   const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=lint')
   const { FREQ_MIN, FREQ_MAX, LOCK_THRESHOLD } = await import('../tuning.js?v=lint')
@@ -48,8 +61,8 @@ export async function lintRoster() {
   for (const st of all) {
     const who = `${st.callsign} (${st.id})`
     if (!st.tagline) problems.push(`${who}: no tagline`)
-    else if (!st.secret && st.tagline.length > 52 - st.callsign.length) {
-      problems.push(`${who}: tagline is ${st.tagline.length} chars; the guide index line only fits ${52 - st.callsign.length} next to this callsign`)
+    else if (!st.secret && st.tagline.length > TAGLINE_MAX) {
+      problems.push(`${who}: tagline is ${st.tagline.length} chars; the guide index's LANE column fits ${TAGLINE_MAX}`)
     }
     if (!st.tracks || st.tracks.length < 10) problems.push(`${who}: only ${st.tracks?.length ?? 0} tracks (min 10)`)
     if (!Array.isArray(st.ident) || st.ident.length !== 4) problems.push(`${who}: ident has ${st.ident?.length ?? 0} tones (want 4)`)
