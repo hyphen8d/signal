@@ -12,6 +12,23 @@ const { MBOX_X0, MBOX_X1, MSTATUS_Y, MWIDGET_DIVIDER_X, centerX, centerXRange, d
 const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${V}`)
 const { nearestStation } = await import(`../tuning.js?v=${V}`)
 
+// 2026-08-27 -- the one threshold that splits a tap from a hold, shared by
+// both gestures that gained a held meaning in the mobile pass: one finger
+// held powers the set off, two fingers held open the guide. One constant so
+// the two can never drift into feeling different, and 500ms because that is
+// the value the two-finger colour gesture had already been using as its own
+// upper bound since the 45th pass -- this names it rather than adding a
+// second, subtly different idea of "held".
+//
+// Confirmed on a real phone the same day, not just in the harness: 500ms
+// reads as a deliberate hold rather than as a laggy tap, in both directions
+// (power off, and the two-finger guide). Worth recording because it is the
+// one thing about this pass a test cannot tell you -- the suite can only
+// assert that >= 500ms powers down and < 500ms mutes, which stays true at
+// 200ms or 2000ms while feeling wrong at both. Treat a change here as a
+// feel change needing a device, not a number to tune from a hunch.
+const TOUCH_HOLD_MS = 500
+
 export default {
 
   // 45th pass -- mobile's whole frame: wordmark, status line, STATION and
@@ -93,7 +110,41 @@ export default {
     // already speaking touch ("TAP", "2-TAP") and line 2 was not. Says SWIPE
     // now, which is the actual gesture and costs one column over the
     // brackets it replaces.
-    const line1 = 'TAP MUTE   2-TAP COLOR'
+    this.mobileDrawHints(s)
+  },
+  // 2026-08-27 (the mobile pass) -- split out of mobileDrawFrame because
+  // line 1 now depends on live state (this.muted), and the frame is only
+  // redrawn wholesale. Called per-frame from drawAntenna's mobile branch
+  // instead, alongside mobileDrawMuteSwitch -- the natural sibling, since
+  // it reflects the same flag. Cheap despite running every frame: cellgrid
+  // tracks dirty rows and put() is a no-op for an unchanged cell, so a hint
+  // row that has not changed costs nothing downstream.
+  //
+  // Line 1 is the state-aware one, and it exists because of a first-run
+  // problem. A genuinely first-ever mobile visit boots MUTED on purpose
+  // (see init -- nothing should play out loud before anyone has touched
+  // anything), and that default's own note allows it "as long as it's
+  // obvious to the user." It was signalled three ways -- [ MUTED ] in the
+  // status row, MUTE [ON ] in the widget row, and this hint -- but not one
+  // of them was an INSTRUCTION. "TAP MUTE" labels what tap does; it does
+  // not tell someone staring at a silent radio what to do about it. One
+  // beat earlier the STANDBY screen says "TAP TO POWER ON" and is
+  // perfectly clear; this is the same moment and it taught nothing, so the
+  // likeliest first read was that the thing is broken.
+  //
+  // 2-TAP COLOR left these rows to make room, and did not simply vanish:
+  // the guide is reachable by touch now (2-finger hold), and its control
+  // list speaks touch, so the least essential gesture is one gesture away
+  // instead of occupying a third of the legend. Two rows, not three --
+  // mobileLayout's worst case (2-line tagline, 2-line title) puts
+  // widgetRow2 at 18, so a third hint row at 19 would sit flush against it.
+  mobileDrawHints(s) {
+    const { term } = s
+    const L = this._mLayout
+    if (!L) return
+    const line1 = this.muted
+      ? 'TAP TO UNMUTE   HOLD POWER   2-HOLD GUIDE'
+      : 'TAP MUTE   HOLD POWER   2-HOLD GUIDE'
     const line2 = 'SWIPE L/R STATION   SWIPE U/D TRACK'
     for (let x = 0; x < term.cols; x++) { term.put(x, L.hint1, ' ', NORMAL, 1); term.put(x, L.hint2, ' ', NORMAL, 1) }
     term.text(centerX(term.cols, line1), L.hint1, line1, BOLD, 1)
@@ -440,8 +491,26 @@ export default {
       // once every finger is confirmed up.
       if (e.touches.length > 0) return
       this._twoFingerActive = false
-      if (Date.now() - this._twoFingerStartTime < 500 && this.poweredOn && !this.guideOpen) {
+      const twoHeld = Date.now() - this._twoFingerStartTime
+      if (twoHeld < TOUCH_HOLD_MS && this.poweredOn && !this.guideOpen) {
         this.cycleDisplayMode(s)
+      } else if (twoHeld >= TOUCH_HOLD_MS && !this.guideOpen) {
+        // 2026-08-27 -- the guide gets a touch trigger at last. It is the
+        // one control the README listed under "Known gaps" that costs
+        // something real: the guide is where every OTHER gesture is
+        // explained, and mobile is exactly the tier that cannot discover
+        // them. It had also quietly become dead weight -- ui/guide.js
+        // carries narrow branches for all three page types, and two live
+        // bugs were fixed in them on 2026-08-27 in rendering no phone could
+        // reach. Either it is reachable or we stop paying for it.
+        //
+        // Two-finger HOLD rather than a new gesture: the < 500ms half of
+        // this same branch has always been colour, and the >= 500ms half
+        // did nothing at all, so this splits an existing gesture instead of
+        // inventing one. Passing !poweredOn as fromStandby matches the
+        // desktop [G]-from-STANDBY path -- closeGuide then lands back on
+        // STANDBY instead of building powered-on chrome over a dark set.
+        this.openGuide(s, !this.poweredOn)
       }
       return
     }
@@ -454,9 +523,23 @@ export default {
     const dt = Date.now() - this._touchStartTime
     const TAP_SLOP = 12
     const SWIPE_MIN = 40
-    if (Math.abs(dx) < TAP_SLOP && Math.abs(dy) < TAP_SLOP && dt < 500) {
-      if (!this.poweredOn) { this.powerUp(s); return }
+    if (Math.abs(dx) < TAP_SLOP && Math.abs(dy) < TAP_SLOP) {
+      // 2026-08-27 -- a press that stays put is now read by DURATION as
+      // well. The guide closes on any press, held or not (forgiving: it is
+      // an overlay, and there is nothing else to mean down there), and so
+      // does power-on, since with the set dark there is no competing action
+      // to confuse a slow press with.
       if (this.guideOpen) { this.closeGuide(s); return }
+      if (!this.poweredOn) { this.powerUp(s); return }
+      // Hold to power OFF. This was the gap that actually failed the
+      // governing test -- "would a real radio have this?" -- because a set
+      // you can switch on and never off is not a radio, and touch had no
+      // way down at all. Hold rather than a new gesture for the same reason
+      // the guide uses two-finger hold: >= 500ms on a still finger already
+      // fell through this branch doing nothing, so the duration split costs
+      // no gesture vocabulary. Deliberately the DESTRUCTIVE action on the
+      // deliberate gesture and mute on the quick one, not the reverse.
+      if (dt >= TOUCH_HOLD_MS) { this.powerDown(s); return }
       // 29th pass: tap used to toggle play/pause, but SIGNAL dropped
       // play/pause entirely (a live broadcast can't be paused, only
       // muted/turned off -- see key() comment on the SPACE removal). Tap
@@ -470,7 +553,24 @@ export default {
       this.toggleMute(s)
       return
     }
-    if (!this.poweredOn || this.guideOpen) return
+    // 2026-08-27 -- guide paging by swipe. Opening the guide on a phone was
+    // only half a feature without this: [<-]/[->] page it on desktop, and
+    // with this guard bare (it used to just `return` on guideOpen) touch
+    // could reach page 1 and nothing else. The station index and all nine
+    // station pages -- the entire reason the guide has more than one page --
+    // were unreachable from a phone even once it could be opened.
+    //
+    // Left/right to match the desktop arrows, and it shares stepGuidePage()
+    // with them rather than re-deriving the clamp. Unlike the arrows, a
+    // swipe with nowhere to go does NOT close the guide: a key that cannot
+    // act is "any other key" and closing is reasonable, but a swipe running
+    // off the end of a page stack reads as a scroll that hit the end, and
+    // dismissing the overlay for it would feel like a misfire.
+    if (this.guideOpen) {
+      if (Math.abs(dx) > SWIPE_MIN && Math.abs(dx) > Math.abs(dy)) this.stepGuidePage(s, dx > 0 ? 1 : -1)
+      return
+    }
+    if (!this.poweredOn) return
     if (Math.abs(dx) > SWIPE_MIN && Math.abs(dx) > Math.abs(dy)) {
       // 45th pass -- flipped after live mobile QA found the station swipe
       // still read as mirrored. Now matches the dial itself, which reads
