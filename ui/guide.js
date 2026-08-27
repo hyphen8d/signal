@@ -285,7 +285,11 @@ export default {
     // that track started, which needs no knowledge of adverts at all. So
     // the suppression half of the 20th pass's call stands untouched, and
     // the detection half turned out not to be on offer either way.
-    put(21, 'Playback is real YouTube video -- ads show as a STATION BREAK.', FAINT)
+    // Precise about WHICH ads on purpose: the hold only covers one that
+    // delays a track starting. A midroll arrives with the track already
+    // playing and is invisible to this -- claiming otherwise here would
+    // be the same species of overstatement the break exists to remove.
+    put(21, 'Playback is real YouTube video -- an ad before a track reads as a BREAK.', FAINT)
     this.drawGuideKeyLine(s, 22, '[->] STATIONS        [any other key] CLOSE')
   },
   // Quick-scan station index (32nd pass, replaces the old combined

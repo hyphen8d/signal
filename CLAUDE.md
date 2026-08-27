@@ -172,6 +172,31 @@ answers the LRCLIB lookup — `true` for a canned synced lyric, `'none'` for a
 them and the next should not. That chain is a real promise chain and
 `advance()` is synchronous, so `await h.flush()` after the load that fires it.
 
+**A fake proves you read your own assumption correctly — nothing more.**
+This is the expensive lesson of the STATION BREAK, which took three passes
+and shipped twice before it was learned. The harness modelled a YouTube
+preroll the way the IFrame API was *assumed* to report one — `getVideoData()`
+naming the ad, `getDuration()` giving the ad's length — and a detector built
+on exactly those assumptions passed its tests every time. A capture from a
+real preroll then showed the player reports the *requested* video's own id
+and own duration throughout, so there was never anything to detect and the
+suite could not have told you: it was asking the fake to confirm the belief
+that built it. When a fake stands in for something outside this codebase,
+green means self-consistent, not correct. Anything load-bearing about the
+external thing's real behaviour has to come off the real thing once, and
+then the fake gets rewritten from that capture rather than from the spec —
+`tests/harness.mjs`'s advert model carries the reading it was rebuilt from,
+so a future detector on ids or durations fails there as it would live.
+
+**Mutate the code to check a test can fail.** The same pass shipped an
+anti-flash test that was decorative: forcing `BREAK_HOLD_MS` to 0 — a break
+firing on every ordinary track change, the exact bug it existed to catch —
+left it green, because the fake started playback at 0ms and gave it no
+window to catch anything in. Breaking the feature on purpose is what found
+that, and the fix was in the harness (content now takes a realistic 700ms to
+start), not the test. Worth doing for anything timing-shaped: neuter the
+behaviour, confirm the suite goes red, and check the *right* tests went red.
+
 `tools/dead-feedback.mjs` drives the same harness as a **sweep** rather than
 as assertions: every key in every view, each pressed run diffed against a
 do-nothing control run from the same PRNG seed, so a key that changes nothing
@@ -267,3 +292,16 @@ exception and the `F13` canary that catches a desynchronised run.
   runs on `syntheticAudio()` and reads smoother than the real thing.
 - Verify feel changes in a browser against the dev server as well as in the
   suite — timing, sound and texture are most of what matters here.
+- **Check the frame rate before believing a live browser check.** A Chrome
+  window that is merely covered by another one sits at literally 0fps — one
+  frame in 25 seconds — while `document.hidden` is false, `visibilityState`
+  is `'visible'` and `hasFocus()` returns true. Everything SIGNAL does per
+  frame stops there, so a verification run against a window that is not
+  actually in front of you measures nothing and reports it as clean. That is
+  the same shape of silent pass as a rate-limited `audition.js` run, and it
+  cost two rounds of "the fix works" on 2026-08-27 before it was noticed.
+  Count frames over a second or two first; then prove the probe can see what
+  you are hunting by forcing that state (`SIGNAL_FORCE_BREAK` and friends)
+  before trusting a negative result. This is separate from the runtime
+  fallback ticker above, which keeps the effects queue moving under the same
+  starvation — that protects the app, this protects your conclusions.
