@@ -7,7 +7,7 @@ body:
       value: |
         Suggestions are genuinely wanted -- the roster is hand-curated, and
         the best additions have come from people who know a lane better than
-        I do. Three things that will get a proposal accepted faster:
+        I do. Four things that will get a proposal accepted faster:
 
         - **Every station has a lane, and the lane is narrower than the
           genre.** COLD WAVE is not "synth music", it's synthetic hearts and
@@ -24,6 +24,11 @@ body:
           the roster is verified before it lands (alive, US-available,
           embeddable, the right recording and not a live take or an edit).
           A link saves me guessing which upload you meant.
+        - **A swap is a fair thing to propose.** If something already on the
+          station strikes you as out of lane, name it under "Anything you'd
+          swap out for it". That's the way to argue for pulling a track --
+          a slot is a slot, and "cut this one" with nothing behind it just
+          leaves the station shorter.
 
         The full roster, with every station's taglines and track list, is in
         [stations.md](https://github.com/hyphen8d/signal/blob/main/stations.md).
@@ -75,6 +80,24 @@ body:
         there -- the sound, the era, the mood it puts you in at 2am?
     validations:
       required: true
+
+  - type: textarea
+    id: swap
+    attributes:
+      label: Anything you'd swap out for it
+      description: >
+        Optional, and only if something on that station feels wrong to you.
+        Name the track and say what's off about the fit -- the era, the
+        tempo, the hour of the night it belongs to. The lane test cuts both
+        directions: a track that would sit equally well on three stations
+        isn't really at home on any of them.
+      placeholder: |
+        Swap for: Some Track -- Some Artist
+        Right era, but it's a daylight song and the rest of the station
+        is 2am.
+      render: text
+    validations:
+      required: false
 
   - type: checkboxes
     id: checks

@@ -45,7 +45,9 @@ you to know anything about the code:
 - **[Suggest a track or a station](https://github.com/hyphen8d/signal/issues/new?template=track_suggestion.yml)**
   — the roster is hand-curated, and the best additions have come from people
   who know a lane better than I do. Every station's list is in
-  [`stations.md`](./stations.md).
+  [`stations.md`](./stations.md). The same form takes a swap: if something
+  already on a station strikes you as out of lane, name it there, along with
+  what you'd put in its place.
 - **[Report a bug](https://github.com/hyphen8d/signal/issues/new?template=bug_report.yml)**
   — a track that won't play, a station that sounds wrong, anything that
   stutters or draws strangely. Which station and which track it happened on
