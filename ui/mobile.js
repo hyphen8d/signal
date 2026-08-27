@@ -305,19 +305,27 @@ export default {
     if (!this.ready || !this.player) return
     let cur, dur
     try { cur = this.player.getCurrentTime(); dur = this.player.getDuration() } catch (e) {}
-    if (!(dur && isFinite(dur) && dur > 0)) return
+    // 22nd pass -- the lite bar had the same lie in it as desktop's, and one
+    // more besides: the icon below is keyed on this.playState, which knows
+    // nothing about a break, so a hold showed a running bar under a ">"
+    // while the NOW PLAYING box above it read STATION BREAK. Same answer as
+    // desktop: plot nothing, keep the width, and let the title carry the
+    // meaning -- there is no one-character glyph that reads as "commercial"
+    // and inventing one for a 42-column grid would say less than the blank.
+    const inBreak = !!this.breakActive
+    if (!inBreak && !(dur && isFinite(dur) && dur > 0)) return
     const fmt = fmtTime
     // 16 segments, not desktop's 28 -- with the icon, brackets and a
     // worst-case "12:34/45:67"-shaped time pair, this still needs to fit
     // inside ~38 usable columns.
     const segs = 16
-    const filled = Math.round(Math.min(1, cur / dur) * segs)
+    const filled = inBreak ? 0 : Math.round(Math.min(1, cur / dur) * segs)
     let bar = ''
     for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '·'
     const icons = { playing: '>', paused: '=', buffering: '.' }
     const attrs = { playing: BRIGHT, paused: MUTED, buffering: DIM }
-    const icon = icons[this.playState] || ' '
-    const attr = attrs[this.playState] || FAINT
+    const icon = inBreak ? ' ' : (icons[this.playState] || ' ')
+    const attr = inBreak ? FAINT : (attrs[this.playState] || FAINT)
     // 2026-08-22 -- the progress bar was too bright; matched the weight
     // between desktop and mobile -- this used to paint icon+bar+time as one BRIGHT/MUTED/DIM
     // string, so the bar itself flared BRIGHT whenever playing. Desktop's
@@ -325,7 +333,7 @@ export default {
     // and only the state label (labelPart) carries BRIGHT/MUTED/DIM. Same
     // split here -- the icon is the "label", bar+time stays FAINT.
     const iconPart = icon
-    const barPart = ` [${bar}] ${fmt(cur)}/${fmt(dur)}`
+    const barPart = inBreak ? ` [${bar}] -:--/-:--` : ` [${bar}] ${fmt(cur)}/${fmt(dur)}`
     const full = iconPart + barPart
     const startX = centerX(term.cols, full)
     term.text(startX, y, iconPart, attr)
