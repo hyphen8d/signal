@@ -345,8 +345,51 @@ export default {
     // legend you scan down a column of; here it would just print the same
     // mark three times on one line.
     const mark = ch.glyph || '●'
-    term.text(4, 3, `[${presetNum}] ${ch.freq.toFixed(1)}   ${mark} ${ch.callsign} ${mark}`, BRIGHT)
-    term.text(4, 4, truncate(ch.tagline, contentWidth), MUTED)
+    // 2026-08-27, second pass -- the header was three stacked left-aligned
+    // lines (callsign / tagline / freqNote) and the lower two bled into each
+    // other. Lifting freqNote FAINT -> MUTED earlier in this same pass is
+    // what did it: the tagline was already MUTED, so two lines of similar
+    // prose sat at identical weight, one under the other, with nothing to
+    // say which was the station's own description and which was the aside.
+    //
+    // Fixed by removing the stack rather than re-splitting the weights --
+    // the tagline joins the callsign on one line, which is what it is: the
+    // station's subtitle, not a paragraph. That leaves freqNote as the only
+    // line beneath, so it has nothing left to be confused with and can keep
+    // the readable MUTED.
+    //
+    // Joined rather than column-aligned, deliberately, and the opposite call
+    // to the index page in this same commit: alignment matters there because
+    // you scan DOWN nine rows and the eye needs a fixed stop. Here there is
+    // exactly one station on the page, so a column stop would only push the
+    // tagline needlessly far from the name it belongs to.
+    //
+    // The lite grid does NOT get this. 42 columns cannot hold the name and a
+    // tagline on one row: joining them there cut taglines to stubs like "a"
+    // and "tok" -- short enough that truncate() had no room to even mark the
+    // cut. So narrow keeps the stacked form, and keeps the ORIGINAL weight
+    // split with it (tagline MUTED, freqNote FAINT), which is what kept
+    // those two rows apart before this pass touched them. Degrading the
+    // narrow path correctly, rather than forcing the wide layout through it.
+    const wide = term.cols >= 72
+    const head = `[${presetNum}] `
+    const dial = ch.freq.toFixed(1)
+    const name = `${mark} ${ch.callsign} ${mark}`
+    term.text(4, 3, head, DIM)
+    term.text(4 + head.length, 3, dial, MUTED)
+    const nameX = 4 + head.length + dial.length + 3
+    term.text(nameX, 3, truncate(name, term.cols - 4 - nameX), BRIGHT)
+    if (!wide) term.text(4, 4, truncate(ch.tagline, contentWidth), MUTED)
+    // Truncated against what is actually left on the row. Nothing truncates
+    // today (the widest pairing lands at column 74 of 80), but lint's tagline
+    // budget is now a flat 43 measured against the INDEX page's LANE column,
+    // so a long callsign here no longer constrains it -- a 16-char callsign
+    // with a 43-char tagline would want 83 columns. It degrades with an
+    // ellipsis instead of running off the grid.
+    if (wide) {
+      const tagX = nameX + name.length + 3
+      term.text(tagX, 3, truncate(ch.tagline, term.cols - 4 - tagX), MUTED)
+    }
     // 49th pass -- notes what each station's gag frequency is an
     // homage to, kept off the main STATION box/index -- a Guide-
     // only aside for anyone curious enough to dig in. Optional field --
@@ -364,7 +407,12 @@ export default {
     // version string, and this is the reward for anyone curious enough to
     // page in this far; it was the most charming line on the page in the
     // least visible weight. One notch, no reflow.
-    if (ch.freqNote) term.text(4, 5, truncate(ch.freqNote, contentWidth), MUTED)
+    // MUTED on the wide grid, where the tagline has moved up onto the header
+    // row and this is the only line left beneath it -- nothing to be confused
+    // with, so it can be readable. FAINT on the lite grid, where the tagline
+    // is still stacked directly above it and the weight split is the only
+    // thing keeping the two apart.
+    if (ch.freqNote) term.text(4, 5, truncate(ch.freqNote, contentWidth), wide ? MUTED : FAINT)
     term.text(4, 6, '-'.repeat(Math.min(72, contentWidth)), FAINT)
     // slice(0, 3) drops overflow SILENTLY -- no ellipsis, unlike truncate()
     // right above it. All nine descs are 2-3 lines today so nothing is lost,
@@ -405,7 +453,6 @@ export default {
     // no nav line at all down there. Same fault the About page's narrow
     // branch already avoided and the index page just had fixed -- this was
     // the last copy of it.
-    const wide = term.cols >= 72
     this.drawGuideKeyLine(s, term.rows - 1, wide
       ? '[<-] PREV        [->] NEXT        [any other key] CLOSE'
       : '[<-] PREV   [->] NEXT')

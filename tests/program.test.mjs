@@ -791,6 +791,39 @@ test('guide station page counts its sample against the real tracklist', async ()
   } finally { h.shutdown() }
 })
 
+test('guide station header: tagline joins the callsign on the wide grid, stacks on the lite one', async () => {
+  // The header was three stacked left-aligned lines and the lower two --
+  // tagline and freqNote -- bled together once both sat at MUTED. Wide grids
+  // fix it by moving the tagline up onto the name row. Lite grids cannot:
+  // 42 columns joined them into stubs ("a", "tok") too short for truncate()
+  // to even mark, so narrow keeps the stack and keeps the weight split that
+  // held those rows apart.
+  const wide = await boot()
+  try {
+    wide.powerOn()
+    await openIndex(wide)
+    wide.key('ArrowRight'); wide.advance(200)
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${wide.tag}`)
+    const ch = STATION_PRESET_ORDER[0]
+    const row3 = wide.row(3)
+    assert.ok(row3.includes(ch.callsign), 'callsign on the header row')
+    assert.ok(row3.includes(ch.tagline), 'and the tagline joins it there')
+    assert.equal(wide.row(4).trim(), '', 'nothing left stacked underneath')
+  } finally { wide.shutdown() }
+
+  const lite = await boot({ mobile: true })
+  try {
+    lite.powerOn()
+    await openIndex(lite)
+    lite.key('ArrowRight'); lite.advance(200)
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${lite.tag}`)
+    const ch = STATION_PRESET_ORDER[0]
+    assert.ok(lite.row(3).includes(ch.callsign), 'callsign still whole on 42 cols')
+    assert.ok(!lite.row(3).includes('...'), 'and the header row never truncates')
+    assert.ok(lite.row(4).trim().length > 0, 'tagline stacks below instead')
+  } finally { lite.shutdown() }
+})
+
 test('guide index and station pages keep their footers on the lite grid', async () => {
   // The index footer and the station-page footer were both hardcoded to row
   // 22 on a grid that is 22 ROWS (0-21), so both fell off entirely and the
