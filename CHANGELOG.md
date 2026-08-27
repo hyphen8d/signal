@@ -185,6 +185,17 @@ and tooling. Full write-up in the audit notes; the short version:
   (NY acts if anything outweigh the West Coast side, plus Outkast
   repping Atlanta).
 
+### Bug fix
+
+- **`NOW PLAYING` could stick on `BUFFERING...` for a whole track** while the
+  progress bar beside it counted up — the two halves of one row contradicting
+  each other. `tryLock()` ended with an unconditional "buffering", including
+  on the path where `presetTune()` had primed the track at the *start* of its
+  ~330ms dial sweep: if the player got from CUED to PLAYING inside that
+  window, that event had already been and gone, and it does not fire twice.
+  The lock now asks the player what it is doing rather than assuming a cue is
+  still pending. Found by the harness's new fake player the day it was built.
+
 ### Input feedback (2026-08-27 dead-feedback sweep)
 
 Every key, swept against every view it can be pressed in, by diffing the text

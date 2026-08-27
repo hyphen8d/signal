@@ -227,6 +227,12 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         this.seekTo = (t) => { base = Math.max(0, t); startedAt = now }
         this.getCurrentTime = () => pos()
         this.getDuration = () => (this.videoId ? FAKE_DURATION : 0)
+        this.getPlayerState = () => (
+          ended ? YT.PlayerState.ENDED
+            : playing ? YT.PlayerState.PLAYING
+              : this.videoId ? YT.PlayerState.CUED
+                : YT.PlayerState.UNSTARTED
+        )
         this.mute = () => { this.muted = true }
         this.unMute = () => { this.muted = false }
         this.setVolume = (v) => { this.volume = v; playerCalls.push(`volume:${v}`) }
