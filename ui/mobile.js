@@ -19,6 +19,14 @@ const { nearestStation } = await import(`../tuning.js?v=${V}`)
 // the value the two-finger colour gesture had already been using as its own
 // upper bound since the 45th pass -- this names it rather than adding a
 // second, subtly different idea of "held".
+//
+// Confirmed on a real phone the same day, not just in the harness: 500ms
+// reads as a deliberate hold rather than as a laggy tap, in both directions
+// (power off, and the two-finger guide). Worth recording because it is the
+// one thing about this pass a test cannot tell you -- the suite can only
+// assert that >= 500ms powers down and < 500ms mutes, which stays true at
+// 200ms or 2000ms while feeling wrong at both. Treat a change here as a
+// feel change needing a device, not a number to tune from a hunch.
 const TOUCH_HOLD_MS = 500
 
 export default {
