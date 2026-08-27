@@ -55,7 +55,7 @@ Math.random = () => {
 // ('x' and ' ' stand in for the Cmd+Tab keydowns that reach the window).
 const KEYS = [
   'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', 'Escape',
-  's', 'n', 'm', 'p', 'b', 'g', 'c', 'C+shift', 'v', 'a', 'f', 'l', 'e', 'y',
+  's', 'n', 'm', 'p', 'b', 'g', 'c', 'C+shift', 'v', 'a', 'f', 'l', 'e', 't', 'y',
   '1', '5', '0', ')', 'x', ' ',
 ]
 

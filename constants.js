@@ -46,7 +46,22 @@ export const MAPPED_KEYS = new Set([
   // the second secret station would be the only command on the roster
   // that lands silently. See key()'s own case.
   ')',
+  // 2026-08-27 -- [T] sleep timer. See SLEEP_STEPS below and key()'s case.
+  't', 'T',
 ])
+
+// Sleep timer (2026-08-27) -- the minute steps [T] cycles through, then off.
+// Descending, the way a clock radio's SLEEP button has always worked: the
+// first press asks for the longest one, and you step it down toward the
+// answer you actually want rather than up toward it.
+export const SLEEP_STEPS = [60, 30, 15]
+// The last stretch fades out instead of cutting off. A hard cut at 0:00 is
+// the one thing a sleep timer must not do -- the whole feature exists for
+// someone on their way to sleep, and silence arriving as an EVENT is what
+// wakes them. Long enough to be a drift rather than a duck; the VOL bar
+// follows it down (see drawVolume) so the screen never claims a level the
+// speaker isn't at.
+export const SLEEP_FADE_MS = 30_000
 
 // 2026-08-27 (dead-feedback audit) -- the visualizer's own command set, the
 // counterpart to MAPPED_KEYS above. isMappedKey() returned true for EVERY key
@@ -61,5 +76,5 @@ export const MAPPED_KEYS = new Set([
 // isMappedKey() asks their own availability check instead.
 export const VISUALIZER_KEYS = new Set([
   'ArrowUp', 'ArrowDown',
-  'c', 'C', 'n', 'N', 'm', 'M', 'v', 'V', 'f', 'F', 'e', 'E', 'Escape',
+  'c', 'C', 'n', 'N', 'm', 'M', 'v', 'V', 'f', 'F', 't', 'T', 'e', 'E', 'Escape',
 ])

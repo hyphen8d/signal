@@ -185,6 +185,20 @@ and tooling. Full write-up in the audit notes; the short version:
   (NY acts if anything outweigh the West Coast side, plus Outkast
   repping Atlanta).
 
+### Sleep timer
+
+- **`[T]` arms a sleep timer** -- 60 / 30 / 15 minutes and off again, stepping
+  down the way a clock radio's SLEEP button always has. A `SLP mm:ss`
+  countdown sits in the title bar's one free stretch, which is also the one
+  row the visualizer keeps, so it stays readable in the state someone on
+  their way to sleep is most likely to have left the set in -- and `[T]`
+  works from in there too. The last 30 seconds fade out rather than cutting
+  off, since silence arriving as an *event* is the one thing a sleep timer
+  must not do; the VOL bar follows the fade down so the screen never claims
+  a level the speaker isn't at. Then the set switches itself off through the
+  normal power-down, collapse and all. Deliberately not persisted, and
+  cancelled by a manual power-off.
+
 ### Bug fix
 
 - **`NOW PLAYING` could stick on `BUFFERING...` for a whole track** while the

@@ -811,6 +811,14 @@ test('the visualizer clicks only for keys it actually answers', async () => {
     for (const k of ['n', 'N', 'm', 'M', 'c', 'C', 'v', 'V', 'e', 'E', 'f', 'F', 'Escape', 'ArrowUp', 'ArrowDown']) {
       assert.ok(h.program.isMappedKey({ key: k }), `[${k}] is a visualizer command and should click`)
     }
+    // 2026-08-27 -- [T] arms the sleep timer from in here too; the SLP
+    // countdown it drives is on the one row the visualizer keeps.
+    assert.ok(h.program.isMappedKey({ key: 't' }), '[T] is a visualizer command')
+    h.key('t'); h.advance(200)
+    assert.equal(h.program._sleepMinutes, 60, 'and it actually armed one')
+    assert.ok(h.row(0).includes('SLP '), 'with its readout on the title bar')
+    h.key('t'); h.key('t'); h.key('t'); h.advance(200) // ...and back off
+    assert.equal(h.program._sleepUntil, null)
     // Real commands elsewhere, deliberate no-ops in here since the 64th
     // pass -- and keys this app does not own at all.
     for (const k of ['p', 'P', 'g', 'G', 's', 'S', 'b', 'B', 'Enter', 'ArrowLeft', 'ArrowRight', '1', '0', ')', 'x', ' ']) {
@@ -1035,6 +1043,113 @@ test('a lock with nothing playing yet still says BUFFERING', async () => {
     h.key(await otherPreset(h))
     h.advance(3000)
     assert.equal(h.program.playState, 'playing')
+  } finally { h.shutdown() }
+})
+
+// --- sleep timer (2026-08-27) ---------------------------------------------
+
+/** Bring an armed timer's deadline to `secs` out, so a test does not have to
+ *  advance the fake clock through a real hour to watch it land. */
+const sleepDueIn = (h, secs) => { h.program._sleepUntil = Date.now() + secs * 1000 }
+
+test('[T] steps the sleep timer down through its settings and off again', async () => {
+  const h = await boot({})
+  try {
+    h.powerOn()
+    assert.equal(h.find('SLP'), -1, 'nothing shown until it is armed')
+
+    h.key('t'); h.advance(1100)
+    assert.equal(h.program._sleepMinutes, 60, 'first press asks for the longest')
+    assert.ok(h.row(0).includes('SLP 59:5'), `title bar counts down: ${h.row(0)}`)
+
+    h.key('t'); h.advance(100)
+    assert.equal(h.program._sleepMinutes, 30, 'and steps down from there')
+    assert.ok(h.row(0).includes('SLP 30:00') || h.row(0).includes('SLP 29:5'))
+
+    h.key('t'); h.advance(100)
+    assert.equal(h.program._sleepMinutes, 15)
+
+    h.key('t'); h.advance(100)
+    assert.equal(h.program._sleepMinutes, 0, 'the fourth press turns it off')
+    assert.equal(h.program._sleepUntil, null)
+    assert.equal(h.find('SLP'), -1, 'and the readout goes with it')
+  } finally { h.shutdown() }
+})
+
+test('the sleep timer fades the level, and the VOL bar follows it down', async () => {
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    const set = h.program.volume
+    h.key('t')            // 60 minutes
+    sleepDueIn(h, 40)     // ...brought to 40s out, just outside the fade
+    h.advance(1100)
+    assert.equal(h.program._sleepFade, 1, 'no fade yet')
+    assert.ok(h.row(17).includes(`] ${set}`), 'VOL still reads the setting')
+
+    h.advance(20_000)     // now ~20s out, inside SLEEP_FADE_MS
+    assert.ok(h.program._sleepFade < 0.8, `fading: ${h.program._sleepFade}`)
+    assert.equal(h.program.volume, set, 'the SETTING is untouched')
+    const shown = Number(h.row(17).match(/\]\s+(\d+)/)[1])
+    assert.ok(shown < set, `the bar follows the speaker down: ${shown} < ${set}`)
+    const sfx = await import(`../audio/sfx.js?v=${h.tag}`)
+    assert.ok(sfx.speakerLevel < set / 100, 'and so does the speaker bus')
+  } finally { h.shutdown() }
+})
+
+test('the sleep timer switches the set off, and lets go of the fade', async () => {
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.key('t')
+    sleepDueIn(h, 3)
+    h.advance(4000)
+    assert.equal(h.program.poweredOn, false, 'the set switched itself off')
+    assert.equal(h.program._sleepUntil, null)
+    assert.equal(h.program._sleepFade, 1, 'the fade let go')
+    const sfx = await import(`../audio/sfx.js?v=${h.tag}`)
+    assert.ok(Math.abs(sfx.speakerLevel - h.program.volume / 100) < 1e-9,
+      'and the bus is back at full level, or the next power-on plays quiet')
+  } finally { h.shutdown() }
+})
+
+test('powering off by hand takes the sleep timer with it', async () => {
+  const h = await boot({})
+  try {
+    h.powerOn()
+    h.key('t')
+    assert.equal(h.program._sleepMinutes, 60, 'test setup: armed')
+    h.key('p')            // off by hand, well before it lands
+    h.advance(2000)
+    assert.equal(h.program._sleepUntil, null, 'disarmed with the set')
+    h.advance(1000)
+    h.key('p')            // ...and back on
+    h.advance(5000)
+    assert.equal(h.program.poweredOn, true)
+    assert.equal(h.program._sleepUntil, null, 'the next session starts unarmed')
+    assert.equal(h.program._sleepMinutes, 0)
+  } finally { h.shutdown() }
+})
+
+test('a sleep deadline that lands under the guide still switches the set off', async () => {
+  // The clock interval that drives the timer sits ABOVE its own overlay
+  // guard for exactly this: a countdown that stopped because someone left
+  // the Guide open would be wrong, and powering down over the top of an
+  // open overlay is the paint-through trap the 67th pass already fixed once.
+  const h = await boot({})
+  try {
+    h.powerOn()
+    h.key('t')
+    sleepDueIn(h, 3)
+    h.key('g')
+    h.advance(300)
+    assert.equal(h.program.guideOpen, true, 'test setup: the guide is up')
+    h.advance(4000)
+    assert.equal(h.program.guideOpen, false, 'the guide came down with it')
+    assert.equal(h.program.poweredOn, false, 'and the set switched off')
+    for (const [y, r] of h.rows().entries()) {
+      assert.ok(!/[┌┐└┘│─]/.test(r), `row ${y} still has guide chrome on it: ${r}`)
+    }
   } finally { h.shutdown() }
 })
 

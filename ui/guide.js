@@ -155,7 +155,11 @@ export default {
   ],
   GUIDE_CONTROL_GROUPS: [
     { head: 'TUNING', rows: [['[<-/->]', 'SEEK'], ['[ENTER]', 'LOCK'], ['[S]', 'SCAN'], ['[1-9]', 'PRESETS'], ['[B]', 'BACK']] },
-    { head: 'RECEIVER', rows: [['[UP/DN]', 'VOLUME'], ['[M]', 'MUTE'], ['[N]', 'NEXT TRACK'], ['[P]', 'POWER']] },
+    // [T] added 2026-08-27. 'SLEEP' is shorter than 'NEXT TRACK', so the
+    // column keeps its width; the group goes to five rows, matching TUNING,
+    // which pushes drawGuideControls' return down one -- still clear of the
+    // About page's own rule at row 14.
+    { head: 'RECEIVER', rows: [['[UP/DN]', 'VOLUME'], ['[M]', 'MUTE'], ['[N]', 'NEXT TRACK'], ['[T]', 'SLEEP'], ['[P]', 'POWER']] },
     // [F] added 2026-08-26 (issue #8). 'FULLSCREEN' is the same 10 chars as
     // 'VISUALIZER', so the column keeps its width and the block its centring.
     { head: 'DISPLAY', rows: [['[C]', 'COLOR'], ['[V]', 'VISUALIZER'], ['[F]', 'FULLSCREEN'], ['[G]', 'GUIDE']] },
