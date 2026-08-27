@@ -228,19 +228,96 @@ export default {
   // left-to-right and the [1-9] preset keys), so the number shown here
   // always matches what actually tunes to that station, and matches the
   // digit-jump handled in key().
+  // Column stops for the index, so the page can be asserted on rather than
+  // eyeballed (see tests). Marker sits outside the block at x=2 -- an
+  // on-air row must not shove its own columns out of line with the rest.
+  GUIDE_INDEX_COLS: { mark: 2, preset: 4, glyph: 9, freq: 12, callsign: 19, tagline: 37 },
+  // 2026-08-27 -- index rebuilt, applying what the About page's 2026-08-26
+  // rebuild established. Same three faults, same fixes:
+  //
+  //   1. ONE attribute for five kinds of information. Every row was BRIGHT,
+  //      so the preset number, the dial glyph, the frequency, the callsign
+  //      and the tagline all read at identical weight -- on a page whose
+  //      only job is "find the station you want and jump to it", nothing
+  //      pointed at the callsign. Five stops, five weights now, with the
+  //      callsign the brightest thing in the row.
+  //   2. Rows joined as `CALLSIGN -- tagline`, so the tagline started at a
+  //      different column on every line -- 10 columns of drift between
+  //      CIPHER (6) and DISTORTION FIELD (16). That is precisely what the
+  //      About rebuild removed from the controls block, reintroduced here.
+  //      Fixed stops now, which is also why lint-roster's tagline rule went
+  //      flat: a per-callsign budget only makes sense for a joined line.
+  //   3. Double-spaced across rows 3-19 to fill the page, which on a
+  //      scan-and-jump table doubles the eye travel and breaks the column
+  //      relationship between neighbouring rows. Single-spaced, which also
+  //      buys the header row and rule that tell you what the columns ARE --
+  //      `[01] G 133.7` asked you to infer all four.
+  //
+  // The on-air marker is the point of the whole page, though: the guide had
+  // no idea what the set was doing, so the index was a table rather than a
+  // place you could see yourself in. Gated on poweredOn as well as the lock
+  // -- opened from STANDBY (see openGuide's fromStandby) the set is off and
+  // nothing is on air, so claiming a station would be a lie.
   drawGuidePageIndex(s) {
     const { term } = s
-    const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
-    put(1, 'SIGNAL -- STATIONS', BOLD)
-    const startY = 3
+    const C = this.GUIDE_INDEX_COLS
+    term.text(centerX(term.cols, 'SIGNAL -- STATIONS'), 1, 'SIGNAL -- STATIONS', BOLD)
+    const wide = term.cols >= 72
+    const onAir = (ch) => this.poweredOn && this.lockedStation === ch
+    if (!wide) {
+      // Narrow: no room for the tagline column, so the row stops at the
+      // callsign rather than truncating prose mid-word. Footer at rows-1,
+      // not a hardcoded 22 -- the lite grid is 22 ROWS, so the old literal
+      // put it off-grid entirely (the same fault the About page's narrow
+      // branch was written to avoid).
+      STATION_PRESET_ORDER.forEach((ch, i) => {
+        const y = 3 + i
+        if (onAir(ch)) term.text(C.mark, y, '>', BOLD)
+        term.text(C.preset, y, `[${String(i + 1).padStart(2, '0')}]`, DIM)
+        term.text(C.glyph, y, ch.glyph || ' ', NORMAL)
+        term.text(11, y, ch.freq.toFixed(1), MUTED)
+        term.text(17, y, truncate(ch.callsign, term.cols - 18), BRIGHT)
+      })
+      this.drawGuideKeyLine(s, term.rows - 1, '[<-] ABOUT  [1-9] JUMP  [->] NEXT')
+      return
+    }
+    term.text(C.preset, 3, 'PRESET', BOLD)
+    term.text(C.freq, 3, 'DIAL', BOLD)
+    term.text(C.callsign, 3, 'STATION', BOLD)
+    term.text(C.tagline, 3, 'LANE', BOLD)
+    term.text(4, 4, '-'.repeat(Math.min(72, term.cols - 8)), FAINT)
     STATION_PRESET_ORDER.forEach((ch, i) => {
-      const presetNum = String(i + 1).padStart(2, '0')
-      const y = startY + i * 2
-      // 41st pass: the dial marker leads the line, so the index doubles as
-      // the legend for the band -- you can read off which shape to hunt for.
-      const line = truncate(`[${presetNum}] ${ch.glyph || ' '}  ${ch.freq.toFixed(1)}   ${ch.callsign} -- ${ch.tagline}`, term.cols - 8)
-      term.text(4, y, line, BRIGHT)
+      const y = 5 + i
+      // 41st pass, preserved: the dial marker rides the row, so the index
+      // doubles as the legend for the band -- you can read off which shape
+      // to hunt for out on the dial.
+      if (onAir(ch)) term.text(C.mark, y, '>', BOLD)
+      term.text(C.preset, y, `[${String(i + 1).padStart(2, '0')}]`, DIM)
+      term.text(C.glyph, y, ch.glyph || ' ', NORMAL)
+      term.text(C.freq, y, ch.freq.toFixed(1), MUTED)
+      term.text(C.callsign, y, ch.callsign, BRIGHT)
+      term.text(C.tagline, y, truncate(ch.tagline, term.cols - C.tagline), MUTED)
     })
+    // Single-spacing bought eight rows back, and handing them straight to
+    // whitespace would just trade one kind of unfinished for another. A
+    // closing rule brackets the table against the one at row 4, and the two
+    // lines under it are the questions the page otherwise leaves hanging:
+    // what the marker means (a bare '>' explains nothing), and how much is
+    // actually behind these nine names -- the same "evidence of depth" the
+    // detail pages' (6 OF n) counter provides, at roster scale.
+    const rowY = 5 + STATION_PRESET_ORDER.length + 1
+    term.text(4, rowY, '-'.repeat(Math.min(72, term.cols - 8)), FAINT)
+    const trackTotal = STATION_PRESET_ORDER.reduce((n, ch) => n + ch.tracks.length, 0)
+    term.text(4, rowY + 1, `${STATION_PRESET_ORDER.length} STATIONS`, BOLD)
+    term.text(18, rowY + 1, `${trackTotal} TRACKS IN ROTATION`, MUTED)
+    // Deliberately NOT drawKeyLineAt: brackets are this app's marker for
+    // "a control you can press" (see drawGuideKeyLine's note), and the
+    // on-air marker is a status glyph, not a key. Bracketing it would teach
+    // the wrong thing about every other bracket on the page.
+    if (STATION_PRESET_ORDER.some(onAir)) {
+      term.text(C.mark, rowY + 2, '>', BOLD)
+      term.text(C.preset, rowY + 2, 'the station you are tuned to right now', FAINT)
+    }
     this.drawGuideKeyLine(s, 22, '[<-] ABOUT   [1-9] JUMP   [->] NEXT   [any other key] CLOSE')
   },
   // Per-station detail page (32nd pass) -- shows the
@@ -280,15 +357,58 @@ export default {
     // the freq is already shown in the header line above. Row 5 sits
     // between the tagline and the rule with nothing else using it, so no
     // reflow needed either time this moved.
-    if (ch.freqNote) term.text(4, 5, truncate(ch.freqNote, contentWidth), FAINT)
+    // 2026-08-27: lifted FAINT -> MUTED. Position is deliberately NOT
+    // touched -- the comment above records this line having moved twice
+    // before settling here, and it belongs next to the frequency it
+    // explains. But FAINT is the register of the ads disclaimer and the
+    // version string, and this is the reward for anyone curious enough to
+    // page in this far; it was the most charming line on the page in the
+    // least visible weight. One notch, no reflow.
+    if (ch.freqNote) term.text(4, 5, truncate(ch.freqNote, contentWidth), MUTED)
     term.text(4, 6, '-'.repeat(Math.min(72, contentWidth)), FAINT)
-    wordWrap(ch.desc, contentWidth).slice(0, 3).forEach((line, li) => term.text(4, 8 + li, line, NORMAL))
-    term.text(4, 12, 'SAMPLE TRACKS', BOLD)
-    sampleTracks(ch.tracks, 6).forEach((t, ti) => {
-      const line = truncate(`${t.title} -- ${t.artist}`, term.cols - 12)
-      term.text(8, 14 + ti, line, MUTED)
+    // slice(0, 3) drops overflow SILENTLY -- no ellipsis, unlike truncate()
+    // right above it. All nine descs are 2-3 lines today so nothing is lost,
+    // but a longer one would vanish without a mark, so the cut is marked.
+    const descLines = wordWrap(ch.desc, contentWidth)
+    descLines.slice(0, 3).forEach((line, li) => {
+      const last = li === 2 && descLines.length > 3
+      term.text(4, 8 + li, last ? truncate(line + ' ...', contentWidth) : line, NORMAL)
     })
-    this.drawGuideKeyLine(s, 22, '[<-] PREV        [->] NEXT        [any other key] CLOSE')
+    // 2026-08-27: says what it is a sample OF. Six tracks with no
+    // denominator reads as the station's whole tracklist -- naming the
+    // total is one string and turns the page into evidence of depth.
+    const total = ch.tracks.length
+    term.text(4, 12, 'SAMPLE TRACKS', BOLD)
+    term.text(18, 12, `(${Math.min(6, total)} OF ${total})`, FAINT)
+    // Title and artist are different questions ("do I know this?" vs "who
+    // is this?"), so they stop sharing one weight -- the titles are what
+    // you scan down.
+    sampleTracks(ch.tracks, 6).forEach((t, ti) => {
+      const y = 14 + ti
+      const title = truncate(t.title, term.cols - 12 - 3)
+      term.text(8, y, title, NORMAL)
+      const artistX = 8 + title.length
+      const room = term.cols - 4 - artistX
+      if (room > 4) term.text(artistX, y, truncate(` -- ${t.artist}`, room), MUTED)
+    })
+    // Rows 20-21 were dead on all nine pages. They earn their place only
+    // when this IS the station playing -- otherwise the page stays airy
+    // rather than padded. Same poweredOn gate as the index marker: from
+    // STANDBY nothing is on air.
+    if (this.poweredOn && this.lockedStation === ch && this.currentTrack) {
+      term.text(4, 20, 'ON AIR NOW', BOLD)
+      const t = this.currentTrack
+      term.text(16, 20, truncate(`${t.title} -- ${t.artist}`, term.cols - 20), BRIGHT)
+    }
+    // term.rows - 1, not a hardcoded 22: the lite grid is 22 ROWS (0-21), so
+    // the literal put this footer off-grid and the detail pages rendered with
+    // no nav line at all down there. Same fault the About page's narrow
+    // branch already avoided and the index page just had fixed -- this was
+    // the last copy of it.
+    const wide = term.cols >= 72
+    this.drawGuideKeyLine(s, term.rows - 1, wide
+      ? '[<-] PREV        [->] NEXT        [any other key] CLOSE'
+      : '[<-] PREV   [->] NEXT')
   },
   closeGuide(s) {
     this.guideOpen = false

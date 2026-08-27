@@ -706,3 +706,105 @@ test('a restored session seeds the speaker bus at its saved volume (issue #18)',
     assert.ok(Math.abs(sfx.speakerLevel - 0.2) < 1e-9, 'and the bus with it, before any key')
   } finally { h.shutdown() }
 })
+
+/** Open the guide and step to the station index (page 2). */
+async function openIndex(h) {
+  h.key('g'); h.advance(200)
+  h.key('ArrowRight'); h.advance(200)
+}
+
+test('guide index: every station row shares the same column stops', async () => {
+  // The About page's rebuild existed because four rows each centred on their
+  // own string made the key column wander. The index had the same disease in
+  // a different form -- rows joined as `CALLSIGN -- tagline`, so the tagline
+  // started 10 columns further right for DISTORTION FIELD than for CIPHER.
+  // This is the assertion that stops it coming back.
+  const h = await boot()
+  try {
+    h.powerOn()
+    await openIndex(h)
+    const C = h.program.GUIDE_INDEX_COLS
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    STATION_PRESET_ORDER.forEach((ch, i) => {
+      const row = h.row(5 + i)
+      const num = `[${String(i + 1).padStart(2, '0')}]`
+      const freq = ch.freq.toFixed(1)
+      assert.equal(row.slice(C.preset, C.preset + num.length), num, `${ch.callsign}: preset stop`)
+      assert.equal(row[C.glyph], ch.glyph, `${ch.callsign}: glyph stop`)
+      assert.equal(row.slice(C.freq, C.freq + freq.length), freq, `${ch.callsign}: dial stop`)
+      assert.equal(row.slice(C.callsign, C.callsign + ch.callsign.length), ch.callsign, `${ch.callsign}: station stop`)
+      assert.equal(row.slice(C.tagline, C.tagline + ch.tagline.length), ch.tagline, `${ch.callsign}: lane stop`)
+    })
+    // The lane column has to actually hold what lint permits, or the rule and
+    // the layout have drifted apart again.
+    const { TAGLINE_MAX } = await import('../tools/lint-roster.js')
+    assert.equal(TAGLINE_MAX, h.term.cols - C.tagline, 'lint budget matches the LANE column width')
+  } finally { h.shutdown() }
+})
+
+test('guide index: the on-air marker points at the locked station, and only it', async () => {
+  const h = await boot()
+  try {
+    h.powerOn()
+    await openIndex(h)
+    const C = h.program.GUIDE_INDEX_COLS
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    const idx = STATION_PRESET_ORDER.indexOf(h.program.lockedStation)
+    assert.ok(idx >= 0, 'powered on and locked to a public station')
+    STATION_PRESET_ORDER.forEach((ch, i) => {
+      const mark = h.row(5 + i)[C.mark]
+      assert.equal(mark, i === idx ? '>' : ' ', `${ch.callsign}: marker only on the locked row`)
+    })
+    assert.ok(h.find('the station you are tuned to right now') >= 0, 'and the marker is explained')
+  } finally { h.shutdown() }
+})
+
+test('guide index from STANDBY claims nothing is on air', async () => {
+  // openGuide(fromStandby) means the set is OFF underneath. A marker there
+  // would assert a station is playing when the tube is dark.
+  const h = await boot()
+  try {
+    h.advance(600) // let the cold-open flourish finish; [G] is gated on it
+    h.key('g'); h.advance(200)
+    assert.equal(h.program.poweredOn, false, 'still in STANDBY')
+    h.key('ArrowRight'); h.advance(200)
+    const C = h.program.GUIDE_INDEX_COLS
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    STATION_PRESET_ORDER.forEach((ch, i) => {
+      assert.equal(h.row(5 + i)[C.mark], ' ', `${ch.callsign}: no marker with the set off`)
+    })
+    assert.equal(h.find('the station you are tuned to right now'), -1, 'and no legend for a marker that is not drawn')
+  } finally { h.shutdown() }
+})
+
+test('guide station page counts its sample against the real tracklist', async () => {
+  const h = await boot()
+  try {
+    h.powerOn()
+    await openIndex(h)
+    h.key('ArrowRight'); h.advance(200) // first station detail page
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    const ch = STATION_PRESET_ORDER[0]
+    assert.ok(ch.tracks.length > 6, 'this station has more than the page samples')
+    assert.ok(h.find(`SAMPLE TRACKS (6 OF ${ch.tracks.length})`) >= 0,
+      'six tracks with no denominator reads as the whole tracklist')
+  } finally { h.shutdown() }
+})
+
+test('guide index and station pages keep their footers on the lite grid', async () => {
+  // The index footer and the station-page footer were both hardcoded to row
+  // 22 on a grid that is 22 ROWS (0-21), so both fell off entirely and the
+  // lite guide had no nav hint below page 1. Same fault page 1 already fixed.
+  const h = await boot({ mobile: true })
+  try {
+    h.powerOn()
+    assert.equal(h.term.rows, 22)
+    await openIndex(h)
+    assert.ok(h.row(h.term.rows - 1).includes('[->] NEXT'), 'index footer lands inside the grid')
+    for (const cs of ['CIPHER', 'DISTORTION FIELD', 'HACKBACK']) {
+      assert.ok(h.find(cs) >= 0, `${cs} not truncated on the lite index`)
+    }
+    h.key('ArrowRight'); h.advance(200)
+    assert.ok(h.row(h.term.rows - 1).includes('[->] NEXT'), 'station footer lands inside the grid')
+  } finally { h.shutdown() }
+})
