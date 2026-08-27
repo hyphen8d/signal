@@ -159,6 +159,15 @@ pure helpers; `tests/roster.test.mjs` runs `tools/lint-roster.js`.
   "Nth pass" note explaining what was tried, what broke, and why the current
   shape won. Preserve them when editing nearby code and add the same kind of
   note for non-obvious changes — much of the rationale exists nowhere else.
+  The corollary: reasoning belongs **next to the code it governs**, and not
+  copied into a doc, a commit message, or an assistant's memory, all of which
+  are free to drift from it. Where something genuinely must live in two
+  places, make one of them assert they agree rather than trusting them to:
+  `lint-roster.js`'s `TAGLINE_MAX` duplicates the width of the guide index's
+  LANE column, and `tests/program.test.mjs` fails if the two diverge. The
+  cautionary case is already further down this file — "Rejections live in two
+  files and neither reads the other" is what the un-asserted version of this
+  looks like a year in.
 - **"Would a real radio have this?"** is the governing design test (play/pause
   was built and removed under it).
 - `stations.md` is generated; edit `stations.js`, then re-run the generator.

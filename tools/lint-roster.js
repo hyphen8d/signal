@@ -41,7 +41,7 @@ globalThis.matchMedia ??= () => ({ matches: false })
 // The guide index's LANE column: 80 - GUIDE_INDEX_COLS.tagline (37). Kept as
 // a literal rather than imported from ui/guide.js on purpose -- that module
 // pulls in the WebAudio sfx chain at load, which Node has no business
-// touching for a roster lint. tests/helpers.test.mjs asserts the two agree,
+// touching for a roster lint. tests/program.test.mjs asserts the two agree,
 // so the duplication cannot drift silently.
 export const TAGLINE_MAX = 43
 
