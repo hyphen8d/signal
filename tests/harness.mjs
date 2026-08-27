@@ -25,10 +25,24 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
+
+// Four timed lines, spaced far enough apart that a test can seek onto one
+// and be certain which is active. parseLRC() sorts and drops untimed/blank
+// lines, so this also exercises the real parser rather than bypassing it.
+const CANNED_LRC = [
+  '[00:00.00] first line of the canned lyric',
+  '[00:12.00] second line of the canned lyric',
+  '[00:24.00] third line of the canned lyric',
+  '[00:36.00] fourth line of the canned lyric',
+].join('\n')
+
+// How long the fake player claims every track is. Comfortably over the 20s
+// floor the mid-song join checks, so the CUED path behaves as it does live.
+const FAKE_DURATION = 214
 let bootCount = 0
 let font = null
 
-export async function boot({ saved = null, mobile = false, tap = null } = {}) {
+export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
   const store = new Map()
@@ -91,7 +105,30 @@ export async function boot({ saved = null, mobile = false, tap = null } = {}) {
   globalThis.SIGNAL_YT_READY = false
   globalThis.SIGNAL_YT_QUEUE = []
   globalThis.SIGNAL_BUILD = tag
-  globalThis.fetch = () => Promise.reject(new Error('no network in tests'))
+  // 2026-08-27 -- `lyrics` answers the ONE request this app makes that a
+  // test might want to succeed: the LRCLIB lookup behind the visualizer's
+  // [L] view. Pass true for the canned track below, a raw LRC string for
+  // your own, 'none' for a 200 with no synced lyrics, or a function of the
+  // request URL returning either -- which is how a test gets ONE track with
+  // lyrics and the next without, the case drawVisualizerFrame() re-checks
+  // every tick to close a view that has run out from under itself. 'none'
+  // is the interesting negative on its own too: lyricsStateFor() is
+  // deliberately binary, so a plain-text-only match is 'unavailable'.
+  // Everything else still rejects -- no test should reach the network.
+  const lrcFor = (url) => {
+    // The function form may answer `true` for "the canned one", so a test
+    // that only cares WHICH tracks get lyrics doesn't have to carry an LRC.
+    if (typeof lyrics === 'function') { const r = lyrics(url); return r === true ? CANNED_LRC : r || null }
+    if (lyrics === true) return CANNED_LRC
+    return typeof lyrics === 'string' && lyrics !== 'none' ? lyrics : null
+  }
+  globalThis.fetch = (url) => {
+    if (lyrics && String(url).includes('lrclib.net')) {
+      const lrc = lrcFor(String(url))
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(lrc ? { syncedLyrics: lrc } : {}) })
+    }
+    return Promise.reject(new Error('no network in tests'))
+  }
   Object.defineProperty(globalThis, 'performance', {
     value: { now: () => now }, configurable: true, writable: true,
   })
@@ -146,6 +183,68 @@ export async function boot({ saved = null, mobile = false, tap = null } = {}) {
     clearPersist() { this.clears++ },
   }
   const program = (await import(`../program.js?v=${tag}`)).default
+
+  // 2026-08-27 -- an optional fake YouTube IFrame player. `player: true`.
+  //
+  // Without it there is no player at all, and loadTrack() returns on its
+  // first line (`if (!this.ready || !this.player) return`) -- so every test
+  // so far has exercised the tuning half of this app with the playback half
+  // switched off. That is why the visualizer's [L] lyrics view had never
+  // been reachable in a test: the lookup that feeds it is fired from inside
+  // loadTrack, past that early return.
+  //
+  // The surface is small and closed -- ten methods and three events -- so
+  // this models it rather than stubbing it: position advances on the same
+  // fake clock as everything else, seekTo/pause/play move it the way the
+  // real one does, and the state events fire on a timer rather than
+  // synchronously, because a synchronous onReady inside init() would be a
+  // shape the real API never produces. h.player exposes the two things a
+  // test cannot cause from the outside: the end of a track, and a dead
+  // video (the content-ops safety net in initPlayer's onError).
+  const playerCalls = []
+  let fake = null
+  if (player) {
+    globalThis.YT = {
+      PlayerState: { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
+      Player: function Player(id, opts) {
+        const ev = (opts && opts.events) || {}
+        let base = 0, startedAt = 0, playing = false, ended = false
+        const pos = () => base + (playing ? (now - startedAt) / 1000 : 0)
+        const fire = (state) => setTimeout(() => ev.onStateChange && ev.onStateChange({ data: state }), 0)
+        const load = (videoId, cue) => {
+          playerCalls.push(`${cue ? 'cue' : 'load'}:${videoId}`)
+          base = 0; startedAt = now; playing = !cue; ended = false
+          fire(cue ? YT.PlayerState.CUED : YT.PlayerState.PLAYING)
+        }
+        fake = this
+        this.videoId = null
+        this.muted = false
+        this.volume = 100
+        this.loadVideoById = (v) => { this.videoId = v; load(v, false) }
+        this.cueVideoById = (v) => { this.videoId = v; load(v, true) }
+        this.playVideo = () => { if (!playing) { startedAt = now; playing = true; fire(YT.PlayerState.PLAYING) } }
+        this.pauseVideo = () => { if (playing) { base = pos(); playing = false; fire(YT.PlayerState.PAUSED) } }
+        this.seekTo = (t) => { base = Math.max(0, t); startedAt = now }
+        this.getCurrentTime = () => pos()
+        this.getDuration = () => (this.videoId ? FAKE_DURATION : 0)
+        this.mute = () => { this.muted = true }
+        this.unMute = () => { this.muted = false }
+        this.setVolume = (v) => { this.volume = v; playerCalls.push(`volume:${v}`) }
+        // The track running out. Real playback reaches this on its own; the
+        // fake clock would have to be advanced through a whole song to, so
+        // tests ask for it. `ended` guards a double-fire, same as the real
+        // player, since ENDED lands the app in skip() which loads again.
+        this.endTrack = () => {
+          if (ended) return
+          ended = true; playing = false; base = FAKE_DURATION
+          ev.onStateChange && ev.onStateChange({ data: YT.PlayerState.ENDED })
+        }
+        this.fail = () => { ev.onError && ev.onError({ data: 150 }) }
+        setTimeout(() => ev.onReady && ev.onReady({ target: this }), 0)
+      },
+    }
+    globalThis.SIGNAL_YT_READY = true
+  }
   const screen = {
     term, crt, program, config,
     cols: term.cols, rows: term.rows,
@@ -200,6 +299,18 @@ export async function boot({ saved = null, mobile = false, tap = null } = {}) {
     tapCalls,
     /** Fullscreen API calls the program has made, in order. See the doc stub. */
     fsCalls,
+    /** loadVideoById/cueVideoById/setVolume calls, in order (player boots only). */
+    playerCalls,
+    /** The fake player itself, for the two events a test cannot otherwise
+     *  cause: h.player.endTrack() and h.player.fail(). Null without
+     *  `player: true`. */
+    get player() { return fake },
+    /** Let pending promise callbacks land. The lyrics lookup is a real
+     *  fetch chain, and advance() is synchronous, so nothing resolves
+     *  during it -- await this after the load that fires the lookup.
+     *  setImmediate rather than setTimeout on purpose: setTimeout is the
+     *  fake clock in here and would never run. */
+    flush() { return new Promise((r) => setImmediate(r)) },
     row(y) {
       let s = ''
       for (let x = 0; x < term.cols; x++) s += String.fromCodePoint(term.chars[y * term.cols + x])
@@ -217,6 +328,8 @@ export async function boot({ saved = null, mobile = false, tap = null } = {}) {
     },
     shutdown() {
       timers.clear()
+      delete globalThis.YT
+      globalThis.SIGNAL_YT_READY = false
       Object.assign(globalThis, real)
       Date.now = realDateNow
       Object.defineProperty(globalThis, 'navigator', {

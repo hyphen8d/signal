@@ -821,3 +821,117 @@ test('mobile: a skip swipe off-station answers, since touch has no click at all'
     assert.ok(h.find('NO SIGNAL') >= 0, 'the lite status row carries it too')
   } finally { h.shutdown() }
 })
+
+// --- the visualizer's lyrics view (2026-08-27) -----------------------------
+//
+// Unreachable in a test until the harness grew a player: the lookup that
+// feeds [L] is fired from inside loadTrack(), past its
+// `if (!this.ready || !this.player) return` first line. This is the view the
+// dead-feedback pattern was first found in -- [V] cycling the effect and
+// flashing its name while the screen carried on drawing lyrics -- so what
+// these check is not just "does it open" but the rule that came out of it: a
+// flash that names an effect has to be followed by that effect drawing.
+
+/** Locked, playing, in the visualizer, with the lyrics lookup resolved. */
+const inVisualizer = async (opts = {}) => {
+  const h = await boot({ player: true, ...opts })
+  h.powerOn()
+  h.key('3')
+  h.advance(3000)
+  await h.flush()   // the LRCLIB chain is a real promise chain
+  h.advance(100)
+  h.key('v')
+  h.advance(1600)
+  assert.equal(h.program.visualizerActive, true, 'test setup: in the visualizer')
+  return h
+}
+
+test('[L] opens the lyrics view and follows the track clock', async () => {
+  const h = await inVisualizer({ lyrics: true })
+  try {
+    assert.ok(h.program.isMappedKey({ key: 'l' }), '[L] is live when lyrics resolved')
+    h.program.player.seekTo(12) // onto the canned lyric's second line
+    h.key('l')
+    h.advance(300)
+    assert.equal(h.program.lyricsViewOpen, true)
+    const active = h.find('second line of the canned lyric')
+    assert.ok(active > 0, 'the line for the current position is on screen')
+    // The crawl draws the previous line above and the next below it.
+    assert.ok(h.row(active - 1).includes('first line'), 'previous line sits above')
+    assert.ok(h.row(active + 1).includes('third line'), 'next line sits below')
+    // And it follows the clock rather than freezing where it opened.
+    h.program.player.seekTo(24)
+    h.advance(300)
+    assert.ok(h.find('third line of the canned lyric') === active, 'the crawl moved on')
+  } finally { h.shutdown() }
+})
+
+test('[L] stays shut, and silent, for a track with no synced lyrics', async () => {
+  // A 200 with no syncedLyrics -- lyricsStateFor() is binary, so a
+  // plain-text-only match reads the same as no match at all.
+  const h = await inVisualizer({ lyrics: 'none' })
+  try {
+    assert.ok(!h.program.isMappedKey({ key: 'l' }), '[L] must not click when it cannot act')
+    const before = h.rows()
+    h.key('l')
+    h.advance(300)
+    assert.equal(h.program.lyricsViewOpen, false)
+    assert.notEqual(h.rows().join(), before.join(), 'the effect canvas is still animating')
+  } finally { h.shutdown() }
+})
+
+test('a flash that names an effect is followed by that effect drawing', async () => {
+  // The bug this rule came from: [V] inside the lyrics view flashed the NEXT
+  // effect's name while drawVisualizerFrame() carried on drawing lyrics --
+  // an announcement for something you could not see, and a silently eaten
+  // step of VISUAL_KEYS.
+  const h = await inVisualizer({ lyrics: true })
+  try {
+    const { VISUALS } = await import(`../visuals/index.js?v=${h.tag}`)
+    h.key('l'); h.advance(300)
+    assert.equal(h.program.lyricsViewOpen, true, 'test setup: in the lyrics view')
+    const wasKey = h.program.activeVisualKey()
+
+    // [V] acts on the view you are looking at: first press comes back to the
+    // canvas WITHOUT cycling under it, and says nothing.
+    h.key('v'); h.advance(300)
+    assert.equal(h.program.lyricsViewOpen, false, '[V] returned to the canvas')
+    assert.equal(h.program.activeVisualKey(), wasKey, 'and did not cycle under the view')
+    assert.equal(h.program._vizFlash, null, 'nothing was announced')
+
+    // The next press cycles, and now the flash and the canvas agree.
+    h.key('v'); h.advance(300)
+    const cycled = h.program.activeVisualKey()
+    assert.notEqual(cycled, wasKey, 'the second press cycled')
+    assert.equal(h.program._vizFlash.text, VISUALS[cycled].label, 'the flash names what is drawn')
+    assert.equal(h.program.lyricsViewOpen, false, 'and the canvas is what is drawn')
+
+    // Shift+C is the one that cycles in a single press from inside the view,
+    // because cycling is all it does -- so it has to drop the view too.
+    h.key('l'); h.advance(300)
+    assert.equal(h.program.lyricsViewOpen, true, 'test setup: back in the lyrics view')
+    h.key('C', { shiftKey: true }); h.advance(300)
+    assert.equal(h.program.lyricsViewOpen, false, 'Shift+C dropped the view it cannot draw under')
+    const next = h.program.activeVisualKey()
+    assert.notEqual(next, cycled, 'and cycled in the same press')
+    assert.equal(h.program._vizFlash.text, VISUALS[next].label, 'the flash names what is drawn')
+  } finally { h.shutdown() }
+})
+
+test('the lyrics view closes itself when a skip lands on a track without lyrics', async () => {
+  // Checked per-tick in drawVisualizerFrame(), not once at skip time: right
+  // after [N] the new track's lookup is still 'pending', so a one-shot check
+  // would almost always miss and leave a dead-end screen up.
+  let serve = true
+  const h = await inVisualizer({ lyrics: () => serve })
+  try {
+    h.key('l'); h.advance(300)
+    assert.equal(h.program.lyricsViewOpen, true, 'test setup: the first track had lyrics')
+    serve = false         // ...and whatever comes next does not
+    h.key('n')            // next track: its lookup is fired, still pending
+    h.advance(300)
+    await h.flush()       // ...and now resolves 'unavailable'
+    h.advance(300)
+    assert.equal(h.program.lyricsViewOpen, false, 'the view stood down on its own')
+  } finally { h.shutdown() }
+})

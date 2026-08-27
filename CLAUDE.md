@@ -154,6 +154,19 @@ layout. Each boot gets fresh module instances (unique `?v=`). Add a scenario
 here when you change a state transition; add to `tests/helpers.test.mjs` for
 pure helpers; `tests/roster.test.mjs` runs `tools/lint-roster.js`.
 
+`boot({ player: true })` adds a **fake YouTube player** — the real API surface
+is ten methods and three events, so the harness models it rather than stubbing
+it: position runs on the same fake clock, `seekTo`/`pause`/`play` move it, and
+the state events fire on a timer the way the real ones do. Without it there is
+no player at all and `loadTrack()` returns on its first line, so every test
+written before 2026-08-27 exercised the tuning half with playback switched
+off. `h.player.endTrack()` and `h.player.fail()` cause the two events a test
+cannot otherwise reach (a natural track end, a dead video). `boot({ lyrics })`
+answers the LRCLIB lookup — `true` for a canned synced lyric, `'none'` for a
+200 with no synced lyrics, or a function of the URL when one track should have
+them and the next should not. That chain is a real promise chain and
+`advance()` is synchronous, so `await h.flush()` after the load that fires it.
+
 `tools/dead-feedback.mjs` drives the same harness as a **sweep** rather than
 as assertions: every key in every view, each pressed run diffed against a
 do-nothing control run from the same PRNG seed, so a key that changes nothing
