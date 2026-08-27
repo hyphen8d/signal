@@ -24,6 +24,7 @@ node tools/stations-to-md.js        # npm run stations — regenerate stations.m
 node tools/stamp.js                 # npm run stamp — bump build.json; RUN BEFORE EVERY DEPLOY
 node tools/audition.js --station=<id> # npm run audition — vet candidate tracks (network)
 node tools/shoot.mjs                # npm run shoot — regenerate screenshots/ (headless Chrome + ImageMagick)
+node tools/dead-feedback.mjs        # npm run deadfeedback — input-feedback sweep (headless, ~1min)
 ```
 
 `file://` does not work — the BDF font fetch needs a real origin. Use
@@ -152,6 +153,19 @@ grid (`h.row(y)`, `h.find(text)`). `boot({ mobile: true })` forces the lite
 layout. Each boot gets fresh module instances (unique `?v=`). Add a scenario
 here when you change a state transition; add to `tests/helpers.test.mjs` for
 pure helpers; `tests/roster.test.mjs` runs `tools/lint-roster.js`.
+
+`tools/dead-feedback.mjs` drives the same harness as a **sweep** rather than
+as assertions: every key in every view, each pressed run diffed against a
+do-nothing control run from the same PRNG seed, so a key that changes nothing
+anywhere on the grid shows up as such. Run it after touching `key()`,
+`isMappedKey()`, `MAPPED_KEYS`/`VISUALIZER_KEYS` or the touch gestures. Two
+rules it exists to keep: a key that CLICKS has to change something (the click
+is gated by `isMappedKey`, which is meant to mirror what `key()` actually
+answers — it drifted out of sync in the visualizer for four passes), and a
+control the screen advertises — footer hints, the Guide's grid, the
+visualizer legend — has to answer even where it can't act (`NO SIGNAL`,
+`NO HISTORY`, `NO LINE IN`). Its header documents the seeding, the `[F]`
+exception and the `F13` canary that catches a desynchronised run.
 
 ## Conventions
 

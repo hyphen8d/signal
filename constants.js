@@ -47,3 +47,19 @@ export const MAPPED_KEYS = new Set([
   // that lands silently. See key()'s own case.
   ')',
 ])
+
+// 2026-08-27 (dead-feedback audit) -- the visualizer's own command set, the
+// counterpart to MAPPED_KEYS above. isMappedKey() returned true for EVERY key
+// while the visualizer was up, which was right when any key woke and exited it
+// (43rd pass) and wrong from the 64th pass on, once every unnamed key became a
+// deliberate no-op in there: the visualizer clicked like a command for presets,
+// [P], [G], [S], [B], Enter -- and for keys this app doesn't own at all, which
+// is the exact thing MAPPED_KEYS was introduced to stop on the main screen.
+// This is the list the switch in key() actually answers: the footer legend's
+// own [N] [L] [M] [C] [V] [E], plus volume, the two settings-shaped keys, and
+// Escape. [L] and [A] are deliberately NOT here -- both are conditional, so
+// isMappedKey() asks their own availability check instead.
+export const VISUALIZER_KEYS = new Set([
+  'ArrowUp', 'ArrowDown',
+  'c', 'C', 'n', 'N', 'm', 'M', 'v', 'V', 'f', 'F', 'e', 'E', 'Escape',
+])

@@ -185,6 +185,33 @@ and tooling. Full write-up in the audit notes; the short version:
   (NY acts if anything outweigh the West Coast side, plus Outkast
   repping Atlanta).
 
+### Input feedback (2026-08-27 dead-feedback sweep)
+
+Every key, swept against every view it can be pressed in, by diffing the text
+grid against a do-nothing control run — `tools/dead-feedback.mjs`, kept in the
+repo so the sweep is repeatable. Two rules came out of it: a key that clicks
+has to change something, and a control the screen advertises has to answer
+even where it can't act.
+
+- **The visualizer clicked for every key on the keyboard**, including keys
+  SIGNAL doesn't own at all — a Cmd-Tab keydown clicked like a command. The
+  click gate still said "any key" from when any key exited the visualizer;
+  the 64th pass had since made every unnamed key a deliberate no-op and
+  nothing narrowed the gate to match. Now `VISUALIZER_KEYS`: exactly the
+  footer legend's own set, with `[L]` following the same lyrics availability
+  the legend already dims itself on.
+- **Four advertised controls answered with nothing** in the state where they
+  couldn't act, and now say why: `[B]` BACK with an empty history —
+  every visitor's whole first session — reads `NO HISTORY`; `[N]` and `[V]`
+  off-station read `NO SIGNAL` (the same word Enter already gives for the
+  same reason); `[A]` on a browser with no capture path reads `NO LINE IN`.
+- **The mobile skip swipe** got the same answer, and needs it most: touch has
+  no key click at all, so a gesture that changed nothing was wholly silent
+  and read as one the screen had missed.
+- `[P]` no longer clicks during a power sequence, where `powerUp()`
+  deliberately ignores it — the impatient double-tap its guard was written
+  for was clicking like a command and doing nothing.
+
 ### UI polish
 
 - Main-view control-hint footer dialed down for legibility —
