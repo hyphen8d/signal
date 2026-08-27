@@ -201,7 +201,17 @@ test('mobile lite: 42x22 grid, tap powers on, swipe steps the station', async ()
     assert.equal(h.program.poweredOn, true)
     assert.ok(h.row(0).includes('SIGNAL v'), 'mobile title bar')
     assert.ok(h.find('STATION') >= 0 && h.find('NOW PLAYING') >= 0, 'mobile boxes')
-    assert.ok(h.find('TAP MUTE') >= 0, 'touch legend')
+    // 2026-08-27: a first-ever mobile visit boots MUTED on purpose, so the
+    // legend's first line is the instruction, not the label. This is the
+    // whole point of making it state-aware -- "TAP MUTE" told someone
+    // looking at a silent radio nothing about how to fix it.
+    assert.equal(h.program.muted, true, 'first-ever mobile visit boots muted')
+    assert.ok(h.find('TAP TO UNMUTE') >= 0, 'legend instructs rather than labels while muted')
+    h.tap()
+    h.advance(400)
+    assert.equal(h.program.muted, false)
+    assert.ok(h.find('TAP MUTE') >= 0, 'and flips back to the label once unmuted')
+    assert.ok(h.find('2-HOLD GUIDE') >= 0, 'guide is advertised now that touch can open it')
     const before = h.program.lockedStation
     h.swipe(1)
     h.advance(400)
@@ -551,22 +561,36 @@ test('guide page 1: [A] is its own callout, not one cell of the control grid', a
   } finally { h.shutdown() }
 })
 
-test('guide page 1 fits the lite grid: nothing truncated, footer on-grid', async () => {
-  // Not reachable by touch today (no gesture opens the guide -- README "Known
-  // gaps"), but the page is shared code and the old one was broken here: wide
-  // rows truncated mid-word and the row-22 footer fell off a 22-row grid, so
-  // there was no close hint at all.
+test('guide page 1 on the lite grid teaches gestures, not keys', async () => {
+  // Reachable by touch as of 2026-08-27 (two-finger hold), which is what
+  // made this page's content wrong rather than merely unused: it rendered
+  // the same bracketed [P]/[ENTER]/[<-/->] table as desktop, so the screen
+  // whose whole job is explaining the controls was naming controls a phone
+  // does not have.
   const h = await boot({ mobile: true })
   try {
     h.powerOn()
     h.key('g')
     h.advance(300)
     assert.equal(h.term.cols, 42)
-    assert.ok(h.find('[->] STATIONS') >= 0, 'footer lands inside the grid')
-    for (const whole of ['A tuning-dial radio, rendered as text.', 'Optional. Meters stay synthetic if not.', '[A] LINE IN -- live audio to meters']) {
-      assert.ok(h.find(whole) >= 0, `not truncated: ${whole}`)
+    assert.ok(h.find('A tuning-dial radio, rendered as text.') >= 0, 'pitch not truncated')
+    assert.ok(h.find('START HERE   TAP to power on') >= 0, 'start line speaks touch')
+    // Matched at the column stop rather than with find(): a bare
+    // find('TAP') hits the START HERE line above the block first, and
+    // find('HOLD') would happily match the '2-HOLD' row. Anchoring at
+    // column 2 asserts the alignment at the same time.
+    const rows = h.rows()
+    for (const [gesture, action] of [['SWIPE L/R', 'STATION'], ['SWIPE U/D', 'NEXT TRACK'], ['TAP', 'MUTE'], ['HOLD', 'POWER OFF'], ['2-TAP', 'COLOR'], ['2-HOLD', 'GUIDE']]) {
+      const row = rows.find((r) => r.slice(2).startsWith(gesture) && r.includes(action))
+      assert.ok(row, `${gesture} -> ${action} listed at the control block's column stop`)
     }
-    for (const head of ['TUNING', 'RECEIVER', 'DISPLAY']) assert.ok(h.find(head) >= 0, `${head} group present`)
+    assert.ok(h.find('SWIPE STATIONS   TAP CLOSE') >= 0, 'footer lands inside the grid and names gestures')
+    // Every keyboard idiom should be gone from this tier.
+    for (const y of h.rows()) {
+      for (const key of ['[P]', '[ENTER]', '[<-/->]', '[A]', '[1-9]']) {
+        assert.ok(!y.includes(key), `no keyboard idiom on the lite guide: ${key}`)
+      }
+    }
   } finally { h.shutdown() }
 })
 
@@ -1289,5 +1313,216 @@ test('tuning away ends the break rather than carrying it to the next station', a
     assert.equal(h.program.breakActive, false)
     assert.equal(h.find('STATION BREAK'), -1, 'the new lock is not wearing it')
     assert.ok(h.find(h.program.currentTrack.title) >= 0, 'it is playing a track')
+  } finally { h.shutdown() }
+})
+
+/** Open the guide and step to the station index (page 2). */
+async function openIndex(h) {
+  h.key('g'); h.advance(200)
+  h.key('ArrowRight'); h.advance(200)
+}
+
+test('guide index: every station row shares the same column stops', async () => {
+  // The About page's rebuild existed because four rows each centred on their
+  // own string made the key column wander. The index had the same disease in
+  // a different form -- rows joined as `CALLSIGN -- tagline`, so the tagline
+  // started 10 columns further right for DISTORTION FIELD than for CIPHER.
+  // This is the assertion that stops it coming back.
+  const h = await boot()
+  try {
+    h.powerOn()
+    await openIndex(h)
+    const C = h.program.GUIDE_INDEX_COLS
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    STATION_PRESET_ORDER.forEach((ch, i) => {
+      const row = h.row(5 + i)
+      const num = `[${String(i + 1).padStart(2, '0')}]`
+      const freq = ch.freq.toFixed(1)
+      assert.equal(row.slice(C.preset, C.preset + num.length), num, `${ch.callsign}: preset stop`)
+      assert.equal(row[C.glyph], ch.glyph, `${ch.callsign}: glyph stop`)
+      assert.equal(row.slice(C.freq, C.freq + freq.length), freq, `${ch.callsign}: dial stop`)
+      assert.equal(row.slice(C.callsign, C.callsign + ch.callsign.length), ch.callsign, `${ch.callsign}: station stop`)
+      assert.equal(row.slice(C.tagline, C.tagline + ch.tagline.length), ch.tagline, `${ch.callsign}: lane stop`)
+    })
+    // The lane column has to actually hold what lint permits, or the rule and
+    // the layout have drifted apart again.
+    const { TAGLINE_MAX } = await import('../tools/lint-roster.js')
+    assert.equal(TAGLINE_MAX, h.term.cols - C.tagline, 'lint budget matches the LANE column width')
+  } finally { h.shutdown() }
+})
+
+test('guide index: the on-air marker points at the locked station, and only it', async () => {
+  const h = await boot()
+  try {
+    h.powerOn()
+    await openIndex(h)
+    const C = h.program.GUIDE_INDEX_COLS
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    const idx = STATION_PRESET_ORDER.indexOf(h.program.lockedStation)
+    assert.ok(idx >= 0, 'powered on and locked to a public station')
+    STATION_PRESET_ORDER.forEach((ch, i) => {
+      const mark = h.row(5 + i)[C.mark]
+      assert.equal(mark, i === idx ? '>' : ' ', `${ch.callsign}: marker only on the locked row`)
+    })
+    assert.ok(h.find('the station you are tuned to right now') >= 0, 'and the marker is explained')
+  } finally { h.shutdown() }
+})
+
+test('guide index from STANDBY claims nothing is on air', async () => {
+  // openGuide(fromStandby) means the set is OFF underneath. A marker there
+  // would assert a station is playing when the tube is dark.
+  const h = await boot()
+  try {
+    h.advance(600) // let the cold-open flourish finish; [G] is gated on it
+    h.key('g'); h.advance(200)
+    assert.equal(h.program.poweredOn, false, 'still in STANDBY')
+    h.key('ArrowRight'); h.advance(200)
+    const C = h.program.GUIDE_INDEX_COLS
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    STATION_PRESET_ORDER.forEach((ch, i) => {
+      assert.equal(h.row(5 + i)[C.mark], ' ', `${ch.callsign}: no marker with the set off`)
+    })
+    assert.equal(h.find('the station you are tuned to right now'), -1, 'and no legend for a marker that is not drawn')
+  } finally { h.shutdown() }
+})
+
+test('guide station page counts its sample against the real tracklist', async () => {
+  const h = await boot()
+  try {
+    h.powerOn()
+    await openIndex(h)
+    h.key('ArrowRight'); h.advance(200) // first station detail page
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    const ch = STATION_PRESET_ORDER[0]
+    assert.ok(ch.tracks.length > 6, 'this station has more than the page samples')
+    assert.ok(h.find(`SAMPLE TRACKS (6 OF ${ch.tracks.length})`) >= 0,
+      'six tracks with no denominator reads as the whole tracklist')
+  } finally { h.shutdown() }
+})
+
+test('guide station header: tagline joins the callsign on the wide grid, stacks on the lite one', async () => {
+  // The header was three stacked left-aligned lines and the lower two --
+  // tagline and freqNote -- bled together once both sat at MUTED. Wide grids
+  // fix it by moving the tagline up onto the name row. Lite grids cannot:
+  // 42 columns joined them into stubs ("a", "tok") too short for truncate()
+  // to even mark, so narrow keeps the stack and keeps the weight split that
+  // held those rows apart.
+  const wide = await boot()
+  try {
+    wide.powerOn()
+    await openIndex(wide)
+    wide.key('ArrowRight'); wide.advance(200)
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${wide.tag}`)
+    const ch = STATION_PRESET_ORDER[0]
+    const row3 = wide.row(3)
+    assert.ok(row3.includes(ch.callsign), 'callsign on the header row')
+    assert.ok(row3.includes(ch.tagline), 'and the tagline joins it there')
+    assert.equal(wide.row(4).trim(), '', 'nothing left stacked underneath')
+  } finally { wide.shutdown() }
+
+  const lite = await boot({ mobile: true })
+  try {
+    lite.powerOn()
+    await openIndex(lite)
+    lite.key('ArrowRight'); lite.advance(200)
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${lite.tag}`)
+    const ch = STATION_PRESET_ORDER[0]
+    assert.ok(lite.row(3).includes(ch.callsign), 'callsign still whole on 42 cols')
+    assert.ok(!lite.row(3).includes('...'), 'and the header row never truncates')
+    assert.ok(lite.row(4).trim().length > 0, 'tagline stacks below instead')
+  } finally { lite.shutdown() }
+})
+
+/** A two-finger gesture held for `dt` ms. Not in the harness because only
+ *  these tests need it: two fingers means touchend fires TWICE (real fingers
+ *  never lift in sync), and the second one -- the event where touches.length
+ *  finally reaches 0 -- is the one that resolves the gesture. */
+function twoFinger(h, dt) {
+  const ev = (touches, changed) => ({ touches, changedTouches: changed, target: null, preventDefault() {} })
+  const a = { clientX: 100, clientY: 100 }
+  const b = { clientX: 140, clientY: 100 }
+  h.program.onTouchStart(h.screen, ev([a, b], []))
+  h.advance(dt)
+  h.program.onTouchEnd(h.screen, ev([a], [b]))
+  h.program.onTouchEnd(h.screen, ev([], [a]))
+  h.advance(200)
+}
+
+test('mobile: hold powers the set off, tap still only mutes', async () => {
+  // The gap that actually failed "would a real radio have this?" -- touch
+  // could switch the set on and never off. Hold and tap are the same
+  // gesture separated by duration, so the tap path has to stay intact.
+  const h = await boot({ mobile: true })
+  try {
+    h.powerOn()
+    assert.equal(h.program.poweredOn, true)
+    const muted = h.program.muted
+    h.touch(100, 100, 100, 100, 80)   // quick tap
+    h.advance(300)
+    assert.equal(h.program.poweredOn, true, 'a tap must not power the set down')
+    assert.equal(h.program.muted, !muted, 'a tap still toggles mute')
+    h.touch(100, 100, 100, 100, 700)  // held
+    h.advance(3000)
+    assert.equal(h.program.poweredOn, false, 'a held press powers off')
+    assert.ok(h.find('STANDBY') >= 0, 'and lands on STANDBY')
+    h.touch(100, 100, 100, 100, 700)  // held, from off
+    h.advance(4000)
+    assert.equal(h.program.poweredOn, true, 'a held press powers back on -- no way to get stuck off')
+  } finally { h.shutdown() }
+})
+
+test('mobile: two-finger hold opens the guide, two-finger tap still cycles colour', async () => {
+  const h = await boot({ mobile: true })
+  try {
+    h.powerOn()
+    const mode = h.program.displayModeIndex
+    twoFinger(h, 120)
+    assert.equal(h.program.guideOpen, false, 'a quick two-finger tap is still colour')
+    assert.notEqual(h.program.displayModeIndex, mode, 'and it cycled')
+    twoFinger(h, 700)
+    assert.equal(h.program.guideOpen, true, 'held, it opens the guide')
+    h.tap()
+    h.advance(300)
+    assert.equal(h.program.guideOpen, false, 'and a tap closes it again')
+  } finally { h.shutdown() }
+})
+
+test('mobile: swiping pages the guide, and running off the end does not dismiss it', async () => {
+  // Opening the guide was only half a feature: [<-]/[->] page it on
+  // desktop, so without this touch reached page 1 and nothing else -- the
+  // index and all nine station pages were unreachable from a phone.
+  const h = await boot({ mobile: true })
+  try {
+    h.powerOn()
+    twoFinger(h, 700)
+    assert.equal(h.program.guidePage, 1)
+    h.swipe(1); h.advance(200)
+    assert.equal(h.program.guidePage, 2, 'swipe right pages forward')
+    h.swipe(-1); h.advance(200)
+    assert.equal(h.program.guidePage, 1, 'swipe left pages back')
+    // At page 1 there is nowhere left to go. An ARROW here closes the guide
+    // (it is "any other key"); a swipe must not -- it reads as a scroll
+    // that hit the end, and dismissing for it would feel like a misfire.
+    h.swipe(-1); h.advance(200)
+    assert.equal(h.program.guideOpen, true, 'a swipe off the end leaves the guide up')
+    assert.equal(h.program.guidePage, 1)
+  } finally { h.shutdown() }
+})
+
+test('guide index and station pages keep their footers on the lite grid', async () => {
+  // The index footer and the station-page footer were both hardcoded to row
+  // 22 on a grid that is 22 ROWS (0-21), so both fell off entirely and the
+  // lite guide had no nav hint below page 1. Same fault page 1 already fixed.
+  const h = await boot({ mobile: true })
+  try {
+    h.powerOn()
+    assert.equal(h.term.rows, 22)
+    await openIndex(h)
+    assert.ok(h.row(h.term.rows - 1).includes('TAP CLOSE'), 'index footer lands inside the grid')
+    for (const cs of ['CIPHER', 'DISTORTION FIELD', 'HACKBACK']) {
+      assert.ok(h.find(cs) >= 0, `${cs} not truncated on the lite index`)
+    }
+    h.key('ArrowRight'); h.advance(200)
+    assert.ok(h.row(h.term.rows - 1).includes('TAP CLOSE'), 'station footer lands inside the grid')
   } finally { h.shutdown() }
 })
