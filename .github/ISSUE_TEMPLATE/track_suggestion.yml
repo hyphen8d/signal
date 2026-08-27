@@ -14,8 +14,12 @@ body:
           borrowed neon. Say why yours belongs on *that* station rather than
           on a different one. If it fits three stations equally well, it
           probably fits none of them.
-        - **One track per artist, roughly.** Stations already carrying an
-          artist will usually stay that way -- breadth is the point.
+        - **Breadth is the tiebreaker, not a quota.** An artist already on a
+          station has a higher bar, not a closed door -- about one track in
+          five across the roster is a second or third from someone already
+          there, and CIPHER alone carries four Prodigy tracks. So propose the
+          banger. Just tell me what it does that the one already there
+          doesn't, because that's the case it has to win.
         - **It has to be on YouTube, playable, and embeddable.** Every ID on
           the roster is verified before it lands (alive, US-available,
           embeddable, the right recording and not a live take or an edit).
@@ -78,7 +82,7 @@ body:
       label: Before you file
       options:
         - label: >
-            I've checked stations.md -- this artist isn't already on the
+            I've checked stations.md -- this exact track isn't already on the
             station I'm suggesting it for.
           required: false
         - label: >
