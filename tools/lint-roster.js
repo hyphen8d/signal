@@ -29,6 +29,12 @@
 //     apart so two carriers can never both be inside lock range at once
 //   - no YouTube ID appears twice across the whole roster (secret included)
 //   - every track has a title and artist
+//   - README's roster sentence still matches the roster: station count, track
+//     total, the per-station min-max, and the secret-station total. It had
+//     already drifted once (said 371 for a 377-track roster), and the guide's
+//     station index computes the same figure live -- so the README was the
+//     only copy free to be wrong. See CLAUDE.md's design-record note: where
+//     something must live in two places, one of them has to assert they agree.
 
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -82,6 +88,47 @@ export async function lintRoster() {
   for (let i = 1; i < sorted.length; i++) {
     const gap = sorted[i].freq - sorted[i - 1].freq
     if (gap < LOCK_THRESHOLD * 2) problems.push(`${sorted[i - 1].callsign} and ${sorted[i].callsign} are only ${gap.toFixed(1)} apart (min ${LOCK_THRESHOLD * 2})`)
+  }
+  // 2026-08-27 -- README's roster sentence is four claims about numbers that
+  // live in stations.js, and it had already drifted: it read "371 tracks
+  // total" for a roster that was 377 by then, corrected by hand in the mobile
+  // pass. The guide's own station index computes the same figure live, so the
+  // two disagreed on a public page while one of them was right by
+  // construction.
+  //
+  // Rather than correct it again and wait for the next curation pass to break
+  // it, this is the assertion CLAUDE.md's design-record note asks for
+  // whenever something must live in two places: make one of them check. A
+  // roster edit that changes any of these four now fails lint with the number
+  // to write, which is a better prompt than remembering.
+  //
+  // A problem rather than a warning on purpose. It is the landing page of a
+  // public repo making a factual claim about the product, and the fix is
+  // typing a different number.
+  const readmePath = path.join(here, '..', 'README.md')
+  const readme = readFileSync(readmePath, 'utf8')
+  const claim = /(\d+)\s+stations,\s+(\d+)\s+tracks total\s*\((\d+)-(\d+)\s+per station\b[^)]*carrying\s+(\d+)\s+more/.exec(readme)
+  if (!claim) {
+    // Deliberately loud. If the sentence was reworded, this rule stops
+    // checking anything at all and silently passes forever -- the exact
+    // failure mode it exists to prevent -- so a miss is reported, not shrugged
+    // off. Update the pattern above alongside the prose.
+    problems.push('README: could not find the "N stations, N tracks total (N-N per station ... carrying N more)" roster sentence -- if it was reworded, update the regex in lint-roster.js so this keeps checking')
+  } else {
+    const counts = STATIONS.map((s) => s.tracks.length)
+    const expect = {
+      stations: STATIONS.length,
+      total: counts.reduce((n, c) => n + c, 0),
+      min: Math.min(...counts),
+      max: Math.max(...counts),
+      secret: SECRET_STATIONS.reduce((n, s) => n + s.tracks.length, 0),
+    }
+    const got = {
+      stations: +claim[1], total: +claim[2], min: +claim[3], max: +claim[4], secret: +claim[5],
+    }
+    for (const k of ['stations', 'total', 'min', 'max', 'secret']) {
+      if (got[k] !== expect[k]) problems.push(`README roster sentence: ${k} says ${got[k]}, roster has ${expect[k]}`)
+    }
   }
   return { problems, warnings, stations: all.length, tracks: all.reduce((n, s) => n + s.tracks.length, 0) }
 }
