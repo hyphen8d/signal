@@ -1571,7 +1571,33 @@ export default {
         this.loadTrack(track, { midSong: true })
       }
     }
-    this.setPlayState(s, 'buffering')
+    // 2026-08-27 -- was an unconditional setPlayState(s, 'buffering'), which
+    // is a lie nothing ever comes back to correct. On the primedFresh path
+    // above there is no load here at all: _primeStationAudio() cued the
+    // track at the START of the ~330ms dial sweep, and if CUED -> seek ->
+    // playVideo -> PLAYING completes inside that window (it does), the
+    // PLAYING event has already been and gone by the time we get here. It
+    // does not fire twice, so the readout sat on BUFFERING... for the whole
+    // track while the progress bar next to it counted up -- the two halves
+    // of one row contradicting each other. Found with the harness's fake
+    // player the day it was built.
+    //
+    // Asking the player beats tracking it ourselves: the PLAYING that
+    // arrives mid-sweep lands while mode is still 'seeking', and
+    // setPlayState() nulls anything that arrives unlocked, so this.playState
+    // is not a record of it. And a player still genuinely working (real
+    // YouTube reports BUFFERING for a beat after playVideo) falls through to
+    // 'buffering' exactly as before and gets its own PLAYING event later --
+    // this only declines to overwrite a state the player has already
+    // reached.
+    // Short-circuited on this.player deliberately: `YT` is the IFrame API's
+    // own global and does not exist at all until it has loaded, so touching
+    // YT.PlayerState unconditionally throws on every path that has no
+    // player -- which is most of them early on, and all of them in a browser
+    // where the API never arrives.
+    const alreadyPlaying = !!(this.ready && this.player && this.player.getPlayerState &&
+      this.player.getPlayerState() === YT.PlayerState.PLAYING)
+    this.setPlayState(s, alreadyPlaying ? 'playing' : 'buffering')
     saveSignalState(this)
   },
   // [B] back (14th pass) -- pops the most recently locked station off

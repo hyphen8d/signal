@@ -154,6 +154,11 @@ layout. Each boot gets fresh module instances (unique `?v=`). Add a scenario
 here when you change a state transition; add to `tests/helpers.test.mjs` for
 pure helpers; `tests/roster.test.mjs` runs `tools/lint-roster.js`.
 
+One trap when writing scenarios: **a fresh boot lands on a random station**,
+and pressing the preset you are already on is a no-op flash rather than a
+re-tune — so a hardcoded `h.key('3')` quietly does nothing about one run in
+nine. Ask `otherPreset(h)` for a digit that isn't the current station.
+
 `boot({ player: true })` adds a **fake YouTube player** — the real API surface
 is ten methods and three events, so the harness models it rather than stubbing
 it: position runs on the same fake clock, `seekTo`/`pause`/`play` move it, and

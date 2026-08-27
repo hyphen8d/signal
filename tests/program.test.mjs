@@ -738,6 +738,20 @@ test('a restored session seeds the speaker bus at its saved volume (issue #18)',
 // cannot act. Both halves had drifted -- see VISUALIZER_KEYS in constants.js
 // and the [B]/[N]/[V]/[A] cases in key().
 
+/** A preset digit for some station OTHER than the one already locked.
+ *  A fresh visitor's boot lands on a RANDOM station, and pressing the preset
+ *  you are already on is deliberately a no-op flash rather than a re-tune
+ *  (see presetTune's first branch) -- so a hardcoded '3' quietly does nothing
+ *  about one run in nine, which is a flaky test rather than a failing one.
+ *  The suite has hit this before: see the cancelled-CRT-ramp test's own
+ *  `if (h.program.lockedStation === target)` dance. */
+const otherPreset = async (h, avoid = []) => {
+  const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+  const taken = new Set([h.program.lockedStation, ...avoid])
+  const i = STATION_PRESET_ORDER.findIndex((st) => !taken.has(st))
+  return String(i + 1)
+}
+
 /** Arrow the dial off whatever the boot locked onto, into plain SEEKING. */
 const seekOffStation = (h) => {
   for (let i = 0; i < 20 && h.program.mode !== 'seeking'; i++) { h.key('ArrowRight'); h.advance(120) }
@@ -776,9 +790,9 @@ test('[B] still steps back when there IS history', async () => {
   const h = await boot({})
   try {
     h.powerOn()
-    h.key('3'); h.advance(2500)
+    h.key(await otherPreset(h)); h.advance(2500)
     const first = h.program.lockedStation
-    h.key('5'); h.advance(2500)
+    h.key(await otherPreset(h)); h.advance(2500)
     assert.notEqual(h.program.lockedStation, first, 'test setup: two different stations')
     h.key('b'); h.advance(2500)
     assert.equal(h.program.lockedStation, first, '[B] returned to the previous station')
@@ -790,7 +804,7 @@ test('the visualizer clicks only for keys it actually answers', async () => {
   const h = await boot({})
   try {
     h.powerOn()
-    h.key('3'); h.advance(3000)
+    h.key(await otherPreset(h)); h.advance(3000)
     h.key('v'); h.advance(1600)
     assert.equal(h.program.visualizerActive, true, 'test setup: in the visualizer')
     // The footer legend's own set, plus volume and the exits.
@@ -860,7 +874,7 @@ test('mobile: a skip swipe off-station answers, since touch has no click at all'
 const inVisualizer = async (opts = {}) => {
   const h = await boot({ player: true, ...opts })
   h.powerOn()
-  h.key('3')
+  h.key(await otherPreset(h))
   h.advance(3000)
   await h.flush()   // the LRCLIB chain is a real promise chain
   h.advance(100)
@@ -957,6 +971,70 @@ test('the lyrics view closes itself when a skip lands on a track without lyrics'
     await h.flush()       // ...and now resolves 'unavailable'
     h.advance(300)
     assert.equal(h.program.lyricsViewOpen, false, 'the view stood down on its own')
+  } finally { h.shutdown() }
+})
+
+test('a preset landing on an already-playing primed track does not claim BUFFERING', async () => {
+  // presetTune() primes the audio at the start of its dial sweep, so by the
+  // time tryLock() runs ~330ms later the track can already have gone
+  // CUED -> seek -> playVideo -> PLAYING. That event does not fire twice,
+  // so an unconditional "buffering" here was permanent: the readout said
+  // BUFFERING... for the whole track while the progress bar beside it
+  // counted up.
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.key(await otherPreset(h))
+    h.advance(3000)
+    assert.equal(h.program.mode, 'locked', 'test setup: locked')
+    assert.equal(h.player.getPlayerState(), 1, 'test setup: the primed track really is playing')
+
+    assert.equal(h.program.playState, 'playing', 'the readout matches the player')
+    assert.equal(h.find('BUFFERING'), -1, 'and BUFFERING... is nowhere on screen')
+
+    // The half that made it obvious: the position keeps moving either way.
+    const at = h.player.getCurrentTime()
+    h.advance(2000)
+    assert.ok(h.player.getCurrentTime() > at + 1.5, 'the track is genuinely running')
+    assert.equal(h.find('BUFFERING'), -1, 'still not buffering two seconds later')
+  } finally { h.shutdown() }
+})
+
+test('a lock with nothing playing yet still says BUFFERING', async () => {
+  // The other half of the same fix: it must not have become "never say
+  // buffering". Two ways to have no PLAYING to report -- no player at all
+  // (every path before the IFrame API lands, and every browser where it
+  // never does) and a player that is still working. Both keep the honest
+  // readout, and the real one's own PLAYING event corrects it after.
+  const noPlayer = await boot({})
+  try {
+    noPlayer.powerOn()
+    noPlayer.key(await otherPreset(noPlayer))
+    noPlayer.advance(3000)
+    assert.equal(noPlayer.program.playState, 'buffering', 'no player: still buffering')
+  } finally { noPlayer.shutdown() }
+
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    // Report CUED for the whole of the next sweep, the way a player that
+    // has not finished loading does.
+    const real = h.program.player.getPlayerState
+    h.program.player.getPlayerState = () => 5 // YT.PlayerState.CUED
+    const first = await otherPreset(h)
+    h.key(first)
+    h.advance(400) // just past the ~330ms dial sweep, so this is the lock itself
+    assert.equal(h.program.mode, 'locked', 'test setup: the sweep landed')
+    assert.equal(h.program.playState, 'buffering', 'still loading: still buffering')
+    // Asserted AT the lock rather than seconds later on purpose: a player
+    // that finishes loading afterwards is supposed to flip this to playing
+    // off its own PLAYING event. The contract is what the readout says at
+    // the moment of the lock, not that it stays there.
+    // ...and once it does report PLAYING, the next lock says so.
+    h.program.player.getPlayerState = real
+    h.key(await otherPreset(h))
+    h.advance(3000)
+    assert.equal(h.program.playState, 'playing')
   } finally { h.shutdown() }
 })
 
