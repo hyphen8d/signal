@@ -63,6 +63,16 @@ export const SLEEP_STEPS = [60, 30, 15]
 // speaker isn't at.
 export const SLEEP_FADE_MS = 30_000
 
+// COMMERCIAL BREAK (2026-08-27) -- how often the player is asked whether an
+// ad is running under us, and how far the reported duration has to drift
+// from the one we were given before that counts as a different piece of
+// video. 250ms is four times a second: fast enough that a 6-second bumper
+// is not half over before the screen admits it, cheap enough that it is
+// noise next to a frame. The slack absorbs the player rounding a duration
+// it has already told us once, not a real change.
+export const BREAK_POLL_MS = 250
+export const BREAK_DURATION_SLACK = 2
+
 // 2026-08-27 (dead-feedback audit) -- the visualizer's own command set, the
 // counterpart to MAPPED_KEYS above. isMappedKey() returned true for EVERY key
 // while the visualizer was up, which was right when any key woke and exited it

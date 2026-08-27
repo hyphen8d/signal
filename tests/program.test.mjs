@@ -1153,6 +1153,169 @@ test('a sleep deadline that lands under the guide still switches the set off', a
   } finally { h.shutdown() }
 })
 
+// --- commercial break (2026-08-27) ----------------------------------------
+//
+// What these prove: given a player reporting an advert the way the IFrame
+// API is understood to report one, SIGNAL stops claiming the track is
+// playing. What they cannot prove is that real YouTube reports it that way
+// -- there is no ad in the harness, and the fake player only says what the
+// harness told it to. That half needs a live preroll and SIGNAL_BREAK_DEBUG.
+
+/** Locked, playing, with the CUED baseline the detector needs. */
+const lockedPlaying = async () => {
+  const h = await boot({ player: true })
+  h.powerOn()
+  h.key(await otherPreset(h))
+  h.advance(3000)
+  assert.equal(h.program.mode, 'locked', 'test setup: locked')
+  assert.ok(h.program._trackDuration > 0, 'test setup: the track baseline was captured at CUED')
+  return h
+}
+
+test('an advert takes the NOW PLAYING readout instead of wearing the track title', async () => {
+  const h = await lockedPlaying()
+  try {
+    const title = h.program.currentTrack.title
+    assert.ok(h.find(title) >= 0, 'test setup: the track is on screen')
+
+    h.player.startAd(15)
+    h.advance(600)
+    assert.equal(h.program.breakActive, true, 'the break was noticed')
+    assert.ok(h.find('STATION BREAK') >= 0, 'and says so where the track was')
+    assert.ok(h.find('COMMERCIAL') >= 0, 'the play state names it too')
+    assert.equal(h.find(title), -1, 'the track title is not claiming to be playing')
+    assert.ok(h.row(13).includes(h.program.lockedStation.callsign), 'the station promises to come back')
+
+    h.player.endAd()
+    h.advance(600)
+    assert.equal(h.program.breakActive, false, 'and it stands down after')
+    assert.ok(h.find(title) >= 0, 'the track comes back')
+    assert.equal(h.find('COMMERCIAL'), -1)
+  } finally { h.shutdown() }
+})
+
+test('a PLAYING event during a break cannot put "> PLAYING" back over the advert', async () => {
+  // The label is derived from breakActive rather than stored in
+  // this.playState precisely because playState belongs to the player, and
+  // the player fires PLAYING during adverts.
+  const h = await lockedPlaying()
+  try {
+    h.player.startAd(15)
+    h.advance(600)
+    assert.equal(h.program.breakActive, true)
+    h.program.setPlayState(h.screen, 'playing') // exactly what the event does
+    h.advance(100)
+    assert.equal(h.find('> PLAYING'), -1, 'the readout still names the break')
+    assert.ok(h.find('COMMERCIAL') >= 0)
+  } finally { h.shutdown() }
+})
+
+test('the break reads the same from inside the visualizer', async () => {
+  const h = await lockedPlaying()
+  try {
+    h.key('v'); h.advance(1600)
+    assert.equal(h.program.visualizerActive, true, 'test setup: in the visualizer')
+    h.player.startAd(15)
+    h.advance(600)
+    assert.ok(h.find('STATION BREAK') >= 0, 'the footer carries it')
+    h.key('e'); h.advance(600)
+    assert.ok(h.find('STATION BREAK') >= 0, 'and so does the main screen on the way out')
+  } finally { h.shutdown() }
+})
+
+test('the guide comes down onto the break, not onto the track it covered', async () => {
+  const h = await lockedPlaying()
+  try {
+    h.player.startAd(30)
+    h.advance(600)
+    h.key('g'); h.advance(300)
+    assert.equal(h.program.guideOpen, true, 'test setup: the guide is up')
+    h.key('x'); h.advance(600) // any key closes it
+    assert.equal(h.program.guideOpen, false)
+    assert.ok(h.find('STATION BREAK') >= 0, 'redrawLockState restored the break')
+  } finally { h.shutdown() }
+})
+
+test('the detector says no rather than guessing when it has nothing to go on', async () => {
+  // The bias that matters: a wrong BREAK over real music would be a new lie
+  // in place of the old one. With no baseline and a matching video id there
+  // is no positive signal, so it must stay quiet -- even though the player
+  // is playing and the app cannot prove anything either way.
+  const h = await lockedPlaying()
+  try {
+    h.program._trackDuration = null
+    h.advance(600)
+    assert.equal(h.program.breakActive, false, 'no baseline, no claim')
+    // ...and a duration that matches the baseline is not an advert either.
+    h.program._trackDuration = h.player.getDuration()
+    h.advance(600)
+    assert.equal(h.program.breakActive, false)
+  } finally { h.shutdown() }
+})
+
+test('a track change is not an advert, however stale the id it reports', async () => {
+  // The regression that a live capture found and no test could have: real
+  // YouTube answers getVideoData() with the OUTGOING track's id for a beat
+  // after loadVideoById(), while currentTrack has already moved on. That is
+  // an id mismatch -- signal 1 -- arriving with no advert anywhere near it,
+  // and it put STATION BREAK over five ordinary [N] skips in about forty.
+  //
+  // The gate is the player state: a transition sits at UNSTARTED, an advert
+  // plays. Asserted on a REAL roster id rather than a sentinel, because the
+  // false positives all named actual tracks -- one HACKBACK song claiming
+  // to be a commercial for the next one.
+  const h = await lockedPlaying()
+  try {
+    const outgoing = h.program.currentTrack.youtubeId
+    h.key('n')
+    h.advance(400)
+    const incoming = h.program.currentTrack.youtubeId
+    assert.notEqual(incoming, outgoing, 'test setup: [N] actually moved the track on')
+    h.player.beginTransition(outgoing)
+    h.advance(1200)
+    assert.equal(
+      h.program.breakActive, false,
+      'a stale id from the outgoing track is a load in flight, not a commercial',
+    )
+    assert.ok(h.find('STATION BREAK') < 0, 'and nothing said so on the screen')
+    // The gate must not cost a real advert: once the player is PLAYING and
+    // the id is genuinely foreign, the break still lands.
+    h.player.endTransition()
+    h.player.startAd(30)
+    h.advance(600)
+    assert.equal(h.program.breakActive, true, 'a playing advert still reads as one')
+  } finally { h.shutdown() }
+})
+
+test('SIGNAL_FORCE_BREAK shows the break on demand, for looking at it', async () => {
+  const h = await lockedPlaying()
+  try {
+    globalThis.SIGNAL_FORCE_BREAK = true
+    h.advance(600)
+    assert.equal(h.program.breakActive, true)
+    assert.ok(h.find('STATION BREAK') >= 0)
+  } finally {
+    delete globalThis.SIGNAL_FORCE_BREAK
+    h.shutdown()
+  }
+})
+
+test('tuning away ends the break rather than carrying it to the next station', async () => {
+  const h = await lockedPlaying()
+  try {
+    h.player.startAd(30)
+    h.advance(600)
+    assert.equal(h.program.breakActive, true, 'test setup: mid-break')
+    seekOffStation(h)                     // arrow away from it
+    assert.equal(h.program.breakActive, false, 'the break went with the station')
+    h.player.endAd()                      // a fresh load ends the advert, as it does live
+    h.key(await otherPreset(h)); h.advance(3000)
+    assert.equal(h.program.breakActive, false)
+    assert.equal(h.find('STATION BREAK'), -1, 'the new lock is not wearing it')
+    assert.ok(h.find(h.program.currentTrack.title) >= 0, 'it is playing a track')
+  } finally { h.shutdown() }
+})
+
 /** Open the guide and step to the station index (page 2). */
 async function openIndex(h) {
   h.key('g'); h.advance(200)
