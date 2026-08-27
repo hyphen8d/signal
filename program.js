@@ -19,7 +19,7 @@
 
 const V = globalThis.SIGNAL_BUILD ?? ''
 import { BOLD, BRIGHT, DIM, FAINT, MUTED, NORMAL } from './src/term.js'
-const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent, playKeyClick, playModeThump, playPanelSound, playPowerOnSound, playPresetClick, playPresetWhoosh, playRelayThunk, playSeekStatic, playStaticBurst, setSpeakerMuted, setStaticIntensity, startStaticNoise, startTubeHum, stopStaticNoise, stopTubeHum } = await import(`./audio/sfx.js?v=${V}`)
+const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent, playKeyClick, playModeThump, playPanelSound, playPowerOnSound, playPresetClick, playPresetWhoosh, playRelayThunk, playSeekStatic, playStaticBurst, setSpeakerLevel, setStaticIntensity, startStaticNoise, startTubeHum, stopStaticNoise, stopTubeHum } = await import(`./audio/sfx.js?v=${V}`)
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
@@ -427,9 +427,12 @@ export default {
     // survived the restore above (or mobile's fresh-visit default), so the
     // very first WebAudio sound of a muted session is already silent. The
     // bus doesn't exist yet this early (it's lazy, see speakerOut()), which
-    // is exactly why setSpeakerMuted tracks the flag module-level: the bus
-    // is born muted when some later sound first creates it.
-    setSpeakerMuted(this.muted)
+    // is exactly why setSpeakerLevel tracks the flags module-level: the bus
+    // is born at the restored level when some later sound first creates it.
+    // 2026-08-27 (#18): the restored VOLUME is seeded the same way and for
+    // the same reason -- a session saved at 10 shouldn't have its first
+    // ident arrive at full level before anyone touches the keys.
+    setSpeakerLevel(this.muted, this.volume)
     // 28th pass -- sometimes it didn't automatically seek to a
     // station and the user had to figure out to use arrows or hit S -- a
     // first-ever visit (no saved session, or a save that somehow had no
@@ -1226,7 +1229,13 @@ export default {
     // speaker path too, same as toggleMute() does. Unconditional (it's a
     // no-op when already unmuted) so the bus can never be left closed with
     // this.muted false.
-    setSpeakerMuted(this.muted)
+    // 2026-08-27 (#18): and this is now the call that makes the volume keys
+    // actually move the synthesized side of the set at all -- before it,
+    // they moved only the YouTube player, so everything on the bus
+    // (idents, liners, static, the lock tone) played at full level however
+    // far down the slider was. Note it runs BEFORE the playDetent() below,
+    // which is exactly why the detent had to come off the bus.
+    setSpeakerLevel(this.muted, this.volume)
     if (this.ready && this.player) {
       this.applyVolume()
       if (!this.muted) this.player.unMute()
@@ -1256,7 +1265,8 @@ export default {
     // survives: the tube hum (chassis) and the relay thunk below (the
     // switch's own mechanism, which is also why it still plays here while
     // muted -- and must, or un-muting would be a silent action).
-    setSpeakerMuted(this.muted)
+    // Un-muting restores the bus to the CURRENT volume, not to 1 (#18).
+    setSpeakerLevel(this.muted, this.volume)
     this.drawVolume(s)
     // 38th pass: mute is a switch, so it gets a relay rather than a beep.
     playRelayThunk(this.muted)

@@ -38,23 +38,70 @@ export function audioCtx() {
 //                          hard-mute switch still clunks, and without it
 //                          un-muting would give no feedback at all.
 //   playPowerOn/DownSound() -- the power switch mechanism, same logic.
+//   playDetent()        -- the volume knob's own notch (2026-08-27, with
+//                          issue #18). Same argument as the relay clunk,
+//                          and the fix below forces the question: once the
+//                          bus carries volume, a detent ON the bus is
+//                          silenced by the very keypress that produced it,
+//                          so turning down to 0 would confirm itself with
+//                          nothing. A stepped pot's detent is mechanical
+//                          and upstream of the amp anyway.
+//                          playKeyClick() stays ON the bus deliberately --
+//                          it has no such self-silencing problem, and the
+//                          50th pass put it there on purpose.
 // Everything else (static bed, seek hiss, idents, lock tone, key clicks,
-// detents, boot ticks, band bump, panel sweep, mode thump, preset whoosh,
+// boot ticks, band bump, panel sweep, mode thump, preset whoosh,
 // static bursts) is speaker audio and dies with the speaker.
-// Lazy like actx itself; speakerMuted is tracked module-level so a bus
-// created AFTER a persisted muted state was restored still comes up muted.
+// 2026-08-27 (issue #18) -- the bus carries VOLUME as well as mute. It was
+// a mute-only switch (0 or 1), so the volume keys moved the YouTube player
+// and nothing else: with the slider at 0 a liner drop still announced
+// itself at full voice level over a set the visitor had turned all the way
+// down. Everything on this bus had the same bug -- idents, the static bed,
+// seek hiss, the lock tone -- the liner is just the loudest way to hear it.
+//
+// Volume belongs HERE rather than in one guard per sound for the same
+// reason mute did (see above): it is the pot in the amp path, and a real
+// set's knob rides everything downstream of it at once. The carve-outs
+// listed above stay bypassed and so stay audible at 0, which is correct --
+// the chassis hum and the switch mechanisms are not coming out of the
+// speaker.
+//
+// Scaling is LINEAR in `volume/100`, deliberately matching what the player
+// side does (applyVolume -> setVolume, a linear amplitude scale on the
+// media element). Both paths therefore ride the same fraction and the mix
+// balance between a track and the sounds over it holds at every knob
+// position; a perceptual curve on one side only would make the sfx swim
+// against the music as you turn it.
+//
+// Lazy like actx itself; both flags are tracked module-level so a bus
+// created AFTER a persisted muted/volume state was restored still comes up
+// at the restored level.
 export let speakerBusNode = null
 export let speakerMuted = false
+export let speakerLevel = 1 // the resolved bus gain, 0..1
+/** The one place the two inputs become a bus gain. Pure and exported so
+ *  the mapping is testable without an AudioContext -- there is none in the
+ *  Node suite, which is why every sound in this file sits in a try/catch.
+ *  `volume` is the 0-100 the program keeps; out-of-range values clamp
+ *  rather than invert the bus. */
+export function speakerGain(muted, volume) {
+  if (muted) return 0
+  const v = Number.isFinite(volume) ? volume : 100
+  return Math.min(100, Math.max(0, v)) / 100
+}
 export function speakerOut(ctx) {
   if (!speakerBusNode) {
     speakerBusNode = ctx.createGain()
-    speakerBusNode.gain.value = speakerMuted ? 0 : 1
+    speakerBusNode.gain.value = speakerLevel
     speakerBusNode.connect(ctx.destination)
   }
   return speakerBusNode
 }
-export function setSpeakerMuted(muted) {
+/** Both inputs together, so a caller can never move one and leave the bus
+ *  disagreeing with the other. Call on every mute OR volume change. */
+export function setSpeakerLevel(muted, volume) {
   speakerMuted = muted
+  speakerLevel = speakerGain(muted, volume)
   if (!speakerBusNode || !actx) return
   try {
     const t = actx.currentTime
@@ -62,7 +109,7 @@ export function setSpeakerMuted(muted) {
     // 0. Short enough to feel instant, long enough not to click.
     speakerBusNode.gain.cancelScheduledValues(t)
     speakerBusNode.gain.setValueAtTime(speakerBusNode.gain.value, t)
-    speakerBusNode.gain.linearRampToValueAtTime(muted ? 0 : 1, t + 0.015)
+    speakerBusNode.gain.linearRampToValueAtTime(speakerLevel, t + 0.015)
   } catch (e) {}
 }
 // Static burst for manual seeking (11th pass -- static was needed
@@ -381,7 +428,10 @@ export function playBootTick(kind, progress = 0) {
 /** Volume detent -- one notch of a stepped pot. Deliberately duller and
  *  lower than playKeyClick(), which is already firing on the same
  *  keypress: the click is the key under your finger, this is the knob it
- *  is turning. */
+ *  is turning.
+ *  Straight to ctx.destination, NOT the speaker bus -- see the bypass list
+ *  at the top of this file. The knob is mechanism, not speaker audio, and
+ *  on the bus it would mute itself at the one notch that reaches 0. */
 export function playDetent() {
   try {
     const ctx = audioCtx()
@@ -399,7 +449,7 @@ export function playDetent() {
     const gain = ctx.createGain()
     gain.gain.setValueAtTime(0.16, t)
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03)
-    src.connect(filter).connect(gain).connect(speakerOut(ctx))
+    src.connect(filter).connect(gain).connect(ctx.destination)
     src.start(t)
   } catch (e) {}
 }

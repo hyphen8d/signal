@@ -155,6 +155,13 @@ export async function boot({ saved = null, mobile = false, tap = null } = {}) {
 
   const h = {
     screen, term, crt, program, config,
+    /** This boot's `?v=` tag. Every app module is instanced per full URL
+     *  (see CLAUDE.md), so a test that needs to read module-level state the
+     *  booted program is actually using -- rather than a second, unrelated
+     *  copy -- must import it as `../x.js?v=${h.tag}`. That is the only way
+     *  to observe the WebAudio side from Node, where there is no
+     *  AudioContext and every sound silently no-ops. */
+    tag,
     get now() { return now },
     /** Dispatch a keydown the way screen.js would. */
     key(key, extra = {}) {
