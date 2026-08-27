@@ -1116,6 +1116,10 @@ export default {
       const state = this.playbackState()
       this.mobileDrawFieldReadout(s, state)
       this.mobileDrawMuteSwitch(s)
+      // 2026-08-27 -- the hint rows read this.muted now (see
+      // mobileDrawHints), so they have to refresh with the switch above
+      // rather than only on a full frame redraw. Same flag, same beat.
+      this.mobileDrawHints(s)
       return
     }
     const { term } = s

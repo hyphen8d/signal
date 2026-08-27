@@ -8,10 +8,16 @@
 //
 // Rules (each cites where it comes from):
 //   - exactly 9 public stations (README "Station count": the 1-9 preset keys)
-//   - tagline fits the guide's index line (README "Taglines"). That line is
-//     `[NN] G  FFF.F   CALLSIGN -- tagline`, truncated at term.cols - 8 = 72,
-//     so the real limit is 52 minus the callsign length (35 was the old flat
-//     rule -- the safe number for the longest callsign; relaxed 2026-08-25)
+//   - tagline fits the guide index's LANE column (README "Taglines").
+//     History: a flat 35 (safe for the longest callsign), then 2026-08-25's
+//     `52 - callsign.length`, which was right while the index drew one joined
+//     line -- a long callsign ate the tagline's budget because they shared a
+//     row. 2026-08-27 the index moved to fixed column stops, so they no
+//     longer share anything: the LANE column starts at x=37 on the 80-col
+//     grid and runs to the edge, giving every station the same flat 43
+//     regardless of callsign. Short-callsign stations lose a little headroom
+//     (CIPHER could have had 46), long-callsign ones gain a lot
+//     (DISTORTION FIELD had 36). See GUIDE_INDEX_COLS in ui/guide.js.
 //   - at least 10 tracks per station (README "Adding tracks")
 //   - 4 ident tones per station (10th pass: "station IDs set to 4 tones long")
 //   - every dial glyph actually exists in fonts/ter-u16n.bdf (an unmapped
@@ -23,6 +29,12 @@
 //     apart so two carriers can never both be inside lock range at once
 //   - no YouTube ID appears twice across the whole roster (secret included)
 //   - every track has a title and artist
+//   - README's roster sentence still matches the roster: station count, track
+//     total, the per-station min-max, and the secret-station total. It had
+//     already drifted once (said 371 for a 377-track roster), and the guide's
+//     station index computes the same figure live -- so the README was the
+//     only copy free to be wrong. See CLAUDE.md's design-record note: where
+//     something must live in two places, one of them has to assert they agree.
 
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -31,6 +43,13 @@ import path from 'node:path'
 const here = path.dirname(fileURLToPath(import.meta.url))
 globalThis.SIGNAL_BUILD ??= 'lint'
 globalThis.matchMedia ??= () => ({ matches: false })
+
+// The guide index's LANE column: 80 - GUIDE_INDEX_COLS.tagline (37). Kept as
+// a literal rather than imported from ui/guide.js on purpose -- that module
+// pulls in the WebAudio sfx chain at load, which Node has no business
+// touching for a roster lint. tests/program.test.mjs asserts the two agree,
+// so the duplication cannot drift silently.
+export const TAGLINE_MAX = 43
 
 export async function lintRoster() {
   const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=lint')
@@ -48,8 +67,8 @@ export async function lintRoster() {
   for (const st of all) {
     const who = `${st.callsign} (${st.id})`
     if (!st.tagline) problems.push(`${who}: no tagline`)
-    else if (!st.secret && st.tagline.length > 52 - st.callsign.length) {
-      problems.push(`${who}: tagline is ${st.tagline.length} chars; the guide index line only fits ${52 - st.callsign.length} next to this callsign`)
+    else if (!st.secret && st.tagline.length > TAGLINE_MAX) {
+      problems.push(`${who}: tagline is ${st.tagline.length} chars; the guide index's LANE column fits ${TAGLINE_MAX}`)
     }
     if (!st.tracks || st.tracks.length < 10) problems.push(`${who}: only ${st.tracks?.length ?? 0} tracks (min 10)`)
     if (!Array.isArray(st.ident) || st.ident.length !== 4) problems.push(`${who}: ident has ${st.ident?.length ?? 0} tones (want 4)`)
@@ -69,6 +88,47 @@ export async function lintRoster() {
   for (let i = 1; i < sorted.length; i++) {
     const gap = sorted[i].freq - sorted[i - 1].freq
     if (gap < LOCK_THRESHOLD * 2) problems.push(`${sorted[i - 1].callsign} and ${sorted[i].callsign} are only ${gap.toFixed(1)} apart (min ${LOCK_THRESHOLD * 2})`)
+  }
+  // 2026-08-27 -- README's roster sentence is four claims about numbers that
+  // live in stations.js, and it had already drifted: it read "371 tracks
+  // total" for a roster that was 377 by then, corrected by hand in the mobile
+  // pass. The guide's own station index computes the same figure live, so the
+  // two disagreed on a public page while one of them was right by
+  // construction.
+  //
+  // Rather than correct it again and wait for the next curation pass to break
+  // it, this is the assertion CLAUDE.md's design-record note asks for
+  // whenever something must live in two places: make one of them check. A
+  // roster edit that changes any of these four now fails lint with the number
+  // to write, which is a better prompt than remembering.
+  //
+  // A problem rather than a warning on purpose. It is the landing page of a
+  // public repo making a factual claim about the product, and the fix is
+  // typing a different number.
+  const readmePath = path.join(here, '..', 'README.md')
+  const readme = readFileSync(readmePath, 'utf8')
+  const claim = /(\d+)\s+stations,\s+(\d+)\s+tracks total\s*\((\d+)-(\d+)\s+per station\b[^)]*carrying\s+(\d+)\s+more/.exec(readme)
+  if (!claim) {
+    // Deliberately loud. If the sentence was reworded, this rule stops
+    // checking anything at all and silently passes forever -- the exact
+    // failure mode it exists to prevent -- so a miss is reported, not shrugged
+    // off. Update the pattern above alongside the prose.
+    problems.push('README: could not find the "N stations, N tracks total (N-N per station ... carrying N more)" roster sentence -- if it was reworded, update the regex in lint-roster.js so this keeps checking')
+  } else {
+    const counts = STATIONS.map((s) => s.tracks.length)
+    const expect = {
+      stations: STATIONS.length,
+      total: counts.reduce((n, c) => n + c, 0),
+      min: Math.min(...counts),
+      max: Math.max(...counts),
+      secret: SECRET_STATIONS.reduce((n, s) => n + s.tracks.length, 0),
+    }
+    const got = {
+      stations: +claim[1], total: +claim[2], min: +claim[3], max: +claim[4], secret: +claim[5],
+    }
+    for (const k of ['stations', 'total', 'min', 'max', 'secret']) {
+      if (got[k] !== expect[k]) problems.push(`README roster sentence: ${k} says ${got[k]}, roster has ${expect[k]}`)
+    }
   }
   return { problems, warnings, stations: all.length, tracks: all.reduce((n, s) => n + s.tracks.length, 0) }
 }
