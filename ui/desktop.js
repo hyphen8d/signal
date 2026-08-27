@@ -976,13 +976,26 @@ export default {
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, PLAYBACK_Y, ' ')
     if (this.mode !== 'locked') return
 
+    const segs = 28
     let barPart = ''
-    if (this.ready && this.player) {
+    if (this.breakActive) {
+      // 22nd pass -- the last contradiction left on this row. The label an
+      // inch to the right says COMMERCIAL while the bar went on drawing the
+      // player's own clock: a progress bar creeping through a track that
+      // has not started, beside the word admitting it hasn't. And the
+      // numbers were never even describing the break -- during a hold the
+      // player reports the REQUESTED track's time and duration, which is
+      // the exact reading that killed the detector. There is nothing
+      // honest to plot, so it plots nothing. The bar keeps its shape and
+      // its width so the row doesn't jump at the moment content arrives --
+      // the handover should be the title lighting up, not the furniture
+      // moving.
+      barPart = `[${'·'.repeat(segs)}] -:-- / -:--`
+    } else if (this.ready && this.player) {
       let cur, dur
       try { cur = this.player.getCurrentTime(); dur = this.player.getDuration() } catch (e) {}
       if (dur && isFinite(dur) && dur > 0) {
         const fmt = fmtTime
-        const segs = 28
         const filled = Math.round(Math.min(1, cur / dur) * segs)
         let bar = ''
         for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '·'

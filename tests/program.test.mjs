@@ -1250,6 +1250,47 @@ test('content starting takes the break down and hands over the track', async () 
   } finally { h.shutdown() }
 })
 
+test('the position bar stands down instead of running under the break', async () => {
+  // The last contradiction on this row, and the reason it is worth a test:
+  // COMMERCIAL sat an inch from a progress bar still creeping through a
+  // track that had not started. Asserted on the break's own row rather than
+  // the whole grid, since the VOL meter fills blocks too.
+  const h = await lockedPlaying()
+  try {
+    skipIntoAd(h)
+    h.advance(HOLD_MS + 600)
+    const y = h.find('COMMERCIAL')
+    assert.ok(y >= 0, 'test setup: mid-break')
+    const row = h.row(y)
+    assert.ok(row.includes('-:-- / -:--'), `the bar admits it knows no time: ${row}`)
+    assert.ok(!row.includes('\u2588'), `nothing is filled in: ${row}`)
+    assert.ok(!/\d:\d\d/.test(row), `and no real clock is shown: ${row}`)
+  } finally { h.shutdown() }
+})
+
+test('the lite bar stands down too, and its icon stops claiming playback', async () => {
+  // Mobile had the same lie plus one of its own: the icon is keyed on
+  // this.playState, which knows nothing about a break, so a hold drew a
+  // running bar under a ">" while the box above it read STATION BREAK.
+  const h = await boot({ player: true, mobile: true })
+  try {
+    h.powerOn()
+    h.advance(4000)
+    assert.equal(h.program.mode, 'locked', 'test setup: locked')
+    const y = h.program._mLayout.npProgress
+    assert.ok(/\d:\d\d\/\d:\d\d/.test(h.row(y)), 'test setup: a real clock while playing')
+    h.player.startAd()
+    h.touch(100, 200, 100, 60)          // vertical swipe == [N]
+    h.advance(400)
+    h.advance(HOLD_MS + 600)
+    assert.equal(h.program.breakActive, true, 'test setup: mid-break')
+    const row = h.row(y)
+    assert.ok(row.includes('-:--/-:--'), `lite bar knows no time: ${row}`)
+    assert.ok(!row.includes('\u2588'), `nothing filled: ${row}`)
+    assert.ok(!row.includes('>'), `and the icon is not claiming playback: ${row}`)
+  } finally { h.shutdown() }
+})
+
 test('the break reads the same from inside the visualizer', async () => {
   const h = await lockedPlaying()
   try {
