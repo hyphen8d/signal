@@ -209,14 +209,29 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
       Player: function Player(id, opts) {
         const ev = (opts && opts.events) || {}
         let base = 0, startedAt = 0, playing = false, ended = false
-        let adDur = 0, adAt = 0
-        let staleId = null
+        let adHolding = false
         const pos = () => base + (playing ? (now - startedAt) / 1000 : 0)
-        const fire = (state) => setTimeout(() => ev.onStateChange && ev.onStateChange({ data: state }), 0)
+        // 22nd pass: content does not start the instant it is asked for.
+        // The live capture timed a healthy load at about a second between
+        // the cue and PLAYING, and that gap is not incidental -- it is the
+        // exact window the STATION BREAK hold has to sit through without
+        // flashing. Firing PLAYING at 0ms, as this did, made the window
+        // zero-width and any over-eager hold passed the suite unnoticed
+        // (caught by mutating BREAK_HOLD_MS to 0: the anti-flash test did
+        // not blink). Everything else fires promptly; only starting to play
+        // takes its realistic beat.
+        const START_DELAY_MS = 700
+        const fire = (state, delay = 0) => setTimeout(() => ev.onStateChange && ev.onStateChange({ data: state }), delay)
+        const firePlaying = () => fire(YT.PlayerState.PLAYING, START_DELAY_MS)
         const load = (videoId, cue) => {
           playerCalls.push(`${cue ? 'cue' : 'load'}:${videoId}`)
-          base = 0; startedAt = now; playing = !cue; ended = false
-          fire(cue ? YT.PlayerState.CUED : YT.PlayerState.PLAYING)
+          base = 0; startedAt = now; playing = !cue && !adHolding; ended = false
+          // Under an advert the requested video is loaded but never starts,
+          // so the one event the app keys on -- PLAYING -- simply does not
+          // arrive. BUFFERING is what a real preroll reports on the way in.
+          if (adHolding) fire(YT.PlayerState.BUFFERING)
+          else if (cue) fire(YT.PlayerState.CUED)
+          else firePlaying()
         }
         fake = this
         this.videoId = null
@@ -224,44 +239,41 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         this.volume = 100
         this.loadVideoById = (v) => { this.videoId = v; load(v, false) }
         this.cueVideoById = (v) => { this.videoId = v; load(v, true) }
-        this.playVideo = () => { if (!playing) { startedAt = now; playing = true; fire(YT.PlayerState.PLAYING) } }
+        this.playVideo = () => { if (!playing) { startedAt = now; playing = true; firePlaying() } }
         this.pauseVideo = () => { if (playing) { base = pos(); playing = false; fire(YT.PlayerState.PAUSED) } }
         this.seekTo = (t) => { base = Math.max(0, t); startedAt = now }
-        this.getCurrentTime = () => (adDur ? Math.min(adDur, (now - adAt) / 1000) : pos())
-        this.getDuration = () => (adDur || (this.videoId ? FAKE_DURATION : 0))
-        // 2026-08-27 -- an advert running over the top of the cued video,
-        // which is what a YouTube preroll IS: same player, same session,
-        // different piece of video underneath. Modelled the way the IFrame
-        // API is understood to report one -- duration and current time
-        // describe the AD while it runs, and getVideoData names it -- which
-        // is precisely the assumption program.js's detector rests on, so a
-        // test here proves the detector reads the model correctly and NOT
-        // that the model matches YouTube. That second half needs a real
-        // preroll; see SIGNAL_BREAK_DEBUG.
-        this.startAd = (secs = 15) => { adDur = secs; adAt = now }
-        this.endAd = () => { adDur = 0 }
-        this.getVideoData = () => ({
-          video_id: staleId || (adDur ? 'ad00000000' : this.videoId),
-        })
+        this.getCurrentTime = () => pos()
+        this.getDuration = () => (this.videoId ? FAKE_DURATION : 0)
+        // 2026-08-27, 22nd pass -- REWRITTEN FROM A LIVE CAPTURE, and the
+        // rewrite is the whole point. The first version modelled an advert
+        // the way the IFrame API was assumed to report one: getVideoData()
+        // naming the advert, getDuration() giving the advert's length. A
+        // capture through a real preroll showed both assumptions false --
+        // the player answers with the REQUESTED video's id and the
+        // REQUESTED video's duration the whole way through:
+        //
+        //     id=XZVpR3Pk-r8  want=XZVpR3Pk-r8  same
+        //     state=UNSTARTED  dur=181.0        <- the track's own length
+        //
+        // So this fake now tells the truth by telling the app nothing. An
+        // advert here is simply a load whose PLAYING event never arrives;
+        // id and duration keep describing the track, because that is what
+        // YouTube does. Any future detector built on ids or durations will
+        // fail against this model exactly as it fails in the real browser,
+        // which is the property that was missing before.
+        this.startAd = () => { adHolding = true }
+        this.endAd = () => {
+          adHolding = false
+          if (this.videoId) { base = 0; startedAt = now; playing = true; firePlaying() }
+        }
+        this.getVideoData = () => ({ video_id: this.videoId })
         this.getPlayerState = () => (
-          staleId ? YT.PlayerState.UNSTARTED
+          adHolding ? YT.PlayerState.UNSTARTED
             : ended ? YT.PlayerState.ENDED
               : playing ? YT.PlayerState.PLAYING
                 : this.videoId ? YT.PlayerState.CUED
                   : YT.PlayerState.UNSTARTED
         )
-        // 2026-08-27, modelled FROM a live capture rather than from the
-        // spec -- the one thing in this fake that a real player taught us.
-        // Mid-loadVideoById(), YouTube keeps answering getVideoData() with
-        // the OUTGOING video's id while the state is still UNSTARTED: the
-        // incoming one has not started, so the id it reports is the one on
-        // its way out. Left unmodelled, that gap read as "the player is
-        // running something we did not ask for" and put a STATION BREAK
-        // over an ordinary [N] skip. The advert model above says what an
-        // advert looks like; this says what an advert must not be confused
-        // WITH, and the detector has to tell them apart.
-        this.beginTransition = (outgoingId) => { staleId = outgoingId }
-        this.endTransition = () => { staleId = null }
         this.mute = () => { this.muted = true }
         this.unMute = () => { this.muted = false }
         this.setVolume = (v) => { this.volume = v; playerCalls.push(`volume:${v}`) }
