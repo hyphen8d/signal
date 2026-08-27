@@ -25,12 +25,10 @@ body:
           embeddable, the right recording and not a live take or an edit).
           A link saves me guessing which upload you meant.
         - **A swap is a fair thing to propose.** If something already on the
-          station strikes you as out of lane, name it in the last field.
-          That's the way to argue for pulling a track -- not because the
-          objection isn't welcome, but because a slot is a slot, and "cut
-          this one" with nothing behind it just leaves the station shorter.
-          Bring the replacement and you're making both halves of the case
-          at once.
+          station strikes you as out of lane, name it under "Anything you'd
+          swap out for it". That's the way to argue for pulling a track --
+          a slot is a slot, and "cut this one" with nothing behind it just
+          leaves the station shorter.
 
         The full roster, with every station's taglines and track list, is in
         [stations.md](https://github.com/hyphen8d/signal/blob/main/stations.md).
