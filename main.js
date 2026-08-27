@@ -50,3 +50,20 @@ try {
     + '\n\n    python3 tools/dev-server.py 8000\n'
   canvas.style.display = 'none'
 }
+
+// TEMPORARY (2026-08-27): `?diag=1` puts an on-screen readout of what the
+// YouTube player actually reports over the tube, so a real preroll can be
+// captured by screenshot instead of by console. Imported lazily and only on
+// that flag -- a normal visitor never fetches diag.js and nothing about the
+// app changes. Delete this block and diag.js together once the commercial
+// break's detection question is settled; diag.js's header says what it is
+// for. Same `?v=${stamp}` form as every other import, per the module
+// identity rule.
+if (window.screen0 && new URLSearchParams(location.search).has('diag')) {
+  try {
+    const { startDiag } = await import(`./diag.js?v=${stamp}`)
+    startDiag()
+  } catch (e) {
+    console.warn('[SIGNAL diag] failed to start:', e)
+  }
+}
