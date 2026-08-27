@@ -466,7 +466,11 @@
         "Death in Vegas",
         "UNKLE",
         "Tricky",
-        "Pitchshifter"
+        "Pitchshifter",
+        "Hive",
+        "ZeroFG",
+        "Unglued",
+        "Y U QT"
       ],
       "constraints": [
         "Big-beat/breakbeat energy specifically -- upbeat, propulsive, \"hacker movie soundtrack.\" NOT the darker synthwave/electronic lane (that's CIRCUIT CRUSH's territory, enforced deliberately -- see its profile) and NOT moodier IDM/glitch (Aphex Twin has been rejected from this station twice, see below).",
@@ -492,6 +496,11 @@
           "artist": "Daft Punk",
           "track": "Da Funk",
           "reason": "Not a genre rejection -- pulled because the official video's audio has dialogue/interview footage baked in, not a clean listen for a radio station."
+        },
+        {
+          "artist": "The Prodigy",
+          "track": "Mindfields",
+          "reason": "Not a taste rejection -- blocked on availability, 2026-08-27 (issue #19). Proposed for the Matrix lane and it fits; there is simply no upload that clears the bar. The \"- Topic\" upload (61V3EsoNFUQ) is licensed in 6 countries, the exact trap the narrow-licence check exists for: the US is among the 6, so a US-only check passes it and it is dead air for almost everyone else. The official Prodigy channel carries only a live-in-Russia take (f0Olyr9zRto, 6:44), and every remaining hit is a fan re-upload. Re-check if a wide-licence studio upload ever appears -- this one is worth taking then."
         }
       ]
     },

@@ -1092,7 +1092,8 @@ export const STATIONS = [
     // (Def Beat, Stem/Long Stem, Ni-Ten-Ichi-Ryu, Genius) are the only
     // uploads found and come from non-official reupload channels -- real
     // and embeddable now, flagged and approved for inclusion anyway.
-    // Up from 22 to 38.
+    // Up from 22 to 38. Then 39 (the pending-queue drain), and 45 with the
+    // 2026-08-27 issue #19 pass noted at the foot of this array.
     tracks: [
       realTrack('wmin5WkOuPw', 'Firestarter', 'The Prodigy'),
       realTrack('xMVTKOoy1uk', 'Omen', 'The Prodigy'),
@@ -1105,7 +1106,11 @@ export const STATIONS = [
       realTrack('F6Y7lcvubhU', 'Rez', 'Underworld'),
       realTrack('DzNex7Mf1bg', 'Clubbed to Death (Kurayamino Mix)', 'Rob Dougan'),
       realTrack('7xI8mCKLiRM', 'Prime Audio Soup', 'Meat Beat Manifesto'),
-      realTrack('iCBL33NKvPA', 'Spybreak!', 'Propellerheads'),
+      // 2026-08-27 (issue #19): swapped from iCBL33NKvPA to the "Short One"
+      // edit, proposed as the cleaner, better-mastered upload. A swap rather
+      // than an addition on purpose -- two mixes of one title in the same
+      // rotation is the thing a real station wouldn't do.
+      realTrack('Agbn4NzOj04', 'Spybreak! (Short One)', 'Propellerheads'),
       realTrack('OjTC88oIRys', 'Busy Child', 'The Crystal Method'),
       realTrack('XAlLaGhfLq4', 'B-Boy Stance', 'Freestylers'),
       realTrack('ub747pprmJ8', 'Right Here, Right Now', 'Fatboy Slim'),
@@ -1139,6 +1144,29 @@ export const STATIONS = [
       // no title collision) rather than trusted from its 2026-08-23/24
       // proposal check.
       realTrack('kQ_sSs8pr1g', 'Ruffneck', 'Freestylers'),
+      // 2026-08-27 -- issue #19, the first outside curation pass this station
+      // has had. Eight proposed with per-track arguments, seven auditioned
+      // clean, six landed here (the seventh is the Spybreak! swap above).
+      //
+      // The proposal arrived apologising for breaking a "one track per
+      // artist" rule that CIPHER has never followed -- the suggestion form
+      // had generalised it from GREEN ROOM, where it belongs. Fixed in the
+      // same pass (see .github/ISSUE_TEMPLATE/track_suggestion.yml); worth
+      // remembering that the form talked a contributor out of proposals
+      // before it talked them into any.
+      //
+      // Firestarter (Empirion Mix) sits alongside the original deliberately
+      // -- it is a different song rather than a remix of that one, which is
+      // the only reason the same-title objection above doesn't apply to it
+      // too. Take California and the Empirion mix are both long (7:47,
+      // 7:52); accepted as a known trade against a station built on
+      // propulsion, not overlooked.
+      realTrack('lGqzRmDcC14', 'Ultrasonic Sound', 'Hive'),
+      realTrack('mloHngTITZ8', 'Godzilla Dub', 'ZeroFG'),
+      realTrack('VHqc2Yqwwu4', "Born In '94", 'Unglued'),
+      realTrack('81bG15gsl70', 'Take California', 'Propellerheads'),
+      realTrack('OTvB4XMsg1U', "Y'all Ready For Dis", 'Y U QT'),
+      realTrack('Hy4T6zvQ6jk', 'Firestarter (Empirion Mix)', 'The Prodigy'),
     ] },
 ]
 
