@@ -8,7 +8,7 @@
 import { BOLD, BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
 const { AUDIO_BUS, audioSignalLive } = await import(`../audio/tap.js?v=${V}`)
-const { VERSION_TAG } = await import(`../constants.js?v=${V}`)
+const { SLEEP_FADE_MS, VERSION_TAG } = await import(`../constants.js?v=${V}`)
 const { crtBase, crtDegradeForDist, flashCrtGlitch, rampCrtParams } = await import(`../crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, FREQ_Y, HINT_Y1, HINT_Y2, MBOX_X0, MBOX_X1, METERS_BOT_Y, METERS_DIVIDER_X, METERS_TOP_Y, NOWPLAYING_BOT_Y, NOWPLAYING_TOP_Y, PLAYBACK_Y, SCALE_Y, SIG_Y, STANDBY_LOGO_FONT, STANDBY_LOGO_GAP, STANDBY_LOGO_LETTER_H, STANDBY_LOGO_LETTER_W, STANDBY_LOGO_WORD, STATION_BOT_Y, STATION_TOP_Y, STATION_Y, STATUS_REVEAL_MS, STATUS_TEXT_WIDTH, STATUS_Y, TAGLINE_Y, TRACK_Y, TUNER_BOT_Y, TUNER_TOP_Y, VOL_SIG_DIVIDER_Y, VOL_Y, VU_DIVIDER_Y, VU_Y, centerX, centerXRange, drawBoxBottom, drawBoxSide, drawBoxTop, drawGrille, fmtTime, formatClock, standbyLayout, truncate } = await import(`../layout.js?v=${V}`)
 const { STATIONS, STATION_PRESET_ORDER } = await import(`../stations.js?v=${V}`)
@@ -54,6 +54,38 @@ export default {
     // title text -- see setStatus().
     const brand = 'MODEL SG-1  -  SIGNAL RECEIVER'
     term.text(centerX(term.cols, brand), 0, brand, FAINT, 1)
+    this.drawSleep(s)
+  },
+
+  /** Sleep timer readout (2026-08-27) -- the title bar's one free stretch,
+   *  between the version tag (ends at 12) and the brand plate (starts at
+   *  25). Up here rather than in the LEVELS pane's switch column for one
+   *  reason: row 0 is the only row the visualizer keeps (see
+   *  enterVisualizer's clear), so the countdown stays readable in the state
+   *  someone on their way to sleep is most likely to have left the set in.
+   *
+   *  Nine fixed columns, always mm:ss, so no digit ever shifts under the eye
+   *  and there are two clear columns before the brand plate at the widest
+   *  reading (SLP 60:00). Blank when nothing is armed -- an OFF indicator
+   *  for a control most visitors will never press is clutter, and the row is
+   *  shared with the wordmark. */
+  drawSleep(s) {
+    if (this.mobile) return // no keyboard to arm it, and no columns to spare
+    const { term } = s
+    const x = 14
+    if (!this._sleepUntil || !this.poweredOn) {
+      for (let i = 0; i < 9; i++) term.put(x + i, 0, ' ', NORMAL, 1)
+      return
+    }
+    const left = Math.max(0, this._sleepUntil - Date.now())
+    const mm = String(Math.floor(left / 60000)).padStart(2, '0')
+    const ss = String(Math.floor(left / 1000) % 60).padStart(2, '0')
+    const label = `SLP ${mm}:${ss}`
+    // Brightens for the run-out, which is the same stretch the volume is
+    // fading over -- so the one thing on screen that explains why the sound
+    // is going quiet is also the one thing getting easier to read.
+    const attr = left <= SLEEP_FADE_MS ? BOLD : DIM
+    for (let i = 0; i < label.length; i++) term.put(x + i, 0, label[i], attr, 1)
   },
 
   /** Everything the main screen draws on a rebuild, in the order every
@@ -725,10 +757,17 @@ export default {
     // Segment count trimmed from 24 to 16 in the 18th pass to fit the
     // halved width with clean margins either side of the divider.
     const segs = 16
-    const filled = this.muted ? 0 : Math.round((this.volume / 100) * segs)
+    // 2026-08-27 -- the SLEEP fade is shown, not hidden. this.volume is the
+    // setting; sleepScaledVolume() is what the speaker is actually at, and
+    // during a sleep run-out those differ. Drawing the setting would put a
+    // steady VOL 70 above a speaker fading to nothing, which is the same
+    // shape of lie as a BUFFERING readout over a running progress bar. No
+    // timer armed means the two are identical and this changes nothing.
+    const level = Math.round(this.sleepScaledVolume())
+    const filled = this.muted ? 0 : Math.round((level / 100) * segs)
     let bar = ''
     for (let i = 0; i < segs; i++) bar += i < filled ? '█' : '-'
-    const label = this.muted ? `VOL [${bar}] MUTE` : `VOL [${bar}] ${this.volume}`
+    const label = this.muted ? `VOL [${bar}] MUTE` : `VOL [${bar}] ${level}`
     term.text(centerXRange(BOX_X0 + 1, METERS_DIVIDER_X - 1, label), VOL_Y, label, DIM)
   },
 

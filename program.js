@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { DISPLAY_MODES, MAPPED_KEYS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
+const { DISPLAY_MODES, MAPPED_KEYS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -364,6 +364,18 @@ export default {
     // Peak-hold on top of AUDIO_BUS.pulse's own fast decay, own state.
     this._pulseDisplay = 0
 
+    // Sleep timer (2026-08-27). Three pieces of state and no persistence:
+    // an absolute deadline so a throttled tab cannot make it drift (the
+    // clock ticker that drives it is a real interval, and a background tab
+    // gets it late, not often), the step [T] is currently showing, and the
+    // fade multiplier the last SLEEP_FADE_MS of it rides down. Deliberately
+    // NOT saved with the session: a set that came back from a reload still
+    // counting down to switching itself off would be baffling, and no clock
+    // radio keeps its sleep setting across a power cut either.
+    this._sleepUntil = null
+    this._sleepMinutes = 0
+    this._sleepFade = 1
+
     this.history = [] // stack of previously-locked stations, for [B] back
     // Set once below if a saved session is restored, so powerUp() knows
     // the player needs an actual loadTrack() call (fresh YT.Player, never
@@ -516,8 +528,14 @@ export default {
     // setTimeout. Resetting it unconditionally on this line, synchronously,
     // would clear it before that timeout ever got a chance to fire.
     this._clockTimer = setInterval(() => {
+      // 2026-08-27 -- the sleep timer rides this interval, and deliberately
+      // sits ABOVE the overlay guard below: a deadline that lands while the
+      // guide is open still has to switch the set off, and it takes the
+      // overlay down with it on the way (see sleepExpired). Only the DRAWING
+      // is gated, same as the clock's.
+      this.tickSleep(s)
       if (this.guideOpen || this.tapConsentOpen || this._powerAnimating) return
-      if (this.poweredOn) this.drawClock(s)
+      if (this.poweredOn) { this.drawClock(s); this.drawSleep(s) }
       else this.drawStandbyClock(s)
     }, 1000)
 
@@ -568,6 +586,12 @@ export default {
   // also removes nearly all the room for a race like the [I] one to recur.
   powerDown(s) {
     if (!this.poweredOn) return
+    // 2026-08-27 -- a sleep timer belongs to the session that armed it. This
+    // covers both ways the set goes off: its own expiry (which cleared it
+    // already -- clearSleepTimer is idempotent) and someone reaching for [P]
+    // first, where leaving it armed would switch the set off again some
+    // minutes into the next listen.
+    this.clearSleepTimer()
     this.poweredOn = false
     this._powerAnimating = true // cleared once the STANDBY beat lands below, ~130ms
     // 43rd pass: cleared silently, not via exitVisualizer() -- the beat
@@ -1213,11 +1237,22 @@ export default {
   // per-track loudness, which nobody's actually done. Treat them as a
   // starting point: bump an individual track's `gain` field if a specific
   // song still stands out once you've heard it.
+  /** The level the set should ACTUALLY be at: the user's own volume, scaled
+   *  by the sleep timer's fade. One helper rather than three call sites
+   *  multiplying for themselves, for the same reason applyVolume() exists at
+   *  all -- every path that sets a level has to go through the same place or
+   *  one of them silently bypasses the fade and the last thirty seconds
+   *  before the set switches itself off are half at full volume. 1 whenever
+   *  no timer is armed, so this is a no-op for everyone who never presses
+   *  [T]. 2026-08-27. */
+  sleepScaledVolume() {
+    return this.volume * this._sleepFade
+  },
   applyVolume() {
     if (!this.ready || !this.player) return
     const ch = this.lockedStation
     const gain = (this.currentTrack && this.currentTrack.gain) ?? (ch && ch.gain) ?? 1
-    const eff = Math.round(Math.min(100, Math.max(0, this.volume * gain)))
+    const eff = Math.round(Math.min(100, Math.max(0, this.sleepScaledVolume() * gain)))
     this.player.setVolume(eff)
   },
   adjustVolume(s, delta) {
@@ -1235,7 +1270,7 @@ export default {
     // (idents, liners, static, the lock tone) played at full level however
     // far down the slider was. Note it runs BEFORE the playDetent() below,
     // which is exactly why the detent had to come off the bus.
-    setSpeakerLevel(this.muted, this.volume)
+    setSpeakerLevel(this.muted, this.sleepScaledVolume())
     if (this.ready && this.player) {
       this.applyVolume()
       if (!this.muted) this.player.unMute()
@@ -1266,7 +1301,7 @@ export default {
     // switch's own mechanism, which is also why it still plays here while
     // muted -- and must, or un-muting would be a silent action).
     // Un-muting restores the bus to the CURRENT volume, not to 1 (#18).
-    setSpeakerLevel(this.muted, this.volume)
+    setSpeakerLevel(this.muted, this.sleepScaledVolume())
     this.drawVolume(s)
     // 38th pass: mute is a switch, so it gets a relay rather than a beep.
     playRelayThunk(this.muted)
@@ -1279,6 +1314,90 @@ export default {
     if (this.mode === 'locked') this.statusPersistent = { text: this.muted ? 'MUTED' : 'LOCKED', active: true }
     this.flashStatus(s, this.muted ? 'MUTED' : 'UNMUTED')
     saveSignalState(this)
+  },
+
+  // --- sleep timer (2026-08-27) ------------------------------------------
+  //
+  // The most unambiguous "would a real radio have this?" yes on the list:
+  // every clock radio ever built has a SLEEP button, and the Guide's own
+  // copy already calls this thing "a weird little radio to leave on". This
+  // is the control that sentence was asking for.
+  //
+  // [T] steps DOWN through SLEEP_STEPS and then off, the way the physical
+  // button always has -- the first press offers the longest one and you
+  // step toward the answer you want. The set switches itself off at the
+  // end through the normal powerDown(), collapse sequence and all, so the
+  // ending is one the receiver already knows how to play.
+
+  cycleSleepTimer(s) {
+    const i = SLEEP_STEPS.indexOf(this._sleepMinutes)
+    const next = i === -1 ? SLEEP_STEPS[0] : (SLEEP_STEPS[i + 1] ?? 0)
+    this._sleepMinutes = next
+    this._sleepUntil = next ? Date.now() + next * 60_000 : null
+    this._sleepFade = 1
+    this.applySleepLevel(s)
+    this.drawSleep(s)
+    // The same detent the volume notches use: this is a setting being
+    // stepped, not an event, and it should feel like the same kind of act.
+    playDetent()
+    // Returned rather than flashed here: [T] works from the visualizer too,
+    // and there the status row is covered -- the caller knows which of the
+    // two slots the visitor can actually see. 12 chars at the longest,
+    // inside STATUS_TEXT_WIDTH's 14.
+    return next ? `SLEEP ${next} MIN` : 'SLEEP OFF'
+  },
+
+  /** Push the current fade out to both places a level lives -- the YouTube
+   *  player and the synthesized speaker bus -- and let the VOL bar follow it
+   *  down. The bar matters: a screen reading VOL 70 while the speaker is at
+   *  a fifth of that is exactly the class of lie the 2026-08-27 audit spent
+   *  its day removing. this.volume itself is never touched, so the setting
+   *  survives the fade and comes back whole on the next power-on. */
+  applySleepLevel(s) {
+    setSpeakerLevel(this.muted, this.sleepScaledVolume())
+    this.applyVolume()
+    // Same overlay rule every other draw follows: the guide and the LINE
+    // INPUT card are full-screen takeovers, and frame() is not running
+    // underneath them to repaint what this would punch through. The
+    // visualizer is safe by construction (it repaints its whole canvas
+    // every tick) -- see key()'s note on the same asymmetry.
+    if (!this.guideOpen && !this.tapConsentOpen) this.drawVolume(s)
+  },
+
+  clearSleepTimer() {
+    this._sleepUntil = null
+    this._sleepMinutes = 0
+    this._sleepFade = 1
+    // Hand the bus its full level back explicitly. It is tracked
+    // module-level and survives a power cycle (see setSpeakerLevel's own
+    // note), so a fade left in place would follow the set into its next
+    // power-on and quietly play the whole session at a fifth volume.
+    setSpeakerLevel(this.muted, this.sleepScaledVolume())
+  },
+
+  /** Driven by the clock's own 1s interval rather than the effects queue:
+   *  the queue does not tick while an overlay is up, and a sleep timer that
+   *  stopped counting because someone left the Guide open would be wrong.
+   *  A deadline rather than a countdown for the same reason -- a background
+   *  tab gets this interval late, not often, and late must not mean slow. */
+  tickSleep(s) {
+    if (!this._sleepUntil) return
+    if (!this.poweredOn) { this.clearSleepTimer(); return }
+    const left = this._sleepUntil - Date.now()
+    if (left <= 0) { this.sleepExpired(s); return }
+    const fade = Math.min(1, left / SLEEP_FADE_MS)
+    if (fade !== this._sleepFade) { this._sleepFade = fade; this.applySleepLevel(s) }
+  },
+
+  sleepExpired(s) {
+    this.clearSleepTimer()
+    // Overlays come down first, and by their own close paths. powerDown()
+    // clears the grid and plays its collapse beats over the top of whatever
+    // is there; landing that on an open guide is the paint-through trap the
+    // 67th pass already fixed once for the STANDBY guide key.
+    if (this.tapConsentOpen) this.closeTapConsent(s)
+    if (this.guideOpen) this.closeGuide(s)
+    this.powerDown(s)
   },
 
   // --- tuning ------------------------------------------------------------
@@ -2013,6 +2132,14 @@ export default {
           e.preventDefault()
           if (!this.toggleFullscreen()) vizFlash('NO FULLSCREEN')
           break
+        // 2026-08-27 -- [T] works in here as well as on the main screen, and
+        // this is the view it matters most in: the title bar is the one row
+        // the visualizer keeps, so the SLP countdown is visible the whole
+        // time, and a control you can watch but not reach would be its own
+        // small dead end.
+        case 't': case 'T':
+          vizFlash(this.cycleSleepTimer(s))
+          return
         case 'e': case 'E':
         case 'Escape':
           this.exitVisualizer(s)
@@ -2073,6 +2200,12 @@ export default {
       case 'ArrowUp': e.preventDefault(); this.adjustVolume(s, 10); break
       case 'ArrowDown': e.preventDefault(); this.adjustVolume(s, -10); break
       case 'm': case 'M': e.preventDefault(); this.toggleMute(s); break
+      // 2026-08-27 -- [T] sleep timer. Not on drawHint()'s footer: line2 is
+      // already 75 of 80 columns (see its own note), and this is the same
+      // shape of control as [A] -- a setting rather than a tuning act -- so
+      // the Guide's RECEIVER list carries it, and the readout in the title
+      // bar teaches it after that.
+      case 't': case 'T': e.preventDefault(); this.flashStatus(s, this.cycleSleepTimer(s)); break
       case 'p': case 'P': e.preventDefault(); this.powerDown(s); break
       // History back (14th pass) -- discovery/history navigation.
       case 'b': case 'B':
