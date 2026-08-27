@@ -81,10 +81,29 @@ const STATES = {
     h.advance(300)
   },
   visualizer: (h) => { h.powerOn(); h.key('3'); h.advance(3000); h.key('v'); h.advance(1600) },
+  // 2026-08-27 -- the two states that need the harness's fake player. Every
+  // state above runs with none, which is honest (it is the app's own
+  // player-not-ready path) but leaves the whole playback half switched off:
+  // loadTrack() returns on its first line. lockedPlaying is the same locked
+  // screen with a track actually running under it; lyricsView is [L], which
+  // no test could reach at all before the player existed, and which is where
+  // the dead-feedback pattern was first found.
+  lockedPlaying: async (h) => { h.powerOn(); h.key('3'); h.advance(3000); await h.flush(); h.advance(300) },
+  lyricsView: async (h) => {
+    h.powerOn(); h.key('3'); h.advance(3000)
+    await h.flush()            // let the LRCLIB chain resolve
+    h.advance(100); h.key('v'); h.advance(1600)
+    h.key('l'); h.advance(400)
+    if (!h.program.lyricsViewOpen) throw new Error('sweep setup: the lyrics view did not open')
+  },
   // The one state that needs a capture-capable browser to reach at all.
   consentCard: (h) => { h.powerOn(); h.advance(800); h.key('a'); h.advance(600) },
 }
-const TAP_TIER = { consentCard: 'tab' }
+const BOOT_OPTS = {
+  consentCard: { tap: 'tab' },
+  lockedPlaying: { player: true },
+  lyricsView: { player: true, lyrics: true },
+}
 
 // Touch has no key click at all, so on mobile a dead gesture is silent in
 // both halves -- which makes the visible answer the only one there is.
@@ -124,11 +143,11 @@ const FRAME_MS = 80
  *  onto a fake clock nobody is advancing. */
 const settle = () => new Promise((r) => setTimeout(r, 0))
 
-const trial = async (setup, act, { mobile = false, tap = null } = {}) => {
+const trial = async (setup, act, bootOpts = {}) => {
   await settle()
   seed()
-  const h = await boot({ mobile, tap })
-  setup(h)
+  const h = await boot(bootOpts)
+  await setup(h)
   // Captured HERE, not after the frames: half these states are mid-sweep and
   // would report where the dial ended up rather than where the key landed.
   const label = `${h.program.poweredOn ? 'on' : 'off'}/${h.program.mode}` +
@@ -163,15 +182,15 @@ const CANARY = 'F13'
 // a desynchronised run would print, so nothing is hidden by dropping it.
 const NO_CANARY = new Set(['guide1', 'guideIndex', 'guideLast'])
 
-const sweepState = async (setup, tap, canary = true) => {
-  const control = await trial(setup, null, { tap })
+const sweepState = async (setup, bootOpts, canary = true) => {
+  const control = await trial(setup, null, bootOpts)
   const press = (key) => {
     const bare = key.replace('+shift', '')
     const shiftKey = key.endsWith('+shift')
     return trial(setup, {
       clicks: (h) => h.program.isMappedKey({ key: bare, shiftKey }),
       press: (h) => h.key(bare, { shiftKey }),
-    }, { tap })
+    }, bootOpts)
   }
   const before = canary ? await press(CANARY) : null
   const inert = []
@@ -187,14 +206,14 @@ const sweepState = async (setup, tap, canary = true) => {
 let lies = 0
 console.log('SIGNAL dead-feedback sweep -- `!` = clicked but changed nothing\n')
 for (const [name, setup] of Object.entries(STATES).filter(([n]) => wanted(n))) {
-  const tap = TAP_TIER[name] ?? null
+  const bootOpts = BOOT_OPTS[name] ?? {}
   const canary = !NO_CANARY.has(name)
-  let r = await sweepState(setup, tap, canary)
-  if (!r.stable) r = await sweepState(setup, tap, canary)
-  if (!r.stable) { console.log(`${name.padEnd(12)} [${r.control.label}]  UNSTABLE -- re-run this state alone: --state=${name}`); continue }
+  let r = await sweepState(setup, bootOpts, canary)
+  if (!r.stable) r = await sweepState(setup, bootOpts, canary)
+  if (!r.stable) { console.log(`${name.padEnd(13)} [${r.control.label}]  UNSTABLE -- re-run this state alone: --state=${name}`); continue }
   lies += r.inert.filter((i) => i.clicks).length
   const shown = r.inert.map((i) => `${i.clicks ? '!' : ' '}${i.key}`)
-  console.log(`${name.padEnd(12)} [${r.control.label}]  no change: ${shown.join(' ') || '(none)'}`)
+  console.log(`${name.padEnd(13)} [${r.control.label}]  no change: ${shown.join(' ') || '(none)'}`)
 }
 
 const mobileRows = Object.entries(MOBILE_STATES).filter(([n]) => wanted(`mobile-${n}`))
@@ -206,7 +225,7 @@ for (const [name, setup] of mobileRows) {
     const t = await trial(setup, { clicks: () => false, press: run }, { mobile: true })
     if (same(t, control)) inert.push(g)
   }
-  console.log(`${name.padEnd(12)} [${control.label}]  no change: ${inert.join(' | ') || '(none)'}`)
+  console.log(`${name.padEnd(13)} [${control.label}]  no change: ${inert.join(' | ') || '(none)'}`)
 }
 
 console.log(`\n${lies} key(s) click without changing anything.`)
