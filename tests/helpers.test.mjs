@@ -156,3 +156,23 @@ test('the tuning-distance curves agree: static gain and CRT degrade both max out
   assert.ok(d0.chroma < dFar.chroma && d0.snow < dFar.snow && d0.roll < dFar.roll)
   assert.deepEqual(crt.crtDegradeForDist(NEAR_THRESHOLD * 5), dFar)
 })
+
+test('speakerGain: mute wins, the slider scales linearly, junk clamps (issue #18)', () => {
+  const { speakerGain } = sfx
+  // Linear in volume/100 on purpose -- it has to match what the player
+  // side does (applyVolume -> setVolume, linear on the media element), or
+  // the sounds over a track drift against it as the knob moves.
+  assert.equal(speakerGain(false, 100), 1)
+  assert.equal(speakerGain(false, 70), 0.7)
+  assert.equal(speakerGain(false, 0), 0)
+  // Mute is absolute, whatever the slider says -- the whole point of the
+  // hard-mute bus.
+  assert.equal(speakerGain(true, 100), 0)
+  assert.equal(speakerGain(true, 0), 0)
+  // Out of range clamps rather than inverting: a negative bus gain would
+  // flip the phase of every sound on it instead of just being quiet.
+  assert.equal(speakerGain(false, -40), 0)
+  assert.equal(speakerGain(false, 400), 1)
+  assert.equal(speakerGain(false, undefined), 1, 'a missing volume is full, not silent')
+  assert.equal(speakerGain(false, NaN), 1)
+})

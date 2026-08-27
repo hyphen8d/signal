@@ -650,3 +650,59 @@ test('toggleFullscreen reports false rather than throwing where the API is absen
     assert.equal(h.program.toggleFullscreen(), true)
   } finally { h.shutdown() }
 })
+
+test('the volume keys ride the speaker bus, not just the player (issue #18)', async () => {
+  // Reported as "Signal DJ shoutouts ignore volume controls": a liner drop
+  // announced itself at full voice level over a set turned all the way
+  // down. The bug was never in the liners -- the bus they share with the
+  // idents, the static bed, the seek hiss and the lock tone was a
+  // mute-only switch, so the volume keys moved the YouTube player and
+  // nothing else. Asserting on the bus rather than on a liner is
+  // deliberate: the bus is the shared quantity, and a liner is a 1-in-4
+  // roll behind a 2.5s timer.
+  const h = await boot()
+  try {
+    const sfx = await import(`../audio/sfx.js?v=${h.tag}`)
+    h.powerOn()
+    assert.equal(h.program.volume, 70, 'fresh boot comes up at the default')
+    assert.ok(Math.abs(sfx.speakerLevel - 0.7) < 1e-9, 'and the bus is already there, not at 1')
+
+    for (let i = 0; i < 7; i++) h.key('ArrowDown')
+    assert.equal(h.program.volume, 0)
+    assert.equal(sfx.speakerLevel, 0, 'turned all the way down closes the speaker')
+
+    // Clamping, not inversion: an extra press at the bottom must not push
+    // the bus negative, which would flip the phase of everything on it.
+    h.key('ArrowDown')
+    assert.equal(h.program.volume, 0)
+    assert.equal(sfx.speakerLevel, 0)
+
+    h.key('ArrowUp')
+    assert.equal(h.program.volume, 10)
+    assert.ok(Math.abs(sfx.speakerLevel - 0.1) < 1e-9, 'and back up again')
+
+    // Mute still wins over any volume, and un-muting returns to the
+    // CURRENT volume rather than to full.
+    h.key('m')
+    assert.equal(h.program.muted, true)
+    assert.equal(sfx.speakerLevel, 0)
+    h.key('m')
+    assert.equal(h.program.muted, false)
+    assert.ok(Math.abs(sfx.speakerLevel - 0.1) < 1e-9, 'un-mute restores the level, not 1')
+  } finally { h.shutdown() }
+})
+
+test('a restored session seeds the speaker bus at its saved volume (issue #18)', async () => {
+  // The bus is lazy, so at restore time there is no node to set -- the
+  // level is tracked module-level precisely so the bus is born correct
+  // whenever the first sound creates it. That was the 50th pass's
+  // reasoning for mute; #18 made it load-bearing for volume too, or a
+  // session saved quiet would get one full-level ident before the visitor
+  // could touch a key.
+  const h = await boot({ saved: { stationId: 'cipher', volume: 20, muted: false } })
+  try {
+    const sfx = await import(`../audio/sfx.js?v=${h.tag}`)
+    assert.equal(h.program.volume, 20, 'volume came back off the save')
+    assert.ok(Math.abs(sfx.speakerLevel - 0.2) < 1e-9, 'and the bus with it, before any key')
+  } finally { h.shutdown() }
+})
