@@ -113,8 +113,20 @@ export function playProcessedVoiceClip(buffer, ctx, t, gainMult = 1) {
   // end of real speech (fixed by re-trimming from ElevenLabs' silence
   // gap, not by touching this), but this window was compounding it, so
   // it gets more room too rather than fighting the source clip's taper.
-  // Station-ID clips also now carry ~0.2s of padded trailing silence
-  // (see audio/ prep) so this fade always lands after real speech ends.
+  // Voice clips also carry padded trailing silence (see audio/ prep) so this
+  // fade always lands after real speech ends.
+  //
+  // 2026-08-27 -- that number was recorded here as "~0.2s" and it was wrong,
+  // which cost a real clip. The fade STARTS at dur - 0.4, so anything under
+  // 0.4s of tail is faded while the speaker is still talking. Every clip on
+  // disk happens to clear it (0.47-0.57s), so the understated figure never
+  // bit until a new drop arrived at 0.31s -- above the documented number,
+  // below the actual one, and audibly clipped on its last word. The real
+  // requirement is >= 0.4s; aim for ~0.5s, which is where the existing set
+  // sits. Check an incoming clip with:
+  //   ffmpeg -i clip.mp3 -af silencedetect=noise=-45dB:d=0.08 -f null -
+  // and pad with `-af apad=pad_dur=<n>` if the last silence_start is later
+  // than duration - 0.4.
   gain.gain.setValueAtTime(peakGain, t + Math.max(0, dur - 0.4))
   gain.gain.exponentialRampToValueAtTime(0.0001, t + dur)
 
@@ -271,6 +283,17 @@ export const GENERAL_LINER_FILES = [
   'audio/oneliner2.mp3',
   'audio/oneliner3.mp3',
   'audio/thanks01.mp3',
+  // 2026-08-27 -- "You're listening to SIGNAL. Wherever you are, thanks for
+  // tuning in." Network-level, names no station, so it rides every pool like
+  // the four above. Additive rather than replacing thanks01: a different
+  // line, and the generals are the clips heard most often (they play on all
+  // nine stations), so the pool wants breadth.
+  //
+  // Note what a fifth general does to the mix: a station's pool is its own
+  // clip plus these, so a station-specific drop goes from 1-in-5 to 1-in-6.
+  // The station clips are the ones carrying identity, so the generals should
+  // not outgrow them much further before the per-station seconds land.
+  'audio/thanks02.mp3',
 ]
 export const STATION_LINER_FILES = {
   cipher: ['audio/liner-cipher-01.mp3'],
