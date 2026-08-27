@@ -45,17 +45,25 @@ export default {
    *  carry on. `then` runs on close, in place of the main-screen redraw --
    *  that's the [V] path handing back to enterVisualizer without a frame of
    *  main screen flashing in between. */
-  openTapConsent(s, then) {
-    if (this.tapConsentOpen) return false
+  /** 2026-08-27 (dead-feedback audit) -- the three questions openTapConsent()
+   *  asks itself, without any of its side effects, so a caller can know in
+   *  advance whether [A] is a live control on this browser. Two need that:
+   *  isMappedKey(), which must not click a key that cannot act, and key()'s
+   *  own [A] cases, which now say NO LINE IN rather than nothing at all. */
+  canOpenTapConsent() {
     // Structural, not incidental: this card is drawn for the 80x25 desktop
     // grid and would clamp to nonsense in mobile-lite's 42x22 (centerX()
     // clamps silently -- see its own comment). Both entry points are
     // keyboard-only so mobile can't reach it anyway, but "mobile is never
     // asked for the microphone" is a promise this pass makes out loud in
     // audio/tap.js and the README, and it should hold by construction.
-    if (this.mobile) return false
+    if (this.tapConsentOpen || this.mobile) return false
+    return tapPromptTier(this) !== 'none'
+  },
+
+  openTapConsent(s, then) {
+    if (!this.canOpenTapConsent()) return false
     const tier = tapPromptTier(this)
-    if (tier === 'none') return false
     this.tapConsentOpen = true
     this._tapConsentTier = tier
     this._tapConsentThen = then || null

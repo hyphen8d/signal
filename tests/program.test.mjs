@@ -706,3 +706,118 @@ test('a restored session seeds the speaker bus at its saved volume (issue #18)',
     assert.ok(Math.abs(sfx.speakerLevel - 0.2) < 1e-9, 'and the bus with it, before any key')
   } finally { h.shutdown() }
 })
+
+// --- dead-feedback audit (2026-08-27) -------------------------------------
+//
+// The rule these all check: a key that clicks like a command has to change
+// something, and a control the screen advertises has to answer even when it
+// cannot act. Both halves had drifted -- see VISUALIZER_KEYS in constants.js
+// and the [B]/[N]/[V]/[A] cases in key().
+
+/** Arrow the dial off whatever the boot locked onto, into plain SEEKING. */
+const seekOffStation = (h) => {
+  for (let i = 0; i < 20 && h.program.mode !== 'seeking'; i++) { h.key('ArrowRight'); h.advance(120) }
+  assert.equal(h.program.mode, 'seeking', 'test setup: expected to be off-station')
+  h.advance(1200)
+}
+
+test('off-station, the advertised controls answer instead of going dead', async () => {
+  const h = await boot({})
+  try {
+    h.powerOn()
+    seekOffStation(h)
+    // [N] NEXT TRACK -- named on the Guide's RECEIVER list, and skip() is a
+    // no-op unless locked.
+    h.key('n')
+    assert.equal(h.program._statusText, 'NO SIGNAL')
+    h.advance(400)
+    assert.ok(h.find('NO SIGNAL') >= 0, '[N] off-station says so on the status row')
+    h.advance(1200)
+    // [V] VISUALIZER -- same, and the case's own comment used to describe
+    // the silence as deliberate.
+    h.key('v')
+    assert.equal(h.program._statusText, 'NO SIGNAL')
+    assert.equal(h.program.visualizerActive, false)
+    h.advance(1200)
+    // [B] BACK -- on the footer's top row, dead for a whole first session.
+    h.program.history.length = 0
+    h.key('b')
+    assert.equal(h.program._statusText, 'NO HISTORY')
+    h.advance(400)
+    assert.ok(h.find('NO HISTORY') >= 0, '[B] with an empty history says so')
+  } finally { h.shutdown() }
+})
+
+test('[B] still steps back when there IS history', async () => {
+  const h = await boot({})
+  try {
+    h.powerOn()
+    h.key('3'); h.advance(2500)
+    const first = h.program.lockedStation
+    h.key('5'); h.advance(2500)
+    assert.notEqual(h.program.lockedStation, first, 'test setup: two different stations')
+    h.key('b'); h.advance(2500)
+    assert.equal(h.program.lockedStation, first, '[B] returned to the previous station')
+    assert.notEqual(h.program._statusText, 'NO HISTORY')
+  } finally { h.shutdown() }
+})
+
+test('the visualizer clicks only for keys it actually answers', async () => {
+  const h = await boot({})
+  try {
+    h.powerOn()
+    h.key('3'); h.advance(3000)
+    h.key('v'); h.advance(1600)
+    assert.equal(h.program.visualizerActive, true, 'test setup: in the visualizer')
+    // The footer legend's own set, plus volume and the exits.
+    for (const k of ['n', 'N', 'm', 'M', 'c', 'C', 'v', 'V', 'e', 'E', 'f', 'F', 'Escape', 'ArrowUp', 'ArrowDown']) {
+      assert.ok(h.program.isMappedKey({ key: k }), `[${k}] is a visualizer command and should click`)
+    }
+    // Real commands elsewhere, deliberate no-ops in here since the 64th
+    // pass -- and keys this app does not own at all.
+    for (const k of ['p', 'P', 'g', 'G', 's', 'S', 'b', 'B', 'Enter', 'ArrowLeft', 'ArrowRight', '1', '0', ')', 'x', ' ']) {
+      assert.ok(!h.program.isMappedKey({ key: k }), `[${k}] does nothing in the visualizer and must not click`)
+    }
+    // [L] follows the same availability the legend dims itself on -- no
+    // lyrics are reachable in the harness (fetch rejects), so it is silent.
+    assert.ok(!h.program.isMappedKey({ key: 'l' }), '[L] with no lyrics must not click')
+    // ...and none of the silent ones may drop the visualizer either.
+    h.key('p'); h.key('1'); h.key('x'); h.advance(200)
+    assert.equal(h.program.visualizerActive, true, 'a swallowed key is still swallowed')
+    assert.equal(h.program.poweredOn, true)
+  } finally { h.shutdown() }
+})
+
+test('[P] does not click while a power sequence is already running', async () => {
+  const h = await boot({})
+  try {
+    // init()'s cold-open flourish holds _powerAnimating for its first 500ms.
+    h.advance(100)
+    assert.equal(h.program._powerAnimating, true, 'test setup: mid cold-open')
+    assert.ok(!h.program.isMappedKey({ key: 'p' }), '[P] cannot act yet, so it must not click')
+    // And through the boot animation, which is what an impatient double-tap
+    // actually lands in (see powerUp()'s 50th-pass guard).
+    h.advance(600)
+    h.key('p')
+    h.advance(1500)
+    assert.equal(h.program.poweredOn, false, 'test setup: still booting')
+    assert.ok(!h.program.isMappedKey({ key: 'p' }), 'the second press of a double-tap must not click')
+    h.advance(4000)
+    assert.equal(h.program.poweredOn, true)
+    assert.ok(h.program.isMappedKey({ key: 'p' }), 'and [P] is a live command again once it lands')
+  } finally { h.shutdown() }
+})
+
+test('mobile: a skip swipe off-station answers, since touch has no click at all', async () => {
+  const h = await boot({ mobile: true })
+  try {
+    h.powerOn()
+    h.advance(1000)
+    h.program.enterSeeking(h.screen)
+    h.advance(1200)
+    h.touch(100, 200, 100, 60) // vertical swipe == [N]
+    assert.equal(h.program._statusText, 'NO SIGNAL')
+    h.advance(400)
+    assert.ok(h.find('NO SIGNAL') >= 0, 'the lite status row carries it too')
+  } finally { h.shutdown() }
+})

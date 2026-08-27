@@ -486,7 +486,15 @@ export default {
       // guard above rather than needing its own. Track selection comes out
       // of a shuffle bag, not a fixed sequence, so there's no meaningful
       // "previous" to give the down-swipe -- both directions just skip.
-      this.skip(s)
+      // 2026-08-27 (dead-feedback audit) -- safe was not the same as
+      // answered. Off-station the swipe landed on nothing whatsoever, and
+      // touch has no key click, so this status flash is the ONLY
+      // acknowledgement the gesture can get -- a swipe that produces no
+      // response at all reads as one the screen failed to see, which is a
+      // worse thought to leave a phone user with than "not here". Same word
+      // as the desktop [N] case in key(), which is this gesture's twin.
+      if (this.mode === 'locked') this.skip(s)
+      else this.flashStatus(s, 'NO SIGNAL')
     }
     } finally { this._inUserGesture = false }
   },

@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { DISPLAY_MODES, MAPPED_KEYS } = await import(`./constants.js?v=${V}`)
+const { DISPLAY_MODES, MAPPED_KEYS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -1755,9 +1755,29 @@ export default {
     // a settled STANDBY screen. 69th pass -- rebound from [I] to [G], same
     // key the guide already answers to powered-on (see key()'s 15th-pass G
     // binding) -- STANDBY no longer teaches a second key for the same thing.
-    if (!this.poweredOn) return e.key === 'p' || e.key === 'P' || (!this.mobile && !this._powerAnimating && (e.key === 'g' || e.key === 'G'))
-    // Visualizer (43rd pass) -- any key wakes it.
-    if (this.visualizerActive) return true
+    // 2026-08-27 (dead-feedback audit) -- _powerAnimating now gates [P] as
+    // well as [G]. powerUp() early-returns for the whole boot animation and
+    // for init()'s 500ms cold-open flourish, deliberately (see its 50th-pass
+    // comment on the double-boot it absorbs) -- but the impatient second
+    // press it was written to catch was still clicking like a command and
+    // then doing nothing. Same window, same answer as [G] beside it. The
+    // first press is not left unacknowledged by this: the whole screen is
+    // visibly booting, which is better feedback than a click.
+    if (!this.poweredOn) {
+      if (this._powerAnimating) return false
+      return e.key === 'p' || e.key === 'P' || (!this.mobile && (e.key === 'g' || e.key === 'G'))
+    }
+    // Visualizer (43rd pass) -- was a bare `return true`, from when any key
+    // woke and exited it. 2026-08-27 (dead-feedback audit): narrowed to the
+    // keys the visualizer's own switch answers -- see VISUALIZER_KEYS for
+    // what went wrong in between. [L] tracks the same lyrics availability the
+    // footer legend already dims itself on, and [A] the same capture path the
+    // card checks, so neither clicks in the state where it cannot act.
+    if (this.visualizerActive) {
+      if (e.key === 'l' || e.key === 'L') return lyricsStateFor(this.currentTrack) === 'available'
+      if (e.key === 'a' || e.key === 'A') return this.canOpenTapConsent()
+      return VISUALIZER_KEYS.has(e.key)
+    }
     return MAPPED_KEYS.has(e.key)
   },
   key(s, e) {
@@ -1955,14 +1975,17 @@ export default {
         // re-entering: enterVisualizer() would re-arm every effect clock.
         case 'a': case 'A':
           e.preventDefault()
-          this.openTapConsent(s, () => this.repaintVisualizerChrome(s))
+          // 2026-08-27 (dead-feedback audit) -- the main screen's [A] case
+          // says NO LINE IN where there is no capture path; in here the
+          // status row is covered, so the legend slot carries it instead.
+          if (!this.openTapConsent(s, () => this.repaintVisualizerChrome(s))) vizFlash('NO LINE IN')
           break
         // 2026-08-26 (issue #8) -- [F] works here as well as on the main
         // screen. Someone running the visualizer on a second monitor is
         // precisely who asked for it.
         case 'f': case 'F':
           e.preventDefault()
-          this.toggleFullscreen()
+          if (!this.toggleFullscreen()) vizFlash('NO FULLSCREEN')
           break
         case 'e': case 'E':
         case 'Escape':
@@ -2010,13 +2033,32 @@ export default {
       // didn't work as intended -- N is back to a plain single-purpose
       // key, always skipping the dead/current track within the locked
       // station.
-      case 'n': case 'N': e.preventDefault(); this.skip(s); break
+      // 2026-08-27 (dead-feedback audit) -- skip() is a no-op unless locked
+      // (seeking, scanning, parked between stations), and [N] NEXT TRACK is
+      // named on the Guide's RECEIVER list, so off-station it clicked like a
+      // command and answered with nothing at all. Enter already says NO
+      // SIGNAL when there is nothing in range; this is the same sentence for
+      // the same reason -- what's missing is the station, not the track.
+      case 'n': case 'N':
+        e.preventDefault()
+        if (this.mode === 'locked') this.skip(s)
+        else this.flashStatus(s, 'NO SIGNAL')
+        break
       case 'ArrowUp': e.preventDefault(); this.adjustVolume(s, 10); break
       case 'ArrowDown': e.preventDefault(); this.adjustVolume(s, -10); break
       case 'm': case 'M': e.preventDefault(); this.toggleMute(s); break
       case 'p': case 'P': e.preventDefault(); this.powerDown(s); break
       // History back (14th pass) -- discovery/history navigation.
-      case 'b': case 'B': e.preventDefault(); this.goBack(s); break
+      case 'b': case 'B':
+        e.preventDefault()
+        // 2026-08-27 (dead-feedback audit) -- [B] BACK sits on the footer's
+        // top row, so it is one of the five controls a first-time visitor is
+        // told about, and the history stack is empty until they have left a
+        // station. goBack()'s silent return made the most-advertised key on
+        // the screen the deadest one in the state everyone starts in.
+        if (this.history.length) this.goBack(s)
+        else this.flashStatus(s, 'NO HISTORY')
+        break
       // Guide (15th pass) -- adds a G key for the guide.
       case 'g': case 'G': e.preventDefault(); this.openGuide(s); break
       // Display modes (23rd pass) -- lets users cycle display modes.
@@ -2026,12 +2068,21 @@ export default {
       // key gets you out. NOT a substitute for Chrome's "Sharing this tab"
       // capture indicator, which the page cannot remove -- that one is the
       // browser telling the truth about [A], and it should.
-      case 'f': case 'F': e.preventDefault(); this.toggleFullscreen(); break
+      // 2026-08-27 (dead-feedback audit) -- toggleFullscreen() has always
+      // returned false where the API is absent entirely ("so a caller could
+      // say so; today nothing needs to" -- see there). A caller does now.
+      case 'f': case 'F':
+        e.preventDefault()
+        if (!this.toggleFullscreen()) this.flashStatus(s, 'NO FULLSCREEN')
+        break
       // Visualizer (43rd pass) -- "V" for saVer, the mnemonic
       // still works after the 44th pass rename to "Visualizer" -- manual
-      // toggle in, any time you're locked. Silently no-ops otherwise
+      // toggle in, any time you're locked. Off-station it does nothing
       // (mirrors [B] BACK with empty history) -- getting in is only
       // meaningful once there's a station/track to show on the info bar.
+      // 2026-08-27 (dead-feedback audit) -- "silently", that used to read,
+      // and [B] was the precedent for it. Both say so now; see the else
+      // below and [B]'s own case.
       case 'v': case 'V':
         e.preventDefault()
         if (this.mode === 'locked' && this.lockedStation) {
@@ -2057,22 +2108,35 @@ export default {
             startAudioTap(this, s)
           }
           this.enterVisualizer(s)
+        } else {
+          // 2026-08-27 (dead-feedback audit) -- the no-op this case's
+          // comment above describes used to be a silent one, with [B] BACK
+          // on an empty history as its precedent. Both answer now. Same word
+          // as [N] just above, for the same reason: the visualizer needs a
+          // station to show, and off-station there isn't one.
+          this.flashStatus(s, 'NO SIGNAL')
         }
         break
       // Consent pass (2026-08-25) -- [A] opens the LINE INPUT card on
       // demand: patch the tap in after saying no, or pull it back out
       // again. It exists because a permission ought to be revocable from
       // inside the thing that asked for it, without hunting through browser
-      // settings. Silently no-ops when there's no capture path at all on
-      // this browser (openTapConsent returns false), same restraint as [B]
-      // with an empty history. Deliberately NOT added to drawHint()'s
-      // footer: line2 is already 75 of 80 columns (see its own note), and
-      // this is a settings-shaped control rather than a tuning one -- the
-      // Guide's controls list carries it, and declineTapConsent() teaches
-      // it at the one moment it's relevant.
+      // settings. Says NO LINE IN where there's no capture path at all on
+      // this browser (openTapConsent returns false) -- it used to no-op
+      // silently, see the audit note in the case body. Deliberately NOT
+      // added to drawHint()'s footer: line2 is already 75 of 80 columns
+      // (see its own note), and this is a settings-shaped control rather
+      // than a tuning one -- the Guide's controls list carries it, and
+      // declineTapConsent() teaches it at the one moment it's relevant.
       case 'a': case 'A':
         e.preventDefault()
-        this.openTapConsent(s)
+        // 2026-08-27 (dead-feedback audit) -- openTapConsent() returns false
+        // where this browser has no capture path at all (no mediaDevices; a
+        // mic denied, blocked or absent off Chromium -- see tapPromptTier),
+        // and the Guide names [A] LINE IN unconditionally. "Not on this
+        // browser" is information; the silence it replaces read as a broken
+        // key on the one control that has no other way to explain itself.
+        if (!this.openTapConsent(s)) this.flashStatus(s, 'NO LINE IN')
         break
       // 11th pass (2026-08-20): 4 new stations brought STATIONS back up to
       // 9 -- preset keys match its length again, same pattern as the 10th
