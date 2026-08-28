@@ -440,7 +440,7 @@ export const STATIONS = [
     // across the pasted "4 hours," favoring the most iconic/likely-official
     // sources), all independently oEmbed-verified.
     freqNote: 'counting up: 5-6-7-8',
-    desc: 'Underground tech house made for warehouse raves long after midnight.',
+    desc: 'Tech house from the current club circuit -- rolling basslines, chopped vocal hooks, and drops built for a big room. Ibiza back rooms and the main stage, same dial.',
     // 60th pass -- fresh contour, unused elsewhere on the roster: a slow
     // three-step rise (U U U), read as a guitar bend/turnaround reaching up
     // into a sustained note rather than resolving down. Slower tempo than
@@ -471,116 +471,77 @@ export const STATIONS = [
     visual: 'bubbletubes',
     tracks: [
       // ===================================================================
-      // TEMPORARY TEST SWAP -- 2026-08-25. Not a curation pass.
+      // SYNAPSE -- roster built 2026-08-28. Tech house, by request, from a
+      // 30-title brief; this is the station's first real roster under the
+      // new callsign.
       //
-      // MIDNIGHT NEON's 28 blues tracks were replaced wholesale with a 60s
-      // oldies rotation, by request, to test how the station machinery
-      // behaves under a format it was not tuned for. NOTHING ELSE ABOUT THE
-      // STATION CHANGED: callsign, tagline, desc, freq, ident, gain, static,
-      // crt, meter and visual are all still the blues identity above, so the
-      // screen deliberately lies about what is playing. That mismatch is the
-      // point of the test, not an oversight.
+      // It ends the TEMPORARY TEST SWAP that ran here from 2026-08-25: the
+      // station's 28 blues tracks had been replaced wholesale with a 71-track
+      // 60s oldies rotation to see how the machinery behaved under a format
+      // it was not tuned for, with the screen deliberately still saying
+      // MIDNIGHT NEON / late-night blues. That mismatch was the point of the
+      // test. It is over -- callsign, tagline and desc are now SYNAPSE and
+      // actually describe what plays.
       //
-      // To revert: `git show <this commit>^:stations.js` and restore the
-      // tracks array between the markers. The 28 blues entries are only in
-      // git history, nowhere else in the repo.
+      // Both previous rosters exist only in git history, nowhere else in the
+      // repo: the 28 blues entries, and the 71 oldies entries (sourced from a
+      // "K-Earth 101 oldies nostalgia" playlist -- see that pass's own note in
+      // the history for its substitutions and known imperfections).
       //
-      // Source: youtube.com/playlist?list=PLhFmNYNh94I-_0gUlqidw9pOX6tZHxos0
-      // ("K-Earth 101 oldies nostalgia," 73 items), in playlist order. Both
-      // jingle compilations were dropped -- item 1 (KRTH jingles and
-      // sweepers, 11:30) and item 73 (Johnny Mann Singers jingle session,
-      // 8:02) -- since SIGNAL's idents already fill that role. That leaves
-      // 71 songs.
+      // All 30 IDs below went through tools/audition.js in one clean run
+      // (UNVERIFIED: 0, so the probe really ran -- a throttled run reports
+      // nothing and looks identical to a clean one). Every one resolves, is
+      // embeddable, is playable, and carries a wide licence: 121-249
+      // countries, against the 20-country floor that flags a narrow one.
       //
-      // Two substitutions, both from The Chiffons' Topic channel: the
-      // playlist carried them as fan-uploaded two-song medleys ("One Fine
-      // Day / Sweet Talkin' Guy," 4:32, and "He's So Fine / Oh My Lover,"
-      // 3:36), which would have shown one title while playing two songs.
-      // The B-sides are simply gone; no other track was substituted.
+      // Channel provenance: artist-official or label channels throughout
+      // (Defected, Insomniac, Snatch!, Toolroom, CircoLoco, Big Beat,
+      // Astralwerks, Experts Only, Dim Mak) plus label-delivered "- Topic"
+      // art tracks. Note that audition.js flagged nearly all of them
+      // UNKNOWN-CHANNEL, which is correct and not a problem: provenance is
+      // scored against the channels the station ALREADY used, and those were
+      // the oldies uploads this pass is deleting. The next pass will score
+      // against these.
       //
-      // All 71 IDs went through tools/audition.js against this station --
-      // every one resolved, none embed-blocked or region-locked, no
-      // collision with an ID already on the roster. 64 are "- Topic"
-      // (label-delivered) or artist-official/VEVO; 6 are fan or archive
-      // uploads kept because they are what the playlist points at (Wild
-      // Thing, You Were On My Mind, You're No Good, I Got You, Groovin',
-      // and the Kinks' own channel upload). Two known imperfections kept on
-      // purpose rather than swapped for unvetted IDs: "Hooked on a Feeling"
-      // is a B.J. Thomas re-recording, not the 1968 master, and "I Second
-      // That Emotion" is credited to The Temptations because that is the
-      // Topic channel it sits on -- the song is Smokey Robinson's.
+      // Two CHECK-VERSION flags were reviewed and kept: "Where You Are" is
+      // the Gorgon City remix because the remix is what was asked for, and
+      // CID's "Fancy $hit" moved off a re-upload channel onto CID's own
+      // "- Topic" delivery once one was found.
+      //
+      // Durations run 2:26 to 6:44. The long ones are club mixes and belong
+      // here -- this is the one station where a six-minute track is the
+      // format rather than an outlier.
       // ===================================================================
-      realTrack('5XOVJsJAIW0', "The Shoop Shoop Song (It's In His Kiss)", 'Betty Everett'),
-      realTrack('0Zp4NbXE0_o', 'I Heard It Through the Grapevine', 'Marvin Gaye'),
-      realTrack('b-D5yAAXYng', 'Stand By Me', 'Ben E. King'),
-      realTrack('fzPXozDgvYs', 'Respect', 'Aretha Franklin'),
-      realTrack('PSddD6w5SKc', 'Under the Boardwalk', 'The Drifters'),
-      realTrack('JSVw-JHuCnk', 'The Loco-Motion', 'Little Eva'),
-      realTrack('h_qrBYtIGb4', "Baby, I'm Yours", 'Barbara Lewis'),
-      realTrack('kk8tFtdHqtw', 'Where Did Our Love Go', 'The Supremes'),
-      realTrack('DUpOyzG6wG8', 'Be My Baby', 'The Ronettes'),
-      realTrack('ABfQuZqq8wg', "Ain't No Mountain High Enough", 'Marvin Gaye & Tammi Terrell'),
-      realTrack('XGg4DudJ1x8', 'Rescue Me', 'Fontella Bass'),
-      realTrack('xqFbU5Q7zys', 'It Takes Two', 'Marvin Gaye & Kim Weston'),
-      realTrack('8Jtokmp8zoE', "I Can't Help Myself (Sugar Pie, Honey Bunch)", 'Four Tops'),
-      realTrack('zlCT2VZf7ag', 'My Girl', 'The Temptations'),
-      realTrack('lk4DJIss1Oc', 'The Letter', 'The Box Tops'),
-      realTrack('xC9QQc_vabI', 'Hooked on a Feeling', 'B.J. Thomas'),
-      realTrack('te51eVrFWEc', 'Unchained Melody', 'The Righteous Brothers'),
-      realTrack('D0LYs-VqFuw', 'One Fine Day', 'The Chiffons'),
-      realTrack('1UingsUi0mI', 'Do Wah Diddy Diddy', 'Manfred Mann'),
-      realTrack('ox-9l9GElTo', 'Tell Him', 'The Exciters'),
-      realTrack('efzeF3g6Q20', 'Oh, Pretty Woman', 'Roy Orbison'),
-      realTrack('4R53SaiFW9c', 'Splish Splash', 'Bobby Darin'),
-      realTrack('uLF3YZIjucs', "Rockin' Robin", 'Bobby Day'),
-      realTrack('IOdPxmthm8k', 'My Boy Lollipop', 'Millie Small'),
-      realTrack('atY7ymXAcRQ', 'Sunshine, Lollipops and Rainbows', 'Lesley Gore'),
-      realTrack('JgeHPXZ-InM', 'Hang On Sloopy', 'The McCoys'),
-      realTrack('swMzw_e2lJg', "Good Lovin'", 'The Young Rascals'),
-      realTrack('_CcdzkSlw2s', 'Black Is Black', 'Los Bravos'),
-      realTrack('Ll33KpCUILk', 'I Will Follow Him', 'Peggy March'),
-      realTrack('wdpJFWwNbGk', 'Young Girl', 'Gary Puckett & The Union Gap'),
-      realTrack('rzh0TAon7Bc', 'The Game of Love', 'Wayne Fontana & The Mindbenders'),
-      realTrack('qkuMiUit3NQ', "Hold On, I'm Comin'", 'Sam & Dave'),
-      realTrack('oU6uUEwZ8FM', "California Dreamin'", 'The Mamas & The Papas'),
-      realTrack('QSqg1NqBKGE', 'Kind of a Drag', 'The Buckinghams'),
-      realTrack('nQM_DQiJltM', 'Louie Louie', 'The Kingsmen'),
-      realTrack('DoWb4X0aDes', 'Wild Thing', 'The Troggs'),
-      realTrack('IzBRtuh9PW0', 'You Were On My Mind', 'We Five'),
-      realTrack('XV9dz_ZDIp0', 'Blue Moon', 'The Marcels'),
-      realTrack('LVAsnD969qs', 'Sherry', 'The Four Seasons'),
-      realTrack('fTTsY-oz6Go', 'You Really Got Me', 'The Kinks'),
-      realTrack('pSw8an1u3rc', 'Happy Together', 'The Turtles'),
-      realTrack('afaMhrCFjzo', 'In the Midnight Hour', 'Wilson Pickett'),
-      realTrack('jwHOjhXVHkk', "I'm a Man", 'The Spencer Davis Group'),
-      realTrack('dyZG1s7gbn8', "Wishin' and Hopin'", 'Dusty Springfield'),
-      realTrack('dMb7mncw2CQ', "You're No Good", 'Betty Everett'),
-      realTrack('64w0UqTHGFg', '(Love Is Like a) Heat Wave', 'Martha and the Vandellas'),
-      realTrack('6f9gFyRa_fM', 'I Got You (I Feel Good)', 'James Brown'),
-      realTrack('3JvkaUvB-ec', 'Everyday People', 'Sly & The Family Stone'),
-      realTrack('Bhx96Nt5hyQ', 'No Particular Place to Go', 'Chuck Berry'),
-      realTrack('1fgnEDi7bq0', 'A Teenager in Love', 'Dion & The Belmonts'),
-      realTrack('0tSpZnVnSLQ', 'Hey There Lonely Girl', 'Eddie Holman'),
-      realTrack('zSKf4bpXthY', 'Whatever Will Be, Will Be (Que Sera, Sera)', 'Doris Day'),
-      realTrack('icptOB_dH1c', 'My Guy', 'Mary Wells'),
-      realTrack('2pxY-5cBx1E', 'Da Doo Ron Ron', 'The Crystals'),
-      realTrack('BCZdMU53Ugo', "A Lover's Concerto", 'The Toys'),
-      realTrack('o7FSKw5S-qg', 'The Wah Watusi', 'The Orlons'),
-      realTrack('rXXmeYQRifc', "Uptight (Everything's Alright)", 'Stevie Wonder'),
-      realTrack('aoRmo-QTp0U', "Groovin'", 'The Young Rascals'),
-      realTrack('gMEz0lB6hBI', 'The Tears of a Clown', 'Smokey Robinson & The Miracles'),
-      realTrack('G8P7gzE4HSU', 'On Broadway', 'The Drifters'),
-      realTrack('ANfifJI5bLs', 'Baby Love', 'The Supremes'),
-      realTrack('UvynvnxZJ3Q', 'I Want You Back', 'The Jackson 5'),
-      realTrack('6LA0lKK4u18', 'Baby I Need Your Loving', 'Four Tops'),
-      realTrack('QKzQK6QMOyM', 'I Second That Emotion', 'The Temptations'),
-      realTrack('MGkhe0DW5Oc', "He's So Fine", 'The Chiffons'),
-      realTrack('RjdH_NmmO0I', "It's My Party", 'Lesley Gore'),
-      realTrack('HV-9NaF4KXE', "Big Girls Don't Cry", 'The Four Seasons'),
-      realTrack('3IbSJ4JHkBs', 'Maybellene', 'Chuck Berry'),
-      realTrack('AO0akwvUh_c', 'Do You Believe in Magic', "The Lovin' Spoonful"),
-      realTrack('jr_BSbEIvQs', 'More Today Than Yesterday', 'Spiral Starecase'),
-      realTrack('04-SxMlByP4', 'I Say a Little Prayer', 'Dionne Warwick'),
+      realTrack('rVp454wjqls', 'TESLA', 'Mau P'),
+      realTrack('0CKkRtkzw4g', 'Take It Off', 'FISHER & Aatig'),
+      realTrack('FhbxFnNm-S8', 'Fancy $hit', 'CID & Taylr Renee'),
+      realTrack('OvW5y3lZ7rc', 'Rhyme Dust', 'MK & Dom Dolla'),
+      realTrack('JalJnTs3mzk', 'Jealous', 'Mochakk'),
+      realTrack('SYTqNepDhl8', 'Murder Mystery', 'Jamie Jones'),
+      realTrack('x8mdqMcOAUo', "Beggin'", 'Chris Lake & Aluna'),
+      realTrack('gPZ1_4e3qv4', 'Where You Are (Gorgon City Remix)', 'John Summit & Hayla'),
+      realTrack('i3eo3ndoCMI', 'LEFT TO RIGHT', 'Odd Mob'),
+      realTrack('t-8CYSBBbZE', 'Sun Goes Down', 'Cloonee'),
+      realTrack('p9ko0iyt1y8', 'Lipstick', 'Alaia & Gallo'),
+      realTrack('hVErLWiBz3M', 'Let Me Take You There', 'Max Styler'),
+      realTrack('ux3Ak1h430k', 'Space Pump (Space Jam)', 'Vinter'),
+      realTrack('juuIhW8V1Xw', 'Drugs From Amsterdam', 'Mau P'),
+      realTrack('4cCi6-16HR4', 'Ferrari', 'James Hype & Miggy Dela Rosa'),
+      realTrack('EaHz7lvbFTk', 'Got The Fire', 'Michael Bibi'),
+      realTrack('vj_TYIjCMzw', 'The Groovy Cat', 'PAWSA'),
+      realTrack('s-ua75beKHk', 'Deceiver', 'Chris Lake & Green Velvet'),
+      realTrack('pVMbyAYgxGU', 'Chromatic', 'Anti Up'),
+      realTrack('uhvrT1rTRQ0', "It's A Killa", 'FISHER & Shermanology'),
+      realTrack('TAKR_6vNJR8', 'On My Mind', 'Diplo & SIDEPIECE'),
+      realTrack('oWqvIzXQFkU', 'You Give Me A Feeling', 'Vintage Culture & James Hype'),
+      realTrack('zEwo9ib8cVg', 'Be Sharp Say Nowt', 'Patrick Topping'),
+      realTrack('GxdWattQE1U', 'Wait A Minute', 'Biscits'),
+      realTrack('0tuIVdYVf5o', 'Gimme Some Keys', 'Matroda'),
+      realTrack('l3fUEyv9RLg', 'Summer 91 (Looking Back)', 'Noizu'),
+      realTrack('ypZvzlpV5N4', 'Soul Sacrifice', 'Dombresky'),
+      realTrack('tYD1E9IUOzA', '(It Happens) Sometimes', 'Jack Back'),
+      realTrack('tapeYww2VrA', 'Hallelujah', 'Will Clarke'),
+      realTrack('p2KlbcmhYuM', 'Back Tomorrow', 'Ferreck Dawn & Jem Cooke'),
     ] },
 
   // 4 new stations added 2026-08-20, tracklists as given, all

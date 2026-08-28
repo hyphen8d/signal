@@ -236,6 +236,10 @@ const MIME = {
   '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png',
   '.jpg': 'image/jpeg', '.ico': 'image/x-icon', '.bdf': 'text/plain; charset=utf-8',
   '.md': 'text/markdown; charset=utf-8', '.woff2': 'font/woff2',
+  // The app fetches its liner/ident clips as ArrayBuffers, so these decoded
+  // fine as application/octet-stream -- but serving audio without an audio
+  // type is the sort of thing that works until something checks.
+  '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.m4a': 'audio/mp4',
 }
 
 // Same reasoning as tools/dev-server.py, which this replaces for an admin

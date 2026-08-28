@@ -188,9 +188,31 @@ export function playNetworkId(program) {
 // station deliberately has none). Same lazy/cached fetch as the network ID,
 // keyed per station so switching stations doesn't refetch.
 export const stationIdBufferPromises = {}
+// A station's spoken ID is normally audio/station-id-<id>.mp3, resolved by
+// convention from the station's id. This map is the exception list, and it
+// exists because a station's CALLSIGN can change while its id cannot: the id
+// is load-bearing for saved sessions (state.js persists stationId), for
+// per-station visualizer picks, and as the key into
+// tools/station-profiles.json and the pending queue. Renaming an id to match
+// a new callsign would silently drop every returning visitor's restored
+// station.
+//
+// 2026-08-28 -- MIDNIGHT NEON became SYNAPSE. The id stayed 'midnight-neon',
+// so without this entry the convention would have kept loading
+// station-id-midnight-neon.mp3, which is voiced as "MIDNIGHT NEON" -- the
+// station would have announced a callsign that is no longer on the screen.
+// That is exactly the mismatch the 60th pass avoided by DROPPING MOMENTUM's
+// liner rather than remapping it (see LINER_FILES above); here there is a
+// real replacement clip, so it is remapped rather than dropped. The old file
+// is left on disk, unreferenced, same as station-id-momentum.mp3.
+const STATION_ID_CLIPS = {
+  'midnight-neon': 'synapse',
+}
+
 export function loadStationIdBuffer(stationId) {
   if (!stationIdBufferPromises[stationId]) {
-    stationIdBufferPromises[stationId] = fetch(`audio/station-id-${stationId}.mp3`)
+    const clip = STATION_ID_CLIPS[stationId] ?? stationId
+    stationIdBufferPromises[stationId] = fetch(`audio/station-id-${clip}.mp3`)
       .then((r) => r.arrayBuffer())
       .then((buf) => audioCtx().decodeAudioData(buf))
       .catch(() => null) // no clip for this station (e.g. the secret one) -- silently skip

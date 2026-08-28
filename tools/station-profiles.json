@@ -171,56 +171,75 @@
       "rejections": []
     },
     "midnight-neon": {
-      "callsign": "MIDNIGHT NEON",
-      "genre": "late-night electric blues -- minor-key slow burns, lush horns, reverberant guitar solos",
-      "eraLane": "no fixed decade; the first 28 tracks run 1947 -> 2012, weighted to classic electric blues",
+      "callsign": "SYNAPSE",
+      "genre": "tech house -- rolling basslines, chopped vocal hooks, and drops built for a big room",
+      "eraLane": "roughly 2018 onward, weighted heavily to the last three years; this is a current-rotation station, not an archive one",
       "acceptedArtists": [
-        "B.B. King",
-        "Tedeschi Trucks Band",
-        "Albert King",
-        "Susan Tedeschi",
-        "Buddy Guy",
-        "Otis Rush",
-        "Gary Clark Jr.",
-        "Stevie Ray Vaughan",
-        "Etta James",
-        "Bobby \"Blue\" Bland",
-        "Ann Peebles",
-        "Robert Cray",
-        "Howlin’ Wolf",
-        "Freddie King",
-        "The Black Keys",
-        "Jimmy Reed",
-        "Muddy Waters",
-        "B.B. King & Eric Clapton",
-        "T-Bone Walker",
-        "Charles Brown",
-        "Elmore James",
-        "Big Mama Thornton",
-        "Albert Collins",
-        "Roy Buchanan",
-        "Z.Z. Hill",
-        "Gary Moore"
+        "Alaia & Gallo",
+        "Anti Up",
+        "Biscits",
+        "CID & Taylr Renee",
+        "Chris Lake & Aluna",
+        "Chris Lake & Green Velvet",
+        "Cloonee",
+        "Diplo & SIDEPIECE",
+        "Dombresky",
+        "FISHER & Aatig",
+        "FISHER & Shermanology",
+        "Ferreck Dawn & Jem Cooke",
+        "Jack Back",
+        "James Hype & Miggy Dela Rosa",
+        "Jamie Jones",
+        "John Summit & Hayla",
+        "MK & Dom Dolla",
+        "Matroda",
+        "Mau P",
+        "Max Styler",
+        "Michael Bibi",
+        "Mochakk",
+        "Noizu",
+        "Odd Mob",
+        "PAWSA",
+        "Patrick Topping",
+        "Vintage Culture & James Hype",
+        "Vinter",
+        "Will Clarke"
       ],
       "constraints": [
-        "The brief is a mood, not a decade: dark highways and low-lit lounges after hours. Slow burns are welcome at length -- the roster already carries 7-9 minute cuts (Tin Pan Alley, If Trouble Was Money), so runtime is not a reason to reject.",
-        "Electric blues, not acoustic/Delta country blues -- the desc says electric and the whole station leans on amplified tone and reverb.",
-        "Sourcing differs from the guitar-rock stations: pre-1970 blues catalog has no official video, so artist \"- Topic\" channels (label-delivered Art Tracks) are the norm and are fine. Fan/compilation uploads are not -- all 28 are Topic, label, artist-official or VEVO.",
-        "Nearly every classic here has multiple near-identical Topic uploads across compilations. Check duration before picking: it is the only cheap way to catch a live take, a single edit or a modern rework (an EDM \"rework\" of a John Lee Hooker cut sits on his own Topic channel)."
+        "The lane deliberately spans BOTH ends of tech house: festival-scale (Dom Dolla, John Summit, FISHER, James Hype, Diplo, Chris Lake) and the Ibiza/underground end (Jamie Jones, Michael Bibi, PAWSA, Patrick Topping, Mochakk). Do not purify it toward either -- the mix is the format. The tagline says \"underground\" but the roster is honestly about half main stage, and that is intended.",
+        "Club versions are the format here, not an outlier. Durations run 2:26 to 6:44 and a six-minute mix is normal on this station in a way it is not anywhere else on the dial -- do not reject a track for length, and do not prefer a radio edit just because it is shorter.",
+        "Nearly every title here exists as BOTH an extended mix (typically 5-7 min) and a single edit (2:30-3:30). Either is acceptable, but check the duration so you know which one you actually took -- the titles frequently do not say, and re-upload channels mislabel them.",
+        "Vocal hooks are in-lane, not a compromise (\"Beggin'\", \"Ferrari\", \"Where You Are\", \"You Give Me A Feeling\"). This is not a purist instrumental station. What is out of lane: EDM/big-room, bass house, and progressive-trance crossover.",
+        "Channel provenance: prefer the artist's own channel, a label channel (Defected, Insomniac, Snatch!, Toolroom, CircoLoco, Hot Creations, Big Beat, Astralwerks, Experts Only, Dim Mak, Nervous), or a label-delivered \"- Topic\" art track. Tech house search results are DOMINATED by re-upload channels -- Myth of NYX, 7clouds, Top Hits USA, Selected., blanc, PROFOUND, Groove Bassment -- which often carry correct audio but have unverifiable provenance and unreliable mix labelling. CID's \"Fancy $hit\" was moved off one of these onto CID's own Topic delivery once a search found it; do the same rather than settling.",
+        "Trap specific to this genre: several of these artists' most-viewed uploads are FESTIVAL SETS, not tracks. A search for \"Mochakk Jealous\" returns his Circoloco Sonar set above the studio single, and Dom Dolla/Odd Mob/Cloonee all have live sets outranking their releases. Always confirm the result is the track, not an hour of one."
       ],
-      "rejections": [
-        {
-          "artist": "Koko Taylor",
-          "track": "I'd Rather Go Blind",
-          "reason": "Song collision -- Etta James already holds this song on the station. The artist is otherwise in-lane; a different track would be fine."
-        },
-        {
-          "artist": "John Lee Hooker",
-          "track": "It Serves Me Right to Suffer",
-          "reason": "Not a lane call -- dropped from the 2026-08-25 batch because its Topic uploads run 3:29 / 5:03 / 5:50 and none could be pinned to the album master without listening. Worth revisiting with a confirmed ID."
-        }
-      ],
-      "notes": "Introduced 60th pass (2026-08-24) from a pasted 40-track playlist + persona brief; 20 taken then, 8 more added 2026-08-25 against the brief alone -- the original 40-track list was never committed and is gone."
+      "rejections": [],
+      "notes": "Roster built 2026-08-28 from a 30-title brief, replacing the temporary 60s-oldies test rotation that ran here 2026-08-25 to 2026-08-28. All 30 verified in one clean audition run (UNVERIFIED: 0), all embeddable, licence breadth 121-249 countries. Nearly all flagged UNKNOWN-CHANNEL at the time, which was correct and harmless: provenance is scored against the channels the station already used, and those were the oldies uploads this pass deleted. From the next pass onward it scores against the label/artist channels above, so the signal becomes meaningful again.",
+      "priorFormat": {
+        "retired": "MIDNIGHT NEON, late-night electric blues. Ran from the 60th pass (2026-08-24) until the SYNAPSE rename (2026-08-28). Do not propose against this; kept for the rejection history.",
+        "callsign": "MIDNIGHT NEON",
+        "genre": "late-night electric blues -- minor-key slow burns, lush horns, reverberant guitar solos",
+        "eraLane": "no fixed decade; the first 28 tracks run 1947 -> 2012, weighted to classic electric blues",
+        "constraints": [
+          "The brief is a mood, not a decade: dark highways and low-lit lounges after hours. Slow burns are welcome at length -- the roster already carries 7-9 minute cuts (Tin Pan Alley, If Trouble Was Money), so runtime is not a reason to reject.",
+          "Electric blues, not acoustic/Delta country blues -- the desc says electric and the whole station leans on amplified tone and reverb.",
+          "Sourcing differs from the guitar-rock stations: pre-1970 blues catalog has no official video, so artist \"- Topic\" channels (label-delivered Art Tracks) are the norm and are fine. Fan/compilation uploads are not -- all 28 are Topic, label, artist-official or VEVO.",
+          "Nearly every classic here has multiple near-identical Topic uploads across compilations. Check duration before picking: it is the only cheap way to catch a live take, a single edit or a modern rework (an EDM \"rework\" of a John Lee Hooker cut sits on his own Topic channel)."
+        ],
+        "rejections": [
+          {
+            "artist": "Koko Taylor",
+            "track": "I'd Rather Go Blind",
+            "reason": "Song collision -- Etta James already holds this song on the station. The artist is otherwise in-lane; a different track would be fine."
+          },
+          {
+            "artist": "John Lee Hooker",
+            "track": "It Serves Me Right to Suffer",
+            "reason": "Not a lane call -- dropped from the 2026-08-25 batch because its Topic uploads run 3:29 / 5:03 / 5:50 and none could be pinned to the album master without listening. Worth revisiting with a confirmed ID."
+          }
+        ],
+        "notes": "Introduced 60th pass (2026-08-24) from a pasted 40-track playlist + persona brief; 20 taken then, 8 more added 2026-08-25 against the brief alone -- the original 40-track list was never committed and is gone."
+      }
     },
     "momentum": {
       "callsign": "MOMENTUM",
