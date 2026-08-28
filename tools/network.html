@@ -61,7 +61,7 @@
   .preview-row td { padding: 0 6px 8px; }
   .preview-row iframe { width: 320px; height: 180px; border: 1px solid var(--line); }
   .add-track { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
-  .add-track input { flex: 1; min-width: 120px; }
+  .add-track input[type=text] { flex: 1; min-width: 120px; }
   .station-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
   .dirty-flag { color: var(--amber); font-size: 11px; }
   .save-msg { font-size: 11px; color: var(--ink-dim); }
@@ -119,11 +119,15 @@
   .git-line .on-main { color: var(--amber); }
   .dirty-files { color: var(--ink-faint); font-size: 11px; margin: 8px 0; max-height: 130px; overflow-y: auto; }
   .ship-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
-  .ship-row input { flex: 1; min-width: 260px; }
+  /* type=text only. `.ship-row input` also matched the checkbox, giving it
+     flex:1 and a 260px min-width -- which is why "also verify every track"
+     rendered as a checkbox stranded halfway across the panel from its own
+     label. Same trap is why every rule below is typed. */
+  .ship-row input[type=text] { flex: 1; min-width: 260px; }
 
   /* ---- audition ---- */
   .aud-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
-  .aud-form input { min-width: 220px; flex: 1; }
+  .aud-form input[type=text] { min-width: 220px; flex: 1; }
   .aud-constraints { border-left: 2px solid var(--amber); padding: 6px 10px; margin-bottom: 10px; color: var(--ink-dim); font-size: 11.5px; background: #0e120c; }
   .aud-constraints .rej { color: var(--ink-faint); }
   .aud-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
@@ -144,11 +148,86 @@
   .pending-card .pc-rationale { color: var(--ink-dim); font-size: 12px; margin: 6px 0; font-style: italic; }
   .pending-card .pc-meta { color: var(--ink-faint); font-size: 11px; }
   .pending-card .pc-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+
+  /* ---- sticky header ---------------------------------------------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20; background: var(--bg);
+    border-bottom: 1px solid var(--line); margin: 0 -28px 16px; padding: 10px 28px 8px;
+  }
+  .topbar-row { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+  .topbar h1 { margin: 0; }
+  .spacer { flex: 1; }
+  .jump { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+  .jump .lbl { color: var(--ink-faint); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; margin-right: 2px; }
+  .chip {
+    border: 1px solid var(--line); color: var(--ink-dim); font-size: 10px;
+    padding: 2px 7px; border-radius: 2px; cursor: pointer; background: var(--panel);
+    font-family: var(--mono); white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--ink-dim); color: var(--ink); }
+  .chip.dirty { border-color: var(--amber); color: var(--amber); }
+  .chip.secret { color: var(--red); }
+  .unsaved-pill {
+    border: 1px solid var(--amber); color: var(--amber); font-size: 11px;
+    padding: 2px 9px; border-radius: 2px; cursor: pointer; background: #1b1608;
+  }
+  .unsaved-pill:hover { background: #241d0a; }
+
+  /* ---- help ------------------------------------------------------- */
+  .help { color: var(--ink-faint); font-size: 11px; line-height: 1.5; margin: 2px 0 0; }
+  .help b { color: var(--ink-dim); font-weight: normal; }
+  body.nohelp .help { display: none; }
+  .helpbtn { font-size: 10px; padding: 2px 8px; }
+  .tool { display: inline-flex; flex-direction: column; gap: 2px; max-width: 230px; }
+  .tool .help { margin: 0; }
+  .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 6px; }
+  .tag-net { color: var(--blue); }
+  .tag-write { color: var(--amber); }
+
+  /* ---- console ---------------------------------------------------- */
+  .console-bar { display: flex; gap: 6px; align-items: center; margin-top: 10px; }
+  .console-bar .ttl { color: var(--ink-faint); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; flex: 1; }
+
+  /* ---- tracks ----------------------------------------------------- */
+  .track-tools { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .track-tools .count { color: var(--ink-faint); font-size: 11px; }
+  table.tracks { table-layout: fixed; }
+  table.tracks td.t-title { width: 34%; }
+  table.tracks td.t-artist { width: 22%; }
+  table.tracks td.t-id { width: 13%; }
+  table.tracks td.idx { width: 34px; }
+  table.tracks td.dot { width: 20px; }
+  table.tracks td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr.removed td { opacity: .4; text-decoration: line-through; }
+  tr.removed td.row-actions { opacity: 1; text-decoration: none; }
+
+  /* ---- flags legend ------------------------------------------------ */
+  .flag-legend { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+  .flag[title] { cursor: help; }
+
+  /* ---- focus / a11y ------------------------------------------------ */
+  :focus-visible { outline: 1px solid var(--amber); outline-offset: 1px; }
+  .panel-head:focus-visible { background: #161c11; }
+  [role=button] { cursor: pointer; }
 </style>
 </head>
 <body>
 
-<h1>SIGNAL <span class="sub">— network ops</span></h1>
+<div class="topbar" id="topbar">
+  <div class="topbar-row">
+    <h1>SIGNAL <span class="sub">— network ops</span></h1>
+    <span class="conn-status" id="conn-status" style="margin:0"></span>
+    <span class="spacer"></span>
+    <button class="helpbtn" id="btn-help" title="Show or hide the explanatory lines under each control">? help</button>
+  </div>
+  <div class="topbar-row" id="topbar-actions" style="display:none">
+    <span class="totals" id="totals" style="margin:0"></span>
+    <span class="spacer"></span>
+    <span id="unsaved-slot"></span>
+  </div>
+  <div class="jump" id="jump" style="display:none"></div>
+  <div class="save-msg" id="global-msg" style="margin-top:6px"></div>
+</div>
 
 <div id="connect-screen">
   <div class="connect-box">
@@ -158,18 +237,20 @@
 </div>
 
 <div id="app">
-  <div class="conn-status" id="conn-status"></div>
-  <div class="totals" id="totals"></div>
-
   <div class="toolbar">
-    <button class="primary" id="btn-check-all">check all for dead links</button>
     <button id="btn-save-all">save all changed stations</button>
     <button id="btn-refresh">reload from disk</button>
-    <span class="save-msg" id="global-msg"></span>
+    <button id="btn-check-all" title="oEmbed-checks every track on every station. Network, and slow on a 432-track roster.">check all for dead links</button>
   </div>
+  <p class="help" style="margin:-10px 0 16px">
+    <b>save all changed stations</b> writes every unsaved track and identity edit to stations.js ·
+    <b>reload from disk</b> discards them and re-reads the file ·
+    <b>check all for dead links</b> asks YouTube oEmbed about all 432 tracks — that only proves a video
+    <i>exists</i>; use AUDITION for duration, region and embeddability.
+  </p>
 
   <div class="panel open" id="panel-ops">
-    <div class="panel-head" data-toggle="panel-ops">
+    <div class="panel-head" data-toggle="panel-ops" role="button" tabindex="0" aria-controls="panel-ops">
       <span class="chevron">▶</span><span class="callsign">PREFLIGHT &amp; TOOLS</span>
       <span class="tagline" id="ops-summary">lint, suite, roster verify</span>
     </div>
@@ -177,7 +258,7 @@
   </div>
 
   <div class="panel" id="panel-deploy">
-    <div class="panel-head" data-toggle="panel-deploy">
+    <div class="panel-head" data-toggle="panel-deploy" role="button" tabindex="0" aria-controls="panel-deploy">
       <span class="chevron">▶</span><span class="callsign">DEPLOY</span>
       <span class="tagline" id="deploy-summary"></span>
     </div>
@@ -185,7 +266,7 @@
   </div>
 
   <div class="panel" id="panel-audition">
-    <div class="panel-head" data-toggle="panel-audition">
+    <div class="panel-head" data-toggle="panel-audition" role="button" tabindex="0" aria-controls="panel-audition">
       <span class="chevron">▶</span><span class="callsign">AUDITION</span>
       <span class="tagline">vet candidate tracks before they reach the roster</span>
     </div>
@@ -193,7 +274,7 @@
   </div>
 
   <div class="panel" id="panel-pending">
-    <div class="panel-head" data-toggle="panel-pending">
+    <div class="panel-head" data-toggle="panel-pending" role="button" tabindex="0" aria-controls="panel-pending">
       <span class="chevron">▶</span><span class="callsign">PENDING QUEUE</span>
       <span class="tagline" id="pending-summary"></span>
     </div>
@@ -201,7 +282,7 @@
   </div>
 
   <div class="panel" id="panel-overlaps">
-    <div class="panel-head" data-toggle="panel-overlaps">
+    <div class="panel-head" data-toggle="panel-overlaps" role="button" tabindex="0" aria-controls="panel-overlaps">
       <span class="chevron">▶</span><span class="callsign">ARTIST OVERLAP &amp; DUPLICATES</span>
       <span class="tagline" id="overlap-summary"></span>
     </div>
@@ -305,6 +386,7 @@ const el = (tag, attrs, ...kids) => {
     if (k === 'onclick') e.addEventListener('click', v)
     else if (k === 'oninput') e.addEventListener('input', v)
     else if (k === 'onchange') e.addEventListener('change', v)
+    else if (k === 'onkeydown') e.addEventListener('keydown', v)
     else if (k === 'html') e.innerHTML = v
     else if (v != null) e.setAttribute(k, v)
   }
@@ -331,6 +413,63 @@ document.addEventListener('click', (e) => {
   const head = e.target.closest('[data-toggle]')
   if (head) togglePanel(head.dataset.toggle)
 })
+// Panel headers are divs, so they need the keyboard behaviour a button would
+// have given for free.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return
+  const head = e.target.closest('.panel-head')
+  if (!head) return
+  e.preventDefault()
+  head.click()
+})
+
+// ---- help ------------------------------------------------------------
+// Every control carries a one-line explanation. They are ON by default --
+// this is a tool you come back to after weeks away -- and the toggle is
+// remembered, so someone who knows it cold can turn the prose off and keep
+// the dense layout. Nothing is hidden behind hover only.
+const HELP_KEY = 'signal:admin:help'
+function applyHelp() {
+  const on = localStorage.getItem(HELP_KEY) !== 'off'
+  document.body.classList.toggle('nohelp', !on)
+  const b = document.getElementById('btn-help')
+  if (b) { b.textContent = on ? '? help on' : '? help off'; b.className = 'helpbtn' + (on ? ' primary' : '') }
+}
+document.getElementById('btn-help').addEventListener('click', () => {
+  localStorage.setItem(HELP_KEY, localStorage.getItem(HELP_KEY) === 'off' ? 'on' : 'off')
+  applyHelp()
+})
+applyHelp()
+
+const help = (html) => el('p', { class: 'help', html })
+
+// What each Node tool actually does, how long it takes, and whether it
+// writes anything. The button labels come from the server (they are the
+// tool's own name); this is the part a label cannot carry.
+const TASK_HELP = {
+  lint: 'Roster rules offline: 9 public stations, ≥10 tracks each, 4-tone idents, glyphs present in the font, unique ids, tagline width, frequency spacing. <b>Instant.</b>',
+  test: 'The full headless suite — boots the real program against a fake clock and asserts on the text grid. <b>~5s, no network.</b>',
+  verify: 'oEmbed-checks <i>every</i> track on the roster. <b class="tag-net">Network, slow.</b> Proves a video resolves; not that it is embeddable or in-region.',
+  stamp: 'Bumps build.json, which main.js reads to cache-bust every module. <b class="tag-write">Writes.</b> Required before any deploy — SHIP does it for you.',
+  stations: 'Regenerates stations.md from stations.js. <b class="tag-write">Writes.</b> Never hand-edit that file; saves here already re-run this.',
+  deadfeedback: 'Presses every key in every view and diffs against a do-nothing control, to find controls that click but change nothing. <b>~1 min.</b>',
+  shoot: 'Re-shoots screenshots/ by driving headless Chrome. <b class="tag-net">Slow</b>, <b class="tag-write">writes</b>. Run it after changing a screen the README shows.',
+}
+
+// The audition flags are terse on purpose in the terminal; here there is
+// room to say what each one means and whether it is fatal.
+const FLAG_HELP = {
+  'UNVERIFIED': 'Nothing beyond oEmbed was checked — duration, region and embeddability are ALL unknown. Usually YouTube rate-limiting (HTTP 429). Wait it out; do not treat as clean.',
+  'NOT-US': 'Not licensed in the US.',
+  'NARROW-LICENCE': 'Licensed in fewer than 20 countries. Observed counts split cleanly: 1–8 bad, 115–249 healthy. The better channel often holds the narrower licence.',
+  'NO-EMBED': 'The uploader disallows embedding, so the IFrame player cannot play it. Fatal — it would be dead air.',
+  'LOGIN_REQUIRED': 'Age-gated. The IFrame player cannot satisfy this. Fatal.',
+  'CHECK-VERSION': 'Title contains live/remix/edit/cover-ish words. Machine checks cannot tell an album master from a live take — listen before accepting.',
+  'UNKNOWN-CHANNEL': 'Channel is not VEVO, not a "- Topic" upload, and not one this station already uses. Fan re-uploads are where covers get labelled as originals.',
+  'ALREADY-ON': 'This exact video id is already on the roster.',
+  'TITLE-ON-STATION': 'A track with this title is already on this station.',
+}
+const flagHelp = (f) => FLAG_HELP[f.split(':')[0]] || FLAG_HELP[f] || f
 
 // ---- boot ------------------------------------------------------------
 async function connect() {
@@ -358,15 +497,76 @@ async function connect() {
 
 function render() {
   const t = roster.totals
+  document.getElementById('topbar-actions').style.display = ''
+  document.getElementById('jump').style.display = ''
   document.getElementById('totals').innerHTML =
     `<b>${t.stationCount}</b> stations &middot; <b>${t.trackCount}</b> tracks &middot; <b>${t.uniqueArtists}</b> unique artists`
   renderConnStatus()
+  renderJump()
+  renderUnsaved()
   renderOps()
   renderDeploy()
   renderAudition()
   renderPending()
   renderOverlaps()
   renderStations()
+}
+
+// 11 station panels plus five tool panels is more than a screen, and the
+// thing you want is almost always a named station. Chips beat scrolling, and
+// they double as the at-a-glance "which of these has unsaved work" answer.
+function renderJump() {
+  const bar = document.getElementById('jump')
+  bar.innerHTML = ''
+  bar.appendChild(el('span', { class: 'lbl' }, 'jump'))
+  for (const [id, label] of [
+    ['panel-ops', 'preflight'], ['panel-deploy', 'deploy'], ['panel-audition', 'audition'],
+    ['panel-pending', 'pending'], ['panel-overlaps', 'overlap'],
+  ]) {
+    bar.appendChild(el('button', {
+      class: 'chip',
+      onclick: () => { const p = document.getElementById(id); p.classList.add('open'); p.scrollIntoView({ block: 'start' }) },
+    }, label))
+  }
+  bar.appendChild(el('span', { class: 'lbl', style: 'margin-left:8px' }, 'stations'))
+  const all = [...roster.stations].sort((a, b) => a.freq - b.freq).concat(roster.secretStations)
+  for (const st of all) {
+    const dirty = isDirty(st) || identDirty(st)
+    bar.appendChild(el('button', {
+      class: 'chip' + (dirty ? ' dirty' : '') + (st.secret ? ' secret' : ''),
+      title: `${st.callsign}${st.secret ? ' (secret)' : ` — ${st.freq.toFixed(1)}`}${dirty ? ' — UNSAVED changes' : ''}`,
+      onclick: () => openStation(st.id),
+    }, st.callsign.split(' ').map(w => w[0]).join('') + (dirty ? ' •' : '')))
+  }
+}
+
+function openStation(id) {
+  const p = document.getElementById('panel-' + id)
+  if (!p) return
+  p.classList.add('open')
+  p.scrollIntoView({ block: 'start' })
+}
+
+function dirtyStations() {
+  return allStations().filter(st => isDirty(st) || identDirty(st))
+}
+
+function renderUnsaved() {
+  const slot = document.getElementById('unsaved-slot')
+  slot.innerHTML = ''
+  const d = dirtyStations()
+  const saveAll = document.getElementById('btn-save-all')
+  if (saveAll) {
+    saveAll.textContent = d.length ? `save all changed stations (${d.length})` : 'save all changed stations'
+    saveAll.className = d.length ? 'primary' : ''
+    saveAll.disabled = !d.length
+  }
+  if (!d.length) return
+  slot.appendChild(el('button', {
+    class: 'unsaved-pill',
+    title: 'Jump to the first station with unsaved changes:\n' + d.map(s => s.callsign).join('\n'),
+    onclick: () => openStation(d[0].id),
+  }, `${d.length} station${d.length === 1 ? '' : 's'} unsaved — jump ↓`))
 }
 
 function renderConnStatus() {
@@ -391,14 +591,36 @@ function logLine(box, ev) {
   box.scrollTop = box.scrollHeight
 }
 
+/** Clear + copy for any streamed log. Both are things you reach for on a
+ *  failure -- the whole point of a run is often the last 20 lines, and
+ *  selecting them out of a scrolling box by hand is miserable. */
+function consoleBox(title) {
+  const box = el('div', { class: 'console' })
+  const bar = el('div', { class: 'console-bar' },
+    el('span', { class: 'ttl' }, title),
+    el('button', { class: 'small', onclick: () => { box.innerHTML = '' } }, 'clear'),
+    el('button', {
+      class: 'small',
+      onclick: async (e) => {
+        const text = [...box.children].map(c => c.textContent).join('\n')
+        try { await navigator.clipboard.writeText(text); e.target.textContent = 'copied' }
+        catch (err) { e.target.textContent = 'copy failed' }
+        setTimeout(() => { e.target.textContent = 'copy' }, 1200)
+      },
+    }, 'copy'))
+  return { box, bar }
+}
+
 function renderOps() {
   const body = document.getElementById('ops-body')
   body.innerHTML = ''
-  body.appendChild(el('div', { class: 'save-msg' },
-    'Preflight runs lint → suite. Roster verify reaches YouTube for every track, so it is opt-in.'))
+  body.appendChild(help(
+    'PREFLIGHT is the "is this safe to ship" check: <b>lint</b> (roster rules, instant) then the ' +
+    '<b>full test suite</b>. Roster verify is opt-in because it asks YouTube about every one of ' +
+    'the 432 tracks and takes minutes — lint failing first means never spending that.'))
 
   const stepsRow = el('div', { class: 'steps' })
-  const console_ = el('div', { class: 'console' })
+  const { box: console_, bar: consoleBar } = consoleBox('output')
   const netBox = el('input', { type: 'checkbox', id: 'pf-net' })
   const stepEls = {}
 
@@ -410,7 +632,7 @@ function renderOps() {
   }
 
   const bar = el('div', { class: 'steps' })
-  const runBtn = el('button', { class: 'primary' }, 'run preflight')
+  const runBtn = el('button', { class: 'primary', title: 'Runs lint, then the test suite. Stops at the first failure.' }, 'run preflight')
   runBtn.addEventListener('click', async () => {
     const includeNetwork = netBox.checked
     runBtn.disabled = true
@@ -435,15 +657,25 @@ function renderOps() {
     runBtn.disabled = false
   })
   bar.appendChild(runBtn)
-  bar.appendChild(el('label', { class: 'save-msg' }, netBox, ' include roster verify (network, slow)'))
+  bar.appendChild(el('label', {
+    class: 'save-msg',
+    title: 'Adds an oEmbed check of every track. Minutes, not seconds.',
+  }, netBox, ' include roster verify (network, slow)'))
   body.appendChild(bar)
   body.appendChild(stepsRow)
 
-  const tools = el('div', { class: 'steps' })
+  const tools = el('div', { class: 'tools-grid' })
   for (const [task, spec] of Object.entries(boot.tasks)) {
-    const b = el('button', { class: 'small' }, spec.label + (spec.network ? ' ⇢' : ''))
+    const b = el('button', {
+      class: 'small',
+      // The tooltip is the same text as the help line, so it is still
+      // reachable with help turned off.
+      title: (TASK_HELP[task] || '').replace(/<[^>]+>/g, ''),
+    }, spec.label + (spec.network ? ' ⇢' : ''))
     b.addEventListener('click', async () => {
       b.disabled = true
+      const was = b.textContent
+      b.textContent = 'running…'
       console_.innerHTML = ''
       try {
         await streamApi('run', { task }, (ev) => {
@@ -454,11 +686,15 @@ function renderOps() {
         })
       } catch (e) { logLine(console_, { type: 'err', text: String(e.message ?? e) }) }
       b.disabled = false
+      b.textContent = was
     })
-    tools.appendChild(b)
+    tools.appendChild(el('div', { class: 'tool' }, b, TASK_HELP[task] ? help(TASK_HELP[task]) : null))
   }
   body.appendChild(el('div', { class: 'group-title' }, 'individual tools'))
+  body.appendChild(help('<b class="tag-net">⇢ / Network</b> = reaches YouTube and is slow. ' +
+    '<b class="tag-write">Writes</b> = changes a file in the repo.'))
   body.appendChild(tools)
+  body.appendChild(consoleBar)
   body.appendChild(console_)
 }
 
@@ -484,19 +720,33 @@ function renderDeploy() {
       'On main — shipping from here publishes to production.'))
   }
 
+  body.appendChild(el('div', { class: 'group-title', style: 'margin-top:10px' },
+    g.dirty.length ? `uncommitted — all ${g.dirty.length} would be staged` : 'uncommitted'))
   const files = el('div', { class: 'dirty-files' })
-  if (!g.dirty.length) files.appendChild(el('div', { class: 'empty' }, 'working tree clean'))
-  for (const d of g.dirty) files.appendChild(el('div', {}, `${d.code.padEnd(3)} ${d.file}`))
+  if (!g.dirty.length) files.appendChild(el('div', { class: 'empty' }, 'working tree clean — nothing to ship'))
+  for (const d of g.dirty) {
+    // M/A/D/?? straight from git status --porcelain; spelled out because the
+    // two-letter codes are not obvious if you do not live in git plumbing.
+    const meaning = { M: 'modified', A: 'added', D: 'deleted', R: 'renamed', '??': 'untracked' }[d.code] || d.code
+    files.appendChild(el('div', { title: meaning }, `${d.code.padEnd(3)} ${d.file}`))
+  }
   body.appendChild(files)
 
-  body.appendChild(el('div', { class: 'save-msg' },
-    'SHIP runs stamp → stations.md → lint → suite, then add, commit, push. It stops at the first failure and commits nothing.'))
+  body.appendChild(help(
+    'SHIP runs, in order: <b>stamp</b> (bump build.json — the step that is easy to forget by hand ' +
+    'and the reason a deploy can leave visitors on the old build) → <b>stations.md</b> → <b>lint</b> → ' +
+    '<b>suite</b> → <code>git add -A</code> → <code>commit</code> → <code>push</code>. ' +
+    'It stops at the first failure, and commits nothing when it does. ' +
+    '<b>It stages everything in the working tree</b>, not just roster changes — check the file list above.'))
 
-  const msg = el('input', { type: 'text', placeholder: 'commit message' })
+  const msg = el('input', { type: 'text', placeholder: 'commit message', title: 'Required. Becomes the git commit message verbatim.' })
   const netBox = el('input', { type: 'checkbox' })
-  const console_ = el('div', { class: 'console' })
+  const { box: console_, bar: consoleBar } = consoleBox('ship log')
   const stepsRow = el('div', { class: 'steps' })
-  const shipBtn = el('button', { class: 'go' }, 'SHIP')
+  const shipBtn = el('button', {
+    class: 'go',
+    title: 'stamp → stations.md → lint → suite → add → commit → push. Asks before it does anything.',
+  }, 'SHIP')
   shipBtn.addEventListener('click', async () => {
     const message = msg.value.trim()
     if (!message) { msg.classList.add('bad'); return }
@@ -529,9 +779,11 @@ function renderDeploy() {
   })
 
   const row = el('div', { class: 'ship-row' }, msg, shipBtn,
-    el('label', { class: 'save-msg' }, netBox, ' also verify every track (slow)'))
+    el('label', { class: 'save-msg', title: 'Adds the full oEmbed sweep before committing. Minutes.' },
+      netBox, ' also verify every track (slow)'))
   body.appendChild(row)
   body.appendChild(stepsRow)
+  body.appendChild(consoleBar)
   body.appendChild(console_)
 }
 
@@ -550,9 +802,9 @@ function renderAudition() {
 
   const sel = el('select', {})
   for (const st of allStations()) sel.appendChild(el('option', { value: st.id }, `${st.callsign} (${st.tracks.length})`))
-  const searchInput = el('input', { type: 'text', placeholder: 'search terms — "Artist Track Title"' })
-  const idsInput = el('input', { type: 'text', placeholder: 'or paste youtube ids, space separated' })
-  const console_ = el('div', { class: 'console' })
+  const searchInput = el('input', { type: 'text', placeholder: 'search terms — "Artist Track Title"', title: 'Ranks candidates from a YouTube video search.' })
+  const idsInput = el('input', { type: 'text', placeholder: 'or paste youtube ids, space separated', title: '11-character video ids. Anything that is not one is ignored.' })
+  const { box: console_, bar: consoleBar } = consoleBox('audition log')
   const out = el('div', {})
 
   const go = el('button', { class: 'primary' }, 'audition')
@@ -576,9 +828,15 @@ function renderAudition() {
   })
 
   body.appendChild(el('div', { class: 'aud-form' }, sel, searchInput, idsInput, go))
-  body.appendChild(el('div', { class: 'save-msg' },
-    'Search ranks candidates; paste IDs to check specific ones. Same checks as tools/audition.js — duration, embeddability, licence breadth, channel provenance, roster collisions.'))
+  body.appendChild(help(
+    'Pick the station first — every check is scored <i>against that station</i> ' +
+    '(its existing channels, its profile constraints, its past rejections). ' +
+    'Type <b>search terms</b> to find candidates, or paste <b>video ids</b> to check specific ones. ' +
+    'This runs tools/audition.js, so it sees what oEmbed cannot: duration, region, embeddability, ' +
+    'channel provenance and roster collisions. <b>It cannot tell you if it is the right recording</b> — ' +
+    'play it.'))
   body.appendChild(out)
+  body.appendChild(consoleBar)
   body.appendChild(console_)
 }
 
@@ -607,6 +865,17 @@ function renderAuditionResult(out, stationId) {
     if (box.children.length) out.appendChild(box)
   }
 
+  // Legend, so a red badge does not require remembering which of nine
+  // acronyms is fatal and which is a nudge to go listen.
+  const seen = [...new Set((audResult.rows || []).flatMap(r => r.flags || []).map(f => f.split(':')[0]))]
+  if (seen.length) {
+    const legend = el('div', { class: 'flag-legend' })
+    legend.appendChild(el('span', { class: 'save-msg' }, 'flags in these results:'))
+    for (const f of seen) legend.appendChild(el('span', { class: flagClass(f), title: flagHelp(f) }, f))
+    out.appendChild(legend)
+    out.appendChild(help(seen.map(f => `<b>${f}</b> — ${flagHelp(f)}`).join('<br>')))
+  }
+
   const grid = el('div', { class: 'aud-grid' })
   for (const r of audResult.rows || []) {
     const card = el('div', { class: 'aud-card' + (r.dead ? ' dead' : '') })
@@ -617,8 +886,8 @@ function renderAuditionResult(out, stationId) {
       el('span', {}, (r.channel || '').slice(0, 30)),
       r.countries != null ? el('span', {}, `${r.countries} countries`) : null))
     const flags = el('div', { class: 'flags' })
-    if (r.flags?.length) for (const f of r.flags) flags.appendChild(el('span', { class: flagClass(f) }, f))
-    else flags.appendChild(el('span', { class: 'flag none' }, 'no flags — still confirm the recording'))
+    if (r.flags?.length) for (const f of r.flags) flags.appendChild(el('span', { class: flagClass(f), title: flagHelp(f) }, f))
+    else flags.appendChild(el('span', { class: 'flag none', title: 'Nothing mechanical to hold against it. Duration and channel are still yours to judge.' }, 'no flags — still confirm the recording'))
     card.appendChild(flags)
     if (!r.dead) {
       card.appendChild(el('iframe', {
@@ -714,7 +983,13 @@ function renderPending() {
   const n = pendingData.pending.length
   summary.textContent = n ? `${n} candidate${n === 1 ? '' : 's'} awaiting review` : 'nothing queued'
   body.innerHTML = ''
-  if (!n) { body.appendChild(el('div', { class: 'empty' }, 'no pending candidates')); return }
+  if (!n) {
+    body.appendChild(el('div', { class: 'empty' }, 'no pending candidates'))
+    body.appendChild(help('Candidates land here from <b>AUDITION</b> above, or from Claude writing into ' +
+      'tools/pending-tracks.json. Approving one adds it to that station\'s unsaved edits; rejecting ' +
+      'one writes the reason to <b>both</b> rejection stores so it is not re-proposed.'))
+    return
+  }
   const sorted = [...pendingData.pending].sort((a, b) => (a.stationId || '').localeCompare(b.stationId || ''))
   for (const entry of sorted) body.appendChild(renderPendingCard(entry))
 }
@@ -783,7 +1058,12 @@ function renderOverlaps() {
   const n = roster.overlaps.length, d = roster.dupeIds.length
   summary.textContent = `${n} artist${n === 1 ? '' : 's'} on multiple stations, ${d} duplicate track id${d === 1 ? '' : 's'}`
   body.innerHTML = ''
-  if (!n && !d) { body.appendChild(el('div', { class: 'empty' }, 'nothing to flag')); return }
+  if (!n && !d) {
+    body.appendChild(el('div', { class: 'empty' }, 'nothing to flag'))
+    body.appendChild(help('An artist on two stations is not automatically wrong — it is worth a look. ' +
+      'A duplicate video id across stations usually is.'))
+    return
+  }
   if (n) {
     body.appendChild(el('div', { style: 'color:var(--ink-dim);margin-bottom:4px' }, 'Artists appearing on more than one station:'))
     for (const o of roster.overlaps) {
@@ -828,7 +1108,15 @@ function badgeFor(st) {
 function renderStationPanel(st) {
   const panelId = 'panel-' + st.id
   const panel = el('div', { class: 'panel' + (st.secret ? ' secret' : ''), id: panelId })
-  const head = el('div', { class: 'panel-head', onclick: () => panel.classList.toggle('open') },
+  const head = el('div', {
+    class: 'panel-head', role: 'button', tabindex: '0',
+    'aria-expanded': 'false',
+    title: `${st.callsign} — ${st.tracks.length} tracks. Click to open.`,
+    onclick: () => {
+      panel.classList.toggle('open')
+      head.setAttribute('aria-expanded', String(panel.classList.contains('open')))
+    },
+  },
     el('span', { class: 'chevron' }, '▶'),
     el('span', { class: 'freq' }, st.secret ? '(secret)' : Number(fieldValue(st, 'freq')).toFixed(1)),
     el('span', { class: 'glyph' }, fieldValue(st, 'glyph') || (st.secret ? '●' : '·')),
@@ -839,10 +1127,15 @@ function renderStationPanel(st) {
 
   const tab = openTab[st.id] || 'tracks'
   const tabs = el('div', { class: 'tabs' })
-  for (const [key, label] of [['tracks', 'tracks'], ['identity', 'identity & feel']]) {
+  for (const [key, label, tip] of [
+    ['tracks', 'tracks', 'The playlist: add, remove, reorder, preview.'],
+    ['identity', 'identity & feel', 'Everything else about the station — dial position, ident tones, CRT character, needle physics.'],
+  ]) {
     tabs.appendChild(el('div', {
       class: 'tab' + (tab === key ? ' on' : ''),
+      role: 'tab', tabindex: '0', 'aria-selected': String(tab === key), title: tip,
       onclick: () => { openTab[st.id] = key; rerenderStation(st) },
+      onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTab[st.id] = key; rerenderStation(st) } },
     }, label))
   }
   body.appendChild(tabs)
@@ -852,30 +1145,73 @@ function renderStationPanel(st) {
   return panel
 }
 
+// Per-station filter text, kept outside the render so retyping it after
+// every rerenderStation() is not the price of removing a track.
+const trackFilter = {}
+
 function renderTracksTab(st) {
   const wrap = el('div', {})
   if (st.desc) wrap.appendChild(el('div', { class: 'desc' }, fieldValue(st, 'desc')))
-  const table = el('table', { class: 'tracks' })
+
   const tracks = tracksFor(st)
-  tracks.forEach((t, i) => table.appendChild(renderTrackRow(st, t, i)))
+  const q = (trackFilter[st.id] || '').trim().toLowerCase()
+  const match = (t) => !q || `${t.title} ${t.artist} ${t.youtubeId}`.toLowerCase().includes(q)
+  const shown = tracks.filter(match)
+
+  // MIDNIGHT NEON carries 71 tracks. Finding one by scrolling is the single
+  // most tedious thing in this panel.
+  const filterInput = el('input', {
+    type: 'text', placeholder: 'filter title / artist / id', style: 'width:240px',
+  })
+  filterInput.value = trackFilter[st.id] || ''
+  filterInput.addEventListener('input', () => {
+    trackFilter[st.id] = filterInput.value
+    rerenderStation(st)
+    // rerender replaces the node, so put the caret back where it was.
+    const fresh = document.querySelector(`#panel-${st.id} .track-tools input`)
+    if (fresh) { fresh.focus(); fresh.setSelectionRange(fresh.value.length, fresh.value.length) }
+  })
+  const tools = el('div', { class: 'track-tools' },
+    filterInput,
+    el('span', { class: 'count' }, q ? `${shown.length} of ${tracks.length}` : `${tracks.length} tracks`),
+    q ? el('button', { class: 'small', onclick: () => { trackFilter[st.id] = ''; rerenderStation(st) } }, 'clear filter') : null)
+  wrap.appendChild(tools)
+  wrap.appendChild(help(
+    'Edits here are held in the browser until you press <b>save tracks</b> — ' +
+    '<b>preview change</b> shows the exact stations.js diff first. ' +
+    'Removing a track keeps the comments above it unless they belong to that track, ' +
+    'and you are told if any are dropped.'))
+
+  const table = el('table', { class: 'tracks' })
+  if (!shown.length) {
+    table.appendChild(el('tr', {}, el('td', { colspan: '6', class: 'empty' },
+      q ? `nothing matches "${q}"` : 'no tracks on this station')))
+  }
+  // Index is the position in the REAL list, not the filtered view -- move and
+  // remove operate on the underlying array.
+  for (const t of shown) table.appendChild(renderTrackRow(st, t, tracks.indexOf(t), !!q))
   wrap.appendChild(table)
   wrap.appendChild(renderAddForm(st))
   wrap.appendChild(renderTrackActions(st))
   return wrap
 }
 
-function renderTrackRow(st, t, i) {
+function renderTrackRow(st, t, i, filtered) {
   const tr = el('tr', {})
   tr.appendChild(el('td', { class: 'idx' }, String(i + 1)))
-  tr.appendChild(el('td', {}, statusDotFor(t.youtubeId)))
-  tr.appendChild(el('td', { class: 't-title' }, t.title))
-  tr.appendChild(el('td', { class: 't-artist' }, t.artist))
-  tr.appendChild(el('td', { class: 't-id' }, t.youtubeId))
+  tr.appendChild(el('td', { class: 'dot' }, statusDotFor(t.youtubeId)))
+  tr.appendChild(el('td', { class: 't-title', title: t.title }, t.title))
+  tr.appendChild(el('td', { class: 't-artist', title: t.artist }, t.artist))
+  tr.appendChild(el('td', { class: 't-id', title: 'youtube id — click to open on YouTube' },
+    el('a', { href: `https://www.youtube.com/watch?v=${t.youtubeId}`, target: '_blank',
+      rel: 'noreferrer', style: 'color:inherit' }, t.youtubeId)))
   const actions = el('td', { class: 'row-actions' },
-    el('button', { class: 'small', onclick: () => togglePreview(st.id, i) }, 'preview'),
-    el('button', { class: 'small', onclick: () => moveTrack(st, i, -1) }, '↑'),
-    el('button', { class: 'small', onclick: () => moveTrack(st, i, 1) }, '↓'),
-    el('button', { class: 'small danger', onclick: () => removeTrack(st, i) }, 'remove'))
+    el('button', { class: 'small', title: 'Play it inline, through the same embed path the app uses', onclick: () => togglePreview(st.id, i) }, 'preview'),
+    // Reordering by index is meaningless against a filtered view -- the row
+    // above you on screen is not the row above in the array.
+    el('button', { class: 'small', title: filtered ? 'clear the filter to reorder' : 'move up', disabled: filtered ? 'disabled' : null, onclick: () => moveTrack(st, i, -1) }, '↑'),
+    el('button', { class: 'small', title: filtered ? 'clear the filter to reorder' : 'move down', disabled: filtered ? 'disabled' : null, onclick: () => moveTrack(st, i, 1) }, '↓'),
+    el('button', { class: 'small danger', title: 'Remove from this station. Nothing is written until you save; revert undoes it.', onclick: () => removeTrack(st, i) }, 'remove'))
   tr.appendChild(actions)
   tr.dataset.previewFor = `${st.id}:${i}`
   return tr
@@ -919,6 +1255,10 @@ function rerenderStation(st) {
   const fresh = renderStationPanel(st)
   if (wasOpen) fresh.classList.add('open')
   panel.replaceWith(fresh)
+  // The header's dirty markers are derived state; refresh them with the
+  // panel that changed rather than leaving them to drift until a full render.
+  renderJump()
+  renderUnsaved()
 }
 
 function renderAddForm(st) {
@@ -1045,6 +1385,39 @@ const CRT_KEYS = [
 ]
 const METER_KEYS = [['spring', 0.05, 1, 0.01], ['damping', 0.1, 1, 0.01], ['swing', 0.2, 2, 0.01]]
 
+// Where each field actually shows up in the receiver. Written for the
+// question you actually have at the slider ("what will this change?"),
+// not as a restatement of the field name.
+const FIELD_HELP = {
+  callsign: 'The station name, on the status row and in the guide.',
+  freq: 'Dial position, in KHZ. Also decides how close two stations sit — crowding them makes both harder to tune.',
+  tagline: 'The one-line lane description, shown on the guide index. Hard-capped by the LANE column width.',
+  freqNote: 'The little "why this frequency" line on the guide\'s station page.',
+  desc: 'The paragraph on the guide\'s station page.',
+  glyph: 'The single character drawn at this station\'s mark on the dial. Must exist in ter-u16n.bdf or it draws as nothing.',
+  visual: 'Which visualizer effect [V] opens on for this station.',
+  gain: 'Playback level multiplier, to even out quiet or loud masters.',
+  static: 'Centre frequency of the static hiss near this station — tuning across the band is a change in the COLOUR of the noise, not just its volume.',
+  identTempo: 'Speed of the 4-tone ident. Below 1 is slower and heavier.',
+  'crt.noise': 'Static grain over the whole tube.',
+  'crt.bloomAmt': 'How much bright text bleeds into its surroundings.',
+  'crt.flicker': 'Brightness instability, frame to frame.',
+  'crt.decay': 'Phosphor persistence — how long a lit cell keeps glowing.',
+  'crt.brightness': 'Overall beam brightness.',
+  'crt.scanMin': 'Darkest point of the scanline pattern.',
+  'crt.scanMax': 'Brightest point of the scanline pattern.',
+  'crt.chroma': 'Colour fringing at edges, as a misconverged tube would show.',
+  'crt.maskAmt': 'Strength of the shadow-mask texture.',
+  'crt.beam': 'Beam width — thinner reads sharper, wider reads softer.',
+  'crt.sharpen': 'Edge sharpening applied after the blur passes.',
+  'crt.snow': 'Sparse white speckle.',
+  'crt.threshold': 'Brightness above which bloom starts.',
+  'crt.vignette': 'Corner darkening.',
+  'meter.spring': 'How hard the needle is pulled toward its target. Higher is twitchier.',
+  'meter.damping': 'How fast the needle settles. Higher stops it dead, lower lets it overshoot.',
+  'meter.swing': 'Overall travel of the needle.',
+}
+
 function renderIdentityTab(st) {
   const wrap = el('div', {})
   const set = (path, value) => {
@@ -1059,6 +1432,8 @@ function renderIdentityTab(st) {
       identEdits[st.id][path] = value
     }
     updateIdentButtons(st)
+    renderJump()
+    renderUnsaved()
   }
 
   // ---- text identity ----
@@ -1132,12 +1507,14 @@ function renderIdentityTab(st) {
   return wrap
 }
 
-function fieldShell(label, control, hintEl) {
+function fieldShell(label, control, hintEl, path) {
   const f = el('div', { class: 'fld' })
-  const lab = el('label', {}, el('span', {}, label))
+  const explain = FIELD_HELP[path] || FIELD_HELP[label] || null
+  const lab = el('label', explain ? { title: explain } : {}, el('span', {}, label))
   if (hintEl) lab.appendChild(hintEl)
   f.appendChild(lab)
   f.appendChild(control)
+  if (explain) f.appendChild(help(explain))
   return f
 }
 
@@ -1145,7 +1522,7 @@ function textField(st, path, label, set) {
   const input = el('input', { type: 'text' })
   input.value = fieldValue(st, path) ?? ''
   input.addEventListener('input', () => set(path, input.value))
-  return fieldShell(label, input)
+  return fieldShell(label, input, null, path)
 }
 
 function taglineField(st, set) {
@@ -1165,7 +1542,7 @@ function taglineField(st, set) {
   // tools/lint-roster.js -- the same constant lint enforces and
   // tests/program.test.mjs asserts against the guide's LANE column. Nothing
   // here re-states the number.
-  return fieldShell('tagline', input, hint)
+  return fieldShell('tagline', input, hint, 'tagline')
 }
 
 function glyphField(st, set) {
@@ -1187,7 +1564,7 @@ function glyphField(st, set) {
   }
   input.addEventListener('input', () => { set('glyph', input.value); paint() })
   paint()
-  return fieldShell('dial glyph', input, hint)
+  return fieldShell('dial glyph', input, hint, 'glyph')
 }
 
 function selectField(st, path, label, options, set) {
@@ -1195,7 +1572,7 @@ function selectField(st, path, label, options, set) {
   const cur = fieldValue(st, path)
   for (const o of options) sel.appendChild(el('option', { value: o, ...(o === cur ? { selected: 'selected' } : {}) }, o))
   sel.addEventListener('change', () => set(path, sel.value))
-  return fieldShell(label, sel)
+  return fieldShell(label, sel, null, path)
 }
 
 function numField(st, path, label, set, min, max, step) {
@@ -1205,7 +1582,7 @@ function numField(st, path, label, set, min, max, step) {
     const v = parseFloat(input.value)
     if (Number.isFinite(v)) set(path, v)
   })
-  return fieldShell(label, input)
+  return fieldShell(label, input, null, path)
 }
 
 /** A slider + a number box for one CRT/meter parameter, plus a clear button
@@ -1230,7 +1607,12 @@ function rangeField(st, path, label, set, min, max, step, fallback) {
     const v = parseFloat(num.value)
     if (Number.isFinite(v)) { range.value = v; push(v) }
   })
-  const clear = el('button', { class: 'small', title: 'remove this override' }, '×')
+  const clear = el('button', {
+    class: 'small',
+    // "×" alone reads as "set to zero", which is a different and much more
+    // visible thing than "stop overriding and inherit the baseline".
+    title: `Remove this override entirely — the station falls back to config.js SCREEN${fallback !== undefined ? ` (${fallback})` : ''}. Not the same as setting it to 0.`,
+  }, 'unset')
   clear.addEventListener('click', () => {
     num.value = ''
     range.value = fallback !== undefined ? fallback : min
@@ -1238,7 +1620,7 @@ function rangeField(st, path, label, set, min, max, step, fallback) {
     hint.textContent = fallback !== undefined ? `default ${fallback}` : 'unset'
   })
   row.appendChild(range); row.appendChild(num); row.appendChild(clear)
-  return fieldShell(label, row, hint)
+  return fieldShell(label, row, hint, path)
 }
 
 // ---- ident tone editor ----

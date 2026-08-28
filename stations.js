@@ -428,7 +428,7 @@ export const STATIONS = [
   //   idealism (ry5_86xOkhk), morning - jinsang (TW7tKY6lQGo), a light of
   //   mine - kudasai (kAMml_RST1g). Ident was [329.6, 293.7, 261.6, 293.7],
   //   identTempo 1.1, gain 1.15, glyph '≡', visual 'skyline'.
-  { id: 'midnight-neon', freq: 567.8, callsign: 'MIDNIGHT NEON', tagline: 'late-night blues, neon glow',
+  { id: 'midnight-neon', freq: 567.8, callsign: 'SYNAPSE', tagline: 'shifting the plates of the underground',
     // 60th pass (2026-08-24): MOMENTUM replaced with MIDNIGHT NEON, from a
     // 40-track blues playlist and persona
     // brief -- late-night minor-key slow burns, lush brass sections, and
@@ -440,7 +440,7 @@ export const STATIONS = [
     // across the pasted "4 hours," favoring the most iconic/likely-official
     // sources), all independently oEmbed-verified.
     freqNote: 'counting up: 5-6-7-8',
-    desc: 'Late-night electric blues -- minor-key slow burns, lush horns, and reverberant guitar solos built for dark highways and low-lit lounges after hours.',
+    desc: 'Underground tech house made for warehouse raves long after midnight.',
     // 60th pass -- fresh contour, unused elsewhere on the roster: a slow
     // three-step rise (U U U), read as a guitar bend/turnaround reaching up
     // into a sustained note rather than resolving down. Slower tempo than

@@ -184,7 +184,12 @@ function git(args) {
     child.stdout.on('data', d => { out += d })
     child.stderr.on('data', d => { err += d })
     child.on('error', () => resolve({ code: 1, out: '', err: 'git not found' }))
-    child.on('close', (code) => resolve({ code: code ?? 0, out: out.trim(), err: err.trim() }))
+    // `raw` is deliberately untrimmed. `git status --porcelain` is a
+    // FIXED-WIDTH format -- two status columns, a space, then the path -- so
+    // an unstaged modification is " M path". Trimming eats the leading space
+    // and every subsequent column offset is one out, which is exactly how
+    // the deploy panel came to list "ools/network.html".
+    child.on('close', (code) => resolve({ code: code ?? 0, out: out.trim(), err: err.trim(), raw: out }))
   })
 }
 
@@ -200,10 +205,19 @@ async function gitState() {
     const c = await git(['rev-list', '--count', `${upstream.out}..HEAD`])
     if (c.code === 0) ahead = +c.out
   }
-  const dirty = status.out ? status.out.split('\n').map(l => ({
-    code: l.slice(0, 2).trim(),
-    file: l.slice(3),
-  })) : []
+  const dirty = (status.raw || '').split('\n').filter(Boolean).map((l) => {
+    // XY<space>PATH. A rename is "R  old -> new"; show the destination,
+    // which is the name that will exist after the commit.
+    const code = l.slice(0, 2).trim()
+    let file = l.slice(3)
+    const arrow = file.indexOf(' -> ')
+    if (arrow !== -1) file = file.slice(arrow + 4)
+    // Paths with spaces or non-ASCII come back quoted.
+    if (file.startsWith('"') && file.endsWith('"')) {
+      try { file = JSON.parse(file) } catch (e) { /* leave as-is */ }
+    }
+    return { code, file }
+  })
   return {
     branch: branch.code === 0 ? branch.out : '(unknown)',
     lastCommit: last.code === 0 ? last.out : '',

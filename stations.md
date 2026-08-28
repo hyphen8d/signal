@@ -142,9 +142,9 @@ Tracks (36):
 35. **Living on the Ceiling** -- Blancmange  ([youtu.be/QW_m8lhZbQQ](https://youtu.be/QW_m8lhZbQQ))
 36. **Words** -- Missing Persons  ([youtu.be/IasCZL072fQ](https://youtu.be/IasCZL072fQ))
 
-## MIDNIGHT NEON -- 567.8
+## SYNAPSE -- 567.8
 
-*late-night blues, neon glow*
+*shifting the plates of the underground*
 
 Ident tones (Hz): 293.7, 349.2, 415.3, 466.2
 
