@@ -313,13 +313,18 @@ function saveIdentity(stationId, fields) {
   }
   verifyPatch(next, stationId, fields)
   if (next === src) return { changed: 0, unchanged: true }
+  const renamed = Object.prototype.hasOwnProperty.call(fields, 'callsign')
   writeRepoFile('stations.js', next)
   // A callsign, tagline, freq or ident change all show up in stations.md,
   // so it is regenerated here for the same reason a track edit regenerates
   // it -- the generated file is never allowed to lag the source.
-  const { STATIONS } = loadRosterFromText(next)
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(next)
   writeRepoFile('stations.md', buildStationsMd(STATIONS))
-  return { changed: Object.keys(fields).length }
+  const station = [...STATIONS, ...SECRET_STATIONS].find(s => s.id === stationId)
+  return {
+    changed: Object.keys(fields).length,
+    warnings: renamed ? renameWarnings(station) : [],
+  }
 }
 
 // A rejection has to land in BOTH stores or it is lost. CLAUDE.md's own
@@ -358,6 +363,54 @@ function rejectTrack({ stationId, youtubeId, title, artist, reason, entry }) {
 // ---------------------------------------------------------------------
 // Boot payload -- one request the dashboard can start from.
 // ---------------------------------------------------------------------
+// A callsign lives in more places than stations.js, and a rename reaches
+// none of them on its own. 2026-08-28: MIDNIGHT NEON became SYNAPSE and the
+// station kept announcing its old name out loud for as long as it took
+// someone to think of checking, because the spoken clip is resolved from the
+// station's id (which correctly did not change). The curation profile still
+// described the old lane too, and that one feeds audition.js.
+//
+// Both are things the server can see, so it says so rather than leaving it
+// to be noticed. This is a WARNING, never a refusal -- the divergence is
+// legitimate and expected in the window between renaming a station and
+// re-recording its ident.
+function renameWarnings(station) {
+  const out = []
+  if (!station) return out
+
+  const profile = readJson('tools/station-profiles.json', { stations: {} })?.stations?.[station.id]
+  if (profile && profile.callsign && profile.callsign !== station.callsign) {
+    out.push({
+      kind: 'profile',
+      file: 'tools/station-profiles.json',
+      detail: `still calls this station "${profile.callsign}". audition.js reads this file and prints it back at you, `
+        + `so candidate picks for ${station.callsign} will be judged against ${profile.callsign}'s lane.`,
+    })
+  }
+
+  // The clip resolved by convention vs. the one voice.js actually maps to.
+  // Read rather than imported: voice.js pulls in the WebAudio chain at load,
+  // which this process has no business touching.
+  let mapped = station.id
+  try {
+    const voice = readRepoFile('audio/voice.js')
+    const block = voice.match(/const STATION_ID_CLIPS = \{([\s\S]*?)\}/)?.[1] ?? ''
+    const hit = block.match(new RegExp(`['"]${station.id}['"]\\s*:\\s*['"]([\\w-]+)['"]`))
+    if (hit) mapped = hit[1]
+  } catch (e) { /* leave as the convention */ }
+  const slug = station.callsign.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  if (existsSync(abs(`audio/station-id-${mapped}.mp3`)) && mapped !== slug) {
+    out.push({
+      kind: 'audio',
+      file: `audio/station-id-${mapped}.mp3`,
+      detail: `is the clip this station plays on lock, but the callsign is now "${station.callsign}". `
+        + `If that recording says something else, the station announces a name that is not on the screen. `
+        + `Fix by adding an entry to STATION_ID_CLIPS in audio/voice.js.`,
+    })
+  }
+  return out
+}
+
 async function bootState() {
   const src = readRepoFile('stations.js')
   const roster = buildRosterPayload(src)

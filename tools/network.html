@@ -582,8 +582,16 @@ function renderConnStatus() {
 // =====================================================================
 // PREFLIGHT & TOOLS
 // =====================================================================
+// Plenty of well-behaved tools write progress to stderr -- `git push` writes
+// ALL of its normal output there, so a successful push rendered solid red
+// with "!" markers, which is exactly backwards for the step you most want to
+// trust. stderr is treated as ordinary output unless the step it belongs to
+// actually failed; a real failure still goes red, because the runner emits
+// its own `err` line and a nonzero `step-done`/`exit`.
 function logLine(box, ev) {
-  const cls = ev.type === 'cmd' ? 'l-cmd' : ev.type === 'err' ? 'l-err'
+  const looksLikeError = ev.type === 'err' && /\b(error|fatal|failed|cannot|denied|refused|not a git)\b/i.test(ev.text || '')
+  const cls = ev.type === 'cmd' ? 'l-cmd'
+    : ev.type === 'err' ? (looksLikeError ? 'l-err' : 'l-out')
     : ev.type === 'step' ? 'l-step' : ev.type === 'info' ? 'l-ok' : 'l-out'
   const text = ev.type === 'step' ? `\n── ${ev.label} ──` : ev.text
   if (text == null) return
@@ -1780,10 +1788,19 @@ async function saveIdentity(st) {
     await refreshAll()
     document.getElementById('panel-' + st.id)?.classList.add('open')
     const g = document.getElementById('global-msg')
-    g.textContent = res.unchanged
-      ? `${st.callsign}: nothing to change.`
-      : `saved ${res.changed} field(s) on ${st.callsign} — only those values moved in stations.js; the comments around them are untouched.`
-    g.style.color = 'var(--green)'
+    const warn = res.warnings || []
+    if (warn.length) {
+      // A rename only reaches stations.js. Everything else that carries the
+      // old callsign is named here, with what it will actually cost.
+      g.innerHTML = `saved ${res.changed} field(s) on <b>${st.callsign}</b> — but a rename does not reach these:<br>`
+        + warn.map(w => `&nbsp;&nbsp;• <b>${w.file}</b> ${w.detail}`).join('<br>')
+      g.style.color = 'var(--amber)'
+    } else {
+      g.textContent = res.unchanged
+        ? `${st.callsign}: nothing to change.`
+        : `saved ${res.changed} field(s) on ${st.callsign} — only those values moved in stations.js; the comments around them are untouched.`
+      g.style.color = 'var(--green)'
+    }
   } catch (e) {
     if (msg) { msg.textContent = 'save failed: ' + (e.message ?? e); msg.style.color = 'var(--red)' }
   }

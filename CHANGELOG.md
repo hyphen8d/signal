@@ -497,6 +497,87 @@ even where it can't act.
   than touching the shared envelope again, so every voice-clip asset now
   carries the same ~0.5-0.6s safety margin the station IDs already have.
 
+### Stations (2026-08-28)
+
+- **MIDNIGHT NEON became SYNAPSE** — tech house, "rolling basslines, chopped
+  vocal hooks, and drops built for a big room." Same dial slot and glyph kept
+  again, the third format to hold them: freq 567.8, glyph '≡'. This ends the
+  temporary 60s-oldies test rotation that had been running there since
+  2026-08-25 with the screen still saying MIDNIGHT NEON — that mismatch was
+  the point of the test, and it is over. 30 tracks replace the 71 oldies,
+  from a supplied brief, all verified in one clean `audition.js` run
+  (`UNVERIFIED: 0`, which is the part that matters — a throttled run reports
+  nothing and looks identical to a clean one), all embeddable, licence
+  breadth 121-249 countries. Both previous rosters — 28 blues, then 71
+  oldies — live only in git history.
+- **The station announces itself correctly again, and that needed code.** A
+  spoken station ID is resolved by convention from the station's *id*, and
+  the id stayed `midnight-neon` because it is load-bearing: `state.js`
+  persists it for restored sessions, and it keys the visualizer overrides,
+  the curation profile and the pending queue. Renaming it to match the
+  callsign would have silently dropped every returning visitor's station. So
+  `audio/voice.js` grew a small exception map, id → clip, and the new
+  recording ships as `station-id-synapse.mp3`. Without it the station would
+  have kept saying "MIDNIGHT NEON" over a screen reading SYNAPSE — the same
+  wrong-callsign problem the 60th pass avoided by dropping MOMENTUM's liner
+  rather than remapping it. The old clip is left on disk, unreferenced.
+- **A rename reaches further than the roster**, which is the lesson worth
+  keeping. `stations.js` was the easy part; the spoken ID and
+  `tools/station-profiles.json` both still carried the old identity
+  afterwards, and the profile is what `audition.js` reads back at you — it
+  would have steered the next 30 picks toward electric blues. The profile is
+  rewritten for the new lane, with the blues-era rejections preserved under
+  `priorFormat` rather than deleted: per that file's own README those are
+  qualitative calls that cost real back-and-forth and are not recoverable
+  from the roster.
+
+### Network admin backend (2026-08-28)
+
+`node tools/admin-server.mjs` — a dependency-free local server under
+`tools/network.html`, which had been a serverless File System Access page
+since the 55th pass. Its ceiling was never its design; it was that a page
+cannot run Node. Everything the roster work still needed a terminal for was
+a Node tool, and everything about a station except its tracks was not
+editable anywhere at all.
+
+- **The toolchain, streamed**: lint, the suite, roster verify, stamp,
+  stations.md, the dead-feedback sweep, screenshots. PREFLIGHT chains lint →
+  suite; roster verify stays opt-in because it asks YouTube about every
+  track, and lint failing first means never spending that.
+- **Station identity is editable** — `crt`, `meter`, `ident`, `glyph`,
+  `visual`, `gain`, `static`, `freq`, tagline, desc. Ident tones play through
+  the same chain the receiver uses; the tagline counter and the
+  glyph-in-font check are the rules `lint-roster.js` already enforces, read
+  from the server rather than restated. A `?station=<id>` boot param runs the
+  real receiver in an iframe beside the sliders.
+- **SHIP**: stamp → stations.md → lint → suite → add → commit → push,
+  stopping at the first failure with nothing committed. The stamp step is the
+  one most easily forgotten by hand, which is the whole argument for it.
+- **Rejections now have one writer.** Rejecting through the dashboard writes
+  both `station-profiles.json` and `pending-tracks.json` and *requires* a
+  reason. Previously neither file read the other and both were hand-kept, so
+  a dropped track's reason was one forgotten edit away from being lost.
+- **What it cost to learn.** The dashboard's tracks patcher had always
+  regenerated the array from data, stripping every comment in it — tolerable
+  while the block was hand-edited, and not tolerable once removing a track
+  was two clicks. Its first real use destroyed 33 lines of "Nth pass" notes
+  as a side effect of dropping two tracks. Both patchers now preserve what
+  they are not asked to change: comments keyed to their track by
+  `youtubeId`, and numeric, quote and indentation style inferred from the
+  literal being replaced (`gain: 1.0` must not come back as `gain: 1`; GREEN
+  ROOM indents its entries 4 spaces where every other station uses 6). The
+  guard is an idempotence sweep in `tests/roster-lib.test.mjs` — rewriting
+  every field, nested leaf and tracks block of every station with the value
+  it already has must return the file byte for byte. The tracks half of that
+  scored 1/11 when first written; that number *is* the bug.
+- One more for the "a green suite proves you read your own assumption"
+  pile: every API test passed against a dashboard that was completely dead,
+  because the page is served at `/admin` and its relative module import
+  resolved one directory too high. It rendered its connect screen forever
+  with no error anywhere on it. A headless browser load found it; nothing
+  else could have.
+
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
