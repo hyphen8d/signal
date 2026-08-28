@@ -96,8 +96,20 @@ What the served version does that the file could not:
 the server and the page — which is why it has no `node:` imports at all. Add
 one and the dashboard stops loading. Two patchers:
 
-- `patchStationTracks()` rewrites a whole `tracks: [...]` block and **strips
-  inline comments** from it, as it always has. That block is generated data.
+- `patchStationTracks()` rewrites a `tracks: [...]` block, carrying each
+  track's comment block across with it, keyed by `youtubeId`. It used to
+  regenerate the array from data and **strip every comment in it** — which
+  was tolerable while the block was only hand-edited, and stopped being
+  tolerable the moment the dashboard made removing a track two clicks. The
+  first real use of that button destroyed 33 lines of "Nth pass" notes (two
+  stations' batch-approval record, an issue-#19 swap rationale) as a side
+  effect of dropping two tracks, and nothing else holds those notes. Fixed
+  2026-08-27. A comment attached to a track you *removed* still goes with it
+  — usually correct — but the caller gets `droppedComments` back and the
+  dashboard prints it, so it is never silent again. Indentation and quote
+  style are inferred from the block, not imposed: GREEN ROOM indents entries
+  4 spaces where every other station uses 6, and `'Don\'t Go'` must not come
+  back as `"Don't Go"`.
 - `patchStationField()` rewrites ONE field's value and leaves every other
   byte alone, comments included. This is what makes the identity editor safe
   to have at all: those fields are wrapped in the "Nth pass" notes that are
@@ -106,9 +118,11 @@ one and the dashboard stops loading. Two patchers:
   from the literal it replaces — `gain: 1.0` must not come back as `gain: 1`,
   and a single-quoted freqNote must not come back double-quoted.
 
-`tests/roster-lib.test.mjs` guards that with an **idempotence sweep**:
-rewriting every field, and every nested leaf, of every station with the value
-it already has must give the file back byte for byte. That is what caught
+`tests/roster-lib.test.mjs` guards **both** patchers with an **idempotence
+sweep**: rewriting every field, every nested leaf, and every tracks block of
+every station with the value it already has must give the file back byte for
+byte. The tracks half of that sweep scored 1/11 when it was first written —
+that is what the comment-stripping looked like as a number. That is what caught
 both style bugs above. It did *not* catch a trailing-space bug on the last
 key of an inline object (`bloomAmt: 2.0}`), because the sweep rewrote `crt`
 as a whole object where the space cancels out on both sides — a headless load

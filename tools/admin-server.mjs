@@ -35,7 +35,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   loadRosterFromText, buildRosterPayload, buildStationsMd,
-  patchStationTracks, patchStationField, verifyPatch,
+  patchStationTracksDetailed, patchStationField, verifyPatch,
 } from './lib/roster.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -56,7 +56,24 @@ const PORT = +(argv.find(a => !a.startsWith('--')) || process.env.SIGNAL_ADMIN_P
 // Neither is chosen for you; the banner below prints the tunnel command and
 // this flag exists for when you'd rather not tunnel. A Tailscale address is
 // a reasonable thing to hand it: that is an authenticated mesh, not the LAN.
-const HOST = flag('host', '127.0.0.1')
+// `--host=tailscale` resolves the tailscale0 interface's own IPv4 rather than
+// hardcoding it. The address is stable per node, so hardcoding would mostly
+// work -- but a systemd unit that names an IP is a unit that breaks silently
+// the day the tailnet is re-created, and this way the unit says what it
+// means. Fails loudly (and exits) if the interface is not up yet, which at
+// boot is normal and is what Restart= is for.
+function resolveHost(want) {
+  if (want !== 'tailscale') return want
+  for (const [name, list] of Object.entries(os.networkInterfaces())) {
+    if (!name.startsWith('tailscale')) continue
+    const v4 = (list || []).find(ni => ni.family === 'IPv4' || ni.family === 4)
+    if (v4) return v4.address
+  }
+  console.error('--host=tailscale: no tailscale0 IPv4 yet (is tailscaled up?).')
+  console.error('At boot this is normal and expected -- systemd Restart= will retry.')
+  process.exit(1)
+}
+const HOST = resolveHost(flag('host', '127.0.0.1'))
 const LOOPBACK = HOST === '127.0.0.1' || HOST === 'localhost' || HOST === '::1'
 
 // Host-header allowlist. Every address this machine actually has, plus the
@@ -258,12 +275,16 @@ function openStream(res) {
 // ---------------------------------------------------------------------
 function saveTracks(stationId, tracks) {
   const src = readRepoFile('stations.js')
-  const next = patchStationTracks(src, stationId, tracks)
-  verifyPatch(next, stationId, tracks.length)
-  writeRepoFile('stations.js', next)
-  const { STATIONS } = loadRosterFromText(next)
+  const { text, keptComments, droppedComments } = patchStationTracksDetailed(src, stationId, tracks)
+  verifyPatch(text, stationId, tracks.length)
+  writeRepoFile('stations.js', text)
+  const { STATIONS } = loadRosterFromText(text)
   writeRepoFile('stations.md', buildStationsMd(STATIONS))
-  return { trackCount: tracks.length }
+  // droppedComments is surfaced to the dashboard rather than swallowed. A
+  // comment attached to a track you removed usually SHOULD go with it, but
+  // "usually" is not "always", and this used to be silent -- 33 lines of
+  // design record went with two track removals before anyone noticed.
+  return { trackCount: tracks.length, keptComments, droppedComments }
 }
 
 function saveIdentity(stationId, fields) {
@@ -564,6 +585,14 @@ const server = http.createServer(async (req, res) => {
 })
 
 server.on('error', (err) => {
+  // Binding a non-local address. Under the systemd unit this is what a boot
+  // race with tailscaled looks like; the default Restart=on-failure retries
+  // until the interface exists, so this is informational, not fatal-forever.
+  if (err.code === 'EADDRNOTAVAIL') {
+    console.error(`Cannot bind ${HOST} -- no interface currently has that address.`)
+    console.error('If this is tailscale, tailscaled may not be up yet. Check: tailscale ip -4')
+    process.exit(1)
+  }
   if (err.code === 'EADDRINUSE') {
     console.error(`Port ${PORT} is already in use -- tools/dev-server.py may be on it.`)
     console.error(`This server serves the app too, so run it INSTEAD, or pick another port:`)

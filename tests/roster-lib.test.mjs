@@ -27,6 +27,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   loadRosterFromText, patchStationField, patchStationTracks, verifyPatch,
+  patchStationTracksDetailed, parseTracksBlock, findTracksRange,
   scanObjectFields, matchBracket, quoteJs, formatValue, buildRosterPayload,
   findStationObjectRange,
 } from '../tools/lib/roster.mjs'
@@ -186,6 +187,95 @@ test('formatValue refuses what it cannot represent', () => {
   assert.throws(() => formatValue(undefined), /Cannot serialize/)
 })
 
+test('rewriting a tracks block with its own tracks is byte-identical, every station', () => {
+  // Was 1/11 until 2026-08-27. formatTracksBlock() regenerated the array from
+  // data, so every save rewrote quote style, re-indented GREEN ROOM (which
+  // uses 4 spaces where the rest use 6) and deleted every comment in the
+  // block. The first real use of the dashboard's remove button destroyed 33
+  // lines of "Nth pass" notes as a side effect of dropping two tracks.
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(SRC)
+  const all = [...STATIONS, ...SECRET_STATIONS]
+  for (const st of all) {
+    assert.equal(
+      patchStationTracks(SRC, st.id, st.tracks), SRC,
+      `rewriting ${st.id}'s tracks with its existing tracks changed the file`)
+  }
+  assert.equal(all.length, 11)
+})
+
+test('removing a track keeps every comment not attached to it', () => {
+  // The victim is chosen from the roster, not hardcoded: the first version of
+  // this test named a specific id, and it broke the moment that track was
+  // legitimately curated out. Pick any station that carries comments in its
+  // tracks block, then drop an entry that has none of its own -- so a clean
+  // run means "every surviving comment survived".
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(SRC)
+  let found = null
+  for (const st of [...STATIONS, ...SECRET_STATIONS]) {
+    const { objStart, objEnd } = findStationObjectRange(SRC, st.id)
+    const { openIdx } = findTracksRange(SRC, objStart, objEnd)
+    const parsed = parseTracksBlock(SRC, openIdx)
+    if (!parsed.entries.some(e => e.comments.some(c => c.trim()))) continue
+    const victim = parsed.entries.find(e => e.youtubeId && !e.comments.some(c => c.trim()))
+    if (victim) { found = { st, victim }; break }
+  }
+  assert.ok(found, 'no station has both commented and uncommented track entries')
+
+  const kept = found.st.tracks.filter(t => t.youtubeId !== found.victim.youtubeId)
+  assert.equal(kept.length, found.st.tracks.length - 1)
+  const r = patchStationTracksDetailed(SRC, found.st.id, kept)
+  verifyPatch(r.text, found.st.id, kept.length)
+  assert.equal(
+    (r.text.match(/\/\//g) || []).length, (SRC.match(/\/\//g) || []).length,
+    `removing ${found.victim.youtubeId} from ${found.st.id} lost comment markers`)
+  assert.equal(r.droppedComments.length, 0)
+})
+
+test('a comment attached to a REMOVED track is dropped, and reported', () => {
+  // Dropping it is right -- the note is about that track. Doing it silently
+  // is not, so the caller gets the text back to show.
+  const src = `const STATIONS = [
+  { id: 'x', tracks: [
+      // keep me, I belong to the survivor
+      realTrack('aaaaaaaaaaa', 'Kept', 'A'),
+      // this note is about the doomed one
+      realTrack('bbbbbbbbbbb', 'Doomed', 'B'),
+    ] },
+]`
+  const { STATIONS } = loadRosterFromText(src)
+  const kept = STATIONS[0].tracks.filter(t => t.youtubeId !== 'bbbbbbbbbbb')
+  const r = patchStationTracksDetailed(src, 'x', kept)
+  assert.ok(r.text.includes('keep me, I belong to the survivor'), 'survivor lost its comment')
+  assert.ok(!r.text.includes('this note is about the doomed one'), 'removed track kept its comment')
+  assert.equal(r.droppedComments.length, 1)
+  assert.equal(r.droppedComments[0].youtubeId, 'bbbbbbbbbbb')
+  assert.match(r.droppedComments[0].comments[0], /doomed one/)
+})
+
+test('reordering carries each comment with its own track', () => {
+  const { STATIONS } = loadRosterFromText(SRC)
+  const cw = STATIONS.find(s => s.id === 'cold-wave')
+  const reversed = [...cw.tracks].reverse()
+  const r = patchStationTracksDetailed(SRC, 'cold-wave', reversed)
+  verifyPatch(r.text, 'cold-wave', reversed.length)
+  assert.equal(
+    (r.text.match(/\/\//g) || []).length, (SRC.match(/\/\//g) || []).length,
+    'reordering lost comment markers')
+  assert.equal(r.droppedComments.length, 0)
+})
+
+test('block indentation is inferred, not imposed', () => {
+  // GREEN ROOM indents entries 4 spaces; everything else uses 6.
+  const { SECRET_STATIONS } = loadRosterFromText(SRC)
+  const gr = SECRET_STATIONS.find(s => s.id === 'green-room')
+  if (!gr) return
+  const { objStart, objEnd } = findStationObjectRange(SRC, 'green-room')
+  const { openIdx } = findTracksRange(SRC, objStart, objEnd)
+  const parsed = parseTracksBlock(SRC, openIdx)
+  assert.equal(parsed.itemIndent, '    ', 'green-room should parse as 4-space indented')
+  assert.equal(patchStationTracks(SRC, 'green-room', gr.tracks), SRC)
+})
+
 test('patchStationTracks writes the tracks it was given', () => {
   const { STATIONS } = loadRosterFromText(SRC)
   const df = STATIONS.find(s => s.id === 'distortion-field')
@@ -247,6 +337,21 @@ test('MUTATION: a patcher that reformats the object fails the idempotence sweep'
   assert.ok(
     (out.match(/\/\//g) || []).length < (SRC.match(/\/\//g) || []).length,
     'the reformatting stand-in was supposed to lose comments')
+})
+
+test('MUTATION: a tracks patcher that regenerates from data loses the comments', () => {
+  // Exactly what formatTracksBlock() did before 2026-08-27, reproduced here
+  // so the test above cannot quietly stop meaning anything.
+  const { STATIONS } = loadRosterFromText(SRC)
+  const cw = STATIONS.find(s => s.id === 'cold-wave')
+  const naive = '[\n' + cw.tracks.map(t =>
+    `      realTrack('${t.youtubeId}', '${t.title}', '${t.artist}'),`).join('\n') + '\n    ]'
+  const { objStart, objEnd } = findStationObjectRange(SRC, 'cold-wave')
+  const { openIdx, closeIdx } = findTracksRange(SRC, objStart, objEnd)
+  const out = SRC.slice(0, openIdx) + naive + SRC.slice(closeIdx + 1)
+  assert.ok(
+    (out.match(/\/\//g) || []).length < (SRC.match(/\/\//g) || []).length,
+    'the regenerate-from-data stand-in was supposed to lose comments')
 })
 
 test('MUTATION: dropping style inference fails the gain check', () => {

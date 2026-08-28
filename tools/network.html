@@ -1010,8 +1010,19 @@ async function saveTracks(st) {
     await refreshAll()
     document.getElementById('panel-' + st.id)?.classList.add('open')
     const g = document.getElementById('global-msg')
-    g.textContent = `saved ${st.callsign} (${res.trackCount} tracks) — stations.md regenerated. Run preflight, then SHIP.`
-    g.style.color = 'var(--green)'
+    const dropped = res.droppedComments || []
+    if (dropped.length) {
+      // Said out loud, with the text, because it is unrecoverable once you
+      // commit and the git diff is the only other place it shows up.
+      g.textContent = `saved ${st.callsign} (${res.trackCount} tracks). ` +
+        `${dropped.length} comment block(s) went with the removed track(s) — check the diff before committing: ` +
+        dropped.map(d => `${d.youtubeId}: ${d.comments.join(' ').slice(0, 90)}`).join(' | ')
+      g.style.color = 'var(--amber)'
+    } else {
+      g.textContent = `saved ${st.callsign} (${res.trackCount} tracks) — ${res.keptComments} comment block(s) carried across, ` +
+        `stations.md regenerated. Run preflight, then SHIP.`
+      g.style.color = 'var(--green)'
+    }
   } catch (e) {
     const m = document.getElementById('msg-' + st.id)
     if (m) { m.textContent = 'save failed: ' + (e.message ?? e); m.style.color = 'var(--red)' }

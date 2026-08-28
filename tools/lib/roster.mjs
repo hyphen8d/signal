@@ -255,11 +255,113 @@ export function formatValue(value, opts = {}) {
 const ITEM_INDENT = '      '
 const CLOSE_INDENT = '    '
 
-export function formatTracksBlock(tracks) {
-  const lines = tracks.map(t =>
-    `${ITEM_INDENT}realTrack(${quoteJs(t.youtubeId)}, ${quoteJs(t.title)}, ${quoteJs(t.artist)}),`
-  )
-  return '[\n' + lines.join('\n') + '\n' + CLOSE_INDENT + ']'
+export function trackLine(t) {
+  return `realTrack(${quoteJs(t.youtubeId)}, ${quoteJs(t.title)}, ${quoteJs(t.artist)}),`
+}
+
+/** Split an existing `tracks: [...]` block into entries, each carrying the
+ *  comment lines that sit above it and its own source text.
+ *
+ *  2026-08-27. This exists because the old formatTracksBlock() regenerated
+ *  the whole array from data, which threw away every comment inside it. That
+ *  was tolerable while the block was only edited by hand; it stopped being
+ *  tolerable the moment the dashboard made removing a track a two-click
+ *  operation. The first real use of it destroyed 33 lines of "Nth pass"
+ *  notes -- the batch-approval record for two stations and an issue-#19 swap
+ *  rationale -- as a side effect of dropping two tracks. Those notes are the
+ *  design record this repo runs on, and nothing else holds them. */
+export function parseTracksBlock(src, openIdx) {
+  const closeIdx = matchBracket(src, openIdx, '[', ']')
+  if (closeIdx === -1) throw new Error('Unbalanced tracks array')
+  const entries = []
+  let i = openIdx + 1
+  while (i < closeIdx) {
+    const triviaStart = i
+    i = skipTrivia(src, i, closeIdx)
+    if (i >= closeIdx) break
+    // Comment lines between the previous entry and this one, kept with their
+    // ORIGINAL indentation. Normalizing them to the item indent re-indented
+    // GREEN ROOM's 4-space block comment to 6 and showed up as a diff on a
+    // line nobody edited -- the same class of unasked-for restyle the field
+    // patcher exists to avoid. The first and last split lines are the tail
+    // of the previous line and this line's own indentation, not content.
+    const trivia = src.slice(triviaStart, i).split('\n').slice(1, -1)
+    const entryStart = i
+    i = skipValue(src, i, closeIdx)
+    let entryEnd = i
+    if (src[entryEnd] === ',') entryEnd++
+    const text = src.slice(entryStart, entryEnd).trim()
+    // Parsed rather than regexed, so an escaped quote inside a title cannot
+    // desynchronise the id -- and so the caller can compare tracks by VALUE.
+    let parsed = null
+    try { parsed = eval(text.replace(/,\s*$/, '')) } catch (e) { /* leave null */ }
+    const lineStart = src.lastIndexOf('\n', entryStart) + 1
+    const lead = src.slice(lineStart, entryStart)
+    entries.push({
+      youtubeId: parsed?.youtubeId ?? null, track: parsed, text, comments: trivia,
+      indent: /^\s*$/.test(lead) ? lead : null,
+    })
+    i = entryEnd
+  }
+  // Indentation is INFERRED from the block, not imposed. GREEN ROOM indents
+  // its entries 4 spaces where every other station uses 6, and a hardcoded
+  // house indent silently reformatted all 28 of its lines.
+  const itemIndent = entries.find(e => e.indent != null)?.indent ?? ITEM_INDENT
+  const closeLineStart = src.lastIndexOf('\n', closeIdx) + 1
+  const closeLead = src.slice(closeLineStart, closeIdx)
+  const closeIndent = /^\s*$/.test(closeLead) ? closeLead : CLOSE_INDENT
+  return { entries, closeIdx, itemIndent, closeIndent }
+}
+
+/** Rebuild a tracks block, carrying each surviving track's comments with it.
+ *
+ *  Comments are keyed to the track they sit above, by youtubeId. A track you
+ *  kept keeps its notes; a track you removed takes its own notes with it,
+ *  which is usually right -- but the count comes back to the caller so it can
+ *  be REPORTED rather than happening silently. An unchanged track's line is
+ *  reused verbatim rather than regenerated, so quote style survives too
+ *  (`'Don\'t Go'` must not come back as `"Don't Go"`). */
+export function formatTracksBlock(tracks, previous = null) {
+  const byId = new Map()
+  if (previous) for (const e of previous.entries) if (e.youtubeId) byId.set(e.youtubeId, e)
+  const itemIndent = previous?.itemIndent ?? ITEM_INDENT
+  const closeIndent = previous?.closeIndent ?? CLOSE_INDENT
+
+  const out = []
+  const kept = []
+  for (const t of tracks) {
+    const prev = byId.get(t.youtubeId)
+    if (prev?.comments?.length) {
+      for (const c of prev.comments) out.push(c)
+      if (prev.comments.some(c => c.trim())) kept.push(t.youtubeId)
+    }
+    // Reuse the original text when nothing about the track changed; only
+    // then is it guaranteed to still say what it said. Compared by VALUE, not
+    // by rendered text -- stations.js writes `'Don\\'t Go'` where quoteJs
+    // would write `\"Don't Go\"`, and a text comparison calls that a change
+    // and restyles the line.
+    const unchanged = prev?.track
+      && prev.track.youtubeId === t.youtubeId
+      && prev.track.title === t.title
+      && prev.track.artist === t.artist
+    out.push(itemIndent + (unchanged ? prev.text : trackLine(t)))
+  }
+
+  const survivors = new Set(tracks.map(t => t.youtubeId))
+  const dropped = []
+  if (previous) {
+    for (const e of previous.entries) {
+      if (e.youtubeId && !survivors.has(e.youtubeId) && e.comments.some(c => c.trim())) {
+        dropped.push({ youtubeId: e.youtubeId, comments: e.comments.filter(c => c.trim()).map(c => c.trim()) })
+      }
+    }
+  }
+
+  return {
+    text: '[\n' + out.join('\n') + '\n' + closeIndent + ']',
+    keptComments: kept.length,
+    droppedComments: dropped,
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -279,9 +381,21 @@ export function findTracksRange(src, objStart, objEnd) {
 /** Pure: text in, patched text out. No IO -- the caller decides whether to
  *  write, and must not write if verifyPatch() throws. */
 export function patchStationTracks(src, stationId, tracks) {
+  return patchStationTracksDetailed(src, stationId, tracks).text
+}
+
+/** Same patch, but also reports which comments were carried across and which
+ *  went with a removed track. The dashboard shows the second list. */
+export function patchStationTracksDetailed(src, stationId, tracks) {
   const { objStart, objEnd } = findStationObjectRange(src, stationId)
   const { openIdx, closeIdx } = findTracksRange(src, objStart, objEnd)
-  return src.slice(0, openIdx) + formatTracksBlock(tracks) + src.slice(closeIdx + 1)
+  const previous = parseTracksBlock(src, openIdx)
+  const built = formatTracksBlock(tracks, previous)
+  return {
+    text: src.slice(0, openIdx) + built.text + src.slice(closeIdx + 1),
+    keptComments: built.keptComments,
+    droppedComments: built.droppedComments,
+  }
 }
 
 /** Resolve a dotted path ('crt.bloomAmt') to the source range of its value,

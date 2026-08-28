@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 377 tracks total.
+Generated from stations.js. 9 stations, 375 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -103,7 +103,7 @@ Tracks (34):
 
 Ident tones (Hz): 440, 659.3, 554.4, 440
 
-Tracks (37):
+Tracks (36):
 
 1. **Blue Monday '88** -- New Order  ([youtu.be/9GMjH1nR0ds](https://youtu.be/9GMjH1nR0ds))
 2. **Just Like Heaven** -- The Cure  ([youtu.be/1ASpBpT8bRQ](https://youtu.be/1ASpBpT8bRQ))
@@ -140,8 +140,7 @@ Tracks (37):
 33. **Christian** -- China Crisis  ([youtu.be/mScWSckEzew](https://youtu.be/mScWSckEzew))
 34. **Smalltown Boy** -- Bronski Beat  ([youtu.be/8o2XHjvaEWE](https://youtu.be/8o2XHjvaEWE))
 35. **Living on the Ceiling** -- Blancmange  ([youtu.be/QW_m8lhZbQQ](https://youtu.be/QW_m8lhZbQQ))
-36. **Ghosts** -- Japan  ([youtu.be/7zzLU1ato2w](https://youtu.be/7zzLU1ato2w))
-37. **Words** -- Missing Persons  ([youtu.be/IasCZL072fQ](https://youtu.be/IasCZL072fQ))
+36. **Words** -- Missing Persons  ([youtu.be/IasCZL072fQ](https://youtu.be/IasCZL072fQ))
 
 ## MIDNIGHT NEON -- 567.8
 
@@ -412,7 +411,7 @@ Tracks (43):
 
 Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
 
-Tracks (45):
+Tracks (44):
 
 1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
 2. **Omen** -- The Prodigy  ([youtu.be/xMVTKOoy1uk](https://youtu.be/xMVTKOoy1uk))
@@ -445,17 +444,16 @@ Tracks (45):
 29. **6 Underground** -- Sneaker Pimps  ([youtu.be/Wuwfe3DRJzE](https://youtu.be/Wuwfe3DRJzE))
 30. **Def Beat** -- Junkie XL  ([youtu.be/7qZW9P7W-nc](https://youtu.be/7qZW9P7W-nc))
 31. **Stem / Long Stem** -- DJ Shadow  ([youtu.be/Ihr0y7ayGV0](https://youtu.be/Ihr0y7ayGV0))
-32. **Ni-Ten-Ichi-Ryu** -- Photek  ([youtu.be/7lVH1Pym9Ik](https://youtu.be/7lVH1Pym9Ik))
-33. **Dirt** -- Death in Vegas  ([youtu.be/Jd_UCgMaHYQ](https://youtu.be/Jd_UCgMaHYQ))
-34. **Lonely Soul** -- UNKLE  ([youtu.be/XrFECnl3vno](https://youtu.be/XrFECnl3vno))
-35. **Black Steel** -- Tricky  ([youtu.be/9ZJTM03UByU](https://youtu.be/9ZJTM03UByU))
-36. **Genius** -- Pitchshifter  ([youtu.be/sGcdcVblZ-8](https://youtu.be/sGcdcVblZ-8))
-37. **Voodoo People** -- The Prodigy  ([youtu.be/YV78vobCyIo](https://youtu.be/YV78vobCyIo))
-38. **Absurd** -- Fluke  ([youtu.be/DAQISes7iXU](https://youtu.be/DAQISes7iXU))
-39. **Ruffneck** -- Freestylers  ([youtu.be/kQ_sSs8pr1g](https://youtu.be/kQ_sSs8pr1g))
-40. **Ultrasonic Sound** -- Hive  ([youtu.be/lGqzRmDcC14](https://youtu.be/lGqzRmDcC14))
-41. **Godzilla Dub** -- ZeroFG  ([youtu.be/mloHngTITZ8](https://youtu.be/mloHngTITZ8))
-42. **Born In '94** -- Unglued  ([youtu.be/VHqc2Yqwwu4](https://youtu.be/VHqc2Yqwwu4))
-43. **Take California** -- Propellerheads  ([youtu.be/81bG15gsl70](https://youtu.be/81bG15gsl70))
-44. **Y'all Ready For Dis** -- Y U QT  ([youtu.be/OTvB4XMsg1U](https://youtu.be/OTvB4XMsg1U))
-45. **Firestarter (Empirion Mix)** -- The Prodigy  ([youtu.be/Hy4T6zvQ6jk](https://youtu.be/Hy4T6zvQ6jk))
+32. **Dirt** -- Death in Vegas  ([youtu.be/Jd_UCgMaHYQ](https://youtu.be/Jd_UCgMaHYQ))
+33. **Lonely Soul** -- UNKLE  ([youtu.be/XrFECnl3vno](https://youtu.be/XrFECnl3vno))
+34. **Black Steel** -- Tricky  ([youtu.be/9ZJTM03UByU](https://youtu.be/9ZJTM03UByU))
+35. **Genius** -- Pitchshifter  ([youtu.be/sGcdcVblZ-8](https://youtu.be/sGcdcVblZ-8))
+36. **Voodoo People** -- The Prodigy  ([youtu.be/YV78vobCyIo](https://youtu.be/YV78vobCyIo))
+37. **Absurd** -- Fluke  ([youtu.be/DAQISes7iXU](https://youtu.be/DAQISes7iXU))
+38. **Ruffneck** -- Freestylers  ([youtu.be/kQ_sSs8pr1g](https://youtu.be/kQ_sSs8pr1g))
+39. **Ultrasonic Sound** -- Hive  ([youtu.be/lGqzRmDcC14](https://youtu.be/lGqzRmDcC14))
+40. **Godzilla Dub** -- ZeroFG  ([youtu.be/mloHngTITZ8](https://youtu.be/mloHngTITZ8))
+41. **Born In '94** -- Unglued  ([youtu.be/VHqc2Yqwwu4](https://youtu.be/VHqc2Yqwwu4))
+42. **Take California** -- Propellerheads  ([youtu.be/81bG15gsl70](https://youtu.be/81bG15gsl70))
+43. **Y'all Ready For Dis** -- Y U QT  ([youtu.be/OTvB4XMsg1U](https://youtu.be/OTvB4XMsg1U))
+44. **Firestarter (Empirion Mix)** -- The Prodigy  ([youtu.be/Hy4T6zvQ6jk](https://youtu.be/Hy4T6zvQ6jk))

@@ -401,7 +401,6 @@ export const STATIONS = [
       realTrack('mScWSckEzew', 'Christian', 'China Crisis'),
       realTrack('8o2XHjvaEWE', 'Smalltown Boy', 'Bronski Beat'),
       realTrack('QW_m8lhZbQQ', 'Living on the Ceiling', 'Blancmange'),
-      realTrack('7zzLU1ato2w', 'Ghosts', 'Japan'),
       realTrack('IasCZL072fQ', 'Words', 'Missing Persons'),
     ] },
   // MOMENTUM (chillhop/downtempo focus, 567.8) retired 2026-08-24, replaced
@@ -1130,7 +1129,6 @@ export const STATIONS = [
       realTrack('Wuwfe3DRJzE', '6 Underground', 'Sneaker Pimps'),
       realTrack('7qZW9P7W-nc', 'Def Beat', 'Junkie XL'),
       realTrack('Ihr0y7ayGV0', 'Stem / Long Stem', 'DJ Shadow'),
-      realTrack('7lVH1Pym9Ik', 'Ni-Ten-Ichi-Ryu', 'Photek'),
       realTrack('Jd_UCgMaHYQ', 'Dirt', 'Death in Vegas'),
       realTrack('XrFECnl3vno', 'Lonely Soul', 'UNKLE'),
       realTrack('9ZJTM03UByU', 'Black Steel', 'Tricky'),
