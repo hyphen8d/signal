@@ -1569,3 +1569,54 @@ test('guide index and station pages keep their footers on the lite grid', async 
     assert.ok(h.row(h.term.rows - 1).includes('TAP CLOSE'), 'station footer lands inside the grid')
   } finally { h.shutdown() }
 })
+
+// ---------------------------------------------------------------------
+// ?station=<id> -- the boot param the identity editor's live preview uses
+// (tools/network.html runs the real receiver in an iframe beside the CRT
+// and ident sliders; without this it would land on a random station and
+// show you nothing about the one you are editing).
+// ---------------------------------------------------------------------
+
+test('?station= boots straight to that station, over a saved session', async () => {
+  const h = await boot({
+    station: 'cipher',
+    // A saved session pointing somewhere ELSE -- the param has to win, or
+    // the preview shows whatever station the last visit left behind.
+    saved: { stationId: 'drift-mode', volume: 50, muted: false },
+  })
+  try {
+    assert.equal(h.program.lockedStation.id, 'cipher')
+    assert.equal(h.program.mode, 'locked')
+    assert.equal(h.program.freq, h.program.lockedStation.freq)
+    assert.ok(h.program.currentTrack, 'no track primed for the previewed station')
+  } finally { h.shutdown() }
+})
+
+test('?station= reaches secret stations too', async () => {
+  const h = await boot({ station: 'nin' })
+  try {
+    assert.equal(h.program.lockedStation.id, 'nin')
+    assert.equal(h.program.lockedStation.secret, true)
+  } finally { h.shutdown() }
+})
+
+test('?station= with an unknown id falls through to the normal random landing', async () => {
+  // Must not throw and must not leave the set on dead air -- an id that no
+  // longer exists (a station renamed since someone bookmarked it) behaves
+  // exactly like no param at all.
+  const h = await boot({ station: 'no-such-station-at-all' })
+  try {
+    assert.equal(h.program.mode, 'locked')
+    assert.ok(h.program.lockedStation, 'landed on nothing')
+    assert.ok(h.program.currentTrack, 'landed with no track')
+  } finally { h.shutdown() }
+})
+
+test('a saved session still wins when there is no ?station= param', async () => {
+  // Guards the ordering: the param block sits between the restore and the
+  // random fallback, so it must not clobber a restore when it is absent.
+  const h = await boot({ saved: { stationId: 'drift-mode', volume: 50, muted: false } })
+  try {
+    assert.equal(h.program.lockedStation.id, 'drift-mode')
+  } finally { h.shutdown() }
+})

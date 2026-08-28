@@ -456,6 +456,34 @@ export default {
     // the same reason -- a session saved at 10 shouldn't have its first
     // ident arrive at full level before anyone touches the keys.
     setSpeakerLevel(this.muted, this.volume)
+    // ?station=<id> (2026-08-27, admin-backend pass) -- boots straight to a
+    // named station, secret ones included. It exists for the identity
+    // editor in tools/network.html, which runs the real receiver in an
+    // iframe beside the sliders: without this, every reload of that preview
+    // lands on the restored-or-random station rather than the one being
+    // edited, and a crt/meter/ident change could not be seen at all.
+    // Deliberately placed AFTER the restore block so it overrides a saved
+    // session, and BEFORE the random-preset fallback so it sets the same
+    // four fields a restore does and flows through the identical
+    // needsTrackLoad path in powerUp(). An unknown id is ignored rather
+    // than thrown -- it falls through to the fallback below, which is the
+    // same thing that happens today with no param at all.
+    // Ships in production on purpose: it is three reads and a find(), it is
+    // the same shape of dev affordance as SIGNAL_FORCE_BREAK, and a
+    // shareable "tune here" link is a fair thing for a radio to have.
+    try {
+      const wanted = new URLSearchParams(globalThis.location?.search || '').get('station')
+      if (wanted) {
+        const ch = [...STATIONS, ...SECRET_STATIONS].find((c) => c.id === wanted)
+        if (ch) {
+          this.mode = 'locked'
+          this.lockedStation = ch
+          this.freq = ch.freq
+          this.currentTrack = this.nextTrack(ch)
+          this.needsTrackLoad = true
+        }
+      }
+    } catch (e) { /* no location (tests/Node) -- nothing to read */ }
     // 28th pass -- sometimes it didn't automatically seek to a
     // station and the user had to figure out to use arrows or hit S -- a
     // first-ever visit (no saved session, or a save that somehow had no

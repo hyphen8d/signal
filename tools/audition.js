@@ -58,6 +58,16 @@ const limit = +flag('limit', 6)
 const outPath = flag('out', path.join(here, 'audition.html'))
 const ids = args.filter(a => !a.startsWith('--'))
 
+// --json (2026-08-27, admin-backend pass) -- tools/admin-server.mjs runs
+// this file as a child process and needs the rows as data, not as a table.
+// Rather than a second code path that could drift from the printed one,
+// every human line is redirected to stderr and the SAME rows array is
+// serialized to stdout at the end. So the JSON consumer and the terminal
+// reader are looking at identical work, and the flags below -- UNVERIFIED
+// most of all -- cannot be present in one view and missing from the other.
+const asJson = args.includes('--json')
+if (asJson) console.log = (...a) => console.error(...a)
+
 // Same small concurrency cap as verify-roster.js -- polite to the endpoint.
 async function mapLimit(items, n, fn) {
   const out = new Array(items.length)
@@ -248,6 +258,24 @@ async function main() {
     console.log(`   An HTTP 429 here is YouTube throttling the watch endpoint (it redirects to`)
     console.log(`   google.com/sorry). Wait it out and re-run; do not treat the rows above as clean.`)
     process.exitCode = 1
+  }
+
+  if (asJson) {
+    process.stdout.write(JSON.stringify({
+      station: {
+        id: station.id, callsign: station.callsign,
+        trackCount: station.tracks.length,
+        artistCount: new Set(station.tracks.map(t => t.artist)).size,
+        channels: [...stationChannels],
+      },
+      profile,
+      mode: searches.length ? 'search' : 'audition',
+      rows,
+      // Hoisted out of the rows so the dashboard cannot render a clean-looking
+      // table without it. A throttled run is a property of the RUN.
+      unverified: unprobed.length,
+      unverifiedReasons: [...new Set(unprobed.map(r => r.reason))],
+    }))
   }
 
   if (searches.length) {

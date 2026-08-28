@@ -5,94 +5,45 @@
 <title>SIGNAL — network ops</title>
 <style>
   :root {
-    --bg: #0b0d0a;
-    --panel: #12160f;
-    --line: #2a3324;
-    --ink: #c9e8b8;
-    --ink-dim: #7f9670;
-    --ink-faint: #4a5a42;
-    --amber: #e8b84a;
-    --red: #e8604a;
-    --green: #6ad46a;
+    --bg: #0b0d0a; --panel: #12160f; --line: #2a3324;
+    --ink: #c9e8b8; --ink-dim: #7f9670; --ink-faint: #4a5a42;
+    --amber: #e8b84a; --red: #e8604a; --green: #6ad46a; --blue: #6ac4d4;
     --mono: "SF Mono", "Menlo", "Consolas", monospace;
   }
   * { box-sizing: border-box; }
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.5;
-    margin: 0;
-    padding: 24px 32px 80px;
-  }
-  h1 {
-    font-size: 15px;
-    letter-spacing: 0.08em;
-    color: var(--amber);
-    margin: 0 0 4px;
-    text-transform: uppercase;
-  }
+  body { background: var(--bg); color: var(--ink); font-family: var(--mono); font-size: 13px; line-height: 1.5; margin: 0; padding: 22px 28px 90px; }
+  h1 { font-size: 15px; letter-spacing: 0.08em; color: var(--amber); margin: 0 0 4px; text-transform: uppercase; }
   h1 .sub { color: var(--ink-dim); font-weight: normal; text-transform: none; letter-spacing: normal; }
-  .totals { color: var(--ink-dim); margin-bottom: 20px; }
+  .totals { color: var(--ink-dim); margin-bottom: 16px; }
   .totals b { color: var(--ink); }
-  .toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-  button {
-    background: var(--panel);
-    color: var(--ink);
-    border: 1px solid var(--line);
-    font-family: var(--mono);
-    font-size: 12px;
-    padding: 6px 12px;
-    cursor: pointer;
-    border-radius: 2px;
-  }
-  button:hover { border-color: var(--ink-dim); }
+  button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); font-family: var(--mono); font-size: 12px; padding: 6px 12px; cursor: pointer; border-radius: 2px; }
+  button:hover:not(:disabled) { border-color: var(--ink-dim); }
   button:disabled { opacity: 0.35; cursor: default; }
   button.primary { border-color: var(--amber); color: var(--amber); }
   button.danger { border-color: var(--red); color: var(--red); }
+  button.go { border-color: var(--green); color: var(--green); }
   button.small { padding: 2px 8px; font-size: 11px; }
-  input[type=text] {
-    background: #080a06;
-    color: var(--ink);
-    border: 1px solid var(--line);
-    font-family: var(--mono);
-    font-size: 12px;
-    padding: 5px 8px;
-    border-radius: 2px;
+  input[type=text], input[type=number], textarea, select {
+    background: #080a06; color: var(--ink); border: 1px solid var(--line);
+    font-family: var(--mono); font-size: 12px; padding: 5px 8px; border-radius: 2px;
   }
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    margin-bottom: 14px;
-    overflow: hidden;
-  }
-  .panel-head {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    cursor: pointer;
-    user-select: none;
-  }
+  textarea { width: 100%; resize: vertical; line-height: 1.45; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--amber); }
+  input.bad, textarea.bad { border-color: var(--red); }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 3px; margin-bottom: 12px; overflow: hidden; }
+  .panel-head { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; user-select: none; }
   .panel-head:hover { background: #161c11; }
   .callsign { font-weight: bold; color: var(--ink); min-width: 190px; }
   .secret .callsign { color: var(--red); }
   .glyph { color: var(--amber); width: 1.4em; display: inline-block; text-align: center; }
   .freq { color: var(--ink-dim); min-width: 64px; }
   .tagline { color: var(--ink-dim); flex: 1; font-style: italic; }
-  .badges { display: flex; gap: 6px; }
-  .badge {
-    border: 1px solid var(--line);
-    color: var(--ink-dim);
-    font-size: 10px;
-    padding: 2px 6px;
-    border-radius: 2px;
-    white-space: nowrap;
-  }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .badge { border: 1px solid var(--line); color: var(--ink-dim); font-size: 10px; padding: 2px 6px; border-radius: 2px; white-space: nowrap; }
   .badge.ok { color: var(--green); border-color: #2e5a2e; }
   .badge.warn { color: var(--red); border-color: #5a2e2e; }
+  .badge.edit { color: var(--amber); border-color: #5a4a2e; }
   .chevron { color: var(--ink-faint); width: 1em; }
   .panel-body { display: none; border-top: 1px solid var(--line); padding: 12px 14px; }
   .panel.open .panel-body { display: block; }
@@ -102,14 +53,11 @@
   table.tracks td { padding: 4px 6px; border-bottom: 1px solid #1a2116; vertical-align: middle; }
   table.tracks tr:hover td { background: #161c11; }
   .idx { color: var(--ink-faint); width: 2.4em; }
-  .t-title { color: var(--ink); }
-  .t-artist { color: var(--ink-dim); }
+  .t-title { color: var(--ink); } .t-artist { color: var(--ink-dim); }
   .t-id { color: var(--ink-faint); font-size: 11px; }
   .row-actions { white-space: nowrap; text-align: right; }
   .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
-  .status-dot.ok { background: var(--green); }
-  .status-dot.bad { background: var(--red); }
-  .status-dot.unknown { background: var(--ink-faint); }
+  .status-dot.ok { background: var(--green); } .status-dot.bad { background: var(--red); } .status-dot.unknown { background: var(--ink-faint); }
   .preview-row td { padding: 0 6px 8px; }
   .preview-row iframe { width: 320px; height: 180px; border: 1px solid var(--line); }
   .add-track { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
@@ -121,53 +69,96 @@
   .overlap-row .artist, .dupe-row .yid { color: var(--ink); }
   .overlap-row .stations, .dupe-row .titles { color: var(--ink-dim); }
   .empty { color: var(--ink-faint); font-style: italic; }
-  .loading { color: var(--ink-dim); padding: 40px; text-align: center; }
-  .connect-box {
-    border: 1px solid var(--line);
-    background: var(--panel);
-    border-radius: 3px;
-    padding: 24px;
-    max-width: 560px;
-  }
-  .connect-box p { color: var(--ink-dim); margin: 0 0 14px; }
-  .connect-box code {
-    background: #080a06; border: 1px solid var(--line); padding: 1px 5px; border-radius: 2px; color: var(--ink);
-  }
-  .conn-status { color: var(--ink-dim); font-size: 12px; margin-bottom: 16px; }
-  .conn-status b { color: var(--green); }
   .fatal { color: var(--red); margin-top: 10px; font-size: 12px; }
+  .connect-box { border: 1px solid var(--line); background: var(--panel); border-radius: 3px; padding: 24px; max-width: 640px; }
+  .connect-box p { color: var(--ink-dim); margin: 0 0 14px; }
+  .connect-box code { background: #080a06; border: 1px solid var(--line); padding: 1px 5px; border-radius: 2px; color: var(--ink); }
+  .connect-box pre { background: #080a06; border: 1px solid var(--line); padding: 10px 12px; color: var(--amber); overflow-x: auto; }
   #app { display: none; }
-  .pending-card {
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    background: #0e120c;
-  }
+  .conn-status { color: var(--ink-dim); font-size: 12px; margin-bottom: 14px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+  .conn-status b { color: var(--green); }
+  .conn-status .warn { color: var(--amber); }
+
+  /* ---- tabs inside a station panel ---- */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+  .tab { padding: 4px 12px; cursor: pointer; color: var(--ink-faint); border: 1px solid transparent; border-bottom: none; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+  .tab:hover { color: var(--ink-dim); }
+  .tab.on { color: var(--amber); border-color: var(--line); background: #0e120c; }
+
+  /* ---- identity editor ---- */
+  .ident-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px 20px; }
+  .fld { display: flex; flex-direction: column; gap: 3px; }
+  .fld label { color: var(--ink-dim); font-size: 11px; display: flex; justify-content: space-between; gap: 8px; }
+  .fld .hint { color: var(--ink-faint); font-size: 10px; }
+  .fld .hint.over { color: var(--red); }
+  .fld .row { display: flex; gap: 6px; align-items: center; }
+  .fld input[type=range] { flex: 1; accent-color: var(--amber); }
+  .fld .num { width: 68px; }
+  .fld .changed { color: var(--amber); }
+  .group-title { color: var(--amber); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin: 16px 0 6px; border-bottom: 1px solid var(--line); padding-bottom: 3px; }
+  .tone-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .tone { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .tone input[type=range] { writing-mode: vertical-lr; direction: rtl; height: 90px; width: 22px; accent-color: var(--amber); }
+  .tone .hz { width: 78px; text-align: center; }
+  .preview-pane { border: 1px solid var(--line); background: #080a06; margin-top: 10px; }
+  .preview-pane iframe { width: 100%; height: 460px; border: 0; display: block; }
+
+  /* ---- ops / console ---- */
+  .steps { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .step { border: 1px solid var(--line); padding: 4px 10px; font-size: 11px; color: var(--ink-faint); border-radius: 2px; }
+  .step.running { color: var(--amber); border-color: var(--amber); }
+  .step.pass { color: var(--green); border-color: #2e5a2e; }
+  .step.fail { color: var(--red); border-color: var(--red); }
+  .console { background: #060804; border: 1px solid var(--line); padding: 10px 12px; font-size: 11.5px; line-height: 1.45; max-height: 340px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; margin-top: 8px; }
+  .console:empty { display: none; }
+  .console .l-cmd { color: var(--blue); } .console .l-err { color: var(--red); }
+  .console .l-out { color: var(--ink-dim); } .console .l-step { color: var(--amber); font-weight: bold; }
+  .console .l-ok { color: var(--green); }
+  .git-line { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--ink-dim); }
+  .git-line b { color: var(--ink); }
+  .git-line .on-main { color: var(--amber); }
+  .dirty-files { color: var(--ink-faint); font-size: 11px; margin: 8px 0; max-height: 130px; overflow-y: auto; }
+  .ship-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+  .ship-row input { flex: 1; min-width: 260px; }
+
+  /* ---- audition ---- */
+  .aud-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .aud-form input { min-width: 220px; flex: 1; }
+  .aud-constraints { border-left: 2px solid var(--amber); padding: 6px 10px; margin-bottom: 10px; color: var(--ink-dim); font-size: 11.5px; background: #0e120c; }
+  .aud-constraints .rej { color: var(--ink-faint); }
+  .aud-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+  .aud-card { border: 1px solid var(--line); background: #0e120c; padding: 10px 12px; }
+  .aud-card.dead { opacity: .55; }
+  .aud-card h4 { margin: 0 0 4px; font-size: 12px; color: var(--ink); font-weight: normal; }
+  .aud-card .meta { color: var(--ink-faint); font-size: 11px; display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .aud-card iframe { width: 100%; aspect-ratio: 16/9; border: 1px solid var(--line); background: #000; }
+  .flags { display: flex; gap: 5px; flex-wrap: wrap; margin: 5px 0; }
+  .flag { font-size: 10px; padding: 1px 6px; border: 1px solid var(--red); color: var(--red); border-radius: 2px; }
+  .flag.soft { border-color: #5a4a2e; color: var(--amber); }
+  .flag.none { border-color: #2e5a2e; color: var(--green); }
+  .unverified-banner { border: 1px solid var(--red); background: #1e0c08; color: var(--red); padding: 10px 12px; margin-bottom: 12px; font-size: 12px; }
+  .pending-card { border: 1px solid var(--line); border-radius: 3px; padding: 10px 12px; margin-bottom: 8px; background: #0e120c; }
   .pending-card .pc-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .pending-card .pc-station { color: var(--amber); font-weight: bold; }
-  .pending-card .pc-title { color: var(--ink); }
-  .pending-card .pc-artist { color: var(--ink-dim); }
+  .pending-card .pc-title { color: var(--ink); } .pending-card .pc-artist { color: var(--ink-dim); }
   .pending-card .pc-rationale { color: var(--ink-dim); font-size: 12px; margin: 6px 0; font-style: italic; }
   .pending-card .pc-meta { color: var(--ink-faint); font-size: 11px; }
-  .pending-card .pc-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+  .pending-card .pc-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
 </style>
 </head>
 <body>
 
-<h1>SIGNAL <span class="sub">— network ops (local file, no server)</span></h1>
+<h1>SIGNAL <span class="sub">— network ops</span></h1>
 
 <div id="connect-screen">
   <div class="connect-box">
-    <p>This page reads and writes <code>stations.js</code> directly on your disk via Chrome's File System Access API — no server, no terminal. First time here (or after a browser restart), grant access to the <code>signal-radio-engine</code> repo folder.</p>
-    <button class="primary" id="btn-connect">connect signal-radio-engine folder</button>
+    <p id="connect-why">Connecting to the admin server…</p>
     <div class="fatal" id="connect-error"></div>
   </div>
 </div>
 
 <div id="app">
   <div class="conn-status" id="conn-status"></div>
-
   <div class="totals" id="totals"></div>
 
   <div class="toolbar">
@@ -177,19 +168,41 @@
     <span class="save-msg" id="global-msg"></span>
   </div>
 
+  <div class="panel open" id="panel-ops">
+    <div class="panel-head" data-toggle="panel-ops">
+      <span class="chevron">▶</span><span class="callsign">PREFLIGHT &amp; TOOLS</span>
+      <span class="tagline" id="ops-summary">lint, suite, roster verify</span>
+    </div>
+    <div class="panel-body" id="ops-body"></div>
+  </div>
+
+  <div class="panel" id="panel-deploy">
+    <div class="panel-head" data-toggle="panel-deploy">
+      <span class="chevron">▶</span><span class="callsign">DEPLOY</span>
+      <span class="tagline" id="deploy-summary"></span>
+    </div>
+    <div class="panel-body" id="deploy-body"></div>
+  </div>
+
+  <div class="panel" id="panel-audition">
+    <div class="panel-head" data-toggle="panel-audition">
+      <span class="chevron">▶</span><span class="callsign">AUDITION</span>
+      <span class="tagline">vet candidate tracks before they reach the roster</span>
+    </div>
+    <div class="panel-body" id="audition-body"></div>
+  </div>
+
   <div class="panel" id="panel-pending">
-    <div class="panel-head" onclick="togglePanel('panel-pending')">
-      <span class="chevron">▶</span>
-      <span class="callsign">PENDING QUEUE</span>
+    <div class="panel-head" data-toggle="panel-pending">
+      <span class="chevron">▶</span><span class="callsign">PENDING QUEUE</span>
       <span class="tagline" id="pending-summary"></span>
     </div>
     <div class="panel-body" id="pending-body"></div>
   </div>
 
   <div class="panel" id="panel-overlaps">
-    <div class="panel-head" onclick="togglePanel('panel-overlaps')">
-      <span class="chevron">▶</span>
-      <span class="callsign">ARTIST OVERLAP &amp; DUPLICATES</span>
+    <div class="panel-head" data-toggle="panel-overlaps">
+      <span class="chevron">▶</span><span class="callsign">ARTIST OVERLAP &amp; DUPLICATES</span>
       <span class="tagline" id="overlap-summary"></span>
     </div>
     <div class="panel-body" id="overlap-body"></div>
@@ -198,259 +211,484 @@
   <div id="stations"></div>
 </div>
 
-<script>
+<script type="module">
 // ---------------------------------------------------------------------
-// 2026-08-25 audit: the roster moved out of program.js into stations.js (a
-// pure-data ES module). Every read/patch/write below now targets
-// stations.js -- the parsing is unchanged, since the `const STATIONS = [`
-// and `const NIN_STATION = {` literals it brace-matches moved verbatim.
-// (Older comments in this file that name the roster file were rewritten
-// mechanically; where one says stations.js "used to have" something, read
-// that as program.js-at-the-time.)
+// SIGNAL network ops -- the admin dashboard.
 //
-// SIGNAL network ops -- serverless rebuild (55th pass, moved off a running
-// server in favor of a plain file). Everything the
-// Node version (network-server.js + tools/lib/roster.js) did now runs in
-// this one HTML file's own JS, reading and writing stations.js directly via
-// Chrome's File System Access API instead of a Node process + HTTP API.
-// Open by double-clicking this file, or bookmark it -- no terminal step.
+// 2026-08-27, admin-backend pass. This page used to be serverless: it read
+// and wrote stations.js through Chrome's File System Access API, with the
+// stations.js parser copied inline. It now talks to tools/admin-server.mjs
+// and imports that parser from tools/lib/roster.mjs -- the same module the
+// server imports -- so the logic that understands stations.js exists once.
 //
-// The extraction/patch logic below is a straight port of tools/lib/roster.js
-// (brace-match STATIONS/SECRET_STATION out of stations.js's source text,
-// eval with a local realTrack() stub, surgically patch one station's
-// `tracks: [...]` block). See that file's own comments for the reasoning;
-// nothing about the parsing logic changed, only where it runs.
+// Going server-only is what the File System Access version could not do:
+//   - run the Node toolchain (lint, the suite, verify, audition, stamp) and
+//     stream it back, instead of leaving those in a terminal
+//   - edit a station's IDENTITY (crt, meter, ident, glyph, visual, gain,
+//     static), which nothing but a hand-edit of stations.js could touch
+//   - commit and push, with the stamp step that a deploy silently needs
+//   - work in any browser, not just Chrome
 //
-// PENDING QUEUE (added 56th pass): tools/pending-tracks.json holds track
-// candidates proposed for a station but not yet committed. Claude proposes
-// entries into that file directly on disk, on request (see
-// tools/station-profiles.json for the vibe-fit reasoning behind a
-// suggestion) -- this dashboard is where pending entries get reviewed and
-// approved or rejected. Approving a pending entry adds it to that station's normal
-// (dirty) in-memory edit state -- same path as the manual add-track form --
-// so it still goes through the existing save/verify/write flow rather than
-// writing straight to stations.js. Rejecting moves it to the file's
-// `rejected` list (with a reason) so Claude doesn't re-propose it later.
+// The cost is that opening this file directly no longer works -- a file://
+// page cannot import a sibling module (CORS), and inlining the parser again
+// is the exact duplication that broke this dashboard once before. The
+// connect screen says so and gives the command.
 // ---------------------------------------------------------------------
 
-// ---- IndexedDB: remember the granted folder handle across reloads -----
-function idbOpen() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('signal-network-ops', 1)
-    req.onupgradeneeded = () => req.result.createObjectStore('handles')
-    req.onsuccess = () => resolve(req.result)
-    req.onerror = () => reject(req.error)
-  })
-}
-async function idbGet(key) {
-  const db = await idbOpen()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('handles', 'readonly')
-    const req = tx.objectStore('handles').get(key)
-    req.onsuccess = () => resolve(req.result)
-    req.onerror = () => reject(req.error)
-  })
-}
-async function idbSet(key, value) {
-  const db = await idbOpen()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('handles', 'readwrite')
-    tx.objectStore('handles').put(value, key)
+// Imported for the change preview below: the page runs the SAME patchers
+// the server runs, against the same source text, so "here is what this save
+// will do to stations.js" is computed by the code that will actually do it
+// rather than by a second description of it.
+// Absolute, not './lib/roster.mjs'. The server serves this file at BOTH
+// /admin and /tools/network.html, and a relative specifier resolves against
+// the URL rather than the file -- so at /admin it asked for /lib/roster.mjs,
+// 404'd, and the whole module script never executed. The page rendered its
+// connect screen forever with no error visible anywhere on it. Caught by a
+// headless load, not by the API tests, every one of which was passing.
+import { patchStationTracks, patchStationField } from '/tools/lib/roster.mjs'
 
-    tx.oncomplete = () => resolve()
-    tx.onerror = () => reject(tx.error)
-  })
-}
-async function idbDel(key) {
-  const db = await idbOpen()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('handles', 'readwrite')
-    tx.objectStore('handles').delete(key)
-    tx.oncomplete = () => resolve()
-    tx.onerror = () => reject(tx.error)
-  })
+// ---- server transport ------------------------------------------------
+// Every mutating call carries X-Signal-Admin; the server rejects writes
+// without it, which is what stops another tab in this browser from driving
+// a process that can `git push`.
+const HDR = { 'Content-Type': 'application/json', 'X-Signal-Admin': '1' }
+
+async function api(path, body) {
+  const res = await fetch('/api/' + path, body === undefined
+    ? { headers: { 'X-Signal-Admin': '1' } }
+    : { method: 'POST', headers: HDR, body: JSON.stringify(body) })
+  const json = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+  if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+  return json
 }
 
-// ---- stations.js parsing / patching (ported from tools/lib/roster.js) --
-function matchBracket(src, openIdx, openCh, closeCh) {
-  let depth = 0
-  for (let i = openIdx; i < src.length; i++) {
-    if (src[i] === openCh) depth++
-    else if (src[i] === closeCh) { depth--; if (depth === 0) return i }
+/** POST that streams newline-delimited JSON back. onEvent gets each object
+ *  as it arrives, so a 90-second verify shows its output while it runs
+ *  rather than in one lump at the end. */
+async function streamApi(path, body, onEvent) {
+  const res = await fetch('/api/' + path, { method: 'POST', headers: HDR, body: JSON.stringify(body) })
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}))
+    throw new Error(j.error || `HTTP ${res.status}`)
   }
-  return -1
-}
-function extractLiteral(src, declNeedle, openCh, closeCh) {
-  const declIdx = src.indexOf(declNeedle)
-  if (declIdx === -1) throw new Error(`"${declNeedle}" not found in stations.js`)
-  const openIdx = src.indexOf(openCh, declIdx)
-  const closeIdx = matchBracket(src, openIdx, openCh, closeCh)
-  if (closeIdx === -1) throw new Error(`Unbalanced ${openCh}${closeCh} reading "${declNeedle}"`)
-  return src.slice(openIdx, closeIdx + 1)
-}
-function realTrack(youtubeId, title, artist) {
-  return { id: `yt:${youtubeId}:real`, youtubeId, title, artist }
-}
-function loadRosterFromText(src) {
-  const stationsText = extractLiteral(src, 'const STATIONS = [', '[', ']')
-  const STATIONS = eval(stationsText)
-  // 2026-08-24: stations.js used to have one `const SECRET_STATION = {...}`;
-  // it's now named secret stations (currently just NIN_STATION -- a second,
-  // GREEN_HOUSE_STATION, was built and pulled before shipping, see
-  // stations.js's own SECRET_STATIONS comment) combined into
-  // `const SECRET_STATIONS = [NIN_STATION]`. That combining line is just a
-  // reference array, not a literal one, so it can't be eval'd standalone --
-  // extract each named object the same way STATIONS is extracted instead,
-  // then build the array here. Each extraction is optional (try/catch, not
-  // a hard failure) specifically so this dashboard doesn't break again the
-  // way it did when GREEN_HOUSE_STATION disappeared from stations.js --
-  // that exact class of bug (a hardcoded name here going stale against
-  // stations.js's real contents) is what broke this file once already this
-  // session; add a new secret station's own name to `names` below rather
-  // than hardcoding another required extractLiteral call.
-  const names = ['NIN_STATION', 'GREEN_HOUSE_STATION']
-  const SECRET_STATIONS = []
-  for (const name of names) {
-    try {
-      const text = extractLiteral(src, `const ${name} = {`, '{', '}')
-      SECRET_STATIONS.push(eval('(' + text + ')'))
-    } catch (e) { /* not present in stations.js right now -- skip it */ }
-  }
-  return { STATIONS, SECRET_STATIONS }
-}
-function findStationObjectRange(src, stationId) {
-  const idNeedle = `id: '${stationId}'`
-  const idIdx = src.indexOf(idNeedle)
-  if (idIdx === -1) throw new Error(`No station with id "${stationId}" found in stations.js`)
-  if (src.indexOf(idNeedle, idIdx + 1) !== -1) {
-    throw new Error(`"${idNeedle}" appears more than once -- refusing to guess which station`)
-  }
-  const objStart = src.lastIndexOf('{', idIdx)
-  if (objStart === -1) throw new Error(`Could not find opening brace before ${idNeedle}`)
-  const objEnd = matchBracket(src, objStart, '{', '}')
-  if (objEnd === -1) throw new Error(`Unbalanced braces for station "${stationId}"`)
-  return { objStart, objEnd }
-}
-function findTracksRange(src, objStart, objEnd) {
-  const objText = src.slice(objStart, objEnd + 1)
-  const needle = 'tracks: ['
-  const relIdx = objText.indexOf(needle)
-  if (relIdx === -1) throw new Error('No "tracks: [" found in station object')
-  const openIdx = objStart + relIdx + needle.length - 1
-  const closeIdx = matchBracket(src, openIdx, '[', ']')
-  if (closeIdx === -1 || closeIdx > objEnd) throw new Error('Unbalanced tracks array')
-  return { openIdx, closeIdx }
-}
-function quoteJs(str) {
-  const s = String(str)
-  if (!s.includes("'")) return `'${s.replace(/\\/g, '\\\\')}'`
-  if (!s.includes('"')) return `"${s.replace(/\\/g, '\\\\')}"`
-  return JSON.stringify(s)
-}
-function formatTracksBlock(tracks) {
-  const ITEM_INDENT = '      '
-  const CLOSE_INDENT = '    '
-  const lines = tracks.map(t =>
-    `${ITEM_INDENT}realTrack(${quoteJs(t.youtubeId)}, ${quoteJs(t.title)}, ${quoteJs(t.artist)}),`
-  )
-  return '[\n' + lines.join('\n') + '\n' + CLOSE_INDENT + ']'
-}
-// Pure function: text in, patched text out. No file IO here -- the caller
-// decides when (and whether, after the safety check below) to write it.
-function patchStationTracks(src, stationId, tracks) {
-  const { objStart, objEnd } = findStationObjectRange(src, stationId)
-  const { openIdx, closeIdx } = findTracksRange(src, objStart, objEnd)
-  return src.slice(0, openIdx) + formatTracksBlock(tracks) + src.slice(closeIdx + 1)
-}
-// Replaces `node --check` from the server version -- there's no way to
-// syntax-check arbitrary JS in-browser without eval'ing the whole module
-// (which touches window/DOM and has real side effects), so instead this
-// re-runs the SAME extraction used to read the roster against the patched
-// text. If that round-trips cleanly and the edited station's track count
-// matches what we just wrote, the patch is structurally sound. Throws on
-// any mismatch -- callers must not write to disk if this throws.
-function verifyPatch(newSrc, stationId, expectedTrackCount) {
-  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(newSrc)
-  const all = [...STATIONS, ...SECRET_STATIONS]
-  const st = all.find(s => s.id === stationId)
-  if (!st) throw new Error(`Post-patch check: station "${stationId}" not found`)
-  if (st.tracks.length !== expectedTrackCount) {
-    throw new Error(`Post-patch check: expected ${expectedTrackCount} tracks, found ${st.tracks.length}`)
-  }
-  return true
-}
-
-// stations.md generator -- port of tools/stations-to-md.js.
-function buildStationsMd(STATIONS) {
-  const lines = []
-  lines.push('# SIGNAL -- station roster')
-  lines.push('')
-  lines.push(`Generated from stations.js. ${STATIONS.length} stations, ${STATIONS.reduce((n, c) => n + c.tracks.length, 0)} tracks total.`)
-  lines.push('')
-  for (const st of STATIONS) {
-    lines.push(`## ${st.callsign} -- ${st.freq.toFixed(1)}`)
-    lines.push('')
-    lines.push(`*${st.tagline}*`)
-    lines.push('')
-    lines.push(`Ident tones (Hz): ${st.ident.join(', ')}`)
-    lines.push('')
-    lines.push(`Tracks (${st.tracks.length}):`)
-    lines.push('')
-    st.tracks.forEach((t, i) => {
-      lines.push(`${i + 1}. **${t.title}** -- ${t.artist}  ([youtu.be/${t.youtubeId}](https://youtu.be/${t.youtubeId}))`)
-    })
-    lines.push('')
-  }
-  return lines.join('\n')
-}
-
-// ---- roster stats (ported from network-server.js) ---------------------
-const TAGLINE_RE = /^[^,]+,\s*[^,]+$/
-function statsFor(station) {
-  const artists = new Set(station.tracks.map(t => t.artist))
-  return {
-    trackCount: station.tracks.length,
-    artistCount: artists.size,
-    taglineOk: TAGLINE_RE.test((station.tagline || '').trim()),
-    hasFreqNote: !!station.freqNote,
-    hasGlyph: !!station.glyph,
-    visual: station.visual || null,
-  }
-}
-function buildRosterPayload(src) {
-  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(src)
-  const all = [...STATIONS, ...SECRET_STATIONS]
-  const artistIndex = new Map()
-  const idIndex = new Map()
-  for (const st of all) {
-    for (const t of st.tracks) {
-      if (!artistIndex.has(t.artist)) artistIndex.set(t.artist, new Set())
-      artistIndex.get(t.artist).add(st.id)
-      if (!idIndex.has(t.youtubeId)) idIndex.set(t.youtubeId, [])
-      idIndex.get(t.youtubeId).push({ stationId: st.id, title: t.title })
+  const reader = res.body.getReader()
+  const dec = new TextDecoder()
+  let buf = ''
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buf += dec.decode(value, { stream: true })
+    const lines = buf.split('\n')
+    buf = lines.pop()
+    for (const line of lines) {
+      if (!line.trim()) continue
+      try { onEvent(JSON.parse(line)) } catch (e) { /* partial/garbage line */ }
     }
   }
-  const overlaps = [...artistIndex.entries()]
-    .filter(([, ids]) => ids.size > 1)
-    .map(([artist, ids]) => ({ artist, stations: [...ids] }))
-    .sort((a, b) => b.stations.length - a.stations.length)
-  const dupeIds = [...idIndex.entries()]
-    .filter(([, hits]) => hits.length > 1)
-    .map(([youtubeId, hits]) => ({ youtubeId, hits }))
-  return {
-    stations: STATIONS.map(st => ({ ...st, secret: false, stats: statsFor(st) })),
-    secretStations: SECRET_STATIONS.map(st => ({ ...st, secret: true, stats: statsFor(st) })),
-    totals: {
-      stationCount: STATIONS.length + SECRET_STATIONS.length,
-      trackCount: all.reduce((n, s) => n + s.tracks.length, 0),
-      uniqueArtists: artistIndex.size,
-    },
-    overlaps,
-    dupeIds,
+  if (buf.trim()) { try { onEvent(JSON.parse(buf)) } catch (e) {} }
+}
+
+// ---- state -----------------------------------------------------------
+let boot = null            // /api/state payload
+let roster = null
+let programText = ''       // stations.js source, for client-side patch preview
+const edits = {}           // stationId -> tracks[]  (unsaved track edits)
+const identEdits = {}      // stationId -> { fieldPath: value }  (unsaved identity edits)
+const linkStatus = {}
+const openTab = {}         // stationId -> 'tracks' | 'identity'
+let pendingData = { pending: [], rejected: [] }
+let audResult = null
+
+const el = (tag, attrs, ...kids) => {
+  const e = document.createElement(tag)
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'onclick') e.addEventListener('click', v)
+    else if (k === 'oninput') e.addEventListener('input', v)
+    else if (k === 'onchange') e.addEventListener('change', v)
+    else if (k === 'html') e.innerHTML = v
+    else if (v != null) e.setAttribute(k, v)
+  }
+  for (const c of kids) {
+    if (c == null || c === false) continue
+    e.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c)
+  }
+  return e
+}
+const allStations = () => [...(roster?.stations || []), ...(roster?.secretStations || [])]
+const stationById = (id) => allStations().find(s => s.id === id)
+const callsignFor = (id) => stationById(id)?.callsign || id
+const tracksFor = (st) => edits[st.id] || st.tracks
+const isDirty = (st) => !!edits[st.id]
+const identOf = (st) => identEdits[st.id] || {}
+const identDirty = (st) => Object.keys(identOf(st)).length > 0
+const getPath = (o, p) => String(p).split('.').reduce((a, k) => (a == null ? a : a[k]), o)
+/** Current value of an identity field: the unsaved edit if there is one,
+ *  otherwise what is on disk. */
+const fieldValue = (st, path) => (path in identOf(st) ? identOf(st)[path] : getPath(st, path))
+
+function togglePanel(id) { document.getElementById(id).classList.toggle('open') }
+document.addEventListener('click', (e) => {
+  const head = e.target.closest('[data-toggle]')
+  if (head) togglePanel(head.dataset.toggle)
+})
+
+// ---- boot ------------------------------------------------------------
+async function connect() {
+  const why = document.getElementById('connect-why')
+  const err = document.getElementById('connect-error')
+  if (location.protocol === 'file:') {
+    why.innerHTML = 'This dashboard needs its server now — it runs the Node toolchain (lint, the suite, audition, stamp, git), which a page opened from disk cannot do.'
+    err.innerHTML = 'Start it and open the served copy:<pre>node tools/admin-server.mjs\n\nthen  http://127.0.0.1:8080/admin</pre>'
+    return
+  }
+  try {
+    boot = await api('state')
+  } catch (e) {
+    why.textContent = 'Could not reach the admin server on this origin.'
+    err.innerHTML = 'Start it from the repo root:<pre>node tools/admin-server.mjs</pre>' + String(e.message ?? e)
+    return
+  }
+  roster = boot.roster
+  pendingData = boot.pending
+  programText = (await api('source').catch(() => null))?.text || ''
+  document.getElementById('connect-screen').style.display = 'none'
+  document.getElementById('app').style.display = 'block'
+  render()
+}
+
+function render() {
+  const t = roster.totals
+  document.getElementById('totals').innerHTML =
+    `<b>${t.stationCount}</b> stations &middot; <b>${t.trackCount}</b> tracks &middot; <b>${t.uniqueArtists}</b> unique artists`
+  renderConnStatus()
+  renderOps()
+  renderDeploy()
+  renderAudition()
+  renderPending()
+  renderOverlaps()
+  renderStations()
+}
+
+function renderConnStatus() {
+  const g = boot.git
+  const box = document.getElementById('conn-status')
+  box.innerHTML = ''
+  box.appendChild(el('span', { html: `serving <b>${location.host}</b>` }))
+  box.appendChild(el('span', { html: `build <b>${boot.build?.stamp ?? boot.build?.build ?? '—'}</b>` }))
+  box.appendChild(el('span', { html: `branch <b>${g.branch}</b>` }))
+  if (g.dirty.length) box.appendChild(el('span', { class: 'warn' }, `${g.dirty.length} uncommitted file(s)`))
+}
+
+// =====================================================================
+// PREFLIGHT & TOOLS
+// =====================================================================
+function logLine(box, ev) {
+  const cls = ev.type === 'cmd' ? 'l-cmd' : ev.type === 'err' ? 'l-err'
+    : ev.type === 'step' ? 'l-step' : ev.type === 'info' ? 'l-ok' : 'l-out'
+  const text = ev.type === 'step' ? `\n── ${ev.label} ──` : ev.text
+  if (text == null) return
+  box.appendChild(el('div', { class: cls }, text))
+  box.scrollTop = box.scrollHeight
+}
+
+function renderOps() {
+  const body = document.getElementById('ops-body')
+  body.innerHTML = ''
+  body.appendChild(el('div', { class: 'save-msg' },
+    'Preflight runs lint → suite. Roster verify reaches YouTube for every track, so it is opt-in.'))
+
+  const stepsRow = el('div', { class: 'steps' })
+  const console_ = el('div', { class: 'console' })
+  const netBox = el('input', { type: 'checkbox', id: 'pf-net' })
+  const stepEls = {}
+
+  const mkStep = (task, label) => {
+    const e = el('span', { class: 'step' }, label)
+    stepEls[task] = e
+    stepsRow.appendChild(e)
+    return e
+  }
+
+  const bar = el('div', { class: 'steps' })
+  const runBtn = el('button', { class: 'primary' }, 'run preflight')
+  runBtn.addEventListener('click', async () => {
+    const includeNetwork = netBox.checked
+    runBtn.disabled = true
+    console_.innerHTML = ''
+    stepsRow.innerHTML = ''
+    Object.keys(stepEls).forEach(k => delete stepEls[k])
+    mkStep('lint', 'lint'); mkStep('test', 'suite')
+    if (includeNetwork) mkStep('verify', 'verify')
+    try {
+      await streamApi('preflight', { includeNetwork }, (ev) => {
+        if (ev.type === 'step') stepEls[ev.task]?.classList.add('running')
+        else if (ev.type === 'step-done') {
+          stepEls[ev.task]?.classList.remove('running')
+          stepEls[ev.task]?.classList.add(ev.code === 0 ? 'pass' : 'fail')
+        } else if (ev.type === 'exit') {
+          document.getElementById('ops-summary').textContent =
+            ev.code === 0 ? 'all clear' : `FAILED at ${ev.failed}`
+          document.getElementById('ops-summary').style.color = ev.code === 0 ? 'var(--green)' : 'var(--red)'
+        } else logLine(console_, ev)
+      })
+    } catch (e) { logLine(console_, { type: 'err', text: String(e.message ?? e) }) }
+    runBtn.disabled = false
+  })
+  bar.appendChild(runBtn)
+  bar.appendChild(el('label', { class: 'save-msg' }, netBox, ' include roster verify (network, slow)'))
+  body.appendChild(bar)
+  body.appendChild(stepsRow)
+
+  const tools = el('div', { class: 'steps' })
+  for (const [task, spec] of Object.entries(boot.tasks)) {
+    const b = el('button', { class: 'small' }, spec.label + (spec.network ? ' ⇢' : ''))
+    b.addEventListener('click', async () => {
+      b.disabled = true
+      console_.innerHTML = ''
+      try {
+        await streamApi('run', { task }, (ev) => {
+          if (ev.type === 'exit') {
+            logLine(console_, { type: ev.code === 0 ? 'info' : 'err', text: `\nexit ${ev.code}` })
+            if (['stamp', 'stations'].includes(task)) refreshAll()
+          } else logLine(console_, ev)
+        })
+      } catch (e) { logLine(console_, { type: 'err', text: String(e.message ?? e) }) }
+      b.disabled = false
+    })
+    tools.appendChild(b)
+  }
+  body.appendChild(el('div', { class: 'group-title' }, 'individual tools'))
+  body.appendChild(tools)
+  body.appendChild(console_)
+}
+
+// =====================================================================
+// DEPLOY
+// =====================================================================
+function renderDeploy() {
+  const g = boot.git
+  const body = document.getElementById('deploy-body')
+  body.innerHTML = ''
+  document.getElementById('deploy-summary').textContent =
+    `${g.branch}${g.dirty.length ? ` · ${g.dirty.length} uncommitted` : ' · clean'}${g.ahead ? ` · ${g.ahead} ahead` : ''}`
+
+  const line = el('div', { class: 'git-line' })
+  line.appendChild(el('span', { html: `branch <b class="${g.branch === 'main' ? 'on-main' : ''}">${g.branch}</b>` }))
+  line.appendChild(el('span', { html: `upstream <b>${g.upstream || '(none)'}</b>` }))
+  if (g.ahead != null) line.appendChild(el('span', { html: `<b>${g.ahead}</b> unpushed commit(s)` }))
+  line.appendChild(el('span', { html: `last <b>${g.lastCommit}</b>` }))
+  body.appendChild(line)
+
+  if (g.branch === 'main') {
+    body.appendChild(el('div', { class: 'save-msg', style: 'color:var(--amber);margin-top:6px' },
+      'On main — shipping from here publishes to production.'))
+  }
+
+  const files = el('div', { class: 'dirty-files' })
+  if (!g.dirty.length) files.appendChild(el('div', { class: 'empty' }, 'working tree clean'))
+  for (const d of g.dirty) files.appendChild(el('div', {}, `${d.code.padEnd(3)} ${d.file}`))
+  body.appendChild(files)
+
+  body.appendChild(el('div', { class: 'save-msg' },
+    'SHIP runs stamp → stations.md → lint → suite, then add, commit, push. It stops at the first failure and commits nothing.'))
+
+  const msg = el('input', { type: 'text', placeholder: 'commit message' })
+  const netBox = el('input', { type: 'checkbox' })
+  const console_ = el('div', { class: 'console' })
+  const stepsRow = el('div', { class: 'steps' })
+  const shipBtn = el('button', { class: 'go' }, 'SHIP')
+  shipBtn.addEventListener('click', async () => {
+    const message = msg.value.trim()
+    if (!message) { msg.classList.add('bad'); return }
+    msg.classList.remove('bad')
+    if (Object.keys(edits).length || Object.keys(identEdits).length) {
+      if (!confirm('You have unsaved dashboard edits that are not on disk yet. They will NOT be included. Ship anyway?')) return
+    }
+    if (!confirm(`Ship to ${g.branch}${g.upstream ? ` → ${g.upstream}` : ''}?\n\n"${message}"`)) return
+    shipBtn.disabled = true
+    console_.innerHTML = ''
+    stepsRow.innerHTML = ''
+    const stepEls = {}
+    try {
+      await streamApi('ship', { message, confirm: true, includeNetwork: netBox.checked }, (ev) => {
+        if (ev.type === 'step') {
+          stepEls[ev.task] = el('span', { class: 'step running' }, ev.label)
+          stepsRow.appendChild(stepEls[ev.task])
+          logLine(console_, ev)
+        } else if (ev.type === 'step-done') {
+          stepEls[ev.task]?.classList.remove('running')
+          stepEls[ev.task]?.classList.add(ev.code === 0 ? 'pass' : 'fail')
+        } else if (ev.type === 'git') { boot.git = ev.state }
+        else if (ev.type === 'exit') {
+          logLine(console_, { type: ev.code === 0 ? 'info' : 'err', text: ev.code === 0 ? '\nshipped.' : `\nstopped at ${ev.failed}` })
+          if (ev.code === 0) { msg.value = ''; refreshAll() }
+        } else logLine(console_, ev)
+      })
+    } catch (e) { logLine(console_, { type: 'err', text: String(e.message ?? e) }) }
+    shipBtn.disabled = false
+  })
+
+  const row = el('div', { class: 'ship-row' }, msg, shipBtn,
+    el('label', { class: 'save-msg' }, netBox, ' also verify every track (slow)'))
+  body.appendChild(row)
+  body.appendChild(stepsRow)
+  body.appendChild(console_)
+}
+
+// =====================================================================
+// AUDITION
+// =====================================================================
+function flagClass(f) {
+  if (/^UNVERIFIED/.test(f)) return 'flag'
+  if (/^(NOT-US|NO-EMBED|DEAD|LOGIN_REQUIRED|UNPLAYABLE|NARROW-LICENCE)/.test(f)) return 'flag'
+  return 'flag soft'
+}
+
+function renderAudition() {
+  const body = document.getElementById('audition-body')
+  body.innerHTML = ''
+
+  const sel = el('select', {})
+  for (const st of allStations()) sel.appendChild(el('option', { value: st.id }, `${st.callsign} (${st.tracks.length})`))
+  const searchInput = el('input', { type: 'text', placeholder: 'search terms — "Artist Track Title"' })
+  const idsInput = el('input', { type: 'text', placeholder: 'or paste youtube ids, space separated' })
+  const console_ = el('div', { class: 'console' })
+  const out = el('div', {})
+
+  const go = el('button', { class: 'primary' }, 'audition')
+  go.addEventListener('click', async () => {
+    const stationId = sel.value
+    const searches = searchInput.value.trim() ? [searchInput.value.trim()] : []
+    const ids = idsInput.value.trim().split(/[\s,]+/).filter(Boolean)
+    if (!searches.length && !ids.length) return
+    go.disabled = true
+    console_.innerHTML = ''
+    out.innerHTML = ''
+    audResult = null
+    try {
+      await streamApi('audition', { stationId, searches, ids }, (ev) => {
+        if (ev.type === 'result') { audResult = ev.result; if (ev.raw) logLine(console_, { type: 'err', text: ev.raw }) }
+        else if (ev.type === 'exit') renderAuditionResult(out, stationId)
+        else logLine(console_, ev)
+      })
+    } catch (e) { logLine(console_, { type: 'err', text: String(e.message ?? e) }) }
+    go.disabled = false
+  })
+
+  body.appendChild(el('div', { class: 'aud-form' }, sel, searchInput, idsInput, go))
+  body.appendChild(el('div', { class: 'save-msg' },
+    'Search ranks candidates; paste IDs to check specific ones. Same checks as tools/audition.js — duration, embeddability, licence breadth, channel provenance, roster collisions.'))
+  body.appendChild(out)
+  body.appendChild(console_)
+}
+
+function renderAuditionResult(out, stationId) {
+  out.innerHTML = ''
+  if (!audResult) { out.appendChild(el('div', { class: 'empty' }, 'no structured result — see the log')); return }
+
+  // The run-level verdict comes FIRST and is impossible to skim past. A
+  // rate-limited audition run that renders as a clean grid is the exact
+  // failure this tool exists to prevent (CLAUDE.md: an UNVERIFIED run used
+  // to look like a clean one).
+  if (audResult.unverified) {
+    out.appendChild(el('div', { class: 'unverified-banner' },
+      `${audResult.unverified} candidate(s) could NOT be checked beyond oEmbed — duration, region and ` +
+      `embeddability are all UNKNOWN for them. ${audResult.unverifiedReasons.join('; ')}. ` +
+      `An HTTP 429 is YouTube throttling; wait it out and re-run. Do not treat the cards below as clean.`))
+  }
+
+  const p = audResult.profile
+  if (p) {
+    const box = el('div', { class: 'aud-constraints' })
+    for (const c of p.constraints || []) box.appendChild(el('div', {}, '! ' + c))
+    for (const r of (p.rejections || [])) {
+      box.appendChild(el('div', { class: 'rej' }, `× rejected before: ${r.artist} — ${r.track}${r.reason ? ` (${r.reason.slice(0, 120)})` : ''}`))
+    }
+    if (box.children.length) out.appendChild(box)
+  }
+
+  const grid = el('div', { class: 'aud-grid' })
+  for (const r of audResult.rows || []) {
+    const card = el('div', { class: 'aud-card' + (r.dead ? ' dead' : '') })
+    card.appendChild(el('h4', {}, r.title || '(dead — ' + r.status + ')'))
+    const mmss = r.seconds ? `${Math.floor(r.seconds / 60)}:${String(r.seconds % 60).padStart(2, '0')}` : '?'
+    card.appendChild(el('div', { class: 'meta' },
+      el('code', {}, r.id), el('span', {}, mmss), el('span', {}, r.source || '-'),
+      el('span', {}, (r.channel || '').slice(0, 30)),
+      r.countries != null ? el('span', {}, `${r.countries} countries`) : null))
+    const flags = el('div', { class: 'flags' })
+    if (r.flags?.length) for (const f of r.flags) flags.appendChild(el('span', { class: flagClass(f) }, f))
+    else flags.appendChild(el('span', { class: 'flag none' }, 'no flags — still confirm the recording'))
+    card.appendChild(flags)
+    if (!r.dead) {
+      card.appendChild(el('iframe', {
+        src: `https://www.youtube-nocookie.com/embed/${r.id}`, loading: 'lazy',
+        allow: 'accelerometer; encrypted-media; picture-in-picture', allowfullscreen: 'true',
+      }))
+      const acts = el('div', { class: 'pc-actions' })
+      const add = el('button', { class: 'small primary' }, 'queue → pending')
+      add.addEventListener('click', async () => {
+        pendingData.pending.push({
+          stationId, youtubeId: r.id, title: r.title, artist: r.channel?.replace(/ - Topic$/, '') || '',
+          proposedBy: 'dashboard', proposedAt: new Date().toISOString().slice(0, 10),
+          rationale: `Auditioned in the dashboard. ${r.flags?.length ? 'Flags: ' + r.flags.join(', ') : 'No flags.'} ${mmss}, ${r.countries ?? '?'} countries, channel "${r.channel}".`,
+        })
+        await api('pending', pendingData)
+        renderPending()
+        document.getElementById('panel-pending').classList.add('open')
+        add.textContent = 'queued'; add.disabled = true
+      })
+      acts.appendChild(add)
+      const rej = el('button', { class: 'small danger' }, 'reject')
+      rej.addEventListener('click', () => doReject({
+        stationId, youtubeId: r.id, title: r.title,
+        artist: r.channel?.replace(/ - Topic$/, '') || '',
+      }, () => { card.style.opacity = .4; rej.disabled = true; add.disabled = true }))
+      acts.appendChild(rej)
+      card.appendChild(acts)
+    }
+    grid.appendChild(card)
+  }
+  out.appendChild(grid)
+}
+
+// ---- the single rejection writer -------------------------------------
+// Both stores or neither. station-profiles.json's list is what audition.js
+// prints back at you next time, so it is the one that actually stops a
+// re-proposal; pending-tracks.json's is the queue's own record. A reason is
+// mandatory because a rejection without one teaches nothing.
+async function doReject({ stationId, youtubeId, title, artist, entry }, onDone) {
+  const reason = prompt(
+    `Reject "${title}" — ${artist} for ${callsignFor(stationId)}?\n\n` +
+    `The reason is written to BOTH tools/station-profiles.json (what audition.js\n` +
+    `shows you next time) and tools/pending-tracks.json. It is required.`, '')
+  if (reason === null) return
+  if (!reason.trim()) { alert('A reason is required.'); return }
+  try {
+    const res = await api('reject', { stationId, youtubeId, title, artist, reason, entry })
+    pendingData = res.pending
+    boot.profiles = await api('state').then(s => s.profiles)
+    renderPending()
+    const g = document.getElementById('global-msg')
+    g.textContent = res.profileWritten
+      ? `rejected "${title}" — logged to station-profiles.json and pending-tracks.json.`
+      : `rejected "${title}" — logged to pending-tracks.json. (No profile entry for "${stationId}", so nothing was added there.)`
+    g.style.color = res.profileWritten ? 'var(--green)' : 'var(--amber)'
+    onDone?.()
+  } catch (e) {
+    alert('Reject failed: ' + (e.message ?? e))
   }
 }
 
-// ---- oEmbed checks -- direct fetch, no proxy needed --------------------
+// =====================================================================
+// PENDING QUEUE
+// =====================================================================
+function statusDotFor(youtubeId) {
+  const s = linkStatus[youtubeId]
+  if (!s) return el('span', { class: 'status-dot unknown', title: 'not checked' })
+  return el('span', { class: `status-dot ${s.ok ? 'ok' : 'bad'}`, title: s.ok ? 'oEmbed OK' : `oEmbed ${s.status}` })
+}
+
 async function checkOembed(youtubeId) {
   const url = `https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${youtubeId}`)}&format=json`
   try {
@@ -470,157 +708,11 @@ async function mapLimit(items, limit, fn) {
   return results
 }
 
-// ---- connection state ---------------------------------------------------
-let dirHandle = null
-let programText = ''
-let roster = null
-const edits = {}
-const linkStatus = {}
-let pendingData = { pending: [], rejected: [] }
-
-async function getFileText(name) {
-  const fh = await dirHandle.getFileHandle(name)
-  const file = await fh.getFile()
-  return file.text()
-}
-async function writeFileText(name, text, create = false) {
-  const fh = await dirHandle.getFileHandle(name, { create })
-  const w = await fh.createWritable()
-  await w.write(text)
-  await w.close()
-}
-
-// pending-tracks.json lives in tools/ (alongside this dashboard), not the
-// repo root where stations.js/stations.md live -- it's a dev-tool file, not
-// a roster file. getFileText/writeFileText assume root-relative paths, so
-// this needs its own directory handle into tools/.
-async function getToolsDirHandle() {
-  return dirHandle.getDirectoryHandle('tools', { create: true })
-}
-// Optional -- a fresh checkout, or a repo Claude hasn't proposed anything
-// into yet, just won't have the file. Missing or unparseable both fall back
-// to an empty queue rather than blocking connect.
-async function loadPendingQueue() {
-  try {
-    const toolsDir = await getToolsDirHandle()
-    const fh = await toolsDir.getFileHandle('pending-tracks.json')
-    const text = await (await fh.getFile()).text()
-    const parsed = JSON.parse(text)
-    pendingData = { pending: parsed.pending || [], rejected: parsed.rejected || [] }
-  } catch (err) {
-    pendingData = { pending: [], rejected: [] }
-  }
-}
-async function writePendingQueue() {
-  const toolsDir = await getToolsDirHandle()
-  const fh = await toolsDir.getFileHandle('pending-tracks.json', { create: true })
-  const w = await fh.createWritable()
-  await w.write(JSON.stringify(pendingData, null, 2))
-  await w.close()
-}
-
-async function connectWith(handle) {
-  dirHandle = handle
-  document.getElementById('connect-error').textContent = ''
-  try {
-    programText = await getFileText('stations.js')
-  } catch (err) {
-    document.getElementById('connect-error').textContent =
-      'Could not find stations.js in that folder -- pick the signal-radio-engine repo root. (' + err.message + ')'
-    document.getElementById('connect-screen').style.display = 'block'
-    document.getElementById('app').style.display = 'none'
-    return
-  }
-  document.getElementById('connect-screen').style.display = 'none'
-  document.getElementById('app').style.display = 'block'
-  document.getElementById('conn-status').innerHTML = `connected: <b>${handle.name}</b> — reads/writes stations.js on save`
-  roster = buildRosterPayload(programText)
-  await loadPendingQueue()
-  render()
-}
-
-async function tryAutoConnect() {
-  let handle
-  try { handle = await idbGet('repoRoot') } catch (e) { handle = null }
-  if (!handle) return
-  try {
-    const perm = await handle.queryPermission({ mode: 'readwrite' })
-    if (perm === 'granted') { await connectWith(handle); return }
-  } catch (e) { /* handle may be stale (folder moved/renamed) -- fall through to manual connect */ }
-  // Permission lapsed or needs a fresh grant -- show the connect button
-  // pre-labelled so one click re-requests rather than re-picking.
-  const btn = document.getElementById('btn-connect')
-  btn.textContent = `reconnect "${handle.name}"`
-  btn.addEventListener('click', async function reconnectOnce(e) {
-    e.stopImmediatePropagation()
-    try {
-      const perm = await handle.requestPermission({ mode: 'readwrite' })
-      if (perm === 'granted') { await connectWith(handle); return }
-      document.getElementById('connect-error').textContent = 'Permission not granted.'
-    } catch (err) {
-      document.getElementById('connect-error').textContent = String(err.message ?? err)
-    }
-  }, { once: true })
-}
-
-document.getElementById('btn-connect').addEventListener('click', async () => {
-  try {
-    const handle = await window.showDirectoryPicker({ mode: 'readwrite' })
-    await idbSet('repoRoot', handle)
-    await connectWith(handle)
-  } catch (err) {
-    if (err.name !== 'AbortError') {
-      document.getElementById('connect-error').textContent = String(err.message ?? err)
-    }
-  }
-})
-
-tryAutoConnect()
-
-// ---- everything below is UI rendering + edit state, same shape as the --
-// ---- server version, just talking to programText/dirHandle instead of -
-// ---- fetch('/api/...'). -------------------------------------------------
-
-function el(tag, attrs, ...children) {
-  const e = document.createElement(tag)
-  for (const [k, v] of Object.entries(attrs || {})) {
-    if (k === 'onclick') e.addEventListener('click', v)
-    else if (k === 'html') e.innerHTML = v
-    else e.setAttribute(k, v)
-  }
-  for (const c of children) {
-    if (c == null) continue
-    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c)
-  }
-  return e
-}
-function togglePanel(id) { document.getElementById(id).classList.toggle('open') }
-window.togglePanel = togglePanel
-
-function tracksFor(station) { return edits[station.id] || station.tracks }
-function isDirty(station) { return !!edits[station.id] }
-
-function render() {
-  const t = roster.totals
-  document.getElementById('totals').innerHTML =
-    `<b>${t.stationCount}</b> stations &middot; <b>${t.trackCount}</b> tracks &middot; <b>${t.uniqueArtists}</b> unique artists`
-  renderPending()
-  renderOverlaps()
-  renderStations()
-}
-
-function callsignFor(stationId) {
-  const st = [...(roster?.stations || []), ...(roster?.secretStations || [])].find(s => s && s.id === stationId)
-  return st ? st.callsign : stationId
-}
-
 function renderPending() {
   const summary = document.getElementById('pending-summary')
   const body = document.getElementById('pending-body')
   const n = pendingData.pending.length
-  summary.textContent = n
-    ? `${n} candidate${n === 1 ? '' : 's'} awaiting review`
-    : 'nothing queued -- ask Claude to propose tracks for a station'
+  summary.textContent = n ? `${n} candidate${n === 1 ? '' : 's'} awaiting review` : 'nothing queued'
   body.innerHTML = ''
   if (!n) { body.appendChild(el('div', { class: 'empty' }, 'no pending candidates')); return }
   const sorted = [...pendingData.pending].sort((a, b) => (a.stationId || '').localeCompare(b.stationId || ''))
@@ -629,17 +721,14 @@ function renderPending() {
 
 function renderPendingCard(entry) {
   const card = el('div', { class: 'pending-card' })
-  const head = el('div', { class: 'pc-head' },
+  card.appendChild(el('div', { class: 'pc-head' },
     el('span', { class: 'pc-station' }, callsignFor(entry.stationId)),
     statusDotFor(entry.youtubeId),
     el('span', { class: 'pc-title' }, entry.title),
-    el('span', { class: 'pc-artist' }, '— ' + entry.artist),
-  )
-  card.appendChild(head)
+    el('span', { class: 'pc-artist' }, '— ' + entry.artist)))
   if (entry.rationale) card.appendChild(el('div', { class: 'pc-rationale' }, entry.rationale))
   card.appendChild(el('div', { class: 'pc-meta' },
-    `${entry.youtubeId} · proposed ${entry.proposedBy || 'claude'}${entry.proposedAt ? ' on ' + entry.proposedAt : ''}`
-  ))
+    `${entry.youtubeId} · proposed ${entry.proposedBy || 'claude'}${entry.proposedAt ? ' on ' + entry.proposedAt : ''}`))
   const previewWrap = el('div', {})
   card.appendChild(previewWrap)
   const actions = el('div', { class: 'pc-actions' })
@@ -658,8 +747,7 @@ function renderPendingCard(entry) {
   const checkBtn = el('button', { class: 'small' }, 'check link')
   checkBtn.addEventListener('click', async () => {
     checkBtn.textContent = 'checking…'
-    const res = await checkOembed(entry.youtubeId)
-    linkStatus[entry.youtubeId] = res
+    linkStatus[entry.youtubeId] = await checkOembed(entry.youtubeId)
     renderPending()
   })
   actions.appendChild(checkBtn)
@@ -667,40 +755,26 @@ function renderPendingCard(entry) {
   approveBtn.addEventListener('click', () => approvePending(entry))
   actions.appendChild(approveBtn)
   const rejectBtn = el('button', { class: 'small danger' }, 'reject')
-  rejectBtn.addEventListener('click', () => rejectPending(entry))
+  rejectBtn.addEventListener('click', () => doReject({ ...entry, entry }))
   actions.appendChild(rejectBtn)
-  const msg = el('span', { class: 'save-msg' })
-  actions.appendChild(msg)
   card.appendChild(actions)
   return card
 }
 
-// Approving does NOT write stations.js directly -- it pushes the candidate
-// into that station's normal in-memory edit state (same as the manual
-// add-track form), so it flows through the exact same dirty/save/verify
-// path as any other roster edit. It's removed from the pending file right
-// away, since its job (getting reviewed) is done either way.
+// Approving does NOT write stations.js -- it pushes the candidate into that
+// station's normal in-memory edit state, the same path the manual add form
+// uses, so it still flows through save/verify/write like any other edit.
 async function approvePending(entry) {
-  const st = [...roster.stations, ...roster.secretStations].find(s => s.id === entry.stationId)
+  const st = stationById(entry.stationId)
   const g = document.getElementById('global-msg')
-  if (!st) { g.textContent = `approve failed: no station "${entry.stationId}" found`; g.style.color = 'var(--red)'; return }
+  if (!st) { g.textContent = `approve failed: no station "${entry.stationId}"`; g.style.color = 'var(--red)'; return }
   addTrack(st, { youtubeId: entry.youtubeId, title: entry.title, artist: entry.artist })
   pendingData.pending = pendingData.pending.filter(e => e !== entry)
-  await writePendingQueue()
+  await api('pending', pendingData)
   renderPending()
   document.getElementById('panel-' + st.id).classList.add('open')
-  g.textContent = `approved "${entry.title}" onto ${st.callsign} -- unsaved, use "save to stations.js" (or "save all changed stations") to commit it.`
+  g.textContent = `approved "${entry.title}" onto ${st.callsign} — unsaved. Use "save tracks" to commit it to stations.js.`
   g.style.color = 'var(--green)'
-}
-
-async function rejectPending(entry) {
-  const reason = prompt(`Reject "${entry.title}" -- ${entry.artist} for ${callsignFor(entry.stationId)}?\nOptional reason (helps Claude avoid re-proposing it):`, '')
-  if (reason === null) return
-  pendingData.pending = pendingData.pending.filter(e => e !== entry)
-  pendingData.rejected.push({ ...entry, rejectedAt: new Date().toISOString().slice(0, 10), rejectedReason: reason || undefined })
-  await writePendingQueue()
-  renderPending()
-  document.getElementById('global-msg').textContent = `rejected "${entry.title}" -- logged to pending-tracks.json so it isn't re-proposed.`
 }
 
 function renderOverlaps() {
@@ -715,8 +789,7 @@ function renderOverlaps() {
     for (const o of roster.overlaps) {
       body.appendChild(el('div', { class: 'overlap-row' },
         el('span', { class: 'artist' }, o.artist + '  '),
-        el('span', { class: 'stations' }, '— ' + o.stations.join(', '))
-      ))
+        el('span', { class: 'stations' }, '— ' + o.stations.join(', '))))
     }
   }
   if (d) {
@@ -724,12 +797,14 @@ function renderOverlaps() {
     for (const dup of roster.dupeIds) {
       body.appendChild(el('div', { class: 'dupe-row' },
         el('span', { class: 'yid' }, dup.youtubeId + '  '),
-        el('span', { class: 'titles' }, '— ' + dup.hits.map(h => `${h.stationId}: ${h.title}`).join(' / '))
-      ))
+        el('span', { class: 'titles' }, '— ' + dup.hits.map(h => `${h.stationId}: ${h.title}`).join(' / '))))
     }
   }
 }
 
+// =====================================================================
+// STATIONS
+// =====================================================================
 function renderStations() {
   const container = document.getElementById('stations')
   container.innerHTML = ''
@@ -737,13 +812,16 @@ function renderStations() {
   for (const st of all) container.appendChild(renderStationPanel(st))
 }
 
-function badgeFor(stats) {
-  const b = []
-  b.push(el('span', { class: 'badge' }, `${stats.trackCount} trk`))
-  b.push(el('span', { class: 'badge' }, `${stats.artistCount} art`))
-  b.push(el('span', { class: `badge ${stats.taglineOk ? 'ok' : 'warn'}` }, stats.taglineOk ? 'tagline ok' : 'tagline!'))
-  if (!stats.hasFreqNote) b.push(el('span', { class: 'badge warn' }, 'no freqNote'))
-  if (!stats.hasGlyph) b.push(el('span', { class: 'badge warn' }, 'no glyph'))
+function badgeFor(st) {
+  const s = st.stats
+  const b = [el('span', { class: 'badge' }, `${tracksFor(st).length} trk`), el('span', { class: 'badge' }, `${s.artistCount} art`)]
+  const tl = String(fieldValue(st, 'tagline') || '')
+  const tlOk = tl.length <= boot.limits.TAGLINE_MAX
+  b.push(el('span', { class: `badge ${tlOk ? 'ok' : 'warn'}` }, tlOk ? 'tagline ok' : `tagline ${tl.length}/${boot.limits.TAGLINE_MAX}`))
+  if (!s.hasFreqNote) b.push(el('span', { class: 'badge warn' }, 'no freqNote'))
+  if (!s.hasGlyph && !st.secret) b.push(el('span', { class: 'badge warn' }, 'no glyph'))
+  if (isDirty(st)) b.push(el('span', { class: 'badge edit' }, 'tracks edited'))
+  if (identDirty(st)) b.push(el('span', { class: 'badge edit' }, 'identity edited'))
   return b
 }
 
@@ -752,49 +830,52 @@ function renderStationPanel(st) {
   const panel = el('div', { class: 'panel' + (st.secret ? ' secret' : ''), id: panelId })
   const head = el('div', { class: 'panel-head', onclick: () => panel.classList.toggle('open') },
     el('span', { class: 'chevron' }, '▶'),
-    el('span', { class: 'freq' }, st.secret ? '(secret)' : st.freq.toFixed(1)),
-    el('span', { class: 'glyph' }, st.glyph || (st.secret ? '●' : '·')),
-    el('span', { class: 'callsign' }, st.callsign),
-    el('span', { class: 'tagline' }, st.tagline || ''),
-    el('div', { class: 'badges' }, ...badgeFor(st.stats))
-  )
+    el('span', { class: 'freq' }, st.secret ? '(secret)' : Number(fieldValue(st, 'freq')).toFixed(1)),
+    el('span', { class: 'glyph' }, fieldValue(st, 'glyph') || (st.secret ? '●' : '·')),
+    el('span', { class: 'callsign' }, fieldValue(st, 'callsign')),
+    el('span', { class: 'tagline' }, fieldValue(st, 'tagline') || ''),
+    el('div', { class: 'badges' }, ...badgeFor(st)))
   const body = el('div', { class: 'panel-body' })
-  body.appendChild(renderStationBody(st))
+
+  const tab = openTab[st.id] || 'tracks'
+  const tabs = el('div', { class: 'tabs' })
+  for (const [key, label] of [['tracks', 'tracks'], ['identity', 'identity & feel']]) {
+    tabs.appendChild(el('div', {
+      class: 'tab' + (tab === key ? ' on' : ''),
+      onclick: () => { openTab[st.id] = key; rerenderStation(st) },
+    }, label))
+  }
+  body.appendChild(tabs)
+  body.appendChild(tab === 'tracks' ? renderTracksTab(st) : renderIdentityTab(st))
   panel.appendChild(head)
   panel.appendChild(body)
   return panel
 }
 
-function renderStationBody(st) {
+function renderTracksTab(st) {
   const wrap = el('div', {})
-  if (st.desc) wrap.appendChild(el('div', { class: 'desc' }, st.desc))
+  if (st.desc) wrap.appendChild(el('div', { class: 'desc' }, fieldValue(st, 'desc')))
   const table = el('table', { class: 'tracks' })
   const tracks = tracksFor(st)
-  tracks.forEach((t, i) => table.appendChild(renderTrackRow(st, t, i, tracks)))
+  tracks.forEach((t, i) => table.appendChild(renderTrackRow(st, t, i)))
   wrap.appendChild(table)
   wrap.appendChild(renderAddForm(st))
-  wrap.appendChild(renderStationActions(st))
+  wrap.appendChild(renderTrackActions(st))
   return wrap
 }
 
-function statusDotFor(youtubeId) {
-  const s = linkStatus[youtubeId]
-  if (!s) return el('span', { class: 'status-dot unknown', title: 'not checked' })
-  return el('span', { class: `status-dot ${s.ok ? 'ok' : 'bad'}`, title: s.ok ? 'oEmbed OK' : `oEmbed ${s.status}` })
-}
-
-function renderTrackRow(st, t, i, tracks) {
+function renderTrackRow(st, t, i) {
   const tr = el('tr', {})
   tr.appendChild(el('td', { class: 'idx' }, String(i + 1)))
   tr.appendChild(el('td', {}, statusDotFor(t.youtubeId)))
   tr.appendChild(el('td', { class: 't-title' }, t.title))
   tr.appendChild(el('td', { class: 't-artist' }, t.artist))
   tr.appendChild(el('td', { class: 't-id' }, t.youtubeId))
-  const actions = el('td', { class: 'row-actions' })
-  actions.appendChild(el('button', { class: 'small', onclick: () => togglePreview(st.id, i) }, 'preview'))
-  actions.appendChild(el('button', { class: 'small', onclick: () => moveTrack(st, i, -1) }, '↑'))
-  actions.appendChild(el('button', { class: 'small', onclick: () => moveTrack(st, i, 1) }, '↓'))
-  actions.appendChild(el('button', { class: 'small danger', onclick: () => removeTrack(st, i) }, 'remove'))
+  const actions = el('td', { class: 'row-actions' },
+    el('button', { class: 'small', onclick: () => togglePreview(st.id, i) }, 'preview'),
+    el('button', { class: 'small', onclick: () => moveTrack(st, i, -1) }, '↑'),
+    el('button', { class: 'small', onclick: () => moveTrack(st, i, 1) }, '↓'),
+    el('button', { class: 'small danger', onclick: () => removeTrack(st, i) }, 'remove'))
   tr.appendChild(actions)
   tr.dataset.previewFor = `${st.id}:${i}`
   return tr
@@ -805,55 +886,37 @@ function togglePreview(stationId, i) {
   if (!row) return
   const existing = row.nextElementSibling
   if (existing && existing.classList.contains('preview-row')) { existing.remove(); return }
-  const st = [...roster.stations, ...roster.secretStations].find(s => s.id === stationId)
-  const track = tracksFor(st)[i]
-  const previewRow = el('tr', { class: 'preview-row' },
-    el('td', { colspan: '6' },
-      el('iframe', {
-        src: `https://www.youtube-nocookie.com/embed/${track.youtubeId}`,
-        allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
-        allowfullscreen: 'true',
-      })
-    )
-  )
-  row.after(previewRow)
+  const track = tracksFor(stationById(stationId))[i]
+  row.after(el('tr', { class: 'preview-row' }, el('td', { colspan: '6' },
+    el('iframe', {
+      src: `https://www.youtube-nocookie.com/embed/${track.youtubeId}`,
+      allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+      allowfullscreen: 'true',
+    }))))
 }
-window.togglePreview = togglePreview
 
-function ensureEditable(station) {
-  if (!edits[station.id]) edits[station.id] = station.tracks.map(t => ({ ...t }))
-  return edits[station.id]
+function ensureEditable(st) {
+  if (!edits[st.id]) edits[st.id] = st.tracks.map(t => ({ ...t }))
+  return edits[st.id]
 }
-function moveTrack(station, i, dir) {
-  const arr = ensureEditable(station)
+function moveTrack(st, i, dir) {
+  const arr = ensureEditable(st)
   const j = i + dir
   if (j < 0 || j >= arr.length) return
   ;[arr[i], arr[j]] = [arr[j], arr[i]]
-  rerenderStation(station)
+  rerenderStation(st)
 }
-function sortTracks(station, keyFn) {
-  const arr = ensureEditable(station)
-  arr.sort((a, b) => keyFn(a).localeCompare(keyFn(b), undefined, { sensitivity: 'base' }))
-  rerenderStation(station)
+function sortTracks(st, keyFn) {
+  ensureEditable(st).sort((a, b) => keyFn(a).localeCompare(keyFn(b), undefined, { sensitivity: 'base' }))
+  rerenderStation(st)
 }
-function removeTrack(station, i) {
-  const arr = ensureEditable(station)
-  arr.splice(i, 1)
-  rerenderStation(station)
-}
-function addTrack(station, track) {
-  const arr = ensureEditable(station)
-  arr.push(track)
-  rerenderStation(station)
-}
-function revertStation(station) {
-  delete edits[station.id]
-  rerenderStation(station)
-}
-function rerenderStation(station) {
-  const panel = document.getElementById('panel-' + station.id)
+function removeTrack(st, i) { ensureEditable(st).splice(i, 1); rerenderStation(st) }
+function addTrack(st, track) { ensureEditable(st).push(track); rerenderStation(st) }
+function revertTracks(st) { delete edits[st.id]; rerenderStation(st) }
+function rerenderStation(st) {
+  const panel = document.getElementById('panel-' + st.id)
   const wasOpen = panel.classList.contains('open')
-  const fresh = renderStationPanel(station)
+  const fresh = renderStationPanel(st)
   if (wasOpen) fresh.classList.add('open')
   panel.replaceWith(fresh)
 }
@@ -873,8 +936,8 @@ function renderAddForm(st) {
     if (res.ok) {
       if (res.title && !titleInput.value) titleInput.value = res.title
       if (res.author && !artistInput.value) artistInput.value = res.author
-      msg.textContent = 'oEmbed OK — review title/artist, then Add'
-      msg.style.color = 'var(--green)'
+      msg.textContent = 'oEmbed OK — this only proves it exists. Audition it for duration, region and embeddability.'
+      msg.style.color = 'var(--amber)'
     } else {
       msg.textContent = `oEmbed ${res.status} — this id does not resolve`
       msg.style.color = 'var(--red)'
@@ -893,29 +956,32 @@ function renderAddForm(st) {
   return el('div', { class: 'add-track' }, idInput, titleInput, artistInput, verifyBtn, addBtn, msg)
 }
 
-function renderStationActions(st) {
+function renderTrackActions(st) {
   const dirty = isDirty(st)
   const wrap = el('div', { class: 'station-actions' })
-  const checkBtn = el('button', { class: 'small' }, 'check this station’s links')
-  checkBtn.addEventListener('click', () => checkStationLinks(st))
-  wrap.appendChild(checkBtn)
-  const sortArtistBtn = el('button', { class: 'small' }, 'sort by artist')
-  sortArtistBtn.addEventListener('click', () => sortTracks(st, t => t.artist))
-  wrap.appendChild(sortArtistBtn)
-  const sortTitleBtn = el('button', { class: 'small' }, 'sort by title')
-  sortTitleBtn.addEventListener('click', () => sortTracks(st, t => t.title))
-  wrap.appendChild(sortTitleBtn)
-  const saveBtn = el('button', { class: dirty ? 'primary' : '' }, 'save to stations.js')
+  wrap.appendChild(el('button', { class: 'small', onclick: () => checkStationLinks(st) }, 'check this station’s links'))
+  wrap.appendChild(el('button', { class: 'small', onclick: () => sortTracks(st, t => t.artist) }, 'sort by artist'))
+  wrap.appendChild(el('button', { class: 'small', onclick: () => sortTracks(st, t => t.title) }, 'sort by title'))
+  const saveBtn = el('button', { class: dirty ? 'primary' : '' }, 'save tracks')
   saveBtn.disabled = !dirty
-  saveBtn.addEventListener('click', () => saveStation(st))
+  saveBtn.addEventListener('click', () => saveTracks(st))
   wrap.appendChild(saveBtn)
+  const diffBox = el('div', { style: 'width:100%' })
   if (dirty) {
-    const revertBtn = el('button', { class: 'small' }, 'revert')
-    revertBtn.addEventListener('click', () => revertStation(st))
-    wrap.appendChild(revertBtn)
+    const preview = el('button', { class: 'small' }, 'preview change')
+    preview.addEventListener('click', () => {
+      try { showDiff(st, diffBox, patchStationTracks(programText, st.id, tracksFor(st))) }
+      catch (e) {
+        diffBox.innerHTML = ''
+        diffBox.appendChild(el('div', { class: 'save-msg', style: 'color:var(--red)' }, String(e.message ?? e)))
+      }
+    })
+    wrap.appendChild(preview)
+    wrap.appendChild(el('button', { class: 'small', onclick: () => revertTracks(st) }, 'revert'))
     wrap.appendChild(el('span', { class: 'dirty-flag' }, 'unsaved changes'))
   }
   wrap.appendChild(el('span', { class: 'save-msg', id: 'msg-' + st.id }))
+  wrap.appendChild(diffBox)
   return wrap
 }
 
@@ -928,92 +994,451 @@ async function checkStationLinks(st) {
   const bad = results.filter(r => !r.ok)
   rerenderStation(st)
   document.getElementById('panel-' + st.id).classList.add('open')
-  const freshMsg = document.getElementById('msg-' + st.id)
-  if (freshMsg) {
-    freshMsg.textContent = bad.length ? `${bad.length} problem(s) found` : 'all clear'
-    freshMsg.style.color = bad.length ? 'var(--red)' : 'var(--green)'
+  const fresh = document.getElementById('msg-' + st.id)
+  if (fresh) {
+    fresh.textContent = bad.length ? `${bad.length} problem(s) found` : 'all clear'
+    fresh.style.color = bad.length ? 'var(--red)' : 'var(--green)'
   }
 }
 
-// Applies one station's pending edit against the in-memory programText,
-// verifies the patch, and (only if that passes) writes the file. Returns
-// {ok, error?}. Does NOT touch the DOM/roster -- callers reload after.
-async function saveStationToDisk(st) {
-  const tracks = tracksFor(st)
-  let newText
-  try {
-    newText = patchStationTracks(programText, st.id, tracks)
-    verifyPatch(newText, st.id, tracks.length)
-  } catch (err) {
-    return { ok: false, error: String(err.message ?? err) }
-  }
-  try {
-    await writeFileText('stations.js', newText)
-    programText = newText
-    const { STATIONS } = loadRosterFromText(programText)
-    await writeFileText('stations.md', buildStationsMd(STATIONS), true)
-  } catch (err) {
-    return { ok: false, error: 'Write failed: ' + String(err.message ?? err) }
-  }
-  delete edits[st.id]
-  return { ok: true, trackCount: tracks.length }
-}
-
-async function saveStation(st) {
+async function saveTracks(st) {
   const msgEl = document.getElementById('msg-' + st.id)
   if (msgEl) msgEl.textContent = 'saving…'
-  const res = await saveStationToDisk(st)
-  if (res.ok) {
-    roster = buildRosterPayload(programText)
-    render()
-    document.getElementById('panel-' + st.id).classList.add('open')
-    document.getElementById('global-msg').textContent =
-      `saved ${st.callsign} (${res.trackCount} tracks) to stations.js — stations.md regenerated. Run this through signal-ship (QA, commit, push) when ready.`
-  } else if (msgEl) {
-    msgEl.textContent = 'save failed: ' + res.error
-    msgEl.style.color = 'var(--red)'
+  try {
+    const res = await api('save-tracks', { stationId: st.id, tracks: tracksFor(st) })
+    delete edits[st.id]
+    await refreshAll()
+    document.getElementById('panel-' + st.id)?.classList.add('open')
+    const g = document.getElementById('global-msg')
+    g.textContent = `saved ${st.callsign} (${res.trackCount} tracks) — stations.md regenerated. Run preflight, then SHIP.`
+    g.style.color = 'var(--green)'
+  } catch (e) {
+    const m = document.getElementById('msg-' + st.id)
+    if (m) { m.textContent = 'save failed: ' + (e.message ?? e); m.style.color = 'var(--red)' }
   }
 }
 
-async function saveAllChanged() {
-  const dirtyIds = Object.keys(edits)
-  const g = document.getElementById('global-msg')
-  if (!dirtyIds.length) { g.textContent = 'nothing unsaved'; return }
-  const all = [...roster.stations, ...roster.secretStations]
-  let ok = 0
-  const failures = []
-  for (const id of dirtyIds) {
-    const st = all.find(s => s.id === id)
-    if (!st) continue
-    g.textContent = `saving ${st.callsign}… (${ok + failures.length + 1}/${dirtyIds.length})`
-    const res = await saveStationToDisk(st)
-    if (res.ok) ok++
-    else failures.push(`${st.callsign}: ${res.error}`)
+// =====================================================================
+// IDENTITY & FEEL
+// =====================================================================
+// Every field stations.js carries except `tracks` and `id`. Ranges are set
+// from what the roster actually uses (measured 2026-08-27) padded outward,
+// not from the shader's theoretical limits -- a slider whose useful travel
+// is 3% of its width is not a control.
+const CRT_KEYS = [
+  ['noise', 0, 0.5, 0.01], ['bloomAmt', 0, 3, 0.01], ['flicker', 0, 0.4, 0.005],
+  ['decay', 0.4, 1, 0.01], ['brightness', 0.6, 2, 0.01], ['scanMin', 0, 1, 0.01],
+  ['scanMax', 0, 1, 0.01], ['chroma', 0, 1, 0.01], ['maskAmt', 0, 1, 0.01],
+  ['beam', 0.2, 1.5, 0.01], ['sharpen', 0, 2, 0.01], ['snow', 0, 0.1, 0.001],
+  ['threshold', 0, 1, 0.01], ['vignette', 0, 1, 0.01],
+]
+const METER_KEYS = [['spring', 0.05, 1, 0.01], ['damping', 0.1, 1, 0.01], ['swing', 0.2, 2, 0.01]]
+
+function renderIdentityTab(st) {
+  const wrap = el('div', {})
+  const set = (path, value) => {
+    const onDisk = getPath(st, path)
+    // Clearing an override that was never there is not an edit.
+    const bothAbsent = (value === null || value === undefined) && onDisk === undefined
+    if (bothAbsent || value === onDisk || (typeof value === 'object' && JSON.stringify(value) === JSON.stringify(onDisk))) {
+      delete identEdits[st.id]?.[path]
+      if (identEdits[st.id] && !Object.keys(identEdits[st.id]).length) delete identEdits[st.id]
+    } else {
+      identEdits[st.id] = identEdits[st.id] || {}
+      identEdits[st.id][path] = value
+    }
+    updateIdentButtons(st)
   }
-  roster = buildRosterPayload(programText)
+
+  // ---- text identity ----
+  const grid = el('div', { class: 'ident-grid' })
+  grid.appendChild(textField(st, 'callsign', 'callsign', set))
+  grid.appendChild(numField(st, 'freq', 'freq (KHZ)', set, boot.limits.FREQ_MIN, boot.limits.FREQ_MAX, 0.1))
+  grid.appendChild(taglineField(st, set))
+  grid.appendChild(textField(st, 'freqNote', 'freqNote (guide detail line)', set))
+  grid.appendChild(glyphField(st, set))
+  grid.appendChild(selectField(st, 'visual', 'visualizer effect', boot.visuals, set))
+  grid.appendChild(numField(st, 'gain', 'playback gain', set, 0.5, 2.5, 0.05))
+  grid.appendChild(numField(st, 'static', 'static centre (Hz)', set, 200, 4000, 10))
+  wrap.appendChild(grid)
+
+  const descWrap = el('div', { class: 'fld', style: 'margin-top:10px' })
+  const descLabel = el('label', {}, el('span', {}, 'desc (guide station page)'))
+  const descArea = el('textarea', { rows: '3' })
+  descArea.value = fieldValue(st, 'desc') || ''
+  descArea.addEventListener('input', () => set('desc', descArea.value))
+  descWrap.appendChild(descLabel); descWrap.appendChild(descArea)
+  wrap.appendChild(descWrap)
+
+  // ---- ident ----
+  wrap.appendChild(el('div', { class: 'group-title' }, 'station ident'))
+  wrap.appendChild(el('div', { class: 'save-msg' },
+    'Four tones, played on lock. Same triangle-oscillator chain the receiver uses, so this is what it will sound like.'))
+  wrap.appendChild(renderIdentEditor(st, set))
+
+  // ---- crt ----
+  wrap.appendChild(el('div', { class: 'group-title' }, 'CRT character'))
+  wrap.appendChild(el('div', { class: 'save-msg' },
+    'Overrides on top of config.js SCREEN. Clearing a field removes the override and the station falls back to the baseline shown.'))
+  const crtGrid = el('div', { class: 'ident-grid' })
+  for (const [key, min, max, step] of CRT_KEYS) crtGrid.appendChild(rangeField(st, 'crt.' + key, key, set, min, max, step, boot.screenDefaults[key]))
+  wrap.appendChild(crtGrid)
+
+  // ---- meter ----
+  wrap.appendChild(el('div', { class: 'group-title' }, 'needle physics'))
+  const meterGrid = el('div', { class: 'ident-grid' })
+  for (const [key, min, max, step] of METER_KEYS) meterGrid.appendChild(rangeField(st, 'meter.' + key, key, set, min, max, step))
+  wrap.appendChild(meterGrid)
+
+  // ---- live preview ----
+  wrap.appendChild(el('div', { class: 'group-title' }, 'live receiver'))
+  wrap.appendChild(el('div', { class: 'save-msg' },
+    'Boots the real app straight to this station via ?station=. It reads stations.js from disk, so SAVE first, then reload the preview to see a change.'))
+  const pane = el('div', { class: 'preview-pane', style: 'display:none' })
+  const previewBtns = el('div', { class: 'station-actions' })
+  const openBtn = el('button', { class: 'small' }, 'show live receiver')
+  openBtn.addEventListener('click', () => {
+    if (pane.style.display === 'none') {
+      pane.innerHTML = ''
+      pane.appendChild(el('iframe', { src: `/?station=${st.id}&t=${Date.now()}`, allow: 'autoplay; microphone' }))
+      pane.style.display = 'block'
+      openBtn.textContent = 'hide live receiver'
+    } else { pane.innerHTML = ''; pane.style.display = 'none'; openBtn.textContent = 'show live receiver' }
+  })
+  previewBtns.appendChild(openBtn)
+  const reloadBtn = el('button', { class: 'small' }, 'reload preview')
+  reloadBtn.addEventListener('click', () => {
+    if (pane.style.display === 'none') return
+    pane.innerHTML = ''
+    pane.appendChild(el('iframe', { src: `/?station=${st.id}&t=${Date.now()}`, allow: 'autoplay; microphone' }))
+  })
+  previewBtns.appendChild(reloadBtn)
+  previewBtns.appendChild(el('button', { class: 'small', onclick: () => window.open(`/?station=${st.id}`, '_blank') }, 'open in a tab ↗'))
+  wrap.appendChild(previewBtns)
+  wrap.appendChild(pane)
+
+  wrap.appendChild(renderIdentityActions(st))
+  return wrap
+}
+
+function fieldShell(label, control, hintEl) {
+  const f = el('div', { class: 'fld' })
+  const lab = el('label', {}, el('span', {}, label))
+  if (hintEl) lab.appendChild(hintEl)
+  f.appendChild(lab)
+  f.appendChild(control)
+  return f
+}
+
+function textField(st, path, label, set) {
+  const input = el('input', { type: 'text' })
+  input.value = fieldValue(st, path) ?? ''
+  input.addEventListener('input', () => set(path, input.value))
+  return fieldShell(label, input)
+}
+
+function taglineField(st, set) {
+  const max = boot.limits.TAGLINE_MAX
+  const hint = el('span', { class: 'hint' })
+  const input = el('input', { type: 'text' })
+  input.value = fieldValue(st, 'tagline') ?? ''
+  const paint = () => {
+    const n = input.value.length
+    hint.textContent = `${n}/${max}`
+    hint.className = 'hint' + (n > max ? ' over' : '')
+    input.className = n > max ? 'bad' : ''
+  }
+  input.addEventListener('input', () => { set('tagline', input.value); paint() })
+  paint()
+  // TAGLINE_MAX comes from the server, which reads it from
+  // tools/lint-roster.js -- the same constant lint enforces and
+  // tests/program.test.mjs asserts against the guide's LANE column. Nothing
+  // here re-states the number.
+  return fieldShell('tagline', input, hint)
+}
+
+function glyphField(st, set) {
+  const hint = el('span', { class: 'hint' })
+  const input = el('input', { type: 'text', maxlength: '2' })
+  input.value = fieldValue(st, 'glyph') ?? ''
+  const glyphs = new Set(boot.glyphs)
+  const paint = () => {
+    const v = input.value
+    if (!v) { hint.textContent = st.secret ? 'not drawn for secret stations' : 'required'; hint.className = 'hint'; input.className = ''; return }
+    const cp = v.codePointAt(0)
+    const ok = glyphs.has(cp)
+    // The font check that lint-roster.js does, done per keystroke: a glyph
+    // missing from ter-u16n.bdf renders as nothing on the dial, which is
+    // invisible until someone tunes past that station.
+    hint.textContent = `U+${cp.toString(16).toUpperCase()} ${ok ? 'in font' : 'NOT IN ter-u16n.bdf'}`
+    hint.className = 'hint' + (ok ? '' : ' over')
+    input.className = ok ? '' : 'bad'
+  }
+  input.addEventListener('input', () => { set('glyph', input.value); paint() })
+  paint()
+  return fieldShell('dial glyph', input, hint)
+}
+
+function selectField(st, path, label, options, set) {
+  const sel = el('select', {})
+  const cur = fieldValue(st, path)
+  for (const o of options) sel.appendChild(el('option', { value: o, ...(o === cur ? { selected: 'selected' } : {}) }, o))
+  sel.addEventListener('change', () => set(path, sel.value))
+  return fieldShell(label, sel)
+}
+
+function numField(st, path, label, set, min, max, step) {
+  const input = el('input', { type: 'number', min, max, step, class: 'num', style: 'width:110px' })
+  input.value = fieldValue(st, path) ?? ''
+  input.addEventListener('input', () => {
+    const v = parseFloat(input.value)
+    if (Number.isFinite(v)) set(path, v)
+  })
+  return fieldShell(label, input)
+}
+
+/** A slider + a number box for one CRT/meter parameter, plus a clear button
+ *  that REMOVES the override rather than zeroing it -- those are different
+ *  things, and only the first makes the station fall back to SCREEN. */
+function rangeField(st, path, label, set, min, max, step, fallback) {
+  const cur = fieldValue(st, path)
+  const has = cur !== undefined
+  const hint = el('span', { class: 'hint' }, has ? '' : (fallback !== undefined ? `default ${fallback}` : 'unset'))
+  const row = el('div', { class: 'row' })
+  const range = el('input', { type: 'range', min, max, step })
+  const num = el('input', { type: 'number', min, max, step, class: 'num' })
+  const val = has ? cur : (fallback !== undefined ? fallback : min)
+  range.value = val; num.value = has ? cur : ''
+  const push = (v) => {
+    set(path, v)
+    hint.textContent = ''
+    updateIdentButtons(st)
+  }
+  range.addEventListener('input', () => { num.value = range.value; push(parseFloat(range.value)) })
+  num.addEventListener('input', () => {
+    const v = parseFloat(num.value)
+    if (Number.isFinite(v)) { range.value = v; push(v) }
+  })
+  const clear = el('button', { class: 'small', title: 'remove this override' }, '×')
+  clear.addEventListener('click', () => {
+    num.value = ''
+    range.value = fallback !== undefined ? fallback : min
+    set(path, null)              // null == remove the field entirely
+    hint.textContent = fallback !== undefined ? `default ${fallback}` : 'unset'
+  })
+  row.appendChild(range); row.appendChild(num); row.appendChild(clear)
+  return fieldShell(label, row, hint)
+}
+
+// ---- ident tone editor ----
+// Mirrors audio/sfx.js playIdent(): triangle oscillator, 0.02/0.16 ramp,
+// 0.18 stop, 0.11 spacing, all scaled by tempo. Kept in this shape so what
+// you hear here is what the receiver plays on lock -- if playIdent's
+// envelope ever changes, this is the thing to change with it.
+let audioCtx = null
+function playIdentPreview(freqs, tempo) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)()
+    if (audioCtx.state === 'suspended') audioCtx.resume()
+    let t = audioCtx.currentTime
+    for (const f of freqs) {
+      const osc = audioCtx.createOscillator()
+      const gain = audioCtx.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(f, t)
+      gain.gain.setValueAtTime(0.001, t)
+      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.02 * tempo)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16 * tempo)
+      osc.connect(gain).connect(audioCtx.destination)
+      osc.start(t)
+      osc.stop(t + 0.18 * tempo)
+      t += 0.11 * tempo
+    }
+  } catch (e) { /* no audio available */ }
+}
+
+function renderIdentEditor(st, set) {
+  const wrap = el('div', {})
+  const row = el('div', { class: 'tone-row' })
+  const tones = [...(fieldValue(st, 'ident') || [440, 440, 440, 440])]
+  let tempo = fieldValue(st, 'identTempo') ?? 1
+
+  const push = () => set('ident', tones.map(n => Math.round(n * 10) / 10))
+  tones.forEach((f, i) => {
+    const cell = el('div', { class: 'tone' })
+    const hz = el('input', { type: 'number', class: 'hz', min: '80', max: '2000', step: '0.1' })
+    const slider = el('input', { type: 'range', min: '80', max: '1200', step: '0.1' })
+    hz.value = f; slider.value = f
+    const apply = (v) => { tones[i] = v; hz.value = v; slider.value = v; push() }
+    slider.addEventListener('input', () => apply(parseFloat(slider.value)))
+    hz.addEventListener('input', () => { const v = parseFloat(hz.value); if (Number.isFinite(v)) apply(v) })
+    slider.addEventListener('change', () => playIdentPreview([tones[i]], tempo))
+    cell.appendChild(slider); cell.appendChild(hz)
+    cell.appendChild(el('span', { class: 'hint' }, `tone ${i + 1}`))
+    row.appendChild(cell)
+  })
+
+  const right = el('div', { class: 'fld', style: 'min-width:180px' })
+  const tempoInput = el('input', { type: 'number', min: '0.4', max: '2.5', step: '0.05', class: 'num' })
+  tempoInput.value = tempo
+  tempoInput.addEventListener('input', () => {
+    const v = parseFloat(tempoInput.value)
+    if (Number.isFinite(v)) { tempo = v; set('identTempo', v) }
+  })
+  right.appendChild(el('label', {}, el('span', {}, 'identTempo')))
+  right.appendChild(tempoInput)
+  const play = el('button', { class: 'primary', style: 'margin-top:8px' }, '▶ play ident')
+  play.addEventListener('click', () => playIdentPreview(tones, tempo))
+  right.appendChild(play)
+  row.appendChild(right)
+
+  wrap.appendChild(row)
+  // lint-roster.js requires exactly 4 tones; the editor has no add/remove
+  // control on purpose, so this cannot be the thing that breaks lint.
+  wrap.appendChild(el('div', { class: 'save-msg' }, `${boot.limits.IDENT_TONES} tones exactly — lint enforces it.`))
+  return wrap
+}
+
+function updateIdentButtons(st) {
+  const save = document.getElementById('ident-save-' + st.id)
+  const revert = document.getElementById('ident-revert-' + st.id)
+  const flag = document.getElementById('ident-flag-' + st.id)
+  const n = Object.keys(identOf(st)).length
+  if (save) { save.disabled = !n; save.className = n ? 'primary' : '' }
+  if (revert) revert.style.display = n ? '' : 'none'
+  if (flag) flag.textContent = n ? `${n} unsaved field(s): ${Object.keys(identOf(st)).join(', ')}` : ''
+}
+
+function renderIdentityActions(st) {
+  const wrap = el('div', { class: 'station-actions' })
+  const save = el('button', { id: 'ident-save-' + st.id }, 'save identity to stations.js')
+  save.disabled = !identDirty(st)
+  if (identDirty(st)) save.className = 'primary'
+  save.addEventListener('click', () => saveIdentity(st))
+  wrap.appendChild(save)
+  const diffBox = el('div', { style: 'width:100%' })
+  const preview = el('button', { class: 'small' }, 'preview change')
+  preview.addEventListener('click', () => {
+    try {
+      let next = programText
+      for (const [path, value] of Object.entries(identOf(st))) next = patchStationField(next, st.id, path, value)
+      showDiff(st, diffBox, next)
+    } catch (e) {
+      diffBox.innerHTML = ''
+      diffBox.appendChild(el('div', { class: 'save-msg', style: 'color:var(--red)' }, String(e.message ?? e)))
+    }
+  })
+  wrap.appendChild(preview)
+  const revert = el('button', { class: 'small', id: 'ident-revert-' + st.id, style: identDirty(st) ? '' : 'display:none' }, 'revert')
+  revert.addEventListener('click', () => { delete identEdits[st.id]; rerenderStation(st) })
+  wrap.appendChild(revert)
+  wrap.appendChild(el('span', { class: 'dirty-flag', id: 'ident-flag-' + st.id }))
+  wrap.appendChild(el('span', { class: 'save-msg', id: 'imsg-' + st.id }))
+  wrap.appendChild(diffBox)
+  updateIdentButtons(st)
+  return wrap
+}
+
+/** Line diff between the current stations.js and what a patch would make
+ *  of it. Deliberately shows CONTEXT-FREE changed lines only: the claim
+ *  being checked is "nothing else moved", and a diff that lists three lines
+ *  when you changed one field is the tell that something is wrong. */
+function diffLines(before, after) {
+  const A = before.split('\n'), B = after.split('\n')
+  const out = []
+  // Common prefix / suffix is enough for these patches -- they are a single
+  // contiguous edit by construction.
+  let i = 0
+  while (i < A.length && i < B.length && A[i] === B[i]) i++
+  let j = 0
+  while (j < A.length - i && j < B.length - i && A[A.length - 1 - j] === B[B.length - 1 - j]) j++
+  for (let k = i; k < A.length - j; k++) out.push(['-', k + 1, A[k]])
+  for (let k = i; k < B.length - j; k++) out.push(['+', k + 1, B[k]])
+  return out
+}
+
+function showDiff(st, container, next) {
+  container.innerHTML = ''
+  if (!programText) {
+    container.appendChild(el('div', { class: 'save-msg' }, 'source not loaded — cannot preview'))
+    return
+  }
+  const lines = diffLines(programText, next)
+  if (!lines.length) {
+    container.appendChild(el('div', { class: 'save-msg' }, 'no change'))
+    return
+  }
+  const box = el('div', { class: 'console' })
+  box.appendChild(el('div', { class: 'l-step' },
+    `${lines.length} line(s) of stations.js change — everything else is byte-identical`))
+  for (const [sign, n, text] of lines) {
+    box.appendChild(el('div', { class: sign === '-' ? 'l-err' : 'l-ok' }, `${sign} ${n}  ${text}`))
+  }
+  container.appendChild(box)
+}
+
+async function saveIdentity(st) {
+  const msg = document.getElementById('imsg-' + st.id)
+  const fields = identOf(st)
+  if (msg) { msg.textContent = 'saving…'; msg.style.color = 'var(--ink-dim)' }
+  try {
+    const res = await api('save-identity', { stationId: st.id, fields })
+    delete identEdits[st.id]
+    await refreshAll()
+    document.getElementById('panel-' + st.id)?.classList.add('open')
+    const g = document.getElementById('global-msg')
+    g.textContent = res.unchanged
+      ? `${st.callsign}: nothing to change.`
+      : `saved ${res.changed} field(s) on ${st.callsign} — only those values moved in stations.js; the comments around them are untouched.`
+    g.style.color = 'var(--green)'
+  } catch (e) {
+    if (msg) { msg.textContent = 'save failed: ' + (e.message ?? e); msg.style.color = 'var(--red)' }
+  }
+}
+
+// =====================================================================
+// global actions
+// =====================================================================
+async function refreshAll() {
+  boot = await api('state')
+  roster = boot.roster
+  pendingData = boot.pending
+  programText = (await api('source').catch(() => null))?.text || programText
   render()
-  g.textContent = failures.length
-    ? `saved ${ok}/${dirtyIds.length} — failed: ${failures.join('; ')}`
-    : `saved ${ok} station(s) to stations.js — stations.md regenerated. Run through signal-ship (QA, commit, push) when ready.`
-  g.style.color = failures.length ? 'var(--red)' : 'var(--green)'
 }
-
-document.getElementById('btn-save-all').addEventListener('click', saveAllChanged)
 
 document.getElementById('btn-refresh').addEventListener('click', async () => {
-  if (Object.keys(edits).length && !confirm('Discard unsaved edits and reload from disk?')) return
+  if ((Object.keys(edits).length || Object.keys(identEdits).length)
+    && !confirm('Discard unsaved edits and reload from disk?')) return
   for (const k of Object.keys(edits)) delete edits[k]
-  programText = await getFileText('stations.js')
-  roster = buildRosterPayload(programText)
-  await loadPendingQueue()
-  render()
+  for (const k of Object.keys(identEdits)) delete identEdits[k]
+  await refreshAll()
+})
+
+document.getElementById('btn-save-all').addEventListener('click', async () => {
+  const g = document.getElementById('global-msg')
+  const trackIds = Object.keys(edits)
+  const identIds = Object.keys(identEdits)
+  if (!trackIds.length && !identIds.length) { g.textContent = 'nothing unsaved'; return }
+  const failures = []
+  let ok = 0
+  for (const id of trackIds) {
+    try { await api('save-tracks', { stationId: id, tracks: edits[id] }); delete edits[id]; ok++ }
+    catch (e) { failures.push(`${callsignFor(id)} tracks: ${e.message ?? e}`) }
+  }
+  for (const id of identIds) {
+    try { await api('save-identity', { stationId: id, fields: identEdits[id] }); delete identEdits[id]; ok++ }
+    catch (e) { failures.push(`${callsignFor(id)} identity: ${e.message ?? e}`) }
+  }
+  await refreshAll()
+  g.textContent = failures.length ? `saved ${ok}, failed: ${failures.join('; ')}` : `saved ${ok} change set(s). Run preflight, then SHIP.`
+  g.style.color = failures.length ? 'var(--red)' : 'var(--green)'
 })
 
 document.getElementById('btn-check-all').addEventListener('click', async () => {
   const g = document.getElementById('global-msg')
-  const all = [...roster.stations, ...roster.secretStations]
   let totalBad = 0, totalChecked = 0
-  for (const st of all) {
+  for (const st of allStations()) {
     const ids = tracksFor(st).map(t => t.youtubeId)
     g.textContent = `checking ${st.callsign}… (${totalChecked}/${roster.totals.trackCount} so far)`
     const results = await mapLimit(ids, 6, checkOembed)
@@ -1025,6 +1450,8 @@ document.getElementById('btn-check-all').addEventListener('click', async () => {
   g.style.color = totalBad ? 'var(--red)' : 'var(--green)'
   renderStations()
 })
+
+connect()
 </script>
 </body>
 </html>

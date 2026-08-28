@@ -16,6 +16,7 @@ No build step, no dependencies. `package.json` exists only to mark the repo
 to name these scripts:
 
 ```bash
+node tools/admin-server.mjs         # npm run admin — the admin backend + the app, port 8080
 python3 tools/dev-server.py 8000    # dev server (no-store headers); open http://localhost:8000
 node --test tests/*.test.mjs        # npm test — headless suite, ~2s, no network
 node tools/lint-roster.js           # npm run lint — offline roster rules
@@ -35,10 +36,86 @@ node tools/dead-feedback.mjs        # npm run deadfeedback — input-feedback sw
 (always fresh, `?t=`) and imports every app module as `?v=<stamp>`; without a
 bump, GitHub Pages' 10-minute cache can keep a visitor on the previous build.
 
-`tools/network.html` is a roster-editing dashboard — open the file directly in
-Chrome, grant it the repo directory (File System Access API), and it rewrites
-`stations.js`'s `tracks:` blocks in place. Saving through it **strips inline
-comments** from the rewritten `tracks` array.
+## The admin backend
+
+`node tools/admin-server.mjs` (`npm run admin`) serves the app AND the
+network-ops dashboard at `http://127.0.0.1:8080/admin`. It sends the same
+`Cache-Control: no-store` headers `tools/dev-server.py` does, so for an admin
+session it replaces that server rather than running beside it. Zero
+dependencies; binds loopback, checks the `Host` header, and requires an
+`X-Signal-Admin` header on every mutating route — which a cross-origin page
+cannot send without a CORS preflight this server never answers. That last
+guard is not decorative: this process can run `git push`.
+
+**This box is normally worked on over SSH, where `127.0.0.1:8080` names the
+laptop, not this machine** — which is exactly how the first live check of the
+dashboard failed, with a browser error page against a server `curl` could
+reach fine. Loopback is still the default, because `tools/dev-server.py`
+binding every interface is a different risk from this one doing it: that
+serves static files, this commits and pushes. Two ways across:
+
+- **Tunnel** (nothing exposed): `ssh -N -L 8080:127.0.0.1:8080 <user>@<box>`,
+  then open `http://127.0.0.1:8080/admin` on the laptop. In a live session,
+  `~C` then `-L 8080:127.0.0.1:8080`. The banner prints this command, filled
+  in with the real port and address, whenever `SSH_CONNECTION` is set.
+- **`--host=<addr>`** (`npm run admin -- --host=100.x.y.z`) binds an
+  interface the other machine can see; a Tailscale address is the defensible
+  one, since that is an authenticated mesh rather than the open LAN. It
+  prints a warning saying what it just allowed, and there is no password.
+
+Either way the `Host` allowlist stays on: every address this machine actually
+has, plus the loopback names, and nothing else. That still stops DNS
+rebinding, which needs the browser to send `Host: evil.com` — a hostname an
+attacker controls is not in the set however it resolves.
+
+`tools/network.html` was serverless until 2026-08-27, reading and writing
+`stations.js` through Chrome's File System Access API with the roster parser
+copied inline. **Opening the file directly no longer works** — a `file://`
+page cannot import a sibling module, and re-inlining the parser is the exact
+duplication that broke this dashboard once before. Its connect screen says
+so and prints the command.
+
+What the served version does that the file could not:
+
+- **Run the Node toolchain** and stream it back: lint, the suite, verify,
+  stamp, stations.md, the dead-feedback sweep, screenshots. PREFLIGHT chains
+  lint → suite (roster verify is opt-in — it is the slow, networked one).
+- **Edit a station's IDENTITY** — `crt`, `meter`, `ident`, `glyph`, `visual`,
+  `gain`, `static`, `freq`, tagline, desc. Nothing but a hand-edit of
+  `stations.js` could touch any of these before. Ident tones play through the
+  same chain `playIdent()` uses; the tagline counter and the glyph-in-font
+  check are the rules `lint-roster.js` already enforces, read from the server
+  rather than restated here.
+- **SHIP**: stamp → stations.md → lint → suite → add → commit → push,
+  stopping at the first failure with nothing committed. The stamp step is the
+  one most easily forgotten by hand, which is the whole argument for it.
+- **Audition in the browser**, wrapping `tools/audition.js --json`.
+- **A live receiver** in an iframe beside the sliders, via `?station=<id>`.
+
+`tools/lib/roster.mjs` is the stations.js parse/patch layer, imported by BOTH
+the server and the page — which is why it has no `node:` imports at all. Add
+one and the dashboard stops loading. Two patchers:
+
+- `patchStationTracks()` rewrites a whole `tracks: [...]` block and **strips
+  inline comments** from it, as it always has. That block is generated data.
+- `patchStationField()` rewrites ONE field's value and leaves every other
+  byte alone, comments included. This is what makes the identity editor safe
+  to have at all: those fields are wrapped in the "Nth pass" notes that are
+  this repo's design record, and a reformat-the-object patcher would eat them
+  the first time anyone dragged a slider. It infers numeric and quote style
+  from the literal it replaces — `gain: 1.0` must not come back as `gain: 1`,
+  and a single-quoted freqNote must not come back double-quoted.
+
+`tests/roster-lib.test.mjs` guards that with an **idempotence sweep**:
+rewriting every field, and every nested leaf, of every station with the value
+it already has must give the file back byte for byte. That is what caught
+both style bugs above. It did *not* catch a trailing-space bug on the last
+key of an inline object (`bloomAmt: 2.0}`), because the sweep rewrote `crt`
+as a whole object where the space cancels out on both sides — a headless load
+of the dashboard caught that one, in the diff preview, and nested leaves are
+in the sweep now. The dashboard's "preview change" button runs these same
+patchers client-side and shows the diff before you save, which is the only
+honest proof that a save touches only what it claims to.
 
 ## Architecture
 
@@ -245,16 +322,26 @@ exception and the `F13` canary that catches a desynchronised run.
   keys that exist, unique IDs, frequency spacing, and taglines that fit the
   guide index line (`≤ 52 − callsign.length`; secret stations are exempt from
   that one and from the glyph rule, since neither is ever drawn).
-- **Rejections live in two files and neither reads the other.**
-  `tools/station-profiles.json`'s `rejections` is the one that matters when
-  you are picking tracks — `audition.js` prints it back at you as "x rejected
-  before". It is hand-maintained, so a curation pass that drops a track has to
-  write it there or the reason is lost; a comment in `stations.js` alone will
-  not surface it. `tools/pending-tracks.json`'s `rejected` is written and read
-  only by `tools/network.html`, for proposals declined out of the queue. Same
-  file's `constraints` holds the qualitative rules; read both before
-  proposing.
+- **Rejections live in two files, and the dashboard is now the single
+  writer for both.** `tools/station-profiles.json`'s `rejections` is the one
+  that matters when you are picking tracks — `audition.js` prints it back at
+  you as "x rejected before". `tools/pending-tracks.json`'s `rejected` is the
+  queue's own record of proposals declined out of it. Same file's
+  `constraints` holds the qualitative rules; read both before proposing.
+
+  Until 2026-08-27 neither file read the other and both were hand-maintained,
+  so a curation pass that dropped a track had to remember to write the reason
+  into the profile or lose it — a comment in `stations.js` alone does not
+  surface anywhere. Rejecting through the dashboard (`POST /api/reject`) now
+  writes **both** in one action and **requires a reason**; it refuses without
+  one, because a rejection with no reason teaches nothing and the next pass
+  re-proposes the track. Rejecting by hand still needs both files edited.
+  If a station has no entry in `station-profiles.json`, the dashboard says so
+  rather than silently writing only one of the two.
 - **`tools/audition.js` is the candidate-side counterpart to `verify-roster.js`**
+  (`--json` prints the same rows as data on stdout with every human line
+  routed to stderr — one code path, so the dashboard and the terminal cannot
+  disagree about a flag; it is how the admin backend runs this tool)
   — that one checks tracks already on the roster, this one checks tracks that
   aren't yet. `--search="..."` (repeatable) ranks candidates; re-run with the
   IDs you picked to write `tools/audition.html` (gitignored), which embeds each

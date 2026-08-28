@@ -5,6 +5,7 @@
   "description": "No dependencies and no build step -- this file only exists so Node treats the repo's .js files (stations.js, tools/, tests/) as ES modules.",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
+    "admin": "node tools/admin-server.mjs",
     "deadfeedback": "node tools/dead-feedback.mjs",
     "stamp": "node tools/stamp.js",
     "stations": "node tools/stations-to-md.js",

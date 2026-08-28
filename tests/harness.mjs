@@ -42,7 +42,7 @@ const FAKE_DURATION = 214
 let bootCount = 0
 let font = null
 
-export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null } = {}) {
+export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
   const store = new Map()
@@ -105,6 +105,13 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
   globalThis.SIGNAL_YT_READY = false
   globalThis.SIGNAL_YT_QUEUE = []
   globalThis.SIGNAL_BUILD = tag
+  // `station` fakes the ?station=<id> query the identity editor's live
+  // preview boots the receiver with (tools/network.html). Node has no
+  // location at all, so program.js's read of it is wrapped in a try/catch
+  // and every other test in this file exercises the no-location path -- which
+  // means without this option the param would have no coverage whatsoever.
+  if (station) globalThis.location = { search: `?station=${station}` }
+  else delete globalThis.location
   // 2026-08-27 -- `lyrics` answers the ONE request this app makes that a
   // test might want to succeed: the LRCLIB lookup behind the visualizer's
   // [L] view. Pass true for the canned track below, a raw LRC string for
@@ -375,6 +382,7 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
     },
     shutdown() {
       timers.clear()
+      delete globalThis.location
       delete globalThis.YT
       globalThis.SIGNAL_YT_READY = false
       Object.assign(globalThis, real)
