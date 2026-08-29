@@ -217,7 +217,7 @@ export const STATIONS = [
       realTrack('28kAclQZLTE', "Pretend We're Dead", 'L7'),
       realTrack('q-KE9lvU810', 'Cherub Rock', 'The Smashing Pumpkins'),
       realTrack('PjsMnvqL7eY', 'Tomorrow', 'Silverchair'),
-      realTrack('JNZezhUkOSk', 'Jeremy', 'Pearl Jam'),
+      realTrack('bQtPzo-7AHs', 'Jeremy', 'Pearl Jam'),
       realTrack('V5UOC0C0x8Q', 'Plush', 'Stone Temple Pilots'),
       realTrack('TAqZb52sgpU', 'Man in the Box', 'Alice In Chains'),
       realTrack('T0_zzCLLRvE', 'Spoonman', 'Soundgarden'),
@@ -237,7 +237,7 @@ export const STATIONS = [
       realTrack('ht672-wYelc', 'Vasoline', 'Stone Temple Pilots'),
       realTrack('fxvkI9MTQw4', 'Cannonball', 'The Breeders'),
       realTrack('SDTSUwIZdMk', 'Kool Thing', 'Sonic Youth'),
-      realTrack('jC9AUR-iTo0', 'Seether', 'Veruca Salt'),
+      realTrack('4YrK1Rq7AKk', 'Seether', 'Veruca Salt'),
       realTrack('o9mJ82x_l-E', 'Hey Man, Nice Shot', 'Filter'),
       realTrack('jBfygUiS50g', 'Unsung', 'Helmet'),
       realTrack('3RMmIJn_4FA', 'Honey Bucket', 'Melvins'),
@@ -247,6 +247,16 @@ export const STATIONS = [
       realTrack('xsJ4O-nSveg', 'Lightning Crashes', 'Live'),
       realTrack('sNh-iw7gsuI', 'Outshined', 'Soundgarden'),
       realTrack('-SRxWz3CDvg', 'This Gift', 'Mudhoney'),
+      // 2026-08-29 -- added at the curator's request. RATM is the first
+      // artist here from outside the grunge/alt-rock lane proper: 1992 and
+      // squarely of-era, guitars and raw vocals and angst, but rap-metal
+      // rather than Seattle or its ripple. Noted because this station has
+      // already turned a candidate away on lane alone (Third Eye Blind,
+      // issue #27) and the next pass should know this one was a deliberate
+      // widening rather than a slip. Official Audio, not the Official
+      // Video: the set plays audio-only, and a video's own baked-in
+      // dialogue has cost a track before.
+      realTrack('hVck6DkOi38', 'Bombtrack', 'Rage Against the Machine'),
     ] },
   // RELIC SIGNAL (classical, 219.8) retired 2026-08-21 (28th pass, per
   // the station-naming pass) -- its classical lane overlapped with
