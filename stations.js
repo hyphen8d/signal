@@ -1225,6 +1225,45 @@ export const STATIONS = [
       realTrack('VHqc2Yqwwu4', "Born In '94", 'Unglued'),
       realTrack('81bG15gsl70', 'Take California', 'Propellerheads'),
       realTrack('OTvB4XMsg1U', "Y'all Ready For Dis", 'Y U QT'),
+      // 2026-08-29 -- twelve to take CIPHER to 50, on the curator's read
+      // that this lane is wider than it looks. Nine fill gaps by artists
+      // already accepted here, three are new (Cirrus, Lo Fidelity
+      // Allstars, Paul Oakenfold), taking the station from 28 artists to
+      // 31.
+      //
+      // The rejection log did most of the picking. It is almost entirely
+      // taste rather than mechanics, and it is specific: no extended mixes
+      // (Chime 12"), nothing bright or poppy (Push Up), nothing mellow
+      // (Fallen), audio-only where a video bakes in dialogue (Superstylin',
+      // Red Alert, and the Da Funk precedent). So every pick here is a
+      // single/album cut, and the Hey Boy Hey Girl EXTENDED version was
+      // passed over for the 3:39 single on exactly that record.
+      //
+      // Two things wanted and not taken. Photek is an accepted artist with
+      // no track, and Ni Ten Ichi Ryu has no official or Topic upload at
+      // all -- only fan channels, which is not provenance this roster
+      // accepts. Juno Reactor's Mona Lisa Overdrive is the Matrix cut this
+      // station is built around and it is unusable both ways: the 4:45
+      // licensed version is NARROW-LICENCE:18, and the one clean upload is
+      // the 10:09 album version, too long to sit in rotation.
+      //
+      // The Prodigy already anchors this station with four. Poison
+      // auditioned clean (ah-JquUf5GA, 123 countries, 6:42 album cut) and
+      // was left out anyway -- a sixth would be a fifth of the station from
+      // one artist. It is the first thing to reach for if one of these is
+      // pulled.
+      realTrack('tpKCqp9CALQ', 'Hey Boy Hey Girl', 'The Chemical Brothers'),
+      realTrack('0u3qQtvU5SQ', 'Setting Sun', 'The Chemical Brothers'),
+      realTrack('Wo7XxlXU3XQ', 'Breathe', 'The Prodigy'),
+      realTrack('A12-KN5UijA', 'Name of the Game', 'The Crystal Method'),
+      realTrack('qEYeT-f1Fdo', 'Cowgirl', 'Underworld'),
+      realTrack('GjlklxY-fWI', 'Inertia Creeps', 'Massive Attack'),
+      realTrack('BEqHME6XUi8', 'Six Days', 'DJ Shadow'),
+      realTrack('tP8tpAs9qhI', 'Satan', 'Orbital'),
+      realTrack('cFffoHmn8XA', 'Zion', 'Fluke'),
+      realTrack('Qe9vdnNQAhc', 'Back on a Mission', 'Cirrus'),
+      realTrack('B99nd2iKGOw', 'Battleflag', 'Lo Fidelity Allstars'),
+      realTrack('MSv3Oez4O-4', 'Ready Steady Go', 'Paul Oakenfold'),
     ] },
 ]
 

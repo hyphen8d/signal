@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 335 tracks total.
+Generated from stations.js. 9 stations, 347 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -377,7 +377,7 @@ Tracks (43):
 
 Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
 
-Tracks (38):
+Tracks (50):
 
 1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
 2. **Omen** -- The Prodigy  ([youtu.be/xMVTKOoy1uk](https://youtu.be/xMVTKOoy1uk))
@@ -417,3 +417,15 @@ Tracks (38):
 36. **Born In '94** -- Unglued  ([youtu.be/VHqc2Yqwwu4](https://youtu.be/VHqc2Yqwwu4))
 37. **Take California** -- Propellerheads  ([youtu.be/81bG15gsl70](https://youtu.be/81bG15gsl70))
 38. **Y'all Ready For Dis** -- Y U QT  ([youtu.be/OTvB4XMsg1U](https://youtu.be/OTvB4XMsg1U))
+39. **Hey Boy Hey Girl** -- The Chemical Brothers  ([youtu.be/tpKCqp9CALQ](https://youtu.be/tpKCqp9CALQ))
+40. **Setting Sun** -- The Chemical Brothers  ([youtu.be/0u3qQtvU5SQ](https://youtu.be/0u3qQtvU5SQ))
+41. **Breathe** -- The Prodigy  ([youtu.be/Wo7XxlXU3XQ](https://youtu.be/Wo7XxlXU3XQ))
+42. **Name of the Game** -- The Crystal Method  ([youtu.be/A12-KN5UijA](https://youtu.be/A12-KN5UijA))
+43. **Cowgirl** -- Underworld  ([youtu.be/qEYeT-f1Fdo](https://youtu.be/qEYeT-f1Fdo))
+44. **Inertia Creeps** -- Massive Attack  ([youtu.be/GjlklxY-fWI](https://youtu.be/GjlklxY-fWI))
+45. **Six Days** -- DJ Shadow  ([youtu.be/BEqHME6XUi8](https://youtu.be/BEqHME6XUi8))
+46. **Satan** -- Orbital  ([youtu.be/tP8tpAs9qhI](https://youtu.be/tP8tpAs9qhI))
+47. **Zion** -- Fluke  ([youtu.be/cFffoHmn8XA](https://youtu.be/cFffoHmn8XA))
+48. **Back on a Mission** -- Cirrus  ([youtu.be/Qe9vdnNQAhc](https://youtu.be/Qe9vdnNQAhc))
+49. **Battleflag** -- Lo Fidelity Allstars  ([youtu.be/B99nd2iKGOw](https://youtu.be/B99nd2iKGOw))
+50. **Ready Steady Go** -- Paul Oakenfold  ([youtu.be/MSv3Oez4O-4](https://youtu.be/MSv3Oez4O-4))
