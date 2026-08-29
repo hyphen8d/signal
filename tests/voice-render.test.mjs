@@ -53,13 +53,18 @@ test('the station ID script matches the line that produced the real clip', () =>
 test('frequencies are spoken the way a presenter reads a dial', () => {
   assert.equal(spokenFrequency(133.7), 'one thirty-three point seven')
   assert.equal(spokenFrequency(199.7), 'one ninety-nine point seven')
-  assert.equal(spokenFrequency(273.0), 'two seventy-three point zero')
+  // A round frequency drops the decimal: a station says "eight oh eight",
+  // not "eight oh eight point zero". Caught by a test render running 0.66s
+  // longer than the clip it was reproducing.
+  assert.equal(spokenFrequency(273.0), 'two seventy-three')
   // HACKBACK. The remainder is a single digit, which the first version read
   // as "eight eight" -- the only station on the dial that reaches this branch,
   // and the reason the generator was run across the whole roster.
-  assert.equal(spokenFrequency(808.0), 'eight oh eight point zero')
+  assert.equal(spokenFrequency(808.0), 'eight oh eight')
   // A round hundred, which nothing on the dial currently is.
-  assert.equal(spokenFrequency(500.0), 'five hundred point zero')
+  assert.equal(spokenFrequency(500.0), 'five hundred')
+  // ...and a real decimal still gets said.
+  assert.equal(spokenFrequency(567.8), 'five sixty-seven point eight')
 })
 
 test('every station on the dial produces a sayable line', () => {
@@ -69,6 +74,10 @@ test('every station on the dial produces a sayable line', () => {
   for (const f of stations) {
     const spoken = spokenFrequency(f)
     assert.doesNotMatch(spoken, /undefined|NaN/, `${f} produced "${spoken}"`)
-    assert.match(spoken, /^[a-z -]+ point [a-z]+$/, `${f} produced "${spoken}"`)
+    // "point <digit>" only where there is a digit to say.
+    const expectDecimal = Math.round((f - Math.floor(f)) * 10) !== 0
+    assert.match(spoken, expectDecimal ? /^[a-z -]+ point [a-z]+$/ : /^[a-z -]+$/,
+      `${f} produced "${spoken}"`)
+    assert.equal(/ point /.test(spoken), expectDecimal, `${f} produced "${spoken}"`)
   }
 })

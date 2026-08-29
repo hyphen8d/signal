@@ -31,7 +31,10 @@ const { DUCK_TAIL_MS } = await import(`../constants.js?v=${V}`)
 //
 // Station ID script is "<CALLSIGN>, <frequency, spoken>." -- e.g. SYNAPSE's
 // is literally "SYNAPSE, five sixty-seven point eight." Digits are spelled
-// out; the renderer says "five six seven point eight" if given 567.8.
+// out; the renderer says "five six seven point eight" if given 567.8. A
+// ROUND frequency drops the decimal: HACKBACK is "eight oh eight", not
+// "eight oh eight point zero" -- a station does not announce a trailing
+// zero. tools/lib/voice-settings.mjs generates both forms.
 //
 // Two things to check on every new clip before it goes in, both of which
 // have bitten:

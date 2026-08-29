@@ -49,8 +49,18 @@ export const PEAK_MAX_DB = -3.0
  *  reads its own frequency. */
 export const ID_SCRIPT = (callsign, spokenFreq) => `${callsign}, ${spokenFreq}.`
 
-/** 567.8 -> "five sixty-seven point eight". Only the shapes this dial
- *  actually produces: three digits, one decimal place, 100.0-900.0. */
+/** 567.8 -> "five sixty-seven point eight". 808.0 -> "eight oh eight".
+ *
+ *  A ROUND frequency drops the decimal entirely, because that is how the
+ *  existing clips read them and a station does not announce "point zero".
+ *  Confirmed by the curator 2026-08-29 after a test render exposed it: the
+ *  first version said "point zero" for every .0 station, and the rendered
+ *  HACKBACK ID ran 2.09s of speech against the existing clip's 1.43s. Same
+ *  voice, same settings, same callsign -- 0.66s can only be words. Five of
+ *  the six round-frequency clips fit the shorter script on duration alone.
+ *
+ *  Only the shapes this dial actually produces: three digits, at most one
+ *  decimal place, 100.0-900.0. */
 export function spokenFrequency(freq) {
   const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
   const TEENS = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
@@ -74,5 +84,5 @@ export function spokenFrequency(freq) {
   const head = rest === 0 ? `${ONES[hundreds]} hundred`
     : rest < 10 ? `${ONES[hundreds]} oh ${ONES[rest]}`
       : `${ONES[hundreds]} ${under100(rest)}`
-  return `${head} point ${ONES[tenth]}`
+  return tenth === 0 ? head : `${head} point ${ONES[tenth]}`
 }
