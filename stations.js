@@ -114,8 +114,6 @@ export const STATIONS = [
     // ones also feel rhythmically distinct, not just melodically. This one
     // (straight descent, dreamy) was already unique and is untouched.
     identTempo: 1.25,
-    // 25th pass: modern rock/grunge masters run loud already -- no boost.
-    gain: 1.0,
     // 41st pass -- per-station identity: gives each channel more distinct
     // identity. Everything a station had until now was
     // INFORMATIONAL -- callsign, tagline, desc, ident motif, dial position --
@@ -307,10 +305,6 @@ export const STATIONS = [
     // station, and the slowest identTempo of the set.
     ident: [392.0, 329.6, 370.0, 293.7],
     identTempo: 1.35,
-    // 25th pass: ambient/drone masters are mastered deliberately quiet
-    // (they're meant to sit low, not compete for attention) -- second-
-    // biggest boost on the roster.
-    gain: 1.5,
     // 41st pass -- see the field notes on DISTORTION FIELD above. hollow and soft; long persistence, dimmer gun, slowest meters by far
     glyph: '§',
     static: 700,
@@ -444,9 +438,6 @@ export const STATIONS = [
     // suits "synthetic hearts, borrowed neon" better anyway.
     ident: [440.0, 659.3, 554.4, 440.0],
     identTempo: 1.0,
-    // 25th pass: 80s synth-pop masters run a bit quieter than modern
-    // loudness-war masters -- small boost.
-    gain: 1.1,
     // 41st pass -- see the field notes on DISTORTION FIELD above. blocky 80s; slight glow and fringe lift
     glyph: 'Þ',
     static: 1300,
@@ -571,7 +562,6 @@ export const STATIONS = [
     // the rest of the roster to match the "slow burn" brief.
     ident: [293.7, 349.2, 415.3, 466.2],
     identTempo: 0.75,
-    gain: 1.1,
     // 60th pass -- glyph reused from MOMENTUM by instruction to keep the
     // same spot and glyph, not reassigned for theme.
     glyph: '≡',
@@ -713,9 +703,6 @@ export const STATIONS = [
     // genre itself has.
     ident: [523.3, 784.0, 659.3, 987.8],
     identTempo: 0.85,
-    // 25th pass: city pop masters (late 70s/80s Japanese) run a bit
-    // quieter than modern masters -- small boost.
-    gain: 1.1,
     // 41st pass -- see the field notes on DISTORTION FIELD above. neon; the brightest, bloomiest picture
     // 50th pass -- glyphs reassigned to associate them with the vibe of
     // each station (e.g. yen symbol for city lights). This does NOT relax
@@ -858,9 +845,6 @@ export const STATIONS = [
     // the set, for a punchier/more aggressive announce.
     ident: [587.3, 466.2, 698.5, 932.3],
     identTempo: 0.75,
-    // 25th pass: modern synthwave masters are already loud/compressed --
-    // no boost.
-    gain: 1.0,
     // 41st pass -- see the field notes on DISTORTION FIELD above. circuitry; heaviest misconvergence and mask
     // 50th pass -- glyphs reassigned to associate them with the vibe of
     // each station. This does NOT relax
@@ -989,9 +973,6 @@ export const STATIONS = [
     // any of the 8 straight up/down shapes anyway.
     ident: [392.0, 493.9, 493.9, 587.3],
     identTempo: 0.9,
-    // 25th pass: 40s/50s masters (limited-range recording, minimal
-    // compression) run quieter than modern masters -- large boost.
-    gain: 1.3,
     // 19th pass -- atomic playlist needed to be sourced from Fallout 4,
     // Fallout 76, etc. games. 5 of the original 10 tracks (Jump Jive An'
     // Wail/Louis Prima, Minnie the Moocher/Cab Calloway, Choo Choo
@@ -1137,9 +1118,6 @@ export const STATIONS = [
     // down on the beat, with a tight/punchy identTempo to match.
     ident: [220.0, 293.7, 349.2, 293.7],
     identTempo: 0.8,
-    // 25th pass: modern hip-hop masters are already loud/compressed -- no
-    // boost.
-    gain: 1.0,
     // 41st pass -- see the field notes on DISTORTION FIELD above. thicker scanlines, a touch more grain
     // 50th pass -- glyphs reassigned to associate them with the vibe of
     // each station. This does NOT relax
@@ -1288,7 +1266,6 @@ export const STATIONS = [
     identTempo: 0.9,
     // Breakbeat/electronic genre runs moderately loud, no special boost
     // needed.
-    gain: 1.0,
     // 28th pass, CORRECTED 2026-08-21: the original 30 track IDs below were
     // never actually oEmbed-verified before being committed -- every single
     // one 404'd (see the fix commit). Full oEmbed-verify pass re-run from
@@ -1548,7 +1525,6 @@ export const NIN_STATION = {
   ident: [246.9, 233.1, 220.0, 207.7],
   identTempo: 0.7,
   // 90s-2000s alt/industrial rock masters run loud already -- no boost.
-  gain: 1.0,
   secret: true,
   // 41st pass -- same per-station identity fields as the public roster (see
   // DISTORTION FIELD's field notes). No glyph: this one is never drawn on
@@ -1658,7 +1634,6 @@ export const GREEN_ROOM_STATION = {
   // The era spread is the problem: 70s rock and reggae masters sit well
   // under the modern hip-hop entries on the same rotation. A modest lift,
   // same as the other mixed-era stations (COLD WAVE, MIDNIGHT NEON).
-  gain: 1.15,
   secret: true,
   // No glyph -- never drawn on the dial, same as NIN. See its note.
   //

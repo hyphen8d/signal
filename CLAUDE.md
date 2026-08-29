@@ -108,7 +108,7 @@ What the served version does that the file could not:
   stamp, stations.md, the dead-feedback sweep, screenshots. PREFLIGHT chains
   lint → suite (roster verify is opt-in — it is the slow, networked one).
 - **Edit a station's IDENTITY** — `crt`, `meter`, `ident`, `glyph`, `visual`,
-  `gain`, `static`, `freq`, tagline, desc. Nothing but a hand-edit of
+  `static`, `freq`, tagline, desc. Nothing but a hand-edit of
   `stations.js` could touch any of these before. Ident tones play through the
   same chain `playIdent()` uses; the tagline counter and the glyph-in-font
   check are the rules `lint-roster.js` already enforces, read from the server
@@ -142,7 +142,8 @@ one and the dashboard stops loading. Two patchers:
   to have at all: those fields are wrapped in the "Nth pass" notes that are
   this repo's design record, and a reformat-the-object patcher would eat them
   the first time anyone dragged a slider. It infers numeric and quote style
-  from the literal it replaces — `gain: 1.0` must not come back as `gain: 1`,
+  from the literal it replaces — `identTempo: 1.0` must not come back as
+  `identTempo: 1`,
   and a single-quoted freqNote must not come back double-quoted.
 
 `tests/roster-lib.test.mjs` guards **both** patchers with an **idempotence
@@ -228,7 +229,7 @@ program):
   `MOBILE_LITE` is decided once at `config.js` import from `matchMedia`, so the
   grid is fixed for the page's life and mobile has parallel `mobile*` draw paths.
 - **A station is an identity object** (`stations.js`): `freq callsign tagline
-  desc freqNote ident identTempo gain glyph static crt meter idleEvent grind
+  desc freqNote ident identTempo glyph static crt meter idleEvent grind
   visual tracks`; secret stations carry `secret: true` and `forcedPhosphor`
   and are read generically — don't reintroduce id comparisons.
 - **Adding a secret station** is five edits and no new call sites, because

@@ -12,7 +12,7 @@
 // rewrite every field of every station with the value it already has, and
 // require the file back byte for byte. That is what caught the two bugs the
 // first version shipped with -- String(1.0) writing "1" over four stations'
-// `gain: 1.0`, and a quote-normalizer rewriting five freqNote lines it was
+// `identTempo: 1.0`, and a quote-normalizer rewriting five freqNote lines it was
 // not asked to touch.
 //
 // Per CLAUDE.md ("Mutate the code to check a test can fail"), the mutation
@@ -36,7 +36,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SRC = readFileSync(path.join(ROOT, 'stations.js'), 'utf8')
 
 const IDENTITY_FIELDS = [
-  'freq', 'callsign', 'tagline', 'desc', 'freqNote', 'glyph', 'static', 'gain',
+  'freq', 'callsign', 'tagline', 'desc', 'freqNote', 'glyph', 'static',
   'visual', 'identTempo', 'ident', 'crt', 'meter', 'idleEvent', 'grind',
 ]
 
@@ -125,9 +125,17 @@ test('sibling fields on a shared line are untouched', () => {
 })
 
 test('numeric and quote style are inferred from the literal being replaced', () => {
-  // gain: 1.0 must not become gain: 1
-  const g = patchStationField(SRC, 'distortion-field', 'gain', 1)
-  assert.match(g.split('\n').find(l => l.includes('gain:')), /gain: 1\.0/)
+  // identTempo: 1.0 must not become identTempo: 1. This used to be pinned on
+  // `gain: 1.0`, which was the roster's other trailing-.0 literal until the
+  // per-station gain field was removed on 2026-08-29 -- the rule it guards is
+  // unchanged, it just needed a field that still exists to guard it on.
+  // Asserted against the whole output rather than "the first line containing
+  // identTempo:", which is what this did when it was pinned on gain and was
+  // only ever correct by accident -- gain's first occurrence happened to
+  // belong to the station being patched, and identTempo's does not.
+  const g = patchStationField(SRC, 'cold-wave', 'identTempo', 1)
+  assert.ok(g.includes('identTempo: 1.0,'), 'the trailing .0 was dropped')
+  assert.ok(!g.includes('identTempo: 1,'), 'the value came back as a bare integer')
   // ident keeps its .0 tones
   const { STATIONS } = loadRosterFromText(SRC)
   const df = STATIONS.find(s => s.id === 'distortion-field')
@@ -354,10 +362,10 @@ test('MUTATION: a tracks patcher that regenerates from data loses the comments',
     'the regenerate-from-data stand-in was supposed to lose comments')
 })
 
-test('MUTATION: dropping style inference fails the gain check', () => {
+test('MUTATION: dropping style inference fails the trailing-.0 check', () => {
   // What the first version of formatValue did.
   const naive = (n) => String(n)
   assert.equal(naive(1.0), '1')
   assert.notEqual(naive(1.0), '1.0',
-    'if these were equal the gain: 1.0 regression would be untestable')
+    'if these were equal the identTempo: 1.0 regression would be untestable')
 })

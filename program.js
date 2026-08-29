@@ -1313,7 +1313,7 @@ export default {
     // 38th pass: shorter resolve than a lock's, matching the smaller VU
     // pulse a skip already gets below.
     this.showTrack(s, track, { revealMs: 150 })
-    // Re-applies volume for the new track's gain -- a skip can land on a
+    // Re-applies volume for the new track -- a skip can land on a
     // track mastered much louder/quieter than the one just playing.
     this.applyVolume()
     this.loadTrack(track)
@@ -1326,24 +1326,31 @@ export default {
     // swipe, natural track-end, dead-video auto-skip) funnels through here.
     maybePlayLinerDrop(this, this.lockedStation, track)
   },
-  // 25th pass -- addresses audio loudness varying as stations change.
-  // YouTube masters vary hugely in loudness across sources (a 1950s
-  // doo-wop recording and a modern loud/compressed synthwave master are
-  // nowhere near the same level), so switching stations could mean a real
-  // jump in perceived volume even with the slider untouched. This applies
-  // an optional multiplier on top of the user's own volume slider:
-  // `track.gain` if the current track has one, else `station.gain`, else
-  // 1 (no change). Every setVolume() call in the file should go through
-  // this rather than calling player.setVolume(this.volume) directly, so
-  // gain is never accidentally bypassed on some code path.
+  // 2026-08-29 -- the per-station `gain` multiplier is GONE, and this note is
+  // what is left of it.
   //
-  // The station-level gains set below are a first-pass, by-genre/by-era
-  // approximation (older and acoustic/orchestral masters run quieter than
-  // modern compressed ones -- a well-established mastering convention, not
-  // something measured per track here) rather than precisely measured
-  // per-track loudness, which nobody's actually done. Treat them as a
-  // starting point: bump an individual track's `gain` field if a specific
-  // song still stands out once you've heard it.
+  // From the 25th pass until now every station carried a playback multiplier
+  // (1.0 to 1.5) meant to even out the fact that a 1950s doo-wop master and a
+  // modern compressed synthwave master are nowhere near the same level. It
+  // was, by its own admission, a by-genre guess rather than a measurement --
+  // and the per-track override it offered as an escape hatch was used by
+  // exactly 0 of 477 tracks in the whole life of the feature.
+  //
+  // It also did not work at the volumes people actually use. The multiplier
+  // was applied as min(100, volume * gain), so the boost was eaten by the
+  // ceiling from about volume 67 upwards: at the default of 70 DRIFT MODE's
+  // 1.5x was already clipping, and at 100 every station came out at exactly
+  // 100 with no compensation at all. The stations meant to be lifted were
+  // precisely the ones that lost the lift as the knob went up, which is the
+  // opposite of a normaliser.
+  //
+  // Removed rather than repaired, on the call that per-station volume
+  // differences are not wanted: every station now plays at the level the
+  // listener set, and YouTube's own normalisation is left to do whatever it
+  // does. Anything that wants to scale playback (the sleep fade, and the
+  // duck that is coming for voice clips) still has to go through
+  // applyVolume() rather than calling player.setVolume() directly -- that
+  // rule was the good half of the old design and it survives.
   /** The level the set should ACTUALLY be at: the user's own volume, scaled
    *  by the sleep timer's fade. One helper rather than three call sites
    *  multiplying for themselves, for the same reason applyVolume() exists at
@@ -1357,9 +1364,7 @@ export default {
   },
   applyVolume() {
     if (!this.ready || !this.player) return
-    const ch = this.lockedStation
-    const gain = (this.currentTrack && this.currentTrack.gain) ?? (ch && ch.gain) ?? 1
-    const eff = Math.round(Math.min(100, Math.max(0, this.sleepScaledVolume() * gain)))
+    const eff = Math.round(Math.min(100, Math.max(0, this.sleepScaledVolume())))
     this.player.setVolume(eff)
   },
   adjustVolume(s, delta) {
@@ -1986,7 +1991,7 @@ export default {
     if (!primedFresh) this.armLoad()
     this.showStation(s, station)
     this.showTrack(s, track)
-    // Re-applies volume for the new station/track's gain (see
+    // Re-applies volume for the new station/track (see
     // applyVolume()) -- a station switch is exactly the moment a loudness
     // jump would otherwise show up.
     this.applyVolume()

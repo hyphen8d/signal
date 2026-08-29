@@ -399,7 +399,7 @@
 // Going server-only is what the File System Access version could not do:
 //   - run the Node toolchain (lint, the suite, verify, audition, stamp) and
 //     stream it back, instead of leaving those in a terminal
-//   - edit a station's IDENTITY (crt, meter, ident, glyph, visual, gain,
+//   - edit a station's IDENTITY (crt, meter, ident, glyph, visual,
 //     static), which nothing but a hand-edit of stations.js could touch
 //   - commit and push, with the stamp step that a deploy silently needs
 //   - work in any browser, not just Chrome
@@ -1930,7 +1930,6 @@ const FIELD_HELP = {
   desc: 'The paragraph on the guide\'s station page.',
   glyph: 'The single character drawn at this station\'s mark on the dial. Must exist in ter-u16n.bdf or it draws as nothing.',
   visual: 'Which visualizer effect [V] opens on for this station.',
-  gain: 'Playback level multiplier, to even out quiet or loud masters.',
   static: 'Centre frequency of the static hiss near this station — tuning across the band is a change in the COLOUR of the noise, not just its volume.',
   identTempo: 'Speed of the 4-tone ident. Below 1 is slower and heavier.',
   'crt.noise': 'Static grain over the whole tube.',
@@ -1978,7 +1977,6 @@ function renderIdentityTab(st) {
   grid.appendChild(textField(st, 'freqNote', 'freqNote (guide detail line)', set))
   grid.appendChild(glyphField(st, set))
   grid.appendChild(selectField(st, 'visual', 'visualizer effect', boot.visuals, set))
-  grid.appendChild(numField(st, 'gain', 'playback gain', set, 0.5, 2.5, 0.05))
   grid.appendChild(numField(st, 'static', 'static centre (Hz)', set, 200, 4000, 10))
   wrap.appendChild(grid)
 
