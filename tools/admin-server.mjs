@@ -640,7 +640,10 @@ function serveStatic(req, res, url) {
   let rel = decodeURIComponent(url.pathname.replace(/^\/+/, ''))
   if (rel === '' ) rel = 'index.html'
   if (rel === 'admin' || rel === 'admin/') rel = 'tools/network.html'
-  // Keeps the console clean; the dashboard has no icon and the 404 is noise.
+  // Keeps the console clean. The dashboard does declare an icon now (an
+  // inline SVG data URI in network.html's head, the app's favicon in the
+  // blue tint), but a browser that probes /favicon.ico anyway shouldn't
+  // put a 404 in the log for it.
   if (rel === 'favicon.ico') { res.writeHead(204, NO_STORE); return res.end() }
   const p = path.resolve(ROOT, rel)
   if (!inRepo(p) || !existsSync(p) || !readdirSafeIsFile(p)) {

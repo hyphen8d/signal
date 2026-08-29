@@ -3,17 +3,61 @@
 <head>
 <meta charset="utf-8">
 <title>SIGNAL — network ops</title>
+
+<!-- The app's favicon (index.html), retinted. Same nine elements, same
+     inline-SVG-data-URI reasoning; the only change is the tint, so the two
+     tabs are told apart by colour rather than by shape. Green there is
+     PHOSPHORS.matrix, the tint the tube boots in; blue here is
+     PHOSPHORS.brutalist ([0.42,0.78,1.00] -> #6bc7ff) -- the tint the README
+     and the [C] cycle both call Cyber Blue. A real tint off the app's own
+     palette rather than a fourth blue invented for the dashboard, and the
+     same one the wordmark below wears. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23000'/%3E%3Cg fill='none' stroke='%236bc7ff' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M9.5 18.25a7.5 7.5 0 0 1 13 0'/%3E%3Cpath d='M4.74 15.5a13 13 0 0 1 22.52 0'/%3E%3C/g%3E%3Ccircle cx='16' cy='22' r='2.6' fill='%236bc7ff'/%3E%3C/svg%3E">
 <style>
   :root {
-    --bg: #0b0d0a; --panel: #12160f; --line: #2a3324;
-    --ink: #c9e8b8; --ink-dim: #7f9670; --ink-faint: #4a5a42;
-    --amber: #e8b84a; --red: #e8604a; --green: #6ad46a; --blue: #6ac4d4;
+    /* The chrome is Cyber Blue throughout -- PHOSPHORS.brutalist's hue
+       (202.8deg), which is the tint the favicon and the header wordmark
+       wear. It replaced a green family (matrix's side of the palette) that
+       this dashboard shared with the app it operates; blue is what tells
+       the ops tab from the receiver tab at a glance.
+
+       Derived, not eyeballed. Every neutral in the green set sat in a tight
+       90-100deg band -- one family at seven lightnesses -- so each was
+       re-pinned to 202.8deg with its lightness and saturation untouched.
+       The text levels needed one correction on top of that: blue carries
+       far less luminance than green at the same HSL lightness (0.07 vs 0.72
+       of it), so holding the lightness would have quietly dimmed every
+       label on the page. --line/--ink/--ink-dim/--ink-faint instead had
+       their lightness re-solved to land on the contrast they had before --
+       14.6:1, 6.0:1 and 2.6:1 against the background, matched to 0.06. */
+    --bg: #0a0c0d; --panel: #0f1316; --line: #273138;
+    --ink: #cce1ef; --ink-dim: #7c929f; --ink-faint: #475761;
+    /* Status colours are deliberately NOT retinted: pass/fail has to stay
+       green/red, and amber marks an edit or a primary action. They are the
+       only warm things left, so they read harder against blue than they did
+       against green. --blue (a teal) is gone -- it named an accent that the
+       theme itself now is, and its two jobs point at --cyber below. */
+    --amber: #e8b84a; --red: #e8604a; --green: #6ad46a;
+    /* PHOSPHORS.brutalist -- "Cyber Blue" in the README and the [C] cycle.
+       The saturated end of the family the neutrals above are desaturated
+       from: the favicon, the wordmark, and the two accents that used to be
+       --blue. Against ink that shares its hue it separates on chroma and on
+       brightness, which is how .l-cmd stays legible next to .l-out. */
+    --cyber: #6bc7ff;
     --mono: "SF Mono", "Menlo", "Consolas", monospace;
   }
   * { box-sizing: border-box; }
   body { background: var(--bg); color: var(--ink); font-family: var(--mono); font-size: 13px; line-height: 1.5; margin: 0; padding: 22px 28px 90px; }
   h1 { font-size: 15px; letter-spacing: 0.08em; color: var(--amber); margin: 0 0 4px; text-transform: uppercase; }
   h1 .sub { color: var(--ink-dim); font-weight: normal; text-transform: none; letter-spacing: normal; }
+  h1.wordmark { display: flex; align-items: flex-end; gap: 11px; }
+  /* Height, not width: the viewBox carries the aspect ratio, so the cells
+     stay square whatever the word is. 32px = 8 grid rows at 4px a cell. */
+  #wordmark { display: block; height: 32px; width: auto; }
+  #wordmark .lit { fill: var(--cyber); }
+  /* FAINT on a single-tint tube is the same hue at a lower beam
+     intensity, not a second colour -- so, opacity. */
+  #wordmark .shadow { fill: var(--cyber); fill-opacity: 0.3; }
   .totals { color: var(--ink-dim); margin-bottom: 16px; }
   .totals b { color: var(--ink); }
   button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); font-family: var(--mono); font-size: 12px; padding: 6px 12px; cursor: pointer; border-radius: 2px; }
@@ -24,7 +68,7 @@
   button.go { border-color: var(--green); color: var(--green); }
   button.small { padding: 2px 8px; font-size: 11px; }
   input[type=text], input[type=number], textarea, select {
-    background: #080a06; color: var(--ink); border: 1px solid var(--line);
+    background: #06080a; color: var(--ink); border: 1px solid var(--line);
     font-family: var(--mono); font-size: 12px; padding: 5px 8px; border-radius: 2px;
   }
   textarea { width: 100%; resize: vertical; line-height: 1.45; }
@@ -33,7 +77,7 @@
   .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 3px; margin-bottom: 12px; overflow: hidden; }
   .panel-head { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; user-select: none; }
-  .panel-head:hover { background: #161c11; }
+  .panel-head:hover { background: #11181c; }
   .callsign { font-weight: bold; color: var(--ink); min-width: 190px; }
   .secret .callsign { color: var(--red); }
   .glyph { color: var(--amber); width: 1.4em; display: inline-block; text-align: center; }
@@ -50,8 +94,8 @@
   .panel.open .chevron { transform: rotate(90deg); }
   .desc { color: var(--ink-dim); margin-bottom: 10px; font-size: 12px; }
   table.tracks { width: 100%; border-collapse: collapse; font-size: 12px; }
-  table.tracks td { padding: 4px 6px; border-bottom: 1px solid #1a2116; vertical-align: middle; }
-  table.tracks tr:hover td { background: #161c11; }
+  table.tracks td { padding: 4px 6px; border-bottom: 1px solid #161d21; vertical-align: middle; }
+  table.tracks tr:hover td { background: #11181c; }
   .idx { color: var(--ink-faint); width: 2.4em; }
   .t-title { color: var(--ink); } .t-artist { color: var(--ink-dim); }
   .t-id { color: var(--ink-faint); font-size: 11px; }
@@ -72,8 +116,8 @@
   .fatal { color: var(--red); margin-top: 10px; font-size: 12px; }
   .connect-box { border: 1px solid var(--line); background: var(--panel); border-radius: 3px; padding: 24px; max-width: 640px; }
   .connect-box p { color: var(--ink-dim); margin: 0 0 14px; }
-  .connect-box code { background: #080a06; border: 1px solid var(--line); padding: 1px 5px; border-radius: 2px; color: var(--ink); }
-  .connect-box pre { background: #080a06; border: 1px solid var(--line); padding: 10px 12px; color: var(--amber); overflow-x: auto; }
+  .connect-box code { background: #06080a; border: 1px solid var(--line); padding: 1px 5px; border-radius: 2px; color: var(--ink); }
+  .connect-box pre { background: #06080a; border: 1px solid var(--line); padding: 10px 12px; color: var(--amber); overflow-x: auto; }
   #app { display: none; }
   .conn-status { color: var(--ink-dim); font-size: 12px; margin-bottom: 14px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
   .conn-status b { color: var(--green); }
@@ -83,7 +127,24 @@
   .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
   .tab { padding: 4px 12px; cursor: pointer; color: var(--ink-faint); border: 1px solid transparent; border-bottom: none; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
   .tab:hover { color: var(--ink-dim); }
-  .tab.on { color: var(--amber); border-color: var(--line); background: #0e120c; }
+  .tab.on { color: var(--amber); border-color: var(--line); background: #0c1012; }
+
+  /* ---- voice & drops ---- */
+  .clip-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid #11181c; flex-wrap: wrap; }
+  .clip-row:last-child { border-bottom: 0; }
+  .clip-name { min-width: 210px; color: var(--ink); }
+  .clip-name .who { color: var(--ink-dim); }
+  .clip-file { font-size: 11px; color: var(--ink-faint); min-width: 210px; }
+  /* Fixed width + tabular figures so the durations form a column you can
+     scan for the odd one out, which is the whole point of listing them. */
+  .clip-dur { font-size: 11.5px; color: var(--ink-dim); min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+  .clip-tail { font-size: 11px; border: 1px solid var(--line); border-radius: 2px; padding: 0 6px; min-width: 74px; text-align: center; font-variant-numeric: tabular-nums; }
+  .clip-tail.ok { color: var(--green); border-color: #2e5a2e; }
+  .clip-tail.warn { color: var(--red); border-color: #5a2e2e; }
+  .clip-tail.unknown { color: var(--ink-faint); }
+  .clip-row .err { color: var(--red); font-size: 11.5px; }
+  .voice-odds { color: var(--ink-dim); font-size: 11.5px; margin: 2px 0 8px; }
+  .voice-odds b { color: var(--ink); }
 
   /* ---- identity editor ---- */
   .ident-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px 20px; }
@@ -100,7 +161,7 @@
   .tone { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .tone input[type=range] { writing-mode: vertical-lr; direction: rtl; height: 90px; width: 22px; accent-color: var(--amber); }
   .tone .hz { width: 78px; text-align: center; }
-  .preview-pane { border: 1px solid var(--line); background: #080a06; margin-top: 10px; }
+  .preview-pane { border: 1px solid var(--line); background: #06080a; margin-top: 10px; }
   .preview-pane iframe { width: 100%; height: 460px; border: 0; display: block; }
 
   /* ---- ops / console ---- */
@@ -109,9 +170,9 @@
   .step.running { color: var(--amber); border-color: var(--amber); }
   .step.pass { color: var(--green); border-color: #2e5a2e; }
   .step.fail { color: var(--red); border-color: var(--red); }
-  .console { background: #060804; border: 1px solid var(--line); padding: 10px 12px; font-size: 11.5px; line-height: 1.45; max-height: 340px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; margin-top: 8px; }
+  .console { background: #040608; border: 1px solid var(--line); padding: 10px 12px; font-size: 11.5px; line-height: 1.45; max-height: 340px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; margin-top: 8px; }
   .console:empty { display: none; }
-  .console .l-cmd { color: var(--blue); } .console .l-err { color: var(--red); }
+  .console .l-cmd { color: var(--cyber); } .console .l-err { color: var(--red); }
   .console .l-out { color: var(--ink-dim); } .console .l-step { color: var(--amber); font-weight: bold; }
   .console .l-ok { color: var(--green); }
   .git-line { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--ink-dim); }
@@ -128,10 +189,10 @@
   /* ---- audition ---- */
   .aud-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
   .aud-form input[type=text] { min-width: 220px; flex: 1; }
-  .aud-constraints { border-left: 2px solid var(--amber); padding: 6px 10px; margin-bottom: 10px; color: var(--ink-dim); font-size: 11.5px; background: #0e120c; }
+  .aud-constraints { border-left: 2px solid var(--amber); padding: 6px 10px; margin-bottom: 10px; color: var(--ink-dim); font-size: 11.5px; background: #0c1012; }
   .aud-constraints .rej { color: var(--ink-faint); }
   .aud-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
-  .aud-card { border: 1px solid var(--line); background: #0e120c; padding: 10px 12px; }
+  .aud-card { border: 1px solid var(--line); background: #0c1012; padding: 10px 12px; }
   .aud-card.dead { opacity: .55; }
   .aud-card h4 { margin: 0 0 4px; font-size: 12px; color: var(--ink); font-weight: normal; }
   .aud-card .meta { color: var(--ink-faint); font-size: 11px; display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -141,7 +202,7 @@
   .flag.soft { border-color: #5a4a2e; color: var(--amber); }
   .flag.none { border-color: #2e5a2e; color: var(--green); }
   .unverified-banner { border: 1px solid var(--red); background: #1e0c08; color: var(--red); padding: 10px 12px; margin-bottom: 12px; font-size: 12px; }
-  .pending-card { border: 1px solid var(--line); border-radius: 3px; padding: 10px 12px; margin-bottom: 8px; background: #0e120c; }
+  .pending-card { border: 1px solid var(--line); border-radius: 3px; padding: 10px 12px; margin-bottom: 8px; background: #0c1012; }
   .pending-card .pc-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .pending-card .pc-station { color: var(--amber); font-weight: bold; }
   .pending-card .pc-title { color: var(--ink); } .pending-card .pc-artist { color: var(--ink-dim); }
@@ -181,7 +242,7 @@
   .tool { display: inline-flex; flex-direction: column; gap: 2px; max-width: 230px; }
   .tool .help { margin: 0; }
   .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 6px; }
-  .tag-net { color: var(--blue); }
+  .tag-net { color: var(--cyber); }
   .tag-write { color: var(--amber); }
 
   /* ---- console ---------------------------------------------------- */
@@ -207,7 +268,7 @@
 
   /* ---- focus / a11y ------------------------------------------------ */
   :focus-visible { outline: 1px solid var(--amber); outline-offset: 1px; }
-  .panel-head:focus-visible { background: #161c11; }
+  .panel-head:focus-visible { background: #11181c; }
   [role=button] { cursor: pointer; }
 </style>
 </head>
@@ -215,7 +276,7 @@
 
 <div class="topbar" id="topbar">
   <div class="topbar-row">
-    <h1>SIGNAL <span class="sub">— network ops</span></h1>
+    <h1 class="wordmark"><svg id="wordmark" role="img" aria-label="SIGNAL" shape-rendering="crispEdges"></svg><span class="sub">— network ops</span></h1>
     <span class="conn-status" id="conn-status" style="margin:0"></span>
     <span class="spacer"></span>
     <button class="helpbtn" id="btn-help" title="Show or hide the explanatory lines under each control">? help</button>
@@ -289,6 +350,14 @@
     <div class="panel-body" id="overlap-body"></div>
   </div>
 
+  <div class="panel" id="panel-voice">
+    <div class="panel-head" data-toggle="panel-voice" role="button" tabindex="0" aria-controls="panel-voice">
+      <span class="chevron">&#9654;</span><span class="callsign">VOICE &amp; DROPS</span>
+      <span class="tagline" id="voice-summary"></span>
+    </div>
+    <div class="panel-body" id="voice-body"></div>
+  </div>
+
   <div id="stations"></div>
 </div>
 
@@ -327,6 +396,58 @@
 // connect screen forever with no error visible anywhere on it. Caught by a
 // headless load, not by the API tests, every one of which was passing.
 import { patchStationTracks, patchStationField } from '/tools/lib/roster.mjs'
+
+// Same argument as the parser above, for the same reason: the header
+// wordmark is drawn from the app's OWN font table rather than a copy
+// pasted into this page. layout.js reaches a browser cleanly -- its whole
+// import chain is src/term.js -> src/cellgrid.js, neither of which touches
+// the DOM at import time.
+import {
+  STANDBY_LOGO_FONT, STANDBY_LOGO_WORD, STANDBY_LOGO_LETTER_W,
+  STANDBY_LOGO_LETTER_H, STANDBY_LOGO_GAP,
+} from '/layout.js'
+
+// ---- the header wordmark ---------------------------------------------
+// The STANDBY splash's wordmark (ui/desktop.js drawStandbyLogo, 63rd pass),
+// rebuilt in SVG so the dashboard wears the same mark the set shows when it
+// is powered off -- which is the honest thing for the page that operates it
+// to look like.
+//
+// Faithful to the original in the two ways that matter. The depth is an
+// offset shadow: the whole shape painted again one cell down-right, behind
+// the bright glyph. That is not a stylistic choice over there -- term.js is
+// single-tint beam intensity, so a colour gradient is not available to it
+// and the shadow is how the mark gets weight. And the cells stay square,
+// because the thing being imitated is a character grid.
+//
+// Two <path>s rather than ~200 <rect>s -- one per layer, each lit cell a
+// closed 1x1 subpath. Colour lives in CSS (.lit / .shadow) so the tint is
+// set in one place with the favicon's, not baked into presentation
+// attributes here.
+function buildWordmark(svg) {
+  const letters = STANDBY_LOGO_WORD.split('')
+  const cells = []
+  let lx = 0
+  for (const ch of letters) {
+    const glyph = STANDBY_LOGO_FONT[ch]
+    for (let row = 0; row < STANDBY_LOGO_LETTER_H; row++) {
+      for (let col = 0; col < STANDBY_LOGO_LETTER_W; col++) {
+        if (glyph[row][col] === '#') cells.push([lx + col, row])
+      }
+    }
+    lx += STANDBY_LOGO_LETTER_W + STANDBY_LOGO_GAP
+  }
+  const w = letters.length * STANDBY_LOGO_LETTER_W + (letters.length - 1) * STANDBY_LOGO_GAP
+  // +1 on each axis is the room the shadow layer needs below and right.
+  svg.setAttribute('viewBox', `0 0 ${w + 1} ${STANDBY_LOGO_LETTER_H + 1}`)
+  const layer = (dx, dy) => cells.map(([x, y]) => `M${x + dx} ${y + dy}h1v1h-1z`).join('')
+  // Shadow first: painting order is what puts it behind, exactly as the two
+  // passes over the cell grid do in drawStandbyLogo().
+  svg.innerHTML =
+    `<path class="shadow" d="${layer(1, 1)}"/>` +
+    `<path class="lit" d="${layer(0, 0)}"/>`
+}
+buildWordmark(document.getElementById('wordmark'))
 
 // ---- server transport ------------------------------------------------
 // Every mutating call carries X-Signal-Admin; the server rejects writes
@@ -509,6 +630,7 @@ function render() {
   renderAudition()
   renderPending()
   renderOverlaps()
+  renderVoice()
   renderStations()
 }
 
@@ -522,6 +644,7 @@ function renderJump() {
   for (const [id, label] of [
     ['panel-ops', 'preflight'], ['panel-deploy', 'deploy'], ['panel-audition', 'audition'],
     ['panel-pending', 'pending'], ['panel-overlaps', 'overlap'],
+    ['panel-voice', 'voice'],
   ]) {
     bar.appendChild(el('button', {
       class: 'chip',
@@ -1058,6 +1181,238 @@ async function approvePending(entry) {
   document.getElementById('panel-' + st.id).classList.add('open')
   g.textContent = `approved "${entry.title}" onto ${st.callsign} — unsaved. Use "save tracks" to commit it to stations.js.`
   g.style.color = 'var(--green)'
+}
+
+// ---- voice & drops ---------------------------------------------------
+// The spoken assets: the network sign-on line, the per-station verbal IDs,
+// and the liner drops -- ElevenLabs-rendered mp3s in audio/, run through a
+// live WebAudio chain (band-limit, mid-forward EQ, grit shaper, wow/flutter,
+// hiss bed) rather than baked into the files. A preview that played the raw
+// mp3 would therefore be lying about what the set actually sounds like, so
+// this plays them through audio/voice.js's OWN playProcessedVoiceClip, on
+// audio/sfx.js's OWN context and speaker bus. Same nodes, not a mirror of
+// them.
+//
+// Contrast the ident tone editor further down, which does hand-mirror
+// playIdent(): six lines of oscillator envelope is worth copying, a
+// five-stage processing chain is not -- and fidelity is the entire point
+// here. "dry" plays the undecorated buffer so the two can be compared.
+//
+// Imported lazily on first use rather than at the top of this file. The
+// dashboard's job (editing stations.js, running the toolchain, shipping)
+// must not stop working if the app's audio graph breaks, and most sessions
+// never open this panel. voice.js top-level-awaits sfx.js, which pulls
+// crt-hooks.js and tuning.js in behind it.
+let voiceMod = null
+async function voiceLib() {
+  if (!voiceMod) {
+    const [voice, sfx] = await Promise.all([import('/audio/voice.js'), import('/audio/sfx.js')])
+    voiceMod = { ...voice, audioCtx: sfx.audioCtx }
+  }
+  return voiceMod
+}
+// Absolute, for the reason the roster.mjs import comment gives at the top of
+// this file: the server serves this page at BOTH /admin and
+// /tools/network.html, and voice.js's own lists hold page-relative paths
+// ('audio/x.mp3') because the app is only ever served from the root. Left
+// relative here they would resolve to /tools/audio/x.mp3 at the second URL.
+const clipUrl = (p) => '/' + String(p).replace(/^\/+/, '')
+
+// The fade in playProcessedVoiceClip starts at dur - 0.4, so a clip with
+// less trailing silence than that is faded down while the speaker is still
+// talking. voice.js's 2026-08-27 note records that costing a real clip: the
+// figure was written down as "~0.2s", a 0.31s clip cleared the documented
+// number, missed the real one, and shipped audibly cut off. That comment
+// tells you to check with `ffmpeg -af silencedetect=noise=-45dB:d=0.08`;
+// this is the same measurement, at the same threshold, on the decoded
+// buffer -- so the check happens by opening the panel instead of by
+// remembering to run ffmpeg.
+const TAIL_MIN = 0.4   // below this the fade eats real speech
+const TAIL_AIM = 0.5   // where the existing set sits
+function trailingSilence(buffer) {
+  const thr = Math.pow(10, -45 / 20)
+  const d = buffer.getChannelData(0)
+  for (let i = d.length - 1; i >= 0; i--) {
+    if (Math.abs(d[i]) > thr) return (d.length - 1 - i) / buffer.sampleRate
+  }
+  return buffer.duration // silence throughout
+}
+
+const clipCache = {}  // url -> { buffer, dur, tail } | { error }
+async function clipInfo(url) {
+  if (clipCache[url]) return clipCache[url]
+  try {
+    const { audioCtx } = await voiceLib()
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    const buffer = await audioCtx().decodeAudioData(await res.arrayBuffer())
+    clipCache[url] = { buffer, dur: buffer.duration, tail: trailingSilence(buffer) }
+  } catch (e) {
+    clipCache[url] = { error: String(e && e.message || e) }
+  }
+  return clipCache[url]
+}
+
+async function playClip(url, gainMult, dry) {
+  const info = await clipInfo(url)
+  if (info.error) return
+  const { playProcessedVoiceClip, audioCtx } = await voiceLib()
+  const ctx = audioCtx()
+  try { await ctx.resume() } catch (e) {}
+  if (dry) {
+    const src = ctx.createBufferSource()
+    src.buffer = info.buffer
+    src.connect(ctx.destination)   // straight out, bypassing the radio chain
+    src.start()
+  } else {
+    playProcessedVoiceClip(info.buffer, ctx, ctx.currentTime, gainMult)
+  }
+}
+
+// One clip row. Duration and tail stay blank until the clip is decoded --
+// either by playing it or by "check every clip" -- so opening the panel
+// does not pull sixteen mp3s nobody asked for.
+function clipRow(label, who, url, gainMult) {
+  const dur = el('span', { class: 'clip-dur' }, '')
+  const tail = el('span', { class: 'clip-tail unknown', title: `Trailing silence. The playback fade starts ${TAIL_MIN}s before the end, so anything under ${TAIL_MIN}s is faded while the voice is still talking. Aim for ~${TAIL_AIM}s.` }, 'tail ?')
+  const errSlot = el('span', {})
+  const paint = (info) => {
+    if (info.error) {
+      dur.textContent = ''
+      tail.className = 'clip-tail warn'; tail.textContent = 'missing'
+      errSlot.innerHTML = ''
+      errSlot.appendChild(el('span', { class: 'err' }, info.error))
+      return
+    }
+    dur.textContent = info.dur.toFixed(2) + 's'
+    tail.className = 'clip-tail ' + (info.tail < TAIL_MIN ? 'warn' : 'ok')
+    tail.textContent = 'tail ' + info.tail.toFixed(2) + 's'
+    if (info.tail < TAIL_MIN) tail.title = `Only ${info.tail.toFixed(2)}s of trailing silence — under the ${TAIL_MIN}s the fade needs, so the last word is being cut off. Pad it: ffmpeg -i clip.mp3 -af apad=pad_dur=0.3`
+  }
+  const row = el('div', { class: 'clip-row', 'data-clip': url },
+    el('span', { class: 'clip-name' }, label, who ? el('span', { class: 'who' }, '  ' + who) : ''),
+    el('span', { class: 'clip-file' }, url.replace(/^\//, '')),
+    dur, tail,
+    el('button', { class: 'small', onclick: () => playClip(url, gainMult, false).then(() => paint(clipCache[url])) }, '▶ through the radio'),
+    el('button', { class: 'small', title: 'The raw file, bypassing the processing chain — for comparison.', onclick: () => playClip(url, gainMult, true).then(() => paint(clipCache[url])) }, 'dry'),
+    errSlot)
+  row._paint = paint
+  if (clipCache[url]) paint(clipCache[url])
+  return row
+}
+
+function renderVoice() {
+  const body = document.getElementById('voice-body')
+  const summary = document.getElementById('voice-summary')
+  body.innerHTML = ''
+
+  const V = window.__voiceConsts
+  if (!V) {
+    // Constants come from voice.js itself; until it is loaded there is
+    // nothing truthful to draw, so the panel offers to load it.
+    summary.textContent = 'the spoken IDs, the sign-on line and the liner drops'
+    body.appendChild(el('div', { class: 'save-msg' },
+      'Plays the voice assets through the same chain the receiver uses — audio/voice.js’s playProcessedVoiceClip, on audio/sfx.js’s context and speaker bus. Loading it pulls the app’s audio modules into this page, so it is deferred until you ask.'))
+    const load = el('button', { class: 'primary' }, 'load voice assets')
+    load.addEventListener('click', async () => {
+      load.disabled = true; load.textContent = 'loading…'
+      try {
+        const m = await voiceLib()
+        window.__voiceConsts = m
+        renderVoice()
+      } catch (e) {
+        load.disabled = false; load.textContent = 'load voice assets'
+        body.appendChild(el('div', { class: 'err' }, 'could not load audio/voice.js: ' + (e.message || e)))
+      }
+    })
+    body.appendChild(load)
+    return
+  }
+
+  const rows = []
+  const add = (r) => { rows.push(r); return r }
+
+  // --- network sign-on ---
+  body.appendChild(el('div', { class: 'group-title' }, 'network sign-on'))
+  body.appendChild(help('Plays once per power-on, on the beat the picture lands, before the locked station takes over.'))
+  body.appendChild(add(clipRow('welcome line', '', clipUrl(V.WELCOME_LINE_FILE), 1)))
+
+  // --- station IDs ---
+  body.appendChild(el('div', { class: 'group-title' }, 'station IDs'))
+  body.appendChild(help('Fired on first lock and on any preset-driven lock. Resolved by convention from the station’s id, which is why a callsign change does not reach the clip on its own.'))
+  for (const st of [...roster.stations].sort((a, b) => a.freq - b.freq)) {
+    const clip = V.STATION_ID_CLIPS[st.id] ?? st.id
+    const note = clip !== st.id ? `id "${st.id}" → clip "${clip}"` : ''
+    body.appendChild(add(clipRow(st.callsign, note, clipUrl(`audio/station-id-${clip}.mp3`), 1)))
+  }
+  if (roster.secretStations.length) {
+    body.appendChild(help('Secret stations (' + roster.secretStations.map(s => s.callsign).join(', ') +
+      ') deliberately have no spoken ID — loadStationIdBuffer() swallows the miss and the station simply says nothing.'))
+  }
+
+  // --- liner drops ---
+  body.appendChild(el('div', { class: 'group-title' }, 'liner drops'))
+  const pct = Math.round(V.LINER_DROP_CHANCE * 100)
+  body.appendChild(el('div', { class: 'voice-odds' },
+    `Rolled on every track change: `, el('b', {}, `${pct}%`), ` (1 in ${Math.round(1 / V.LINER_DROP_CHANCE)}) fires a drop, ` +
+    `${V.LINER_DROP_DELAY_MS}ms after the track starts, at ${V.LINER_DROP_GAIN_MULT}× the gain of an ID. ` +
+    `Every station’s pool is its own clip plus the generals below.`))
+
+  body.appendChild(el('div', { class: 'group-title' }, 'general pool — rides every station'))
+  for (const f of V.GENERAL_LINER_FILES) {
+    body.appendChild(add(clipRow(f.split('/').pop().replace(/\.mp3$/, ''), '', clipUrl(f), V.LINER_DROP_GAIN_MULT)))
+  }
+
+  body.appendChild(el('div', { class: 'group-title' }, 'per-station'))
+  for (const st of [...roster.stations].sort((a, b) => a.freq - b.freq)) {
+    const own = V.STATION_LINER_FILES[st.id]
+    const pool = V.LINER_FILES[st.id]
+    if (!own) {
+      body.appendChild(el('div', { class: 'clip-row' },
+        el('span', { class: 'clip-name' }, st.callsign),
+        el('span', { class: 'clip-file' }, 'no entry — no liners at all')))
+      continue
+    }
+    if (!own.length) {
+      body.appendChild(el('div', { class: 'clip-row' },
+        el('span', { class: 'clip-name' }, st.callsign),
+        el('span', { class: 'clip-file' }, `no clip of its own — generals only, 1 in ${pool.length} per drop`)))
+      continue
+    }
+    for (const f of own) {
+      body.appendChild(add(clipRow(st.callsign, `1 in ${pool.length} of this station’s drops`, clipUrl(f), V.LINER_DROP_GAIN_MULT)))
+    }
+  }
+
+  // --- scan ---
+  const actions = el('div', { class: 'station-actions', style: 'margin-top:12px' })
+  const scan = el('button', { class: 'primary' }, `check every clip (${rows.length})`)
+  const scanMsg = el('span', { class: 'save-msg', style: 'margin-left:10px' })
+  scan.addEventListener('click', async () => {
+    scan.disabled = true
+    let bad = 0, missing = 0
+    for (let i = 0; i < rows.length; i++) {
+      scanMsg.textContent = `decoding ${i + 1}/${rows.length}…`
+      const url = rows[i].getAttribute('data-clip')
+      const info = await clipInfo(url)
+      rows[i]._paint(info)
+      if (info.error) missing++
+      else if (info.tail < TAIL_MIN) bad++
+    }
+    scan.disabled = false
+    const parts = [`${rows.length} clips`]
+    if (missing) parts.push(`${missing} missing`)
+    if (bad) parts.push(`${bad} with a short tail`)
+    if (!missing && !bad) parts.push('all tails clear')
+    scanMsg.textContent = parts.join(' · ')
+    summary.textContent = parts.join(' · ')
+  })
+  actions.appendChild(scan)
+  actions.appendChild(scanMsg)
+  body.appendChild(actions)
+  body.appendChild(help(`Decodes every clip and measures its trailing silence — the ${TAIL_MIN}s the playback fade needs. This is the ffmpeg silencedetect check voice.js asks for, done in the browser.`))
+
+  summary.textContent = `${rows.length} clips — not checked yet`
 }
 
 function renderOverlaps() {

@@ -205,7 +205,11 @@ export const stationIdBufferPromises = {}
 // liner rather than remapping it (see LINER_FILES above); here there is a
 // real replacement clip, so it is remapped rather than dropped. The old file
 // is left on disk, unreferenced, same as station-id-momentum.mp3.
-const STATION_ID_CLIPS = {
+// Exported so tools/network.html's voice panel can show which clip a
+// station ACTUALLY loads rather than restating this mapping in a second
+// place -- the remap below is precisely the thing a preview exists to make
+// visible, and a copy of it in the dashboard could silently disagree.
+export const STATION_ID_CLIPS = {
   'midnight-neon': 'synapse',
 }
 
