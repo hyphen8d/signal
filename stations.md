@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 410 tracks total.
+Generated from stations.js. 9 stations, 420 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -185,7 +185,7 @@ Tracks (50):
 
 Ident tones (Hz): 293.7, 349.2, 415.3, 466.2
 
-Tracks (30):
+Tracks (35):
 
 1. **TESLA** -- Mau P  ([youtu.be/rVp454wjqls](https://youtu.be/rVp454wjqls))
 2. **Take It Off** -- FISHER & Aatig  ([youtu.be/0CKkRtkzw4g](https://youtu.be/0CKkRtkzw4g))
@@ -217,6 +217,11 @@ Tracks (30):
 28. **(It Happens) Sometimes** -- Jack Back  ([youtu.be/tYD1E9IUOzA](https://youtu.be/tYD1E9IUOzA))
 29. **Hallelujah** -- Will Clarke  ([youtu.be/tapeYww2VrA](https://youtu.be/tapeYww2VrA))
 30. **Back Tomorrow** -- Ferreck Dawn & Jem Cooke  ([youtu.be/p2KlbcmhYuM](https://youtu.be/p2KlbcmhYuM))
+31. **Losing It** -- FISHER  ([youtu.be/u31thuMehjM](https://youtu.be/u31thuMehjM))
+32. **San Frandisco** -- Dom Dolla  ([youtu.be/VFQ87_g41ZA](https://youtu.be/VFQ87_g41ZA))
+33. **Cola** -- CamelPhat & Elderbrook  ([youtu.be/qke-jOUqSXU](https://youtu.be/qke-jOUqSXU))
+34. **XTC** -- Solardo & Eli Brown  ([youtu.be/VL-TIXPivpQ](https://youtu.be/VL-TIXPivpQ))
+35. **Feel My Needs** -- Weiss  ([youtu.be/nUn0PC7098E](https://youtu.be/nUn0PC7098E))
 
 ## CITY LIGHTS -- 780.0
 
@@ -342,7 +347,7 @@ Tracks (50):
 
 Ident tones (Hz): 392, 493.9, 493.9, 587.3
 
-Tracks (30):
+Tracks (35):
 
 1. **I Don't Want to Set the World on Fire** -- The Ink Spots  ([youtu.be/GkHd1d_UVOE](https://youtu.be/GkHd1d_UVOE))
 2. **Crawl Out Through the Fallout** -- Sheldon Allman  ([youtu.be/Q9bSOaSuScQ](https://youtu.be/Q9bSOaSuScQ))
@@ -370,10 +375,15 @@ Tracks (30):
 24. **Uranium Rock** -- Warren Smith  ([youtu.be/jq2kqNTHejM](https://youtu.be/jq2kqNTHejM))
 25. **Sh-Boom** -- The Chords  ([youtu.be/xfoseSZtllo](https://youtu.be/xfoseSZtllo))
 26. **Money Honey** -- Clyde McPhatter & The Drifters  ([youtu.be/zPJ7N5_o-u8](https://youtu.be/zPJ7N5_o-u8))
-27. **Rocket 88** -- Jackie Brenston & His Delta Cats  ([youtu.be/xFg6i2p8YQc](https://youtu.be/xFg6i2p8YQc))
+27. **Rocket 88** -- Jackie Brenston & His Delta Cats  ([youtu.be/260hXID0Yo0](https://youtu.be/260hXID0Yo0))
 28. **It's Only a Paper Moon** -- Nat King Cole  ([youtu.be/IIQFJGru-xI](https://youtu.be/IIQFJGru-xI))
 29. **Butcher Pete (Part 2)** -- Roy Brown  ([youtu.be/6VGDnqCV53w](https://youtu.be/6VGDnqCV53w))
 30. **Into Each Life Some Rain Must Fall** -- The Ink Spots & Ella Fitzgerald  ([youtu.be/ayGkA-vxrMc](https://youtu.be/ayGkA-vxrMc))
+31. **Grandma Plays the Numbers** -- Wynonie Harris  ([youtu.be/8L6dp5zFkDs](https://youtu.be/8L6dp5zFkDs))
+32. **Personality** -- Johnny Mercer  ([youtu.be/pUgC0Rq3bHM](https://youtu.be/pUgC0Rq3bHM))
+33. **Whole Lotta Shakin' Goin' On** -- Big Maybelle  ([youtu.be/I9PtTaclmCk](https://youtu.be/I9PtTaclmCk))
+34. **Right Behind You Baby** -- Ray Smith  ([youtu.be/Acfhtz020wE](https://youtu.be/Acfhtz020wE))
+35. **It's a Man** -- Betty Hutton  ([youtu.be/ydLHY0qonl4](https://youtu.be/ydLHY0qonl4))
 
 ## HACKBACK -- 808.0
 

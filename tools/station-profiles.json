@@ -235,7 +235,12 @@
         "Patrick Topping",
         "Vintage Culture & James Hype",
         "Vinter",
-        "Will Clarke"
+        "Will Clarke",
+        "FISHER",
+        "Dom Dolla",
+        "CamelPhat & Elderbrook",
+        "Solardo & Eli Brown",
+        "Weiss"
       ],
       "constraints": [
         "The lane deliberately spans BOTH ends of tech house: festival-scale (Dom Dolla, John Summit, FISHER, James Hype, Diplo, Chris Lake) and the Ibiza/underground end (Jamie Jones, Michael Bibi, PAWSA, Patrick Topping, Mochakk). Do not purify it toward either -- the mix is the format. The tagline says \"underground\" but the roster is honestly about half main stage, and that is intended.",
@@ -243,7 +248,8 @@
         "Nearly every title here exists as BOTH an extended mix (typically 5-7 min) and a single edit (2:30-3:30). Either is acceptable, but check the duration so you know which one you actually took -- the titles frequently do not say, and re-upload channels mislabel them.",
         "Vocal hooks are in-lane, not a compromise (\"Beggin'\", \"Ferrari\", \"Where You Are\", \"You Give Me A Feeling\"). This is not a purist instrumental station. What is out of lane: EDM/big-room, bass house, and progressive-trance crossover.",
         "Channel provenance: prefer the artist's own channel, a label channel (Defected, Insomniac, Snatch!, Toolroom, CircoLoco, Hot Creations, Big Beat, Astralwerks, Experts Only, Dim Mak, Nervous), or a label-delivered \"- Topic\" art track. Tech house search results are DOMINATED by re-upload channels -- Myth of NYX, 7clouds, Top Hits USA, Selected., blanc, PROFOUND, Groove Bassment -- which often carry correct audio but have unverifiable provenance and unreliable mix labelling. CID's \"Fancy $hit\" was moved off one of these onto CID's own Topic delivery once a search found it; do the same rather than settling.",
-        "Trap specific to this genre: several of these artists' most-viewed uploads are FESTIVAL SETS, not tracks. A search for \"Mochakk Jealous\" returns his Circoloco Sonar set above the studio single, and Dom Dolla/Odd Mob/Cloonee all have live sets outranking their releases. Always confirm the result is the track, not an hour of one."
+        "Trap specific to this genre: several of these artists' most-viewed uploads are FESTIVAL SETS, not tracks. A search for \"Mochakk Jealous\" returns his Circoloco Sonar set above the studio single, and Dom Dolla/Odd Mob/Cloonee all have live sets outranking their releases. Always confirm the result is the track, not an hour of one.",
+        "The festival-set trap above confirmed live 2026-08-29: searching 'FISHER Losing It' returns his Coachella 2019 set (6:36) directly beside the 4:09 studio audio. Duration is what separates them. Also note CamelPhat & Elderbrook's 'Cola' was taken at Aug 2017, five months before the stated 'roughly 2018 onward' line -- accepted on the 'roughly' and flagged in stations.js as the first to pull if that era boundary is meant strictly."
       ],
       "rejections": [],
       "notes": "Roster built 2026-08-28 from a 30-title brief, replacing the temporary 60s-oldies test rotation that ran here 2026-08-25 to 2026-08-28. All 30 verified in one clean audition run (UNVERIFIED: 0), all embeddable, licence breadth 121-249 countries. Nearly all flagged UNKNOWN-CHANNEL at the time, which was correct and harmless: provenance is scored against the channels the station already used, and those were the oldies uploads this pass deleted. From the next pass onward it scores against the label/artist channels above, so the signal becomes meaningful again.",
@@ -438,11 +444,17 @@
         "The Chords",
         "Clyde McPhatter & The Drifters",
         "Jackie Brenston & His Delta Cats",
-        "The Ink Spots & Ella Fitzgerald"
+        "The Ink Spots & Ella Fitzgerald",
+        "Wynonie Harris",
+        "Johnny Mercer",
+        "Big Maybelle",
+        "Ray Smith",
+        "Betty Hutton"
       ],
       "constraints": [
         "TIGHTEST constraint on the roster: not just \"any genuine 40s/50s classic\" -- must be verifiably a real track that actually plays on Fallout 4's Diamond City Radio or Fallout 76's Appalachia Radio. A track has been pulled before for being period-correct but NOT actually on those in-game stations (checked against the Fallout Wiki tracklists).",
-        "Attribution precision matters -- credit the actual original recording artist, not a more-famous cover (e.g. \"Good Rocking Tonight\" is Roy Brown's original, not the Wynonie Harris version some sources list)."
+        "Attribution precision matters -- credit the actual original recording artist, not a more-famous cover (e.g. \"Good Rocking Tonight\" is Roy Brown's original, not the Wynonie Harris version some sources list).",
+        "Verified against a published Diamond City Radio tracklist on 2026-08-29 rather than from memory, which is the only way to satisfy the Fallout-canon rule above. A dozen further genuine gaps exist if this station is taken to 50 -- among them Ink Spots 'Maybe' and 'It's All Over but the Crying', Billie Holiday 'Easy Living', Roy Brown 'Mighty Mighty Man', Bob Crosby 'Dear Hearts and Gentle People' and 'Happy Times', Tex Beneke 'A Wonderful Guy', The Three Suns 'Worry Worry Worry', Connee Allen 'Rocket 69' (note the spelling, Connee not Connie), Betty Hutton 'He's a Demon He's a Devil He's a Doll', Frankie Carle 'One More Tomorrow', Cole Porter 'Anything Goes'. Several of those verified clean already."
       ],
       "rejections": [
         {

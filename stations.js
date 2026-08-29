@@ -666,6 +666,31 @@ export const STATIONS = [
       realTrack('tYD1E9IUOzA', '(It Happens) Sometimes', 'Jack Back'),
       realTrack('tapeYww2VrA', 'Hallelujah', 'Will Clarke'),
       realTrack('p2KlbcmhYuM', 'Back Tomorrow', 'Ferreck Dawn & Jem Cooke'),
+      // 2026-08-29 -- five, not a full run to 50. FISHER and Dom Dolla were
+      // both on this station only inside collaborations (FISHER & Aatig, MK
+      // & Dom Dolla); these are their solo entries, and Losing It is the
+      // track that took this genre mainstream.
+      //
+      // The profile's festival-set trap is real and immediate: searching
+      // "FISHER Losing It" returns his Coachella 2019 set at 6:36 right
+      // beside the 4:09 studio audio. Every pick here is a studio release
+      // off the artist's own channel or a label the profile already lists
+      // (Spinnin', Defected, Ultra, Toolroom).
+      //
+      // Cola is Aug 2017 against a lane stated as "roughly 2018 onward".
+      // Taken on the "roughly", and flagged rather than quietly assumed --
+      // it is five months early and the first thing to pull if that era
+      // line is meant harder than it reads.
+      //
+      // Durations are deliberately mixed, per the profile: Cola and Feel My
+      // Needs are the extended club mixes at ~6:50, the other three are
+      // 3-4 min single edits. Both are in format here; what matters is
+      // knowing which one was taken, so: checked, and these are correct.
+      realTrack('u31thuMehjM', 'Losing It', 'FISHER'),
+      realTrack('VFQ87_g41ZA', 'San Frandisco', 'Dom Dolla'),
+      realTrack('qke-jOUqSXU', 'Cola', 'CamelPhat & Elderbrook'),
+      realTrack('VL-TIXPivpQ', 'XTC', 'Solardo & Eli Brown'),
+      realTrack('nUn0PC7098E', 'Feel My Needs', 'Weiss'),
     ] },
 
   // 4 new stations added 2026-08-20, tracklists as given, all
@@ -1033,10 +1058,38 @@ export const STATIONS = [
       realTrack('jq2kqNTHejM', 'Uranium Rock', 'Warren Smith'),
       realTrack('xfoseSZtllo', 'Sh-Boom', 'The Chords'),
       realTrack('zPJ7N5_o-u8', 'Money Honey', 'Clyde McPhatter & The Drifters'),
-      realTrack('xFg6i2p8YQc', 'Rocket 88', 'Jackie Brenston & His Delta Cats'),
+      // 2026-08-29 -- swapped off xFg6i2p8YQc, which had gone NOT-US and
+      // unplayable. Not a curation change: the roster health check found it
+      // while verifying this station's five additions, on a track that had
+      // been sitting here working. The78Prof is a channel this station
+      // already uses.
+      realTrack('260hXID0Yo0', 'Rocket 88', 'Jackie Brenston & His Delta Cats'),
       realTrack('IIQFJGru-xI', "It's Only a Paper Moon", 'Nat King Cole'),
       realTrack('6VGDnqCV53w', 'Butcher Pete (Part 2)', 'Roy Brown'),
       realTrack('ayGkA-vxrMc', 'Into Each Life Some Rain Must Fall', 'The Ink Spots & Ella Fitzgerald'),
+      // 2026-08-29 -- five, all five new artists here. This station's
+      // constraint is the tightest on the roster: a track must actually
+      // play on Fallout 4's Diamond City Radio or Fallout 76's Appalachia
+      // Radio, and one has been pulled before for being period-correct but
+      // not on those stations. So the tracklist was checked against a
+      // published Diamond City Radio listing rather than recalled -- all
+      // five appear on it, and the roster turned out to have a dozen more
+      // genuine gaps if this station is ever taken to 50.
+      //
+      // Attribution, per the profile's second rule: "Whole Lotta Shakin'
+      // Goin' On" is credited to Big Maybelle, whose 1955 recording is the
+      // original and the one the game uses -- not Jerry Lee Lewis, whose
+      // 1957 version is the famous one and the wrong answer here. Same
+      // shape as the Roy Brown / Wynonie Harris note already in the profile.
+      //
+      // Provenance is weaker here than anywhere else on the dial and that is
+      // unavoidable: 1940s-50s sides have no official uploads, so archive
+      // channels carry them. The78Prof is one this station already uses.
+      realTrack('8L6dp5zFkDs', 'Grandma Plays the Numbers', 'Wynonie Harris'),
+      realTrack('pUgC0Rq3bHM', 'Personality', 'Johnny Mercer'),
+      realTrack('I9PtTaclmCk', "Whole Lotta Shakin' Goin' On", 'Big Maybelle'),
+      realTrack('Acfhtz020wE', 'Right Behind You Baby', 'Ray Smith'),
+      realTrack('ydLHY0qonl4', "It's a Man", 'Betty Hutton'),
     ] },
   // 20th pass -- new channel added for 0 called Hackback, built around
   // artists like Tribe Called Quest, De La Soul, Slick Rick, Outkast, Wu
