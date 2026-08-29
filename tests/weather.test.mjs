@@ -159,3 +159,27 @@ test('an insecure origin is not mistaken for a browser without geolocation', () 
   assert.equal(canLocate({ isSecureContext: true, navigator: {} }), false)
   assert.equal(canLocate({ isSecureContext: true, navigator: { geolocation: {} } }), true)
 })
+
+test('precipitation chance is the window peak, and absent is not zero', () => {
+  const pops = flat(0)
+  for (let h = 12; h <= 17; h++) pops[h] = 10
+  pops[15] = 80
+  const withPop = bucketHours({ ...day(flat(60), flat(0)), precipitation_probability: pops })
+  assert.equal(withPop.find((p) => p.name === 'AFTERNOON').pop, 80,
+    'a mean would read ~22 and turn a wet afternoon into a dry-looking one')
+
+  // No field at all is null, NOT 0 -- "no data" and "definitely dry" must
+  // not render the same, so the column blanks instead of claiming 0%.
+  const noPop = bucketHours(day(flat(60), flat(0)))
+  assert.equal(noPop[0].pop, null)
+  assert.equal(reducePart([50], [0]).pop, null)
+  assert.equal(reducePart([50], [0], [0]).pop, 0, 'an actual zero is still a zero')
+})
+
+test('the request asks for the precipitation field it renders', () => {
+  // The column silently blanks for every part if this drops out of the URL,
+  // which looks like weather with no rain rather than a broken request.
+  const u = new URL(forecastUrl(1, 2, 'celsius'))
+  assert.match(u.searchParams.get('hourly'), /precipitation_probability/)
+  assert.equal(u.searchParams.get('daily'), 'sunrise,sunset')
+})

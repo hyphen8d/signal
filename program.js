@@ -587,6 +587,12 @@ export default {
       // overlay down with it on the way (see sleepExpired). Only the DRAWING
       // is gated, same as the clock's.
       this.tickSleep(s)
+      // 2026-08-29 -- the weather refresh rides here too, and sits ABOVE the
+      // overlay guard for the same reason the sleep tick does: it is data,
+      // not drawing. A reading going stale behind an open guide should still
+      // be replaced. Cheap -- a timestamp compare per second, with a network
+      // call behind it at most once every fifteen minutes.
+      this.tickWeather(s)
       if (this.guideOpen || this.tapConsentOpen || this.weatherOpen || this._powerAnimating) return
       if (this.poweredOn) { this.drawClock(s); this.drawSleep(s) }
       else this.drawStandbyClock(s)

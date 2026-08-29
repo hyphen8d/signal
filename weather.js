@@ -91,11 +91,17 @@ export const DAY_PARTS = [
  *  useful answer; a mean or a modal code would read CLEAR and be technically
  *  defensible and practically a lie. Not a real severity model, and it does
  *  not need to be -- it needs to not say CLEAR on a day it rains. */
-export function reducePart(temps, codes) {
+export function reducePart(temps, codes, pops = []) {
   const t = temps.filter((n) => Number.isFinite(n))
   const c = codes.filter((n) => Number.isFinite(n))
+  const p = pops.filter((n) => Number.isFinite(n))
   if (!t.length || !c.length) return null
-  return { temp: Math.round(Math.max(...t)), code: Math.max(...c) }
+  // Precipitation chance is the window's PEAK for the same reason the
+  // condition is its worst: "60% at some point this afternoon" is the thing
+  // worth knowing, and averaging it across six hours turns a wet afternoon
+  // into a 20% that reads as fine. Null when the field is absent rather than
+  // 0 -- "no data" and "definitely dry" must not draw the same.
+  return { temp: Math.round(Math.max(...t)), code: Math.max(...c), pop: p.length ? Math.max(...p) : null }
 }
 
 /** Split Open-Meteo's flat 24-hour arrays into the three day parts.
@@ -121,8 +127,12 @@ export function bucketHours(hourly) {
       .map((iso, i) => [hourOf(iso), i])
       .filter(([h]) => h >= part.from && h <= part.to)
       .map(([, i]) => i)
-    const got = reducePart(idx.map((i) => hourly.temperature_2m?.[i]), idx.map((i) => hourly.weather_code?.[i]))
-    return { name: part.name, ...(got || { temp: null, code: null }) }
+    const got = reducePart(
+      idx.map((i) => hourly.temperature_2m?.[i]),
+      idx.map((i) => hourly.weather_code?.[i]),
+      idx.map((i) => hourly.precipitation_probability?.[i]),
+    )
+    return { name: part.name, ...(got || { temp: null, code: null, pop: null }) }
   })
 }
 
@@ -137,7 +147,7 @@ export function forecastUrl(lat, lon, units) {
   const q = new URLSearchParams({
     latitude: String(lat), longitude: String(lon),
     current: 'temperature_2m,weather_code',
-    hourly: 'temperature_2m,weather_code',
+    hourly: 'temperature_2m,weather_code,precipitation_probability',
     // Sun times come free in the same request and are the most radio thing
     // available here -- a station reads them out. Deliberately NOT asking for
     // a place name: there is no reverse geocode in this API, and the obvious

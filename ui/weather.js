@@ -156,6 +156,29 @@ export default {
     this.drawWeatherReadout(s)
   },
 
+  /** Ridden off the clock's own 1s interval rather than given a timer of its
+   *  own -- see program.js's note on what deliberately stays on real timers.
+   *
+   *  This closes a real gap rather than tuning one. Until now refreshWeather()
+   *  was reached ONLY from [W] and the consent [Y], so the row-0 readout
+   *  showed whatever was fetched the last time somebody opened the card and
+   *  then held that reading indefinitely. isStale() and WX_MAX_AGE_MS both
+   *  existed and nothing consulted them for the header. A permanently stale
+   *  temperature in the title bar is worse than no temperature: it is wrong
+   *  and it looks live.
+   *
+   *  The staleness check is a timestamp compare, so running it every second
+   *  costs nothing; the fetch behind it fires at most once every fifteen
+   *  minutes, and only while powered on with consent already given. It never
+   *  raises a prompt -- requestLocation() is not reached from here, because
+   *  `_wxLoc` is already set by the time consent is 'yes'. */
+  tickWeather(s) {
+    if (this.mobile || !this.poweredOn) return
+    if (this.weatherConsent !== 'yes' || !this._wxLoc) return
+    if (!WX.isStale(this._wx)) return
+    this.refreshWeather(s)
+  },
+
   /** Row 0. Nine columns of "69F CLEAR", blank whenever there is nothing
    *  true to say -- before consent, after a refusal, while the first fetch
    *  is in flight, and on every mobile grid. Same rule the sleep timer
@@ -221,8 +244,15 @@ export default {
       const spec = WX.DAY_PARTS.find((d) => d.name === part.name)
       const temp = part.temp === null ? '--' : `${part.temp}${suffix}`
       const label = part.code === null ? '--' : WX.wmoLabel(part.code)
+      // Precipitation chance earns its column by keeping the condition
+      // honest: the label is the window's WORST code, so a single drizzle
+      // hour makes a whole afternoon read DRIZZLE. Seen live at 8% on the
+      // first run with this field. "DRIZZLE 8%" is true; "DRIZZLE" alone
+      // was misleading. Blank rather than 0% when the field is missing --
+      // no data and definitely-dry must not draw the same.
+      const pop = part.pop === null || part.pop === undefined ? '' : `${part.pop}%`
       return {
-        text: part.name.padEnd(11) + temp.padStart(5) + '   ' + label,
+        text: part.name.padEnd(11) + temp.padStart(5) + '   ' + label.padEnd(8) + pop.padStart(4),
         isNow: !!spec && hourNow >= spec.from && hourNow <= spec.to,
       }
     })
