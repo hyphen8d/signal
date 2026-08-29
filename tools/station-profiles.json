@@ -120,12 +120,21 @@
         "Loscil",
         "Midori Takada",
         "Celer",
-        "Rafael Anton Irisarri"
+        "Rafael Anton Irisarri",
+        "Fennesz",
+        "Laraaji",
+        "Chihei Hatakeyama",
+        "Christina Vantzou",
+        "Goldmund",
+        "Taylor Deupree",
+        "Susumu Yokota",
+        "Peter Broderick"
       ],
       "constraints": [
         "Modern-classical-ADJACENT ambient is welcome (Arnalds, O'Halloran, Einaudi are already on the roster) -- but a piece that reads as straightforwardly classical/neoclassical, rather than ambient-with-classical-texture, is the wrong lane for this station specifically.",
         "OPEN QUESTION, found 2026-08-26: the neoclassical boundary below is not actually settled. Nils Frahm's \"Says\" is listed as rejected for being too straightforwardly classical, yet it is still on the roster, and Einaudi's \"Nuvole Bianche\" sits beside it while the constraint blesses Einaudi by name. Either the rejection was recorded and never acted on, or the line moved. Resolve it before leaning on the Richter/Frahm precedent to reject anything new -- and prefer unambiguous ambient/drone meanwhile, which is what the 2026-08-26 batch did to sidestep the question entirely.",
-        "Sourcing is easy here compared with the other stations: contemporary ambient and drone is well served by artist \"- Topic\" channels, and all six of the 2026-08-26 additions are Topic with no flags at all. The real hazard is length -- full-album streams dominate search results for this genre (43, 59, 66 and 185-minute uploads all surfaced), so check duration and take the single-track upload."
+        "Sourcing is easy here compared with the other stations: contemporary ambient and drone is well served by artist \"- Topic\" channels, and all six of the 2026-08-26 additions are Topic with no flags at all. The real hazard is length -- full-album streams dominate search results for this genre (43, 59, 66 and 185-minute uploads all surfaced), so check duration and take the single-track upload.",
+        "Length has a FLOOR as well as a ceiling, established 2026-08-29: Boards of Canada's 'Olson' auditioned clean and was left out at 1:32, under this station's own shortest track (2:33). The ceiling is generous -- Basinski 62:11 and Eno 55:04 are on the roster -- so the hazard really is full-album uploads, not long pieces. Also reject uploads marked (Excerpt): a part of a piece is not the piece."
       ],
       "rejections": [
         {
@@ -177,10 +186,19 @@
         "Bronski Beat",
         "Blancmange",
         "Japan",
-        "Missing Persons"
+        "Missing Persons",
+        "Heaven 17",
+        "Wang Chung",
+        "Real Life",
+        "Berlin",
+        "Devo",
+        "Yello",
+        "Thompson Twins",
+        "Dead Or Alive"
       ],
       "constraints": [
-        "Strictly synth-driven new wave/synthpop of the era -- drum machines and cold hooks. Not later-80s pop-rock crossover, not synthwave (that's a modern retro genre and belongs on CIRCUIT CRUSH instead)."
+        "Strictly synth-driven new wave/synthpop of the era -- drum machines and cold hooks. Not later-80s pop-rock crossover, not synthwave (that's a modern retro genre and belongs on CIRCUIT CRUSH instead).",
+        "Japan was on acceptedArtists from the start with no track. Reason found 2026-08-29: 'Ghosts' has no official or Topic upload anywhere, only fan channels. The artist is on the station now via 'Quiet Life', which does. Do not spend another search on Ghosts unless an official upload appears."
       ],
       "rejections": []
     },

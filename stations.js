@@ -385,6 +385,47 @@ export const STATIONS = [
       realTrack('Vi3bSG3jL_M', 'Vital', 'Grouper'),
       realTrack('bFNbOvzvvYI', 'Oro Oro', 'Celer'),
       realTrack('osA0Wl_-EHU', 'Reprisal', 'Rafael Anton Irisarri'),
+      // 2026-08-29 -- sixteen to take DRIFT MODE to 50. Eight new artists
+      // (30 to 38); the rest are second pieces by artists already trusted
+      // here, which is the lower-risk half of a lane this taste-sensitive.
+      //
+      // The profile's warning about length is real and visible in the
+      // search results: Hammock's Departure Songs comes back as a 111-minute
+      // full-album upload and Biosphere as a 120-minute one. Everything here
+      // is a single piece. The floor matters too -- Boards of Canada's Olson
+      // auditioned clean and was left out at 1:32, below this station's own
+      // shortest track (2:33). The ceiling is not a problem: Basinski's
+      // 62:11 and Eno's 55:04 are already here, so 10:26 is unremarkable.
+      //
+      // Two dropped on LANE rather than mechanics, against the neoclassical
+      // boundary this station has rejected twice (Max Richter, and Nils
+      // Frahm's Says -- which is still on the roster, the open question the
+      // profile already flags). Christina Vantzou's No.4 String Quartet is
+      // clean and was passed over for reading as a string quartet rather
+      // than ambient-with-classical-texture; she arrives on a different
+      // piece instead. A Sarah Davachi track was dropped for being an
+      // upload marked (Excerpt) -- a part of a piece is not the piece.
+      //
+      // Fennesz's Transit carries David Sylvian vocals, against a station
+      // described as mostly wordless. Taken because Sigur Ros is already
+      // here on the same allowance, but it is the one to pull first if the
+      // wordless side of that description matters more than 'mostly'.
+      realTrack('4qrEH65DeCE', 'Transit', 'Fennesz'),
+      realTrack('VmqZTrthXbA', 'The Dance No. 1', 'Laraaji'),
+      realTrack('OtJQGz9mg0I', 'Where Is the Map?', 'Chihei Hatakeyama'),
+      realTrack('Wu-7ZpcyKdA', "The maitre d' is dead", 'Christina Vantzou'),
+      realTrack('t1UkSZGoCjs', 'Finding It There', 'Goldmund'),
+      realTrack('-x3sbeokO3A', 'Abandon', 'Goldmund'),
+      realTrack('_482aKbIfdc', 'Rhytn', 'Taylor Deupree'),
+      realTrack('eu6rBUu5-SA', 'Tobiume', 'Susumu Yokota'),
+      realTrack('khBhiVhPD_Y', 'In a Landscape', 'Peter Broderick'),
+      realTrack('ga0UH5znGmw', 'Carried', 'Peter Broderick'),
+      realTrack('2Tqy6be0Juc', 'The Big Ship', 'Brian Eno'),
+      realTrack('IxGj-uXJtMY', 'Enthalpy', 'Loscil'),
+      realTrack('hctJTb01NNI', 'Microfauna', 'Eluvium'),
+      realTrack('00Ipvqnk5is', 'Sore', 'Eluvium'),
+      realTrack('ljypVwBF_e8', 'RH Negative', 'Rafael Anton Irisarri'),
+      realTrack('nZyYcmK7a0I', 'Forever Ago is Now', 'Rafael Anton Irisarri'),
     ] },
   { id: 'cold-wave', freq: 273.0, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
@@ -442,8 +483,8 @@ export const STATIONS = [
       realTrack('Zi86ZiOlIVo', 'The Safety Dance', 'Men Without Hats'),
       realTrack('wO0A0XcWy88', 'Major Tom (Coming Home)', 'Peter Schilling'),
       realTrack('LuN6gs0AJls', 'I Melt With You', 'Modern English'),
-      realTrack('V83JR2IoI8k', 'She Blinded Me With Science (Official Video - HD Remaster)', 'Thomas Dolby'),
-      realTrack('xJeWySiuq1I', 'Vienna (Official Music Video)', 'Ultravox'),
+      realTrack('V83JR2IoI8k', 'She Blinded Me With Science', 'Thomas Dolby'),
+      realTrack('xJeWySiuq1I', 'Vienna', 'Ultravox'),
       realTrack('lVrELhxOFnM', 'Always Something There to Remind Me', 'Naked Eyes'),
       // 2026-08-26: pending queue approved wholesale and drained -- all 33
       // proposals across 8 stations landed at once, so these arrived as a
@@ -457,6 +498,34 @@ export const STATIONS = [
       realTrack('8o2XHjvaEWE', 'Smalltown Boy', 'Bronski Beat'),
       realTrack('QW_m8lhZbQQ', 'Living on the Ceiling', 'Blancmange'),
       realTrack('IasCZL072fQ', 'Words', 'Missing Persons'),
+      // 2026-08-29 -- fourteen to take COLD WAVE to 50. Five are canonical
+      // gaps by artists already here; nine are new, taking the station from
+      // 32 artists to 41, the widest single jump any station has had. (33 is
+      // the acceptedArtists count, not the roster's -- Japan was on that list
+      // with no track, see below.) The 80s synthpop lane turns out to be deep
+      // rather than narrow:
+      // nothing here needed the lane stretched, and the only rejection this
+      // station has ever recorded is one song the curator did not like.
+      //
+      // Japan was on acceptedArtists from the beginning with no track, and
+      // the reason is now known: Ghosts has no official or Topic upload at
+      // all, only fan channels. Quiet Life does, so the artist arrives on a
+      // different song than the one that was presumably wanted -- worth
+      // knowing before anyone goes looking for Ghosts again.
+      realTrack('zWo8joPm5hY', 'Everything Counts', 'Depeche Mode'),
+      realTrack('xxDv_RTdLQo', 'Temptation', 'New Order'),
+      realTrack('xik-y0xlpZ0', 'A Forest', 'The Cure'),
+      realTrack('u1ZvPSpLxCg', 'Mad World', 'Tears for Fears'),
+      realTrack('oJL-lCzEXgI', 'Hungry Like the Wolf', 'Duran Duran'),
+      realTrack('OeuCBosUWp8', 'Quiet Life', 'Japan'),
+      realTrack('CkfdXrEBzDw', 'Temptation', 'Heaven 17'),
+      realTrack('V-xpJRwIA-Q', 'Dance Hall Days', 'Wang Chung'),
+      realTrack('JcROTsR-2l4', 'Send Me an Angel', 'Real Life'),
+      realTrack('FJZ8NH0HT_o', 'The Metro', 'Berlin'),
+      realTrack('3bXEHGUvVrA', 'Whip It', 'Devo'),
+      realTrack('Ya1ySdk9Oao', 'Oh Yeah', 'Yello'),
+      realTrack('qMpBobAonKs', 'Hold Me Now', 'Thompson Twins'),
+      realTrack('rc6vowZjWOs', 'You Spin Me Round (Like a Record)', 'Dead Or Alive'),
     ] },
   // MOMENTUM (chillhop/downtempo focus, 567.8) retired 2026-08-24, replaced
   // with MIDNIGHT NEON -- late-night

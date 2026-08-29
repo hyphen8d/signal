@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 347 tracks total.
+Generated from stations.js. 9 stations, 377 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -67,7 +67,7 @@ Tracks (50):
 
 Ident tones (Hz): 392, 329.6, 370, 293.7
 
-Tracks (34):
+Tracks (50):
 
 1. **Weightless** -- Marconi Union  ([youtu.be/UfcAVejslrU](https://youtu.be/UfcAVejslrU))
 2. **Near Light** -- Olafur Arnalds  ([youtu.be/0kYc55bXJFI](https://youtu.be/0kYc55bXJFI))
@@ -103,6 +103,22 @@ Tracks (34):
 32. **Vital** -- Grouper  ([youtu.be/Vi3bSG3jL_M](https://youtu.be/Vi3bSG3jL_M))
 33. **Oro Oro** -- Celer  ([youtu.be/bFNbOvzvvYI](https://youtu.be/bFNbOvzvvYI))
 34. **Reprisal** -- Rafael Anton Irisarri  ([youtu.be/osA0Wl_-EHU](https://youtu.be/osA0Wl_-EHU))
+35. **Transit** -- Fennesz  ([youtu.be/4qrEH65DeCE](https://youtu.be/4qrEH65DeCE))
+36. **The Dance No. 1** -- Laraaji  ([youtu.be/VmqZTrthXbA](https://youtu.be/VmqZTrthXbA))
+37. **Where Is the Map?** -- Chihei Hatakeyama  ([youtu.be/OtJQGz9mg0I](https://youtu.be/OtJQGz9mg0I))
+38. **The maitre d' is dead** -- Christina Vantzou  ([youtu.be/Wu-7ZpcyKdA](https://youtu.be/Wu-7ZpcyKdA))
+39. **Finding It There** -- Goldmund  ([youtu.be/t1UkSZGoCjs](https://youtu.be/t1UkSZGoCjs))
+40. **Abandon** -- Goldmund  ([youtu.be/-x3sbeokO3A](https://youtu.be/-x3sbeokO3A))
+41. **Rhytn** -- Taylor Deupree  ([youtu.be/_482aKbIfdc](https://youtu.be/_482aKbIfdc))
+42. **Tobiume** -- Susumu Yokota  ([youtu.be/eu6rBUu5-SA](https://youtu.be/eu6rBUu5-SA))
+43. **In a Landscape** -- Peter Broderick  ([youtu.be/khBhiVhPD_Y](https://youtu.be/khBhiVhPD_Y))
+44. **Carried** -- Peter Broderick  ([youtu.be/ga0UH5znGmw](https://youtu.be/ga0UH5znGmw))
+45. **The Big Ship** -- Brian Eno  ([youtu.be/2Tqy6be0Juc](https://youtu.be/2Tqy6be0Juc))
+46. **Enthalpy** -- Loscil  ([youtu.be/IxGj-uXJtMY](https://youtu.be/IxGj-uXJtMY))
+47. **Microfauna** -- Eluvium  ([youtu.be/hctJTb01NNI](https://youtu.be/hctJTb01NNI))
+48. **Sore** -- Eluvium  ([youtu.be/00Ipvqnk5is](https://youtu.be/00Ipvqnk5is))
+49. **RH Negative** -- Rafael Anton Irisarri  ([youtu.be/ljypVwBF_e8](https://youtu.be/ljypVwBF_e8))
+50. **Forever Ago is Now** -- Rafael Anton Irisarri  ([youtu.be/nZyYcmK7a0I](https://youtu.be/nZyYcmK7a0I))
 
 ## COLD WAVE -- 273.0
 
@@ -110,7 +126,7 @@ Tracks (34):
 
 Ident tones (Hz): 440, 659.3, 554.4, 440
 
-Tracks (36):
+Tracks (50):
 
 1. **Blue Monday '88** -- New Order  ([youtu.be/9GMjH1nR0ds](https://youtu.be/9GMjH1nR0ds))
 2. **Just Like Heaven** -- The Cure  ([youtu.be/1ASpBpT8bRQ](https://youtu.be/1ASpBpT8bRQ))
@@ -139,8 +155,8 @@ Tracks (36):
 25. **The Safety Dance** -- Men Without Hats  ([youtu.be/Zi86ZiOlIVo](https://youtu.be/Zi86ZiOlIVo))
 26. **Major Tom (Coming Home)** -- Peter Schilling  ([youtu.be/wO0A0XcWy88](https://youtu.be/wO0A0XcWy88))
 27. **I Melt With You** -- Modern English  ([youtu.be/LuN6gs0AJls](https://youtu.be/LuN6gs0AJls))
-28. **She Blinded Me With Science (Official Video - HD Remaster)** -- Thomas Dolby  ([youtu.be/V83JR2IoI8k](https://youtu.be/V83JR2IoI8k))
-29. **Vienna (Official Music Video)** -- Ultravox  ([youtu.be/xJeWySiuq1I](https://youtu.be/xJeWySiuq1I))
+28. **She Blinded Me With Science** -- Thomas Dolby  ([youtu.be/V83JR2IoI8k](https://youtu.be/V83JR2IoI8k))
+29. **Vienna** -- Ultravox  ([youtu.be/xJeWySiuq1I](https://youtu.be/xJeWySiuq1I))
 30. **Always Something There to Remind Me** -- Naked Eyes  ([youtu.be/lVrELhxOFnM](https://youtu.be/lVrELhxOFnM))
 31. **Kids in America** -- Kim Wilde  ([youtu.be/80TfG7C9azA](https://youtu.be/80TfG7C9azA))
 32. **Don't Go** -- Yazoo  ([youtu.be/9wyzRycjNH4](https://youtu.be/9wyzRycjNH4))
@@ -148,6 +164,20 @@ Tracks (36):
 34. **Smalltown Boy** -- Bronski Beat  ([youtu.be/8o2XHjvaEWE](https://youtu.be/8o2XHjvaEWE))
 35. **Living on the Ceiling** -- Blancmange  ([youtu.be/QW_m8lhZbQQ](https://youtu.be/QW_m8lhZbQQ))
 36. **Words** -- Missing Persons  ([youtu.be/IasCZL072fQ](https://youtu.be/IasCZL072fQ))
+37. **Everything Counts** -- Depeche Mode  ([youtu.be/zWo8joPm5hY](https://youtu.be/zWo8joPm5hY))
+38. **Temptation** -- New Order  ([youtu.be/xxDv_RTdLQo](https://youtu.be/xxDv_RTdLQo))
+39. **A Forest** -- The Cure  ([youtu.be/xik-y0xlpZ0](https://youtu.be/xik-y0xlpZ0))
+40. **Mad World** -- Tears for Fears  ([youtu.be/u1ZvPSpLxCg](https://youtu.be/u1ZvPSpLxCg))
+41. **Hungry Like the Wolf** -- Duran Duran  ([youtu.be/oJL-lCzEXgI](https://youtu.be/oJL-lCzEXgI))
+42. **Quiet Life** -- Japan  ([youtu.be/OeuCBosUWp8](https://youtu.be/OeuCBosUWp8))
+43. **Temptation** -- Heaven 17  ([youtu.be/CkfdXrEBzDw](https://youtu.be/CkfdXrEBzDw))
+44. **Dance Hall Days** -- Wang Chung  ([youtu.be/V-xpJRwIA-Q](https://youtu.be/V-xpJRwIA-Q))
+45. **Send Me an Angel** -- Real Life  ([youtu.be/JcROTsR-2l4](https://youtu.be/JcROTsR-2l4))
+46. **The Metro** -- Berlin  ([youtu.be/FJZ8NH0HT_o](https://youtu.be/FJZ8NH0HT_o))
+47. **Whip It** -- Devo  ([youtu.be/3bXEHGUvVrA](https://youtu.be/3bXEHGUvVrA))
+48. **Oh Yeah** -- Yello  ([youtu.be/Ya1ySdk9Oao](https://youtu.be/Ya1ySdk9Oao))
+49. **Hold Me Now** -- Thompson Twins  ([youtu.be/qMpBobAonKs](https://youtu.be/qMpBobAonKs))
+50. **You Spin Me Round (Like a Record)** -- Dead Or Alive  ([youtu.be/rc6vowZjWOs](https://youtu.be/rc6vowZjWOs))
 
 ## SYNAPSE -- 567.8
 
