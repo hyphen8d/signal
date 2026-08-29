@@ -6,3 +6,10 @@ tools/audition.html
 # tool also reads ELEVENLABS_API_KEY from the environment instead.
 .elevenlabs-key
 .elevenlabs-voice-id
+# Scratch renders from tools/voice-render.mjs. The SHIP flow does `git add
+# -A`, so an untracked test clip in audio/ would otherwise ride along with
+# the next deploy.
+audio/*-test.mp3
+audio/.render-*.mp3
+audio/.mono-*.mp3
+audio/.pad-*.mp3

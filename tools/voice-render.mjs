@@ -33,7 +33,7 @@
 // process list.
 
 import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -72,8 +72,15 @@ function readSecret(envName, fileName, what, extra = '') {
  *  dashboard shows, taken the same way, so the tool and the panel cannot
  *  disagree about whether a clip is acceptable. */
 function measure(file) {
-  const out = execFileSync('ffmpeg', ['-v', 'info', '-i', file, '-af', 'silencedetect=noise=-45dB:d=0.08,volumedetect', '-f', 'null', '-'],
-    { encoding: 'utf8', stdio: ['ignore', 'ignore', 'pipe'] })
+  // spawnSync, and read STDERR. ffmpeg writes every diagnostic -- including
+  // silencedetect's and volumedetect's numbers -- to stderr and leaves
+  // stdout for piped media. execFileSync returns stdout, so the first
+  // version of this read null and threw on it. The same mistake is why the
+  // roster health checks earlier today needed `-v info`: quieten ffmpeg and
+  // the measurements vanish silently rather than erroring.
+  const r = spawnSync('ffmpeg', ['-v', 'info', '-i', file, '-af', 'silencedetect=noise=-45dB:d=0.08,volumedetect', '-f', 'null', '-'],
+    { encoding: 'utf8' })
+  const out = r.stderr || ''
   const dur = +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file], { encoding: 'utf8' }).trim()
   const starts = [...out.matchAll(/silence_start: ([0-9.]+)/g)].map((m) => +m[1])
   const last = starts.length ? starts[starts.length - 1] : null
