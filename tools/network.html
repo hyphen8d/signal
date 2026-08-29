@@ -729,7 +729,12 @@ function renderConnStatus() {
   const g = boot.git
   const box = document.getElementById('conn-status')
   box.innerHTML = ''
-  box.appendChild(el('span', { html: `serving <b>${location.host}</b>` }))
+  // 2026-08-29 -- the "serving <host>" chip is gone. It restated the address
+  // bar an inch above it, and this dashboard gets screen-shared while
+  // showing people the project, which made the one thing on it worth not
+  // broadcasting also the most redundant. The build stamp and branch stay:
+  // those are the two things you actually cannot see from anywhere else on
+  // the page.
   box.appendChild(el('span', { html: `build <b>${boot.build?.stamp ?? boot.build?.build ?? '—'}</b>` }))
   box.appendChild(el('span', { html: `branch <b>${g.branch}</b>` }))
   if (g.dirty.length) box.appendChild(el('span', { class: 'warn' }, `${g.dirty.length} uncommitted file(s)`))
