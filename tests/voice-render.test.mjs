@@ -15,6 +15,7 @@ import {
   VOICE_NAME, MODEL_ID, VOICE_SETTINGS, TAIL_MIN_S,
   ID_SCRIPT, spokenFrequency,
 } from '../tools/lib/voice-settings.mjs'
+import { stationIdClipPath, stationIdClipName } from '../audio/station-id-clips.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const VOICE_JS = readFileSync(path.join(ROOT, 'audio/voice.js'), 'utf8')
@@ -79,5 +80,26 @@ test('every station on the dial produces a sayable line', () => {
     assert.match(spoken, expectDecimal ? /^[a-z -]+ point [a-z]+$/ : /^[a-z -]+$/,
       `${f} produced "${spoken}"`)
     assert.equal(/ point /.test(spoken), expectDecimal, `${f} produced "${spoken}"`)
+  }
+})
+
+test('the renderer targets the clip the player actually loads', async () => {
+  // The bug this pins cost a wasted render and, worse, was silent: SYNAPSE's
+  // id is still 'midnight-neon', so a path derived from the id wrote over
+  // station-id-midnight-neon.mp3 -- a retired file nothing reads -- while
+  // the clip the set fetches was left untouched. Everything reported
+  // success.
+  assert.equal(stationIdClipName('midnight-neon'), 'synapse')
+  assert.equal(stationIdClipPath('midnight-neon'), 'audio/station-id-synapse.mp3')
+  // A station with no remap is unchanged.
+  assert.equal(stationIdClipPath('cipher'), 'audio/station-id-cipher.mp3')
+})
+
+test('every public station has a clip file where the map says it should be', async () => {
+  const { existsSync } = await import('node:fs')
+  const { STATIONS } = await import('../stations.js?v=voice-render-test')
+  for (const st of STATIONS) {
+    const p = path.join(ROOT, stationIdClipPath(st.id))
+    assert.ok(existsSync(p), `${st.callsign} loads ${stationIdClipPath(st.id)}, which does not exist`)
   }
 })

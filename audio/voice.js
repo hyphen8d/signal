@@ -263,17 +263,19 @@ export const stationIdBufferPromises = {}
 // liner rather than remapping it (see LINER_FILES above); here there is a
 // real replacement clip, so it is remapped rather than dropped. The old file
 // is left on disk, unreferenced, same as station-id-momentum.mp3.
-// Exported so tools/network.html's voice panel can show which clip a
-// station ACTUALLY loads rather than restating this mapping in a second
-// place -- the remap below is precisely the thing a preview exists to make
-// visible, and a copy of it in the dashboard could silently disagree.
-export const STATION_ID_CLIPS = {
-  'midnight-neon': 'synapse',
-}
+// The map moved to audio/station-id-clips.js on 2026-08-29 and is
+// re-exported here so every existing importer keeps working. It left because
+// tools/voice-render.mjs needs it too and cannot import this file -- Node
+// has no AudioContext -- so it derived clip names for itself and got them
+// wrong the first time it mattered, writing a re-rendered SYNAPSE over the
+// retired station-id-midnight-neon.mp3 while the live clip went untouched.
+// Two readers, one definition.
+export { STATION_ID_CLIPS } from './station-id-clips.js'
+const { stationIdClipName } = await import(`./station-id-clips.js?v=${V}`)
 
 export function loadStationIdBuffer(stationId) {
   if (!stationIdBufferPromises[stationId]) {
-    const clip = STATION_ID_CLIPS[stationId] ?? stationId
+    const clip = stationIdClipName(stationId)
     stationIdBufferPromises[stationId] = fetch(`audio/station-id-${clip}.mp3`)
       .then((r) => r.arrayBuffer())
       .then((buf) => audioCtx().decodeAudioData(buf))

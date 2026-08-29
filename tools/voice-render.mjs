@@ -41,6 +41,7 @@ import {
   TAIL_MIN_S, TAIL_AIM_S, PEAK_MIN_DB, PEAK_MAX_DB,
   ID_SCRIPT, spokenFrequency,
 } from './lib/voice-settings.mjs'
+import { stationIdClipPath } from '../audio/station-id-clips.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
@@ -102,7 +103,11 @@ async function main() {
     const st = [...STATIONS, ...(SECRET_STATIONS ?? [])].find((x) => x.id === stationId)
     if (!st) die(`No station "${stationId}".`)
     text ??= ID_SCRIPT(st.callsign, spokenFrequency(st.freq))
-    out ??= `audio/station-id-${stationId}.mp3`
+    // NOT `station-id-${stationId}.mp3`. A station whose callsign changed
+    // loads a differently-named clip, and deriving the path from the id
+    // wrote a re-rendered SYNAPSE over the retired midnight-neon file while
+    // leaving the live one alone. tests/voice-render.test.mjs pins this.
+    out ??= stationIdClipPath(stationId)
   }
   if (!text) die('Nothing to say. Give --text="..." or --station=<id>.')
   if (!out) die('Nowhere to put it. Give --out=audio/<name>.mp3')
