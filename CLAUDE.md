@@ -391,6 +391,14 @@ exception and the `F13` canary that catches a desynchronised run.
   `[G]` from STANDBY avoids powering on at all). One known limit: a
   headless capture cannot get a live audio tap, so the visualizer shot
   runs on `syntheticAudio()` and reads smoother than the real thing.
+  **`og.jpg` is derived, not captured** — it is the hero fitted onto the
+  1200x630 canvas social scrapers crop to, written by the `hero` recipe
+  itself (`shoot.mjs og` is an alias for that recipe). It was a manual
+  step until 2026-08-28 and that is exactly how it went stale: the
+  nameplate change regenerated all four captures and left the social card
+  — the image most people see first, and the only one nobody looks at
+  locally — still showing the old header. A shot no tool owns is a shot
+  that rots.
 - Verify feel changes in a browser against the dev server as well as in the
   suite — timing, sound and texture are most of what matters here.
 - **Check the frame rate before believing a live browser check.** A Chrome

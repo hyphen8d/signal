@@ -170,6 +170,19 @@ async function tuneTo(api, preset) {
   await sleep(2500) // let the lock sequence's sweeps and text resolves finish
 }
 
+// og.jpg is not a capture of its own -- it IS the hero, fitted onto the
+// 1200x630 canvas every social scraper crops to (see index.html's og:image
+// note for why that size and why padding rather than cropping: handed the
+// 4:3 hero directly, a scraper centre-crops the top and bottom off the tube).
+//
+// Derived here rather than left as the manual step it used to be, because
+// that is precisely how it went stale. The 2026-08-28 nameplate change
+// regenerated all four captures and left the social card still showing
+// MODEL SG-1 -- on the one image most people see FIRST, and the only one
+// nobody ever looks at locally. A shot that no tool owns is a shot that
+// rots.
+const OG = { out: 'og.jpg', box: '1200x630' }
+
 const RECIPES = {
   // [G] straight from STANDBY: no power-on, no playback. See note 3.
   async guide(api, tmp) {
@@ -184,7 +197,7 @@ const RECIPES = {
     await tuneTo(api, 3)
     await api.settleFrames()
     await api.png(path.join(tmp, 'f0.png'))
-    return { tiles: ['f0.png'], out: 'hero.jpg' }
+    return { tiles: ['f0.png'], out: 'hero.jpg', derive: [OG] }
   },
   // README: "DISTORTION FIELD's fire effect" -- preset 2, whose visual is FLAME.
   async visualizer(api, tmp) {
@@ -232,9 +245,14 @@ const RECIPES = {
   },
 }
 
-const want = args.filter((a) => !a.startsWith('--'))
-const names = want.length ? want : Object.keys(RECIPES)
-for (const n of names) if (!RECIPES[n]) { console.error(`Unknown shot "${n}". Known: ${Object.keys(RECIPES).join(', ')}`); process.exit(2) }
+// `shoot.mjs og` names the file someone is actually looking for, and runs the
+// hero recipe -- og.jpg is derived from that capture and cannot be taken on
+// its own. Listed in the error message below for the same reason.
+const ALIASES = { og: 'hero' }
+const want = args.filter((a) => !a.startsWith('--')).map((a) => ALIASES[a] ?? a)
+const names = [...new Set(want.length ? want : Object.keys(RECIPES))]
+const known = [...Object.keys(RECIPES), ...Object.keys(ALIASES)].join(', ')
+for (const n of names) if (!RECIPES[n]) { console.error(`Unknown shot "${n}". Known: ${known}`); process.exit(2) }
 
 for (const name of names) {
   const tmp = mkdtempSync(path.join(tmpdir(), `signal-${name}-`))
@@ -258,6 +276,13 @@ for (const name of names) {
     // Four: append side by side first, then fit the strip to 1900 wide.
     if (src.length === 1) magick([...src, '-resize', `${W}x${H}`, '-quality', '88', dest])
     else magick([...src, '+append', '-resize', '1900x', '-quality', '88', dest])
-    console.log(`-> screenshots/${out}`)
+    process.stdout.write(`-> screenshots/${out}`)
+    // Fit inside the box, then pad out to it on black, centred. -resize alone
+    // would leave it 842 wide; -extent alone would crop.
+    for (const d of result.derive ?? []) {
+      magick([dest, '-resize', d.box, '-background', 'black', '-gravity', 'center', '-extent', d.box, '-quality', '88', path.join(SHOTS, d.out)])
+      process.stdout.write(` + ${d.out}`)
+    }
+    console.log('')
   } finally { rmSync(tmp, { recursive: true, force: true }) }
 }
