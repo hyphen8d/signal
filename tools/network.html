@@ -129,6 +129,23 @@
   .tab:hover { color: var(--ink-dim); }
   .tab.on { color: var(--amber); border-color: var(--line); background: #0c1012; }
 
+  /* ---- roster health ---- */
+  .health-bars { display: flex; flex-direction: column; gap: 5px; margin: 8px 0 12px; }
+  .health-bar { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .health-bar .cs { min-width: 150px; color: var(--ink); }
+  .health-bar .track { flex: 1; height: 10px; background: #11181c; border: 1px solid var(--line); border-radius: 2px; overflow: hidden; display: flex; }
+  .health-bar .done { background: var(--green); opacity: 0.55; }
+  .health-bar .bad { background: var(--red); }
+  .health-bar .num { min-width: 96px; text-align: right; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .health-flag { display: flex; align-items: baseline; gap: 10px; padding: 5px 0; border-bottom: 1px solid #11181c; flex-wrap: wrap; }
+  .health-flag:last-child { border-bottom: 0; }
+  .health-flag .cs { min-width: 150px; color: var(--ink-dim); font-size: 11.5px; }
+  .health-flag .what { flex: 1; min-width: 260px; color: var(--ink); }
+  .health-flag .yid { font-size: 11px; color: var(--ink-faint); }
+  .fl { font-size: 11px; border: 1px solid #5a2e2e; color: var(--red); border-radius: 2px; padding: 0 6px; white-space: nowrap; }
+  .fl.soft2 { border-color: #5a4a2e; color: var(--amber); }
+  .health-note { color: var(--ink-dim); font-size: 11.5px; margin: 6px 0 0; }
+
   /* ---- voice & drops ---- */
   .clip-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid #11181c; flex-wrap: wrap; }
   .clip-row:last-child { border-bottom: 0; }
@@ -356,6 +373,14 @@
       <span class="tagline" id="voice-summary"></span>
     </div>
     <div class="panel-body" id="voice-body"></div>
+  </div>
+
+  <div class="panel" id="panel-health">
+    <div class="panel-head" data-toggle="panel-health" role="button" tabindex="0" aria-controls="panel-health">
+      <span class="chevron">&#9654;</span><span class="callsign">ROSTER HEALTH</span>
+      <span class="tagline" id="health-summary"></span>
+    </div>
+    <div class="panel-body" id="health-body"></div>
   </div>
 
   <div id="stations"></div>
@@ -631,6 +656,7 @@ function render() {
   renderPending()
   renderOverlaps()
   renderVoice()
+  renderHealth()
   renderStations()
 }
 
@@ -644,7 +670,7 @@ function renderJump() {
   for (const [id, label] of [
     ['panel-ops', 'preflight'], ['panel-deploy', 'deploy'], ['panel-audition', 'audition'],
     ['panel-pending', 'pending'], ['panel-overlaps', 'overlap'],
-    ['panel-voice', 'voice'],
+    ['panel-voice', 'voice'], ['panel-health', 'health'],
   ]) {
     bar.appendChild(el('button', {
       class: 'chip',
@@ -1181,6 +1207,139 @@ async function approvePending(entry) {
   document.getElementById('panel-' + st.id).classList.add('open')
   g.textContent = `approved "${entry.title}" onto ${st.callsign} — unsaved. Use "save tracks" to commit it to stations.js.`
   g.style.color = 'var(--green)'
+}
+
+// ---- roster health ---------------------------------------------------
+// The counterpart to AUDITION: that one vets tracks on the way IN, this one
+// re-asks the same questions of tracks already on the roster. Until now the
+// strict checks ran once, on the day a track was added, and never again --
+// while all three things they catch (age-gating, embed revocation, a licence
+// narrowed by a re-upload) are things that happen AFTER. Both tools share
+// tools/lib/probe.mjs, so "playable" has one definition.
+//
+// The narrow-licence case is why this is a panel and not a footnote: it is
+// invisible from here. A track licensed in nine countries including the US
+// plays perfectly for the person checking it and is dead for nearly everyone
+// else. Nothing else in this dashboard would ever say so.
+//
+// Deliberately not a one-shot sweep. A full pass is one watch-page fetch per
+// track against an endpoint that throttles after a few hundred, so it would
+// fail partway EVERY time and return a wall of UNVERIFIED that reads like
+// findings. check-roster.mjs keeps a record and works through the roster in
+// batches; this panel renders that record and asks for the next batch.
+let health = null
+
+function healthFlagEl(f) {
+  // Amber for "we could not check", red for "we checked and it is wrong" --
+  // an unverified row is not a finding about the track.
+  const soft = f.startsWith('UNVERIFIED')
+  return el('span', { class: 'fl' + (soft ? ' soft2' : ''), title: healthFlagHelp(f) }, f)
+}
+function healthFlagHelp(f) {
+  if (f.startsWith('NARROW-LICENCE')) return 'Licensed in fewer than 20 countries. It may well play for you — the US is usually among them — and be dead air for most listeners. This is the failure you cannot hear from here.'
+  if (f === 'LOGIN_REQUIRED') return 'Age-gated. The IFrame player cannot satisfy a login, so this track plays as silence rather than failing loudly.'
+  if (f === 'NO-EMBED') return 'The uploader has disallowed embedding, so the player cannot have it at all.'
+  if (f === 'NOT-US') return 'Not licensed in the US.'
+  if (f.startsWith('DEAD')) return 'oEmbed no longer returns this video at all — removed, private, or the id is wrong.'
+  if (f.startsWith('UNVERIFIED')) return 'The probe did not complete, so nothing was actually checked. Not a finding about the track.'
+  return 'playabilityStatus reported by YouTube.'
+}
+
+function renderHealth() {
+  const body = document.getElementById('health-body')
+  const summary = document.getElementById('health-summary')
+  body.innerHTML = ''
+
+  if (!health) {
+    summary.textContent = 'age-gating, embed blocks and narrowed licences, on tracks already on the roster'
+    body.appendChild(el('div', { class: 'save-msg' },
+      'AUDITION vets tracks on the way in; this re-asks the same questions of tracks already on the roster — the checks that catch a track going bad after it was added. Reading the record costs nothing.'))
+    const load = el('button', { class: 'primary' }, 'read the record')
+    load.addEventListener('click', async () => {
+      load.disabled = true; load.textContent = 'reading…'
+      try { health = await api('health'); renderHealth() }
+      catch (e) {
+        load.disabled = false; load.textContent = 'read the record'
+        body.appendChild(el('div', { class: 'fatal' }, String(e.message || e)))
+      }
+    })
+    body.appendChild(load)
+    return
+  }
+
+  const h = health
+  const pct = h.total ? Math.round((h.checked / h.total) * 100) : 0
+  summary.textContent = `${h.checked}/${h.total} checked · ${h.flaggedCount} flagged` +
+    (h.never ? ` · ${h.never} never looked at` : '') + (h.stale ? ` · ${h.stale} stale` : '')
+
+  body.appendChild(el('div', { class: 'save-msg' },
+    `${pct}% of the roster has been checked beyond oEmbed. Never-checked tracks are checked first, then the oldest — so running this repeatedly walks the whole roster.`))
+
+  // --- findings first: this is the reason to open the panel ---
+  if (h.flaggedCount) {
+    body.appendChild(el('div', { class: 'group-title' }, `flagged — ${h.flaggedCount}`))
+    for (const f of h.flagged) {
+      body.appendChild(el('div', { class: 'health-flag' },
+        el('span', { class: 'cs' }, f.callsign),
+        el('span', { class: 'what' }, `${f.artist} — ${f.title}`),
+        ...f.flags.map(healthFlagEl),
+        el('span', { class: 'yid' }, f.youtubeId),
+        el('button', {
+          class: 'small',
+          title: 'Open the video on YouTube to see it for yourself.',
+          onclick: () => window.open(`https://www.youtube.com/watch?v=${f.youtubeId}`, '_blank'),
+        }, 'watch ↗')))
+    }
+    body.appendChild(el('div', { class: 'health-note' },
+      'A flag is evidence, not a verdict — the fix is usually a different upload of the same song, which is an AUDITION job. Rejecting one through this dashboard records the reason in both files.'))
+  } else if (h.checked) {
+    body.appendChild(el('div', { class: 'empty' }, 'nothing flagged in what has been checked so far'))
+  }
+
+  if (h.unverified) {
+    body.appendChild(el('div', { class: 'health-note' },
+      `${h.unverified} track(s) carry an UNVERIFIED result — the probe did not complete for them, so nothing was checked. Re-run later; the limit clears on its own.`))
+  }
+
+  // --- coverage per station ---
+  body.appendChild(el('div', { class: 'group-title' }, 'coverage'))
+  const bars = el('div', { class: 'health-bars' })
+  for (const st of h.byStation) {
+    const donePct = st.total ? (st.checked - st.flagged) / st.total * 100 : 0
+    const badPct = st.total ? st.flagged / st.total * 100 : 0
+    bars.appendChild(el('div', { class: 'health-bar' },
+      el('span', { class: 'cs' }, st.callsign),
+      el('span', { class: 'track' },
+        el('span', { class: 'done', style: `width:${donePct}%` }),
+        el('span', { class: 'bad', style: `width:${badPct}%` })),
+      el('span', { class: 'num' }, `${st.checked}/${st.total}` + (st.flagged ? `  ${st.flagged}!` : ''))))
+  }
+  body.appendChild(bars)
+
+  // --- run a batch ---
+  const actions = el('div', { class: 'station-actions', style: 'margin-top:12px' })
+  const sizeSel = el('select', {})
+  for (const n of [40, 80, 120]) sizeSel.appendChild(el('option', { value: String(n) }, `${n} tracks`))
+  const go = el('button', { class: 'go' }, '▶ check next batch')
+  const log = el('div', { class: 'console' })
+  go.addEventListener('click', async () => {
+    go.disabled = true; sizeSel.disabled = true
+    log.innerHTML = ''
+    try {
+      await streamApi('health', { batch: +sizeSel.value }, (ev) => {
+        if (ev.type === 'result' && ev.result) health = ev.result
+        if (ev.text) log.appendChild(el('div', { class: 'l-' + (ev.type === 'cmd' ? 'cmd' : ev.type === 'err' ? 'out' : 'out') }, ev.text))
+        log.scrollTop = log.scrollHeight
+      })
+    } finally {
+      go.disabled = false; sizeSel.disabled = false
+      renderHealth()
+    }
+  })
+  actions.appendChild(go); actions.appendChild(sizeSel)
+  body.appendChild(actions)
+  body.appendChild(help('Network, and slow — roughly a second a track. It stops early if YouTube starts throttling rather than filling the record with results that mean nothing, and picks up where it left off next time.'))
+  body.appendChild(log)
 }
 
 // ---- voice & drops ---------------------------------------------------

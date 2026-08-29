@@ -21,6 +21,7 @@ python3 tools/dev-server.py 8000    # dev server (no-store headers); open http:/
 node --test tests/*.test.mjs        # npm test — headless suite, ~2s, no network
 node tools/lint-roster.js           # npm run lint — offline roster rules
 node tools/verify-roster.js         # npm run verify — lint + oEmbed check of every track (network)
+node tools/check-roster.mjs         # npm run health — deep-probe roster tracks in batches (network)
 node tools/stations-to-md.js        # npm run stations — regenerate stations.md (never hand-edit it)
 node tools/stamp.js                 # npm run stamp — bump build.json; RUN BEFORE EVERY DEPLOY
 node tools/audition.js --station=<id> # npm run audition — vet candidate tracks (network)
@@ -352,6 +353,23 @@ exception and the `F13` canary that catches a desynchronised run.
   re-proposes the track. Rejecting by hand still needs both files edited.
   If a station has no entry in `station-profiles.json`, the dashboard says so
   rather than silently writing only one of the two.
+- **`tools/check-roster.mjs` closes the gap between those two.** `audition.js`
+  asks `playabilityStatus`, `playableInEmbed` and `availableCountries` of a
+  candidate; `verify-roster.js` asks oEmbed, and only oEmbed, of the roster —
+  so until 2026-08-29 the strict checks ran once, on the day a track was
+  added, and never again. All three things they catch are things that happen
+  *after*: an upload gets age-gated (`LOGIN_REQUIRED`, which the IFrame player
+  cannot satisfy, so it plays as dead air), embedding is revoked, or a
+  re-upload narrows the licence. That last one is invisible from the curator's
+  chair — a track licensed in nine countries including the US plays fine here
+  and is dead for nearly everyone else. The first real run found exactly those
+  two on DISTORTION FIELD. Both tools now share `tools/lib/probe.mjs`, so
+  "playable" has one definition and `tests/probe.test.mjs` pins the
+  thresholds. It is **incremental on purpose**: a full pass is one watch-page
+  fetch per track against an endpoint that throttles after a few hundred, so
+  it works in batches, keeps its record in `tools/roster-health.json`, and
+  **stops early when throttled rather than recording UNVERIFIED rows that say
+  nothing** — a throttled run must never read as a clean one.
 - **`tools/audition.js` is the candidate-side counterpart to `verify-roster.js`**
   (`--json` prints the same rows as data on stdout with every human line
   routed to stderr — one code path, so the dashboard and the terminal cannot

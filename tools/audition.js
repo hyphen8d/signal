@@ -52,6 +52,10 @@ const flag = (name, dflt = null) => {
   const hit = args.find(a => a.startsWith(`--${name}=`))
   return hit ? hit.slice(name.length + 3) : dflt
 }
+// The probe itself lives in lib/probe.mjs -- shared with check-roster.mjs
+// so "is this playable" has one definition. See that file's header.
+import { UA, mapLimit, oembed, playability, decayFlags } from './lib/probe.mjs'
+
 const stationArg = flag('station')
 const searches = args.filter(a => a.startsWith('--search=')).map(a => a.slice(9))
 const limit = +flag('limit', 6)
@@ -68,74 +72,9 @@ const ids = args.filter(a => !a.startsWith('--'))
 const asJson = args.includes('--json')
 if (asJson) console.log = (...a) => console.error(...a)
 
-// Same small concurrency cap as verify-roster.js -- polite to the endpoint.
-async function mapLimit(items, n, fn) {
-  const out = new Array(items.length)
-  let next = 0
-  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => {
-    while (next < items.length) { const i = next++; out[i] = await fn(items[i], i) }
-  }))
-  return out
-}
 
-// CONSENT=YES+1 short-circuits YouTube's consent interstitial, which otherwise
-// bounces a cookie-less client between redirects until undici gives up with
-// "redirect count exceeded" (hit for real on a DRIFT MODE search, 2026-08-26).
-const UA = {
-  'accept-language': 'en-US,en;q=0.9',
-  'user-agent': 'Mozilla/5.0',
-  cookie: 'CONSENT=YES+1',
-}
 
-async function oembed(id) {
-  try {
-    const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`, { headers: UA })
-    if (r.status !== 200) return { ok: false, status: r.status }
-    const j = await r.json()
-    return { ok: true, status: 200, title: j.title, channel: j.author_name }
-  } catch (err) {
-    return { ok: false, status: 'ERR', error: String(err?.message ?? err) }
-  }
-}
 
-// The watch page carries what oEmbed doesn't: length, region availability and
-// whether the IFrame player is allowed to have it at all.
-//
-// 2026-08-26 -- this used to fail OPEN, and a GREEN ROOM curation pass proved
-// how badly that reads. YouTube rate-limits the watch endpoint after a few
-// hundred requests: it answers 429 and redirects to google.com/sorry, a real
-// page containing none of the fields below. Every regex then missed, and the
-// old defaults (`embeddable: true`, `status: '?'`, `countries/us: null`) meant
-// assess() had nothing to flag -- so an ENTIRE throttled run printed clean,
-// indistinguishable from a genuinely clean one except for `?` in the duration
-// column. That is the worst possible shape for a tool whose only job is
-// catching what oEmbed can't see. It now fails CLOSED: anything short of a
-// 200 with real player data comes back `probed: false` and is flagged
-// UNVERIFIED, and `embeddable` is null (unknown) rather than true.
-//
-// `lengthSeconds` is the liveness probe for the parse, not just a datum -- a
-// page that yields no duration yielded nothing else either.
-async function playability(id) {
-  const unprobed = (reason) => ({
-    probed: false, reason, seconds: 0, countries: null, us: null, embeddable: null, status: '?',
-  })
-  try {
-    const res = await fetch(`https://www.youtube.com/watch?v=${id}`, { headers: UA })
-    const html = await res.text()
-    if (res.status !== 200) return unprobed(`HTTP ${res.status}`)
-    const seconds = +(html.match(/"lengthSeconds":"(\d+)"/)?.[1] ?? 0)
-    if (!seconds) return unprobed('no player data')
-    const countries = html.match(/"availableCountries":\[([^\]]*)\]/)?.[1]
-    return {
-      probed: true,
-      seconds,
-      countries: countries ? countries.split(',').length : null,
-      us: countries ? countries.includes('"US"') : null,
-      embeddable: !/"playableInEmbed":false/.test(html),
-      status: html.match(/"playabilityStatus":\{"status":"(\w+)"/)?.[1] ?? '?',
-    }
-  } catch (err) { return unprobed(String(err?.message ?? err)) }
-}
 
 async function search(query, n) {
   // sp=EgIQAQ%3D%3D restricts to videos, so playlists/channels don't crowd out
@@ -162,24 +101,14 @@ const SUSPECT = /\b(live|remix|rework|cover|karaoke|sped ?up|slowed|nightcore|8d
 
 async function assess(id, stationChannels) {
   const e = await oembed(id)
-  if (!e.ok) return { id, dead: true, status: e.status, flags: [`DEAD ${e.status}${e.error ? ` (${e.error})` : ''}`] }
+  if (!e.ok) return { id, dead: true, status: e.status, flags: decayFlags(e, {}) }
   const p = await playability(id)
-  const flags = []
-  // Loudest first: without this the row below reads as "checked, nothing
-  // wrong" when in fact nothing was checked at all. See playability().
-  if (!p.probed) flags.push(`UNVERIFIED(${p.reason})`)
-  if (p.us === false) flags.push('NOT-US')
-  // 2026-08-26 -- a US-available check is NOT enough, which four GREEN ROOM
-  // tracks demonstrated in one pass: their "- Topic" uploads were licensed in
-  // 1, 2, 2 and 4 countries respectively and every one of them listed the US,
-  // so a US-only check passed all four while they would have failed for
-  // everyone else. Observed counts split cleanly -- the narrow ones came in
-  // at 1-8, everything healthy at 115-249 -- so 20 sits in open space rather
-  // than on a judgement call. The better channel keeps turning out to hold the
-  // narrower licence; that is the trade this roster meets constantly.
-  if (p.countries !== null && p.countries < 20) flags.push(`NARROW-LICENCE:${p.countries}`)
-  if (p.embeddable === false) flags.push('NO-EMBED')
-  if (p.status !== 'OK' && p.status !== '?') flags.push(p.status)
+  // The decay flags -- DEAD/UNVERIFIED/NOT-US/NARROW-LICENCE/NO-EMBED and the
+  // playability status -- are shared with check-roster.mjs via lib/probe.mjs,
+  // so a track cannot pass the roster check and fail here (or vice versa) on
+  // the same evidence. What follows is audition-only: the questions you ask
+  // of a CANDIDATE, which a track already on the roster has answered.
+  const flags = decayFlags(e, p)
   if (SUSPECT.test(e.title)) flags.push('CHECK-VERSION')
 
   const source = /VEVO$/i.test(e.channel) ? 'vevo'

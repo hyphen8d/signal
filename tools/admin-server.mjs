@@ -142,6 +142,7 @@ const TASKS = {
   stations: { label: 'regenerate stations.md', cmd: () => ['node', ['tools/stations-to-md.js']] },
   deadfeedback: { label: 'input-feedback sweep', cmd: () => ['node', ['tools/dead-feedback.mjs']] },
   shoot: { label: 'regenerate screenshots', network: true, cmd: () => ['node', ['tools/shoot.mjs']] },
+  health: { label: 'roster health batch', network: true, cmd: () => ['node', ['tools/check-roster.mjs']] },
 }
 
 /** Run a command, streaming every line to `emit`. Resolves with the exit
@@ -178,6 +179,16 @@ function run(cmd, args, emit, opts = {}) {
 // ---------------------------------------------------------------------
 // git
 // ---------------------------------------------------------------------
+/** run() streams; this one collects. For the cheap read-only invocations
+ *  (check-roster --report) where the caller wants a value, not a log. */
+function capture(cmd, args, opts = {}) {
+  let stdout = '', stderr = ''
+  return run(cmd, args, (ev) => {
+    if (ev.type === 'out') stdout += ev.text + '\n'
+    else if (ev.type === 'err') stderr += ev.text + '\n'
+  }, opts).then((code) => ({ code, stdout, stderr }))
+}
+
 function git(args) {
   return new Promise((resolve) => {
     const child = spawn('git', args, { cwd: ROOT })
@@ -608,6 +619,37 @@ async function handleApi(req, res, url) {
     s.emit({ type: 'git', state: await gitState() })
     s.emit({ type: 'exit', code: 0 })
     return s.end()
+  }
+
+  // Roster health. Two routes because the two things cost wildly different
+  // amounts: reading the record is a file read, running a batch is minutes of
+  // network. The panel renders from GET on every open and only spends the
+  // network when asked.
+  if (route === 'health' && req.method === 'GET') {
+    const out = await capture('node', ['tools/check-roster.mjs', '--report', '--json'])
+    let parsed = null
+    try { parsed = JSON.parse(out.stdout) } catch (e) {}
+    if (!parsed) return sendJson(res, 500, { error: out.stderr.trim() || 'check-roster --report produced no JSON' })
+    return sendJson(res, 200, parsed)
+  }
+  if (route === 'health' && req.method === 'POST') {
+    const { batch, stationId } = await readBody(req)
+    const args = ['tools/check-roster.mjs', '--json']
+    if (batch) args.push(`--batch=${Math.max(1, Math.min(200, +batch || 40))}`)
+    if (stationId) args.push(`--station=${stationId}`)
+    const s2 = openStream(res)
+    let json = ''
+    const code = await run('node', args, (ev) => {
+      // Same split as the audition route: --json owns stdout, every human
+      // line is on stderr, so progress streams while the result is collected.
+      if (ev.type === 'out') { json += ev.text + '\n'; return }
+      s2.emit(ev)
+    })
+    let parsed = null
+    try { parsed = JSON.parse(json) } catch (e) {}
+    s2.emit({ type: 'result', result: parsed, raw: parsed ? undefined : json })
+    s2.emit({ type: 'exit', code })
+    return s2.end()
   }
 
   if (route === 'audition' && req.method === 'POST') {
