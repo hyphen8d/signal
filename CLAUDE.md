@@ -48,6 +48,32 @@ dependencies; binds loopback, checks the `Host` header, and requires an
 cannot send without a CORS preflight this server never answers. That last
 guard is not decorative: this process can run `git push`.
 
+**On the development box it is already running, as a systemd USER unit** —
+`tools/signal-admin.service`, a reference copy of what is installed at
+`~/.config/systemd/user/`. So the first thing to know is that
+`npm run admin` will fail with `EADDRINUSE` while the unit holds the port:
+the answer is almost never to start one, it is to restart the one that is up.
+
+```bash
+systemctl --user status signal-admin
+systemctl --user restart signal-admin          # after editing admin-server.mjs
+journalctl --user -u signal-admin -f
+systemctl --user disable --now signal-admin    # stop it coming back
+```
+
+**A code change to `tools/admin-server.mjs` does not take effect until that
+restart.** `tools/network.html` needs no restart at all — `serveStatic()`
+re-reads from disk per request under `no-store` — which makes the split easy
+to forget in the direction that wastes the most time: the page updates on a
+reload, the routes it is calling do not.
+
+The unit carries its own reasoning in its comments (why it binds the tailnet
+rather than loopback, why `Restart=always` with no start-rate limit, why the
+mise *shim* rather than the version-pinned node path) and is the authority on
+all three; read it before changing how the service runs. Note it is bound to
+the tailnet, not loopback, unlike the default described above — this box is
+worked on over SSH, and the two ways across are covered below.
+
 **This box is normally worked on over SSH, where `127.0.0.1:8080` names the
 laptop, not this machine** — which is exactly how the first live check of the
 dashboard failed, with a browser error page against a server `curl` could

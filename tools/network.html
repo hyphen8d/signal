@@ -318,12 +318,12 @@
   <div class="toolbar">
     <button id="btn-save-all">save all changed stations</button>
     <button id="btn-refresh">reload from disk</button>
-    <button id="btn-check-all" title="oEmbed-checks every track on every station. Network, and slow on a 432-track roster.">check all for dead links</button>
+    <button id="btn-check-all">check all for dead links</button>
   </div>
   <p class="help" style="margin:-10px 0 16px">
     <b>save all changed stations</b> writes every unsaved track and identity edit to stations.js ·
     <b>reload from disk</b> discards them and re-reads the file ·
-    <b>check all for dead links</b> asks YouTube oEmbed about all 432 tracks — that only proves a video
+    <b>check all for dead links</b> asks YouTube oEmbed about all <span id="check-all-count">?</span> tracks — that only proves a video
     <i>exists</i>; use AUDITION for duration, region and embeddability.
   </p>
 
@@ -647,6 +647,13 @@ function render() {
   document.getElementById('jump').style.display = ''
   document.getElementById('totals').innerHTML =
     `<b>${t.stationCount}</b> stations &middot; <b>${t.trackCount}</b> tracks &middot; <b>${t.uniqueArtists}</b> unique artists`
+  // The roster size appears in three other bits of copy. It used to be typed
+  // into each of them, and had drifted to 432 against a real 386 -- the line
+  // immediately above was right only because it is computed. All of them now
+  // read the same totals, so there is nothing left to drift.
+  document.getElementById('check-all-count').textContent = t.trackCount
+  document.getElementById('btn-check-all').title =
+    `oEmbed-checks every track on every station. Network, and slow on a ${t.trackCount}-track roster.`
   renderConnStatus()
   renderJump()
   renderUnsaved()
@@ -774,7 +781,7 @@ function renderOps() {
   body.appendChild(help(
     'PREFLIGHT is the "is this safe to ship" check: <b>lint</b> (roster rules, instant) then the ' +
     '<b>full test suite</b>. Roster verify is opt-in because it asks YouTube about every one of ' +
-    'the 432 tracks and takes minutes — lint failing first means never spending that.'))
+    `the ${roster.totals.trackCount} tracks and takes minutes — lint failing first means never spending that.`))
 
   const stepsRow = el('div', { class: 'steps' })
   const { box: console_, bar: consoleBar } = consoleBox('output')

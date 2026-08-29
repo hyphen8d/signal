@@ -126,7 +126,19 @@ export function playProcessedVoiceClip(buffer, ctx, t, gainMult = 1) {
   // sits. Check an incoming clip with:
   //   ffmpeg -i clip.mp3 -af silencedetect=noise=-45dB:d=0.08 -f null -
   // and pad with `-af apad=pad_dur=<n>` if the last silence_start is later
-  // than duration - 0.4.
+  // than duration - 0.4. Note `-v info`, not the `-v error` that looks
+  // tidier: silencedetect logs at INFO, so `-v error` prints nothing and
+  // reads exactly like a clip with no trailing silence at all.
+  //
+  // 2026-08-29 -- this rule was broken a SECOND time, by
+  // station-id-synapse.mp3: 0.23s of tail, shipped in the MIDNIGHT NEON ->
+  // SYNAPSE rename, and audibly cut off in production until it was padded to
+  // 0.53s. Twice now the offender has been the newest clip on the disk, which
+  // is what a rule that only lives in a comment gets you. It no longer only
+  // lives in a comment: the admin dashboard's VOICE & DROPS panel decodes
+  // every clip and measures this, at the same -45dB threshold, so opening the
+  // panel performs the check that used to depend on remembering to run
+  // ffmpeg. That panel is how this one was caught.
   gain.gain.setValueAtTime(peakGain, t + Math.max(0, dur - 0.4))
   gain.gain.exponentialRampToValueAtTime(0.0001, t + dur)
 

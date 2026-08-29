@@ -1,0 +1,49 @@
+# SIGNAL network admin backend -- see ~/Work/signal/CLAUDE.md ("The admin
+# backend"). Written 2026-08-27.
+#
+# Bound to the tailnet, not loopback, because this box is worked on over SSH
+# from another machine. There is NO password on this service and it can
+# commit and push to the repo's remote, so what protects it is (a) the
+# tailnet being an authenticated mesh, and (b) the server's own Host-header
+# allowlist. Do not move it to 0.0.0.0.
+#
+#   systemctl --user status signal-admin
+#   systemctl --user restart signal-admin
+#   journalctl --user -u signal-admin -f
+#   systemctl --user disable --now signal-admin     # stop it coming back
+
+[Unit]
+Description=SIGNAL network admin backend (roster, preflight, deploy)
+Documentation=file:///home/hyphen8d/Work/signal/CLAUDE.md
+# tailscaled is a SYSTEM service and a user unit cannot order itself against
+# it, so this is a hint rather than a guarantee -- the real handling of "the
+# tailnet is not up yet" is Restart=, below.
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hyphen8d/Work/signal
+
+# The mise SHIM, not the versioned install path
+# (~/.local/share/mise/installs/node/26.7.0/bin/node). The shim is a symlink
+# to /usr/bin/mise, which resolves the pinned version at exec time -- so a
+# node upgrade through mise does not leave this unit pointing at a directory
+# that no longer exists.
+ExecStart=/home/hyphen8d/.local/share/mise/shims/node tools/admin-server.mjs --host=tailscale 8080
+
+# At boot this unit will usually lose the race with tailscaled, exit 1 from
+# resolveHost(), and be restarted until the interface appears. That is the
+# intended path, which is why it is Restart=always with no start-rate limit
+# rather than on-failure with the default burst cap -- the default would give
+# up after 5 tries in 10s and leave the service dead for the whole session.
+Restart=always
+RestartSec=3
+StartLimitIntervalSec=0
+
+# It runs `git push`, node, and the test suite; it does not need more than
+# the user it already runs as.
+NoNewPrivileges=true
+PrivateTmp=false
+
+[Install]
+WantedBy=default.target
