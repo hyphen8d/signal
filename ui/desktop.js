@@ -52,7 +52,15 @@ export default {
     // to sit here too (10th pass) but moved down onto the status line in
     // the 17th pass, since it wasn't obvious tucked in next to the
     // title text -- see setStatus().
-    const brand = 'MODEL SG-1  -  SIGNAL RECEIVER'
+    // 2026-08-28 -- "MODEL " dropped from the front of the plate. Row 0 is
+    // the busiest row on the screen (wordmark, sleep countdown, plate,
+    // clock) and the word was the least load-bearing thing on it: the set is
+    // called the SG-1, and "MODEL" only ever said that the next token was a
+    // model number, which "SG-1  -  SIGNAL RECEIVER" already says by shape.
+    // Worth six columns to the sleep timer -- but only three of clearance,
+    // because the plate is CENTRED and gives back half of what it loses at
+    // each end. drawSleep()'s note carries that arithmetic.
+    const brand = 'SG-1  -  SIGNAL RECEIVER'
     term.text(centerX(term.cols, brand), 0, brand, FAINT, 1)
     this.drawSleep(s)
   },
@@ -64,9 +72,12 @@ export default {
    *  enterVisualizer's clear), so the countdown stays readable in the state
    *  someone on their way to sleep is most likely to have left the set in.
    *
-   *  Nine fixed columns, always mm:ss, so no digit ever shifts under the eye
-   *  and there are two clear columns before the brand plate at the widest
-   *  reading (SLP 60:00). Blank when nothing is armed -- an OFF indicator
+   *  Nine fixed columns, always mm:ss, so no digit ever shifts under the eye.
+   *  At the widest reading (SLP 60:00) that used to leave two clear columns
+   *  before the brand plate; dropping "MODEL " from the plate on 2026-08-28
+   *  makes it five. Half of six, because the plate is centred -- worth
+   *  knowing before trimming it further for room that isn't there.
+   *  Blank when nothing is armed -- an OFF indicator
    *  for a control most visitors will never press is clutter, and the row is
    *  shared with the wordmark. */
   drawSleep(s) {

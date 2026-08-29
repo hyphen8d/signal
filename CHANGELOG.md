@@ -527,6 +527,22 @@ even where it can't act.
   than touching the shared envelope again, so every voice-clip asset now
   carries the same ~0.5-0.6s safety margin the station IDs already have.
 
+### Title bar (2026-08-28)
+
+- **The nameplate is `SG-1  -  SIGNAL RECEIVER` now, not `MODEL SG-1  -
+  SIGNAL RECEIVER`.** Row 0 is the busiest row on the screen -- wordmark,
+  sleep countdown, plate and clock all share it -- and "MODEL" was the least
+  load-bearing thing on it: the set is called the SG-1, and the word only
+  announced that a model number followed, which the shape of the line already
+  says. The sleep timer sits immediately left of the plate and had two clear
+  columns at its widest reading (`SLP 60:00`); it now has five. Six columns
+  came off the plate but only three of clearance came back, because the plate
+  is centred and returns half of what it loses at each end.
+- **The boot readout's banner lost it too**, deliberately in step. The
+  nameplate and the POST banner are the two places the set says its own name,
+  and a change that reaches one and not the other is the same drift the
+  SYNAPSE rename got caught by.
+
 ### Content ops (2026-08-28)
 
 - **Two CIPHER uploads swapped over a playback-stutter report (issue #5).** A

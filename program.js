@@ -846,7 +846,14 @@ export default {
     // real constants (FREQ_MIN/MAX, STATIONS.length) so this can't drift out
     // of sync with the actual band/roster the way a hardcoded line could.
     const bootLines = [
-      'MODEL SG-1  SIGNAL RECEIVER',
+      // 2026-08-28 -- "MODEL " dropped here for the same reason it was
+      // dropped from the title bar's plate (drawChrome): the set is called
+      // the SG-1, and the word only announced that a model number followed.
+      // Kept in step with the plate deliberately -- the nameplate and the
+      // POST banner are the two places the set says its own name, and a
+      // rename that reaches one and not the other is exactly the drift the
+      // SYNAPSE pass got caught by.
+      'SG-1  SIGNAL RECEIVER',
       '',
       `BAND        : ${FREQ_MIN.toFixed(1)} - ${FREQ_MAX.toFixed(1)} KHZ`,
       `PRESETS     : ${STATIONS.length} STATIONS LOADED`,

@@ -42,7 +42,7 @@ export default {
   // 2026-08-22, round 2 -- collapsed to one line, with SG-1 in the
   // middle instead of the full plate text: the two-row mirror read as too
   // heavy on a 42-col phone screen. Back to one row: wordmark left, a short
-  // "SG-1" centered (not the full "MODEL SG-1 - SIGNAL RECEIVER" plate),
+  // "SG-1" centered (not the full "SG-1  -  SIGNAL RECEIVER" plate),
   // clock right. Row 1 goes back to being blank spacer, same as before the
   // two-row version existed.
   // 2026-08-22, round 4 -- header needed to be one row, not two: the
