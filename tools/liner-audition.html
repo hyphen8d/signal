@@ -20,6 +20,8 @@
        wow/flutter and hiss bed the app uses -- at the same LINER_DROP_GAIN_MULT
        a drop gets. An ElevenLabs render sounds materially different once it
        has been through that, and that is the version listeners hear.
+       (Voice and settings are recorded at the top of audio/voice.js --
+       Nathan, Eleven Multilingual v2, stability 81, similarity 100.)
     2. Checks the trailing silence, which is the one thing that has actually
        bitten. The envelope starts its fade at (duration - 0.4), so a clip
        with less than 0.4s of tail is faded down while the speaker is still

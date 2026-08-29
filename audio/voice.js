@@ -9,9 +9,43 @@ const V = globalThis.SIGNAL_BUILD ?? ''
 const { audioCtx, speakerOut } = await import(`./sfx.js?v=${V}`)
 const { DUCK_TAIL_MS } = await import(`../constants.js?v=${V}`)
 
+// ---------------------------------------------------------------------
+// VOICE PROVENANCE -- what made every mp3 in audio/, and what to match when
+// making another one. Confirmed by the curator 2026-08-29 against the
+// ElevenLabs generation panel for SYNAPSE's station ID.
+//
+//   Voice            Nathan -- Virtual Radio Host
+//   Model            Eleven Multilingual v2
+//   Speed            0.99
+//   Stability        81%
+//   Similarity boost 100%
+//   Style            0%
+//   Speaker boost    enabled
+//
+// Station ID script is "<CALLSIGN>, <frequency, spoken>." -- e.g. SYNAPSE's
+// is literally "SYNAPSE, five sixty-seven point eight." Digits are spelled
+// out; the renderer says "five six seven point eight" if given 567.8.
+//
+// Two things to check on every new clip before it goes in, both of which
+// have bitten:
+//   - TRAILING SILENCE >= 0.4s, ideally ~0.5s. The playback envelope below
+//     starts its fade at (duration - 0.4), so a shorter tail is faded down
+//     while the speaker is still talking. The dashboard's VOICE panel
+//     measures this; it is how SYNAPSE's 0.23s clip was caught.
+//   - LEVEL. SYNAPSE's ID came in around 3dB hotter than the rest of the
+//     set (peak -2.1dB against a typical -5dB) and still sits louder than
+//     everything else, which the duck cannot fix because it scales the
+//     music, not the voice.
+//
+// This block replaces a line that named "Rachel M -- Pro British Radio
+// Presenter" as the voice, which was wrong. Recorded here rather than left
+// as a corrected half-sentence because it was the ONLY place in the repo the
+// voice was named at all, and a wrong answer in the only place anyone would
+// look is worse than no answer.
+// ---------------------------------------------------------------------
+
 // 53rd pass -- network sign-on ID: verbal station IDs, an ElevenLabs-rendered
-// line ("Rachel M -- Pro British Radio
-// Presenter"): "you're now listening to the SIGNAL radio network". This is
+// line: "you're now listening to the SIGNAL radio network". This is
 // the engine's first real audio ASSET -- everything else above is
 // synthesized procedurally; this one loads audio/network-id.mp3 and runs it
 // through a WebAudio chain live at playback time (band-limit, mid-forward
