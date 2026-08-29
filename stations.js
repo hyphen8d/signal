@@ -847,7 +847,7 @@ export const STATIONS = [
       realTrack('LxIyc5qJGzQ', 'My Mistake', 'NINA'),
       realTrack('gzRbL_Jwtzw', 'DiscoDeath', 'Robert Parker'),
       realTrack('VE3QIvywZnU', 'Living the Modern Life', 'SelloRekt & LA Dreams'),
-      realTrack('7fDvxlK2FMc', 'Le Perv (official video)', 'Carpenter Brut'),
+      realTrack('7fDvxlK2FMc', 'Le Perv', 'Carpenter Brut'),
       realTrack('UiSB2Fbw9gs', 'Days of Thunder', 'The Midnight'),
       realTrack('ssdA6IiP3r4', 'Arcade Summer', 'FM-84'),
       realTrack('hd9xGlXGNh0', 'Prelude to War', 'Volkor X'),
@@ -1059,7 +1059,7 @@ export const STATIONS = [
       realTrack('RijB8wnJCN0', 'Insane in the Brain', 'Cypress Hill'),
       realTrack('J7_bMdYfSws', 'California Love', '2Pac feat. Dr. Dre & Roger Troutman'),
       realTrack('cKu3_3mp1U8', 'Let Me Ride', 'Dr. Dre'),
-      realTrack('z5rRZdiu1UE', 'Sabotage (Official Music Video)', 'Beastie Boys'),
+      realTrack('z5rRZdiu1UE', 'Sabotage', 'Beastie Boys'),
       realTrack('E7t8eoA_1jQ', 'Paid In Full', 'Eric B. & Rakim'),
       realTrack('O0uoB45_Uns', 'Stray Bullet', 'Organized Konfusion'),
       // 2026-08-25: 29 -> 37, all 8 new artists. This station had become the
