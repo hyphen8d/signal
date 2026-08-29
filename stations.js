@@ -160,6 +160,48 @@ export const STATIONS = [
     // v0.8: 3 tracks swapped for variety ("Lightning
     // Crashes", "Dollar Bill", "No Rain" out) for Zombie/Possum Kingdom/Buddy
     // Holly below, all oEmbed-verified same as everything else.
+    // CURATION HISTORY, and it lives out here above the array on purpose
+    // (2026-08-28). Both notes below used to sit INSIDE tracks: [] as
+    // headers introducing the batch beneath them -- which is only true for
+    // as long as the order holds.
+    //
+    // It stopped holding. The dashboard's "sort by title" button reads like
+    // a view control and is not one: it reorders the stored array, and a
+    // save writes that order to this file. patchStationTracks did exactly
+    // what it promises, carrying every comment across with its own anchor
+    // track and losing none -- but "the eight below" then introduced
+    // whatever happened to sort next, and one of the eight had been deleted
+    // in the same edit. The comments survived and their meaning did not.
+    //
+    // That sort was reverted, so the batches below are contiguous again and
+    // these notes could go back inside. They are staying out here. The sort
+    // is one click, it looks like a view, and the next person to press it
+    // will not be thinking about comment anchors; a note that names its own
+    // tracks is true regardless of where they sit, and a note that says "the
+    // eight below" is one button away from being a lie. That is the whole
+    // argument, and it cost a curation pass to learn.
+    //
+    // 2026-08-25, +8 and all new artists: Cannonball (The Breeders), Kool
+    // Thing (Sonic Youth), Seether (Veruca Salt), Hey Man, Nice Shot
+    // (Filter), Unsung (Helmet), Honey Bucket (Melvins), Creep (Radiohead),
+    // and Debonair (The Afghan Whigs) -- that last one dropped again on
+    // 2026-08-28, which is why the note names it and the array doesn't.
+    // The roster had 23 artists across 32 tracks and was leaning on repeats
+    // (STP x3, four others x2), so this widened the "ripple effects" half of
+    // the desc rather than deepening the Seattle core: the Sub Pop
+    // label-mates, the Aberdeen progenitor the scene grew out of, the NYC
+    // noise-rock root that made it possible, and the era's radio angst from
+    // outside the northwest. Every ID oEmbed-verified on the artist's own
+    // channel or VEVO -- no fan uploads in that batch, which the Blind Melon
+    // rejection ("not radio version") argues for.
+    //
+    // 2026-08-26, the pending queue approved wholesale and drained: Far
+    // Behind (Candlebox), Hey Jealousy (Gin Blossoms), Lightning Crashes
+    // (Live). All 33 proposals across 8 stations landed at once, so these
+    // arrived as a batch rather than as a curated pass. Every one was
+    // re-verified at approval time (alive, US-available, embeddable, no
+    // duplicate ID, no title collision) rather than trusted from its
+    // 2026-08-23/24 proposal check.
     tracks: [
       realTrack('hTWKbfoikeg', 'Smells Like Teen Spirit', 'Nirvana'),
       realTrack('3mbBbFH9fAg', 'Black Hole Sun', 'Soundgarden'),
@@ -193,32 +235,18 @@ export const STATIONS = [
       realTrack('JXkN3nJyWEA', 'Feel the Pain', 'Dinosaur Jr'),
       realTrack('oFD88EyZ80E', 'Backwater', 'Meat Puppets'),
       realTrack('ht672-wYelc', 'Vasoline', 'Stone Temple Pilots'),
-      // 2026-08-25: +8, all new artists (the roster had 23 artists across 32
-      // tracks and was leaning on repeats -- STP x3, four others x2). Picked
-      // to widen the "ripple effects" half of the desc rather than deepen the
-      // Seattle core: the Sub Pop label-mates (Afghan Whigs), the Aberdeen
-      // progenitor the scene grew out of (Melvins), the NYC noise-rock root
-      // that made it possible (Sonic Youth), and the era's radio angst from
-      // outside the northwest. Every ID oEmbed-verified on the artist's own
-      // channel or VEVO -- no fan uploads in this batch, which the Blind
-      // Melon rejection ("not radio version") argues for.
       realTrack('fxvkI9MTQw4', 'Cannonball', 'The Breeders'),
       realTrack('SDTSUwIZdMk', 'Kool Thing', 'Sonic Youth'),
       realTrack('jC9AUR-iTo0', 'Seether', 'Veruca Salt'),
       realTrack('o9mJ82x_l-E', 'Hey Man, Nice Shot', 'Filter'),
       realTrack('jBfygUiS50g', 'Unsung', 'Helmet'),
-      realTrack('oJwWmz8Mp3U', 'Debonair', 'The Afghan Whigs'),
       realTrack('3RMmIJn_4FA', 'Honey Bucket', 'Melvins'),
       realTrack('XFkzRNyygfk', 'Creep', 'Radiohead'),
-      // 2026-08-26: pending queue approved wholesale and drained -- all 33
-      // proposals across 8 stations landed at once, so these arrived as a
-      // batch rather than a curated pass. Every one was re-verified at
-      // approval time (alive, US-available, embeddable, no duplicate ID and
-      // no title collision) rather than trusted from its 2026-08-23/24
-      // proposal check.
       realTrack('fTqyUz_jSIo', 'Far Behind', 'Candlebox'),
       realTrack('ah5gAkna3jI', 'Hey Jealousy', 'Gin Blossoms'),
       realTrack('xsJ4O-nSveg', 'Lightning Crashes', 'Live'),
+      realTrack('sNh-iw7gsuI', 'Outshined', 'Soundgarden'),
+      realTrack('-SRxWz3CDvg', 'This Gift', 'Mudhoney'),
     ] },
   // RELIC SIGNAL (classical, 219.8) retired 2026-08-21 (28th pass, per
   // the station-naming pass) -- its classical lane overlapped with
@@ -1061,7 +1089,6 @@ export const STATIONS = [
       realTrack('3SwwljI-8JY', 'Halcyon', 'Orbital'),
       realTrack('yJnve05CnNE', 'The Box', 'Orbital'),
       realTrack('u7K72X4eo_s', 'Teardrop', 'Massive Attack'),
-      realTrack('QmKE9zKYx0g', 'Song of Life', 'Leftfield'),
       realTrack('XiMrrleH_hI', 'Born Slippy .NUXX', 'Underworld'),
       realTrack('F6Y7lcvubhU', 'Rez', 'Underworld'),
       realTrack('DzNex7Mf1bg', 'Clubbed to Death (Kurayamino Mix)', 'Rob Dougan'),
@@ -1076,7 +1103,6 @@ export const STATIONS = [
       realTrack('ub747pprmJ8', 'Right Here, Right Now', 'Fatboy Slim'),
       realTrack('8B-i1vsA6jw', 'Sour Times', 'Portishead'),
       realTrack('svJvT6ruolA', 'No Good (Start the Dance)', 'The Prodigy'),
-      realTrack('Xu3FTEmN-eg', 'Galvanize featuring Q-Tip (Official Music Video)', 'The Chemical Brothers'),
       // 2026-08-28 (issue #5) -- swapped from IKTJoHbKZO0, and see the note
       // on Keep Hope Alive below for why. Like-for-like: same 4:29 mix, on a
       // 2017 "- Topic" upload that reaches 1080p instead of a 2007 one
@@ -1091,8 +1117,10 @@ export const STATIONS = [
       // reported sub-second audio dropouts, and reported them on all THREE
       // Crystal Method tracks this station carried and on nothing else.
       // What those three had in common was not the artist and not that they
-      // were official videos (Galvanize and No Good are official videos and
-      // are fine): they were the only 2007 uploads on CIPHER, the only ones
+      // were official videos (Galvanize and No Good were both official
+      // videos on this station and both fine -- Galvanize was removed later
+      // the same day for unrelated reasons, and No Good is still here):
+      // they were the only 2007 uploads on CIPHER, the only ones
       // YouTube never re-transcoded to modern renditions -- 480p, 480p and
       // 350p, which is not even a standard height -- and one to two orders
       // of magnitude less requested than the official videos that don't
@@ -1115,14 +1143,11 @@ export const STATIONS = [
       realTrack('maP6q3D4Hf0', 'Leave You Far Behind', 'Lunatic Calm'),
       realTrack('hbe3CQamF8k', 'Angel', 'Massive Attack'),
       realTrack('d0PCD7YMfeY', "Ain't Talkin' 'bout Dub", 'Apollo 440'),
-      realTrack('6QCXpHdW9ak', 'Papua New Guinea', 'Future Sound of London'),
       realTrack('MwZmPJFNVbw', 'Supermoves', 'Overseer'),
       realTrack('Wuwfe3DRJzE', '6 Underground', 'Sneaker Pimps'),
       realTrack('7qZW9P7W-nc', 'Def Beat', 'Junkie XL'),
       realTrack('Ihr0y7ayGV0', 'Stem / Long Stem', 'DJ Shadow'),
       realTrack('Jd_UCgMaHYQ', 'Dirt', 'Death in Vegas'),
-      realTrack('XrFECnl3vno', 'Lonely Soul', 'UNKLE'),
-      realTrack('9ZJTM03UByU', 'Black Steel', 'Tricky'),
       realTrack('sGcdcVblZ-8', 'Genius', 'Pitchshifter'),
       realTrack('YV78vobCyIo', 'Voodoo People', 'The Prodigy'),
       realTrack('DAQISes7iXU', 'Absurd', 'Fluke'),
@@ -1135,7 +1160,12 @@ export const STATIONS = [
       realTrack('kQ_sSs8pr1g', 'Ruffneck', 'Freestylers'),
       // 2026-08-27 -- issue #19, the first outside curation pass this station
       // has had. Eight proposed with per-track arguments, seven auditioned
-      // clean, six landed here (the seventh is the Spybreak! swap above).
+      // clean, six landed: Ultrasonic Sound (Hive), Godzilla Dub (ZeroFG),
+      // Born In '94 (Unglued), Take California (Propellerheads), Y'all Ready
+      // For Dis (Y U QT), and Firestarter (Empirion Mix) (The Prodigy). The
+      // seventh was the Spybreak! swap above. Named rather than left as "the
+      // six below" -- see DISTORTION FIELD's curation-history block for what
+      // a sort does to a comment that describes tracks by position.
       //
       // The proposal arrived apologising for breaking a "one track per
       // artist" rule that CIPHER has never followed -- the suggestion form
@@ -1144,18 +1174,30 @@ export const STATIONS = [
       // remembering that the form talked a contributor out of proposals
       // before it talked them into any.
       //
-      // Firestarter (Empirion Mix) sits alongside the original deliberately
-      // -- it is a different song rather than a remix of that one, which is
-      // the only reason the same-title objection above doesn't apply to it
-      // too. Take California and the Empirion mix are both long (7:47,
-      // 7:52); accepted as a known trade against a station built on
-      // propulsion, not overlooked.
+      // 2026-08-28: the Empirion mix is GONE again, so what follows is the
+      // record of an argument that was made and then reversed rather than a
+      // description of the array. It was kept alongside the original on the
+      // grounds that it is a different song rather than a remix of that one,
+      // which was the only reason the same-title objection above did not
+      // apply to it too; its length (7:52, alongside Take California's 7:47)
+      // was accepted at the time as a known trade against a station built on
+      // propulsion. Take California stayed.
+      //
+      // WHY it came out, from the curator directly: personal taste and
+      // preference, and nothing more. Not availability, not licence, not
+      // lane mechanics -- it auditioned clean and still would. It went in
+      // one pass with Song of Life, Papua New Guinea, Lonely Soul, Black
+      // Steel and Galvanize, all seven on the same grounds, all seven now in
+      // station-profiles.json with that reason attached so audition.js says
+      // so before anyone re-proposes one. Worth writing plainly rather than
+      // dressing up: an early draft of this comment guessed at a downtempo
+      // tightening, which fits four of the six and not the other two, and a
+      // plausible invented rationale in this file is worse than none.
       realTrack('lGqzRmDcC14', 'Ultrasonic Sound', 'Hive'),
       realTrack('mloHngTITZ8', 'Godzilla Dub', 'ZeroFG'),
       realTrack('VHqc2Yqwwu4', "Born In '94", 'Unglued'),
       realTrack('81bG15gsl70', 'Take California', 'Propellerheads'),
       realTrack('OTvB4XMsg1U', "Y'all Ready For Dis", 'Y U QT'),
-      realTrack('Hy4T6zvQ6jk', 'Firestarter (Empirion Mix)', 'The Prodigy'),
     ] },
 ]
 

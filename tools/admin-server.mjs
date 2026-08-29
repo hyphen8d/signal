@@ -37,6 +37,7 @@ import {
   loadRosterFromText, buildRosterPayload, buildStationsMd,
   patchStationTracksDetailed, patchStationField, verifyPatch,
 } from './lib/roster.mjs'
+import { mergeRejection } from './lib/rejections.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(here, '..')
@@ -334,30 +335,52 @@ function saveIdentity(stationId, fields) {
 // prevents a re-proposal; pending-tracks.json's is the queue's own record.
 // Writing one without the other is how a reason gets forgotten, so this is
 // the single writer for both and the reason is required.
+// 2026-08-28 -- the two stores are merged through tools/lib/rejections.mjs
+// now rather than appended to, and the outcome per store is reported back
+// instead of assumed. See that file for why: this appended blindly, so the
+// same rejection recorded by hand and then through here landed twice and
+// audition.js printed it twice. The stores are deduped INDEPENDENTLY on
+// purpose -- the case that found this had the profile already carrying the
+// record and the queue carrying nothing, and refusing outright would have
+// left that record half-written for good.
 function rejectTrack({ stationId, youtubeId, title, artist, reason, entry }) {
   if (!reason || !String(reason).trim()) throw new Error('a rejection reason is required')
   const today = new Date().toISOString().slice(0, 10)
+  const clean = String(reason).trim()
+  const opts = { today, reason: clean }
 
   const profiles = readJson('tools/station-profiles.json', null)
-  let profileWritten = false
+  let profile = 'no-profile'
   if (profiles?.stations?.[stationId]) {
     const p = profiles.stations[stationId]
-    p.rejections = p.rejections || []
-    p.rejections.push({ artist, track: title, reason: String(reason).trim(), rejectedAt: today, youtubeId })
-    writeRepoFile('tools/station-profiles.json', JSON.stringify(profiles, null, 2) + '\n')
-    profileWritten = true
+    const merged = mergeRejection(p.rejections, { artist, track: title, reason: clean, rejectedAt: today, youtubeId }, opts)
+    profile = merged.outcome
+    if (merged.outcome !== 'skipped') {
+      p.rejections = merged.list
+      writeRepoFile('tools/station-profiles.json', JSON.stringify(profiles, null, 2) + '\n')
+    }
   }
 
   const pending = readJson('tools/pending-tracks.json', { pending: [], rejected: [] })
+  const before = (pending.pending || []).length
   pending.pending = (pending.pending || []).filter(e => !(e.stationId === stationId && e.youtubeId === youtubeId))
-  pending.rejected = pending.rejected || []
-  pending.rejected.push({
+  const drained = before !== pending.pending.length
+  const merged = mergeRejection(pending.rejected, {
     ...(entry || {}), stationId, youtubeId, title, artist,
-    rejectedAt: today, rejectedReason: String(reason).trim(),
-  })
-  writeRepoFile('tools/pending-tracks.json', JSON.stringify(pending, null, 2) + '\n')
+    rejectedAt: today, rejectedReason: clean,
+  }, opts)
+  if (merged.outcome !== 'skipped' || drained) {
+    pending.rejected = merged.list
+    writeRepoFile('tools/pending-tracks.json', JSON.stringify(pending, null, 2) + '\n')
+  }
 
-  return { profileWritten, pending }
+  return {
+    profile, queue: merged.outcome,
+    // Kept so an older caller reading `profileWritten` still sees the truth.
+    profileWritten: profile === 'added' || profile === 'amended',
+    alreadyRecorded: profile === 'skipped' && merged.outcome === 'skipped',
+    pending,
+  }
 }
 
 // ---------------------------------------------------------------------

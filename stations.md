@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 334 tracks total.
+Generated from stations.js. 9 stations, 329 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -8,7 +8,7 @@ Generated from stations.js. 9 stations, 334 tracks total.
 
 Ident tones (Hz): 392, 349.2, 311.2, 261.6
 
-Tracks (43):
+Tracks (44):
 
 1. **Smells Like Teen Spirit** -- Nirvana  ([youtu.be/hTWKbfoikeg](https://youtu.be/hTWKbfoikeg))
 2. **Black Hole Sun** -- Soundgarden  ([youtu.be/3mbBbFH9fAg](https://youtu.be/3mbBbFH9fAg))
@@ -47,12 +47,13 @@ Tracks (43):
 35. **Seether** -- Veruca Salt  ([youtu.be/jC9AUR-iTo0](https://youtu.be/jC9AUR-iTo0))
 36. **Hey Man, Nice Shot** -- Filter  ([youtu.be/o9mJ82x_l-E](https://youtu.be/o9mJ82x_l-E))
 37. **Unsung** -- Helmet  ([youtu.be/jBfygUiS50g](https://youtu.be/jBfygUiS50g))
-38. **Debonair** -- The Afghan Whigs  ([youtu.be/oJwWmz8Mp3U](https://youtu.be/oJwWmz8Mp3U))
-39. **Honey Bucket** -- Melvins  ([youtu.be/3RMmIJn_4FA](https://youtu.be/3RMmIJn_4FA))
-40. **Creep** -- Radiohead  ([youtu.be/XFkzRNyygfk](https://youtu.be/XFkzRNyygfk))
-41. **Far Behind** -- Candlebox  ([youtu.be/fTqyUz_jSIo](https://youtu.be/fTqyUz_jSIo))
-42. **Hey Jealousy** -- Gin Blossoms  ([youtu.be/ah5gAkna3jI](https://youtu.be/ah5gAkna3jI))
-43. **Lightning Crashes** -- Live  ([youtu.be/xsJ4O-nSveg](https://youtu.be/xsJ4O-nSveg))
+38. **Honey Bucket** -- Melvins  ([youtu.be/3RMmIJn_4FA](https://youtu.be/3RMmIJn_4FA))
+39. **Creep** -- Radiohead  ([youtu.be/XFkzRNyygfk](https://youtu.be/XFkzRNyygfk))
+40. **Far Behind** -- Candlebox  ([youtu.be/fTqyUz_jSIo](https://youtu.be/fTqyUz_jSIo))
+41. **Hey Jealousy** -- Gin Blossoms  ([youtu.be/ah5gAkna3jI](https://youtu.be/ah5gAkna3jI))
+42. **Lightning Crashes** -- Live  ([youtu.be/xsJ4O-nSveg](https://youtu.be/xsJ4O-nSveg))
+43. **Outshined** -- Soundgarden  ([youtu.be/sNh-iw7gsuI](https://youtu.be/sNh-iw7gsuI))
+44. **This Gift** -- Mudhoney  ([youtu.be/-SRxWz3CDvg](https://youtu.be/-SRxWz3CDvg))
 
 ## DRIFT MODE -- 321.0
 
@@ -370,7 +371,7 @@ Tracks (43):
 
 Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
 
-Tracks (44):
+Tracks (38):
 
 1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
 2. **Omen** -- The Prodigy  ([youtu.be/xMVTKOoy1uk](https://youtu.be/xMVTKOoy1uk))
@@ -378,41 +379,35 @@ Tracks (44):
 4. **Halcyon** -- Orbital  ([youtu.be/3SwwljI-8JY](https://youtu.be/3SwwljI-8JY))
 5. **The Box** -- Orbital  ([youtu.be/yJnve05CnNE](https://youtu.be/yJnve05CnNE))
 6. **Teardrop** -- Massive Attack  ([youtu.be/u7K72X4eo_s](https://youtu.be/u7K72X4eo_s))
-7. **Song of Life** -- Leftfield  ([youtu.be/QmKE9zKYx0g](https://youtu.be/QmKE9zKYx0g))
-8. **Born Slippy .NUXX** -- Underworld  ([youtu.be/XiMrrleH_hI](https://youtu.be/XiMrrleH_hI))
-9. **Rez** -- Underworld  ([youtu.be/F6Y7lcvubhU](https://youtu.be/F6Y7lcvubhU))
-10. **Clubbed to Death (Kurayamino Mix)** -- Rob Dougan  ([youtu.be/DzNex7Mf1bg](https://youtu.be/DzNex7Mf1bg))
-11. **Prime Audio Soup** -- Meat Beat Manifesto  ([youtu.be/7xI8mCKLiRM](https://youtu.be/7xI8mCKLiRM))
-12. **Spybreak! (Short One)** -- Propellerheads  ([youtu.be/Agbn4NzOj04](https://youtu.be/Agbn4NzOj04))
-13. **Busy Child** -- The Crystal Method  ([youtu.be/OjTC88oIRys](https://youtu.be/OjTC88oIRys))
-14. **B-Boy Stance** -- Freestylers  ([youtu.be/XAlLaGhfLq4](https://youtu.be/XAlLaGhfLq4))
-15. **Right Here, Right Now** -- Fatboy Slim  ([youtu.be/ub747pprmJ8](https://youtu.be/ub747pprmJ8))
-16. **Sour Times** -- Portishead  ([youtu.be/8B-i1vsA6jw](https://youtu.be/8B-i1vsA6jw))
-17. **No Good (Start the Dance)** -- The Prodigy  ([youtu.be/svJvT6ruolA](https://youtu.be/svJvT6ruolA))
-18. **Galvanize featuring Q-Tip (Official Music Video)** -- The Chemical Brothers  ([youtu.be/Xu3FTEmN-eg](https://youtu.be/Xu3FTEmN-eg))
-19. **(Can't You) Trip Like I Do** -- Filter & The Crystal Method  ([youtu.be/Q7SedYMP-PA](https://youtu.be/Q7SedYMP-PA))
-20. **Bentley's Gonna Sort You Out** -- Bentley Rhythm Ace  ([youtu.be/WrDXJp-uDoY](https://youtu.be/WrDXJp-uDoY))
-21. **The Gift** -- Way Out West  ([youtu.be/NxsevNnHfzs](https://youtu.be/NxsevNnHfzs))
-22. **Keep Hope Alive** -- The Crystal Method  ([youtu.be/LZi4qE6Ll6E](https://youtu.be/LZi4qE6Ll6E))
-23. **Atom Bomb** -- Fluke  ([youtu.be/PHMzCpy0fXc](https://youtu.be/PHMzCpy0fXc))
-24. **Leave You Far Behind** -- Lunatic Calm  ([youtu.be/maP6q3D4Hf0](https://youtu.be/maP6q3D4Hf0))
-25. **Angel** -- Massive Attack  ([youtu.be/hbe3CQamF8k](https://youtu.be/hbe3CQamF8k))
-26. **Ain't Talkin' 'bout Dub** -- Apollo 440  ([youtu.be/d0PCD7YMfeY](https://youtu.be/d0PCD7YMfeY))
-27. **Papua New Guinea** -- Future Sound of London  ([youtu.be/6QCXpHdW9ak](https://youtu.be/6QCXpHdW9ak))
-28. **Supermoves** -- Overseer  ([youtu.be/MwZmPJFNVbw](https://youtu.be/MwZmPJFNVbw))
-29. **6 Underground** -- Sneaker Pimps  ([youtu.be/Wuwfe3DRJzE](https://youtu.be/Wuwfe3DRJzE))
-30. **Def Beat** -- Junkie XL  ([youtu.be/7qZW9P7W-nc](https://youtu.be/7qZW9P7W-nc))
-31. **Stem / Long Stem** -- DJ Shadow  ([youtu.be/Ihr0y7ayGV0](https://youtu.be/Ihr0y7ayGV0))
-32. **Dirt** -- Death in Vegas  ([youtu.be/Jd_UCgMaHYQ](https://youtu.be/Jd_UCgMaHYQ))
-33. **Lonely Soul** -- UNKLE  ([youtu.be/XrFECnl3vno](https://youtu.be/XrFECnl3vno))
-34. **Black Steel** -- Tricky  ([youtu.be/9ZJTM03UByU](https://youtu.be/9ZJTM03UByU))
-35. **Genius** -- Pitchshifter  ([youtu.be/sGcdcVblZ-8](https://youtu.be/sGcdcVblZ-8))
-36. **Voodoo People** -- The Prodigy  ([youtu.be/YV78vobCyIo](https://youtu.be/YV78vobCyIo))
-37. **Absurd** -- Fluke  ([youtu.be/DAQISes7iXU](https://youtu.be/DAQISes7iXU))
-38. **Ruffneck** -- Freestylers  ([youtu.be/kQ_sSs8pr1g](https://youtu.be/kQ_sSs8pr1g))
-39. **Ultrasonic Sound** -- Hive  ([youtu.be/lGqzRmDcC14](https://youtu.be/lGqzRmDcC14))
-40. **Godzilla Dub** -- ZeroFG  ([youtu.be/mloHngTITZ8](https://youtu.be/mloHngTITZ8))
-41. **Born In '94** -- Unglued  ([youtu.be/VHqc2Yqwwu4](https://youtu.be/VHqc2Yqwwu4))
-42. **Take California** -- Propellerheads  ([youtu.be/81bG15gsl70](https://youtu.be/81bG15gsl70))
-43. **Y'all Ready For Dis** -- Y U QT  ([youtu.be/OTvB4XMsg1U](https://youtu.be/OTvB4XMsg1U))
-44. **Firestarter (Empirion Mix)** -- The Prodigy  ([youtu.be/Hy4T6zvQ6jk](https://youtu.be/Hy4T6zvQ6jk))
+7. **Born Slippy .NUXX** -- Underworld  ([youtu.be/XiMrrleH_hI](https://youtu.be/XiMrrleH_hI))
+8. **Rez** -- Underworld  ([youtu.be/F6Y7lcvubhU](https://youtu.be/F6Y7lcvubhU))
+9. **Clubbed to Death (Kurayamino Mix)** -- Rob Dougan  ([youtu.be/DzNex7Mf1bg](https://youtu.be/DzNex7Mf1bg))
+10. **Prime Audio Soup** -- Meat Beat Manifesto  ([youtu.be/7xI8mCKLiRM](https://youtu.be/7xI8mCKLiRM))
+11. **Spybreak! (Short One)** -- Propellerheads  ([youtu.be/Agbn4NzOj04](https://youtu.be/Agbn4NzOj04))
+12. **Busy Child** -- The Crystal Method  ([youtu.be/OjTC88oIRys](https://youtu.be/OjTC88oIRys))
+13. **B-Boy Stance** -- Freestylers  ([youtu.be/XAlLaGhfLq4](https://youtu.be/XAlLaGhfLq4))
+14. **Right Here, Right Now** -- Fatboy Slim  ([youtu.be/ub747pprmJ8](https://youtu.be/ub747pprmJ8))
+15. **Sour Times** -- Portishead  ([youtu.be/8B-i1vsA6jw](https://youtu.be/8B-i1vsA6jw))
+16. **No Good (Start the Dance)** -- The Prodigy  ([youtu.be/svJvT6ruolA](https://youtu.be/svJvT6ruolA))
+17. **(Can't You) Trip Like I Do** -- Filter & The Crystal Method  ([youtu.be/Q7SedYMP-PA](https://youtu.be/Q7SedYMP-PA))
+18. **Bentley's Gonna Sort You Out** -- Bentley Rhythm Ace  ([youtu.be/WrDXJp-uDoY](https://youtu.be/WrDXJp-uDoY))
+19. **The Gift** -- Way Out West  ([youtu.be/NxsevNnHfzs](https://youtu.be/NxsevNnHfzs))
+20. **Keep Hope Alive** -- The Crystal Method  ([youtu.be/LZi4qE6Ll6E](https://youtu.be/LZi4qE6Ll6E))
+21. **Atom Bomb** -- Fluke  ([youtu.be/PHMzCpy0fXc](https://youtu.be/PHMzCpy0fXc))
+22. **Leave You Far Behind** -- Lunatic Calm  ([youtu.be/maP6q3D4Hf0](https://youtu.be/maP6q3D4Hf0))
+23. **Angel** -- Massive Attack  ([youtu.be/hbe3CQamF8k](https://youtu.be/hbe3CQamF8k))
+24. **Ain't Talkin' 'bout Dub** -- Apollo 440  ([youtu.be/d0PCD7YMfeY](https://youtu.be/d0PCD7YMfeY))
+25. **Supermoves** -- Overseer  ([youtu.be/MwZmPJFNVbw](https://youtu.be/MwZmPJFNVbw))
+26. **6 Underground** -- Sneaker Pimps  ([youtu.be/Wuwfe3DRJzE](https://youtu.be/Wuwfe3DRJzE))
+27. **Def Beat** -- Junkie XL  ([youtu.be/7qZW9P7W-nc](https://youtu.be/7qZW9P7W-nc))
+28. **Stem / Long Stem** -- DJ Shadow  ([youtu.be/Ihr0y7ayGV0](https://youtu.be/Ihr0y7ayGV0))
+29. **Dirt** -- Death in Vegas  ([youtu.be/Jd_UCgMaHYQ](https://youtu.be/Jd_UCgMaHYQ))
+30. **Genius** -- Pitchshifter  ([youtu.be/sGcdcVblZ-8](https://youtu.be/sGcdcVblZ-8))
+31. **Voodoo People** -- The Prodigy  ([youtu.be/YV78vobCyIo](https://youtu.be/YV78vobCyIo))
+32. **Absurd** -- Fluke  ([youtu.be/DAQISes7iXU](https://youtu.be/DAQISes7iXU))
+33. **Ruffneck** -- Freestylers  ([youtu.be/kQ_sSs8pr1g](https://youtu.be/kQ_sSs8pr1g))
+34. **Ultrasonic Sound** -- Hive  ([youtu.be/lGqzRmDcC14](https://youtu.be/lGqzRmDcC14))
+35. **Godzilla Dub** -- ZeroFG  ([youtu.be/mloHngTITZ8](https://youtu.be/mloHngTITZ8))
+36. **Born In '94** -- Unglued  ([youtu.be/VHqc2Yqwwu4](https://youtu.be/VHqc2Yqwwu4))
+37. **Take California** -- Propellerheads  ([youtu.be/81bG15gsl70](https://youtu.be/81bG15gsl70))
+38. **Y'all Ready For Dis** -- Y U QT  ([youtu.be/OTvB4XMsg1U](https://youtu.be/OTvB4XMsg1U))
