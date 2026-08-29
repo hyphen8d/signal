@@ -48,14 +48,24 @@ const flag = (n, d) => { const h = args.find((a) => a.startsWith(`--${n}=`)); re
 const has = (n) => args.includes(`--${n}`)
 const die = (msg, code = 2) => { console.error(msg); process.exit(code) }
 
-function apiKey() {
-  if (process.env.ELEVENLABS_API_KEY) return process.env.ELEVENLABS_API_KEY.trim()
-  const f = path.join(ROOT, '.elevenlabs-key')
-  if (existsSync(f)) return readFileSync(f, 'utf8').trim()
-  die('No API key. Either:\n' +
-      '  export ELEVENLABS_API_KEY=...\n' +
-      '  or put it in .elevenlabs-key at the repo root (gitignored).\n' +
-      'Not passed as an argument on purpose -- that lands in shell history.')
+/** Env first, then a gitignored file.
+ *
+ *  The file is not a fallback, it is the path that actually works when
+ *  someone else is driving the shell: an `export` in an interactive session
+ *  does not reach a tool run from a fresh shell, which is a confusing way to
+ *  be told "no API key" when you just set one. */
+function readSecret(envName, fileName, what, extra = '') {
+  if (process.env[envName]) return process.env[envName].trim()
+  const f = path.join(ROOT, fileName)
+  if (existsSync(f)) {
+    const v = readFileSync(f, 'utf8').trim()
+    if (v) return v
+  }
+  die(`No ${what}. Either:\n` +
+      `  export ${envName}=...          (only reaches tools run from that same shell)\n` +
+      `  or:  printf %s '<value>' > ${fileName}     (gitignored, works from anywhere)\n` +
+      'Never passed as an argument -- that lands in shell history and the process list.' +
+      (extra ? `\n${extra}` : ''))
 }
 
 /** ffmpeg's own measurements. The same two numbers the VOICE panel in the
@@ -105,14 +115,9 @@ async function main() {
   if (has('dry-run')) { console.log('\n--dry-run: nothing rendered, no credits spent.'); return }
   if (!has('yes')) die('\nAdd --yes to render this. (--dry-run to just see the script.)', 1)
 
-  const key = apiKey()
-  const voiceId = flag('voice-id', process.env.ELEVENLABS_VOICE_ID)
-  if (!voiceId) {
-    die('\nNo voice id. Find it in the ElevenLabs panel ("Copy Voice ID") and either:\n' +
-        '  export ELEVENLABS_VOICE_ID=...\n' +
-        '  or pass --voice-id=...\n' +
-        `The voice itself is "${VOICE_NAME}" -- see audio/voice.js.`)
-  }
+  const key = readSecret('ELEVENLABS_API_KEY', '.elevenlabs-key', 'API key')
+  const voiceId = flag('voice-id') || readSecret('ELEVENLABS_VOICE_ID', '.elevenlabs-voice-id', 'voice id',
+    `Find it under "Copy Voice ID" in the ElevenLabs panel. The voice is "${VOICE_NAME}" -- see audio/voice.js.`)
 
   console.log('\nrendering...')
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=${OUTPUT_FORMAT}`, {

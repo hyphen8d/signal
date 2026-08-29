@@ -5,3 +5,4 @@ tools/audition.html
 # ElevenLabs API key for tools/voice-render.mjs. Never commit this; the
 # tool also reads ELEVENLABS_API_KEY from the environment instead.
 .elevenlabs-key
+.elevenlabs-voice-id
