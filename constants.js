@@ -123,3 +123,23 @@ export const VISUALIZER_KEYS = new Set([
   'ArrowUp', 'ArrowDown',
   'c', 'C', 'n', 'N', 'm', 'M', 'v', 'V', 'f', 'F', 't', 'T', 'e', 'E', 'Escape',
 ])
+
+// --- voice duck (2026-08-29) --------------------------------------------
+// How far the music drops under a station ID or a liner drop. -50% is the
+// ordinary broadcast figure: enough that the voice sits clearly on top,
+// little enough that the track is plainly still playing underneath rather
+// than having been paused for an announcement.
+export const DUCK_LEVEL = 0.5
+// Down fast, up slow -- the asymmetry is what makes a duck sound like a
+// desk and not like a volume control being yanked.
+export const DUCK_IN_MS = 160
+export const DUCK_OUT_MS = 520
+// Ramp granularity. player.setVolume() takes integers 0-100, so at a 50%
+// drop from a typical listening level there are only ~35 distinct steps to
+// move through; 40ms gives the ramp four of them on the way down, which is
+// under the threshold where stepping is audible as stepping.
+export const DUCK_TICK_MS = 40
+// Held past the end of the clip before the ramp back starts. Voice clips
+// carry ~0.5s of padded trailing silence (see audio/voice.js), so without a
+// hold the music would already be climbing under the speaker's last word.
+export const DUCK_TAIL_MS = 300

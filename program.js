@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
+const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -318,6 +318,10 @@ export default {
     this._wx = null
     this._wxLoc = null
     this._wxBusy = false
+    // 2026-08-29 -- voice duck. 1 = full level, DUCK_LEVEL = under a clip.
+    this._duck = 1
+    this._duckUntil = 0
+    this._duckTimer = null
     // null | 'locating' | 'loading' -- which wait the card is showing.
     this._wxPhase = null
     // Whether a lookup has ever COMPLETED. Distinguishes "nobody has
@@ -657,6 +661,8 @@ export default {
     // first, where leaving it armed would switch the set off again some
     // minutes into the next listen.
     this.clearSleepTimer()
+    // A duck in flight must not outlive the set it was ducking.
+    this.clearDuck()
     this.breakActive = false
     this._contentStarted = false
     this._loadStartedAt = 0
@@ -1364,9 +1370,65 @@ export default {
   },
   applyVolume() {
     if (!this.ready || !this.player) return
-    const eff = Math.round(Math.min(100, Math.max(0, this.sleepScaledVolume())))
+    // The duck rides here rather than at its own setVolume() call for the
+    // reason the removed gain comment above gives: one place computes the
+    // level, so nothing can set a volume that silently skips the sleep fade
+    // or leaves the music ducked.
+    const eff = Math.round(Math.min(100, Math.max(0, this.sleepScaledVolume() * this._duck)))
     this.player.setVolume(eff)
   },
+  /** Pull the music down under a voice clip, then let it back up.
+   *
+   *  The music is NOT in the WebAudio graph -- it is YouTube's iframe, and
+   *  its audio is unreachable from here -- so this cannot be a gain node the
+   *  way every synthesized sound on the set is. It has to be
+   *  player.setVolume(), which is a step function with no ramp of its own, so
+   *  the ramp is made by stepping it on a timer.
+   *
+   *  Asymmetric on purpose, the way a broadcast duck is: down fast so the
+   *  voice is never fighting a full-level track on its first word, back up
+   *  slowly so the music returns underneath rather than snapping back and
+   *  drawing attention to the mechanism.
+   *
+   *  A REAL timer, not the effects queue. The queue stops ticking while an
+   *  overlay is up (see _runFx's guard), and a duck that stops halfway would
+   *  leave the music at half volume until someone closed the guide. Audio
+   *  scheduling is already the documented exception to the fx-queue rule.
+   *
+   *  Re-entrant: a second clip landing while one is still ducking just pushes
+   *  the deadline out. Nothing stacks, so two overlapping drops cannot duck
+   *  to a quarter. */
+  duckFor(ms) {
+    if (!Number.isFinite(ms) || ms <= 0) return
+    this._duckUntil = Math.max(this._duckUntil || 0, Date.now() + ms)
+    if (this._duckTimer) return
+    this._duckTimer = setInterval(() => {
+      const target = Date.now() < this._duckUntil ? DUCK_LEVEL : 1
+      const span = target < this._duck ? DUCK_IN_MS : DUCK_OUT_MS
+      const step = (1 - DUCK_LEVEL) * (DUCK_TICK_MS / span)
+      const before = this._duck
+      if (this._duck < target) this._duck = Math.min(target, this._duck + step)
+      else if (this._duck > target) this._duck = Math.max(target, this._duck - step)
+      // Only push a level when it actually moved. setVolume() with the value
+      // it already has is harmless, but calling it 25 times a second for the
+      // whole hold makes the ramp indistinguishable from a jump in anything
+      // that watches the calls -- which is exactly how the first version of
+      // the ramp test managed to pass against a hard jump.
+      if (this._duck !== before) this.applyVolume()
+      if (target === 1 && this._duck === 1) this.clearDuck()
+    }, DUCK_TICK_MS)
+  },
+
+  /** Stops the ramp and restores full level. Idempotent -- called on
+   *  power-down, where a timer left running would keep calling setVolume on a
+   *  player the set has finished with. */
+  clearDuck() {
+    if (this._duckTimer) { clearInterval(this._duckTimer); this._duckTimer = null }
+    this._duckUntil = 0
+    this._duck = 1
+    this.applyVolume()
+  },
+
   adjustVolume(s, delta) {
     const before = this.volume
     const wasMuted = this.muted

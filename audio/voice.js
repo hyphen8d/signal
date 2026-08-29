@@ -7,6 +7,7 @@
 
 const V = globalThis.SIGNAL_BUILD ?? ''
 const { audioCtx, speakerOut } = await import(`./sfx.js?v=${V}`)
+const { DUCK_TAIL_MS } = await import(`../constants.js?v=${V}`)
 
 // 53rd pass -- network sign-on ID: verbal station IDs, an ElevenLabs-rendered
 // line ("Rachel M -- Pro British Radio
@@ -244,6 +245,11 @@ export function playStationId(program, station) {
     if (program.lockedStation !== station) return // re-tuned away during the async gap
     try {
       const ctx = audioCtx()
+      // 2026-08-29 -- pull the music down under the announcement. Called here
+      // rather than inside playProcessedVoiceClip() because that chain is
+      // shared with the network sign-on line above, which plays over a boot
+      // with no track under it yet and so has nothing to duck.
+      program.duckFor?.(buffer.duration * 1000 + DUCK_TAIL_MS)
       playProcessedVoiceClip(buffer, ctx, ctx.currentTime)
     } catch (e) {}
   })
@@ -418,6 +424,7 @@ export function maybePlayLinerDrop(program, station, track) {
       program._lastLiner = path
       try {
         const ctx = audioCtx()
+        program.duckFor?.(buffer.duration * 1000 + DUCK_TAIL_MS)
         playProcessedVoiceClip(buffer, ctx, ctx.currentTime, LINER_DROP_GAIN_MULT)
       } catch (e) {}
     })

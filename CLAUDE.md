@@ -216,7 +216,16 @@ program):
   every synthesized control sound. `audio/voice.js` — station IDs, liners,
   welcome line (one shared "through the radio" chain), LRCLIB lyrics.
   `audio/tap.js` — the live audio tap and `AUDIO_BUS`, plus `auMul` /
-  `syntheticAudio` / `SILENT_AUDIO`.
+  `syntheticAudio` / `SILENT_AUDIO`. The **voice duck** (2026-08-29) pulls the
+  music down 50% under a station ID or a liner drop, and is the one piece of
+  level control that cannot be a gain node: the music is YouTube's iframe and
+  is not in the WebAudio graph at all, so it has to be `player.setVolume()`,
+  stepped on a real timer to make a ramp the API does not provide. It lives in
+  `program.js` beside `applyVolume()` — every path that sets a level goes
+  through that one function, which is what keeps the duck, the sleep fade and
+  the listener's own volume multiplying instead of overwriting each other. The
+  network sign-on line deliberately does NOT duck; it plays over a boot with
+  no track under it.
 - `stations.js` — the roster, pure data, no imports (Node can import it).
   `layout.js` — desktop + mobile row/column constants, STANDBY layout, text and
   box helpers. `tuning.js` — the band, thresholds, `freqToCol`, the three

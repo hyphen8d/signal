@@ -73,6 +73,12 @@ things easy to miss from a screenshot alone:
   the same window, like a tube actually coming up to temperature.
   Power-down mirrors it in reverse: a signal-loss glitch, the picture
   collapsing to a centerline, then a single dot, then STANDBY.
+- **The music ducks under the voice.** When a station ID or a liner drop
+  plays, the track underneath drops 50% and comes back — fast down so the
+  voice never fights a full-level track on its first word, slow back up so
+  the music returns underneath rather than snapping back. The network
+  sign-on line is the exception: it plays over the boot, where there is no
+  track to duck yet.
 - **Every station has its own identity**, not just a name and a tracklist:
   a marker on the dial, a distinct musical ident (a short tone motif on
   lock — pitch contour and tempo both vary station to station, so a slow
