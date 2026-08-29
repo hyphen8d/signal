@@ -85,6 +85,25 @@ export const SLEEP_FADE_MS = 30_000
 export const BREAK_POLL_MS = 250
 export const BREAK_HOLD_MS = 4000
 
+// NOW PLAYING reveal (2026-08-28, 23rd pass) -- the stuck-reveal ceiling,
+// and NOT a design timing: nothing should ever be seen landing on it.
+//
+// The reveal holds its resolve in noise until the player reports PLAYING
+// (see revealHeld), so the title settles as the sound arrives instead of a
+// timer's worth of time before it. Two things can release that hold -- the
+// event, or the break taking the slot at BREAK_HOLD_MS -- and both of them
+// stop working in the same conditions: an occluded tab pinned at 0fps
+// starves checkForBreak (frame-driven on purpose, see there) while the
+// effects queue's fallback ticker keeps the resolve itself ticking. That is
+// the one state where a held reveal has nothing left to land it, so it
+// lands itself.
+//
+// Deliberately well above BREAK_HOLD_MS. Anything close to it would race
+// the break over exactly the case the break exists for -- an advert -- and
+// the visible cost of losing that race is the title flashing up a beat
+// before STATION BREAK wipes it, which is worse than either outcome alone.
+export const REVEAL_CEILING_MS = 12_000
+
 // 2026-08-27 (dead-feedback audit) -- the visualizer's own command set, the
 // counterpart to MAPPED_KEYS above. isMappedKey() returned true for EVERY key
 // while the visualizer was up, which was right when any key woke and exited it

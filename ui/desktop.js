@@ -560,7 +560,17 @@ export default {
   // signal looks like. Deliberately short (under ~300ms): the moment it
   // reads as waiting rather than resolving, it is wrong.
   RESOLVE_GLYPHS: '▓▒░#%&*',
-  resolveText(s, x, y, text, attr, durationMs = 250) {
+  // 2026-08-28, 23rd pass -- `gate` (optional) holds the settle without
+  // touching the animation. While it answers false the row churns noise and
+  // NOTHING settles: the clock does not start, so `start` is null rather
+  // than a time to subtract from. The frame the gate opens becomes t=0 and
+  // the ordinary reveal plays out unchanged from there -- same durations,
+  // same per-character scatter, same stagger between a pair of rows that
+  // were given different durations. Deliberately not a "pause" that eats
+  // elapsed time: a reveal that had already half-settled before the gate
+  // shut would have shown half the title, and half of a claim is still the
+  // claim (see revealHeld in program.js).
+  resolveText(s, x, y, text, attr, durationMs = 250, gate = null) {
     const { term } = s
     this._cancelResolve(y)
     // Per-character settle times, random rather than left-to-right: a
@@ -568,9 +578,12 @@ export default {
     // is), scattered reads as noise clearing.
     const settleAt = []
     for (let i = 0; i < text.length; i++) settleAt.push(durationMs * (0.12 + 0.88 * Math.random()))
-    const start = performance.now()
+    let start = gate ? null : performance.now()
     const tick = (now = performance.now()) => {
-      const elapsed = now - start
+      if (start === null && gate()) start = now
+      // Every settleAt is > 0, so an elapsed of 0 settles nothing at all --
+      // a held row is pure noise, not a partially readable title.
+      const elapsed = start === null ? 0 : now - start
       let done = true
       for (let i = 0; i < text.length; i++) {
         const ch = text[i]
@@ -909,8 +922,13 @@ export default {
     // so station (identity) and track (content) stay visually distinct
     // tiers instead of collapsing to the same weight.
     const lineX = centerX(term.cols, line)
+    // 23rd pass -- the reveal lands on the music rather than on a timer.
+    // revealHeld() answers false for everything that is true right now (a
+    // break readout, a redraw of a track already playing, a set with no
+    // player at all), so the gate is only built for the one case it is for.
+    const gate = this.revealHeld(track) ? () => !this.revealHeld(track) : null
     if (opts.reveal === false) term.text(lineX, TRACK_Y, line, BOLD)
-    else this.resolveText(s, lineX, TRACK_Y, line, BOLD, opts.revealMs ?? 250)
+    else this.resolveText(s, lineX, TRACK_Y, line, BOLD, opts.revealMs ?? 250, gate)
     this.updateTabTitle(track)
   },
   // 21st pass (0.3 wishlist: browser tab title shows now-playing)
@@ -920,10 +938,20 @@ export default {
   // loaded -- seeking, scanning, power-off) resets to the bare title;
   // showTrack() sets it to callsign + track. Cheap: just a document.title
   // write, no extra DOM/animation cost.
+  // 23rd pass -- the tab holds with the screen. It is the one surface that
+  // stays visible after you switch away, so a title it shows for the whole
+  // of a load is exactly the claim the hold exists to stop, and leaving it
+  // out of the feature would have left the honest version only on the
+  // pixels nobody is looking at. The station is still true while the track
+  // isn't yet, so the tab names that and waits; the PLAYING handler in
+  // program.js calls this again to land it, since a tab title has no
+  // per-frame redraw of its own to notice.
   updateTabTitle(track) {
-    document.title = (this.lockedStation && track)
-      ? `${this.lockedStation.callsign} · ${track.title} — SIGNAL`
-      : 'SIGNAL'
+    const cs = this.lockedStation && this.lockedStation.callsign
+    if (!cs || !track) { document.title = 'SIGNAL'; return }
+    document.title = this.revealHeld(track)
+      ? `${cs} — SIGNAL`
+      : `${cs} · ${track.title} — SIGNAL`
   },
 
   // Progress bar + play-state indicator, merged onto one row 2026-08-20

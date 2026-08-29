@@ -264,7 +264,16 @@ export default {
     // left-anchored station row above it -- the two rows reading differently
     // is the point, same way the main screen's two hint rows differ. No
     // leading space here for that reason: centerX() places it.
-    let line2 = track ? `${track.title}  --  ${track.artist}` : ''
+    // 2026-08-28, 23rd pass -- and blank while the reveal is held, for the
+    // same reason the main screen's row is noise then: this footer is the
+    // NOW PLAYING slot in here, and it redraws every frame off displayTrack()
+    // rather than through showTrack(), so without this the visualizer would
+    // go on naming a track the rest of the app has stopped claiming.
+    // Blank rather than a churn of its own -- there is no resolve on this
+    // row to hold, and a per-frame scramble at 60fps reads as a fault
+    // rather than as a receiver working at it. The row comes back with the
+    // music, or as STATION BREAK at BREAK_HOLD_MS.
+    let line2 = track && !this.revealHeld(track) ? `${track.title}  --  ${track.artist}` : ''
     if (line2.length > term.cols - 2) line2 = truncate(line2, term.cols - 2)
     if (line2) term.text(centerX(term.cols, line2), VIZ_INFO_Y2, line2, foot, 1)
 

@@ -164,6 +164,21 @@ export default {
     if (cur.tagLines === tagLines && cur.trackLines === trackLines) return false
     const { term } = s
     this._mLayout = mobileLayout(tagLines, trackLines)
+    // 2026-08-28, 23rd pass -- cancel before wiping, for the reason
+    // desktop's clearStation() gives: a resolve whose next tick lands after
+    // the wipe paints characters back onto a row that was just cleared. The
+    // lite grid has a worse version of it than desktop can have, because a
+    // relayout MOVES the rows -- the resolve is keyed on the row it started
+    // at (`resolve:<y>`), so after a shift it is not merely stale, it is
+    // painting into a row that now belongs to something else. The one that
+    // caught this smeared noise glyphs across the playback bar.
+    //
+    // Latent until this pass and rare enough to look like a flaky test: a
+    // resolve used to live 250-340ms, so it had to be relaid out mid-flight
+    // to show at all. A held reveal lives until the music starts, which
+    // makes the same bug near-permanent and, once the break took the row,
+    // silent forever after.
+    for (let y = 3; y < term.rows; y++) this._cancelResolve(y)
     for (let y = 3; y < term.rows; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
     this.mobileDrawFrame(s)
     // Widgets and the playback bar all live in the zone that just got
@@ -279,15 +294,27 @@ export default {
     const artist = truncate(track.artist, maxWidth)
     const t1X = centerX(term.cols, t1)
     const artistX = centerX(term.cols, artist)
-    if (opts.reveal === false) {
+    // 23rd pass -- the last side door. The two instant-restore paths below
+    // exist so a relayout does not leave the other box blank, and an
+    // instant draw of a HELD track would hand back, in full, the title the
+    // gate had just refused to give -- and freeze it there, since nothing
+    // is animating it. A held track re-enters the hold instead.
+    const held = this.revealHeld(track)
+    if (opts.reveal === false && !held) {
       term.text(t1X, L.npTrack1, t1, BOLD)
       if (t2) term.text(centerX(term.cols, t2), L.npTrack2, t2, BOLD)
       term.text(artistX, L.npArtist, artist, MUTED)
     } else {
       const ms = opts.revealMs ?? 250
-      this.resolveText(s, t1X, L.npTrack1, t1, BOLD, ms)
-      if (t2) this.resolveText(s, centerX(term.cols, t2), L.npTrack2, t2, BOLD, ms)
-      this.resolveText(s, artistX, L.npArtist, artist, MUTED, ms + 90)
+      // 23rd pass -- same gate desktop's showTrack() builds, applied to all
+      // three rows: the artist is as much a claim about what is playing as
+      // the title is, and a wrapped title that settled one row at a time
+      // would read as a fault. They share one gate, so they release
+      // together and keep the +90 stagger they already had.
+      const gate = held ? () => !this.revealHeld(track) : null
+      this.resolveText(s, t1X, L.npTrack1, t1, BOLD, ms, gate)
+      if (t2) this.resolveText(s, centerX(term.cols, t2), L.npTrack2, t2, BOLD, ms, gate)
+      this.resolveText(s, artistX, L.npArtist, artist, MUTED, ms + 90, gate)
     }
     if (relaid && this.lockedStation) this.mobileShowStation(s, this.lockedStation, { reveal: false })
   },

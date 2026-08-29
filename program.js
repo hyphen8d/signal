@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, MAPPED_KEYS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
+const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -1099,6 +1099,11 @@ export default {
               // length. So this is where the set earns the right to claim
               // the track, and detectBreak() holds the readout until it.
               self._contentStarted = true
+              // 23rd pass -- the tab is the other surface the reveal holds
+              // (updateTabTitle names the station and waits while a reveal
+              // is held), and it has no per-frame redraw to pick the
+              // landing up on its own. This is that landing.
+              self.updateTabTitle(self.currentTrack)
               self.setPlayState(s, 'playing')
               // 2026-08-22, round 4 -- loadTrack() now resolves the
               // mute-for-autoplay/unmute decision itself, synchronously, at
@@ -1142,8 +1147,9 @@ export default {
     // has certainly not started yet, so the hold re-arms here. Everything
     // between now and the player's PLAYING event is time the set does not
     // get to claim this track is playing (see detectBreak).
-    this._contentStarted = false
-    this._loadStartedAt = Date.now()
+    // 23rd pass: the drawing callers arm this themselves a few statements
+    // earlier, because they draw before they load -- see armLoad().
+    this.armLoad()
     // 2026-08-22 (bug report: "on load after power on, nothing plays...
     // even changing stations doesn't play audio. I have to mute and
     // unmute" -- classic mobile autoplay block. cueVideoById()'s later
@@ -1263,6 +1269,12 @@ export default {
     if (this.mode !== 'locked') return
     const track = this.nextTrack(this.lockedStation)
     this.currentTrack = track
+    // 23rd pass -- armed HERE rather than left to loadTrack() below.
+    // showTrack()'s reveal is gated on the player having started this track
+    // (revealHeld), and it is drawn before the load is ordered: without
+    // this the gate's first tick still sees the OUTGOING track's PLAYING
+    // and the title lands instantly, which is the whole bug.
+    this.armLoad()
     // Same station, just the next track in it -- station identity (its own
     // box now) doesn't need to be touched at all, just the track line.
     // 38th pass: shorter resolve than a lock's, matching the smaller VU
@@ -1441,6 +1453,68 @@ export default {
   /** What the NOW PLAYING slot should be showing right now. */
   displayTrack() {
     return this.breakActive ? this.breakTrack() : this.currentTrack
+  },
+
+  // --- the held reveal (2026-08-28, 23rd pass) ---------------------------
+  //
+  // The break above shrank "the set names a track that isn't playing" from
+  // about thirty seconds to four. This closes the last four.
+  //
+  // BREAK_HOLD_MS left the readout with two regimes: for the first four
+  // seconds of a load the set named the new track on nothing but a
+  // keypress, and only after that did the hold take over. That window is a
+  // small version of the exact untruth the break exists to delete -- it was
+  // shrunk, not closed, and a grace period is a lie with a timer on it.
+  //
+  // So the resolve animation stops running on a clock and starts running on
+  // the music. resolveText() takes a gate: while it is closed the row
+  // churns noise and settles nothing, and the moment it opens the ordinary
+  // reveal plays from there. One rule instead of two regimes, and the
+  // animation goes from decoration to the best beat in the app -- the title
+  // materialising as the track actually starts.
+  //
+  // Matt's call on the open question: the resolve STARTS ON THE KEYPRESS.
+  // [N] has to acknowledge instantly, so the noise is up in the same frame
+  // as the click; what waits is the settle, not the response.
+  //
+  // Everything the hold covers has to hold together or the honesty leaks
+  // out of whichever surface was left behind: the desktop track row, both
+  // mobile track rows and the artist line, the visualizer's footer, and the
+  // browser tab.
+
+  /** A new load is being ordered: no evidence it is playing, and the clock
+   *  the hold and the break both read starts now. loadTrack() calls this,
+   *  but so do skip() and tryLock() -- they DRAW before they load, and the
+   *  reveal has to be armed by the time it is drawn. Idempotent. */
+  armLoad() {
+    this._contentStarted = false
+    this._loadStartedAt = Date.now()
+  },
+
+  /** Has the current load actually started? The single source of truth for
+   *  both the reveal and the visualizer footer, so the two cannot disagree
+   *  about what is known. REVEAL_CEILING_MS is the stuck-reveal guard and
+   *  not a timing anyone should ever see (see constants.js); no load at all
+   *  on the clock reads as started, so an unrecognised state fails towards
+   *  showing the title rather than towards hiding it forever. */
+  contentReady() {
+    if (this._contentStarted) return true
+    if (!this._loadStartedAt) return true
+    return (Date.now() - this._loadStartedAt) >= REVEAL_CEILING_MS
+  },
+
+  /** Should this track's name be withheld right now?
+   *
+   *  Only ever the real current track: a STATION BREAK readout is a true
+   *  statement about this instant and lands immediately, and so does a
+   *  redraw of a track that is already playing (contentReady). With no
+   *  player there is nothing that can ever report PLAYING, so nothing may
+   *  be held on it -- which is also what keeps every harness boot without
+   *  `player: true` drawing exactly as it did before. */
+  revealHeld(track) {
+    if (!track || track !== this.currentTrack) return false
+    if (!this.ready || !this.player) return false
+    return !this.contentReady()
   },
 
   detectBreak() {
@@ -1870,6 +1944,13 @@ export default {
     }
     this._primedTrack = null
     this.currentTrack = track
+    // 23rd pass -- see skip()'s note: the reveal is gated on the load this
+    // call is about to order, so the gate is armed before the draw. NOT in
+    // the primed case: there the load was ordered in the original gesture,
+    // ~330ms of dial sweep ago, and re-arming would both re-hide a title
+    // that may already be playing and push the break's clock back by the
+    // length of the sweep.
+    if (!primedFresh) this.armLoad()
     this.showStation(s, station)
     this.showTrack(s, track)
     // Re-applies volume for the new station/track's gain (see

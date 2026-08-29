@@ -1359,6 +1359,244 @@ test('tuning away ends the break rather than carrying it to the next station', a
   } finally { h.shutdown() }
 })
 
+// --- the held reveal (2026-08-28, 23rd pass) ------------------------------
+//
+// The break above stops the set naming a track four seconds after the
+// keypress; this stops it naming one for those four seconds too. The reveal
+// holds in noise until the player reports PLAYING, so what these have to
+// prove is a pair that pulls in opposite directions: the title is NOT up
+// while nothing is playing, and it IS up promptly once something is --
+// a hold that never releases is worse than the lie it replaced.
+//
+// Timing-shaped, so every one of these was checked by breaking the feature
+// on purpose and confirming the right ones went red (see CLAUDE.md). The
+// fake starts content at 700ms, which is the window they all live in.
+
+const PLAY_DELAY_MS = 700 // harness START_DELAY_MS: cue -> PLAYING
+
+/** The row the desktop NOW PLAYING title settles onto. */
+const trackRow = async (h) => (await import(`../layout.js?v=${h.tag}`)).TRACK_Y
+
+/** What is actually drawn between the box borders on a row. */
+const rowInk = (h, y) => h.row(y).replace(/[\s\u2502]/g, '')
+
+test('the title waits for the music instead of for the keypress', async () => {
+  const h = await lockedPlaying()
+  try {
+    const y = await trackRow(h)
+    h.key('n')
+    const title = h.program.currentTrack.title
+    h.advance(300)
+    assert.equal(h.program.revealHeld(h.program.currentTrack), true, 'nothing has started yet')
+    assert.equal(h.find(title), -1, 'so the set is not naming the track')
+    h.advance(PLAY_DELAY_MS - 300 + 400)
+    assert.equal(h.program.revealHeld(h.program.currentTrack), false, 'the player reported PLAYING')
+    assert.ok(h.find(title) >= 0, 'and the title landed with it')
+    assert.ok(rowInk(h, y).length > 0, 'on the row it belongs on')
+  } finally { h.shutdown() }
+})
+
+test('[N] still answers in the same frame, even though the title does not', async () => {
+  // Matt's call on the open question this feature had: the resolve STARTS on
+  // the keypress and only its settle waits. A held row that went blank, or
+  // sat on the outgoing title, would make [N] read as a dead key -- the
+  // exact class of thing tools/dead-feedback.mjs exists to catch.
+  const h = await lockedPlaying()
+  try {
+    const y = await trackRow(h)
+    const before = h.row(y)
+    const outgoing = h.program.currentTrack.title
+    h.key('n')
+    h.advance(20)
+    assert.notEqual(h.row(y), before, 'the row moved on the keypress')
+    assert.equal(h.find(outgoing), -1, 'the track that just ended is not still named')
+    assert.ok(rowInk(h, y).length > 0, 'and the row is churning, not blank')
+  } finally { h.shutdown() }
+})
+
+test('a held reveal never flashes the title on its way to a break', async () => {
+  // The two halves of the feature meeting: an advert holds the reveal for
+  // its whole length and then the break takes the row. Stepped a poll at a
+  // time, because the failure this guards is a single frame wide -- the
+  // ceiling landing the title just before the break wipes it.
+  const h = await lockedPlaying()
+  try {
+    skipIntoAd(h)
+    const title = h.program.currentTrack.title
+    for (let t = 400; t <= HOLD_MS + 1200; t += BREAK_POLL) {
+      h.advance(BREAK_POLL)
+      assert.equal(h.find(title), -1, `the unstarted track was named at t=${t}ms`)
+    }
+    assert.equal(h.program.breakActive, true, 'the break took the row instead')
+    assert.ok(h.find('STATION BREAK') >= 0)
+    h.player.endAd()
+    h.advance(PLAY_DELAY_MS + 600)
+    assert.ok(h.find(title) >= 0, 'and the title arrives when the music finally does')
+  } finally { h.shutdown() }
+})
+
+test('the tab holds with the screen and lands with it', async () => {
+  // The tab is the surface that stays visible after you switch away, so a
+  // title it carries through a whole load is the same claim in the one
+  // place you would keep reading it.
+  const h = await lockedPlaying()
+  try {
+    const cs = h.program.lockedStation.callsign
+    h.key('n')
+    const title = h.program.currentTrack.title
+    h.advance(300)
+    assert.equal(globalThis.document.title, `${cs} — SIGNAL`, 'the station is true, the track is not yet')
+    h.advance(PLAY_DELAY_MS - 300 + 200)
+    assert.ok(globalThis.document.title.includes(title), 'and the tab lands on the PLAYING event')
+  } finally { h.shutdown() }
+})
+
+test('the visualizer footer holds the same way the main screen does', async () => {
+  // It redraws every frame off displayTrack() rather than through
+  // showTrack(), so it is the one surface that could go on naming a track
+  // the rest of the app had stopped claiming.
+  const h = await lockedPlaying()
+  try {
+    h.key('v'); h.advance(600)
+    assert.equal(h.program.visualizerActive, true, 'test setup: in the visualizer')
+    h.key('n')
+    const title = h.program.currentTrack.title
+    h.advance(300)
+    assert.equal(h.find(title), -1, 'the footer is not naming it either')
+    h.advance(PLAY_DELAY_MS - 300 + 400)
+    assert.ok(h.find(title) >= 0, 'and it comes back with the music')
+  } finally { h.shutdown() }
+})
+
+test('a redraw during the hold does not smuggle the title in', async () => {
+  // The side door: every redraw path (guide close, visualizer exit, a
+  // relayout) calls showTrack() again with the same track. If the gate were
+  // built at the call site rather than asked for per draw, any of them would
+  // hand back the title the hold had just refused to give.
+  const h = await lockedPlaying()
+  try {
+    h.key('n')
+    const title = h.program.currentTrack.title
+    h.advance(120)
+    h.key('g'); h.advance(200)
+    assert.equal(h.program.guideOpen, true, 'test setup: the guide is up')
+    h.key('x'); h.advance(200)             // any key closes it
+    assert.equal(h.program.guideOpen, false)
+    assert.equal(h.program.revealHeld(h.program.currentTrack), true, 'still nothing playing')
+    assert.equal(h.find(title), -1, 'and the redraw did not name it')
+  } finally { h.shutdown() }
+})
+
+test('mobile holds every row of its NOW PLAYING box', async () => {
+  // The artist is as much a claim about what is playing as the title, and a
+  // wrapped title that settled a row at a time would read as a fault.
+  const h = await boot({ player: true, mobile: true })
+  try {
+    h.powerOn()
+    h.advance(4000)
+    assert.equal(h.program.mode, 'locked', 'test setup: locked')
+    h.touch(100, 200, 100, 60)             // vertical swipe == [N]
+    h.advance(300)
+    const L = h.program._mLayout
+    const track = h.program.currentTrack
+    assert.equal(h.program.revealHeld(track), true, 'test setup: held')
+    for (const y of [L.npTrack1, L.npTrack2, L.npArtist]) {
+      if (y == null) continue
+      assert.equal(rowInk(h, y).includes(track.artist.slice(0, 6)), false, `row ${y} named the artist early`)
+    }
+    h.advance(PLAY_DELAY_MS - 300 + 500)
+    assert.equal(h.program.revealHeld(track), false)
+    assert.ok(h.rows().some((r) => r.includes(track.artist.slice(0, 6))), 'the artist landed with the music')
+  } finally { h.shutdown() }
+})
+
+test('a relayout during a held reveal does not smear it across the box', async () => {
+  // Reached the suite as a 1-in-5 flaky failure of the lite-bar test above,
+  // with noise glyphs painted through the playback bar, and it is a real
+  // bug older than this pass rather than a bad test.
+  //
+  // A resolve is keyed on the row it STARTED at (`resolve:<y>`), and the
+  // lite grid moves its rows whenever a title's wrap changes. The sequence
+  // that hurts: a two-line title is held (its resolves sit on npTop+1..+3),
+  // then the break arrives and puts a ONE-line 'STATION BREAK' in the box,
+  // which shrinks it -- and npTop+3 is now the playback bar. Those resolves
+  // are still held, because the track they were started for is still the
+  // current one, so they churn over the bar for as long as the break lasts.
+  //
+  // Everything about it needs the hold to show: before this pass a resolve
+  // lived 250-340ms and had to be relaid out inside that window. That is
+  // what made it rare, and it is why the fix (cancel the whole zone before
+  // wiping it, in mobileRelayout) belongs with this feature.
+  const h = await boot({ player: true, mobile: true })
+  try {
+    h.powerOn()
+    h.advance(4000)
+    assert.equal(h.program.mode, 'locked', 'test setup: locked')
+    const st = h.program.lockedStation
+    st.tracks = [{
+      title: 'A Title With Quite Enough Words In It To Need Both Of The Track Rows',
+      artist: 'The Longs',
+      youtubeId: 'bbbbbbbbbbb',
+    }]
+    h.program.bags[st.id] = { order: [0], pos: 0 }
+    h.player.startAd()                       // nothing will start: the reveal holds
+    h.touch(100, 200, 100, 60)               // [N] -> the wrapping title
+    h.advance(400)
+    assert.equal(h.program._mLayout.trackLines, 2, 'test setup: the title wrapped the box open')
+    assert.equal(h.program.revealHeld(h.program.currentTrack), true, 'test setup: held')
+    h.advance(HOLD_MS + 800)                 // the break takes the box back to one line
+    assert.equal(h.program.breakActive, true, 'test setup: the break arrived')
+    assert.equal(h.program._mLayout.trackLines, 1, 'test setup: and shrank the box')
+    const L = h.program._mLayout
+    // Asserted on the queue as well as the pixels, and deliberately. Which
+    // one you SEE on the bar row is a race -- the bar redraws every frame,
+    // a resolve only every 33ms -- which is exactly why this arrived as an
+    // intermittent failure. Whether a resolve is still registered against a
+    // row the wipe took away is not a race.
+    const live = h.program._fx
+      .filter((e) => e.tag.startsWith('resolve:'))
+      .map((e) => Number(e.tag.slice('resolve:'.length)))
+    const stale = live.filter((y) => y > L.npTrack1 + (L.npTrack2 == null ? 0 : 1) && y !== L.npArtist)
+    assert.deepEqual(stale, [], `resolves left painting rows the relayout moved: ${live}`)
+    const NOISE = /[\u2593\u2592\u2591#%&*]/
+    for (const y of [L.npProgress, L.npBot, L.widgetRow, L.widgetRow2]) {
+      assert.equal(NOISE.test(h.row(y)), false, `a stale resolve painted onto row ${y}: ${h.row(y)}`)
+    }
+  } finally { h.shutdown() }
+})
+
+test('with no player there is nothing to wait for, so nothing is held', async () => {
+  // Every boot without `player: true` has no player at all -- loadTrack()
+  // returns on its first line and no PLAYING event can ever arrive. A hold
+  // keyed on that event would leave those sets showing noise forever, which
+  // is both the wrong behaviour and most of the suite.
+  const h = await boot()
+  try {
+    h.powerOn()
+    h.key(await otherPreset(h))
+    h.advance(2000)
+    assert.equal(h.program.revealHeld(h.program.currentTrack), false, 'not held with no player')
+    assert.ok(h.find(h.program.currentTrack.title) >= 0, 'the title is up as it always was')
+  } finally { h.shutdown() }
+})
+
+test('a reveal with nothing left to land it settles itself', async () => {
+  // REVEAL_CEILING_MS, and the one state it is for: an occluded tab at 0fps
+  // starves checkForBreak (frame-driven on purpose) while the effects
+  // queue's fallback ticker keeps the resolve ticking, so the hold has
+  // neither of its two releases left. Well clear of BREAK_HOLD_MS, so the
+  // break wins this race every time it is in it -- see constants.js.
+  const h = await lockedPlaying()
+  try {
+    const { REVEAL_CEILING_MS } = await import(`../constants.js?v=${h.tag}`)
+    assert.ok(REVEAL_CEILING_MS > HOLD_MS * 2, 'the ceiling is nowhere near the break')
+    h.program.armLoad()
+    assert.equal(h.program.revealHeld(h.program.currentTrack), true, 'held while the load is fresh')
+    h.program._loadStartedAt = Date.now() - (REVEAL_CEILING_MS + 1)
+    assert.equal(h.program.revealHeld(h.program.currentTrack), false, 'a stuck reveal gives up and shows')
+  } finally { h.shutdown() }
+})
+
 /** Open the guide and step to the station index (page 2). */
 async function openIndex(h) {
   h.key('g'); h.advance(200)

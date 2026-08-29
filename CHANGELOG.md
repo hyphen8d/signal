@@ -219,6 +219,36 @@ and tooling. Full write-up in the audit notes; the short version:
   revisits the detection half of the 20th pass's decision and leaves the
   suppression half untouched; the Guide still says so on its own page.
 
+### The title lands on the music (2026-08-28)
+
+- **NOW PLAYING waits for the downbeat.** The reveal used to run on a timer:
+  press `[N]` and the track title typed itself in immediately, whether or not
+  a single note of it had played. The STATION BREAK above had already shrunk
+  that window from about thirty seconds to four — this closes the last four.
+  The resolve now holds in noise until the player reports PLAYING, so the
+  title *settles as the sound arrives* instead of a beat before it. One rule
+  in place of two regimes, honest by construction rather than by grace
+  period, and the animation stops being decoration: the best moment in the
+  app is now the title materialising on the downbeat.
+- **The keypress still answers instantly.** The resolve *starts* on the key —
+  the row is churning noise in the same frame as the click — and only the
+  settle waits. A held row shows nothing readable, not a half-legible title:
+  half of a claim is still the claim.
+- **Every surface holds together**, or the honesty leaks out of whichever one
+  was left behind: the desktop track row, both of mobile's title rows and its
+  artist line, the visualizer's footer, and the browser tab, which names the
+  station and waits rather than carrying a wrong title for the whole of a
+  load. If the music never arrives, the break takes the row at four seconds
+  exactly as before.
+- **Fixed alongside it: a resolve could paint over the lite grid's playback
+  bar.** A resolve is keyed on the row it started at, and the lite layout
+  moves its rows when a title's wrap changes — so a two-line title held open,
+  then replaced by a one-line `STATION BREAK`, left noise churning across the
+  bar underneath. Older than this pass and rare enough to have surfaced only
+  as an intermittent test failure (a resolve used to live 340ms and had to be
+  relaid out inside that window); held reveals made it permanent, and made it
+  findable.
+
 ### Sleep timer
 
 - **`[T]` arms a sleep timer** -- 60 / 30 / 15 minutes and off again, stepping

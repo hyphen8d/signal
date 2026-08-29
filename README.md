@@ -90,6 +90,12 @@ things easy to miss from a screenshot alone:
 - **Text resolves rather than appears.** Callsign, tagline, and track title
   settle out of scrambled noise glyphs over a couple hundred milliseconds
   when you lock or skip, instead of snapping into place.
+- **The title lands on the music, not on the keypress.** That resolve starts
+  the instant you press `[N]`, but it doesn't finish until the player says
+  the track has actually started — so the name settles as the first sound
+  arrives rather than a second or two before it. The set never claims to be
+  playing something it isn't: while it's waiting, the row is honest noise,
+  and if nothing ever starts the STATION BREAK takes the slot instead.
 - **Every control sound is genuine feedback, not garnish** — a relay thunk
   on mute, a volume detent, a keypress click, a thud at the band edges. The
   status row backs all of it up visually too, sweeping and typewriting in
