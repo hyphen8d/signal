@@ -257,6 +257,23 @@ export const STATIONS = [
       // Video: the set plays audio-only, and a video's own baked-in
       // dialogue has cost a track before.
       realTrack('hVck6DkOi38', 'Bombtrack', 'Rage Against the Machine'),
+      // 2026-08-29 -- five to take this station to 50. Two are canonical
+      // gaps by artists already here (Nirvana and Pearl Jam each had two of
+      // their three obvious ones); three are new artists, so the station
+      // gains breadth rather than just depth -- 34 artists to 37.
+      // Every one is the album cut on an official channel, checked on
+      // DURATION and not just on flags: Alice In Chains' Rooster and the
+      // Pumpkins' Today were both dropped from this batch for exactly that
+      // reason, their VEVO uploads running 49s and 40s long because the
+      // video carries an intro before the song. Seven Mary Three's
+      // Cumbersome auditioned clean too and lost the last slot to Shine on
+      // the same axis: it is a music video at the single edit, which is the
+      // shape Blind Melon's No Rain was already turned away in.
+      realTrack('n6P0SitRwy8', 'Heart-Shaped Box', 'Nirvana'),
+      realTrack('q90DPCu_-zk', 'Even Flow', 'Pearl Jam'),
+      realTrack('GpBFOJ3R0M4', 'Only Happy When It Rains', 'Garbage'),
+      realTrack('OGKRr0NmgFM', 'Plowed', 'Sponge'),
+      realTrack('iuB1A2VJ3-k', 'Shine', 'Collective Soul'),
     ] },
   // RELIC SIGNAL (classical, 219.8) retired 2026-08-21 (28th pass, per
   // the station-naming pass) -- its classical lane overlapped with

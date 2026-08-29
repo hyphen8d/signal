@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 330 tracks total.
+Generated from stations.js. 9 stations, 335 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -8,7 +8,7 @@ Generated from stations.js. 9 stations, 330 tracks total.
 
 Ident tones (Hz): 392, 349.2, 311.2, 261.6
 
-Tracks (45):
+Tracks (50):
 
 1. **Smells Like Teen Spirit** -- Nirvana  ([youtu.be/hTWKbfoikeg](https://youtu.be/hTWKbfoikeg))
 2. **Black Hole Sun** -- Soundgarden  ([youtu.be/3mbBbFH9fAg](https://youtu.be/3mbBbFH9fAg))
@@ -55,6 +55,11 @@ Tracks (45):
 43. **Outshined** -- Soundgarden  ([youtu.be/sNh-iw7gsuI](https://youtu.be/sNh-iw7gsuI))
 44. **This Gift** -- Mudhoney  ([youtu.be/-SRxWz3CDvg](https://youtu.be/-SRxWz3CDvg))
 45. **Bombtrack** -- Rage Against the Machine  ([youtu.be/hVck6DkOi38](https://youtu.be/hVck6DkOi38))
+46. **Heart-Shaped Box** -- Nirvana  ([youtu.be/n6P0SitRwy8](https://youtu.be/n6P0SitRwy8))
+47. **Even Flow** -- Pearl Jam  ([youtu.be/q90DPCu_-zk](https://youtu.be/q90DPCu_-zk))
+48. **Only Happy When It Rains** -- Garbage  ([youtu.be/GpBFOJ3R0M4](https://youtu.be/GpBFOJ3R0M4))
+49. **Plowed** -- Sponge  ([youtu.be/OGKRr0NmgFM](https://youtu.be/OGKRr0NmgFM))
+50. **Shine** -- Collective Soul  ([youtu.be/iuB1A2VJ3-k](https://youtu.be/iuB1A2VJ3-k))
 
 ## DRIFT MODE -- 321.0
 
