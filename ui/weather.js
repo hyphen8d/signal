@@ -198,10 +198,11 @@ export default {
       } else {
         put(12, this._wxBusy ? 'LOCATING...' : 'NO READING', FAINT)
       }
-      this.drawGuideKeyLine(s, 14, '[W] CLOSE', DIM)
+      this.drawGuideKeyLine(s, 15, '[W] CLOSE', DIM)
       return
     }
     const suffix = WX.unitSuffix(this._wx.units)
+    const IN0 = CARD_X0 + 1, IN1 = CARD_X1 - 1
     // The part of the day it is RIGHT NOW is drawn BRIGHT and the others
     // NORMAL. A three-line forecast with nothing marked makes you work out
     // which line applies to you, which is the one thing a glance at this
@@ -211,15 +212,39 @@ export default {
     const hourNow = this._wx.timezone
       ? Number(new Date().toLocaleString('en-GB', { timeZone: this._wx.timezone, hour: '2-digit', hour12: false }).slice(0, 2))
       : new Date().getHours()
-    let y = 10
-    for (const part of this._wx.parts) {
+    // Build the three lines first, then centre the BLOCK rather than each
+    // line -- centring them individually would ragged the columns and the
+    // whole point of the padding is that the temperatures line up. Earlier
+    // this sat at a fixed offset from the left edge, which left roughly half
+    // the card empty on the right and read as unfinished.
+    const rows = this._wx.parts.map((part) => {
       const spec = WX.DAY_PARTS.find((d) => d.name === part.name)
-      const isNow = spec && hourNow >= spec.from && hourNow <= spec.to
       const temp = part.temp === null ? '--' : `${part.temp}${suffix}`
       const label = part.code === null ? '--' : WX.wmoLabel(part.code)
-      left(y, part.name.padEnd(12) + temp.padStart(5) + '  ' + label, isNow ? BRIGHT : NORMAL)
-      y++
+      return {
+        text: part.name.padEnd(11) + temp.padStart(5) + '   ' + label,
+        isNow: !!spec && hourNow >= spec.from && hourNow <= spec.to,
+      }
+    })
+    const blockW = Math.max(...rows.map((r) => r.text.length))
+    const blockX = IN0 + Math.max(0, Math.floor(((IN1 - IN0 + 1) - blockW) / 2))
+    rows.forEach((r, i) => term.text(blockX, 10 + i, r.text, r.isNow ? BRIGHT : NORMAL))
+
+    // Sun times, pushed out to the two ends of the interior. They are the
+    // most radio thing the same request returns, and putting them at the
+    // edges is what makes the card's width look chosen rather than left
+    // over. Drawn only when both parsed -- one lonely time reads as a fault.
+    const { rise, set } = this._wx.sun || {}
+    if (rise && set) {
+      // Spread to the INTERIOR's edges rather than the block's -- the block
+      // is ~26 columns and pinning these to it just repacked them in the
+      // middle, leaving the same empty margins the centring was meant to
+      // fix. At the edges they frame the block and the card's width finally
+      // has a reason to be what it is.
+      const l = `SUNRISE ${rise}`, r = `SUNSET ${set}`
+      term.text(IN0 + 3, 13, l, MUTED)
+      term.text(IN1 - 2 - r.length, 13, r, MUTED)
     }
-    this.drawGuideKeyLine(s, 14, '[W] CLOSE', DIM)
+    this.drawGuideKeyLine(s, 15, '[W] CLOSE', DIM)
   },
 }

@@ -126,11 +126,26 @@ export function bucketHours(hourly) {
   })
 }
 
+/** "2026-08-29T06:24" -> "06:24". Null for anything that is not that shape,
+ *  so a missing sun time draws as absent rather than as "undefined". */
+export function hhmm(iso) {
+  const t = String(iso ?? '').slice(11, 16)
+  return /^\d\d:\d\d$/.test(t) ? t : null
+}
+
 export function forecastUrl(lat, lon, units) {
   const q = new URLSearchParams({
     latitude: String(lat), longitude: String(lon),
     current: 'temperature_2m,weather_code',
     hourly: 'temperature_2m,weather_code',
+    // Sun times come free in the same request and are the most radio thing
+    // available here -- a station reads them out. Deliberately NOT asking for
+    // a place name: there is no reverse geocode in this API, and the obvious
+    // free substitute (the timezone's own city) is wrong in a way that would
+    // ship. Seattle's coordinates resolve to America/Los_Angeles, so a
+    // Seattle listener would be told their forecast is for LOS ANGELES.
+    // Showing nothing beats confidently showing the wrong city.
+    daily: 'sunrise,sunset',
     forecast_days: '1', timezone: 'auto', temperature_unit: units,
   })
   return `https://api.open-meteo.com/v1/forecast?${q}`
@@ -193,6 +208,12 @@ export async function fetchWeather(lat, lon, units, fetchImpl = globalThis.fetch
       units,
       current: { temp: Math.round(j.current.temperature_2m), code: j.current.weather_code },
       parts: bucketHours(j.hourly),
+      // Same character-slicing rule as bucketHours(): these are zoneless
+      // local strings ("2026-08-29T06:24") and the clock face is chars 11-15.
+      sun: {
+        rise: hhmm(j.daily?.sunrise?.[0]),
+        set: hhmm(j.daily?.sunset?.[0]),
+      },
       timezone: j.timezone || null,
     }
   } catch (e) { return null }
