@@ -344,13 +344,19 @@
         "Eiichi Ohtaki",
         "Akira Terao",
         "Yasuko Agawa",
-        "Yurie Kokubu"
+        "Yurie Kokubu",
+        "Takako Mamiya",
+        "Chiemi Manabe",
+        "Naoko Gushima",
+        "Rajie",
+        "Piper"
       ],
       "constraints": [
         "HARD RULE, explicit editorial decision 2026-08-20: Japanese artists only. Western yacht-rock/AOR that sounds similar (Steely Dan, Toto, etc.) does NOT belong here even though it's genre-adjacent -- this is specifically a Japan-only lane.",
         "Verify original-artist credit carefully -- a song has been mis-credited to the wrong artist before (a listed \"Casiio\" cover turned out to actually be Yasuha's original).",
         "Sourcing runs opposite to the guitar stations: most of this catalogue was never officially uploaded, so fan and archive channels carry roughly two thirds of the roster and are accepted here out of necessity. Prefer artist \"- Topic\", label channels (Victor, Sony Music (Japan), VAP, PANAM, MUSIC Liverary) and artist-official where they exist -- they are also the defence against the mis-credit rule above, since fan re-uploads are where covers get labelled as originals.",
-        "Check region-locking, not just oEmbed -- unique to this station. Japanese label uploads are commonly geo-fenced and an oEmbed 200 says nothing about it; confirm the video is US-available and embeddable before proposing. Watch for Night Tempo \"Showa Groove\" mixes (modern remixes), live cuts, and \"Original Basic Track\" uploads that are backing-track outtakes."
+        "Check region-locking, not just oEmbed -- unique to this station. Japanese label uploads are commonly geo-fenced and an oEmbed 200 says nothing about it; confirm the video is US-available and embeddable before proposing. Watch for Night Tempo \"Showa Groove\" mixes (modern remixes), live cuts, and \"Original Basic Track\" uploads that are backing-track outtakes.",
+        "The mis-credit warning above earned itself three times in one pass (2026-08-29), all of them Topic uploads that look correct in a result list: 'AIRPORT LADY' on Ai Furihata - Topic is a cover, not Kadomatsu; 'Bomber' on Hirotaka Mori - Topic is not Yamashita; a Nanako Sato search returns 'Nanaco', a different artist. Read the CHANNEL, not the title. Related: Casiopea's Asayake has no clean upload of the 1979 original -- the available ones are 'Casiopea 3rd', the later lineup re-recording it."
       ],
       "rejections": []
     },
@@ -475,13 +481,21 @@
         "Jeru the Damaja",
         "N.W.A",
         "UGK",
-        "Goodie Mob"
+        "Goodie Mob",
+        "Salt-N-Pepa",
+        "MC Lyte",
+        "Fugees",
+        "DJ Quik",
+        "Too $hort",
+        "Del the Funky Homosapien",
+        "Scarface"
       ],
       "constraints": [
         "Genuinely coast-to-coast -- NY is if anything the heavier side (Tribe/De La/Wu-Tang/Nas/Gang Starr/Pete Rock/Digable Planets/MF DOOM/Black Star) alongside West Coast (Dre/Ice Cube/Warren G/2Pac/Cypress Hill) and Outkast (Atlanta). A \"west coast legends\" framing was checked against the actual tracklist and found wrong (52nd pass) -- don't skew additions toward any one coast without checking the balance first.",
         "Coast balance, measured 2026-08-25 rather than assumed: before this pass roughly half the roster was New York. The 8-track addition was weighted away from it on purpose (3 NY, plus New Jersey, Houston, Chicago, Oakland and Philadelphia). Re-measure before the next batch instead of trusting this number -- it is a snapshot, like acceptedArtists.",
         "Before 2026-08-25 the station had no women across 21 artists. Queen Latifah is the first. Golden-age canon has plenty more (MC Lyte, Salt-N-Pepa, Lauryn Hill/Fugees, Roxanne Shante) and none are represented yet.",
-        "On the open question under the Snoop Dogg rejection -- whether this station steers away from radio-famous tracks toward deeper cuts -- the roster itself argues against it: C.R.E.A.M., Ms. Jackson, California Love, Regulate, Insane in the Brain and It Was A Good Day are all canon hits. Treat that removal as a taste call on the track until something else suggests otherwise."
+        "On the open question under the Snoop Dogg rejection -- whether this station steers away from radio-famous tracks toward deeper cuts -- the roster itself argues against it: C.R.E.A.M., Ms. Jackson, California Love, Regulate, Insane in the Brain and It Was A Good Day are all canon hits. Treat that removal as a taste call on the track until something else suggests otherwise.",
+        "Coast balance re-measured 2026-08-29 before the batch that took this station to 50: NY was 24/43 (56%). The seven added were 2 NY, 1 NJ, 3 West, 1 South, landing NY at 26/50 (52%). Re-measure again rather than trusting that number. Women went from 1 artist to 4 (Queen Latifah, Salt-N-Pepa, MC Lyte, Fugees); Roxanne Shante is the one named in the earlier gap note still not represented. Mobb Deep's Shook Ones Pt. II is verified clean (rTKpYJ80OVQ) and was passed over on coast alone."
       ],
       "rejections": [
         {

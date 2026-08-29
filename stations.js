@@ -776,6 +776,37 @@ export const STATIONS = [
       // no title collision) rather than trusted from its 2026-08-23/24
       // proposal check.
       realTrack('r63lZvPsj5U', 'Neat na Gogo San-ji', 'Miki Matsubara'),
+      // 2026-08-29 -- nine to take CITY LIGHTS to 50. Five are new artists,
+      // which matters more here than elsewhere: this was the thinnest public
+      // roster relative to its size, 28 artists across 41 tracks, with three
+      // artists carrying three tracks each. It is 33 artists now.
+      //
+      // Every one confirmed US-available and embeddable by the watch probe,
+      // not by oEmbed. That is this station's own constraint and it is not
+      // decorative -- Japanese label uploads are routinely geo-fenced and an
+      // oEmbed 200 says nothing about it. All nine came back 121-249
+      // countries with us=true.
+      //
+      // The profile's other warning -- verify original-artist credit, a song
+      // has been mis-credited here before -- earned itself three times in one
+      // pass. A Topic upload of AIRPORT LADY is Ai Furihata covering
+      // Kadomatsu, not Kadomatsu. A Topic upload titled Bomber is Hirotaka
+      // Mori, not Yamashita. And a search for Nanako Sato returns 'Nanaco',
+      // a different artist entirely. All three look right in a result list
+      // and are wrong in the roster; the channel name is what catches them.
+      //
+      // Casiopea's Asayake was wanted and dropped: the only clean uploads are
+      // from 'Casiopea 3rd', the later lineup, so they are re-recordings
+      // rather than the 1979 original. Same shape as the mis-credits above.
+      realTrack('n79SqFZFQcQ', 'Mayonaka no Joke', 'Takako Mamiya'),
+      realTrack('HuslecphkVw', 'Untotooku', 'Chiemi Manabe'),
+      realTrack('AADQuhYHbf4', 'Candy', 'Naoko Gushima'),
+      realTrack('h8uDIS6-g9w', 'Hold Me Tight', 'Rajie'),
+      realTrack('9TT_oIzTT74', 'Summer Breeze', 'Piper'),
+      realTrack('mCHy6H2QDEY', 'Town', 'Minako Yoshida'),
+      realTrack('AeH1xq2PpjQ', 'Tuxedo Connection', 'Hitomi Tohyama'),
+      realTrack('SIGr6dc_2Sc', 'Bomber', 'Tatsuro Yamashita'),
+      realTrack('pSbzx-0wbs0', 'Two Call', 'Kaoru Akimoto'),
     ] },
   // 22nd pass -- outlaw channel dropped completely, 9 channels being the
   // max for now. OUTLAW (freq 288.6, spaghetti-western/outlaw-country)
@@ -1103,6 +1134,36 @@ export const STATIONS = [
       realTrack('TMZi25Pq3T8', 'Straight Outta Compton', 'N.W.A'),
       realTrack('MnP1XmxyqxA', 'Pocket Full of Stones', 'UGK'),
       realTrack('OGy4bmG5SJw', 'Cell Therapy', 'Goodie Mob'),
+      // 2026-08-29 -- seven to take HACKBACK to 50, picked against the two
+      // things this profile asks for by name rather than against taste.
+      //
+      // Coast balance, re-measured rather than trusted, as the profile
+      // instructs: NY was 24 of 43, 56%, still the heavy side after the
+      // 2026-08-25 pass tried to weight away from it. These seven are 2 NY,
+      // 1 New Jersey, 3 West and 1 South, which lands NY at 26 of 50, 52%.
+      // A real move but a small one -- the next batch, if there is one,
+      // should keep pushing and should re-measure again rather than trust
+      // this number either.
+      //
+      // Representation: the profile records that before 2026-08-25 this
+      // station had no women across 21 artists, and that Queen Latifah was
+      // still the only one. It names the canon that was missing -- MC Lyte,
+      // Salt-N-Pepa, Lauryn Hill/Fugees, Roxanne Shante. Three of those four
+      // are here now, taking it from one woman to four. Roxanne Shante is
+      // the one still outstanding.
+      //
+      // Mobb Deep's Shook Ones Pt. II is the obvious canonical hole left and
+      // it auditioned clean (rTKpYJ80OVQ, Official Audio, 5:28). It lost to
+      // Del on coast alone -- a fourth New York track would have cancelled
+      // most of the balance move above. First thing to reach for if the next
+      // pass widens the station rather than rebalancing it.
+      realTrack('4vaN01VLYSQ', 'Shoop', 'Salt-N-Pepa'),
+      realTrack('VMttICy5MSg', 'Cha Cha Cha', 'MC Lyte'),
+      realTrack('PWOa_eeKzO0', 'Ready or Not', 'Fugees'),
+      realTrack('yqxrr6CQyus', 'Tonite', 'DJ Quik'),
+      realTrack('0Cjj3YMrkEM', 'The Ghetto', 'Too $hort'),
+      realTrack('BQrdjT3GHwE', 'Mistadobalina', 'Del the Funky Homosapien'),
+      realTrack('cGwUE0V9Gqw', 'I Seen a Man Die', 'Scarface'),
     ] },
   // 52nd pass -- stations 1, 6, and 9 needed similar short descriptions to
   // fit the format the others have. Was a bare two-word tagline; added

@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 377 tracks total.
+Generated from stations.js. 9 stations, 393 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -224,7 +224,7 @@ Tracks (30):
 
 Ident tones (Hz): 523.3, 784, 659.3, 987.8
 
-Tracks (41):
+Tracks (50):
 
 1. **Stay With Me** -- Miki Matsubara  ([youtu.be/5zTkTlj2h9E](https://youtu.be/5zTkTlj2h9E))
 2. **Sparkle** -- Tatsuro Yamashita  ([youtu.be/tWqZASIxlqs](https://youtu.be/tWqZASIxlqs))
@@ -267,6 +267,15 @@ Tracks (41):
 39. **L.A. Night** -- Yasuko Agawa  ([youtu.be/2tiLgAG02QM](https://youtu.be/2tiLgAG02QM))
 40. **Just a Joke** -- Yurie Kokubu  ([youtu.be/AD3sEAGRGv4](https://youtu.be/AD3sEAGRGv4))
 41. **Neat na Gogo San-ji** -- Miki Matsubara  ([youtu.be/r63lZvPsj5U](https://youtu.be/r63lZvPsj5U))
+42. **Mayonaka no Joke** -- Takako Mamiya  ([youtu.be/n79SqFZFQcQ](https://youtu.be/n79SqFZFQcQ))
+43. **Untotooku** -- Chiemi Manabe  ([youtu.be/HuslecphkVw](https://youtu.be/HuslecphkVw))
+44. **Candy** -- Naoko Gushima  ([youtu.be/AADQuhYHbf4](https://youtu.be/AADQuhYHbf4))
+45. **Hold Me Tight** -- Rajie  ([youtu.be/h8uDIS6-g9w](https://youtu.be/h8uDIS6-g9w))
+46. **Summer Breeze** -- Piper  ([youtu.be/9TT_oIzTT74](https://youtu.be/9TT_oIzTT74))
+47. **Town** -- Minako Yoshida  ([youtu.be/mCHy6H2QDEY](https://youtu.be/mCHy6H2QDEY))
+48. **Tuxedo Connection** -- Hitomi Tohyama  ([youtu.be/AeH1xq2PpjQ](https://youtu.be/AeH1xq2PpjQ))
+49. **Bomber** -- Tatsuro Yamashita  ([youtu.be/SIGr6dc_2Sc](https://youtu.be/SIGr6dc_2Sc))
+50. **Two Call** -- Kaoru Akimoto  ([youtu.be/pSbzx-0wbs0](https://youtu.be/pSbzx-0wbs0))
 
 ## CIRCUIT CRUSH -- 488.0
 
@@ -355,7 +364,7 @@ Tracks (30):
 
 Ident tones (Hz): 220, 293.7, 349.2, 293.7
 
-Tracks (43):
+Tracks (50):
 
 1. **Can I Kick It?** -- A Tribe Called Quest  ([youtu.be/D-uV8TGjaGU](https://youtu.be/D-uV8TGjaGU))
 2. **Award Tour** -- A Tribe Called Quest  ([youtu.be/P800UWoE9xs](https://youtu.be/P800UWoE9xs))
@@ -400,6 +409,13 @@ Tracks (43):
 41. **Straight Outta Compton** -- N.W.A  ([youtu.be/TMZi25Pq3T8](https://youtu.be/TMZi25Pq3T8))
 42. **Pocket Full of Stones** -- UGK  ([youtu.be/MnP1XmxyqxA](https://youtu.be/MnP1XmxyqxA))
 43. **Cell Therapy** -- Goodie Mob  ([youtu.be/OGy4bmG5SJw](https://youtu.be/OGy4bmG5SJw))
+44. **Shoop** -- Salt-N-Pepa  ([youtu.be/4vaN01VLYSQ](https://youtu.be/4vaN01VLYSQ))
+45. **Cha Cha Cha** -- MC Lyte  ([youtu.be/VMttICy5MSg](https://youtu.be/VMttICy5MSg))
+46. **Ready or Not** -- Fugees  ([youtu.be/PWOa_eeKzO0](https://youtu.be/PWOa_eeKzO0))
+47. **Tonite** -- DJ Quik  ([youtu.be/yqxrr6CQyus](https://youtu.be/yqxrr6CQyus))
+48. **The Ghetto** -- Too $hort  ([youtu.be/0Cjj3YMrkEM](https://youtu.be/0Cjj3YMrkEM))
+49. **Mistadobalina** -- Del the Funky Homosapien  ([youtu.be/BQrdjT3GHwE](https://youtu.be/BQrdjT3GHwE))
+50. **I Seen a Man Die** -- Scarface  ([youtu.be/cGwUE0V9Gqw](https://youtu.be/cGwUE0V9Gqw))
 
 ## CIPHER -- 133.7
 
