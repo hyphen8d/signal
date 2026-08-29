@@ -40,6 +40,10 @@ export const MAPPED_KEYS = new Set([
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
   // 2026-08-26 (issue #8) -- [F] fullscreen, main screen and visualizer.
   'f', 'F',
+  // 2026-08-29 -- [W] weather card. Here for the reason every command key
+  // is: isMappedKey() gates playKeyClick(), so a key that acts and does
+  // not click is the exact drift the dead-feedback sweep exists to catch.
+  'w', 'W',
   // 2026-08-26 -- Shift+0 (')' on a standard layout), GREEN ROOM's way in.
   // Here for the same reason every other command key is: isMappedKey()
   // gates playKeyClick(), so without this the one keypress that reaches

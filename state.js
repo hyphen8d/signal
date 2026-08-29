@@ -33,6 +33,12 @@ export function saveSignalState(program) {
       // capture grant itself is NOT ours to remember (the browser owns
       // that), this only remembers whether we've asked and what they said.
       tapConsent: program.tapConsent || undefined,
+      // 2026-08-29 -- 'yes' | 'no' | null, same contract as tapConsent
+      // above and for the same reason: this remembers whether we have
+      // ASKED and what was said, never the location itself. The browser
+      // owns the geolocation grant; coordinates are held in memory for
+      // the session and written nowhere.
+      weatherConsent: program.weatherConsent || undefined,
     }))
   } catch (e) {}
 }

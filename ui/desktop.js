@@ -63,6 +63,10 @@ export default {
     const brand = 'SG-1  -  SIGNAL RECEIVER'
     term.text(centerX(term.cols, brand), 0, brand, FAINT, 1)
     this.drawSleep(s)
+    // 2026-08-29 -- the weather readout, opposite the sleep timer across
+    // the plate (x=52, the stretch between the plate's end and the clock).
+    // Blank unless someone has consented AND a reading has landed.
+    this.drawWeatherReadout(s)
   },
 
   /** Sleep timer readout (2026-08-27) -- the title bar's one free stretch,

@@ -328,6 +328,36 @@ visualizer legend — has to answer even where it can't act (`NO SIGNAL`,
 `NO HISTORY`, `NO LINE IN`). Its header documents the seeding, the `[F]`
 exception and the `F13` canary that catches a desynchronised run.
 
+### Weather ([W])
+
+`weather.js` is the data half (pure: bucketing, the WMO code tables, the unit
+call, the card's own copy) and `ui/weather.js` is the drawing half. The split
+is what lets the bucketing be tested in Node — a drawing bug is visible the
+moment you look at the screen, a bucketing bug puts the afternoon's weather on
+the morning line and looks entirely plausible.
+
+Two things about it are load-bearing and easy to undo by accident:
+
+- **The card does NOT clear the grid**, unlike the guide and the LINE INPUT
+  card. Weather is an aside, not a destination — the dial above and the meters
+  below stay lit underneath it. The cost is that it cannot rely on the
+  "nothing else may paint" contract the full-screen overlays get, so
+  `weatherOpen` has to appear in the same paint guards as `guideOpen` and
+  `tapConsentOpen`. Miss one and the track title draws through the card.
+- **Geolocation needs a secure context.** On plain `http` the API exists, the
+  call runs, and the error callback fires with code 1 — `PERMISSION_DENIED`,
+  the same code a real refusal gives — saying "Only secure origins are
+  allowed". Those two must not be conflated: a refusal is persisted, so
+  treating an insecure origin as one would remember a visitor as having
+  declined forever, on every origin. `canLocate()` separates them. In
+  practice this means **the feature cannot be exercised over the Tailscale
+  IP** — use `localhost` or the deployed site.
+
+Widths are asserted rather than trusted, because both failed once in a real
+render: card copy over 48 columns writes through the box's right border, and
+the row-0 readout is right-aligned to end at column 63 because starting it at
+52 rendered as `SIGNAL RECEIVER69F CLEAR`, flush against the brand plate.
+
 ## Conventions
 
 - **The comments are the design record.** Nearly every decision carries an

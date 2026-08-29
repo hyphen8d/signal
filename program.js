@@ -34,6 +34,7 @@ const { default: desktopUi } = await import(`./ui/desktop.js?v=${V}`)
 const { default: mobileUi } = await import(`./ui/mobile.js?v=${V}`)
 const { default: guide } = await import(`./ui/guide.js?v=${V}`)
 const { default: tapConsentUi } = await import(`./ui/tap-consent.js?v=${V}`)
+const { default: weatherUi } = await import(`./ui/weather.js?v=${V}`)
 const { default: visualizer } = await import(`./visualizer.js?v=${V}`)
 
 // --- program ---------------------------------------------------------------
@@ -48,6 +49,7 @@ export default {
   ...mobileUi,
   ...guide,
   ...tapConsentUi,
+  ...weatherUi,
   ...visualizer,
 
   // --- fx: frame-driven scheduled effects (2026-08-25 audit) --------------
@@ -113,7 +115,7 @@ export default {
   },
   _tickFx(now) {
     this._runFx(this._fxAlways, now)
-    if (this.poweredOn && !this.guideOpen && !this.tapConsentOpen) this._runFx(this._fx, now)
+    if (this.poweredOn && !this.guideOpen && !this.tapConsentOpen && !this.weatherOpen) this._runFx(this._fx, now)
   },
   _runFx(q, now) {
     // Snapshot what's due first: an entry's fn may add or cancel others.
@@ -309,6 +311,13 @@ export default {
     // to them once already, which is enough. Restored from saved.tapConsent
     // in the session-restore block below, same as the preferences around it.
     this.tapConsent = null
+    // 2026-08-29 -- the weather card's answer, same three-state contract
+    // as tapConsent above. `_wxLoc` and `_wx` are session-only: the
+    // coordinates and the reading are held in memory and never persisted.
+    this.weatherConsent = null
+    this._wx = null
+    this._wxLoc = null
+    this._wxBusy = false
     // Cleared on every power-on: an agreed-but-idle tab tap gets ONE
     // automatic re-raise of the picker per power cycle (see key()'s [V]),
     // never one per keypress.
@@ -434,6 +443,7 @@ export default {
         this.visualOverrides = saved.visualOverrides
       }
       if (saved.tapConsent === 'yes' || saved.tapConsent === 'no') this.tapConsent = saved.tapConsent
+      if (saved.weatherConsent === 'yes' || saved.weatherConsent === 'no') this.weatherConsent = saved.weatherConsent
       if (saved.stationId) {
         const ch = STATIONS.find((c) => c.id === saved.stationId)
         if (ch) {
@@ -544,6 +554,10 @@ export default {
     // Consent pass (2026-08-25) -- the LINE INPUT card. Same overlay
     // contract as guideOpen above: while it's true, nothing else may paint.
     this.tapConsentOpen = false
+    // 2026-08-29 -- the weather card. Unlike the two overlays above this
+    // one does NOT clear the grid (see ui/weather.js), so it relies on
+    // this flag appearing in the same paint guards they use.
+    this.weatherOpen = false
 
     // Date/time module ticker (15th pass) -- one interval for the whole
     // page lifetime, since the clock needs to keep ticking on the STANDBY
@@ -573,7 +587,7 @@ export default {
       // overlay down with it on the way (see sleepExpired). Only the DRAWING
       // is gated, same as the clock's.
       this.tickSleep(s)
-      if (this.guideOpen || this.tapConsentOpen || this._powerAnimating) return
+      if (this.guideOpen || this.tapConsentOpen || this.weatherOpen || this._powerAnimating) return
       if (this.poweredOn) { this.drawClock(s); this.drawSleep(s) }
       else this.drawStandbyClock(s)
     }, 1000)
@@ -1642,7 +1656,7 @@ export default {
     // underneath them to repaint what this would punch through. The
     // visualizer is safe by construction (it repaints its whole canvas
     // every tick) -- see key()'s note on the same asymmetry.
-    if (!this.guideOpen && !this.tapConsentOpen) this.drawVolume(s)
+    if (!this.guideOpen && !this.tapConsentOpen && !this.weatherOpen) this.drawVolume(s)
   },
 
   clearSleepTimer() {
@@ -2176,6 +2190,14 @@ export default {
     // above: on the LINE INPUT card only the three keys that actually answer
     // it are commands, so a stray keypress gets no click either. See key().
     if (this.tapConsentOpen) return e.key === 'y' || e.key === 'Y' || e.key === 'n' || e.key === 'N' || e.key === 'Escape'
+    // 2026-08-29 -- the weather card, same rule: only the keys that answer
+    // it click. Which those are depends on the face showing, so this mirrors
+    // key()'s own branch exactly -- if the two ever disagree, the sweep in
+    // tools/dead-feedback.mjs is what catches it.
+    if (this.weatherOpen) {
+      if (e.key === 'w' || e.key === 'W' || e.key === 'Escape') return true
+      return this.weatherConsent !== 'yes' && (e.key === 'y' || e.key === 'Y' || e.key === 'n' || e.key === 'N')
+    }
     // 67th pass, live QA fix -- poweredOn flips false the instant powerDown()
     // is called, but its collapse beats keep painting the screen for another
     // ~900ms (see powerDown()'s beats array), and powerUp() has its own
@@ -2285,6 +2307,18 @@ export default {
       e.preventDefault()
       if (e.key === 'y' || e.key === 'Y') this.acceptTapConsent(s)
       else if (e.key === 'n' || e.key === 'N' || e.key === 'Escape') this.declineTapConsent(s)
+      return
+    }
+    // 2026-08-29 -- the weather card owns its keys while it is up, same
+    // contract as the LINE INPUT card above. Which keys answer depends on
+    // which face is showing: the consent face takes [Y]/[N], the forecast
+    // face only closes. [W] closes from either, so the key that opened it
+    // is also the key that dismisses it.
+    if (this.weatherOpen) {
+      e.preventDefault()
+      if (e.key === 'w' || e.key === 'W' || e.key === 'Escape') this.closeWeather(s)
+      else if (this.weatherConsent !== 'yes' && (e.key === 'y' || e.key === 'Y')) this.acceptWeather(s)
+      else if (this.weatherConsent !== 'yes' && (e.key === 'n' || e.key === 'N')) this.declineWeather(s)
       return
     }
     // Visualizer (43rd pass) -- standard visualizer manners: ANY key
@@ -2572,6 +2606,19 @@ export default {
           this.flashStatus(s, 'NO SIGNAL')
         }
         break
+      // 2026-08-29 -- [W] opens the weather card. Unlike [A] this is not a
+      // settings control, it is a thing to look at, which is why it draws
+      // over the set rather than replacing it (see ui/weather.js). The
+      // consent face is shown until someone says yes, and [W] keeps
+      // re-opening it after a no -- same "not now is a decision, not a door
+      // closing" argument the LINE INPUT card makes below.
+      case 'w': case 'W':
+        e.preventDefault()
+        // canOpenWeather() is false off-station only in the sense of being
+        // powered down; there is no NO SIGNAL case here, because the weather
+        // does not depend on a station being locked.
+        if (!this.openWeather(s)) this.flashStatus(s, 'NO WEATHER')
+        break
       // Consent pass (2026-08-25) -- [A] opens the LINE INPUT card on
       // demand: patch the tap in after saying no, or pull it back out
       // again. It exists because a permission ought to be revocable from
@@ -2668,7 +2715,7 @@ export default {
     // Consent pass (2026-08-25) -- the LINE INPUT card joins the guide on
     // this bail for the same reason: it's a full-screen takeover of the same
     // grid, and a per-frame redraw would punch holes straight through it.
-    if (!this.poweredOn || this.guideOpen || this.tapConsentOpen) return
+    if (!this.poweredOn || this.guideOpen || this.tapConsentOpen || this.weatherOpen) return
 
     // 2026-08-23 (live audio tap) -- refill the signal bus once per rAF,
     // before anything below reads it. After the bail above on purpose: in
