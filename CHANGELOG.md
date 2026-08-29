@@ -652,6 +652,151 @@ editable anywhere at all.
   else could have.
 
 
+### Weather (2026-08-29)
+
+`[W]` opens a weather card: today in three parts — morning, afternoon,
+evening — each with a high, a condition and a chance of rain, plus sunrise
+and sunset, with the part you are currently in picked out. A live reading
+also sits in the title bar opposite the sleep timer, refreshed every fifteen
+minutes while the set is on. "Would a real radio have this?" answers this
+one without argument: a station reading out the local forecast is not a
+feature bolted on, it is most of what daytime radio is.
+
+- **It draws over the set rather than replacing it**, unlike the guide and
+  the LINE INPUT card. Weather is an aside, not a destination — the dial
+  above and the meters below stay lit and moving underneath. The cost is
+  that it cannot use the "nothing else may paint" contract the full-screen
+  overlays get, so `weatherOpen` joins them in every paint guard.
+- **Location is asked for through a consent card**, the same shape as `[A]`,
+  and only ever from the keypress. Saying no costs nothing and `[W]`
+  re-opens it. Coordinates and readings are held in memory for the session
+  and written nowhere; only the answer to the question is persisted.
+- **Geolocation needs a secure context.** On plain `http` the API exists,
+  the call runs, and the error callback fires with code 1 —
+  `PERMISSION_DENIED`, the same code a genuine refusal gives — saying "Only
+  secure origins are allowed". Conflating those would have remembered a
+  visitor as having declined forever, on every origin, because they once
+  pressed `[W]` on an http URL. They are separated. The practical
+  consequence: this cannot be exercised over a bare IP, only `localhost` or
+  the deployed site.
+- Three bugs that 161 passing tests could not see, all found by rendering:
+  card copy at 52 characters wrote through a 50-column box border; the
+  title-bar readout started where the brand plate ends and rendered as
+  `SIGNAL RECEIVER69F CLEAR`; and pressing `[W]` said `NO READING` for the
+  whole time it was loading, because `!this._wx` was being read as "we
+  looked and found nothing" when it is equally true before anyone has
+  looked. Widths are asserted as data now, and the loading state is a real
+  state.
+
+### Audio levels (2026-08-29)
+
+- **The music ducks 50% under station IDs and liner drops**, fast down
+  (160ms) and slow back up (520ms) — the asymmetry is what makes a duck
+  sound like a desk rather than a volume control being yanked. It cannot be
+  a gain node: the music is YouTube's iframe and is not in the WebAudio
+  graph, so it is `player.setVolume()` stepped on a real timer to make a
+  ramp the API does not provide. Not the effects queue — that stops ticking
+  under an overlay, and a duck stopped halfway would leave the music at half
+  volume until the guide was closed. The network sign-on line deliberately
+  does not duck; it plays over a boot with no track under it.
+- **Per-station playback `gain` is gone.** From the 25th pass every station
+  carried a multiplier (1.0–1.5) meant to even out loudness between a 1950s
+  master and a modern compressed one. It never worked at the volumes people
+  use: applied as `min(100, volume * gain)`, the ceiling ate the boost from
+  about volume 67 up, so at the default of 70 DRIFT MODE's 1.5× was already
+  clipping and at 100 every station came out at exactly 100 with no
+  compensation at all — the stations meant to be lifted were the ones that
+  lost the lift as the knob went up. It was also never measured (its own
+  comment said so) and its per-track escape hatch was used by 0 of 477
+  tracks. Every station now plays at the level the listener set.
+
+### Stations (2026-08-29)
+
+Seven of the nine public stations are at 50 tracks; SYNAPSE and ATOMIC are
+at 35. 420 public tracks, up from 329.
+
+- **DISTORTION FIELD, CIPHER, COLD WAVE, DRIFT MODE, CITY LIGHTS, HACKBACK
+  and CIRCUIT CRUSH** all reached 50. The lanes turned out to differ wildly
+  in how hard they are to fill: synthwave is internet-native and every
+  candidate auditioned clean, while city pop was never officially uploaded
+  and leans on archive channels by necessity.
+- **HACKBACK was filled against its own profile's instructions** rather
+  than taste — coast balance re-measured (New York was 56%) and the note
+  that the station had one woman across 43 tracks. Salt-N-Pepa, MC Lyte and
+  Fugees take that to four.
+- **Six wrong-artist near misses caught across two stations**, every one on
+  a `- Topic` channel where the title matched exactly: Ai Furihata covering
+  Kadomatsu, Hirotaka Mori's "Bomber" standing in for Yamashita, "Nanaco"
+  for Nanako Sato, Powerwolf for Dance With The Dead, Robert Knight for
+  Robert Parker. Only the channel name distinguishes them. Not a city-pop
+  quirk, as that profile framed it — a property of searching YouTube.
+- **Four track titles were carrying their YouTube upload names** —
+  "Sabotage (Official Music Video)", "Le Perv (official video)" and two
+  more. `layout.js` draws that field on the dial, so listeners were being
+  shown "(Official Music Video)" as though it were part of the song's name.
+- **SYNAPSE's spoken station ID was being cut off.** Its clip had 0.23s of
+  trailing silence against the 0.4s the playback fade needs, so its last
+  word was faded out under listeners. Second time that rule has been broken
+  and both times by the newest clip on the disk.
+
+### Roster health (2026-08-29)
+
+`tools/check-roster.mjs` (`npm run health`) — the strict checks used to run
+once, on the day a track was added, and never again. `audition.js` asks
+`playabilityStatus`, `playableInEmbed` and `availableCountries` of a
+candidate; `verify-roster.js` asked oEmbed, and only oEmbed, of the roster.
+All three things they catch are things that happen *after*: an upload gets
+age-gated, embedding is revoked, or a re-upload narrows the licence.
+
+- The narrow-licence case is why this exists rather than being a
+  nice-to-have: **it is invisible from the curator's chair.** A track
+  licensed in nine countries including the US plays perfectly here and is
+  dead air for nearly everyone else. The first real run found exactly that
+  on DISTORTION FIELD — Veruca Salt's "Seether" at nine countries —
+  alongside Pearl Jam's "Jeremy" gone `LOGIN_REQUIRED`, which the IFrame
+  player cannot satisfy and which had been playing as silence.
+- **Incremental because it has to be**: a full pass is one watch-page fetch
+  per track against an endpoint that throttles after a few hundred, so a
+  one-shot sweep would fail partway every time and return a wall of
+  `UNVERIFIED` that reads like findings. It works in batches, keeps its
+  record in `tools/roster-health.json`, and stops early when throttled
+  rather than recording rows that say nothing.
+- Both tools now share `tools/lib/probe.mjs`, lifted out of `audition.js`
+  byte-for-byte, so "playable" has one definition and the two cannot
+  disagree. `tests/probe.test.mjs` pins the thresholds — 20 countries above
+  all.
+- **All 477 tracks are now deep-probed**, secret stations included, where
+  none had been that morning.
+
+### Network admin dashboard (2026-08-29)
+
+- **Cyber Blue throughout**, derived rather than eyeballed: every neutral in
+  the old green set sat in a tight 90–100° band, so each was re-pinned to
+  the brutalist phosphor's 202.8°. Blue carries far less luminance than
+  green at the same HSL lightness, so the text levels were re-solved to hold
+  their original contrast ratios rather than quietly dimming every label.
+  Status colours stay warm — pass/fail has to stay green/red.
+- **The STANDBY wordmark is the header**, drawn from `layout.js`'s own font
+  table rather than a copy, and the favicon is the app's icon retinted to
+  the same blue. The app is green, the ops backend is blue.
+- **VOICE & DROPS** plays the spoken assets through `voice.js`'s own
+  processing chain rather than a mirror of it, and measures each clip's
+  trailing silence against the 0.4s the fade needs — which is how SYNAPSE's
+  clipped station ID was found.
+- **ROSTER HEALTH** renders the record above, findings first.
+- **The bind address is no longer printed in the header.** It restated the
+  browser's own address bar, and this page gets screen-shared.
+
+### Documentation (2026-08-29)
+
+- `tools/signal-admin.service` is committed. The admin backend runs as a
+  systemd user unit on the development box, and CLAUDE.md nowhere said so —
+  the unit named CLAUDE.md in its own header while CLAUDE.md had never heard
+  of the unit. Anyone reading the docs would reach for `npm run admin` and
+  get `EADDRINUSE`, and would not know that editing `admin-server.mjs` does
+  nothing until the service restarts while editing `network.html` needs no
+  restart at all.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

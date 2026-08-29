@@ -2,7 +2,8 @@
 
 A community-facing, unofficial internet-radio-style web toy: a terminal/CRT
 tuning-dial receiver with 9 curated stations, real songs, station idents,
-scanning, presets, an ambient tube hum, and a power switch.
+scanning, presets, a local weather readout, an ambient tube hum, and a power
+switch.
 
 Built on top of [`cyberspace-crt`](https://github.com/unremarkablegarden/cyberspace-crt),
 the WebGL2 CRT text-grid engine open-sourced from [cyberspace.online](https://cyberspace.online).
@@ -247,6 +248,8 @@ isn't just an internal annoyance anymore.
   node tools/verify-roster.js               # whole roster, secret stations included
   node tools/verify-roster.js --station=atomic   # one station only
   node tools/lint-roster.js                 # offline: the rules below, no network
+  node tools/check-roster.mjs               # the deeper probe, in batches
+  node tools/check-roster.mjs --report      # read the record, no network
   ```
 
   Checks every track ID against oEmbed and prints any that are now dead,
@@ -256,6 +259,18 @@ isn't just an internal annoyance anymore.
   glyphs present in the font, `visual` keys that exist, unique IDs and
   frequency spacing — and `tests/roster.test.mjs` asserts the same rules,
   so `npm test` catches a malformed roster before it ships.
+- **oEmbed is not the whole check, and it does not stay true.** `verify-roster.js`
+  asks whether a video exists; it cannot see whether the upload has been
+  age-gated, has had embedding revoked, or has been re-uploaded under a
+  narrower licence. Those all happen *after* a track is added, and the last
+  one is invisible from here — a track licensed in nine countries including
+  the US plays perfectly for whoever is checking and is dead air for nearly
+  everyone else. `tools/check-roster.mjs` (`npm run health`) asks the full
+  set of questions of tracks already on the roster and keeps its answers in
+  `tools/roster-health.json`. It works in batches on purpose: a full pass is
+  one page fetch per track against an endpoint that throttles after a few
+  hundred, and it stops early when throttled rather than recording results
+  that say nothing.
 - **Concept-tied stations:** if a station's premise points at a real source
   (e.g. ATOMIC being an in-universe Fallout radio station), verify tracks
   against *that* source's actual tracklist, not just oEmbed -- oEmbed only
