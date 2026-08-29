@@ -5,10 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        The controls table and station roster in the
-        [README](https://github.com/hyphen8d/signal#controls) and the
-        [wiki](https://github.com/hyphen8d/signal/wiki) cover most of the
-        "how does X work" ground. If they didn't, ask here.
+        The [controls table](https://github.com/hyphen8d/signal#controls) and
+        the [station roster](https://github.com/hyphen8d/signal/blob/main/stations.md)
+        cover most of the "how does X work" ground. If they didn't, ask here.
 
   - type: textarea
     id: body

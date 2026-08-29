@@ -1,8 +1,13 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Controls and station reference
-    url: https://github.com/hyphen8d/signal/wiki
-    about: The full controls reference and station roster live on the wiki.
+  - name: Controls reference
+    url: https://github.com/hyphen8d/signal#controls
+    about: Every key the set answers to, in the README.
+  - name: Station roster and track lists
+    url: https://github.com/hyphen8d/signal/blob/main/stations.md
+    about: >
+      Every station with its tagline, frequency and full tracklist --
+      generated from stations.js, so it is never out of date.
   - name: cyberspace-crt (the rendering engine)
     url: https://github.com/unremarkablegarden/cyberspace-crt
     about: >

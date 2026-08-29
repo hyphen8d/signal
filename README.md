@@ -20,8 +20,9 @@ different program on top of it.
 New in 0.9: a full-screen visualizer with its own transport controls for
 every station, station-spacing and naming fixes, an audio-autoplay fix, a
 hard-mute mode, and a curated track roster. Full history in
-[CHANGELOG.md](./CHANGELOG.md). More background and the full controls/station
-reference also live on the [wiki](https://github.com/hyphen8d/signal/wiki).
+[CHANGELOG.md](./CHANGELOG.md). The full controls reference is
+[below](#controls); the roster with taglines and track lists is in
+[stations.md](./stations.md).
 
 ## Screenshots
 
