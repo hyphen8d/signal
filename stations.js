@@ -892,6 +892,49 @@ export const STATIONS = [
       realTrack('jsE7RFs7bHk', 'Never Sleep Again', 'Betamaxx'),
       realTrack('9EJJlr7Dopk', 'Ignition', 'Meteor'),
       realTrack('HJti6_oiR1A', 'Feral', 'Dan Terminus'),
+      // 2026-08-29 -- seventeen to take CIRCUIT CRUSH to 50. Nine new
+      // artists, 27 to 36. Synthwave is unusually well served on YouTube
+      // compared with the other lanes -- artist Topic channels plus the
+      // scene's own label channels (NewRetroWave, Aphasia, Mad Decent) --
+      // so all nineteen candidates auditioned clean and the choice was
+      // which to leave out rather than what was usable.
+      //
+      // Two were dropped for depth rather than quality: The Midnight's Los
+      // Angeles and Timecop1983's Static both verified clean and would each
+      // have been a THIRD track for an artist already holding two. Carpenter
+      // Brut and Perturbator were allowed to go to three instead, because
+      // the darker/harder end is what this station is defined as owning
+      // against CIPHER -- see the boundary in both profiles.
+      //
+      // GUNSHIP's Dark All Day was wanted and not found: the only Topic
+      // upload is a Power Glove remix and everything else is a fan
+      // re-upload. Not a lane call, an availability one.
+      //
+      // Three wrong-artist near misses while collecting, all of which read
+      // correct in a result list: 'Dancing with the Dead' on Powerwolf -
+      // Topic is a metal band, not Dance With The Dead; a Robert Parker
+      // search returns Robert Knight's Everlasting Love; and a Dance With
+      // The Dead result was a metal cover. CITY LIGHTS hit the same shape
+      // three times the same day -- a Topic channel looks authoritative and
+      // the title matches, so the channel name is the only thing that
+      // catches it. This is not a city-pop problem, it is a search problem.
+      realTrack('lD69ScxsHCM', 'Fade Away', 'Trevor Something'),
+      realTrack('gkjk30imnXI', 'Client', 'Waveshaper'),
+      realTrack('YrVFhHHpLJ0', 'Pulse Power', 'Dynatron'),
+      realTrack('jyO-MyJ4R1g', 'Chinatown', 'Starcadian'),
+      realTrack('cq05Ierbz44', 'Maniac', 'Tokyo Rose'),
+      realTrack('Z1kAGzKaLOQ', 'Just Drive', 'W O L F C L U B'),
+      realTrack('S0A9dNsLRjc', 'Rabbit in the Headlights', 'Michael Oakley'),
+      realTrack('MUAJFyr5qzA', 'Web of Sin', 'Daniel Deluxe'),
+      realTrack('ArDVDnWTqvw', 'Source Code', 'Mega Drive'),
+      realTrack('qT0iQRjHbW4', 'Odd Look', 'Kavinsky'),
+      realTrack('qFfybn_W8Ak', 'Roller Mobster', 'Carpenter Brut'),
+      realTrack('Q9tzrYi3Fdk', 'Sentient', 'Perturbator'),
+      realTrack('5dNP-a-XXx0', 'Overdrive', 'Lazerhawk'),
+      realTrack('JE1jylkS_7w', 'Salvation Code', 'Scandroid'),
+      realTrack('hugowO0sSrM', 'Interceptor', 'Mitch Murder'),
+      realTrack('dTkGNEl55Ug', 'Brokendate', 'Com Truise'),
+      realTrack('LITFNKqEz_U', 'Sleepwalking', 'NINA'),
     ] },
   // 23rd pass: freq nudged 878.9 -> 854.9 -- stations 8 and 9 were too
   // close to each other. freqToCol() rounded 878.9 and HACKBACK's 893.7

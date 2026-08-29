@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 393 tracks total.
+Generated from stations.js. 9 stations, 410 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -283,7 +283,7 @@ Tracks (50):
 
 Ident tones (Hz): 587.3, 466.2, 698.5, 932.3
 
-Tracks (33):
+Tracks (50):
 
 1. **Nightcall** -- Kavinsky  ([youtu.be/ZVS6Q_lbKQ0](https://youtu.be/ZVS6Q_lbKQ0))
 2. **Sunset** -- The Midnight  ([youtu.be/URma_gu1aNE](https://youtu.be/URma_gu1aNE))
@@ -318,6 +318,23 @@ Tracks (33):
 31. **Never Sleep Again** -- Betamaxx  ([youtu.be/jsE7RFs7bHk](https://youtu.be/jsE7RFs7bHk))
 32. **Ignition** -- Meteor  ([youtu.be/9EJJlr7Dopk](https://youtu.be/9EJJlr7Dopk))
 33. **Feral** -- Dan Terminus  ([youtu.be/HJti6_oiR1A](https://youtu.be/HJti6_oiR1A))
+34. **Fade Away** -- Trevor Something  ([youtu.be/lD69ScxsHCM](https://youtu.be/lD69ScxsHCM))
+35. **Client** -- Waveshaper  ([youtu.be/gkjk30imnXI](https://youtu.be/gkjk30imnXI))
+36. **Pulse Power** -- Dynatron  ([youtu.be/YrVFhHHpLJ0](https://youtu.be/YrVFhHHpLJ0))
+37. **Chinatown** -- Starcadian  ([youtu.be/jyO-MyJ4R1g](https://youtu.be/jyO-MyJ4R1g))
+38. **Maniac** -- Tokyo Rose  ([youtu.be/cq05Ierbz44](https://youtu.be/cq05Ierbz44))
+39. **Just Drive** -- W O L F C L U B  ([youtu.be/Z1kAGzKaLOQ](https://youtu.be/Z1kAGzKaLOQ))
+40. **Rabbit in the Headlights** -- Michael Oakley  ([youtu.be/S0A9dNsLRjc](https://youtu.be/S0A9dNsLRjc))
+41. **Web of Sin** -- Daniel Deluxe  ([youtu.be/MUAJFyr5qzA](https://youtu.be/MUAJFyr5qzA))
+42. **Source Code** -- Mega Drive  ([youtu.be/ArDVDnWTqvw](https://youtu.be/ArDVDnWTqvw))
+43. **Odd Look** -- Kavinsky  ([youtu.be/qT0iQRjHbW4](https://youtu.be/qT0iQRjHbW4))
+44. **Roller Mobster** -- Carpenter Brut  ([youtu.be/qFfybn_W8Ak](https://youtu.be/qFfybn_W8Ak))
+45. **Sentient** -- Perturbator  ([youtu.be/Q9tzrYi3Fdk](https://youtu.be/Q9tzrYi3Fdk))
+46. **Overdrive** -- Lazerhawk  ([youtu.be/5dNP-a-XXx0](https://youtu.be/5dNP-a-XXx0))
+47. **Salvation Code** -- Scandroid  ([youtu.be/JE1jylkS_7w](https://youtu.be/JE1jylkS_7w))
+48. **Interceptor** -- Mitch Murder  ([youtu.be/hugowO0sSrM](https://youtu.be/hugowO0sSrM))
+49. **Brokendate** -- Com Truise  ([youtu.be/dTkGNEl55Ug](https://youtu.be/dTkGNEl55Ug))
+50. **Sleepwalking** -- NINA  ([youtu.be/LITFNKqEz_U](https://youtu.be/LITFNKqEz_U))
 
 ## ATOMIC -- 529.0
 
