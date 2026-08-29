@@ -11,8 +11,15 @@ const { DUCK_TAIL_MS } = await import(`../constants.js?v=${V}`)
 
 // ---------------------------------------------------------------------
 // VOICE PROVENANCE -- what made every mp3 in audio/, and what to match when
-// making another one. Confirmed by the curator 2026-08-29 against the
-// ElevenLabs generation panel for SYNAPSE's station ID.
+// making another one.
+//
+// EVERY clip is this voice: the network sign-on and welcome lines, all nine
+// station IDs, both per-station and general liner drops, and the retired
+// ones still sitting on disk unreferenced. Confirmed by the curator
+// 2026-08-29, against the ElevenLabs generation panel for SYNAPSE's ID.
+// Stated as "every" on purpose -- the point of this block is that someone
+// rendering a new clip does not have to wonder which of the existing ones
+// theirs has to sit beside.
 //
 //   Voice            Nathan -- Virtual Radio Host
 //   Model            Eleven Multilingual v2
@@ -38,10 +45,11 @@ const { DUCK_TAIL_MS } = await import(`../constants.js?v=${V}`)
 //     music, not the voice.
 //
 // This block replaces a line that named "Rachel M -- Pro British Radio
-// Presenter" as the voice, which was wrong. Recorded here rather than left
-// as a corrected half-sentence because it was the ONLY place in the repo the
-// voice was named at all, and a wrong answer in the only place anyone would
-// look is worse than no answer.
+// Presenter" as the voice. That was wrong for the whole set, not merely out
+// of date for part of it. Recorded here rather than left as a corrected
+// half-sentence because it was the ONLY place in the repo the voice was
+// named at all, and a wrong answer in the only place anyone would look is
+// worse than no answer.
 // ---------------------------------------------------------------------
 
 // 53rd pass -- network sign-on ID: verbal station IDs, an ElevenLabs-rendered
