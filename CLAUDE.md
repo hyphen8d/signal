@@ -25,6 +25,7 @@ node tools/check-roster.mjs         # npm run health — deep-probe roster track
 node tools/stations-to-md.js        # npm run stations — regenerate stations.md (never hand-edit it)
 node tools/stamp.js                 # npm run stamp — bump build.json; RUN BEFORE EVERY DEPLOY
 node tools/audition.js --station=<id> # npm run audition — vet candidate tracks (network)
+node tools/voice-render.mjs         # npm run voice — render a voice clip (network, costs credits)
 node tools/shoot.mjs                # npm run shoot — regenerate screenshots/ (headless Chrome + ImageMagick)
 node tools/dead-feedback.mjs        # npm run deadfeedback — input-feedback sweep (headless, ~1min)
 ```
@@ -367,6 +368,37 @@ Widths are asserted rather than trusted, because both failed once in a real
 render: card copy over 48 columns writes through the box's right border, and
 the row-0 readout is right-aligned to end at column 63 because starting it at
 52 rendered as `SIGNAL RECEIVER69F CLEAR`, flush against the brand plate.
+
+### Rendering a voice clip ([W]-adjacent, but its own thing)
+
+`tools/voice-render.mjs` calls ElevenLabs directly, so a new station ID or
+liner does not need the web UI, a download and a rename. The settings live in
+`tools/lib/voice-settings.mjs` and are the same ones `audio/voice.js`'s
+provenance block documents — `tests/voice-render.test.mjs` asserts the two
+agree, because they are two copies of the same numbers and the alternative to
+asserting is finding out when a clip comes back sounding wrong.
+
+The reason it exists is not typing saved. It is that the two checks happen
+*between* the render and the file existing:
+
+- **Trailing silence** is padded to ~0.5s when short. Safe to automate: it
+  appends digital silence and alters no audio.
+- **Peak level** is reported against the band the existing set occupies and
+  deliberately NOT corrected — normalising changes the recording, and a hot
+  take is better fixed by taking it again. SYNAPSE's ID is the standing
+  example of both failures at once.
+
+Nothing renders without `--yes`; `--dry-run` prints the script and spends
+nothing. The frequency is the part that goes wrong and the part nobody
+proofreads, so the script is always printed first. Digits must be spelled
+out — handed `567.8` the renderer says "five six seven point eight", which is
+not how a station reads its own frequency; `spokenFrequency()` handles that,
+including HACKBACK's "eight oh eight", the one shape on the dial that a naive
+implementation reads as "eight eight".
+
+The key is read from `ELEVENLABS_API_KEY` or a gitignored `.elevenlabs-key`,
+never from an argument — an argument lands in shell history and the process
+list.
 
 ## Conventions
 
