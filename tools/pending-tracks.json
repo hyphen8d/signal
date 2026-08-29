@@ -275,6 +275,14 @@
       "rationale": "Checked against tools/station-profiles.json (momentum) for genre/era fit. oEmbed verified live (200) in a batch re-check 2026-08-24.",
       "rejectedAt": "2026-08-25",
       "rejectedReason": "Station retired -- MOMENTUM was replaced by MIDNIGHT NEON in the 60th pass (2026-08-24), so there is no station left to approve this into and the chillhop/lofi lane has no home on the current roster. Filed as rejected rather than deleted so the oEmbed-verified ID and the original rationale survive, and so it is not re-proposed; tools/station-profiles.json keeps MOMENTUM's profile flagged retired for the same reason. Not a judgment on the track -- revisit if a station ever reopens this lane."
+    },
+    {
+      "stationId": "distortion-field",
+      "youtubeId": "gjdLAsnR_Ws",
+      "title": "Semi-Charmed Life",
+      "artist": "Third Eye Blind",
+      "rejectedAt": "2026-08-29",
+      "rejectedReason": "Rejected on lane, not availability -- it passed every mechanical check (right recording, embeddable, wide licence, artist not already on the station). DISTORTION FIELD is grunge/alt-rock proper: guitars, raw vocals, radio-ready angst, the early-to-mid-90s Seattle sound and its ripple effects, explicitly not pop-rock crossover. Semi-Charmed Life (1997, San Francisco) sits at the bright, jangly, radio-pop end of the decade -- dark lyric notwithstanding -- and next to Nirvana, Alice In Chains and Screaming Trees it would read as the odd one out. Proposed in issue #27 on the argument \"it is 90s rock, it is good\", which is a case for the decade rather than for this station; a counter-argument that the lane is drawn too tight was explicitly invited on 2026-08-27 and not made. This is the track that would test that boundary if anyone wants to argue it."
     }
   ]
 }

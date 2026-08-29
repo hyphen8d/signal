@@ -527,6 +527,34 @@ even where it can't act.
   than touching the shared envelope again, so every voice-clip asset now
   carries the same ~0.5-0.6s safety margin the station IDs already have.
 
+### Content ops (2026-08-28)
+
+- **Two CIPHER uploads swapped over a playback-stutter report (issue #5).** A
+  listener reported sub-second audio dropouts on all three of the station's
+  Crystal Method tracks and on nothing else. It is not the artist and not
+  that they are official videos — Galvanize and No Good are official videos
+  and are fine. They were the only *2007* uploads on the station, the only
+  ones YouTube never re-transcoded to modern renditions (480p, 480p and a
+  non-standard 350p), and one to two orders of magnitude less requested than
+  the official videos that don't stutter; their audio ladders are identical
+  to everything else, so it isn't the sound files. `(Can't You) Trip Like I
+  Do` moves to a 2017 `- Topic` upload at 1080p (same 4:29 mix, and the title
+  and credit corrected on the way — the old string was the YouTube video's
+  own title, "[Official Video]" and all, for what is a Filter/Crystal Method
+  collaboration). `Keep Hope Alive` moves to a 2018 `- Topic` upload at 720p,
+  which is the 6:13 album version rather than the 3:29 video edit — a real
+  change in character, taken as the price of a file that plays. **Busy Child
+  is deliberately left alone**: its only same-version alternative is another
+  480p-capped legacy rendition, so it stays as the control that makes the
+  swap an experiment rather than a guess.
+- **Issue #19 closed with seven of eight suggestions on the roster**, the
+  first outside curation pass CIPHER has had. The eighth, Mindfields, is
+  recorded as an *availability* rejection rather than a taste one — no upload
+  clears the licence bar.
+- **Issue #27 (Semi-Charmed Life on DISTORTION FIELD) passed on lane, not
+  availability**, and recorded in both rejection stores with the reasoning
+  attached so the next pass doesn't re-litigate it from scratch.
+
 ### Stations (2026-08-28)
 
 - **MIDNIGHT NEON became SYNAPSE** — tech house, "rolling basslines, chopped

@@ -1077,10 +1077,40 @@ export const STATIONS = [
       realTrack('8B-i1vsA6jw', 'Sour Times', 'Portishead'),
       realTrack('svJvT6ruolA', 'No Good (Start the Dance)', 'The Prodigy'),
       realTrack('Xu3FTEmN-eg', 'Galvanize featuring Q-Tip (Official Music Video)', 'The Chemical Brothers'),
-      realTrack('IKTJoHbKZO0', "\"Can't You Trip Like I Do\" [Official Video]", 'The Crystal Method'),
+      // 2026-08-28 (issue #5) -- swapped from IKTJoHbKZO0, and see the note
+      // on Keep Hope Alive below for why. Like-for-like: same 4:29 mix, on a
+      // 2017 "- Topic" upload that reaches 1080p instead of a 2007 one
+      // capped at 480p. Title and credit corrected while it was open: the
+      // old string was the YouTube VIDEO's title, "[Official Video]" and
+      // all, and the song is a Filter/Crystal Method collaboration off the
+      // Spawn soundtrack rather than a Crystal Method solo track.
+      realTrack('Q7SedYMP-PA', "(Can't You) Trip Like I Do", 'Filter & The Crystal Method'),
       realTrack('WrDXJp-uDoY', "Bentley's Gonna Sort You Out", 'Bentley Rhythm Ace'),
       realTrack('NxsevNnHfzs', 'The Gift', 'Way Out West'),
-      realTrack('m7CYzc1naaw', 'Keep Hope Alive', 'The Crystal Method'),
+      // 2026-08-28 (issue #5) -- swapped from m7CYzc1naaw. A listener
+      // reported sub-second audio dropouts, and reported them on all THREE
+      // Crystal Method tracks this station carried and on nothing else.
+      // What those three had in common was not the artist and not that they
+      // were official videos (Galvanize and No Good are official videos and
+      // are fine): they were the only 2007 uploads on CIPHER, the only ones
+      // YouTube never re-transcoded to modern renditions -- 480p, 480p and
+      // 350p, which is not even a standard height -- and one to two orders
+      // of magnitude less requested than the official videos that don't
+      // stutter. Their audio ladders are identical to the rest of the
+      // station, so it is not the sound files themselves.
+      //
+      // The mechanism is not provable from outside YouTube, so the swap IS
+      // the experiment: this one and Trip Like I Do move to modern uploads,
+      // and Busy Child deliberately does NOT -- its only same-version
+      // alternative (t6twhXA1Gyw, 2009 VEVO) is another 480p-capped legacy
+      // rendition, so leaving it is what keeps a control. If the two swapped
+      // ones go quiet and Busy Child keeps stuttering, the theory is right.
+      //
+      // The cost, stated because it is a real one: this upload is the 6:13
+      // album version, where the old one was the 3:29 video edit. A longer
+      // track and a different arrangement, accepted as the price of a file
+      // that plays.
+      realTrack('LZi4qE6Ll6E', 'Keep Hope Alive', 'The Crystal Method'),
       realTrack('PHMzCpy0fXc', 'Atom Bomb', 'Fluke'),
       realTrack('maP6q3D4Hf0', 'Leave You Far Behind', 'Lunatic Calm'),
       realTrack('hbe3CQamF8k', 'Angel', 'Massive Attack'),
