@@ -318,6 +318,12 @@ export default {
     this._wx = null
     this._wxLoc = null
     this._wxBusy = false
+    // null | 'locating' | 'loading' -- which wait the card is showing.
+    this._wxPhase = null
+    // Whether a lookup has ever COMPLETED. Distinguishes "nobody has
+    // asked yet" from "we asked and got nothing", which the card used to
+    // render identically as NO READING.
+    this._wxTried = false
     // Cleared on every power-on: an agreed-but-idle tab tap gets ONE
     // automatic re-raise of the picker per power cycle (see key()'s [V]),
     // never one per keypress.

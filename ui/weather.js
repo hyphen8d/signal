@@ -76,11 +76,14 @@ export default {
     // this is narrower than openGuide's -- the scan sweep and the status
     // line are both outside the card and keep running.
     this._cancelAllResolves()
-    this.drawWeatherCard(s)
-    // Fetching is deliberately AFTER the first paint: the card appears on
-    // the keypress, then fills in. A card that waits for the network before
-    // showing anything reads as a dropped keypress.
+    // refreshWeather() is kicked off BEFORE the first paint, not after, and
+    // the ordering is the whole fix for a bug this had: its synchronous
+    // prefix sets the phase, so the very first frame says LOCATING instead
+    // of NO READING. It still does not BLOCK on the network -- everything
+    // after the first await lands later -- so the card appears on the
+    // keypress exactly as before.
     if (this.weatherConsent === 'yes') this.refreshWeather(s)
+    this.drawWeatherCard(s)
     return true
   },
 
@@ -114,8 +117,12 @@ export default {
   acceptWeather(s) {
     this.weatherConsent = 'yes'
     saveSignalState(this)
-    this.drawWeatherCard(s)   // repaint as LOCATING... before we block on the prompt
+    // Same ordering as openWeather, and the comment that used to sit on the
+    // line above was simply wrong: it claimed to repaint as LOCATING, but it
+    // ran before refreshWeather() had set any phase, so it painted NO
+    // READING every time.
     this.refreshWeather(s)
+    this.drawWeatherCard(s)
   },
 
   /** [N] / [Escape]. Says no and remembers it, and the card stays reachable
@@ -132,6 +139,11 @@ export default {
   async refreshWeather(s) {
     if (this._wxBusy) return
     this._wxBusy = true
+    // Two distinct waits, and they are worth telling apart on screen: the
+    // browser deciding where you are can take seconds and is the one a
+    // visitor might need to answer a prompt for, while the forecast fetch
+    // is ours and is usually quick.
+    this._wxPhase = this._wxLoc ? 'loading' : 'locating'
     try {
       // An insecure origin is NOT a refusal, and must not be recorded as
       // one -- see canLocate()'s note. Bail before asking, so the card can
@@ -146,11 +158,18 @@ export default {
         this.weatherConsent = 'no'
         saveSignalState(this)
       } else if (WX.isStale(this._wx)) {
+        this._wxPhase = 'loading'
+        if (this.weatherOpen) this.drawWeatherCard(s)
         const units = WX.unitsForLocale(globalThis.navigator?.language)
         this._wx = await WX.fetchWeather(this._wxLoc.lat, this._wxLoc.lon, units)
       }
     } finally {
       this._wxBusy = false
+      this._wxPhase = null
+      // Only NOW is "we looked and found nothing" true. Before the first
+      // completed attempt there is no reading because nobody has asked yet,
+      // which is a different thing and must not draw the same.
+      this._wxTried = true
     }
     if (this.weatherOpen) this.drawWeatherCard(s)
     this.drawWeatherReadout(s)
@@ -218,8 +237,16 @@ export default {
         // Named plainly rather than shown as a generic failure: this one is
         // fixed by changing the URL, and nothing else on the card says so.
         WX.INSECURE_COPY.forEach((line, i) => put(11 + i, line, i === 0 ? NORMAL : MUTED))
+      } else if (this._wxBusy) {
+        put(12, this._wxPhase === 'loading' ? 'LOADING...' : 'LOCATING...', FAINT)
+      } else if (this._wxTried) {
+        // Reached only after an attempt actually finished empty.
+        put(12, 'NO READING', FAINT)
       } else {
-        put(12, this._wxBusy ? 'LOCATING...' : 'NO READING', FAINT)
+        // Consent given but nothing started yet -- defensive; openWeather
+        // starts the refresh before painting, so this is a single frame at
+        // most. Says the honest thing rather than the alarming one.
+        put(12, 'LOCATING...', FAINT)
       }
       this.drawGuideKeyLine(s, 15, '[W] CLOSE', DIM)
       return
