@@ -23,6 +23,7 @@ node tools/lint-roster.js           # npm run lint — offline roster rules
 node tools/verify-roster.js         # npm run verify — lint + oEmbed check of every track (network)
 node tools/check-roster.mjs         # npm run health — deep-probe roster tracks in batches (network)
 node tools/lyrics-audit.mjs         # npm run lyrics — measure [L]'s LRCLIB match rate (network)
+node tools/roster-watch.mjs         # npm run watch — one scheduled health batch; --status, --dry-run
 node tools/stations-to-md.js        # npm run stations — regenerate stations.md (never hand-edit it)
 node tools/stamp.js                 # npm run stamp — bump build.json; RUN BEFORE EVERY DEPLOY
 node tools/audition.js --station=<id> # npm run audition — vet candidate tracks (network)
@@ -562,6 +563,41 @@ list.
   it works in batches, keeps its record in `tools/roster-health.json`, and
   **stops early when throttled rather than recording UNVERIFIED rows that say
   nothing** — a throttled run must never read as a clean one.
+- **`tools/roster-watch.mjs` is what remembers to run it** (2026-08-30). The
+  NIN three-country track was found only because someone happened to run the
+  deep probe by hand the evening before; `check-roster.mjs` already knew how
+  to catch that rot, and nothing made it look. This runs one batch, records
+  the outcome, and speaks up **only** when a person is needed — findings
+  always, a stalled sweep after 3 throttles, a broken checker after 2. Clean
+  runs say nothing, because a notification that fires every day is wallpaper
+  inside a week, and wallpaper is how the original bug survived.
+
+  The rule it exists for: **`check-roster` exits 0 when throttled**, since it
+  found nothing wrong — it merely never looked. So the obvious scheduler
+  (fire it, check the exit code, stay quiet on 0) reports an unfinished sweep
+  as a clean bill of health, which is that tool's own warning leaked one level
+  up. `roster-watch` reads the `--json` summary's `throttled` flag and treats
+  it as its own outcome; `tests/roster-watch.test.mjs` is mostly that one
+  claim said four ways.
+
+  Installed as a systemd **user timer**, daily, batch 40 — see
+  `tools/signal-health.{service,timer}`, reference copies of what is at
+  `~/.config/systemd/user/`, which carry the schedule reasoning (40/day walks
+  477 tracks in ~12 days, inside the 30-day staleness horizon, without ever
+  tripping the rate limit — turning the batch *up* makes the sweep progress
+  *less*, since a throttled run records nothing for what it gave up on).
+  `SuccessExitStatus=1` because findings are a correct outcome of a run that
+  worked: the unit going red should mean the machinery broke, not that the
+  roster has a problem. Local run state is `tools/roster-watch-state.json`,
+  gitignored — unlike `roster-health.json` beside it, that is per-machine.
+
+  **Verify the notification path, don't assume it.** `notify-send` inside a
+  systemd user unit dies silently when the unit's environment has no session
+  bus, which would leave the whole thing running daily and telling nobody.
+  Checked on this box 2026-08-30 (`systemctl --user show-environment` carries
+  `DBUS_SESSION_BUS_ADDRESS`/`WAYLAND_DISPLAY`, and a `systemd-run --user`
+  notify actually appeared). Re-check it after any change to how the session
+  is set up.
 - **`tools/audition.js` is the candidate-side counterpart to `verify-roster.js`**
   (`--json` prints the same rows as data on stdout with every human line
   routed to stderr — one code path, so the dashboard and the terminal cannot

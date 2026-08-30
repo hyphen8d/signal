@@ -1,0 +1,34 @@
+# SIGNAL roster health -- one batch of check-roster.mjs, scheduled.
+# See ~/Work/signal/CLAUDE.md and tools/roster-watch.mjs. Written 2026-08-30.
+#
+# Paired with signal-health.timer, which carries the schedule and the
+# install commands. This unit is Type=oneshot and does NOT restart: a failed
+# health check is news for a person, not something to retry into the ground.
+# The endpoint it talks to rate-limits, so a retry loop is the one response
+# guaranteed to make a throttled run worse.
+
+[Unit]
+Description=SIGNAL roster health check (one batch)
+Documentation=file:///home/hyphen8d/Work/signal/CLAUDE.md
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/hyphen8d/Work/signal
+
+# The mise SHIM, not the versioned install path -- same reasoning as
+# signal-admin.service: the shim resolves the pinned version at exec time, so
+# a node upgrade does not leave this pointing at a directory that is gone.
+ExecStart=/home/hyphen8d/.local/share/mise/shims/node tools/roster-watch.mjs --batch=40
+
+# roster-watch exits 1 on real findings and 2 when the checker itself broke.
+# Findings are a correct, useful outcome of a run that worked, so they must
+# not paint the unit red -- `systemctl --user status` should mean "is the
+# machinery healthy", not "is the roster clean". The roster's own state lives
+# in tools/roster-watch-state.json and the notification.
+SuccessExitStatus=1
+
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

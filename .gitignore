@@ -13,3 +13,9 @@ audio/*-test.mp3
 audio/.render-*.mp3
 audio/.mono-*.mp3
 audio/.pad-*.mp3
+# tools/roster-watch.mjs's own memory: when the scheduled health check last
+# ran on THIS box and how the last twenty runs went. Unlike roster-health.json
+# beside it -- which is shared knowledge about the roster and belongs in the
+# repo -- this is per-machine timer state, and committing it would mean every
+# machine fighting over the file for no one's benefit.
+tools/roster-watch-state.json

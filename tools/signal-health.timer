@@ -1,0 +1,37 @@
+# Schedule for signal-health.service. Written 2026-08-30.
+#
+#   systemctl --user enable --now signal-health.timer
+#   systemctl --user list-timers signal-health.timer
+#   systemctl --user start signal-health.service      # run one batch now
+#   journalctl --user -u signal-health -n 50
+#   node tools/roster-watch.mjs --status              # what the last runs did
+#   systemctl --user disable --now signal-health.timer
+#
+# WHY DAILY, AND WHY A BATCH OF 40. The roster is ~477 tracks and a full pass
+# is one watch-page fetch each, against an endpoint that starts answering 429
+# after a few hundred -- which is why check-roster.mjs is incremental in the
+# first place. 40 a day walks the whole roster in about twelve days, well
+# inside check-roster's own 30-day staleness horizon, while staying far
+# enough under the rate limit that an ordinary run never trips it.
+#
+# Turning this up is the obvious temptation and it is a trap: a bigger batch
+# throttles, a throttled run records NOTHING for the tracks it gave up on,
+# and the sweep then makes less progress per day than the smaller batch did.
+
+[Unit]
+Description=SIGNAL roster health check, daily
+Documentation=file:///home/hyphen8d/Work/signal/CLAUDE.md
+
+[Timer]
+OnCalendar=daily
+# Not on the hour. Everything else on a `daily` calendar fires at 00:00, and
+# there is no reason for this to be in that crowd.
+RandomizedDelaySec=2h
+
+# The box is a desktop and is not on overnight, so without this the timer
+# would simply never fire on most days -- it would be scheduled for a moment
+# the machine is asleep and skipped. Persistent catches up on the next boot.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
