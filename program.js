@@ -2896,17 +2896,27 @@ export default {
     // below on purpose: the break shows in its footer too.
     this.checkForBreak(s)
 
-    // Visualizer (43rd pass) -- idle trigger. Only arms while locked and
-    // actually playing; there's nothing worth idling into while seeking,
-    // scanning, or between stations. Manual entry is the [V] case in key(),
-    // which mobile can never reach anyway (no keyboard) -- but this timer
-    // fires on its own regardless of input source, so it needs its own
-    // guard: every visualizer effect is drawn for the 80-col desktop grid
-    // and would render as garbage squeezed into mobile's 42.
-    if (!this.mobile && !this.visualizerActive && this.mode === 'locked' && this.lockedStation &&
-        Date.now() - this._lastInputAt > VISUALIZER_IDLE_MS) {
-      this.enterVisualizer(s)
-    }
+    // Visualizer (43rd pass) -- the idle trigger, RETIRED 2026-08-30.
+    //
+    // It entered the visualizer on its own after VISUALIZER_IDLE_MS of no
+    // input, which was right when the visualizer was purely a screensaver:
+    // a receiver left running should eventually show you something other
+    // than a static dial. It stopped being right once the visualizer became
+    // a place with state in it. Taking over the screen unasked now means
+    // covering a weather card someone is reading, dropping a lyrics view,
+    // and -- the one that actually decides it -- re-arming every effect
+    // clock underneath a listener who never asked to go anywhere.
+    //
+    // [V] is now the only way in, on desktop. Mobile never had this at all
+    // (every effect is drawn for the 80-col grid and renders as garbage in
+    // the lite layout's 42), so nothing changes there.
+    //
+    // The call is gone rather than left behind an `if (false)`: a condition
+    // that can never be true is a thing the next reader has to disprove.
+    // VISUALIZER_IDLE_MS stays exported and `_lastInputAt` stays maintained
+    // by every input path -- neither costs anything, and putting the
+    // behaviour back is then a two-line change rather than an
+    // archaeology exercise.
     // Early return, same shape as the poweredOn/guideOpen bail above --
     // this is a full-screen takeover of its own, so none of the normal
     // per-frame draws (including the rare idle CRT tear/roll and the
