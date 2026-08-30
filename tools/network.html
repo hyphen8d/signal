@@ -145,6 +145,21 @@
   .fl { font-size: 11px; border: 1px solid #5a2e2e; color: var(--red); border-radius: 2px; padding: 0 6px; white-space: nowrap; }
   .fl.soft2 { border-color: #5a4a2e; color: var(--amber); }
   .health-note { color: var(--ink-dim); font-size: 11.5px; margin: 6px 0 0; }
+  /* Is the scheduled check still running at all? Separate question from
+     whether the roster is clean, and the more important of the two: a
+     stopped checker reports a clean roster forever. */
+  .watch { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 7px 9px; margin: 0 0 10px; border: 1px solid var(--line); border-radius: 3px; background: #0c1114; }
+  .watch .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; align-self: center; }
+  .watch.ok .dot { background: var(--green); }
+  .watch.warn .dot { background: var(--amber); }
+  .watch.bad .dot { background: var(--red); }
+  .watch .lead { color: var(--ink); }
+  .watch .when { color: var(--ink-dim); font-size: 11.5px; }
+  .watch .runs { margin-left: auto; display: flex; gap: 3px; align-self: center; }
+  .watch .run { width: 7px; height: 7px; border-radius: 1px; background: var(--ink-faint); }
+  .watch .run.clean { background: var(--green); opacity: .55; }
+  .watch .run.incomplete { background: var(--amber); }
+  .watch .run.findings, .watch .run.error { background: var(--red); }
 
   /* ---- voice & drops ---- */
   .clip-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid #11181c; flex-wrap: wrap; }
@@ -1241,6 +1256,65 @@ async function approvePending(entry) {
 // batches; this panel renders that record and asks for the next batch.
 let health = null
 
+function healthAgo(iso) {
+  if (!iso) return 'never'
+  const mins = (Date.now() - Date.parse(iso)) / 60000
+  if (!Number.isFinite(mins)) return 'never'
+  if (mins < 90) return `${Math.max(0, Math.round(mins))} min ago`
+  const hrs = mins / 60
+  if (hrs < 36) return `${Math.round(hrs)} h ago`
+  return `${Math.round(hrs / 24)} d ago`
+}
+
+// The liveness strip. The coverage bars below say what the RECORD holds;
+// this says whether anything is still adding to it. Those are different
+// questions and only one of them was previously askable here -- a timer
+// that got disabled and a timer with nothing to report leave the record
+// looking identical, which is the same shape of silent pass as a throttled
+// run reading as a clean one, one level further out.
+function healthWatchEl(w) {
+  if (!w) {
+    return el('div', { class: 'watch warn' },
+      el('span', { class: 'dot' }),
+      el('span', { class: 'lead' }, 'scheduled check: unknown'),
+      el('span', { class: 'when' }, 'roster-watch could not be read — see tools/signal-health.timer'))
+  }
+  const errStreak = (w.streak && w.streak.error) || 0
+  const incStreak = (w.streak && w.streak.incomplete) || 0
+  const bad = w.lastOutcome === 'error' || errStreak > 0
+  const warn = w.schedule !== 'ok' || incStreak > 0 || w.lastOutcome === 'findings'
+  const cls = bad ? 'bad' : warn ? 'warn' : 'ok'
+
+  let lead, when
+  if (w.schedule === 'never') {
+    lead = 'scheduled check has never run'
+    when = 'enable it: systemctl --user enable --now signal-health.timer'
+  } else if (w.schedule === 'late') {
+    // The one the panel exists for. Nothing else on this page would say it.
+    lead = `scheduled check is ${Math.floor(w.daysSinceRun)} days late`
+    when = `nothing has advanced the record since ${healthAgo(w.lastRun)} — the timer may be stopped (grace is ${w.graceDays}d)`
+  } else {
+    lead = `checking daily · last run ${healthAgo(w.lastRun)}`
+    when = w.lastOutcome === 'clean' ? 'clean'
+      : w.lastOutcome === 'incomplete' ? `throttled${incStreak > 1 ? ` ${incStreak} runs running` : ''} — the sweep is not advancing`
+      : w.lastOutcome === 'findings' ? 'found something — see below'
+      : w.lastOutcome === 'error' ? `the checker itself failed${errStreak > 1 ? ` ${errStreak} runs running` : ''}` : String(w.lastOutcome || '')
+  }
+
+  const runs = el('span', { class: 'runs', title: 'the last runs, oldest left' })
+  for (const h of (w.history || []).slice(-14)) {
+    runs.appendChild(el('span', {
+      class: `run ${h.outcome}`,
+      title: `${h.at} — ${h.outcome}, ${h.checked}/${h.total} checked, ${h.flagged} flagged`,
+    }))
+  }
+  return el('div', { class: `watch ${cls}` },
+    el('span', { class: 'dot' }),
+    el('span', { class: 'lead' }, lead),
+    el('span', { class: 'when' }, when),
+    runs)
+}
+
 function healthFlagEl(f) {
   // Amber for "we could not check", red for "we checked and it is wrong" --
   // an unverified row is not a finding about the track.
@@ -1283,6 +1357,8 @@ function renderHealth() {
   const pct = h.total ? Math.round((h.checked / h.total) * 100) : 0
   summary.textContent = `${h.checked}/${h.total} checked · ${h.flaggedCount} flagged` +
     (h.never ? ` · ${h.never} never looked at` : '') + (h.stale ? ` · ${h.stale} stale` : '')
+
+  body.appendChild(healthWatchEl(h.watch))
 
   body.appendChild(el('div', { class: 'save-msg' },
     `${pct}% of the roster has been checked beyond oEmbed. Never-checked tracks are checked first, then the oldest — so running this repeatedly walks the whole roster.`))

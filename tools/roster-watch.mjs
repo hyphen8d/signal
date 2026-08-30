@@ -34,6 +34,7 @@
 //   node tools/roster-watch.mjs --batch=60
 //   node tools/roster-watch.mjs --dry-run    # no network, no notify, no write
 //   node tools/roster-watch.mjs --status     # what the last runs did
+//   node tools/roster-watch.mjs --status --json   # same, for the dashboard
 //
 // Installed as a systemd USER timer -- see tools/signal-health.timer, which
 // carries the install commands and the reasoning for its schedule.
@@ -52,6 +53,7 @@ const flag = (n, d) => { const h = args.find((a) => a.startsWith(`--${n}=`)); re
 const BATCH = +flag('batch', 40)
 const dryRun = args.includes('--dry-run')
 const statusOnly = args.includes('--status')
+const asJson = args.includes('--json')
 
 // How many runs in a row may end without finishing before that is itself
 // the news. Three throttles is ~three days of a stalled sweep on the daily
@@ -96,6 +98,26 @@ export function bumpStreak(streak, outcome) {
   const next = {}
   for (const k of ['incomplete', 'error']) next[k] = k === outcome ? (streak[k] ?? 0) + 1 : 0
   return next
+}
+
+// How long the record may go without a run before the SCHEDULE itself is
+// the thing that is broken. The timer is daily and Persistent=true, so a
+// missed day is caught at the next boot; two full days without a run means
+// something stopped, and nothing else would ever say so -- a disabled timer
+// looks exactly like a quiet one from inside the state file.
+const SCHEDULE_GRACE_DAYS = 2
+
+/** Is the scheduled check still happening at all?
+ *
+ *  Separate from whether the ROSTER is healthy, and the more important of
+ *  the two: a stopped checker reports a clean roster forever. This is the
+ *  same class of mistake as a throttled run reading as a clean one, one
+ *  level further out. */
+export function scheduleHealth(state, nowMs = Date.now()) {
+  if (!state || !state.lastRun) return { status: 'never', days: null }
+  const days = (nowMs - Date.parse(state.lastRun)) / 86400000
+  if (!Number.isFinite(days)) return { status: 'never', days: null }
+  return { status: days > SCHEDULE_GRACE_DAYS ? 'late' : 'ok', days }
 }
 
 export function describe(outcome, summary, streak) {
@@ -153,7 +175,23 @@ function notify({ title, body, urgency }) {
 async function main() {
   const state = loadState()
 
+  if (statusOnly && asJson) {
+    // Spawned by tools/admin-server.mjs. Same discipline every other tool
+    // here follows: --json owns stdout and there is ONE code path, so the
+    // dashboard and the terminal cannot disagree about what a run did.
+    const sched = scheduleHealth(state)
+    process.stdout.write(JSON.stringify({
+      lastRun: state.lastRun, lastOutcome: state.lastOutcome,
+      streak: state.streak, history: state.history,
+      schedule: sched.status, daysSinceRun: sched.days,
+      graceDays: SCHEDULE_GRACE_DAYS,
+    }))
+    return
+  }
+
   if (statusOnly) {
+    const sched = scheduleHealth(state)
+    console.log(`schedule : ${sched.status}${sched.days != null ? ` (${sched.days.toFixed(1)}d since last run)` : ''}`)
     console.log(`last run : ${state.lastRun ?? 'never'}`)
     console.log(`outcome  : ${state.lastOutcome ?? '-'}`)
     console.log(`streaks  : ${JSON.stringify(state.streak)}`)

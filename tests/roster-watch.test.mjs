@@ -99,3 +99,28 @@ test('a long findings list is summarised rather than truncated silently', () => 
   const d = describeRun('findings', summary({ flaggedCount: 7, flagged }), {})
   assert.match(d.body, /\+4 more/, 'the count beyond the named ones must be visible')
 })
+
+test('a stopped schedule is detectable, because nothing else would say so', () => {
+  // The dashboard's coverage bars render the RECORD. A timer that got
+  // disabled and a timer with nothing to report leave that record looking
+  // identical -- so a stopped checker would go on reporting a clean roster
+  // forever. This is the same silent-pass shape as a throttled run reading
+  // as a clean one, one level further out.
+  const { scheduleHealth } = watch
+  const now = Date.parse('2026-08-30T12:00:00Z')
+  const at = (iso) => ({ lastRun: iso })
+
+  assert.equal(scheduleHealth(at('2026-08-30T11:00:00Z'), now).status, 'ok', 'an hour ago is fine')
+  assert.equal(scheduleHealth(at('2026-08-29T12:00:00Z'), now).status, 'ok', 'yesterday is the normal case')
+  // Daily timer with Persistent=true catches a missed day at the next boot,
+  // so two days is the point where something has actually stopped.
+  assert.equal(scheduleHealth(at('2026-08-27T11:00:00Z'), now).status, 'late')
+  assert.equal(scheduleHealth(null, now).status, 'never')
+  assert.equal(scheduleHealth({ lastRun: null }, now).status, 'never')
+  // Junk in the state file must not read as healthy.
+  assert.equal(scheduleHealth({ lastRun: 'not a date' }, now).status, 'never')
+
+  const late = scheduleHealth(at('2026-08-25T12:00:00Z'), now)
+  assert.equal(late.status, 'late')
+  assert.equal(Math.round(late.days), 5, 'the panel prints this number')
+})

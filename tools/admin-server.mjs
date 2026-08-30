@@ -630,7 +630,19 @@ async function handleApi(req, res, url) {
     let parsed = null
     try { parsed = JSON.parse(out.stdout) } catch (e) {}
     if (!parsed) return sendJson(res, 500, { error: out.stderr.trim() || 'check-roster --report produced no JSON' })
-    return sendJson(res, 200, parsed)
+    // The record says what the roster looks like. It cannot say whether
+    // anything is still LOOKING -- a stopped timer and a quiet one are the
+    // same file. So the scheduled watcher's own state rides along on the
+    // same request: no second round trip, and the panel cannot render
+    // coverage without also being able to say when it was last advanced.
+    // Attached rather than fatal if it fails: this route's job is the
+    // roster, and losing the liveness strip must not cost the findings.
+    let watch = null
+    try {
+      const w = await capture('node', ['tools/roster-watch.mjs', '--status', '--json'])
+      watch = JSON.parse(w.stdout)
+    } catch (e) {}
+    return sendJson(res, 200, { ...parsed, watch })
   }
   if (route === 'health' && req.method === 'POST') {
     const { batch, stationId } = await readBody(req)

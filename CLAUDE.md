@@ -598,6 +598,20 @@ list.
   `DBUS_SESSION_BUS_ADDRESS`/`WAYLAND_DISPLAY`, and a `systemd-run --user`
   notify actually appeared). Re-check it after any change to how the session
   is set up.
+
+  The **ROSTER HEALTH panel** shows this as a liveness strip above the
+  coverage bars, because a notification is a one-shot channel: dismiss it, or
+  be asleep when findings land, and nothing re-raises it. `GET /api/health`
+  therefore returns `watch` alongside the record (one request — the panel must
+  not be able to render coverage without also being able to say when that
+  coverage was last advanced), captured from `roster-watch --status --json`
+  rather than by reading the state file, so the dashboard and the terminal
+  cannot disagree. It is attached non-fatally: losing the strip must not cost
+  the findings. `scheduleHealth()` is the part worth keeping — past a 2-day
+  grace it says the schedule is LATE, which is the only thing on that page
+  that can tell a disabled timer from a quiet one. Everything else there
+  renders the record, and a stopped checker leaves a record that looks
+  perfect.
 - **`tools/audition.js` is the candidate-side counterpart to `verify-roster.js`**
   (`--json` prints the same rows as data on stdout with every human line
   routed to stderr — one code path, so the dashboard and the terminal cannot
