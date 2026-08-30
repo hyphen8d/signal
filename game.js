@@ -91,7 +91,27 @@ const ENEMY = [
   [-1, 1], [0, 1], [1, 1],
 ]
 const OPTION = [[0, -1], [-1, 0], [0, 0], [1, 0], [0, 1]]
-const CAPSULE = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]
+// The capsule got its own pass after the first playtest -- "knowing they are
+// capsules seemed hard to distinguish at first". The original was a hollow
+// 3x3 box, which at this dot pitch lands inside one or two cells and is
+// simply a small smudge, indistinguishable from an enemy or a bit of debris.
+//
+// Three cues now, because one was not enough and they are all free:
+//   - SIZE and SHAPE: a 7x5 hollow shell, the only outlined thing on screen.
+//     Everything else -- ship, enemies, options -- is solid.
+//   - BRIGHTNESS: drawn in the player layer, not the hazard layer, so it is
+//     the same tier as your own ship and a tier above the enemies. The one
+//     thing on the field you WANT to touch reads as friendly.
+//   - MOTION: the core blinks inside the shell. Nothing else on the field
+//     blinks except a ship that is already dead, so it draws the eye.
+const CAPSULE_SHELL = [
+  [-2, -2], [-1, -2], [0, -2], [1, -2], [2, -2],
+  [-3, -1], [3, -1],
+  [-3, 0], [3, 0],
+  [-3, 1], [3, 1],
+  [-2, 2], [-1, 2], [0, 2], [1, 2], [2, 2],
+]
+const CAPSULE_CORE = [[0, -1], [-1, 0], [0, 0], [1, 0], [0, 1]]
 
 /** Terrain profile at absolute dot column `c`, as [top, bottom] thicknesses.
  *
@@ -425,7 +445,12 @@ export default {
     if (!f) return
     f[how]++
     if (f.killed + f.escaped >= f.total) {
-      if (f.killed === f.total) g.caps.push({ x, y, vx: 0.55 })
+      // Drifts left at well under half the ship's slowest speed, so it is
+      // always catchable even with no SPEED upgrades and something else
+      // demanding attention. Being generous here is right: the capsule is
+      // already the reward for the hardest thing in the game (clearing a
+      // whole formation), and making you win it twice is just mean.
+      if (f.killed === f.total) g.caps.push({ x, y, vx: 0.28 })
       g.forms.delete(fid)
     }
   },
@@ -455,12 +480,24 @@ export default {
     const keep = []
     for (const c of g.caps) {
       c.x -= c.vx
-      // Capsules settle rather than sinking through the floor, so one
-      // dropped over a valley is still collectable.
-      const [, bot] = terrainAt(Math.round(g.scroll + c.x), h)
-      c.y = Math.min(c.y + 0.35, h - 2 - bot)
+      // 2026-08-30, after the first playtest: "capsules drop too quick to
+      // get". They used to fall at 0.35 dots a step and settle on the floor,
+      // which was wrong twice over. It put the reward on the ONE surface in
+      // the game that kills you on contact, so collecting your winnings from
+      // clearing a formation meant a dive into the terrain -- and it gave
+      // you about two seconds to decide before it got there.
+      //
+      // They now hang at the height the formation died at and drift left,
+      // which is both fair and what the arcade actually does: a Gradius
+      // capsule has no gravity. The clamp keeps one inside the channel when
+      // the terrain scrolls up underneath it, so a capsule can never be
+      // swallowed by the ground it is no longer falling towards.
+      const [top, bot] = terrainAt(Math.round(g.scroll + c.x), h)
+      c.y = Math.max(top + 3, Math.min(c.y, h - 1 - bot - 3))
       if (c.x < -4) continue
-      if (Math.abs(c.x - g.ship.x) < 5 && Math.abs(c.y - g.ship.y) < 4) {
+      // Widened with the sprite: the shell is 7x5 dots now, and a hitbox
+      // tighter than the thing you can see reads as the pickup not working.
+      if (Math.abs(c.x - g.ship.x) < 8 && Math.abs(c.y - g.ship.y) < 6) {
         g.meter = (g.meter % POWERS.length) + 1
         playGameCapsule()
         continue
@@ -601,8 +638,8 @@ export default {
   gameDrawHazards(dc) {
     const g = this._game
     for (const en of g.enemies) for (const [dx, dy] of ENEMY) dc.plot(en.x + dx, en.y + dy)
-    for (const c of g.caps) for (const [dx, dy] of CAPSULE) dc.plot(c.x + dx, c.y + dy)
     for (const p of g.parts) dc.plot(p.x, p.y)
+    // Capsules are NOT drawn here -- see gameDrawPlayer and CAPSULE_SHELL.
   },
 
   gameDrawPlayer(dc) {
@@ -612,6 +649,12 @@ export default {
       else { dc.plot(b.x, b.y); dc.plot(b.x + 1, b.y) }
     }
     for (const o of this.gameOptions()) for (const [dx, dy] of OPTION) dc.plot(o.x + dx, o.y + dy)
+    // Capsules ride in the bright layer with the player's own kit. See
+    // CAPSULE_SHELL for why all three of size, brightness and blink.
+    for (const c of g.caps) {
+      for (const [dx, dy] of CAPSULE_SHELL) dc.plot(c.x + dx, c.y + dy)
+      if ((g.step >> 4) % 2 === 0) for (const [dx, dy] of CAPSULE_CORE) dc.plot(c.x + dx, c.y + dy)
+    }
     // Blink through invulnerability rather than drawing nothing: a ship you
     // cannot see is a ship you fly into a wall.
     if (g.over) return
