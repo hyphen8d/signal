@@ -807,6 +807,65 @@ test('the terrain always leaves a gap the ship can fit through', async () => {
   assert.ok(tightest >= 20, `tightest channel was ${tightest} dots`)
 })
 
+test('game over clears the field instead of freezing it', async () => {
+  // Reported from real play: "at game over some artifacts of enemies freeze
+  // on screen". The scroll keeps running past the game-over return, so
+  // anything left in the entity lists hung motionless over moving ground --
+  // which reads as a crash, not an ending.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(200)
+    const p = h.program
+    const g = p._game
+    p.gameSpawnWave()
+    p.gameSpawnTurret()
+    g.ebullets.push({ x: 80, y: 30, vx: -1, vy: 0 })
+    g.caps.push({ x: 90, y: 30, vx: 0.28 })
+    assert.ok(g.enemies.length > 0 && g.turrets.length > 0, 'field is populated')
+
+    g.lives = 0
+    g.invuln = 0
+    p.gameLoseLife()
+    g.invuln = 0
+    p.gameLoseLife()
+    assert.equal(g.over, true, 'game over')
+
+    for (const [what, list] of [['enemies', g.enemies], ['enemy shots', g.ebullets],
+                                ['turrets', g.turrets], ['capsules', g.caps]]) {
+      assert.equal(list.length, 0, `${what} cleared rather than frozen`)
+    }
+    // Debris is the exception -- the last explosion has to finish.
+    const before = g.parts.length
+    assert.ok(before > 0, 'the explosion exists')
+    h.advance(600)
+    assert.ok(g.parts.length < before, 'and it plays out rather than hanging')
+  } finally { h.shutdown() }
+})
+
+test('the visualizer never opens on its own any more', async () => {
+  // Retired 2026-08-30 at the owner's request. It was right when the
+  // visualizer was purely a screensaver and wrong once it became a place
+  // with state -- taking the screen unasked covers a weather card, drops a
+  // lyrics view, and re-arms every effect clock under someone who never
+  // asked to go anywhere. Nothing failed when the call was removed, which
+  // is why this exists.
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.key('3')
+    h.advance(3000)
+    await h.flush()
+    assert.equal(h.program.visualizerActive, false, 'not up to start with')
+    // Well past the old VISUALIZER_IDLE_MS (4m20s), with no input at all.
+    h.advance(6 * 60 * 1000, 64)
+    assert.equal(h.program.visualizerActive, false, 'still has not let itself in')
+    // And [V] still works, so this removed the timer and not the feature.
+    h.key('v')
+    assert.equal(h.program.visualizerActive, true, '[V] still opens it')
+  } finally { h.shutdown() }
+})
+
 test('the game does not click', async () => {
   // The dead-feedback rule runs both ways. A key that clicks must change
   // something; the game changes plenty and must NOT click, because a click

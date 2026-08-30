@@ -377,7 +377,21 @@ export default {
     g.step++
     g.scroll += 0.9
     if (g.invuln > 0) g.invuln--
-    if (g.over) return
+    if (g.over) {
+      // Reported 2026-08-30: "at game over some artifacts of enemies freeze
+      // on screen". They did. The scroll above runs before this return, so
+      // the ground kept moving while every enemy, shot and turret hung
+      // motionless in mid-air on top of it -- the one combination that
+      // reads as the game having crashed rather than ended.
+      //
+      // The field is emptied in gameLoseLife the moment it becomes over, so
+      // there is nothing left to freeze. Debris is the exception and is
+      // still stepped here: the last explosion finishing under GAME OVER is
+      // the difference between a stop and an ending.
+      for (const p of g.parts) { p.x += p.vx; p.y += p.vy; p.life-- }
+      g.parts = g.parts.filter((p) => p.life > 0)
+      return
+    }
 
     // Ship. Held keys read here rather than in gameKey so movement runs at
     // the ship's speed and not the keyboard's repeat rate.
@@ -842,6 +856,16 @@ export default {
     if (g.lives < 0) {
       g.over = true
       g.overAt = Date.now()
+      // Clear the field. Nothing is stepped once the game is over (see
+      // gameStep), so anything left in these lists would sit frozen on a
+      // still-scrolling background until the view hands itself back.
+      // Particles are deliberately kept: they are the explosion that just
+      // happened, and they still run.
+      g.enemies = []
+      g.ebullets = []
+      g.turrets = []
+      g.caps = []
+      g.forms.clear()
       return
     }
     const { w, h } = g
