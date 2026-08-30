@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 395 tracks total.
+Generated from stations.js. 9 stations, 410 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -160,7 +160,7 @@ Tracks (50):
 
 Ident tones (Hz): 293.7, 349.2, 415.3, 466.2
 
-Tracks (35):
+Tracks (50):
 
 1. **TESLA** -- Mau P  ([youtu.be/rVp454wjqls](https://youtu.be/rVp454wjqls))
 2. **Take It Off** -- FISHER & Aatig  ([youtu.be/0CKkRtkzw4g](https://youtu.be/0CKkRtkzw4g))
@@ -197,6 +197,21 @@ Tracks (35):
 33. **Cola** -- CamelPhat & Elderbrook  ([youtu.be/qke-jOUqSXU](https://youtu.be/qke-jOUqSXU))
 34. **XTC** -- Solardo & Eli Brown  ([youtu.be/VL-TIXPivpQ](https://youtu.be/VL-TIXPivpQ))
 35. **Feel My Needs** -- Weiss  ([youtu.be/nUn0PC7098E](https://youtu.be/nUn0PC7098E))
+36. **Miracle Maker** -- Dom Dolla & Clementine Douglas  ([youtu.be/U6Xz8foh7XQ](https://youtu.be/U6Xz8foh7XQ))
+37. **Human** -- John Summit & Echoes  ([youtu.be/fqvuxA5vuv4](https://youtu.be/fqvuxA5vuv4))
+38. **Relax My Eyes** -- ANOTR & Abel Balder  ([youtu.be/JOXzs2UhkHI](https://youtu.be/JOXzs2UhkHI))
+39. **Tell Me Something Good** -- Ewan McVicar  ([youtu.be/v8bIYKwUyPM](https://youtu.be/v8bIYKwUyPM))
+40. **Asking** -- Sonny Fodera & MK  ([youtu.be/Jckql0mdf_c](https://youtu.be/Jckql0mdf_c))
+41. **Turn Off The Lights** -- Chris Lake & Alexis Roberts  ([youtu.be/E_wxPpRSgho](https://youtu.be/E_wxPpRSgho))
+42. **Stop It** -- FISHER  ([youtu.be/rwBA75RmDkc](https://youtu.be/rwBA75RmDkc))
+43. **Wild** -- James Hype  ([youtu.be/_kFKqY9oCUc](https://youtu.be/_kFKqY9oCUc))
+44. **Turbo Time** -- Patrick Topping  ([youtu.be/RgyrmIEA-1g](https://youtu.be/RgyrmIEA-1g))
+45. **Buggin'** -- Hot Since 82 & Jem Cooke  ([youtu.be/eOlLPCVTLfE](https://youtu.be/eOlLPCVTLfE))
+46. **Voodoo** -- Gorgon City  ([youtu.be/tG7NLC9dIXY](https://youtu.be/tG7NLC9dIXY))
+47. **Weak** -- Vintage Culture & Maverick Sabre  ([youtu.be/fneCWdB8d04](https://youtu.be/fneCWdB8d04))
+48. **Free Your Mind** -- Prospa & Cloonee  ([youtu.be/gJYjbDnyx-o](https://youtu.be/gJYjbDnyx-o))
+49. **Temptation** -- SIDEPIECE  ([youtu.be/6dx013HIzCU](https://youtu.be/6dx013HIzCU))
+50. **Wassup** -- Wax Motif  ([youtu.be/Fc0tcD9F4GU](https://youtu.be/Fc0tcD9F4GU))
 
 ## CITY LIGHTS -- 780.0
 

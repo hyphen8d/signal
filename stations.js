@@ -710,6 +710,61 @@ export const STATIONS = [
       realTrack('qke-jOUqSXU', 'Cola', 'CamelPhat & Elderbrook'),
       realTrack('VL-TIXPivpQ', 'XTC', 'Solardo & Eli Brown'),
       realTrack('nUn0PC7098E', 'Feel My Needs', 'Weiss'),
+      // 2026-08-30 -- fifteen to take SYNAPSE to 50, the last public station
+      // still at its founding size. 34 artists to 47: this station was
+      // unusually flat before (34 artists across 35 tracks, only Mau P
+      // twice), so the safe half of a pass like this -- second cuts by
+      // artists already trusted here -- was almost entirely unused. Six are
+      // that; the rest are new names.
+      //
+      // The profile's two traps were both live again on this pass and both
+      // are the same question, "which upload is this really":
+      //
+      //   - Festival sets outrank releases. Searching Dom Dolla's Miracle
+      //     Maker returns a 1:14 Brooklyn Mirage clip beside the 3:09 VEVO
+      //     audio; Michael Bibi's Hanging Tree surfaces an Amnesia Milano
+      //     closing set. Duration separates them, as it did for FISHER's
+      //     Losing It a pass ago.
+      //   - Extended mix vs single edit, which the titles routinely do not
+      //     say. Both are in lane here and the durations below are the
+      //     record of which one was actually taken: nine singles (2:15 to
+      //     4:13) and six club versions (6:27 to 8:26).
+      //
+      // Hot Since 82's Buggin' at 8:26 is now the longest track on the
+      // station, past the 6:44 the profile quotes as the old ceiling. Taken
+      // anyway, off the artist's own channel, because the profile is
+      // explicit that length is not a reason to reject here -- but it is the
+      // one to pull first if this station ever wants a real ceiling.
+      //
+      // PROVENANCE IS THE BEST OF ANY PASS ON THIS STATION and the flags
+      // undersell it. Two VEVO, three "- Topic", four on channels this
+      // station already uses -- and every one of the six that audition.js
+      // marks UNKNOWN-CHANNEL is still an artist or label channel, not a
+      // re-upload: No Art Music is ANOTR's, STEREOHYPE is James Hype's own
+      // label, Trick is Patrick Topping's, plus Ministry of Sound, Hot Since
+      // 82's channel and Sonny Fodera's. Nothing here comes off the
+      // re-upload channels the profile names, which were visible in these
+      // same searches (blanc and Groove Bassment both carried Wild and Your
+      // Mind Is Dirty) and were passed over deliberately.
+      //
+      // FISHER's Stop It trips CHECK-VERSION on the word "mix". That is the
+      // shared audition heuristic being wrong for THIS station specifically:
+      // an extended mix is the format here, not a warning sign.
+      realTrack('U6Xz8foh7XQ', 'Miracle Maker', 'Dom Dolla & Clementine Douglas'),
+      realTrack('fqvuxA5vuv4', 'Human', 'John Summit & Echoes'),
+      realTrack('JOXzs2UhkHI', 'Relax My Eyes', 'ANOTR & Abel Balder'),
+      realTrack('v8bIYKwUyPM', 'Tell Me Something Good', 'Ewan McVicar'),
+      realTrack('Jckql0mdf_c', 'Asking', 'Sonny Fodera & MK'),
+      realTrack('E_wxPpRSgho', 'Turn Off The Lights', 'Chris Lake & Alexis Roberts'),
+      realTrack('rwBA75RmDkc', 'Stop It', 'FISHER'),
+      realTrack('_kFKqY9oCUc', 'Wild', 'James Hype'),
+      realTrack('RgyrmIEA-1g', 'Turbo Time', 'Patrick Topping'),
+      realTrack('eOlLPCVTLfE', "Buggin'", 'Hot Since 82 & Jem Cooke'),
+      realTrack('tG7NLC9dIXY', 'Voodoo', 'Gorgon City'),
+      realTrack('fneCWdB8d04', 'Weak', 'Vintage Culture & Maverick Sabre'),
+      realTrack('gJYjbDnyx-o', 'Free Your Mind', 'Prospa & Cloonee'),
+      realTrack('6dx013HIzCU', 'Temptation', 'SIDEPIECE'),
+      realTrack('Fc0tcD9F4GU', 'Wassup', 'Wax Motif'),
     ] },
 
   // 4 new stations added 2026-08-20, tracklists as given, all
