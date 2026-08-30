@@ -719,6 +719,15 @@ export function playStaticBurst(duration, peakGain, freq) {
 // something odd, not like a console plugged into it. Levels are set against
 // playKeyClick rather than against each other, since what they actually sit
 // on top of is a real track at the listener's own volume.
+//
+// 2026-08-30, after the first real playtest: "game audio is very low". The
+// original levels (0.035 - 0.09) were picked against each other and against
+// nothing else, which is the mistake -- the radio's own control sounds sit
+// at 0.12 to 0.35, and these have to carry OVER a track playing at the
+// listener's chosen volume rather than in silence. Raised into that band.
+// Deliberately NOT ducking the music the way a station ID does: a duck says
+// "stop listening, something is being announced", and the whole point here
+// is that the song keeps going while you play.
 
 /** Player shot -- a descending blip, kept quiet and short because it fires
  *  several times a second over an actual song. */
@@ -731,9 +740,9 @@ export function playGameShot() {
     osc.frequency.setValueAtTime(1500, t)
     osc.frequency.exponentialRampToValueAtTime(420, t + 0.06)
     const g = ctx.createGain()
-    // Well under playKeyClick's peak: this is the one sound in the set that
-    // repeats on a held key, so it is the one that turns into a drone.
-    g.gain.setValueAtTime(0.035, t)
+    // The quietest of the four: this is the one that repeats on a held key,
+    // so it is the one that turns into a drone. Still in the radio's band.
+    g.gain.setValueAtTime(0.10, t)
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.07)
     osc.connect(g).connect(speakerOut(ctx))
     osc.start(t)
@@ -759,7 +768,7 @@ export function playGameHit(big = false) {
     filter.frequency.setValueAtTime(big ? 1200 : 2600, t)
     filter.frequency.exponentialRampToValueAtTime(big ? 90 : 400, t + dur)
     const g = ctx.createGain()
-    g.gain.setValueAtTime(big ? 0.22 : 0.09, t)
+    g.gain.setValueAtTime(big ? 0.38 : 0.20, t)
     g.gain.exponentialRampToValueAtTime(0.001, t + dur)
     src.connect(filter).connect(g).connect(speakerOut(ctx))
     src.start(t)
@@ -778,7 +787,7 @@ export function playGameCapsule() {
     osc.frequency.setValueAtTime(600, t)
     osc.frequency.exponentialRampToValueAtTime(1250, t + 0.08)
     const g = ctx.createGain()
-    g.gain.setValueAtTime(0.07, t)
+    g.gain.setValueAtTime(0.22, t)
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.12)
     osc.connect(g).connect(speakerOut(ctx))
     osc.start(t)
@@ -800,7 +809,7 @@ export function playGamePowerUp() {
       const g = ctx.createGain()
       const at = t + i * 0.07
       g.gain.setValueAtTime(0, at)
-      g.gain.linearRampToValueAtTime(0.06, at + 0.008)
+      g.gain.linearRampToValueAtTime(0.20, at + 0.008)
       g.gain.exponentialRampToValueAtTime(0.001, at + 0.1)
       osc.connect(g).connect(speakerOut(ctx))
       osc.start(at)

@@ -283,6 +283,52 @@ test('a cleared formation drops a capsule and a leaked one does not', async () =
   } finally { h.shutdown() }
 })
 
+test('a capsule stays in the channel and stays catchable', async () => {
+  // First-playtest finding: capsules fell to the floor, which put the reward
+  // for clearing a formation on the one surface that kills you, and gave you
+  // about two seconds to get there. They now hang and drift.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const p = h.program
+    const g = p._game
+    g.caps.length = 0
+    const y0 = g.ship.y - 10
+    g.caps.push({ x: g.w - 12, y: y0, vx: 0.28 })
+    const startX = g.caps[0].x
+    // Long enough that the old 0.35-a-step fall would have put it on the
+    // floor several times over.
+    h.advance(2500)
+    const c = g.caps[0]
+    assert.ok(c, 'still on the field after 2.5s')
+    assert.ok(Math.abs(c.y - y0) < 12, `stayed near its drop height (${y0} -> ${c.y})`)
+    // Never inside the terrain, which is what "catchable" actually means.
+    const { terrainAt } = await import(`../game.js?v=${h.tag}`)
+    const [top, bot] = terrainAt(Math.round(g.scroll + c.x), g.h)
+    assert.ok(c.y > top && c.y < g.h - bot, `outside the rock (${c.y}, gap ${top}..${g.h - bot})`)
+    assert.ok(c.x < startX, 'and it is drifting toward the ship')
+  } finally { h.shutdown() }
+})
+
+test('flying into a capsule collects it', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const g = h.program._game
+    g.caps.length = 0
+    g.meter = 0
+    // Put one just ahead of the ship at its own height and fly into it.
+    g.caps.push({ x: g.ship.x + 30, y: g.ship.y, vx: 0.28 })
+    h.key('ArrowRight')
+    h.advance(2000)
+    h.keyUp('ArrowRight')
+    assert.equal(g.caps.length, 0, 'picked up')
+    assert.equal(g.meter, 1, 'and the meter cursor stepped to SPEED')
+  } finally { h.shutdown() }
+})
+
 test('the meter spends, and a refused spend keeps the capsule', async () => {
   const h = await inVisualizer()
   try {
