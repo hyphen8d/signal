@@ -271,11 +271,11 @@ export const stationIdBufferPromises = {}
 // retired station-id-midnight-neon.mp3 while the live clip went untouched.
 // Two readers, one definition.
 export { STATION_ID_CLIPS } from './station-id-clips.js'
-const { stationIdClipName } = await import(`./station-id-clips.js?v=${V}`)
+const { stationClipName } = await import(`./station-id-clips.js?v=${V}`)
 
 export function loadStationIdBuffer(stationId) {
   if (!stationIdBufferPromises[stationId]) {
-    const clip = stationIdClipName(stationId)
+    const clip = stationClipName(stationId)
     stationIdBufferPromises[stationId] = fetch(`audio/station-id-${clip}.mp3`)
       .then((r) => r.arrayBuffer())
       .then((buf) => audioCtx().decodeAudioData(buf))
@@ -369,6 +369,20 @@ export const LINER_DROP_CHANCE = 0.25
 // given a separate trigger, so they ride the same 1-in-4 roll and
 // repeat-avoidance logic in maybePlayLinerDrop as the per-station pilots
 // instead of duplicating that machinery.
+// TRANSCRIBED 2026-08-29 via ElevenLabs Scribe, because the scripts existed
+// nowhere but in the audio and the next person writing a liner was guessing.
+// Accuracy spot-check: thanks02 came back matching the one line already
+// quoted in this file, word for word.
+//
+// Frequencies below are written as digits because that is how a transcript
+// renders them. The clips SAY them: "two seventy-three", not "273". To
+// re-render one, spell it out -- see tools/lib/voice-settings.mjs.
+//
+//   oneliner01  "This is SIGNAL. Try not to overthink it."
+//   oneliner2   "SIGNAL. It really whips the llama's ass."
+//   oneliner3   "SIGNAL is created for you with love from San Diego, California."
+//   thanks01    "Every signal needs a receiver. Thanks for being ours."
+//   thanks02    "You're listening to SIGNAL. Wherever you are, thanks for tuning in."
 export const GENERAL_LINER_FILES = [
   'audio/oneliner01.mp3',
   'audio/oneliner2.mp3',
@@ -386,6 +400,24 @@ export const GENERAL_LINER_FILES = [
   // not outgrow them much further before the per-station seconds land.
   'audio/thanks02.mp3',
 ]
+// TRANSCRIBED 2026-08-29, same pass as the generals above. THE FORMAT IS THE
+// POINT: every one of these is <hook>, then the callsign and frequency, in
+// that order. A liner that opens with the callsign reads as a different
+// station entirely, and that is not obvious from the filenames -- the first
+// batch of replacements was drafted the other way round before anyone
+// listened.
+//
+// Round frequencies drop the decimal here too, exactly as the station IDs do:
+// "Cold Wave 273", never "273 point 0".
+//
+//   cipher            "They're listening. So are we. CIPHER, 133.7."
+//   distortion-field  "We love guitar solos. DISTORTION FIELD, 199.7."
+//   cold-wave         "Machines don't get lonely, we do. COLD WAVE, 273."
+//   drift-mode        "Sleep mode activated. DRIFT MODE, 321."
+//   circuit-crush     "The long way home every time. CIRCUIT CRUSH, 488."
+//   atomic            "Glowing in the dark since 1955. ATOMIC, 529."
+//   city-lights       "You're tuned in to Tokyo. CITY LIGHTS, 780."
+//   hackback          "A throwback state of mind. HACKBACK, 808."
 export const STATION_LINER_FILES = {
   cipher: ['audio/liner-cipher-01.mp3'],
   'distortion-field': ['audio/liner-distortion-field-01.mp3'],

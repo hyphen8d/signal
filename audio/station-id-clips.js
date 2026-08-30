@@ -13,11 +13,20 @@
 // stationId), for per-station visualizer picks, and as the key into
 // tools/station-profiles.json. So when MIDNIGHT NEON became SYNAPSE on
 // 2026-08-28 the id stayed 'midnight-neon' and only the clip moved.
-export const STATION_ID_CLIPS = {
+export const STATION_CLIP_NAMES = {
   'midnight-neon': 'synapse',
 }
 
-/** The file the set will actually fetch for a station. One definition, so a
- *  tool writing a clip and the player reading it cannot disagree. */
-export const stationIdClipName = (stationId) => STATION_ID_CLIPS[stationId] ?? stationId
-export const stationIdClipPath = (stationId) => `audio/station-id-${stationIdClipName(stationId)}.mp3`
+/** The name a station's clips are filed under, which is its id unless the
+ *  callsign has moved. ONE resolver for both clip types on purpose: station
+ *  IDs and liner drops used to derive their filenames by different rules,
+ *  and having two rules is how a re-render silently wrote to a retired file
+ *  on 2026-08-29 while the live one went untouched. */
+export const stationClipName = (stationId) => STATION_CLIP_NAMES[stationId] ?? stationId
+export const stationIdClipPath = (stationId) => `audio/station-id-${stationClipName(stationId)}.mp3`
+export const linerClipPath = (stationId, n) =>
+  `audio/liner-${stationClipName(stationId)}-${String(n).padStart(2, '0')}.mp3`
+
+// The old name, kept because tools/network.html's VOICE panel reads it to
+// show which clip a station actually loads.
+export const STATION_ID_CLIPS = STATION_CLIP_NAMES

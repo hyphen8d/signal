@@ -38,7 +38,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   VOICE_NAME, MODEL_ID, VOICE_SETTINGS, OUTPUT_FORMAT,
-  TAIL_MIN_S, TAIL_AIM_S, PEAK_MIN_DB, PEAK_MAX_DB,
+  TAIL_MIN_S, TAIL_AIM_S, peakBandFor,
   ID_SCRIPT, spokenFrequency,
 } from './lib/voice-settings.mjs'
 import { stationIdClipPath } from '../audio/station-id-clips.js'
@@ -169,8 +169,9 @@ async function main() {
 
   // Reported, never corrected. Normalising would alter the recording, and a
   // hot take is better fixed by taking it again.
-  if (Number.isFinite(m.peak) && (m.peak > PEAK_MAX_DB || m.peak < PEAK_MIN_DB)) {
-    console.log(`\n! PEAK ${m.peak}dB is outside the set's band (${PEAK_MIN_DB} to ${PEAK_MAX_DB}dB).`)
+  const band = peakBandFor(out)
+  if (Number.isFinite(m.peak) && (m.peak > band.max || m.peak < band.min)) {
+    console.log(`\n! PEAK ${m.peak}dB is outside the band for a ${band.kind} (${band.min} to ${band.max}dB).`)
     console.log('  Not corrected -- normalising changes the recording. This clip will sit')
     console.log('  louder or quieter than the rest, and the duck cannot fix it: it scales')
     console.log('  the music, not the voice. Consider re-rendering.')

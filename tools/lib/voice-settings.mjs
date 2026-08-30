@@ -36,13 +36,38 @@ export const OUTPUT_FORMAT = 'mp3_44100_128'
 export const TAIL_MIN_S = 0.4
 export const TAIL_AIM_S = 0.5
 
-// Peak level band the existing clips occupy, measured 2026-08-29 with
-// `ffmpeg -af volumedetect`. SYNAPSE's ID sits at -2.1 and is the outlier
-// that prompted measuring at all -- it is audibly hotter than the rest and
-// the duck cannot fix it, because the duck scales the music and not the
-// voice.
-export const PEAK_MIN_DB = -7.5
+// Peak level band, measured 2026-08-29 with `ffmpeg -af volumedetect`.
+//
+// PER CLIP TYPE, because one band for both is wrong and produced four false
+// alarms on its first real batch. Liner drops play through
+// LINER_DROP_GAIN_MULT (0.75) where station IDs play at full level, so a
+// liner can sit 20*log10(0.75) = 2.5dB hotter on disk and still arrive at the
+// same place. Judging both against the ID band flagged four perfectly normal
+// liners as too loud.
+export const PEAK_MIN_DB = -8.0
 export const PEAK_MAX_DB = -3.0
+// Liners get their own pair rather than the ID band shifted by the 2.5dB of
+// LINER_DROP_GAIN_MULT, which was the first attempt and was too clever: the
+// shifted band promptly flagged two new clips as too QUIET while the liner
+// already in the pool at -6.9dB sat below both of them.
+//
+// This band is WIDE, and honestly so. The nine station IDs were rendered in
+// one session and hold 4.1dB; the liner pool was recorded across four
+// separate passes and spans -6.9 to -1.1, with no level ever having been
+// enforced. A band narrow enough to be a spec would condemn clips that have
+// been playing for weeks. So this is a smell detector for something well
+// outside what the set already contains -- the peak is printed on every
+// render regardless, and that number is the useful part.
+export const LINER_PEAK_MIN_DB = -7.5
+export const LINER_PEAK_MAX_DB = -0.5
+/** Liners and one-liners are played through LINER_DROP_GAIN_MULT; station IDs
+ *  and the welcome line are not, and their band is the tighter one. */
+export function peakBandFor(outPath) {
+  const isLiner = /(^|\/)(liner-|oneliner|thanks)/.test(outPath)
+  return isLiner
+    ? { min: LINER_PEAK_MIN_DB, max: LINER_PEAK_MAX_DB, kind: 'liner' }
+    : { min: PEAK_MIN_DB, max: PEAK_MAX_DB, kind: 'station ID' }
+}
 
 /** The station ID script. Digits must be spelled out -- handed "567.8" the
  *  renderer says "five six seven point eight", which is not how a station

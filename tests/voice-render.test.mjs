@@ -15,7 +15,7 @@ import {
   VOICE_NAME, MODEL_ID, VOICE_SETTINGS, TAIL_MIN_S,
   ID_SCRIPT, spokenFrequency,
 } from '../tools/lib/voice-settings.mjs'
-import { stationIdClipPath, stationIdClipName } from '../audio/station-id-clips.js'
+import { stationIdClipPath, stationClipName, linerClipPath } from '../audio/station-id-clips.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const VOICE_JS = readFileSync(path.join(ROOT, 'audio/voice.js'), 'utf8')
@@ -89,7 +89,7 @@ test('the renderer targets the clip the player actually loads', async () => {
   // station-id-midnight-neon.mp3 -- a retired file nothing reads -- while
   // the clip the set fetches was left untouched. Everything reported
   // success.
-  assert.equal(stationIdClipName('midnight-neon'), 'synapse')
+  assert.equal(stationClipName('midnight-neon'), 'synapse')
   assert.equal(stationIdClipPath('midnight-neon'), 'audio/station-id-synapse.mp3')
   // A station with no remap is unchanged.
   assert.equal(stationIdClipPath('cipher'), 'audio/station-id-cipher.mp3')
@@ -102,4 +102,13 @@ test('every public station has a clip file where the map says it should be', asy
     const p = path.join(ROOT, stationIdClipPath(st.id))
     assert.ok(existsSync(p), `${st.callsign} loads ${stationIdClipPath(st.id)}, which does not exist`)
   }
+})
+
+test('liner filenames resolve through the same remap as station IDs', () => {
+  // The whole point of extending the map: two clip types, one rule. SYNAPSE's
+  // liner is liner-synapse-NN.mp3, not liner-midnight-neon-NN.mp3, for the
+  // same reason its spoken ID is station-id-synapse.mp3.
+  assert.equal(linerClipPath('midnight-neon', 1), 'audio/liner-synapse-01.mp3')
+  assert.equal(linerClipPath('cipher', 2), 'audio/liner-cipher-02.mp3')
+  assert.equal(linerClipPath('cipher', 12), 'audio/liner-cipher-12.mp3')
 })
