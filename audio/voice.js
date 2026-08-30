@@ -362,7 +362,20 @@ export function lyricsStateFor(track) {
 // public stations now have their pilot clip; NIN deliberately has none
 // (see maybePlayLinerDrop's comment -- it gets a different, one-time
 // "discovery" treatment instead, not yet built).
-export const LINER_DROP_CHANCE = 0.25
+export const LINER_DROP_CHANCE = 0.35
+// 2026-08-29 -- was 0.25, and the station-specific clip was picked from the
+// combined pool, so a given station's own liner landed on 0.25 * 2/11 = 4.5%
+// of track changes: one every twenty-two. That is rare enough that the
+// station clips -- the ones actually carrying identity -- were the half
+// nobody heard, and rare enough to be hard to even TEST by skipping tracks.
+//
+// The fix is two-part, and the second half matters more than the first. The
+// rate went up a little; the MIX changed a lot. A drop now picks its bucket
+// before it picks its clip: half the time the station's own, half the time a
+// general. So the generals no longer crowd out the station clips simply by
+// outnumbering them nine to two, which is the thing the note under
+// GENERAL_LINER_FILES has been warning about since there were three of them.
+export const STATION_LINER_SHARE = 0.5
 // 57th pass -- general-purpose one-liners (3 one-liners plus a
 // thank-you clip general enough to double as a 4th), not written for any
 // one station's genre. Folded into every station's pool below rather than
@@ -524,15 +537,25 @@ export const LINER_DROP_DELAY_MS = 2500
 // those defaults for station IDs/the welcome line too.
 export const LINER_DROP_GAIN_MULT = 0.75
 export function maybePlayLinerDrop(program, station, track) {
-  const files = LINER_FILES[station.id]
-  if (!files || !files.length || program.muted) return
-  if (Math.random() >= LINER_DROP_CHANCE) return
-  // Avoid repeating the same clip twice in a row once a station has more
-  // than one -- irrelevant with CIPHER's single pilot clip today.
-  const pool = files.length > 1 && program._lastLiner
-    ? files.filter((f) => f !== program._lastLiner)
-    : files
-  const path = pool[Math.floor(Math.random() * pool.length)]
+  // An ABSENT key means the station opts out of liners entirely -- that is how
+  // the secret stations stay silent, and it is load-bearing (see the note
+  // above 'midnight-neon'). An EMPTY array means generals only.
+  const own = STATION_LINER_FILES[station.id]
+  if (!own || program.muted) return
+  // SIGNAL_FORCE_LINER makes the next drop certain, for testing a clip
+  // without skipping through twenty tracks to hear it. Same shape as the
+  // other forced-state hooks; never set in normal play.
+  if (!globalThis.SIGNAL_FORCE_LINER && Math.random() >= LINER_DROP_CHANCE) return
+  // Bucket first, then clip. See STATION_LINER_SHARE.
+  const bucket = own.length && Math.random() < STATION_LINER_SHARE ? own : GENERAL_LINER_FILES
+  if (!bucket.length) return
+  // Avoid repeating the same clip twice in a row, within whichever bucket
+  // won -- a station with one clip would otherwise never play it twice
+  // running even when that is the only thing its bucket holds.
+  const pool = bucket.length > 1 && program._lastLiner
+    ? bucket.filter((f) => f !== program._lastLiner)
+    : bucket
+  const path = (pool.length ? pool : bucket)[Math.floor(Math.random() * (pool.length || bucket.length))]
   setTimeout(() => {
     // Re-check on the far side of the delay (same gotcha as every other
     // async-scheduled sound here) -- a station change, track skip, mute, or
