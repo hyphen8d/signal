@@ -1632,6 +1632,41 @@ test('guide index: every station row shares the same column stops', async () => 
   } finally { h.shutdown() }
 })
 
+test("guide detail: every station's desc is shown in full, not cut off", async () => {
+  // 2026-08-30. NEON STASIS shipped its first draft desc 47 characters over
+  // this budget and lost the end of its own sentence. drawGuidePageStation
+  // marks the cut with a trailing " ..." rather than dropping it silently,
+  // which is honest -- but the mark is only visible to someone who opens
+  // that page, and nothing opened it. The suite could not see the loss at
+  // all, so this is the assertion that closes that gap end to end: it reads
+  // what the page actually drew rather than re-deriving the wrap.
+  const h = await boot()
+  try {
+    h.powerOn()
+    await openIndex(h)
+    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    // Into the first station's page from the index, then [->] walks the
+    // rest -- the detail pages step through the roster in preset order.
+    h.key('1'); h.advance(200)
+    for (let i = 0; i < STATION_PRESET_ORDER.length; i++) {
+      const ch = STATION_PRESET_ORDER[i]
+      // Rows 8-10 are the desc block. A budget overrun shows up as the
+      // ellipsis the drawing code appends, on the last of them.
+      const drawn = [h.row(8), h.row(9), h.row(10)].map((r) => r.trimEnd())
+      assert.ok(!drawn.some((r) => r.endsWith('...')),
+        `${ch.callsign}: desc is cut off on the guide's detail page -- ${JSON.stringify(drawn[2])}`)
+      // And it really is this station's page, not a stale one.
+      assert.ok(h.find(ch.callsign) >= 0, `${ch.callsign}: detail page did not open`)
+      h.key('ArrowRight'); h.advance(200)
+    }
+    // The lint budget has to match the width the page actually wraps to, or
+    // the rule and the layout have drifted apart -- same trade, and the same
+    // guard, as TAGLINE_MAX above.
+    const { DESC_WIDTH } = await import('../tools/lint-roster.js')
+    assert.equal(DESC_WIDTH, h.term.cols - 8, 'lint desc budget matches the detail page contentWidth')
+  } finally { h.shutdown() }
+})
+
 test('guide index: the on-air marker points at the locked station, and only it', async () => {
   const h = await boot()
   try {

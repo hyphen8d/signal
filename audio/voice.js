@@ -586,6 +586,8 @@ export const GENERAL_LINER_FILES = [
 //   distortion-field  "We love guitar solos. DISTORTION FIELD, 199.7."
 //   cold-wave         "Machines don't get lonely, we do. COLD WAVE, 273."
 //   drift-mode        "Sleep mode activated. DRIFT MODE, 321."  (retired)
+//   neon-stasis       "The food court closed an hour ago. Nobody told the
+//                      music. NEON STASIS, three twenty-one."
 //   circuit-crush     "The long way home every time. CIRCUIT CRUSH, 488."
 //   atomic            "Glowing in the dark since 1955. ATOMIC, 529."
 //   city-lights       "You're tuned in to Tokyo. CITY LIGHTS, 780."
@@ -603,6 +605,8 @@ export const GENERAL_LINER_FILES = [
 //                      COLD WAVE, two seventy-three."
 //   drift-mode        "Nothing here is in a hurry. Neither are you.
 //                      DRIFT MODE, three twenty-one."   (retired)
+//   neon-stasis       "Second floor, past the fountain, keep walking.
+//                      NEON STASIS, three twenty-one."
 //   circuit-crush     "Headlights, empty road, and a synthesiser that won't
 //                      quit. CIRCUIT CRUSH, four eighty-eight."
 //   atomic            "Still on the air, whatever the counter says.
@@ -621,15 +625,12 @@ export const STATION_LINER_FILES = {
   // dropped from this map rather than remapped, for exactly the reason
   // MOMENTUM's was below: both are voiced "DRIFT MODE, three twenty-one",
   // and a liner that announces a callsign nobody can tune to is worse than
-  // no liner at all.
-  //
-  // Present-and-empty, NOT absent. That distinction is the 2026-08-27 fix
-  // documented below and it is easy to undo by accident here: an absent key
-  // means no liners AT ALL (which is how the secret stations opt out), so
-  // simply deleting the retired entry would have quietly excluded this
-  // station from the four GENERAL one-liners too. Empty says "no station
-  // clip of its own yet, general pool still applies".
-  'neon-stasis': [],
+  // no liner at all. NEON STASIS got its own pair rendered the same day, so
+  // it never sat on the empty-array case -- but that case is the one to
+  // reach for if a future station ships before its clips do, because an
+  // ABSENT key means no liners at all (the secret stations' opt-out) while
+  // an empty one still hands the station the four generals.
+  'neon-stasis': ['audio/liner-neon-stasis-01.mp3', 'audio/liner-neon-stasis-02.mp3'],
   'circuit-crush': ['audio/liner-circuit-crush-01.mp3', 'audio/liner-circuit-crush-02.mp3'],
   atomic: ['audio/liner-atomic-01.mp3', 'audio/liner-atomic-02.mp3'],
   // 60th pass -- MOMENTUM retired (see the retirement comment above

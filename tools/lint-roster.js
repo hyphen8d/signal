@@ -51,11 +51,28 @@ globalThis.matchMedia ??= () => ({ matches: false })
 // so the duplication cannot drift silently.
 export const TAGLINE_MAX = 43
 
+// The guide's per-station detail page (drawGuidePageStation) gives `desc`
+// exactly DESC_LINES lines at DESC_WIDTH columns -- contentWidth is
+// term.cols - 8, so 72 on the 80-column desktop grid -- and marks anything
+// past that with a trailing " ...". The mark is honest, but it is only
+// visible to someone who opens that page, which is exactly how NEON STASIS
+// was first written 47 characters over and lost the end of its own sentence
+// (2026-08-30). Same duplication trade as TAGLINE_MAX above, guarded the
+// same way in tests/program.test.mjs.
+//
+// DESKTOP ONLY, deliberately. The 42-column lite layout truncates the
+// tagline, the desc and the track titles as a matter of course, so requiring
+// the same fit there would fail for all nine stations today and would be
+// asserting a rule mobile does not actually have.
+export const DESC_WIDTH = 72
+export const DESC_LINES = 3
+
 export async function lintRoster() {
   const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=lint')
   const { FREQ_MIN, FREQ_MAX, LOCK_THRESHOLD } = await import('../tuning.js?v=lint')
   const { VISUALS } = await import('../visuals/index.js?v=lint')
   const { parseBDF } = await import('../src/bdf.js')
+  const { wordWrap } = await import('../layout.js?v=lint')
   const font = parseBDF(readFileSync(path.join(here, '..', 'fonts', 'ter-u16n.bdf'), 'utf8'))
 
   const problems = []
@@ -71,6 +88,12 @@ export async function lintRoster() {
       problems.push(`${who}: tagline is ${st.tagline.length} chars; the guide index's LANE column fits ${TAGLINE_MAX}`)
     }
     if (!st.tracks || st.tracks.length < 10) problems.push(`${who}: only ${st.tracks?.length ?? 0} tracks (min 10)`)
+    if (!st.secret && st.desc) {
+      const lines = wordWrap(st.desc, DESC_WIDTH)
+      if (lines.length > DESC_LINES) {
+        problems.push(`${who}: desc wraps to ${lines.length} lines at ${DESC_WIDTH} columns; the guide's detail page shows ${DESC_LINES} and marks the rest with "..."`)
+      }
+    }
     if (!Array.isArray(st.ident) || st.ident.length !== 4) problems.push(`${who}: ident has ${st.ident?.length ?? 0} tones (want 4)`)
     if (!(st.freq >= FREQ_MIN && st.freq <= FREQ_MAX)) problems.push(`${who}: freq ${st.freq} outside ${FREQ_MIN}-${FREQ_MAX}`)
     if (st.visual && !VISUALS[st.visual]) problems.push(`${who}: visual '${st.visual}' is not a built effect`)
