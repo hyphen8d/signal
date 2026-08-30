@@ -69,10 +69,28 @@ export function peakBandFor(outPath) {
     : { min: PEAK_MIN_DB, max: PEAK_MAX_DB, kind: 'station ID' }
 }
 
+// Callsigns this voice reads wrong, respelled phonetically. Eleven
+// Multilingual v2 does not support <phoneme> tags, so respelling the input is
+// the only lever available.
+//
+// AND IT IS CONTEXT-DEPENDENT, which is the surprising part. "CIRCUIT CRUSH"
+// came out wrong as the FIRST words of a station ID and came out fine mid-
+// sentence in the liner, which reads "...a synthesiser that won't quit.
+// CIRCUIT CRUSH, four eighty-eight." Same two words, same voice, same
+// settings, different position. So this map applies to ID_SCRIPT only, and a
+// liner that opens with a callsign would need its own respelling -- worth
+// knowing before assuming a name is safe because it works somewhere.
+//
+// Confirmed by ear 2026-08-29; three spellings were rendered and 'Serkit' won.
+export const CALLSIGN_RESPELL = {
+  'CIRCUIT CRUSH': 'Serkit Crush',
+}
+
 /** The station ID script. Digits must be spelled out -- handed "567.8" the
  *  renderer says "five six seven point eight", which is not how a station
  *  reads its own frequency. */
-export const ID_SCRIPT = (callsign, spokenFreq) => `${callsign}, ${spokenFreq}.`
+export const ID_SCRIPT = (callsign, spokenFreq) =>
+  `${CALLSIGN_RESPELL[callsign] ?? callsign}, ${spokenFreq}.`
 
 /** 567.8 -> "five sixty-seven point eight". 808.0 -> "eight oh eight".
  *

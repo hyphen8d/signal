@@ -13,7 +13,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   VOICE_NAME, MODEL_ID, VOICE_SETTINGS, TAIL_MIN_S,
-  ID_SCRIPT, spokenFrequency,
+  ID_SCRIPT, spokenFrequency, CALLSIGN_RESPELL,
 } from '../tools/lib/voice-settings.mjs'
 import { stationIdClipPath, stationClipName, linerClipPath } from '../audio/station-id-clips.js'
 
@@ -111,4 +111,15 @@ test('liner filenames resolve through the same remap as station IDs', () => {
   assert.equal(linerClipPath('midnight-neon', 1), 'audio/liner-synapse-01.mp3')
   assert.equal(linerClipPath('cipher', 2), 'audio/liner-cipher-02.mp3')
   assert.equal(linerClipPath('cipher', 12), 'audio/liner-cipher-12.mp3')
+})
+
+test('a callsign this voice mispronounces is respelled in the ID script', () => {
+  // Regenerating CIRCUIT CRUSH's ID must not quietly restore the spelling
+  // that sounded wrong. The liner is deliberately NOT respelled -- the same
+  // words read correctly mid-sentence, and only the ID opens with them.
+  assert.equal(ID_SCRIPT('CIRCUIT CRUSH', 'four eighty-eight'),
+    'Serkit Crush, four eighty-eight.')
+  assert.equal(ID_SCRIPT('CIPHER', 'one thirty-three point seven'),
+    'CIPHER, one thirty-three point seven.')
+  assert.ok(CALLSIGN_RESPELL['CIRCUIT CRUSH'])
 })

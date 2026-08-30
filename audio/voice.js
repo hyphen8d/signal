@@ -29,6 +29,12 @@ const { DUCK_TAIL_MS } = await import(`../constants.js?v=${V}`)
 //   Style            0%
 //   Speaker boost    enabled
 //
+// CIRCUIT CRUSH's ID is scripted "Serkit Crush, four eighty-eight." -- this
+// voice reads "CIRCUIT" wrong when it opens a line, and Eleven Multilingual
+// v2 has no phoneme tags, so the spelling is the fix. Its LINER is not
+// respelled: the same words read correctly mid-sentence there. See
+// CALLSIGN_RESPELL in tools/lib/voice-settings.mjs.
+//
 // Station ID script is "<CALLSIGN>, <frequency, spoken>." -- e.g. SYNAPSE's
 // is literally "SYNAPSE, five sixty-seven point eight." Digits are spelled
 // out; the renderer says "five six seven point eight" if given 567.8. A
