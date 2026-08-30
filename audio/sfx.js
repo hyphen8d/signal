@@ -798,6 +798,38 @@ export function playGameCapsule() {
 /** The meter actually cashed in -- two rising notes. Distinct from
  *  playGameCapsule on purpose: collecting and spending are different events
  *  and the meter is the whole game, so they must not sound alike. */
+/** The stage-break sting (2026-08-30). A four-note rise, deliberately built
+ *  from the same square-wave voice playGamePowerUp() uses rather than a new
+ *  timbre: the break is the game's own punctuation, and a sound from
+ *  somewhere else would read as the radio interrupting rather than the game
+ *  turning a page.
+ *
+ *  Longer and quieter per note than the power-up (0.10 against 0.20). It
+ *  plays under nothing -- the break is the one moment with no shooting --
+ *  so it does not have to cut through, and a sting at pickup volume over
+ *  two seconds of empty sky is a fanfare rather than a cue. */
+export function playGameStage() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    for (const [i, f] of [523, 659, 784, 1047].entries()) {
+      const osc = ctx.createOscillator()
+      osc.type = 'square'
+      osc.frequency.value = f
+      const g = ctx.createGain()
+      const at = t + i * 0.11
+      g.gain.setValueAtTime(0, at)
+      g.gain.linearRampToValueAtTime(0.10, at + 0.012)
+      // The last note rings on: the first three are the run-up and this is
+      // the arrival, which is the whole shape of the thing in one number.
+      g.gain.exponentialRampToValueAtTime(0.001, at + (i === 3 ? 0.42 : 0.14))
+      osc.connect(g).connect(speakerOut(ctx))
+      osc.start(at)
+      osc.stop(at + (i === 3 ? 0.45 : 0.16))
+    }
+  } catch (e) {}
+}
+
 export function playGamePowerUp() {
   try {
     const ctx = audioCtx()

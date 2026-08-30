@@ -469,6 +469,11 @@ export default {
       }
       if (saved.tapConsent === 'yes' || saved.tapConsent === 'no') this.tapConsent = saved.tapConsent
       if (saved.weatherConsent === 'yes' || saved.weatherConsent === 'no') this.weatherConsent = saved.weatherConsent
+      // Guarded on Number.isFinite rather than typeof: a hand-edited or
+      // corrupted entry reaching NaN would otherwise poison every future
+      // comparison, since NaN > NaN is false and the record could never be
+      // beaten again.
+      if (Number.isFinite(saved.gameHiScore)) this.gameHiScore = Math.max(0, Math.floor(saved.gameHiScore))
       if (saved.stationId) {
         const ch = STATIONS.find((c) => c.id === saved.stationId)
         if (ch) {

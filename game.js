@@ -12,8 +12,19 @@
 import { BOLD, BRIGHT, DIM, FAINT, MUTED, NORMAL } from './src/term.js'
 import { DotCanvas } from './src/vector.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
-const { playGameCapsule, playGameHit, playGamePowerUp, playGameShot } = await import(`./audio/sfx.js?v=${V}`)
+const { playGameCapsule, playGameHit, playGamePowerUp, playGameShot, playGameStage } = await import(`./audio/sfx.js?v=${V}`)
 const { VIZ_BOT, centerX } = await import(`./layout.js?v=${V}`)
+// The tube's own vocabulary for "something just happened", borrowed rather
+// than invented: the stage break pulses the bloom the same way the rest of
+// the app marks an event. A game that flashed the screen its own way would
+// be a second language on one screen.
+const { pulseBloom } = await import(`./crt-hooks.js?v=${V}`)
+// The high score is written through the same door every other preference
+// uses. program.js calls this directly at five sites rather than wrapping
+// it, so this is the house style rather than a shortcut -- and state.js is
+// already the one place that knows how to fail quietly when localStorage
+// is not there to be written to.
+const { saveSignalState } = await import(`./state.js?v=${V}`)
 // The visualizer effects' own 2D hash, reused rather than reinvented -- see
 // gameDrawTerrain for what it is doing here and what the first attempt got
 // wrong.
@@ -135,6 +146,68 @@ const MIN_FIRE_RANGE = 34
 // Distance, not time, so the stage is a place you travel through rather
 // than a clock you wait out. ~100s at the current scroll rate.
 export const STAGE_DOTS = 5400
+
+// --- the stage break (2026-08-30) ---------------------------------------
+// The rollover used to be `stage++` and the HUD bar brightening for 2.5s.
+// Nothing happened in the world you were flying through, so the one moment
+// the game had a structure to show off was the one moment it showed you
+// least. The break makes the boundary a PLACE: spawning stops, the cave
+// opens out into clear sky, the scroll surges, and the next stage's terrain
+// closes back in behind it.
+//
+// The gate is keyed to a WORLD COLUMN, not to the break timer. That is the
+// whole trick and it is worth stating plainly: terrain here is a pure
+// function of the column, so a corridor expressed in the same coordinate
+// scrolls correctly by construction, at whatever speed the surge happens to
+// be running. Driving the opening off the countdown instead would have made
+// the corridor slide against the rock it is cut through the moment the
+// scroll rate changed -- which is exactly what the surge does.
+const BREAK_STEPS = 165
+// Half-width of the clear corridor, in dots. Sized against the surge below
+// so the gate takes roughly the break to pass: ~2.6s at an average of about
+// 1.9 dots/step is ~310 dots of travel, against 2*170 = 340 of gate.
+const GATE_HALF = 170
+// Peak scroll multiplier at the middle of the break, eased in and out so
+// the surge arrives as acceleration rather than a jump cut.
+const BREAK_BOOST = 2.4
+
+/** How open the gate is at world column `c`: 0 outside it, 1 dead centre.
+ *  Smoothstep rather than linear -- a linear mouth reads as a wedge cut by
+ *  a machine, and the eased one reads as the cave opening out. */
+export function gateEase(c, gateAt) {
+  if (gateAt === null) return 0
+  const d = Math.abs(c - gateAt)
+  if (d >= GATE_HALF) return 0
+  const u = 1 - d / GATE_HALF
+  return u * u * (3 - 2 * u)
+}
+
+/** terrainAt() with the stage gate cut through it.
+ *
+ *  BOTH the collision test and the draw call this, and that is not a
+ *  nicety: opening the corridor in the drawing alone would leave the rock
+ *  still solid to fly into, so the break would hand the player clear sky
+ *  with an invisible ceiling in it. One function, two callers, no way for
+ *  the two to disagree. */
+export function terrainAtGate(c, h, gateAt) {
+  const [top, bot] = terrainAt(c, h)
+  const e = gateEase(c, gateAt)
+  if (e <= 0) return [top, bot]
+  // Eased toward 1, not 0: a crust of one dot keeps the surface on screen,
+  // so the break reads as the cave opening out rather than the terrain
+  // being switched off.
+  return [Math.round(top + (1 - top) * e), Math.round(bot + (1 - bot) * e)]
+}
+
+// --- the meter wipe (2026-08-30) ----------------------------------------
+// Death takes speed, missiles, double, laser, options and the shield in one
+// silent assignment (see gameLoseLife). That is the harshest rule in the
+// game and the screen never admitted it happened -- the meter was simply
+// empty next time you looked down, which reads as the meter having been
+// empty all along rather than as something being taken. Emptying the boxes
+// left to right over ~0.6s is the whole fix: the same information, in the
+// order it was earned, slow enough to watch.
+const WIPE_STEPS = 36
 // Options trail the ship along the path it actually flew, which is the
 // mechanic they are famous for: the trail is a ring buffer of past ship
 // positions and option i simply reads it (i+1)*OPTION_LAG steps back. No
@@ -275,11 +348,27 @@ export default {
       stage: 1,
       stageIn: STAGE_DOTS,
       stageFlash: 0,
+      // The break: steps remaining, and the world column the gate is cut
+      // at. `gateAt` outlives `stageBreak` by design -- the corridor is
+      // still on screen when the countdown ends, and blanking it at zero
+      // would slam the rock shut in one frame.
+      stageBreak: 0,
+      gateAt: null,
+      // The meter wipe. `wipeOwned` is the kit as it stood the instant
+      // before death, held only long enough to be drawn going out.
+      wipe: 0,
+      wipeOwned: null,
       turretIn: 260,
       // Armament. Wiped wholesale on death -- see loseLife.
       spd: 0, missile: false, double: false, laser: false, opts: 0, shield: 0,
       meter: 0,
       score: 0, lives: START_LIVES,
+      // The record as it stood when this run began. Held separately from
+      // program.gameHiScore, which climbs DURING the run: without the
+      // snapshot there is no moment at which "did I beat it?" can still be
+      // asked, because by game over the answer is always no -- your own
+      // score is already the record it would be compared against.
+      hiAtStart: this.gameHiScore || 0,
       cool: 0, invuln: 150, waveIn: 90,
       over: false, overAt: 0,
       acc: 0, lastT: null, step: 0,
@@ -293,8 +382,24 @@ export default {
   /** Back to the effect canvas. Does NOT leave the visualizer: [E] acts on
    *  the view you are actually looking at, the same call the lyrics view's
    *  [V] case already makes. */
+  /** Commit the run's score if it beat the record. Called from BOTH ways a
+   *  run can end -- game over, and walking out with [E].
+   *
+   *  The second one is not an afterthought. Beating the record and then
+   *  pressing [E] is the ordinary way to stop playing, and a record that
+   *  only counted when you died would throw away the good runs and keep
+   *  the ones that ended badly. */
+  gameRecordScore() {
+    const g = this._game
+    if (!g) return
+    if (g.score <= (this.gameHiScore || 0)) return
+    this.gameHiScore = g.score
+    saveSignalState(this)
+  },
+
   stopGame(s) {
     if (!this.gameOpen) return false
+    this.gameRecordScore()
     this.gameOpen = false
     this._game = null
     this._heldKeys?.clear()
@@ -375,7 +480,28 @@ export default {
     const g = this._game
     const { w, h } = g
     g.step++
-    g.scroll += 0.9
+    // The break's surge, eased in and out across the break with a half-sine
+    // so it arrives as acceleration and leaves the same way. Every distance
+    // in this step is measured off `adv` rather than the old bare 0.9: the
+    // scroll, the stage counter and the spawn spacing are all supposed to
+    // be the same dots, and leaving any one of them on the constant would
+    // have quietly meant "distance, except while it matters".
+    //
+    // Read ONCE at the top and used for the whole step. The countdown is
+    // decremented below, and asking `g.stageBreak > 0` again further down
+    // would answer differently on the last step of the break -- the surge
+    // and the gate would treat that step as part of the break while the
+    // spawn suppression had already let go of it. Caught by the spawn-hold
+    // test, which found the wave timer moving one step early.
+    const inBreak = g.stageBreak > 0
+    const bp = inBreak ? Math.sin((1 - g.stageBreak / BREAK_STEPS) * Math.PI) : 0
+    const adv = 0.9 * (1 + (BREAK_BOOST - 1) * bp)
+    g.scroll += adv
+    if (g.stageBreak > 0) g.stageBreak--
+    // Ahead of the `over` return below, so the wipe still runs when the
+    // death that started it was the last one. The final thing the meter
+    // does is empty itself under GAME OVER.
+    if (g.wipe > 0) g.wipe--
     if (g.invuln > 0) g.invuln--
     if (g.over) {
       // Reported 2026-08-30: "at game over some artifacts of enemies freeze
@@ -426,30 +552,54 @@ export default {
     // speaker all leave the tap null, and a game whose enemies stop
     // spawning in a quiet bar is broken, not atmospheric.
     const A = this._au
-    if (g.waveIn > 0) g.waveIn--
-    const beat = A && A.onset && A.bass > 0.5 && g.waveIn < 100 && g.enemies.length < 14
-    if (g.waveIn === 0 || beat) {
-      this.gameSpawnWave()
-      g.waveIn = 150 + Math.floor(Math.random() * 90)
+    // Nothing spawns during the break, and the timers HOLD rather than run
+    // down against a suppressed spawn -- otherwise every countdown that
+    // expired mid-break would fire the instant it ended, and the breath
+    // would be paid for with a wall of enemies on the far side of it. The
+    // beat gate goes quiet too: a loud bar is exactly when it would fire.
+    if (!inBreak) {
+      if (g.waveIn > 0) g.waveIn--
+      const beat = A && A.onset && A.bass > 0.5 && g.waveIn < 100 && g.enemies.length < 14
+      if (g.waveIn === 0 || beat) {
+        this.gameSpawnWave()
+        g.waveIn = 150 + Math.floor(Math.random() * 90)
+      }
     }
 
     // Stage progress. Measured in scrolled dots so it advances with the
     // distance travelled and not with time spent hiding.
     if (g.stageFlash > 0) g.stageFlash--
-    g.stageIn -= 0.9
+    g.stageIn -= adv
     if (g.stageIn <= 0) {
       g.stage++
       g.stageIn = STAGE_DOTS
-      g.stageFlash = 150
+      g.stageFlash = BREAK_STEPS
       g.score += 1000
-      playGamePowerUp()
+      // The gate is cut one screen-width plus its own half ahead, so its
+      // leading edge sits exactly at the right-hand edge of the screen as
+      // the break begins: the corridor opens INTO view rather than being
+      // discovered already around you. At the surge's average rate that
+      // puts its centre on the ship about as the countdown runs out.
+      g.stageBreak = BREAK_STEPS
+      g.gateAt = g.scroll + w + GATE_HALF
+      // Not playGamePowerUp() any more -- that is the sound of picking
+      // something up, and it was doing double duty here for want of
+      // anything else. See playGameStage().
+      playGameStage()
+      // The tube reacts too. Small: this fires on top of a screen that is
+      // already opening out and brightening, and a hard flash on top of
+      // that would be the third thing saying the same word at once.
+      pulseBloom(s, 0.45, 220)
     }
 
-    // Surface guns, spaced by distance for the same reason.
-    g.turretIn -= 0.9
-    if (g.turretIn <= 0) {
-      this.gameSpawnTurret()
-      g.turretIn = Math.max(90, 240 - g.stage * 22) + Math.random() * 160
+    // Surface guns, spaced by distance for the same reason. Held through
+    // the break with the wave timer above, and for the same reason.
+    if (!inBreak) {
+      g.turretIn -= adv
+      if (g.turretIn <= 0) {
+        this.gameSpawnTurret()
+        g.turretIn = Math.max(90, 240 - g.stage * 22) + Math.random() * 160
+      }
     }
 
     this.gameStepBullets()
@@ -464,7 +614,7 @@ export default {
     // Terrain kills last, so a frame that already killed you by collision
     // cannot kill you twice.
     if (g.invuln <= 0) {
-      const [top, bot] = terrainAt(Math.round(g.scroll + g.ship.x), h)
+      const [top, bot] = terrainAtGate(Math.round(g.scroll + g.ship.x), h, g.gateAt)
       if (g.ship.y - 2 < top || g.ship.y + 2 > h - 1 - bot) this.gameLoseLife()
     }
   },
@@ -843,6 +993,13 @@ export default {
     this.gameBurst(g.ship.x, g.ship.y, 22)
     playGameHit(true)
     g.lives--
+    // The kit as it stood one instant ago, kept so the meter can be seen
+    // losing it rather than simply being empty afterwards. Armed only when
+    // there was something to lose: a death with an empty meter has nothing
+    // to say, and running the animation anyway would make the wipe mean
+    // "you died" instead of "this is what it cost".
+    const had = [g.spd > 0, g.missile, g.double, g.laser, g.opts > 0, g.shield > 0]
+    if (had.some(Boolean)) { g.wipeOwned = had; g.wipe = WIPE_STEPS }
     // Everything goes. This is the arcade's actual rule and it is the
     // reason the meter has any weight: a death that cost you nothing but a
     // life would make the whole left-to-right power economy decorative.
@@ -866,6 +1023,7 @@ export default {
       g.turrets = []
       g.caps = []
       g.forms.clear()
+      this.gameRecordScore()
       return
     }
     const { w, h } = g
@@ -911,6 +1069,7 @@ export default {
 
     this.gameDrawHud(s)
     this.gameDrawMeter(s)
+    if (g.stageBreak > 0 && !g.over) this.gameDrawStageBreak(s)
     if (g.over) this.gameDrawOver(s)
   },
 
@@ -919,7 +1078,8 @@ export default {
     const { h } = g
     for (let x = 0; x < dc.w; x++) {
       const c = Math.round(g.scroll) + x
-      const [top, bot] = terrainAt(c, h)
+      // Gated, exactly as the collision test is. See terrainAtGate.
+      const [top, bot] = terrainAtGate(c, h, g.gateAt)
       // A solid fill would be a slab of fully-lit cells -- a lot of lit area
       // for the bloom shader, and the visualizer footer's own note is about
       // exactly that eating legibility. Two dots of solid crust reads as a
@@ -1041,6 +1201,19 @@ export default {
     const g = this._game
     term.text(1, HUD_Y, `SCORE ${String(g.score).padStart(7, '0')}`, MUTED)
 
+    // HI sits between SCORE and the stage bar. Both numbers are zero-padded
+    // to seven, so this row's furniture never moves and the columns below
+    // are safe: SCORE ends at 13, HI runs 16..25, the bar starts at 28.
+    //
+    // It shows the live maximum rather than the stored record, which is
+    // what an arcade does -- the moment your own score passes the number
+    // beside it, that number starts moving with you. It brightens at the
+    // same moment, so passing the record is something you SEE happen rather
+    // than something you work out afterwards from the game-over screen.
+    const beating = g.score > g.hiAtStart
+    const hi = Math.max(g.score, this.gameHiScore || 0)
+    term.text(16, HUD_Y, `HI ${String(hi).padStart(7, '0')}`, beating ? (BRIGHT | BOLD) : MUTED)
+
     const bars = 14
     const done = Math.max(0, Math.min(bars, Math.round((1 - g.stageIn / STAGE_DOTS) * bars)))
     const bar = `STAGE ${g.stage} [${'█'.repeat(done)}${'·'.repeat(bars - done)}]`
@@ -1065,6 +1238,13 @@ export default {
     const { term } = s
     const g = this._game
     const owned = [g.spd > 0, g.missile, g.double, g.laser, g.opts > 0, g.shield > 0]
+    // The wipe. While it runs, the boxes to the RIGHT of the cascade still
+    // show the kit as it was, so what you are watching is the loss crossing
+    // the meter rather than a row that has already gone dark. `gone` is a
+    // real number, not an index, so the box currently being taken can flare
+    // on its way out -- which is the frame that carries the whole effect.
+    const wiping = g.wipe > 0 && g.wipeOwned
+    const gone = wiping ? (1 - g.wipe / WIPE_STEPS) * POWERS.length : 0
     const segs = POWERS.map((p) => ` ${p} `)
     const width = segs.reduce((n, seg) => n + seg.length + 1, -1)
     const x0 = Math.max(0, Math.floor((term.cols - width) / 2))
@@ -1074,7 +1254,16 @@ export default {
       // Armed wins over owned: the cursor is the thing you are deciding
       // about, and it has to be findable at a glance while the screen is
       // moving.
-      const attr = armed ? (BRIGHT | BOLD) : owned[i] ? NORMAL : FAINT
+      let attr = armed ? (BRIGHT | BOLD) : owned[i] ? NORMAL : FAINT
+      if (wiping) {
+        // Only boxes that HELD something take part. An empty slot has
+        // nothing to lose and flaring it would advertise a loss that never
+        // happened, turning the wipe into a generic death animation.
+        if (!g.wipeOwned[i]) attr = FAINT
+        else if (i > gone) attr = NORMAL          // not reached yet: still yours
+        else if (i > gone - 1) attr = BRIGHT | BOLD  // going out now
+        else attr = FAINT                          // gone
+      }
       term.text(x, METER_Y, seg, attr, armed ? 1 : 0)
       x += seg.length + 1
     }
@@ -1084,11 +1273,45 @@ export default {
     }
   },
 
+  /** The break's announcement. Two centred lines on the empty sky the gate
+   *  just opened.
+   *
+   *  It clears BEFORE the break does (the 0.22 tail below), so the words are
+   *  gone by the time the rock closes back in. Holding them to the last step
+   *  would have the banner and the terrain arrive on the same frame, and the
+   *  moment the next stage starts should be the one thing happening. */
+  gameDrawStageBreak(s) {
+    const { term } = s
+    const g = this._game
+    if (g.stageBreak < BREAK_STEPS * 0.22) return
+    const mid = GAME_TOP + Math.floor(GAME_ROWS / 2)
+    const lines = [[`STAGE ${g.stage}`, BRIGHT | BOLD], ['CLEAR SKY', MUTED]]
+    for (const [i, [text, attr]] of lines.entries()) {
+      const x = centerX(term.cols, text)
+      // Same one-cell bleed the game-over card clears, and for the same
+      // reason: a bright word laid straight onto terrain has no edge, and
+      // the blank column either side is what gives it one.
+      for (let k = -1; k <= text.length; k++) term.put(x + k, mid + i * 2, ' ')
+      term.text(x, mid + i * 2, text, attr)
+    }
+  },
+
   gameDrawOver(s) {
     const { term } = s
     const g = this._game
     const mid = GAME_TOP + Math.floor(GAME_ROWS / 2)
-    const lines = [['GAME OVER', BRIGHT | BOLD], [`SCORE ${String(g.score).padStart(7, '0')}`, NORMAL]]
+    // Third line is the record, and it says one of two different things.
+    // Beating it is the only news here worth its own word, so it gets one;
+    // otherwise the number stands there as the thing to go back for.
+    // hiAtStart, not gameHiScore -- by now the run has already been folded
+    // into the record, so comparing against the live value would report
+    // every run as a record. See hiAtStart in startGame.
+    const beat = g.score > g.hiAtStart
+    const lines = [
+      ['GAME OVER', BRIGHT | BOLD],
+      [`SCORE ${String(g.score).padStart(7, '0')}`, NORMAL],
+      beat ? ['NEW RECORD', BRIGHT | BOLD] : [`HI ${String(g.hiAtStart).padStart(7, '0')}`, MUTED],
+    ]
     for (const [i, [text, attr]] of lines.entries()) {
       const x = centerX(term.cols, text)
       for (let k = -1; k <= text.length; k++) term.put(x + k, mid + i * 2, ' ')

@@ -256,6 +256,23 @@ program):
   framebuffer, and is the argument for this game over another), and that the
   simulation runs on a fixed 60Hz step rather than the frame delta.
 
+  Three things landed 2026-08-30 and two of them reach outside the module.
+  The **stage break** — a clear corridor, a scroll surge and a banner where
+  one stage becomes the next — cuts its gate at a WORLD COLUMN rather than
+  off the break's countdown, because terrain here is a pure function of the
+  column and a corridor in the same coordinate scrolls correctly however
+  fast the surge is running. `terrainAtGate()` is called by **both** the
+  collision test and the draw, and that pairing is the thing to preserve:
+  gating only the drawing yields open sky with the rock still solid in it,
+  which looks perfect in a screenshot and is unplayable. A test holds it.
+  The **meter wipe** empties the power boxes left to right on death, and
+  changes only cell ATTRIBUTES — a test that reads the characters back
+  cannot see it at all. The **high score** is the game's one persistent
+  trace and therefore spans three files: `program.gameHiScore`, a field in
+  `state.js`'s payload, and the two call sites in `game.js` that commit it
+  (game over *and* walking out with `[E]` — a record that only counted when
+  you died would keep the bad runs and discard the good ones).
+
 ### Things that only make sense across files
 
 - **Layout is absolute cell coordinates** (`layout.js`); no layout engine.

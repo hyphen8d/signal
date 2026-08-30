@@ -20,6 +20,14 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { boot } from './harness.mjs'
 
+// The gate maths is pure, so it is imported the way helpers.test.mjs imports
+// its subjects rather than reached through a booted program. Nothing in
+// game.js touches the DOM at load.
+globalThis.SIGNAL_BUILD ??= 'gametest'
+globalThis.matchMedia ??= () => ({ matches: false })
+const gameMod = await import(`../game.js?v=gametest`)
+const { terrainAt, terrainAtGate, gateEase } = gameMod
+
 const KONAMI = [
   'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
   'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
@@ -30,6 +38,28 @@ const KONAMI = [
 function konami(h, seq = KONAMI) {
   for (const k of seq) h.tapKey(k)
 }
+
+/** Advance until the simulation has actually run `steps` fixed steps.
+ *
+ *  Counting steps rather than milliseconds, because milliseconds do not
+ *  survive contact with drawGameFrame's accumulator: h.advance(16) runs
+ *  ZERO steps (0.016 is a hair under STEP's 0.0167), and the first frame
+ *  after the game opens runs zero too, since `lastT` starts null and that
+ *  frame only seeds the clock. Three tests below were first written with a
+ *  bare advance(16) and asserted against a simulation that had never run --
+ *  the same silent pass CLAUDE.md warns about for a throttled probe, which
+ *  is why this reads the step counter and not the clock. */
+function tick(h, steps = 1) {
+  const g = h.program._game
+  const target = g.step + steps
+  let guard = 0
+  while (g.step < target && guard++ < 40 * steps + 40) h.advance(17)
+  if (g.step < target) throw new Error(`tick: only ${g.step - target + steps}/${steps} steps ran`)
+}
+
+/** h.find() returns a ROW INDEX, or -1. `assert.ok(h.find(x))` is therefore
+ *  true for -1 as well and asserts nothing; these two say what they mean. */
+const onScreen = (h, text) => h.find(text) >= 0
 
 /** Powered on, locked, visualizer up -- the only state the code is read in. */
 async function inVisualizer(opts = {}) {
@@ -894,5 +924,264 @@ test('the radio is still a radio underneath the game', async () => {
     h.tapKey('m')
     assert.equal(h.program.muted, !muted, '[M] still mutes')
     assert.equal(h.program.gameOpen, true, 'and did not disturb the game')
+  } finally { h.shutdown() }
+})
+
+// --- the stage break (2026-08-30) ----------------------------------------
+//
+// What these are guarding, worst-first:
+//
+//   - The gate reaching the COLLISION test and not only the drawing. Open
+//     sky you cannot fly through is the single worst thing this feature
+//     could ship as, it would look completely correct in a screenshot, and
+//     it is one forgotten call site away at all times.
+//   - The break actually being a breath. If the suppressed spawn timers ran
+//     down anyway, everything they held back would arrive in one wave on
+//     the far side, which is worse than no break at all.
+
+test('the gate only ever opens the passage, never closes it', () => {
+  // terrainAt's own min-gap guarantee must survive being gated. The gate
+  // eases toward a 1-dot crust, so every column it touches gets wider --
+  // if this ever inverts, the break becomes a wall across the screen.
+  const h = 76
+  let worst = Infinity, tightest = Infinity
+  for (let c = 0; c < 6000; c++) {
+    const [t0, b0] = terrainAt(c, h)
+    const [t1, b1] = terrainAtGate(c, h, 3000)
+    assert.ok(t1 >= 1 && b1 >= 1, `crust must survive at column ${c}`)
+    worst = Math.min(worst, (h - t1 - b1) - (h - t0 - b0))
+    tightest = Math.min(tightest, h - t1 - b1)
+  }
+  assert.ok(worst >= 0, `gating narrowed the passage by ${-worst} dots somewhere`)
+  assert.ok(tightest >= 20, `gated terrain closed to ${tightest} dots`)
+})
+
+test('the gate is a no-op with no break running, and local to the one it cuts', () => {
+  const h = 76
+  for (const c of [0, 137, 4001]) {
+    assert.deepEqual(terrainAtGate(c, h, null), terrainAt(c, h), `null gate changed column ${c}`)
+  }
+  // Far from the gate, nothing moves; at its centre, the cave is fully open.
+  assert.deepEqual(terrainAtGate(9999, h, 3000), terrainAt(9999, h), 'gate reached across the level')
+  assert.deepEqual(terrainAtGate(3000, h, 3000), [1, 1], 'gate centre is not open sky')
+  assert.equal(gateEase(3000, 3000), 1)
+  assert.equal(gateEase(9999, 3000), 0)
+})
+
+test('the gate reaches the collision test, not just the picture', async () => {
+  // The invisible-wall guard. Put the ship inside rock that the UNGATED
+  // terrain would kill it for, and prove the gate saves it -- then prove
+  // the same position without a gate still kills, so this cannot pass by
+  // the collision having quietly stopped working altogether.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    // A column with a real ceiling to be buried in.
+    let col = 0
+    for (let c = 100; c < 8000; c++) { if (terrainAt(c, g.h)[0] >= 8) { col = c; break } }
+    assert.ok(col > 0, 'setup: found no ceiling thick enough to test against')
+
+    const place = (gateAt) => {
+      g.scroll = col - g.ship.x
+      g.gateAt = gateAt
+      g.ship.y = 5          // inside the ungated ceiling, clear of the gated one
+      g.invuln = 0
+      g.lives = 3
+      tick(h)
+      return g.lives
+    }
+    assert.equal(place(null), 2, 'setup: ungated rock at this spot must kill')
+    assert.equal(place(col), 3, 'the gate opened the picture but not the rock')
+  } finally { h.shutdown() }
+})
+
+test('a stage rollover opens a break ahead of the ship, and holds the spawns', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    g.enemies = []; g.turrets = []
+    g.stageIn = 0.5
+    tick(h)
+    assert.equal(g.stage, 2, 'the stage rolled over')
+    assert.ok(g.stageBreak > 0, 'the break started')
+    // Cut ahead of the right-hand edge, so the corridor arrives rather than
+    // being discovered already around you.
+    assert.ok(g.gateAt > g.scroll + g.w, `gate at ${g.gateAt} is not ahead of the screen edge ${g.scroll + g.w}`)
+
+    // Nothing spawns for the length of the break, and the timers that would
+    // have spawned are HELD, not run down against a suppressed spawn.
+    //
+    // Baselined here rather than before the rollover: the wave block sits
+    // ABOVE the rollover in gameStep, so the step that starts the break
+    // legitimately decrements once on its way past. The claim under test is
+    // that the timers do not move THROUGH the break.
+    // Stepped directly rather than through tick(): one advance() can run
+    // two fixed steps, so a tick()-driven loop overshoots the end of the
+    // break by one and that step -- correctly -- decrements the timer
+    // again. The claim is about the break's own duration, so the loop has
+    // to be able to stop exactly at its end.
+    const waveBefore = g.waveIn, turretBefore = g.turretIn
+    let guard = 0
+    while (g.stageBreak > 0 && guard++ < 500) p.gameStep(h.screen)
+    assert.equal(g.enemies.length, 0, 'a wave spawned during the break')
+    assert.equal(g.turrets.length, 0, 'a turret spawned during the break')
+    assert.equal(g.waveIn, waveBefore, 'the wave timer ran down through the break')
+    assert.equal(g.turretIn, turretBefore, 'the turret timer ran down through the break')
+  } finally { h.shutdown() }
+})
+
+test('the break announces itself and gets out of the way before the rock returns', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const g = h.program._game
+    g.stageIn = 0.5
+    tick(h)
+    assert.ok(onScreen(h, 'STAGE 2'), 'the break does not say which stage it is')
+    assert.ok(onScreen(h, 'CLEAR SKY'), 'the break has no second line')
+    // Run to the last few steps of the break: the words must already be gone.
+    while (g.stageBreak > 2) tick(h)
+    assert.equal(h.find('CLEAR SKY'), -1, 'the banner was still up as the stage started')
+  } finally { h.shutdown() }
+})
+
+// --- the meter wipe -------------------------------------------------------
+
+/** Attribute at the first character of each meter label. The wipe changes
+ *  ONLY attributes -- the labels never move -- so a test that reads the
+ *  characters back cannot see this feature at all. Found the hard way. */
+function meterAttrs(h) {
+  const { METER_Y, POWERS } = gameMod
+  const term = h.screen.term
+  const row = h.row(METER_Y)
+  return POWERS.map((name) => {
+    const c = row.indexOf(name)
+    return c < 0 ? null : term.attrs[METER_Y * term.cols + c]
+  })
+}
+
+test('death empties the meter box by box, left to right', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const { BRIGHT, BOLD, FAINT, NORMAL } = await import('../src/term.js')
+    const p = h.program, g = p._game
+    h.advance(16)
+    // Own the first three and OPTION; leave LASER and '?' unearned.
+    g.spd = 2; g.missile = true; g.double = true; g.opts = 1; g.lives = 2
+    h.advance(16)
+    p.gameLoseLife()
+    assert.ok(g.wipe > 0, 'the wipe did not arm')
+
+    const flared = [false, false, false, false, false, false]
+    let lastGone = -1
+    while (g.wipe > 0) {
+      const attrs = meterAttrs(h)
+      attrs.forEach((a, i) => { if (a === (BRIGHT | BOLD)) flared[i] = true })
+      // Once a box has gone out it stays out: the cascade only travels one way.
+      const gone = attrs.lastIndexOf(FAINT)
+      if (attrs[0] === FAINT) assert.ok(gone >= lastGone, 'the wipe went backwards')
+      lastGone = Math.max(lastGone, 0)
+      h.advance(16)
+    }
+    assert.deepEqual(
+      flared, [true, true, true, false, true, false],
+      'every OWNED box should flare on its way out, and no unowned one should',
+    )
+    // And when it is done, the meter really is empty.
+    assert.deepEqual(meterAttrs(h), Array(6).fill(FAINT), 'the meter did not end empty')
+  } finally { h.shutdown() }
+})
+
+test('dying with nothing to lose does not run the wipe', async () => {
+  // The wipe means "this is what it cost". With an empty meter it would
+  // mean "you died", which the explosion already said.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    h.advance(16)
+    g.spd = 0; g.missile = false; g.double = false; g.laser = false
+    g.opts = 0; g.shield = 0; g.lives = 2
+    p.gameLoseLife()
+    assert.equal(g.wipe, 0, 'the wipe armed with an empty meter')
+  } finally { h.shutdown() }
+})
+
+// --- the high score -------------------------------------------------------
+
+test('the high score survives the run, both ways out', async () => {
+  for (const how of ['game over', 'walked out with [E]']) {
+    const h = await inVisualizer()
+    try {
+      konami(h)
+      const p = h.program, g = p._game
+      h.advance(16)
+      g.score = 4242
+      if (how === 'game over') { g.lives = 0; p.gameLoseLife() } else { h.tapKey('e') }
+      assert.equal(p.gameHiScore, 4242, `the score was lost on: ${how}`)
+    } finally { h.shutdown() }
+  }
+})
+
+test('a worse run does not overwrite a better record', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program
+    p.gameHiScore = 9000
+    p._game.hiAtStart = 9000
+    p._game.score = 12
+    h.tapKey('e')
+    assert.equal(p.gameHiScore, 9000, 'a losing run stamped over the record')
+  } finally { h.shutdown() }
+})
+
+test('the record is written where a reload will find it', async () => {
+  // End to end through the real state.js, not just the in-memory field --
+  // a high score that never reaches localStorage is the one thing this
+  // feature exists to prevent.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(16)
+    h.program._game.score = 777
+    h.tapKey('e')
+    const { STORAGE_KEY } = await import('../state.js?v=gametest')
+    const saved = JSON.parse(globalThis.localStorage.getItem(STORAGE_KEY) || '{}')
+    assert.equal(saved.gameHiScore, 777, 'the record never reached storage')
+  } finally { h.shutdown() }
+})
+
+test('GAME OVER reports the record, and says so when it was beaten', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    h.advance(16)
+    g.hiAtStart = 100
+    g.score = 5000
+    g.lives = 0
+    p.gameLoseLife()
+    h.advance(200)
+    assert.ok(onScreen(h, 'NEW RECORD'), 'beating the record went unremarked')
+  } finally { h.shutdown() }
+})
+
+test('GAME OVER shows the standing record when it was not beaten', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    h.advance(16)
+    g.hiAtStart = 999999
+    g.score = 10
+    g.lives = 0
+    p.gameLoseLife()
+    h.advance(200)
+    assert.equal(h.find('NEW RECORD'), -1, 'a losing run claimed a record')
+    assert.ok(onScreen(h, 'HI 0999999'), 'the standing record is not shown')
   } finally { h.shutdown() }
 })

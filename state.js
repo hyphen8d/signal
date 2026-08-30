@@ -39,6 +39,14 @@ export function saveSignalState(program) {
       // owns the geolocation grant; coordinates are held in memory for
       // the session and written nowhere.
       weatherConsent: program.weatherConsent || undefined,
+      // 2026-08-30 -- VECTOR SCAN's high score. The one thing the hidden
+      // game leaves behind, and the reason it is worth playing twice: a
+      // score that dies with the tab is a number, not a record. Kept here
+      // rather than under its own key because this module is already the
+      // one place that knows how to fail quietly when localStorage is
+      // unavailable, and a second try/catch around a second key would be
+      // that logic copied rather than reused.
+      gameHiScore: program.gameHiScore || undefined,
     }))
   } catch (e) {}
 }
