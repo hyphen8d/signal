@@ -1568,7 +1568,17 @@ export const NIN_STATION = {
       realTrack('kUZn9mk0g0w', 'Somewhat Damaged', 'Nine Inch Nails'),
       realTrack('2U0flA_Yp64', 'And All That Could Have Been', 'Nine Inch Nails'),
       realTrack('xwhBRJStz7w', 'The Hand That Feeds', 'Nine Inch Nails'),
-      realTrack('F-jZHMX-CJ0', 'Right Where It Belongs', 'Nine Inch Nails'),
+      // 2026-08-30: the UPLOAD changed here, not the song. The official
+      // "- Topic" upload (F-jZHMX-CJ0) is licensed in THREE countries --
+      // the US among them, so it played fine from this chair and was dead
+      // for nearly everyone else. That is why it survived every check that
+      // ever looked at it, and why it took check-roster.mjs's first deep
+      // probe to find. No official video was ever made for this track, so
+      // unlike The Hand That Feeds and Survivalism there is no wide-licence
+      // official upload to move to -- this is a fan re-upload at 249
+      // countries, picked by ear against four others. The era-wide rule and
+      // the trade it costs are in tools/station-profiles.json.
+      realTrack('qpLNRNO72X4', 'Right Where It Belongs', 'Nine Inch Nails'),
       realTrack('wwvLlEtxX3o', 'Only', 'Nine Inch Nails'),
       realTrack('pDXSTAqVwo8', 'Piggy (VEVO Presents)', 'Nine Inch Nails'),
       realTrack('QrrEo3hZABU', 'Down In It', 'Nine Inch Nails'),
