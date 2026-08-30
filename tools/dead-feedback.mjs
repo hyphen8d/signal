@@ -98,6 +98,33 @@ const STATES = {
   },
   // The one state that needs a capture-capable browser to reach at all.
   consentCard: (h) => { h.powerOn(); h.advance(800); h.key('a'); h.advance(600) },
+  // VECTOR SCAN (2026-08-29) -- the hidden game, which is a view keys get
+  // pressed in like any other and so belongs in the sweep.
+  //
+  // Read its row differently from every other one here. The game
+  // deliberately does not click (isMappedKey returns false for the whole of
+  // it -- see its case in program.js), so nothing in this row can EVER be a
+  // `!`, and the row is not asking the "clicked and lied" question at all.
+  // What it is watching for is the other half: a key the game advertises in
+  // its own on-screen furniture -- the six power-meter slots, the [E] EXIT
+  // in the HUD -- going quiet. Expect the arrows, space, Z, Enter and E to
+  // be absent from the no-change list; a key appearing there that the
+  // screen names is the finding.
+  //
+  // The game also animates on its own, so unlike the static screens above
+  // it relies entirely on the seeded PRNG making the control and pressed
+  // runs identical but for the press. That is the seeding the header calls
+  // load-bearing, being leaned on harder than anywhere else in this file.
+  vectorScan: (h) => {
+    h.powerOn(); h.key('3'); h.advance(3000); h.key('v'); h.advance(1600)
+    for (const k of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
+                     'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) {
+      h.key(k)
+      h.keyUp(k)
+    }
+    h.advance(600)
+    if (!h.program.gameOpen) throw new Error('sweep setup: the game did not open')
+  },
 }
 const BOOT_OPTS = {
   consentCard: { tap: 'tab' },

@@ -37,6 +37,13 @@ export default {
     // 2026-08-24: always re-enter on the station's own visual, not
     // whatever the lyrics view happened to be left on last time.
     this.lyricsViewOpen = false
+    // VECTOR SCAN (2026-08-29) -- and never on the game. exitVisualizer()
+    // already clears both of these; re-clearing on the way IN is the same
+    // belt-and-braces the line above is, and the buffer must start empty so
+    // arrow presses from a previous visit cannot part-complete the code.
+    this.gameOpen = false
+    this._game = null
+    this._konami.length = 0
     // Every effect re-arms its own clocks/accumulators here (see each
     // visuals/<key>.js reset()): the effect clock restarts at 0 on entry
     // (_vizEnterAt above), so anything holding an absolute `t` from a
@@ -86,6 +93,15 @@ export default {
   exitVisualizer(s) {
     if (!this.visualizerActive) return
     this.visualizerActive = false
+    // VECTOR SCAN (2026-08-29) -- the game only ever exists inside the
+    // visualizer, so leaving by ANY route ends it: [E] twice, the idle
+    // timeout, a lock, powerDown. Dropping the state rather than keeping it
+    // for a resume is deliberate -- an arcade cabinet does not hold your
+    // game while you go and listen to the radio.
+    this.gameOpen = false
+    this._game = null
+    this._heldKeys?.clear()
+    this._konami.length = 0
     this._lastInputAt = Date.now()
     playPanelSound(false)
     // Same rebuild closeGuide() uses: full clear, then chrome/frames/meters,
@@ -364,7 +380,15 @@ export default {
     // each tick (that's what makes the footer's writes into those rows
     // safe, see its own comment), so skipping the effect call entirely
     // here is the same contract, not a special case.
-    if (this.lyricsViewOpen) this.drawLyricsView(s)
+    // VECTOR SCAN (2026-08-29) -- the hidden game is a third view on this
+    // same canvas, ahead of the lyrics view and the effect. It takes the
+    // whole canvas under exactly the contract [L] already established just
+    // below: every view here repaints rows 1..VIZ_BOT-1 in full each tick,
+    // so skipping the effect call entirely is the contract being kept, not
+    // a special case. Ahead of [L] because startGame() closes the lyrics
+    // view on the way in and nothing can reopen it while the game is up.
+    if (this.gameOpen) this.drawGameFrame(s, (Date.now() - this._vizEnterAt) / 1000)
+    else if (this.lyricsViewOpen) this.drawLyricsView(s)
     else VISUALS[key].draw(this, s, (Date.now() - this._vizEnterAt) / 1000)
     // Info footer updates on the same cadence drawPlayback() already uses
     // for the normal progress bar -- plenty for a running clock, and cheap

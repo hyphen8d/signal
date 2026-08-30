@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
+const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -36,6 +36,7 @@ const { default: guide } = await import(`./ui/guide.js?v=${V}`)
 const { default: tapConsentUi } = await import(`./ui/tap-consent.js?v=${V}`)
 const { default: weatherUi } = await import(`./ui/weather.js?v=${V}`)
 const { default: visualizer } = await import(`./visualizer.js?v=${V}`)
+const { default: game } = await import(`./game.js?v=${V}`)
 
 // --- program ---------------------------------------------------------------
 
@@ -51,6 +52,9 @@ export default {
   ...tapConsentUi,
   ...weatherUi,
   ...visualizer,
+  // VECTOR SCAN (2026-08-29) -- the hidden game. Last, so it composes over
+  // the visualizer it lives inside rather than under it.
+  ...game,
 
   // --- fx: frame-driven scheduled effects (2026-08-25 audit) --------------
   //
@@ -303,6 +307,17 @@ export default {
     // into it before anyone's had a chance to touch anything.
     this.visualizerActive = false
     this._lastInputAt = Date.now()
+    // VECTOR SCAN (2026-08-29) -- the hidden game's input state. See game.js.
+    //
+    // _heldKeys is what keyUp() below exists for. screen.js has forwarded
+    // keyup to program.keyUp?.() since the engine was vendored and NOTHING
+    // has ever implemented it: every control in this radio is a discrete
+    // press, so there was never a reason to know a key was still down. A
+    // ship is the first thing here that is steered rather than commanded.
+    this._heldKeys = new Set()
+    this._konami = []
+    this.gameOpen = false
+    this._game = null
     // 65th pass -- per-station visualizer effect override, keyed by
     // station.id. Empty until [Shift+C] cycles a station off its default;
     // Consent pass (2026-08-25) -- the visitor's answer to the LINE INPUT
@@ -632,6 +647,13 @@ export default {
     this._twoFingerStartTime = 0
     document.addEventListener('touchstart', (e) => this.onTouchStart(s, e), { passive: false })
     document.addEventListener('touchend', (e) => this.onTouchEnd(s, e), { passive: false })
+    // VECTOR SCAN (2026-08-29) -- a held key whose keyup lands somewhere
+    // else never arrives, so it stays held forever: alt-tab away mid-dive
+    // and the ship is still climbing when you come back. Cheap to fix, and
+    // the failure is otherwise indistinguishable from a stuck keyboard.
+    // Optional-called: the headless suite has a document but no window, and
+    // screen.js's own listeners are never started there either.
+    globalThis.addEventListener?.('blur', () => this._heldKeys?.clear())
   },
 
   // Power down/up (12th pass -- power on and power
@@ -674,6 +696,15 @@ export default {
     // painting the drift effect over STANDBY forever after the next
     // power-up.
     this.visualizerActive = false
+    // VECTOR SCAN (2026-08-29) -- same reasoning as the line above, one
+    // step further in: this path deliberately does NOT call
+    // exitVisualizer(), so the game's own teardown there is not reached and
+    // has to be repeated here. Left set, the next power-up would come back
+    // up inside a game.
+    this.gameOpen = false
+    this._game = null
+    this._heldKeys?.clear()
+    this._konami.length = 0
     // 2026-08-25 audit: everything cosmetic that was in flight -- status
     // sweep, text resolves, CRT ramps, bloom pulses, the boot flicker tail,
     // the shimmer restore -- lives on the normal effects queue and is
@@ -2308,11 +2339,31 @@ export default {
     // footer legend already dims itself on, and [A] the same capture path the
     // card checks, so neither clicks in the state where it cannot act.
     if (this.visualizerActive) {
+      // VECTOR SCAN (2026-08-29) -- the game answers a different key set,
+      // and answers it SILENTLY. Returning false here is not the game
+      // opting out of feedback: the click is the keyboard's own sound, and
+      // a click layered onto every shot and every frame of a held key would
+      // be the loudest thing on the screen. The game has its own sounds
+      // (playGameShot and the rest) and repaints the canvas every frame,
+      // which is feedback the sweep's rule is satisfied by --
+      // silent-and-changing is the correct half of that pairing, not the
+      // flagged one.
+      if (this.gameOpen) return false
       if (e.key === 'l' || e.key === 'L') return lyricsStateFor(this.currentTrack) === 'available'
       if (e.key === 'a' || e.key === 'A') return this.canOpenTapConsent()
       return VISUALIZER_KEYS.has(e.key)
     }
     return MAPPED_KEYS.has(e.key)
+  },
+  /** The other half of the held-key set. See _heldKeys in init().
+   *
+   *  Keyed on e.code where there is one and e.key otherwise: code is layout
+   *  independent, and it is the only one of the two that survives a
+   *  modifier being tapped mid-hold (hold Z, tap Shift, and the keyup
+   *  arrives as 'Z' while what went into the set was 'z' -- the key is then
+   *  held forever). The harness sends a code too, so both halves agree. */
+  keyUp(s, e) {
+    this._heldKeys?.delete(e.code || e.key)
   },
   key(s, e) {
     // 2026-08-22, round 4 -- same reasoning as onTouchStart's: true for
@@ -2428,6 +2479,34 @@ export default {
       const vizFlash = (text) => {
         this._vizFlash = { text, until: Date.now() + 1400 }
         this.drawVisualizerInfo(s)
+      }
+      // VECTOR SCAN (2026-08-29) -- three things, in this order, before the
+      // visualizer's own switch gets a look.
+      //
+      // 1. Record the held key. Every keydown, not just the game's: the set
+      //    has to be right the instant the game opens, and a key already
+      //    down when it opens has no keydown left to send.
+      this._heldKeys.add(e.code || e.key)
+      // 2. The game, if it is up, takes its own keys and lets the rest fall
+      //    through to the radio underneath -- [M] still mutes, [N] still
+      //    skips. See gameKey.
+      if (this.gameOpen && this.gameKey(s, e)) return
+      // 3. The Konami code. Checked here rather than in the switch because
+      //    the sequence's last key is [A], which the switch would otherwise
+      //    answer by opening the LINE INPUT card over the game that just
+      //    started. Consuming that final key is the whole reason this sits
+      //    above rather than below, and tests/game.test.mjs pins it.
+      //    Every earlier key in the code falls through and does its normal
+      //    job -- see KONAMI_CODE for why that is safe, and why it nets out
+      //    to no volume change at all.
+      if (!this.gameOpen && !this.mobile) {
+        this._konami.push(e.key.length === 1 ? e.key.toLowerCase() : e.key)
+        if (this._konami.length > KONAMI_CODE.length) this._konami.shift()
+        if (this._konami.length === KONAMI_CODE.length &&
+            this._konami.every((k, i) => k === KONAMI_CODE[i])) {
+          this._konami.length = 0
+          if (this.startGame(s)) return
+        }
       }
       switch (e.key) {
         case 'c': case 'C':
