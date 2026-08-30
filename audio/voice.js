@@ -122,7 +122,68 @@ export const VOICE_CLIP_HISS_GAIN = 0.0125 * 0.85 // ~0.0106
 // defaults above -- an optional per-call trim so one clip type (liner
 // drops) can sit quieter than station IDs/the welcome line without
 // touching their own tuned levels.
+// 2026-08-30 -- THE ONE VOICE CHANNEL.
+//
+// A station ID, a liner drop and the network sign-on are all the same
+// announcer, and a real station has exactly one of him. Nothing used to hold
+// a handle on a clip once it had STARTED, so the only thing between two
+// overlapping voices was the re-check each caller does on the far side of
+// its own async gap -- and that can only stop a clip that has not begun.
+//
+// Preset-hopping walks straight through it, which is how this was found in
+// real use rather than here: tryLock() fires the ID 500ms after a lock and
+// the clip runs ~2.4s, so a second preset pressed anywhere in that ~2.9s
+// window lands a second voice on top of the first. The guards all pass,
+// because by then the second lock is the real one and the first clip is
+// simply already in the air.
+//
+// CUT, not queued and not refused. The newest announcement is the one that
+// matches what is on the screen -- a listener who has just pressed 5 should
+// hear station 5 name itself, not wait out station 4 -- so the stale clip
+// yields. Queuing them would make a fast walk down the presets take longer
+// to fall silent the more keys you pressed, which is the opposite of what
+// the gesture means.
+//
+// A FADE rather than a hard stop, because stopping a bufferSource dead
+// mid-word clicks, and a click is a worse artefact than the overlap this
+// exists to remove. 80ms is under the ~100ms it takes to read as a cut and
+// well over the ~5ms where a discontinuity is audible.
+//
+// The duck needs nothing from this: duckFor() extends and never shortens
+// (Math.max on _duckUntil), so a cut clip's hold simply stays up until the
+// clip that replaced it has finished, which is the behaviour we want anyway.
+const VOICE_CUT_S = 0.08
+let liveVoice = null
+
+function cutLiveVoice(ctx) {
+  if (!liveVoice) return
+  const { gains, sources } = liveVoice
+  liveVoice = null
+  const at = ctx.currentTime
+  const end = at + VOICE_CUT_S
+  for (const g of gains) {
+    try {
+      // cancelAndHoldAtTime keeps the ramp where it actually IS; plain
+      // cancelScheduledValues would snap back to the last set value, which
+      // on the way up is a jump to near-silence and audible as a blip.
+      if (g.gain.cancelAndHoldAtTime) g.gain.cancelAndHoldAtTime(at)
+      else g.gain.cancelScheduledValues(at)
+      g.gain.setValueAtTime(Math.max(g.gain.value || 0.0001, 0.0001), at)
+      g.gain.exponentialRampToValueAtTime(0.0001, end)
+    } catch (e) {}
+  }
+  // Every source, not just the speech one: the hiss bed is a second buffer
+  // running the full length of the clip, and leaving it playing under the
+  // next voice is the same overlap in a quieter costume.
+  for (const src of sources) { try { src.stop(end) } catch (e) {} }
+}
+
+/** Exported for tests only -- the WebAudio half cannot run in Node, so the
+ *  suite drives this function with a fake context instead. */
+export function _liveVoiceForTest() { return liveVoice }
+
 export function playProcessedVoiceClip(buffer, ctx, t, gainMult = 1) {
+  cutLiveVoice(ctx)
   const dur = buffer.duration
   const peakGain = VOICE_CLIP_PEAK_GAIN * gainMult
   const hissGain = VOICE_CLIP_HISS_GAIN * gainMult
@@ -225,6 +286,12 @@ export function playProcessedVoiceClip(buffer, ctx, t, gainMult = 1) {
   src.stop(stopAt)
   noiseSrc.stop(stopAt)
   lfo.stop(stopAt)
+
+  // Registered by identity so a cut clip's own onended, which fires after
+  // the replacement is already registered, cannot clear the newer handle.
+  const handle = { gains: [gain, noiseGain], sources: [src, noiseSrc, lfo] }
+  liveVoice = handle
+  src.onended = () => { if (liveVoice === handle) liveVoice = null }
 }
 // Kicked off early (see init()) so the fetch/decode is almost always done
 // well before REVEAL_DELAY's ~5.5s mark on a fresh boot; if it isn't, this
