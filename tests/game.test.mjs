@@ -69,6 +69,31 @@ test('a near miss does not open the game', async () => {
   }
 })
 
+test('holding a key in the code does not break it', async () => {
+  // Reported from real use, 2026-08-30, and the harness could never have
+  // produced it: h.key() sends exactly ONE keydown, while a browser fires a
+  // keydown every ~30ms for as long as a key is down. Press an arrow a
+  // fraction too long and the buffer fills with duplicates, so the code
+  // silently never matches and the final [A] falls through to the LINE
+  // INPUT card instead -- which is exactly what it looks like from the
+  // outside, and gives no clue that the press length was the problem.
+  //
+  // This is the trap CLAUDE.md's advert note describes, in miniature: the
+  // fake was asked to confirm the assumption that built it.
+  const h = await inVisualizer()
+  try {
+    for (const k of KONAMI) {
+      h.key(k)
+      // Held: the browser's auto-repeat, which sets `repeat` on every
+      // keydown after the first.
+      h.key(k, { repeat: true })
+      h.key(k, { repeat: true })
+      h.keyUp(k)
+    }
+    assert.equal(h.program.gameOpen, true, 'the code works even entered slowly')
+  } finally { h.shutdown() }
+})
+
 test('an interrupted code has to be started again', async () => {
   const h = await inVisualizer()
   try {

@@ -2499,7 +2499,17 @@ export default {
       //    Every earlier key in the code falls through and does its normal
       //    job -- see KONAMI_CODE for why that is safe, and why it nets out
       //    to no volume change at all.
-      if (!this.gameOpen && !this.mobile) {
+      //    Auto-repeat is skipped, and that is not a detail. A browser
+      //    fires a keydown every ~30ms for as long as a key is held, so
+      //    pressing an arrow a fraction too long used to stuff the buffer
+      //    with duplicates and the code silently never matched -- the final
+      //    [A] then fell through to the LINE INPUT card, which from the
+      //    outside looks exactly like the code not existing. Reported from
+      //    real use 2026-08-30; the suite could not have found it, because
+      //    the harness sends exactly one keydown per press and was
+      //    therefore only ever confirming its own assumption. It sends
+      //    repeats now.
+      if (!this.gameOpen && !this.mobile && !e.repeat) {
         this._konami.push(e.key.length === 1 ? e.key.toLowerCase() : e.key)
         if (this._konami.length > KONAMI_CODE.length) this._konami.shift()
         if (this._konami.length === KONAMI_CODE.length &&
