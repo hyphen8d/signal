@@ -336,7 +336,7 @@ export default {
   // on the same reasoning, and these two get the same treatment now.
   // 44th pass -- dispatches on the locked station's own `visual` field
   // (VISUAL_METHODS) rather than always drawing DRIFT, so a themed station
-  // (today just DRIFT MODE) gets its own effect the moment one exists for
+  // (today just NEON STASIS) gets its own effect the moment one exists for
   // it, with no change needed here.
   drawVisualizerFrame(s, t) {
     // 65th pass -- activeVisualKey() folds in any [Shift+C] override (see
@@ -356,8 +356,10 @@ export default {
     // as the picture breathing with the music, not a strobe. pulseBloom
     // self-clears its shared timer and settles back to the station's own
     // crtBase.bloomAmt, and idents can't contend (a lock always exits the
-    // visualizer first). DRIFT MODE is excluded: nothing about that station
-    // should thump.
+    // visualizer first). The 'drift' effect is excluded: nothing about the
+    // station that carries it should thump. Written for DRIFT MODE and
+    // inherited by NEON STASIS on 2026-08-30, where it is if anything more
+    // true -- mallsoft has even less business thumping than ambient did.
     if (this._au && key !== 'drift' && this._au.onset && this._au.bass > 0.55 &&
         Date.now() - this._auBloomAt > 1200) {
       this._auBloomAt = Date.now()

@@ -147,7 +147,22 @@
           "track": "Says",
           "reason": "Same call as the Richter track above -- too straightforwardly classical for this station's ambient/drone lane."
         }
-      ]
+      ],
+      "retired": "Replaced by NEON STASIS (2026-08-30) -- same frequency (321.0), same dial glyph and the same DRIFT visualizer effect, a different lane entirely. Kept for the constraints and rejection history below, which are the only surviving record of where this station's neoclassical boundary sat; do not propose against this profile. The 50 tracks are preserved in the retirement comment above NEON STASIS in stations.js."
+    },
+    "neon-stasis": {
+      "callsign": "NEON STASIS",
+      "genre": "Mallsoft -- the vaporwave subgenre that scores an empty shopping centre: muzak, lounge and smooth-jazz sources slowed, drowned in hall reverb and mixed as if heard from the far end of a food court",
+      "eraLane": "Releases are roughly 2011-present; the SOURCE material they slow down is 70s-90s muzak, lounge, smooth jazz and shopping-centre PA. Both halves matter -- a modern track with no retail-nostalgia source is the wrong lane.",
+      "acceptedArtists": [],
+      "constraints": [
+        "SEARCH BY TRACK TITLE, NEVER BY ALBUM TITLE. Measured on the founding pass, 2026-08-30: three album-name searches (Palm Mall, Hologram Plaza, Yes We're Open) returned 18 candidates of which 18 were full-album uploads, 30 to 90 minutes long, and not one was usable. The same run's track-name searches returned 3-to-5-minute singles almost exclusively. This genre's canonical records are Bandcamp-native and reach YouTube mainly as one-file album rips, so the album titles a curator naturally reaches for are exactly the queries that return nothing usable.",
+        "THE FONT CANNOT DRAW THIS GENRE'S NAMES, and it fails quietly. fonts/ter-u16n.bdf carries 891 glyphs, Latin-1 and box-drawing, with NO CJK at all; src/term.js falls back to '?' (glyph 63) for anything missing. So '猫 シ Corp.' draws on the dial as '?? Corp.' and '식료품groceries' as a row of question marks. Romanise to the artist's own Latin name -- Cat System Corp (per catsystemcorp.bandcamp.com), Groceries Store (per groceries-store.bandcamp.com), ESPRIT, Telepath. This constraint is unique to this station: no other lane on the roster is named predominantly in katakana and hangul. And it is not only CJK: FULLWIDTH LATIN is missing too, which this aesthetic uses constantly -- 'ＴＥＭＰＬＥ' (U+FF34...) is as unrenderable as the katakana beside it and looks like ordinary capitals in a search result, so it is the easier of the two to paste in by accident. Convert fullwidth to ASCII and romanise the rest.",
+        "LONG IS FINE; AN ALBUM IS NOT. Inherited from DRIFT MODE, whose roster carried Basinski at 62:11 and Eno at 55:04 -- the objection to a 45-minute upload here is never its length, it is that the file holds a dozen distinct works while the dial announces one title. A genuinely continuous single piece of any length is welcome. Apply the test to the FILE, not the runtime.",
+        "Prefer '- Topic' and VEVO where they exist, which is less hopeless than it looks for a Bandcamp genre: Windows 96 - Topic, Home - Topic, Skylar Spence - Topic, ddsvevo and YungBaeVEVO were all found on the founding pass. Everything else in this lane comes off fan, archive and reupload channels (Vapor Memory, Artzie Music, Geometric Lullaby, Electronic Gems), which is normal here the way it is for CITY LIGHTS -- but a sample-based genre on a reupload channel carries real takedown exposure, so tools/check-roster.mjs matters more for this station than for most.",
+        "Mallsoft is the target, not vaporwave at large. Future funk (upbeat, disco-chopped, Yung Bae's later catalogue) is the wrong feel outright. Vaportrap and the harder end of the aesthetic (Blank Banshee) sit in the lane's history and are admissible sparingly. The test is the one the two founding examples pass: does it sound like it is playing four storeys away in a building that is about to close?"
+      ],
+      "rejections": []
     },
     "cold-wave": {
       "callsign": "COLD WAVE",

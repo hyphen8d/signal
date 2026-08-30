@@ -585,7 +585,7 @@ export const GENERAL_LINER_FILES = [
 //   cipher            "They're listening. So are we. CIPHER, 133.7."
 //   distortion-field  "We love guitar solos. DISTORTION FIELD, 199.7."
 //   cold-wave         "Machines don't get lonely, we do. COLD WAVE, 273."
-//   drift-mode        "Sleep mode activated. DRIFT MODE, 321."
+//   drift-mode        "Sleep mode activated. DRIFT MODE, 321."  (retired)
 //   circuit-crush     "The long way home every time. CIRCUIT CRUSH, 488."
 //   atomic            "Glowing in the dark since 1955. ATOMIC, 529."
 //   city-lights       "You're tuned in to Tokyo. CITY LIGHTS, 780."
@@ -602,7 +602,7 @@ export const GENERAL_LINER_FILES = [
 //   cold-wave         "Drum machines, bad decisions, and a lot of reverb.
 //                      COLD WAVE, two seventy-three."
 //   drift-mode        "Nothing here is in a hurry. Neither are you.
-//                      DRIFT MODE, three twenty-one."
+//                      DRIFT MODE, three twenty-one."   (retired)
 //   circuit-crush     "Headlights, empty road, and a synthesiser that won't
 //                      quit. CIRCUIT CRUSH, four eighty-eight."
 //   atomic            "Still on the air, whatever the counter says.
@@ -616,7 +616,20 @@ export const STATION_LINER_FILES = {
   cipher: ['audio/liner-cipher-01.mp3', 'audio/liner-cipher-02.mp3'],
   'distortion-field': ['audio/liner-distortion-field-01.mp3', 'audio/liner-distortion-field-02.mp3'],
   'cold-wave': ['audio/liner-cold-wave-01.mp3', 'audio/liner-cold-wave-02.mp3'],
-  'drift-mode': ['audio/liner-drift-mode-01.mp3', 'audio/liner-drift-mode-02.mp3'],
+  // 2026-08-30 -- DRIFT MODE retired, replaced by NEON STASIS on the same
+  // frequency (see stations.js). Its two liner clips are left on disk and
+  // dropped from this map rather than remapped, for exactly the reason
+  // MOMENTUM's was below: both are voiced "DRIFT MODE, three twenty-one",
+  // and a liner that announces a callsign nobody can tune to is worse than
+  // no liner at all.
+  //
+  // Present-and-empty, NOT absent. That distinction is the 2026-08-27 fix
+  // documented below and it is easy to undo by accident here: an absent key
+  // means no liners AT ALL (which is how the secret stations opt out), so
+  // simply deleting the retired entry would have quietly excluded this
+  // station from the four GENERAL one-liners too. Empty says "no station
+  // clip of its own yet, general pool still applies".
+  'neon-stasis': [],
   'circuit-crush': ['audio/liner-circuit-crush-01.mp3', 'audio/liner-circuit-crush-02.mp3'],
   atomic: ['audio/liner-atomic-01.mp3', 'audio/liner-atomic-02.mp3'],
   // 60th pass -- MOMENTUM retired (see the retirement comment above

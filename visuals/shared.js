@@ -23,9 +23,12 @@ const V = globalThis.SIGNAL_BUILD ?? ''
 // pass -- since it can't be impacted by audio, it can instead
 // be themed to each station, with a goal of eventually having 10 visuals) --
 // VISUAL_METHODS just below is the dispatch table that idea hangs off of.
-// DRIFT is wired to the DRIFT MODE station explicitly (see STATIONS'
-// `visual` field), not just landing there by default -- the two sharing a
-// name is meant to be a real pairing. Every other station falls back to
+// DRIFT is wired to one station explicitly (see STATIONS' `visual` field),
+// not just landing there by default. That was DRIFT MODE, which the two
+// sharing a name made an obvious pairing; NEON STASIS replaced it on the
+// same dial slot on 2026-08-30 and kept the effect, so the pairing is now
+// by temperament rather than by name -- mallsoft wants the same slow
+// undemanding wash the ambient lane did. Every other station falls back to
 // DRIFT purely because nothing themed exists for them yet. Something
 // hacking/code-based was floated for CIPHER and a synthwave/
 // vaporwave treatment for CIRCUIT CRUSH as the next two builds; RIPPLE and

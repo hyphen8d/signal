@@ -290,136 +290,165 @@ export const STATIONS = [
   //   (HfgVsUqmAN8), Rossini William Tell Overture (1yu-WOwvdOo), Ravel
   //   Bolero (5Eqj9G5j1ss), Schubert Ave Maria (_5lHOap57to). Ident was
   //   [523.3, 659.3, 784.0, 1046.5], identTempo 1.15, gain 1.45.
-  { id: 'drift-mode', freq: 321.0, callsign: 'DRIFT MODE', tagline: 'fade to black, ambient descent',
-    // 28th pass: renamed from QUIET HOURS (option 2B minus "sleep well").
-    // Same ambient/drone lane, same ident, same tracks -- name/tagline only.
-    // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
-    // round 10, 2026-08-23 (easter-egg pass): 356.2 -> 321.0 --
-    // "3-2-1" counting down to nothing, matching a station about winding
-    // down/fading to black. Same gag as CIPHER's 133.7 and DISTORTION
-    // FIELD's 199.7 above.
+  // DRIFT MODE (ambient/drone, 321.0) retired 2026-08-30 and replaced in
+  // place by NEON STASIS below. Not a rename -- the QUIET HOURS -> DRIFT
+  // MODE and MIDNIGHT NEON -> SYNAPSE passes kept their ids because only
+  // the name moved; this one changes the lane outright, so it takes a new
+  // id the way MOMENTUM -> MIDNIGHT NEON did. Three fields are inherited
+  // deliberately rather than redesigned, and the reasons are on the station
+  // itself below.
+  //
+  // The curation record for this lane is NOT repeated here: it lives in
+  // tools/station-profiles.json under 'drift-mode', which is kept as a
+  // retired entry the way 'momentum' is -- 38 trusted artists, the
+  // unresolved neoclassical-boundary question, the full-album-upload hazard
+  // and the 1:32 length floor. Read that before rebuilding this lane.
+  //
+  // The 50 tracks, preserved the way RELIC SIGNAL's were above, so it can
+  // be stood back up without archaeology:
+  //   Marconi Union, Weightless (UfcAVejslrU); Olafur Arnalds, Near Light
+  //   (0kYc55bXJFI); Stars of the Lid, Adamord (YC6pJOH7bF0); Sigur Ros,
+  //   Svefn-g-englar (8L64BcCRDAE); Grouper, Heavy Water / I'd Rather Be
+  //   Sleeping (wLxbD0CkS30); William Basinski, Disintegration Loop 1.1
+  //   (BD3D5mCjt7I); Brian Eno / Orchestra of the Swan, An Ending (Ascent)
+  //   [arr. Le Page] (sfBlBs25Ewk); Brian Eno, Music for Airports: 1/1
+  //   (QJ-polFpeX0); Brian Eno, Discreet Music (jl_z5JvrKlc); Nils Frahm,
+  //   Says (dIwwjy4slI8); Stars of the Lid, Requiem for Dying Mothers, Pt.
+  //   1 (-bc37fU36Vk); Hammock, Release (vTaBX_FoGWk); Tim Hecker, In the
+  //   Fog I (ShW8YyueC1s); A Winged Victory for the Sullen, Requiem for
+  //   the Static King, Pt. 1 (SwmRJQAx8eA); Johann Johannsson, A Song for
+  //   Europa (ngUnLL4CAck); Harold Budd / Brian Eno, The Plateaux of
+  //   Mirror (mwJTwG5r5Ks); Kali Malone, Cast of Mind (2CN1qXJJODI);
+  //   Eluvium, Radio Ballet (nvtV4fvNJpY); Dustin O'Halloran, Opus 23
+  //   (ONQt97F9KKI); Julianna Barwick, Keep Up the Good Work
+  //   (SDru80vHKxU); Ryuichi Sakamoto, andata (pygwK0sBUdM); Poppy
+  //   Ackroyd, Rain (5nCRNIKkKSs); Ludovico Einaudi, Nuvole Bianche
+  //   (CQ8zglIXZi8); Slow Meadow, Everything Is a Memory (l81XVNzdZts);
+  //   Hiroshi Yoshimura, Green (TvGXQXN5CQ4); Biosphere, Kobresia
+  //   (csnryqUpO-g); Aphex Twin, Rhubarb (75O11W5EZAU); Gas, Pop 1
+  //   (bWw6hMgRILQ); Loscil, Estuarine (MYtX2zYlfdA); Midori Takada, Mr.
+  //   Henri Rousseau's Dream (g7Jgc1bVWbo); Tim Hecker, Virginal II
+  //   (25zpPS_OdhQ); Grouper, Vital (Vi3bSG3jL_M); Celer, Oro Oro
+  //   (bFNbOvzvvYI); Rafael Anton Irisarri, Reprisal (osA0Wl_-EHU);
+  //   Fennesz, Transit (4qrEH65DeCE); Laraaji, The Dance No. 1
+  //   (VmqZTrthXbA); Chihei Hatakeyama, Where Is the Map? (OtJQGz9mg0I);
+  //   Christina Vantzou, The maitre d' is dead (Wu-7ZpcyKdA); Goldmund,
+  //   Finding It There (t1UkSZGoCjs); Goldmund, Abandon (-x3sbeokO3A);
+  //   Taylor Deupree, Rhytn (_482aKbIfdc); Susumu Yokota, Tobiume
+  //   (eu6rBUu5-SA); Peter Broderick, In a Landscape (khBhiVhPD_Y); Peter
+  //   Broderick, Carried (ga0UH5znGmw); Brian Eno, The Big Ship
+  //   (2Tqy6be0Juc); Loscil, Enthalpy (IxGj-uXJtMY); Eluvium, Microfauna
+  //   (hctJTb01NNI); Eluvium, Sore (00Ipvqnk5is); Rafael Anton Irisarri,
+  //   RH Negative (ljypVwBF_e8); Rafael Anton Irisarri, Forever Ago is Now
+  //   (nZyYcmK7a0I).
+  //
+  { id: 'neon-stasis', freq: 321.0, callsign: 'NEON STASIS', tagline: 'closing time in a mall that never was',
+    // 2026-08-30 -- mallsoft, the vaporwave subgenre that scores an empty
+    // shopping centre: muzak and lounge sources slowed, drowned in hall
+    // reverb and played back as if heard from the far end of a food court.
+    // The two records that define the lane are the brief for it -- Cat
+    // System Corp's "Palm Mall" and Groceries Store's "Yes We're Open".
+    //
+    // INHERITED FROM DRIFT MODE ON PURPOSE, not by neglect:
+    //   freq 321.0 -- the "3-2-1, counting down to nothing" gag belongs to
+    //     the NUMBER, not to the genre, and it reads at least as well over
+    //     a mall at closing time as it did over a fade to black.
+    //   glyph § -- kept, and it happens to suit the new lane better than
+    //     the old one: two stacked loops read as an escalator.
+    //   visual 'drift' -- the effect stays paired here, so the station this
+    //     effect is named after is gone but the pairing in VISUAL_METHODS
+    //     never dangles. Note what that pairing carries with it:
+    //     drawVisualizerFrame excludes 'drift' from the downbeat bloom
+    //     ("nothing about that station should thump"), which was written
+    //     for ambient and is, if anything, more true of mallsoft.
+    //   crt/meter/static -- long persistence, soft gun, the two laziest
+    //     needles on the dial. A dead mall and a fade to black want the
+    //     same tube. Untouched also because two comments elsewhere in this
+    //     file quote these numbers by callsign.
     freqNote: '3-2-1, counting down to nothing',
-    desc: 'Ambient, modern classical, and drone pieces built for stillness -- slow-moving, mostly wordless, meant to fade into the room instead of demanding it.',
-    // 25th pass: was a straight descent, same shape as 3 other stations --
-    // now a gentle down-up-down undulation (D U D), a shape unique to this
-    // station, and the slowest identTempo of the set.
-    ident: [392.0, 329.6, 370.0, 293.7],
+    desc: 'Mallsoft and adjacent vaporwave -- muzak and lounge slowed to a crawl and drowned in reverb, until it sounds like it is playing four storeys away in a mall that closed decades ago, if it ever opened.',
+    // The one identity field that is genuinely new. DRIFT MODE's was a
+    // drone shape (D U D); this is a department-store PA chime -- an F
+    // major triad falling away and then one bright tone left hanging
+    // (D D U), the only ident on the dial with that shape. identTempo
+    // stays at 1.35, still the slowest announce on the public roster: a
+    // chime over a tannoy in an empty building has nowhere to be.
+    ident: [523.3, 440.0, 349.2, 523.3],
     identTempo: 1.35,
-    // 41st pass -- see the field notes on DISTORTION FIELD above. hollow and soft; long persistence, dimmer gun, slowest meters by far
     glyph: '§',
     static: 700,
     crt: { decay: 0.88, brightness: 1.12, bloomAmt: 1.7, scanMax: 0.6 },
     meter: { spring: 0.16, damping: 0.72, swing: 0.55 },
-    // 44th pass -- the Visualizer's DRIFT mode (see VISUAL_METHODS) is
-    // explicitly paired with the one station it's named after, not just
-    // landing here as everyone's fallback.
     visual: 'drift',
     tracks: [
-      realTrack('UfcAVejslrU', 'Weightless', 'Marconi Union'),
-      realTrack('0kYc55bXJFI', 'Near Light', 'Olafur Arnalds'),
-      realTrack('YC6pJOH7bF0', 'Adamord', 'Stars of the Lid'),
-      realTrack('8L64BcCRDAE', 'Svefn-g-englar', 'Sigur Rós'),
-      realTrack('wLxbD0CkS30', "Heavy Water / I'd Rather Be Sleeping", 'Grouper'),
-      realTrack('BD3D5mCjt7I', 'Disintegration Loop 1.1', 'William Basinski'),
-      realTrack('sfBlBs25Ewk', 'An Ending (Ascent) [arr. David Le Page]', 'Brian Eno / Orchestra of the Swan'),
-      realTrack('QJ-polFpeX0', 'Music for Airports: 1/1', 'Brian Eno'),
-      realTrack('jl_z5JvrKlc', 'Discreet Music', 'Brian Eno'),
-      realTrack('dIwwjy4slI8', 'Says', 'Nils Frahm'),
-      realTrack('-bc37fU36Vk', 'Requiem for Dying Mothers, Pt. 1', 'Stars of the Lid'),
-      realTrack('vTaBX_FoGWk', 'Release', 'Hammock'),
-      realTrack('ShW8YyueC1s', 'In the Fog I', 'Tim Hecker'),
-      realTrack('SwmRJQAx8eA', 'Requiem for the Static King, Pt. 1', 'A Winged Victory for the Sullen'),
-      realTrack('ngUnLL4CAck', 'A Song for Europa', 'Jóhann Jóhannsson'),
-      realTrack('mwJTwG5r5Ks', 'The Plateaux of Mirror', 'Harold Budd / Brian Eno'),
-      realTrack('2CN1qXJJODI', 'Cast of Mind', 'Kali Malone'),
-      realTrack('nvtV4fvNJpY', 'Radio Ballet', 'Eluvium'),
-      realTrack('ONQt97F9KKI', 'Opus 23', "Dustin O'Halloran"),
-      realTrack('SDru80vHKxU', 'Keep Up the Good Work', 'Julianna Barwick'),
-      realTrack('pygwK0sBUdM', 'andata', 'Ryuichi Sakamoto'),
-      realTrack('5nCRNIKkKSs', 'Rain', 'Poppy Ackroyd'),
-      realTrack('CQ8zglIXZi8', 'Nuvole Bianche', 'Ludovico Einaudi'),
-      realTrack('l81XVNzdZts', 'Everything Is a Memory', 'Slow Meadow'),
-      // 2026-08-26: 24 -> 30, all 6 new artists. The last public station left
-      // at its original size. Unlike the four widened before it, this one was
-      // never repeat-heavy (24 tracks / 22 artists), so these are additions to
-      // a healthy roster rather than a correction to a skewed one.
+      // The founding 25, 2026-08-30. All checked on the strict probe, not
+      // just oEmbed: playabilityStatus, playableInEmbed and licence breadth
+      // are clean on every one, and nothing here is age-gated or narrowly
+      // licensed.
       //
-      // All six sit unambiguously in ambient/drone, deliberately nowhere near
-      // the neoclassical boundary this station has drawn twice (Max Richter's
-      // "On the Nature of Daylight" and Nils Frahm's "Says" were both rejected
-      // as too straightforwardly classical). Worth flagging that the boundary
-      // is not actually settled: "Says" is still on the roster above, and
-      // Einaudi's "Nuvole Bianche" sits beside it while the profile blesses
-      // Einaudi by name. Nothing here depends on resolving that -- these are
-      // drone, environmental ambient and minimal techno-ambient, not piano.
+      // ONE FINDING SHAPED THIS WHOLE BATCH, and it is the profile's first
+      // constraint: this genre barely exists on YouTube as single tracks.
+      // Searching the three records that DEFINE mallsoft -- Palm Mall,
+      // Hologram Plaza, Yes We're Open, two of them the brief for this
+      // station -- returned 18 candidates of which 18 were one-file album
+      // rips running 30 to 90 minutes. Not one was usable. Track-name
+      // searches in the same run came back almost entirely 2-to-5-minute
+      // singles. So the mallsoft core here is thinner than the lane
+      // deserves: Cat System Corp, Waterfront Dining, 18 Carat Affair and
+      // ESPRIT are the real thing, and the rest reaches out to the vapor
+      // foundations and adjacent artists that happen to have been
+      // distributed as singles. Four more auditioned clean and were cut for
+      // being albums rather than for anything wrong with them (luxury
+      // elite's tv party 43:30, Infinity Frequencies' Computer Death 38:12,
+      // MindSpring Memories 39:35, Windows96's How To See Through Walls
+      // 36:47) -- the test is on the FILE, not on the runtime, since the
+      // dial announces one title and those hold a dozen works each.
       //
-      // Widens the geography too, which the roster was thin on: Japanese
-      // environmental ambient (Yoshimura, Takada), Norwegian arctic ambient
-      // (Biosphere), German minimal (Gas) and Canadian (Loscil).
+      // EVERY NAME IS ROMANISED and that is not a style choice. ter-u16n.bdf
+      // carries no CJK and no fullwidth Latin, and src/term.js falls back to
+      // '?' for a missing glyph, so the uploads' own credits -- "猫 シ Corp.",
+      // "ESPRIT 空想", "ダン·メイソン" -- would draw on the dial as rows of
+      // question marks. Each artist is filed under its own Latin name
+      // (catsystemcorp.bandcamp.com is where Cat System Corp comes from).
+      // Telepath was dropped over exactly this: its track titles have no
+      // honest romanisation, and inventing one is a mis-credit.
       //
-      // All six are "- Topic", i.e. label-delivered. Skipped the four already
-      // queued in pending-tracks.json for this station (Tim Hecker, Grouper,
-      // Celer, Rafael Anton Irisarri) so this batch can't collide with that
-      // review. Aphex Twin's is catalogued "#3" -- Selected Ambient Works
-      // Volume II is formally untitled -- but every listener knows it as
-      // "Rhubarb", so that is what the dial says.
-      realTrack('TvGXQXN5CQ4', 'Green', 'Hiroshi Yoshimura'),
-      realTrack('csnryqUpO-g', 'Kobresia', 'Biosphere'),
-      realTrack('75O11W5EZAU', 'Rhubarb', 'Aphex Twin'),
-      realTrack('bWw6hMgRILQ', 'Pop 1', 'Gas'),
-      realTrack('MYtX2zYlfdA', 'Estuarine', 'Loscil'),
-      realTrack('g7Jgc1bVWbo', "Mr. Henri Rousseau's Dream", 'Midori Takada'),
-      // 2026-08-26: pending queue approved wholesale and drained -- all 33
-      // proposals across 8 stations landed at once, so these arrived as a
-      // batch rather than a curated pass. Every one was re-verified at
-      // approval time (alive, US-available, embeddable, no duplicate ID and
-      // no title collision) rather than trusted from its 2026-08-23/24
-      // proposal check.
-      realTrack('25zpPS_OdhQ', 'Virginal II', 'Tim Hecker'),
-      realTrack('Vi3bSG3jL_M', 'Vital', 'Grouper'),
-      realTrack('bFNbOvzvvYI', 'Oro Oro', 'Celer'),
-      realTrack('osA0Wl_-EHU', 'Reprisal', 'Rafael Anton Irisarri'),
-      // 2026-08-29 -- sixteen to take DRIFT MODE to 50. Eight new artists
-      // (30 to 38); the rest are second pieces by artists already trusted
-      // here, which is the lower-risk half of a lane this taste-sensitive.
+      // Provenance is mixed, which is normal here the way it is for CITY
+      // LIGHTS -- a Bandcamp-native genre has no official uploads to prefer.
+      // Seven are "- Topic" (Home, Windows 96, Skylar Spence), three come
+      // off artist or label channels (sunsetcorp is Lopatin's own, NmeshTV,
+      // 100% Electronica), and the rest are archive and reupload channels.
+      // That last group is the takedown exposure, so check-roster.mjs earns
+      // its keep on this station more than on most.
       //
-      // The profile's warning about length is real and visible in the
-      // search results: Hammock's Departure Songs comes back as a 111-minute
-      // full-album upload and Biosphere as a 120-minute one. Everything here
-      // is a single piece. The floor matters too -- Boards of Canada's Olson
-      // auditioned clean and was left out at 1:32, below this station's own
-      // shortest track (2:33). The ceiling is not a problem: Basinski's
-      // 62:11 and Eno's 55:04 are already here, so 10:26 is unremarkable.
-      //
-      // Two dropped on LANE rather than mechanics, against the neoclassical
-      // boundary this station has rejected twice (Max Richter, and Nils
-      // Frahm's Says -- which is still on the roster, the open question the
-      // profile already flags). Christina Vantzou's No.4 String Quartet is
-      // clean and was passed over for reading as a string quartet rather
-      // than ambient-with-classical-texture; she arrives on a different
-      // piece instead. A Sarah Davachi track was dropped for being an
-      // upload marked (Excerpt) -- a part of a piece is not the piece.
-      //
-      // Fennesz's Transit carries David Sylvian vocals, against a station
-      // described as mostly wordless. Taken because Sigur Ros is already
-      // here on the same allowance, but it is the one to pull first if the
-      // wordless side of that description matters more than 'mostly'.
-      realTrack('4qrEH65DeCE', 'Transit', 'Fennesz'),
-      realTrack('VmqZTrthXbA', 'The Dance No. 1', 'Laraaji'),
-      realTrack('OtJQGz9mg0I', 'Where Is the Map?', 'Chihei Hatakeyama'),
-      realTrack('Wu-7ZpcyKdA', "The maitre d' is dead", 'Christina Vantzou'),
-      realTrack('t1UkSZGoCjs', 'Finding It There', 'Goldmund'),
-      realTrack('-x3sbeokO3A', 'Abandon', 'Goldmund'),
-      realTrack('_482aKbIfdc', 'Rhytn', 'Taylor Deupree'),
-      realTrack('eu6rBUu5-SA', 'Tobiume', 'Susumu Yokota'),
-      realTrack('khBhiVhPD_Y', 'In a Landscape', 'Peter Broderick'),
-      realTrack('ga0UH5znGmw', 'Carried', 'Peter Broderick'),
-      realTrack('2Tqy6be0Juc', 'The Big Ship', 'Brian Eno'),
-      realTrack('IxGj-uXJtMY', 'Enthalpy', 'Loscil'),
-      realTrack('hctJTb01NNI', 'Microfauna', 'Eluvium'),
-      realTrack('00Ipvqnk5is', 'Sore', 'Eluvium'),
-      realTrack('ljypVwBF_e8', 'RH Negative', 'Rafael Anton Irisarri'),
-      realTrack('nZyYcmK7a0I', 'Forever Ago is Now', 'Rafael Anton Irisarri'),
+      // Saint Pepsi and Skylar Spence are the same person under two project
+      // names, credited here as each upload credits itself rather than
+      // collapsed -- the same call the roster makes elsewhere.
+      realTrack('xAh-nngGZ6I', 'Sembikiya Restaurant', 'Cat System Corp'),
+      realTrack('boofE5_HtkI', 'Roadtrips in Spring', 'Waterfront Dining'),
+      realTrack('oVnx6cxbIwQ', 'What\'s Love', 'Waterfront Dining'),
+      realTrack('Q-hG1GSVb-8', 'Paradise Vacations', 'Waterfront Dining'),
+      realTrack('xe610x1aIjM', 'Death Became Her', '18 Carat Affair'),
+      realTrack('pgZCxhhUBMs', 'Summer Night', 'ESPRIT'),
+      realTrack('9tBj5zv4S1A', 'Dreaming', 'Dan Mason'),
+      realTrack('aQkPcPqTq4M', 'Lisa Frank 420 / Modern Computing', 'Macintosh Plus'),
+      realTrack('0T17gsA67og', 'Eccojam A1', 'Chuck Person'),
+      realTrack('-RFunvF0mDw', 'Nobody Here', 'Sunset Corp'),
+      realTrack('dN0czUMRMU8', 'Angel', 'Sunset Corp'),
+      realTrack('l7nsljmRX_s', 'Dream Sequins', 'Nmesh'),
+      realTrack('osKY4JMmmt0', 'Salsa Verde', 'Vaperror'),
+      realTrack('RQxDM2K-hd0', 'Teen Pregnancy', 'Blank Banshee'),
+      realTrack('OrR1TGQY20Y', 'Cherry Pepsi', 'Saint Pepsi'),
+      realTrack('_hI0qMtdfng', 'Enjoy Yourself', 'Saint Pepsi'),
+      realTrack('tCcamt8KZNQ', 'Fiona Coyne', 'Skylar Spence'),
+      realTrack('aBhrEv5Z7uc', 'Resonance', 'Home'),
+      realTrack('D__gB1DzHIc', 'Before the Night', 'Home'),
+      realTrack('mbMoY1dxbEY', 'We\'re Finally Landing', 'Home'),
+      realTrack('yRlBcUJZJHA', 'Half Moon', 'Home'),
+      realTrack('X6PnNgYSa5s', 'Venus Aire', 'Windows 96'),
+      realTrack('4GhvYoo4088', 'Hypnosis', 'Windows 96'),
+      realTrack('7P4fatlUbvg', 'Transient Feeling', 'Windows 96'),
+      realTrack('bxCU_P0Y1CE', 'Glass Prism', 'Windows 96'),
     ] },
   { id: 'cold-wave', freq: 273.0, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
@@ -1638,7 +1667,8 @@ export const GREEN_ROOM_STATION = {
   // sags. The only unmoored motif on the roster, and the point of picking
   // it over another minor-third drift.
   ident: [392.0, 349.2, 311.1, 277.2],
-  // Slowest announce on the roster (DRIFT MODE's 1.35 held it before this).
+  // Slowest announce on the roster (NEON STASIS's 1.35 is next, inherited
+  // from DRIFT MODE, which held that spot before 2026-08-30).
   // Higher is slower here -- see playIdent's tempo note in audio/sfx.js.
   identTempo: 1.5,
   // The era spread is the problem: 70s rock and reggae masters sit well
@@ -1657,8 +1687,8 @@ export const GREEN_ROOM_STATION = {
   static: 800,
   crt: { beam: 0.95, sharpen: 0.35, bloomAmt: 2.1, decay: 0.88, noise: 0.08, flicker: 0.05 },
   // Sluggish needle, and the smallest swing on the roster. Sits right next
-  // to DRIFT MODE's 0.16/0.72 -- the two laziest needles on the dial are
-  // the ambient station and this one -- but damped harder and swung
+  // to NEON STASIS's 0.16/0.72 -- the two laziest needles on the dial are
+  // the mallsoft station and this one -- but damped harder and swung
   // shorter, so it settles late and barely overshoots at all.
   meter: { spring: 0.18, damping: 0.74, swing: 0.7 },
   // Rarer than the roster default (90-210s) rather than more frequent --

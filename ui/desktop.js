@@ -1144,7 +1144,8 @@ export default {
    *    spring  -- how hard the meter is pulled toward its target
    *    damping -- how fast that pull is bled off
    *    swing   -- how far the target itself travels while playing
-   *  DRIFT MODE drifts (0.16/0.72/0.55, barely moving); CIPHER and the
+   *  NEON STASIS drifts (0.16/0.72/0.55, barely moving -- it inherited these
+ *  from DRIFT MODE, which held this slot until 2026-08-30); CIPHER and the
    *  secret station snap (0.6+/0.4/1.05+). The defaults below are the values
    *  every station used before this pass, so anything without a `meter`
    *  field behaves exactly as it always did -- including "no station at

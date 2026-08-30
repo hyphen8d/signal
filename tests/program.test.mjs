@@ -1820,7 +1820,7 @@ test('?station= boots straight to that station, over a saved session', async () 
     station: 'cipher',
     // A saved session pointing somewhere ELSE -- the param has to win, or
     // the preview shows whatever station the last visit left behind.
-    saved: { stationId: 'drift-mode', volume: 50, muted: false },
+    saved: { stationId: 'neon-stasis', volume: 50, muted: false },
   })
   try {
     assert.equal(h.program.lockedStation.id, 'cipher')
@@ -1853,9 +1853,9 @@ test('?station= with an unknown id falls through to the normal random landing', 
 test('a saved session still wins when there is no ?station= param', async () => {
   // Guards the ordering: the param block sits between the restore and the
   // random fallback, so it must not clobber a restore when it is absent.
-  const h = await boot({ saved: { stationId: 'drift-mode', volume: 50, muted: false } })
+  const h = await boot({ saved: { stationId: 'neon-stasis', volume: 50, muted: false } })
   try {
-    assert.equal(h.program.lockedStation.id, 'drift-mode')
+    assert.equal(h.program.lockedStation.id, 'neon-stasis')
   } finally { h.shutdown() }
 })
 
