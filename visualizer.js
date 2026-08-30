@@ -438,6 +438,13 @@ export default {
     const draw = (i, y, attr) => {
       if (i < 0 || i >= lines.length) return
       let text = lines[i].text
+      // 2026-08-30 -- an empty tag is an LRC's end-of-passage marker, kept
+      // by parseLRC as a sentinel. Landing on one means nobody is singing
+      // right now, and the honest render of that is nothing: the line that
+      // just finished stops claiming to be current. The rows below still
+      // draw, so an instrumental shows the next line approaching rather
+      // than an empty screen.
+      if (!text) return
       if (text.length > term.cols - 4) text = truncate(text, term.cols - 4)
       term.text(centerX(term.cols, text), y, text, attr)
     }

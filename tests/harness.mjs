@@ -140,12 +140,60 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
     // that only cares WHICH tracks get lyrics doesn't have to carry an LRC.
     if (typeof lyrics === 'function') { const r = lyrics(url); return r === true ? CANNED_LRC : r || null }
     if (lyrics === true) return CANNED_LRC
+    if (lyrics === 'search' || lyrics === 'mismatch') return CANNED_LRC
     return typeof lyrics === 'string' && lyrics !== 'none' ? lyrics : null
   }
+  // 2026-08-30 -- rebuilt from the real endpoint rather than from what the
+  // lookup code expects, which is the rule CLAUDE.md's advert note exists
+  // to enforce. Both shapes below were captured live on 2026-08-30 by
+  // tools/lyrics-audit.mjs against lrclib.net:
+  //
+  //   /api/get     200 -> ONE OBJECT: { id, name, trackName, artistName,
+  //                       albumName, duration, instrumental, plainLyrics,
+  //                       syncedLyrics }
+  //                404 -> no match at all. NOT a 200 with an empty body,
+  //                       which is what the first fake here assumed.
+  //   /api/search  200 -> AN ARRAY of that same object, possibly empty,
+  //                       ordered by the server's own relevance and NOT by
+  //                       duration -- a search for a track whose live cut
+  //                       is popular returns the live cut first.
+  //
+  // `duration` is the field the sync gate turns on, so it is modelled here
+  // rather than omitted: a fake with no duration passes every gate by
+  // accident and would have made the gate's tests decorative.
+  const lyricRow = (lrc, duration) => ({
+    id: 1, name: 'canned', trackName: 'canned', artistName: 'canned',
+    albumName: 'canned', duration, instrumental: false,
+    plainLyrics: 'canned', syncedLyrics: lrc,
+  })
+  const miss = () => Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve(null) })
   globalThis.fetch = (url) => {
-    if (lyrics && String(url).includes('lrclib.net')) {
-      const lrc = lrcFor(String(url))
-      return Promise.resolve({ ok: true, json: () => Promise.resolve(lrc ? { syncedLyrics: lrc } : {}) })
+    const u = String(url)
+    if (lyrics && u.includes('lrclib.net')) {
+      const lrc = lrcFor(u)
+      const isSearch = u.includes('/api/search')
+      // 'search' makes the exact lookup miss so the fallback is the only
+      // way through -- the path that carried 17 of the audit's points and
+      // that the old single-shape fake could not reach at all.
+      if (lyrics === 'search') {
+        return isSearch
+          ? Promise.resolve({ ok: true, json: () => Promise.resolve([lyricRow(lrc, FAKE_DURATION)]) })
+          : miss()
+      }
+      // 'mismatch' answers with a real synced lyric for a recording of
+      // visibly the wrong length, which is the case the gate exists for.
+      if (lyrics === 'mismatch') {
+        const row = lyricRow(lrc, FAKE_DURATION + 90)
+        return isSearch
+          ? Promise.resolve({ ok: true, json: () => Promise.resolve([row]) })
+          : Promise.resolve({ ok: true, json: () => Promise.resolve(row) })
+      }
+      if (!lrc) return isSearch
+        ? Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+        : miss()
+      return isSearch
+        ? Promise.resolve({ ok: true, json: () => Promise.resolve([lyricRow(lrc, FAKE_DURATION)]) })
+        : Promise.resolve({ ok: true, json: () => Promise.resolve(lyricRow(lrc, FAKE_DURATION)) })
     }
     return Promise.reject(new Error('no network in tests'))
   }

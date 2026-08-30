@@ -22,6 +22,7 @@ node --test tests/*.test.mjs        # npm test — headless suite, ~2s, no netwo
 node tools/lint-roster.js           # npm run lint — offline roster rules
 node tools/verify-roster.js         # npm run verify — lint + oEmbed check of every track (network)
 node tools/check-roster.mjs         # npm run health — deep-probe roster tracks in batches (network)
+node tools/lyrics-audit.mjs         # npm run lyrics — measure [L]'s LRCLIB match rate (network)
 node tools/stations-to-md.js        # npm run stations — regenerate stations.md (never hand-edit it)
 node tools/stamp.js                 # npm run stamp — bump build.json; RUN BEFORE EVERY DEPLOY
 node tools/audition.js --station=<id> # npm run audition — vet candidate tracks (network)
@@ -336,10 +337,17 @@ no player at all and `loadTrack()` returns on its first line, so every test
 written before 2026-08-27 exercised the tuning half with playback switched
 off. `h.player.endTrack()` and `h.player.fail()` cause the two events a test
 cannot otherwise reach (a natural track end, a dead video). `boot({ lyrics })`
-answers the LRCLIB lookup — `true` for a canned synced lyric, `'none'` for a
-200 with no synced lyrics, or a function of the URL when one track should have
-them and the next should not. That chain is a real promise chain and
-`advance()` is synchronous, so `await h.flush()` after the load that fires it.
+answers the LRCLIB lookup — `true` for a canned synced lyric, a raw LRC string
+for your own, `'none'` for no match, `'search'` to make `/api/get` miss so only
+the fallback can answer, `'mismatch'` for a real synced lyric belonging to a
+recording of visibly the wrong length, or a function of the URL when one track
+should have them and the next should not. That chain is a real promise chain
+and `advance()` is synchronous, so `await h.flush()` after the load that fires
+it. The fake models **both** endpoints as the live API really answers them
+(captured 2026-08-30): `/api/get` returns one object or a **404**, `/api/search`
+returns an **array**, ordered by the server's relevance and *not* by duration.
+It carries `duration` deliberately — a fake that omitted it would pass every
+duration gate by accident and make those tests decorative.
 
 **A fake proves you read your own assumption correctly — nothing more.**
 This is the expensive lesson of the STATION BREAK, which took three passes
@@ -408,6 +416,52 @@ Widths are asserted rather than trusted, because both failed once in a real
 render: card copy over 48 columns writes through the box's right border, and
 the row-0 readout is right-aligned to end at column 63 because starting it at
 52 rendered as `SIGNAL RECEIVER69F CLEAR`, flush against the brand plate.
+
+### Synced lyrics ([L])
+
+The lookup lives in `audio/voice.js`, the crawl in `visualizer.js`'s
+`drawLyricsView`. LRCLIB is the only source and that is not laziness: it is
+the only keyless, CORS-open, *time-synced* provider going. Plain-text APIs
+can't do the one thing this feature is for, and the alternatives need a key
+and a proxy. The real second source, if a track ever justifies it, is a
+bundled `.lrc` in the repo.
+
+**Everything here was measured, not reasoned** — `npm run lyrics` samples the
+roster against the live API and reports the match rate. On 101 tracks across
+all 11 stations the original lookup (one `/api/get` on the raw title) resolved
+**59%**; the `/api/search` fallback took it to **76%**. Re-run it after
+touching any of this rather than trusting those numbers.
+
+Three things that look optional and are not:
+
+- **A search result is not a match.** LRCLIB orders by its own relevance, so
+  for several roster tracks the top synced hit is a *live* cut whose timings
+  fit nothing. `pickLyricMatch()` ranks by closeness to the length actually
+  playing. Taking row zero is the bug this exists to prevent.
+- **The duration gate is the sync half.** Fourteen sampled tracks already
+  matched a recording of visibly the wrong length — a 277s lyric against a
+  166s upload, a 224s one against 416s — and rendered as confident drift. Past
+  `LYRIC_DURATION_TOLERANCE` the answer is refused, because `NO LYRICS
+  AVAILABLE` beats lyrics that disagree with the song. Two causes hide in that
+  gap and nothing separates them automatically: a different recording
+  (unfixable) and an upload with lead-in padding (would need a per-track
+  offset, not built).
+- **The duration is 0 when `loadTrack()` asks.** So the first answer is ranked
+  and gated against nothing, and the PLAYING handler asks once more with the
+  real length; `rankedBy` on the cache entry is what stops that looping.
+
+Two smaller rules. A dropped request is `'error'` and retryable, *not*
+`'unavailable'` — both used to write the same permanent verdict into a cache
+keyed by `youtubeId`, so one flaky request cost that track its lyrics for the
+whole session. And `parseLRC` **keeps blank tags** as sentinels: an empty tag
+ends a sung passage, and dropping them left the previous line lit at full
+brightness through an instrumental, still claiming to be current.
+
+**Title normalisation was tried and rejected on the evidence.** The roster's
+decorations (`Piggy (VEVO Presents)`) genuinely do 404 on `/api/get`, so
+stripping them looks obviously right; measured, it recovered *nothing* the
+search fallback hadn't already caught. The strategy is still in the audit tool
+so the claim stays checkable — don't re-add it to `voice.js` without a number.
 
 ### Rendering a voice clip ([W]-adjacent, but its own thing)
 

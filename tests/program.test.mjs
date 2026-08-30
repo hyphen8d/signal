@@ -1858,3 +1858,66 @@ test('a saved session still wins when there is no ?station= param', async () => 
     assert.equal(h.program.lockedStation.id, 'drift-mode')
   } finally { h.shutdown() }
 })
+
+// --- the lyrics lookup, 2026-08-30 ---------------------------------------
+// tools/lyrics-audit.mjs measured the shipping lookup at 59% of a 101-track
+// roster sample. The search fallback took it to 76%, and the duration gate
+// is what stops that extra reach turning into confidently wrong timings.
+
+test('[L] comes alive off the search fallback when the exact lookup misses', async () => {
+  // 'search' makes /api/get 404 -- the state that used to end the story --
+  // and answers only /api/search. This is the path that carried 17 of the
+  // audit's 17 recovered tracks; the old single-shape fake could not
+  // express it, so it had no coverage at all.
+  const h = await inVisualizer({ lyrics: 'search' })
+  try {
+    assert.ok(h.program.isMappedKey({ key: 'l' }), '[L] should be live via the search fallback')
+    h.program.player.seekTo(12)
+    h.key('l')
+    h.advance(300)
+    assert.equal(h.program.lyricsViewOpen, true)
+    assert.ok(h.find('second line of the canned lyric') > 0, 'the fallback lyric is on screen')
+  } finally { h.shutdown() }
+})
+
+test('a lyric for a visibly different recording is refused, not shown', async () => {
+  // 'mismatch' returns a genuinely synced lyric whose recording is 90s
+  // longer than the one playing. Real cases behind this: a 277s entry
+  // matched to a 166s upload, a 224s entry to a 416s one. Both rendered as
+  // confident drift, which is worse than saying nothing.
+  const h = await inVisualizer({ lyrics: 'mismatch' })
+  try {
+    assert.ok(!h.program.isMappedKey({ key: 'l' }), '[L] must not offer lyrics that will drift')
+    h.key('l')
+    h.advance(300)
+    assert.equal(h.program.lyricsViewOpen, false, 'the view opened on a mismatched recording')
+  } finally { h.shutdown() }
+})
+
+test('nothing is lit while nobody is singing', async () => {
+  // The instrumental-gap fix. A blank LRC tag ends a passage; before
+  // 2026-08-30 parseLRC dropped those, so the last sung line stayed lit at
+  // full brightness through the gap, still claiming to be current.
+  const lrc = [
+    '[00:00.00]alpha line of the canned lyric',
+    '[00:04.00]',
+    '[00:40.00]beta line of the canned lyric',
+  ].join('\n')
+  const h = await inVisualizer({ lyrics: lrc })
+  try {
+    const { VIZ_BOT } = await import(`../layout.js?v=${h.tag}`)
+    const midY = Math.floor((1 + VIZ_BOT) / 2)
+    h.key('l')
+    h.program.player.seekTo(1)
+    h.advance(300)
+    assert.ok(h.row(midY).includes('alpha line'), 'setup: the sung line is current at 1s')
+    // Into the gap: the sentinel at 4s is now the current line.
+    h.program.player.seekTo(20)
+    h.advance(300)
+    assert.equal(h.row(midY).trim(), '', 'a line stayed lit through the instrumental')
+    // And it comes back when the singing does.
+    h.program.player.seekTo(41)
+    h.advance(300)
+    assert.ok(h.row(midY).includes('beta line'), 'the crawl did not resume after the gap')
+  } finally { h.shutdown() }
+})

@@ -140,10 +140,19 @@ test('fmtTime and centerX', () => {
   assert.equal(layout.centerX(10, 'a'.repeat(30)), 0, 'never negative')
 })
 
-test('parseLRC keeps timed, non-blank lines in time order', () => {
+test('parseLRC keeps timed lines in order, blank tags included as sentinels', () => {
+  // Changed deliberately 2026-08-30: the blank-tag line at 00:05 used to be
+  // DROPPED here, and that is what left the previous line lit at full
+  // brightness through an instrumental, still claiming to be the words
+  // playing now. An empty tag is an LRC's end-of-passage marker, so it is
+  // kept and drawLyricsView renders it as nothing lit. Untagged text is
+  // still dropped -- it carries no time and cannot be placed.
   const lines = voice.parseLRC('[00:12.50]second\n[00:01.00]first\n[00:05.00]\nno tag\n[01:00.25]last')
   assert.deepEqual(lines, [
-    { time: 1, text: 'first' }, { time: 12.5, text: 'second' }, { time: 60.25, text: 'last' },
+    { time: 1, text: 'first' },
+    { time: 5, text: '' },
+    { time: 12.5, text: 'second' },
+    { time: 60.25, text: 'last' },
   ])
 })
 
@@ -201,4 +210,132 @@ test('every public station has a liner pool; every secret one has none', () => {
   for (const st of stations.SECRET_STATIONS) {
     assert.equal(LINER_FILES[st.id], undefined, `${st.callsign}: stays out of the liner rotation`)
   }
+})
+
+// --- lyrics matching (2026-08-30) ----------------------------------------
+// The measured half of the lyrics work. tools/lyrics-audit.mjs found the
+// shipping lookup resolving 59% of a 101-track roster sample and the search
+// fallback taking it to 76%; these pin the two pieces of judgment that
+// fallback needs, because a search result list is NOT a match.
+
+test('pickLyricMatch prefers the recording that is actually playing', () => {
+  const { pickLyricMatch } = voice
+  const rows = [
+    // What lrclib.net really returns first for several roster tracks: a
+    // popular LIVE cut, ahead of the album version. Taking rows[0] is how
+    // you get lyrics whose timings fit nothing.
+    { duration: 288, syncedLyrics: '[00:01.00]live' },
+    { duration: 264, syncedLyrics: '[00:01.00]album' },
+  ]
+  assert.equal(pickLyricMatch(rows, 265).duration, 264, 'ranked by closeness to the playing length')
+  assert.equal(pickLyricMatch(rows, 290).duration, 288, 'and the other way round')
+  // With no duration known there is nothing to rank on, so the server's own
+  // order stands and the gate downstream is what catches a bad pick.
+  assert.equal(pickLyricMatch(rows, 0).duration, 288)
+})
+
+test('pickLyricMatch ignores rows with no synced lyrics at all', () => {
+  const { pickLyricMatch } = voice
+  // Plain text is useless here -- the whole feature is following the line
+  // playing right now -- so a plain-only row must never win on duration.
+  const rows = [
+    { duration: 214, plainLyrics: 'words', syncedLyrics: null },
+    { duration: 300, syncedLyrics: '[00:01.00]timed' },
+  ]
+  assert.equal(pickLyricMatch(rows, 214).duration, 300, 'a plain-text row won on closeness')
+  assert.equal(pickLyricMatch([{ duration: 214, plainLyrics: 'words' }], 214), null)
+  assert.equal(pickLyricMatch([], 214), null)
+  assert.equal(pickLyricMatch(null, 214), null, 'a 404 body must not throw')
+})
+
+test('lyricDurationOk refuses a different recording but never guesses', () => {
+  const { lyricDurationOk, LYRIC_DURATION_TOLERANCE: TOL } = voice
+  assert.equal(lyricDurationOk(214, 214), true)
+  assert.equal(lyricDurationOk(214, 214 + TOL), true, 'the tolerance itself is inside')
+  assert.equal(lyricDurationOk(214, 214 + TOL + 1), false)
+  // Real pairs the audit flagged: these were rendering as confident drift.
+  assert.equal(lyricDurationOk(277, 166), false, 'The Safety Dance case')
+  assert.equal(lyricDurationOk(224, 416), false, 'Cola case')
+  // Unknown on either side is not evidence of anything, and an unprovable
+  // objection must not withhold lyrics that may be perfectly good.
+  assert.equal(lyricDurationOk(0, 214), true)
+  assert.equal(lyricDurationOk(214, 0), true)
+  assert.equal(lyricDurationOk(undefined, undefined), true)
+})
+
+test('a dropped request is retried; a real "no match" is not', async () => {
+  // Before 2026-08-30 both wrote 'unavailable' into a cache keyed by
+  // youtubeId and never looked again, so ONE flaky request meant that track
+  // had no lyrics for the rest of the session -- on a feature whose whole
+  // job is to be there when you press [L]. These are now different states.
+  const { ensureLyricsFetched, lyricsStateFor, lyricsCache } = voice
+  const realFetch = globalThis.fetch
+  const settle = async () => { for (let i = 0; i < 8; i++) await new Promise((r) => setTimeout(r, 0)) }
+  const row = (lrc) => ({ ok: true, json: async () => ({ duration: 200, syncedLyrics: lrc }) })
+  try {
+    // 1. The network drops. Not a verdict on the song.
+    const flaky = { youtubeId: 'retry-case', title: 'T', artist: 'A' }
+    globalThis.fetch = async () => { throw new Error('network down') }
+    ensureLyricsFetched(flaky, 200)
+    await settle()
+    assert.equal(lyricsStateFor(flaky), 'unavailable', 'reads as unavailable to the UI')
+    assert.equal(lyricsCache['retry-case'].state, 'error', 'but is held as retryable underneath')
+
+    // 2. The network comes back, and asking again now works.
+    globalThis.fetch = async () => row('[00:01.00]back again')
+    ensureLyricsFetched(flaky, 200)
+    await settle()
+    assert.equal(lyricsStateFor(flaky), 'available', 'a retry never happened')
+
+    // 3. A genuine miss is final: asking again must not re-fetch.
+    const absent = { youtubeId: 'absent-case', title: 'T', artist: 'A' }
+    let calls = 0
+    globalThis.fetch = async () => { calls++; return { ok: true, json: async () => null } }
+    ensureLyricsFetched(absent, 200)
+    await settle()
+    const afterFirst = calls
+    assert.equal(lyricsStateFor(absent), 'unavailable')
+    ensureLyricsFetched(absent, 200)
+    await settle()
+    assert.equal(calls, afterFirst, 'a settled "no lyrics" was asked again')
+  } finally { globalThis.fetch = realFetch }
+})
+
+test('an answer found with no duration is refined once the real one is known', async () => {
+  // loadTrack fires the lookup while getDuration() still answers 0, so the
+  // first answer is ranked and gated against nothing. The PLAYING handler
+  // asks again with the real length; this is the upgrade, and it must
+  // happen exactly once rather than on every ask.
+  const { ensureLyricsFetched, lyricsCache } = voice
+  const realFetch = globalThis.fetch
+  const settle = async () => { for (let i = 0; i < 8; i++) await new Promise((r) => setTimeout(r, 0)) }
+  try {
+    const t = { youtubeId: 'refine-case', title: 'T', artist: 'A' }
+    let calls = 0
+    // Both endpoints modelled the way lrclib.net really answers: /api/get
+    // returns ONE object, /api/search returns an ARRAY. A stub that gives
+    // the same shape to both sends the search path down the "not an array"
+    // branch and quietly tests nothing.
+    const hit = { duration: 500, syncedLyrics: '[00:01.00]x' }
+    globalThis.fetch = async (url) => {
+      calls++
+      const search = String(url).includes('/api/search')
+      return { ok: true, json: async () => (search ? [hit] : hit) }
+    }
+    ensureLyricsFetched(t, 0)          // blind: no duration to gate against
+    await settle()
+    assert.equal(lyricsCache['refine-case'].state, 'available', 'blind answer stands on its own')
+    const blindCalls = calls
+
+    ensureLyricsFetched(t, 200)        // informed: 500s against a 200s track
+    await settle()
+    assert.ok(calls > blindCalls, 'the blind answer was never revisited')
+    assert.equal(lyricsCache['refine-case'].state, 'unavailable', 'the gate did not apply on the refine')
+    assert.equal(lyricsCache['refine-case'].reason, 'duration')
+
+    const settledCalls = calls
+    ensureLyricsFetched(t, 200)        // asked again: must be a cache hit now
+    await settle()
+    assert.equal(calls, settledCalls, 'a refined answer was fetched twice')
+  } finally { globalThis.fetch = realFetch }
 })

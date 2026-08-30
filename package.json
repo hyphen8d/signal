@@ -12,6 +12,7 @@
     "lint": "node tools/lint-roster.js",
     "verify": "node tools/verify-roster.js",
     "health": "node tools/check-roster.mjs",
+    "lyrics": "node tools/lyrics-audit.mjs",
     "audition": "node tools/audition.js",
     "voice": "node tools/voice-render.mjs",
     "shoot": "node tools/shoot.mjs"

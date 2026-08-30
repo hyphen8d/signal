@@ -1180,6 +1180,14 @@ export default {
               // landing up on its own. This is that landing.
               self.updateTabTitle(self.currentTrack)
               self.setPlayState(s, 'playing')
+              // 2026-08-30 -- the second, informed ask. loadTrack() fires
+              // the lookup while getDuration() still answers 0, so a match
+              // found then was ranked and gated against nothing. Here the
+              // real length is known, and ensureLyricsFetched() upgrades a
+              // blind answer exactly once (see its `rankedBy`). A track
+              // already resolved against a duration is a cache hit, so this
+              // costs nothing on the ordinary path.
+              ensureLyricsFetched(self.currentTrack, self.trackDuration())
               // 2026-08-22, round 4 -- loadTrack() now resolves the
               // mute-for-autoplay/unmute decision itself, synchronously, at
               // call time (see there) rather than waiting for this async
@@ -1209,6 +1217,21 @@ export default {
     if (window.SIGNAL_YT_READY) create()
     else window.SIGNAL_YT_QUEUE.push(create)
   },
+  /** Length of the recording currently loaded, in seconds, or 0 when the
+   *  player cannot say yet.
+   *
+   *  0 means "unknown", never "zero-length" -- every caller has to treat it
+   *  as an absent answer rather than a small one. The player reports
+   *  nothing useful between being handed a video and reaching CUED, which
+   *  is most of what loadTrack() is doing when it asks. */
+  trackDuration() {
+    if (!this.ready || !this.player) return 0
+    try {
+      const d = this.player.getDuration()
+      return Number.isFinite(d) && d > 0 ? d : 0
+    } catch (e) { return 0 }
+  },
+
   loadTrack(track, opts = {}) {
     if (!this.ready || !this.player) return
     // 2026-08-24 -- fire the lyrics lookup unconditionally on every load,
@@ -1217,7 +1240,13 @@ export default {
     // cache hit is a same-tick no-op), so this doesn't cost a duplicate
     // request, and it means a lock-in-progress-before-Guide-was-open or a
     // background/foreground resume still ends up with lyrics ready.
-    ensureLyricsFetched(track)
+    // The duration is passed so the lookup can rank and gate against the
+    // recording actually playing (see ensureLyricsFetched). It is normally
+    // 0 right here -- the player has only just been handed the video --
+    // which is exactly why the PLAYING handler asks a second time once the
+    // real length is known. A blind answer is refined, never re-fetched
+    // twice, and everything else is a cache hit.
+    ensureLyricsFetched(track, this.trackDuration())
     // 2026-08-27, 22nd pass -- a new piece of video has been asked for and
     // has certainly not started yet, so the hold re-arms here. Everything
     // between now and the player's PLAYING event is time the set does not

@@ -336,37 +336,153 @@ export function playStationId(program, station) {
 // object rather than the Promise-map loadStationIdBuffer() uses just
 // above: the footer needs a synchronous "what's the state right now" read
 // every draw, not a one-shot .then() at play time.
-export const lyricsCache = {} // youtubeId -> { state: 'pending'|'available'|'unavailable', lines? }
+export const lyricsCache = {} // youtubeId -> see the state note below
+
+// 2026-08-30 -- measured, not guessed. tools/lyrics-audit.mjs samples the
+// roster against the live API and reports match rate; on 101 tracks across
+// all 11 stations the shipping code (an /api/get on the raw title, and
+// nothing else) resolved 59%. Adding the /api/search fallback below took
+// that to 76%. Re-run the audit rather than trusting this number after any
+// change here -- that is what it is for.
+//
+// Title normalisation was tried in the same audit and is deliberately NOT
+// here: the roster's decorations ("Piggy (VEVO Presents)") really do 404 on
+// /api/get, so stripping them looks like an obvious win, and it recovered
+// exactly ZERO tracks that the search fallback did not already catch. It
+// would have been code carrying its own maintenance for no measured gain.
+
+/** How far the matched recording's length may differ from the one actually
+ *  playing, in seconds, before its timings are refused.
+ *
+ *  This is the SYNC half of the feature and it is why a match is not the
+ *  same thing as a result. A search for "Piggy" returns a live take (288s)
+ *  above the album cut, and the audit found fourteen sampled tracks already
+ *  matched to a recording of visibly the wrong length -- The Safety Dance
+ *  against a 277s entry for a 166s upload, Cola against 224s for 416s.
+ *  Those were rendering as confident, drifting nonsense.
+ *
+ *  Two causes hide in that gap and nothing tells them apart automatically:
+ *  a genuinely different recording (unfixable) and an upload with lead-in
+ *  padding (fixable with an offset, not built). So this refuses both. The
+ *  view already says NO LYRICS AVAILABLE gracefully, and silence beats
+ *  lyrics that confidently disagree with the song. */
+export const LYRIC_DURATION_TOLERANCE = 12
+
+/** Parse a time-tagged LRC body into `{ time, text }`, sorted.
+ *
+ *  Blank lines are KEPT, as sentinels with empty text (2026-08-30). They
+ *  used to be dropped, on the reasoning that a line with nothing in it has
+ *  nothing to show -- which is true of the line and false of the moment:
+ *  an LRC marks the END of a sung passage with an empty tag, so discarding
+ *  them left the last line of a verse lit at full brightness through an
+ *  eight-bar instrumental, still claiming to be the words playing now.
+ *  drawLyricsView skips empty text, so a sentinel renders as nothing lit,
+ *  which is the honest answer while nobody is singing. */
 export function parseLRC(lrcText) {
   const lines = []
   const re = /^\[(\d{2}):(\d{2}(?:\.\d{1,2})?)\](.*)$/
   for (const raw of lrcText.split('\n')) {
     const m = re.exec(raw.trim())
     if (!m) continue
-    const words = m[3].trim()
-    if (!words) continue // skip blank/instrumental-gap lines -- nothing to show
-    lines.push({ time: Number(m[1]) * 60 + Number(m[2]), text: words })
+    lines.push({ time: Number(m[1]) * 60 + Number(m[2]), text: m[3].trim() })
   }
   lines.sort((a, b) => a.time - b.time)
   return lines
 }
-export function ensureLyricsFetched(track) {
-  if (!track || !track.youtubeId || lyricsCache[track.youtubeId]) return
-  lyricsCache[track.youtubeId] = { state: 'pending' }
-  const params = new URLSearchParams({ track_name: track.title, artist_name: track.artist })
-  fetch(`https://lrclib.net/api/get?${params}`)
+
+const hasSynced = (d) => !!(d && typeof d.syncedLyrics === 'string' && d.syncedLyrics.includes('['))
+
+/** Best of a search result list: synced only, then closest in length to the
+ *  recording actually playing.
+ *
+ *  The ranking is not a refinement, it is the point. LRCLIB orders by its
+ *  own relevance, and for several roster tracks the top synced hit is a
+ *  live version whose timings fit nothing. With no duration to rank by
+ *  (the player has not reported one yet) this takes the first synced row
+ *  and lets the gate in resolve() catch it afterwards. */
+export function pickLyricMatch(rows, wantSeconds) {
+  if (!Array.isArray(rows)) return null
+  const ok = rows.filter(hasSynced)
+  if (!ok.length) return null
+  if (!wantSeconds) return ok[0]
+  return ok.slice().sort(
+    (a, b) => Math.abs((a.duration || 0) - wantSeconds) - Math.abs((b.duration || 0) - wantSeconds),
+  )[0]
+}
+
+/** Is this match close enough in length to be trusted? Unknown on either
+ *  side means we cannot tell, and an unprovable objection is not a reason
+ *  to withhold the lyrics -- so it passes. */
+export function lyricDurationOk(lrcSeconds, wantSeconds) {
+  if (!lrcSeconds || !wantSeconds) return true
+  return Math.abs(lrcSeconds - wantSeconds) <= LYRIC_DURATION_TOLERANCE
+}
+
+// A transient fetch failure is NOT the same answer as "this song has no
+// synced lyrics", and until 2026-08-30 both wrote 'unavailable' into a
+// cache keyed by youtubeId and never revisited -- so one dropped request
+// meant that track had no lyrics for the rest of the session, on a feature
+// whose whole job is to be there when you press [L]. 'error' is a separate,
+// retryable state with a bounded attempt count.
+const LYRIC_MAX_ATTEMPTS = 3
+
+function resolve(id, data, wantSeconds, rankedBy) {
+  if (!hasSynced(data)) { lyricsCache[id] = { state: 'unavailable', rankedBy }; return }
+  if (!lyricDurationOk(data.duration, wantSeconds)) {
+    lyricsCache[id] = { state: 'unavailable', reason: 'duration', lrcDur: data.duration, rankedBy }
+    return
+  }
+  lyricsCache[id] = { state: 'available', lines: parseLRC(data.syncedLyrics), lrcDur: data.duration, rankedBy }
+}
+
+/** Look up synced lyrics for a track.
+ *
+ *  `wantSeconds` is the length of the recording actually playing, from the
+ *  player. It is routinely 0 at the moment loadTrack fires this, which is
+ *  fine and is why `rankedBy` is recorded: an entry resolved with no
+ *  duration to rank or gate against is looked up ONCE more when a real
+ *  duration turns up. Everything else is served from cache. */
+export function ensureLyricsFetched(track, wantSeconds = 0) {
+  if (!track || !track.youtubeId) return
+  const id = track.youtubeId
+  const entry = lyricsCache[id]
+  if (entry) {
+    if (entry.state === 'pending') return
+    const retryable = entry.state === 'error' && (entry.attempts || 0) < LYRIC_MAX_ATTEMPTS
+    // Resolved blind, and we can now do better than blind.
+    const canRefine = !entry.rankedBy && wantSeconds > 0
+    if (!retryable && !canRefine) return
+  }
+  const attempts = (entry && entry.state === 'error' ? entry.attempts || 0 : 0) + 1
+  lyricsCache[id] = { state: 'pending', attempts }
+  const q = { track_name: track.title, artist_name: track.artist }
+
+  const fail = () => {
+    lyricsCache[id] = { state: 'error', attempts }
+  }
+  fetch(`https://lrclib.net/api/get?${new URLSearchParams(q)}`)
     .then((r) => (r.ok ? r.json() : null))
     .then((data) => {
-      lyricsCache[track.youtubeId] = (data && data.syncedLyrics)
-        ? { state: 'available', lines: parseLRC(data.syncedLyrics) }
-        : { state: 'unavailable' }
+      if (hasSynced(data) && lyricDurationOk(data.duration, wantSeconds)) {
+        resolve(id, data, wantSeconds, wantSeconds)
+        return null
+      }
+      // The exact lookup missed, or matched the wrong length. Search is
+      // where the 17 points came from; see the audit note above.
+      return fetch(`https://lrclib.net/api/search?${new URLSearchParams(q)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((rows) => resolve(id, pickLyricMatch(rows, wantSeconds), wantSeconds, wantSeconds))
     })
-    .catch(() => { lyricsCache[track.youtubeId] = { state: 'unavailable' } })
+    .catch(fail)
 }
+
 export function lyricsStateFor(track) {
   if (!track || !track.youtubeId) return 'unavailable'
   const entry = lyricsCache[track.youtubeId]
-  return entry ? entry.state : 'unavailable'
+  if (!entry) return 'unavailable'
+  // 'error' is retryable internally but reads as unavailable to the UI:
+  // [L] must not offer itself for a track whose lyrics are not there.
+  return entry.state === 'error' ? 'unavailable' : entry.state
 }
 
 // 56th pass -- liner drops (one in 4 chance approved; tested with cipher
