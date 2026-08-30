@@ -399,6 +399,27 @@ export const GENERAL_LINER_FILES = [
   // The station clips are the ones carrying identity, so the generals should
   // not outgrow them much further before the per-station seconds land.
   'audio/thanks02.mp3',
+  // 2026-08-29 -- four more. Written against the transcripts above rather
+  // than blind, which is the only reason they share a register with what was
+  // already here.
+  //
+  //   oneliner04  "You've got SIGNAL. Nothing here is live, and nothing here
+  //                is sorry about it."
+  //   oneliner05  "SIGNAL. Still broadcasting, still nobody's asked us to stop."
+  //   oneliner06  "SIGNAL. There's nobody at the desk. There hasn't been for
+  //                a while."
+  //   oneliner07  "SIGNAL, still here. Turn it up or leave it low, makes no
+  //                difference to us."
+  //
+  // On the odds the note above worries about: this adds four generals AND a
+  // second clip to every station in the same pass, so a station-specific drop
+  // goes from 1-in-6 to 2-in-11 -- 17% to 18%. The balance the note was
+  // protecting is intact only because both halves grew together; four
+  // generals alone would have pushed it to 1-in-10.
+  'audio/oneliner04.mp3',
+  'audio/oneliner05.mp3',
+  'audio/oneliner06.mp3',
+  'audio/oneliner07.mp3',
 ]
 // TRANSCRIBED 2026-08-29, same pass as the generals above. THE FORMAT IS THE
 // POINT: every one of these is <hook>, then the callsign and frequency, in
@@ -418,13 +439,35 @@ export const GENERAL_LINER_FILES = [
 //   atomic            "Glowing in the dark since 1955. ATOMIC, 529."
 //   city-lights       "You're tuned in to Tokyo. CITY LIGHTS, 780."
 //   hackback          "A throwback state of mind. HACKBACK, 808."
+//
+// The -02 clips, written 2026-08-29 to that same shape. SYNAPSE gets its
+// first: it has had none since MOMENTUM was retired and its liner was
+// dropped rather than remapped.
+//
+//   cipher            "If you know why this frequency is funny, you're in the
+//                      right place. CIPHER, one thirty-three point seven."
+//   distortion-field  "Every one of these was somebody's whole personality for
+//                      a year. DISTORTION FIELD, one ninety-nine point seven."
+//   cold-wave         "Drum machines, bad decisions, and a lot of reverb.
+//                      COLD WAVE, two seventy-three."
+//   drift-mode        "Nothing here is in a hurry. Neither are you.
+//                      DRIFT MODE, three twenty-one."
+//   circuit-crush     "Headlights, empty road, and a synthesiser that won't
+//                      quit. CIRCUIT CRUSH, four eighty-eight."
+//   atomic            "Still on the air, whatever the counter says.
+//                      ATOMIC, five twenty-nine."
+//   midnight-neon     "Somewhere it's four in the morning and this is exactly
+//                      right. SYNAPSE, five sixty-seven point eight."
+//   city-lights       "Tokyo, after dark, about forty years ago.
+//                      CITY LIGHTS, seven eighty."
+//   hackback          "The number's not an accident. HACKBACK, eight oh eight."
 export const STATION_LINER_FILES = {
-  cipher: ['audio/liner-cipher-01.mp3'],
-  'distortion-field': ['audio/liner-distortion-field-01.mp3'],
-  'cold-wave': ['audio/liner-cold-wave-01.mp3'],
-  'drift-mode': ['audio/liner-drift-mode-01.mp3'],
-  'circuit-crush': ['audio/liner-circuit-crush-01.mp3'],
-  atomic: ['audio/liner-atomic-01.mp3'],
+  cipher: ['audio/liner-cipher-01.mp3', 'audio/liner-cipher-02.mp3'],
+  'distortion-field': ['audio/liner-distortion-field-01.mp3', 'audio/liner-distortion-field-02.mp3'],
+  'cold-wave': ['audio/liner-cold-wave-01.mp3', 'audio/liner-cold-wave-02.mp3'],
+  'drift-mode': ['audio/liner-drift-mode-01.mp3', 'audio/liner-drift-mode-02.mp3'],
+  'circuit-crush': ['audio/liner-circuit-crush-01.mp3', 'audio/liner-circuit-crush-02.mp3'],
+  atomic: ['audio/liner-atomic-01.mp3', 'audio/liner-atomic-02.mp3'],
   // 60th pass -- MOMENTUM retired (see the retirement comment above
   // MIDNIGHT NEON in STATIONS). Its liner clip (audio/liner-momentum-01.mp3,
   // voiced as "MOMENTUM") is left on disk but dropped from this map rather
@@ -449,9 +492,9 @@ export const STATION_LINER_FILES = {
   // absent-and-missing meaning "no liners at all". tests/helpers.test.mjs
   // now asserts every public station has a non-empty pool and that every
   // secret one has none, so the next retirement cannot reopen this quietly.
-  'midnight-neon': [],
-  'city-lights': ['audio/liner-city-lights-01.mp3'],
-  hackback: ['audio/liner-hackback-01.mp3'],
+  'midnight-neon': ['audio/liner-synapse-01.mp3'],
+  'city-lights': ['audio/liner-city-lights-01.mp3', 'audio/liner-city-lights-02.mp3'],
+  hackback: ['audio/liner-hackback-01.mp3', 'audio/liner-hackback-02.mp3'],
 }
 export const LINER_FILES = {}
 for (const stId in STATION_LINER_FILES) {
