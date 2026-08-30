@@ -476,6 +476,318 @@ test('running out of ships ends the game and returns to the effect', async () =>
   } finally { h.shutdown() }
 })
 
+// --- difficulty pass, 2026-08-30 ---------------------------------------
+// Three reports from real players: you can just hold fire, enemies are easy
+// to kill, and there is no sign of how a level ends. They were one problem
+// wearing three hats -- the only threat in the game was collision -- and
+// these guard the three answers.
+
+test('holding fire is capped by shots on screen, not just by the cooldown', async () => {
+  // The complaint was that holding fire is strictly dominant. A cooldown
+  // alone cannot fix that; the cap is what makes range and timing matter.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const g = h.program._game
+    // Face open sky so nothing is close enough to recycle a slot quickly.
+    g.bullets.length = 0
+    h.key(' ')
+    h.advance(3000)
+    h.keyUp(' ')
+    const forward = g.bullets.filter((b) => b.kind !== 'm').length
+    assert.ok(forward > 0, 'it does fire')
+    assert.ok(forward <= 4, `capped at 4 with no options, saw ${forward}`)
+  } finally { h.shutdown() }
+})
+
+test('options widen the shot cap', async () => {
+  // Otherwise the cap would make Options a downgrade, which is the exact
+  // opposite of what the meter is teaching you to save for.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const p = h.program
+    const g = p._game
+    g.bullets.length = 0
+    assert.equal(p.gameCanFire(), true)
+    for (let i = 0; i < 4; i++) g.bullets.push({ x: 100, y: 30, vx: 3.4, vy: 0, kind: 'b' })
+    assert.equal(p.gameCanFire(), false, 'four is the cap with no options')
+    g.opts = 2
+    assert.equal(p.gameCanFire(), true, 'two options make room for more')
+  } finally { h.shutdown() }
+})
+
+test('a full missile pool does not block the forward gun', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const p = h.program
+    const g = p._game
+    g.missile = true
+    g.bullets.length = 0
+    for (let i = 0; i < 6; i++) g.bullets.push({ x: 100, y: 30, vx: 1.7, vy: 0, kind: 'm' })
+    assert.equal(p.gameCanFire(), true, 'missiles are a separate pool')
+  } finally { h.shutdown() }
+})
+
+test('forward shots do not crowd out missiles either', async () => {
+  // The pool has to be separate in BOTH directions. If forward fire counted
+  // against the missile cap, MISSILE would quietly stop working whenever
+  // you were shooting -- which is most of the time.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const p = h.program
+    const g = p._game
+    g.missile = true
+    g.bullets.length = 0
+    for (let i = 0; i < 8; i++) g.bullets.push({ x: 100, y: 30, vx: 3.4, vy: 0, kind: 'b' })
+    p.gameFire(g.ship.x + 4, g.ship.y)
+    const missiles = g.bullets.filter((b) => b.kind === 'm').length
+    assert.ok(missiles > 0, 'a missile still launched with the gun busy')
+  } finally { h.shutdown() }
+})
+
+test('enemies shoot back, and telegraph it first', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const p = h.program
+    const g = p._game
+    g.ebullets.length = 0
+    g.enemies.length = 0
+    // One enemy, far enough ahead to be allowed to fire (see
+    // MIN_FIRE_RANGE), wound up and about to. `shooter` is explicit because
+    // only a fraction of a real formation is armed -- this literal silently
+    // became fodder when that landed, and the suite caught it.
+    g.enemies.push({
+      x: g.ship.x + 60, baseY: g.ship.y, y: g.ship.y, amp: 0, phase: 0, vx: 0, fid: 999,
+      shooter: true, shootIn: 3, tel: 0, aimX: 0, aimY: 0,
+    })
+    g.forms.set(999, { total: 1, killed: 0, escaped: 0 })
+    h.advance(120)
+    const en = g.enemies[0]
+    assert.ok(en && en.tel > 0, 'winds up before firing')
+    assert.equal(g.ebullets.length, 0, 'and has not fired during the wind-up')
+    h.advance(400)
+    assert.ok(g.ebullets.length > 0, 'then a shot exists')
+  } finally { h.shutdown() }
+})
+
+test('nothing fires from point blank', async () => {
+  // The single most important fairness rule in the game, and it was found
+  // only by measuring: mean enemy shots on screen was 0.11 with a maximum
+  // of 1, yet those shots were killing a dodging bot every 8 seconds. There
+  // was no wall of bullets -- nearly every shot fired was simply
+  // unavoidable, because nothing stopped an enemy firing from three dots
+  // away. Two earlier tuning passes chased the wrong number entirely.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const g = h.program._game
+    g.ebullets.length = 0
+    g.enemies.length = 0
+    // Right on top of the ship, armed, and due to fire immediately.
+    g.enemies.push({
+      x: g.ship.x + 8, baseY: g.ship.y, y: g.ship.y, amp: 0, phase: 0, vx: 0, fid: 998,
+      shooter: true, shootIn: 1, tel: 0, aimX: 0, aimY: 0,
+    })
+    g.forms.set(998, { total: 1, killed: 0, escaped: 0 })
+    const en = g.enemies[0]
+    // Polled rather than sampled once at the end. A shot fired at a
+    // stationary ship reaches it, kills it, and gameLoseLife clears the
+    // array -- so a single late look sees an empty list and reads a shot
+    // that WAS fired as one that never was.
+    let everFired = false
+    const watch = (ms) => {
+      for (let i = 0; i < ms; i += 50) {
+        h.advance(50)
+        if (g.ebullets.length > 0) everFired = true
+      }
+    }
+    watch(1500)
+    assert.equal(everFired, false, 'held its fire at point blank')
+    // And it is a hold, not a reset: back off, and it shoots.
+    en.x = g.ship.x + 60
+    watch(1500)
+    assert.equal(everFired, true, 'fires once there is room to answer')
+  } finally { h.shutdown() }
+})
+
+test('an enemy shot kills the ship', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const p = h.program
+    const g = p._game
+    g.invuln = 0
+    const lives = g.lives
+    g.ebullets.length = 0
+    g.ebullets.push({ x: g.ship.x + 6, y: g.ship.y, vx: -2, vy: 0 })
+    h.advance(200)
+    assert.equal(g.lives, lives - 1, 'incoming fire is lethal')
+    assert.equal(g.ebullets.length, 0, 'and the screen is cleared on respawn')
+  } finally { h.shutdown() }
+})
+
+test('an aimed shot commits to where the ship was, so it can be dodged', async () => {
+  // A shot that re-aims at the moment of firing is unavoidable by moving,
+  // which would make the telegraph a lie.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const p = h.program
+    const g = p._game
+    g.ebullets.length = 0
+    // The remembered point has to sit on the OPPOSITE side of the muzzle
+    // from the ship, or both behaviours produce the same signs and the
+    // assertion proves nothing. That is exactly how the first version of
+    // this test passed with the commitment deliberately removed: the ship
+    // and the aim point were both down-left of the muzzle.
+    g.ship.x = 30
+    g.ship.y = 70            // ship low
+    p.gameEnemyFire(100, 40, 1.5, 30, 6)   // remembered point high
+    const b = g.ebullets[0]
+    assert.ok(b, 'fired')
+    assert.ok(b.vx < 0, 'travelling leftward')
+    assert.ok(b.vy < 0, 'and UP toward where the ship was, not down to where it is')
+  } finally { h.shutdown() }
+})
+
+test('turrets sit on the terrain surface and ride the scroll', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const p = h.program
+    const g = p._game
+    const { terrainAt } = await import(`../game.js?v=${h.tag}`)
+    g.turrets.length = 0
+    p.gameSpawnTurret()
+    const t = g.turrets[0]
+    assert.ok(t, 'spawned')
+    const a = p.gameTurretPos(t)
+    const [top, bot] = terrainAt(t.col, g.h)
+    const onSurface = t.floor
+      ? Math.abs(a.y - (g.h - 1 - bot - 2)) < 0.001
+      : Math.abs(a.y - (top + 2)) < 0.001
+    assert.ok(onSurface, 'sits on the ground, not floating')
+    const x0 = a.x
+    h.advance(600)
+    assert.ok(p.gameTurretPos(t).x < x0, 'and scrolls with the terrain')
+  } finally { h.shutdown() }
+})
+
+test('a missile can kill a turret, which is the point of the slot', async () => {
+  // Before turrets there was nothing on the ground to shoot, so MISSILE was
+  // a trap choice on the meter -- a hole in the economy, not just a
+  // difficulty problem.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const p = h.program
+    const g = p._game
+    g.turrets.length = 0
+    g.bullets.length = 0
+    p.gameSpawnTurret()
+    const t = g.turrets[0]
+    const pos = p.gameTurretPos(t)
+    const score = g.score
+    g.bullets.push({ x: pos.x, y: pos.y, vx: 0, vy: 0, kind: 'm' })
+    h.advance(60)
+    assert.equal(g.turrets.length, 0, 'destroyed')
+    assert.ok(g.score > score, 'and scored')
+  } finally { h.shutdown() }
+})
+
+test('the stage advances on distance and says so', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const g = h.program._game
+    assert.equal(g.stage, 1)
+    assert.ok(h.row(1).includes('STAGE 1'), `HUD names the stage: ${JSON.stringify(h.row(1))}`)
+    // Just short of the rollover, then over it.
+    g.stageIn = 20
+    h.advance(600)
+    assert.equal(g.stage, 2, 'rolled over')
+    assert.ok(h.row(1).includes('STAGE 2'), 'and the readout followed')
+  } finally { h.shutdown() }
+})
+
+test('the stage bar fills as the stage is travelled', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const filled = (row) => (row.match(/█/g) || []).length
+    const early = filled(h.row(1))
+    // Flown, not assigned. Setting stageIn by hand would only prove the bar
+    // renders whatever it is given -- it would stay green with the stage
+    // clock stopped dead, which is the bug that matters.
+    h.advance(9000)
+    const late = filled(h.row(1))
+    assert.ok(late > early, `bar fills as you travel (${early} -> ${late})`)
+  } finally { h.shutdown() }
+})
+
+test('enemies fire more often in later stages', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const p = h.program
+    const g = p._game
+    // Sample the interval rather than trusting one draw -- it is randomised.
+    const sample = () => {
+      let n = 0
+      for (let i = 0; i < 200; i++) n += p.gameFireInterval()
+      return n / 200
+    }
+    g.stage = 1
+    const early = sample()
+    g.stage = 5
+    const late = sample()
+    assert.ok(late < early * 0.85, `pressure ramps (${early.toFixed(0)} -> ${late.toFixed(0)})`)
+  } finally { h.shutdown() }
+})
+
+test('vertical movement is not artificially slower than horizontal', async () => {
+  // The original factor came from a wrong claim about Braille dot shape --
+  // that a dot is twice as tall as it is wide. Measured, a dot in ter-u16n
+  // is 4.5px across and 4px down, so climbing was ~45% slower than it
+  // looked. Now derived from the canvas's own measurement.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(100)
+    const g = h.program._game
+    assert.ok(g.vAspect > 1.0 && g.vAspect < 1.3, `aspect from the font, got ${g.vAspect}`)
+
+    g.ship.x = 60; g.ship.y = 40
+    const y0 = g.ship.y
+    h.key('ArrowUp'); h.advance(500); h.keyUp('ArrowUp')
+    const dy = y0 - g.ship.y
+
+    g.ship.x = 60; g.ship.y = 40
+    const x0 = g.ship.x
+    h.key('ArrowRight'); h.advance(500); h.keyUp('ArrowRight')
+    const dx = g.ship.x - x0
+
+    assert.ok(dy >= dx, `vertical keeps up with horizontal in dots (${dy} vs ${dx})`)
+  } finally { h.shutdown() }
+})
+
 test('the terrain always leaves a gap the ship can fit through', async () => {
   // A pure function, so this can sweep far more of the level than anyone
   // could fly. The failure it guards is not "hard": a channel narrower than

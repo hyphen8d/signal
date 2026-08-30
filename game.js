@@ -67,6 +67,74 @@ export const POWERS = ['SPEED', 'MISSILE', 'DOUBLE', 'LASER', 'OPTION', '?']
 const SPEEDS = [0.62, 0.86, 1.12, 1.42, 1.75]
 const MAX_OPTIONS = 2
 const START_LIVES = 3
+
+// --- on-screen shot cap (2026-08-30) ------------------------------------
+// The first version had none, and playtesters found the obvious dominant
+// strategy immediately: hold fire forever, because there is no cost to it.
+// A cooldown alone cannot fix that -- it caps the RATE but leaves holding
+// strictly better than not holding, so the fire button stops being a
+// decision.
+//
+// The arcade's answer is a limit on shots ON SCREEN, and it is a much
+// better mechanic than it sounds. Spray from across the map and your slots
+// are all in flight, so you cannot shoot the thing that just appeared in
+// front of you; fire at something close and the slots recycle immediately.
+// It makes range and timing matter without making the gun weaker.
+//
+// Options widen the cap, so they still read as a straight upgrade. DOUBLE's
+// diagonal counts against it, which is the honest trade: more coverage for
+// less forward throughput.
+const SHOT_CAP = 4, SHOT_CAP_PER_OPT = 3
+// The laser is long, fast and pierces, so it gets a much tighter cap --
+// otherwise it is simply the best option in every situation rather than a
+// trade against DOUBLE.
+const LASER_CAP = 2, LASER_CAP_PER_OPT = 1
+// Missiles have their own pool. Sharing the forward cap would mean taking
+// MISSILE actively reduced your forward fire, which is a punishing thing
+// for a power-up to do.
+const MISSILE_CAP = 2, MISSILE_CAP_PER_OPT = 1
+
+// --- how the difficulty of incoming fire was actually found -------------
+// Worth writing down, because three of the four things tried here were
+// wrong and the reasoning is not recoverable from the constants.
+//
+// Symptom: with enemy fire added, a bot that flies the terrain perfectly
+// died every 8 seconds. Attributing deaths by cause said 88% were enemy
+// bullets. Two rounds of tuning followed from that number -- fewer
+// shooters, wider intervals, slower shots, a longer telegraph, a cap on
+// shots in flight -- and the proportion did not move at all.
+//
+// It could not move. The bot never dies to terrain, so "% of deaths from
+// bullets" is pinned near 100 however gentle the bullets are. It was a
+// property of the measurement, not of the game, and two passes were spent
+// tuning against it.
+//
+// Measuring ABSOLUTES instead found the real shape immediately: mean
+// enemy shots on screen 0.11, maximum 1. There was no wall of bullets and
+// the cap never once bound. One shot every nine seconds was killing the
+// bot every eight -- meaning very nearly every shot fired was
+// unavoidable, because nothing stopped an enemy firing from point blank.
+// A shot from three dots away has a two-step flight time; no telegraph
+// rescues that.
+//
+// So the fix is a minimum range, below. The cap stays as cheap insurance
+// for later stages, where the rate does climb -- but it is a backstop that
+// does not fire today, and this comment says so rather than implying it
+// solved something.
+const EBULLET_CAP = 4, EBULLET_CAP_PER_STAGE = 1
+/** How far ahead of the ship a gun has to be before it may fire.
+ *
+ *  At the shot's 1.25 dots a step this is ~0.45s of flight on top of the
+ *  wind-up, against a ship that covers ~19 dots in the same time. That is
+ *  the difference between a shot you answer and a shot that has already
+ *  hit you. Anything closer holds fire and keeps its interval, so an enemy
+ *  that drifts past you does not get a free point-blank shot on the way. */
+const MIN_FIRE_RANGE = 34
+
+// --- stages (2026-08-30) ------------------------------------------------
+// Distance, not time, so the stage is a place you travel through rather
+// than a clock you wait out. ~100s at the current scroll rate.
+export const STAGE_DOTS = 5400
 // Options trail the ship along the path it actually flew, which is the
 // mechanic they are famous for: the trail is a ring buffer of past ship
 // positions and option i simply reads it (i+1)*OPTION_LAG steps back. No
@@ -112,6 +180,13 @@ const CAPSULE_SHELL = [
   [-2, 2], [-1, 2], [0, 2], [1, 2], [2, 2],
 ]
 const CAPSULE_CORE = [[0, -1], [-1, 0], [0, 0], [1, 0], [0, 1]]
+// A surface gun: a squat dome on a base, drawn mirrored for the ceiling.
+// Wider than it is tall so it reads as bolted down rather than flying.
+const TURRET = [
+  [-1, -2], [0, -2], [1, -2],
+  [-2, -1], [-1, -1], [0, -1], [1, -1], [2, -1],
+  [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
+]
 
 /** Terrain profile at absolute dot column `c`, as [top, bottom] thicknesses.
  *
@@ -177,9 +252,30 @@ export default {
       trail: Array.from({ length: TRAIL_LEN }, () => ({ x: Math.round(w * 0.18), y: Math.round(h / 2) })),
       trailAt: 0,
       scroll: 0,
+      // Equal VISUAL speed in both axes. DotCanvas measures the dot's shape
+      // off the loaded face rather than assuming it (see dotAspect), so
+      // this rides the font instead of a hardcoded guess -- which is what
+      // the first version got wrong: it claimed a dot was "roughly twice as
+      // tall as it is wide" and slowed the vertical axis to 0.55 on that
+      // basis. Measured, a dot in ter-u16n is 4.5px across and 4px down, so
+      // the correction is 1/0.889 = ~1.125 -- vertical should be slightly
+      // FASTER in dots than horizontal, not half speed. Climbing was about
+      // 45% slower than it looked, which mattered little when the only
+      // threat was terrain and matters a great deal now that things shoot.
+      vAspect: 1 / layers.player.aspect,
       bullets: [], enemies: [], caps: [], parts: [],
+      // Enemy fire and surface guns, both added 2026-08-30. Kept in their
+      // own lists rather than tagged into `bullets`/`enemies`: everything
+      // that hunts the player is checked against exactly one thing (the
+      // ship) while everything of the player's is checked against many, so
+      // sharing a list would mean filtering on every pass through both.
+      ebullets: [], turrets: [],
       forms: new Map(),
       fid: 0,
+      stage: 1,
+      stageIn: STAGE_DOTS,
+      stageFlash: 0,
+      turretIn: 260,
       // Armament. Wiped wholesale on death -- see loseLife.
       spd: 0, missile: false, double: false, laser: false, opts: 0, shield: 0,
       meter: 0,
@@ -286,23 +382,22 @@ export default {
     // Ship. Held keys read here rather than in gameKey so movement runs at
     // the ship's speed and not the keyboard's repeat rate.
     const v = SPEEDS[g.spd]
-    // Braille dots are half a cell across and a quarter down, so a dot is
-    // roughly twice as tall as it is wide; moving the same dots-per-step in
-    // both axes would feel twice as fast vertically. The 0.55 is that
-    // aspect, applied to the sim rather than to the drawing.
+    // See vAspect in startGame for why this is measured and not a constant.
     if (this.gameHeld('ArrowLeft')) g.ship.x -= v
     if (this.gameHeld('ArrowRight')) g.ship.x += v
-    if (this.gameHeld('ArrowUp')) g.ship.y -= v * 0.55
-    if (this.gameHeld('ArrowDown')) g.ship.y += v * 0.55
+    if (this.gameHeld('ArrowUp')) g.ship.y -= v * g.vAspect
+    if (this.gameHeld('ArrowDown')) g.ship.y += v * g.vAspect
     g.ship.x = Math.max(4, Math.min(w - 5, g.ship.x))
     g.ship.y = Math.max(3, Math.min(h - 4, g.ship.y))
 
     g.trail[g.trailAt] = { x: g.ship.x, y: g.ship.y }
     g.trailAt = (g.trailAt + 1) % TRAIL_LEN
 
-    // Fire.
+    // Fire. Gated by the on-screen cap as well as the cooldown -- see
+    // SHOT_CAP. A capped shot does NOT consume the cooldown, so the gun
+    // fires the instant a slot frees rather than on the next whole cycle.
     if (g.cool > 0) g.cool--
-    if (g.cool === 0 && this.gameHeld('Space', 'KeyZ', ' ', 'z')) {
+    if (g.cool === 0 && this.gameHeld('Space', 'KeyZ', ' ', 'z') && this.gameCanFire()) {
       this.gameFire(g.ship.x + 4, g.ship.y)
       for (const o of this.gameOptions()) this.gameFire(o.x + 2, o.y)
       g.cool = g.laser ? 11 : 8
@@ -324,8 +419,29 @@ export default {
       g.waveIn = 150 + Math.floor(Math.random() * 90)
     }
 
+    // Stage progress. Measured in scrolled dots so it advances with the
+    // distance travelled and not with time spent hiding.
+    if (g.stageFlash > 0) g.stageFlash--
+    g.stageIn -= 0.9
+    if (g.stageIn <= 0) {
+      g.stage++
+      g.stageIn = STAGE_DOTS
+      g.stageFlash = 150
+      g.score += 1000
+      playGamePowerUp()
+    }
+
+    // Surface guns, spaced by distance for the same reason.
+    g.turretIn -= 0.9
+    if (g.turretIn <= 0) {
+      this.gameSpawnTurret()
+      g.turretIn = Math.max(90, 240 - g.stage * 22) + Math.random() * 160
+    }
+
     this.gameStepBullets()
     this.gameStepEnemies()
+    this.gameStepTurrets()
+    this.gameStepEnemyBullets()
     this.gameStepPickups()
 
     for (const p of g.parts) { p.x += p.vx; p.y += p.vy; p.life-- }
@@ -339,6 +455,21 @@ export default {
     }
   },
 
+  /** Is there a free slot on screen? See SHOT_CAP.
+   *
+   *  Counts the forward weapon only -- missiles have their own pool, and
+   *  are checked separately inside gameFire so a full missile pool cannot
+   *  block the gun (or the reverse). */
+  gameCanFire() {
+    const g = this._game
+    const cap = g.laser
+      ? LASER_CAP + LASER_CAP_PER_OPT * g.opts
+      : SHOT_CAP + SHOT_CAP_PER_OPT * g.opts
+    let live = 0
+    for (const b of g.bullets) if (b.kind !== 'm') live++
+    return live < cap
+  },
+
   gameFire(x, y) {
     const g = this._game
     if (g.laser) {
@@ -350,7 +481,13 @@ export default {
     // The missile is the ground-attack weapon: it falls until it meets the
     // floor and then runs along it, which is what makes it worth a slot on
     // a map with terrain rather than being a second forward gun.
-    if (g.missile) g.bullets.push({ x, y, vx: 1.7, vy: 1.5, kind: 'm' })
+    if (g.missile) {
+      let live = 0
+      for (const b of g.bullets) if (b.kind === 'm') live++
+      if (live < MISSILE_CAP + MISSILE_CAP_PER_OPT * g.opts) {
+        g.bullets.push({ x, y, vx: 1.7, vy: 1.5, kind: 'm' })
+      }
+    }
   },
 
   /** Where the options are right now: the ship's own past positions. */
@@ -397,6 +534,30 @@ export default {
     for (const en of g.enemies) {
       en.x -= en.vx
       en.y = en.baseY + en.amp * Math.sin(en.x * 0.055 + en.phase)
+      // Shooting back (2026-08-30). Until this, the only threat in the game
+      // was collision -- with terrain or with an enemy's body -- which is a
+      // single idea the player solves once and then never thinks about
+      // again. That is the actual reason it played easy, far more than
+      // enemy health or hitbox size, and it is why neither of those was
+      // touched: more health makes a game grindier, not harder.
+      //
+      // Only fires while fully on screen, so nothing can shoot you from
+      // inside the right-hand margin where it cannot be seen or answered.
+      // Must be on screen AND far enough ahead to be answerable -- see
+      // MIN_FIRE_RANGE. Holding fire rather than resetting the interval, so
+      // closing to point-blank buys an enemy nothing.
+      if (!en.shooter || en.x > w - 4 || en.x - g.ship.x < MIN_FIRE_RANGE) continue
+      if (en.tel > 0) {
+        // Telegraphed. The wind-up draws the line the shot will travel (see
+        // gameDrawHazards), which is what makes an aimed shot fair: you are
+        // told where it is going before it goes there.
+        if (--en.tel === 0) this.gameEnemyFire(en.x - 3, en.y, 1.25)
+      } else if (--en.shootIn <= 0) {
+        en.tel = 24
+        en.aimX = g.ship.x
+        en.aimY = g.ship.y
+        en.shootIn = this.gameFireInterval()
+      }
     }
     const survivors = []
     for (const en of g.enemies) {
@@ -468,10 +629,148 @@ export default {
     const baseY = Math.max(lo + amp, Math.min(hi - amp, lo + Math.random() * Math.max(1, hi - lo)))
     const phase = Math.random() * Math.PI * 2
     const vx = 0.8 + Math.random() * 0.5
+    // Only some of a formation shoots, and that is a volume control, not a
+    // detail. With every member armed, a full screen of fourteen enemies
+    // firing every few seconds puts a shot in the air roughly three times a
+    // second -- measured against a bot that flies the channel perfectly and
+    // does nothing else, that took survival from "indefinite" to 24
+    // seconds, which is not difficulty, it is a curtain. Most enemies being
+    // fodder is also how the arcade does it, and it gives a formation
+    // internal shape: there is a right one to kill first.
+    const shooters = new Set()
+    const nShoot = Math.max(1, Math.round(n * 0.4))
+    while (shooters.size < nShoot) shooters.add(Math.floor(Math.random() * n))
     for (let i = 0; i < n; i++) {
-      g.enemies.push({ x: w + 6 + i * 9, baseY, y: baseY, amp, phase, vx, fid })
+      g.enemies.push({
+        x: w + 6 + i * 9, baseY, y: baseY, amp, phase, vx, fid,
+        shooter: shooters.has(i),
+        // Staggered per member, so a formation arrives as a rolling threat
+        // rather than a single volley you either eat or don't.
+        shootIn: this.gameFireInterval() + i * 24, tel: 0, aimX: 0, aimY: 0,
+      })
     }
     g.forms.set(fid, { total: n, killed: 0, escaped: 0 })
+  },
+
+  /** Steps between one enemy's shots. Tightens with the stage, which is the
+   *  only difficulty ramp in the game until rank lands -- and the gentlest
+   *  one available, since it adds pressure without making anything tougher
+   *  to kill or harder to see. */
+  gameFireInterval() {
+    const g = this._game
+    const ramp = Math.max(0.42, 1 - (g.stage - 1) * 0.13)
+    return Math.round((260 + Math.random() * 280) * ramp)
+  },
+
+  /** An aimed shot, from an enemy or a surface gun. Aimed at where the ship
+   *  WAS when the wind-up started (en.aimX/aimY), not where it is now:
+   *  a shot that re-aims at the moment of firing is unavoidable by moving,
+   *  which makes the telegraph a lie. */
+  gameEnemyFire(x, y, speed, aimX, aimY) {
+    const g = this._game
+    if (g.ebullets.length >= EBULLET_CAP + EBULLET_CAP_PER_STAGE * (g.stage - 1)) return
+    const tx = (aimX ?? g.ship.x) - x
+    const ty = (aimY ?? g.ship.y) - y
+    const d = Math.hypot(tx, ty) || 1
+    g.ebullets.push({ x, y, vx: (tx / d) * speed, vy: (ty / d) * speed })
+  },
+
+  gameStepEnemyBullets() {
+    const g = this._game
+    const { w, h } = g
+    const keep = []
+    for (const b of g.ebullets) {
+      b.x += b.vx
+      b.y += b.vy
+      if (b.x < -3 || b.x > w + 3 || b.y < -3 || b.y > h + 3) continue
+      // Stopped by scenery, the same as the player's own shots. Without
+      // this, a surface gun could fire straight through the hill it is
+      // standing on.
+      const [top, bot] = terrainAt(Math.round(g.scroll + b.x), h)
+      if (b.y < top || b.y > h - 1 - bot) continue
+      if (g.invuln <= 0 && Math.abs(b.x - g.ship.x) < 3.5 && Math.abs(b.y - g.ship.y) < 3) {
+        this.gameLoseLife()
+        continue
+      }
+      keep.push(b)
+    }
+    g.ebullets = keep
+  },
+
+  /** A gun bolted to the terrain surface.
+   *
+   *  Anchored to an ABSOLUTE terrain column rather than a screen position,
+   *  so it rides the same scroll the ground does and sits on the surface
+   *  exactly however that surface moves -- the alternative, a screen-space
+   *  position with a per-step correction, drifts off the hillside the
+   *  moment the profile changes under it.
+   *
+   *  These are also what makes MISSILE worth a slot. Before them there was
+   *  nothing on the ground to shoot, so a sixth of the power meter was a
+   *  trap choice -- a real hole in the economy, quite apart from difficulty. */
+  gameSpawnTurret() {
+    const g = this._game
+    const { w, h } = g
+    const col = Math.round(g.scroll + w + 8)
+    const floor = Math.random() < 0.68
+    g.turrets.push({
+      col, floor,
+      shootIn: 60 + Math.floor(Math.random() * 90), tel: 0, aimX: 0, aimY: 0,
+    })
+  },
+
+  /** Where a turret is on screen right now, given the scroll. */
+  gameTurretPos(t) {
+    const g = this._game
+    const { h } = g
+    const [top, bot] = terrainAt(t.col, h)
+    return { x: t.col - g.scroll, y: t.floor ? h - 1 - bot - 2 : top + 2 }
+  },
+
+  gameStepTurrets() {
+    const g = this._game
+    const { w } = g
+    const keep = []
+    for (const t of g.turrets) {
+      const p = this.gameTurretPos(t)
+      if (p.x < -6) continue
+      // Same range rule as the flyers. A turret the ship is already on top
+      // of firing straight up is the same unanswerable shot.
+      if (p.x < w - 2 && Math.hypot(p.x - g.ship.x, p.y - g.ship.y) > MIN_FIRE_RANGE * 0.8) {
+        if (t.tel > 0) {
+          if (--t.tel === 0) this.gameEnemyFire(p.x, p.y + (t.floor ? -3 : 3), 1.25, t.aimX, t.aimY)
+        } else if (--t.shootIn <= 0) {
+          t.tel = 26
+          t.aimX = g.ship.x
+          t.aimY = g.ship.y
+          t.shootIn = this.gameFireInterval()
+        }
+      }
+      // Shot down by anything, missiles included -- the missile runs along
+      // the floor precisely so it can reach these.
+      let hit = false
+      for (const b of g.bullets) {
+        const rx = b.kind === 'l' ? 8 : 3.5
+        if (Math.abs(b.x - p.x) < rx && Math.abs(b.y - p.y) < 3.5) {
+          hit = true
+          if (b.kind !== 'l') b.x = -999
+          break
+        }
+      }
+      if (hit) {
+        g.score += 150
+        this.gameBurst(p.x, p.y, 9)
+        playGameHit(false)
+        continue
+      }
+      if (g.invuln <= 0 && Math.abs(p.x - g.ship.x) < 4 && Math.abs(p.y - g.ship.y) < 3) {
+        this.gameBurst(p.x, p.y, 9)
+        this.gameLoseLife()
+        continue
+      }
+      keep.push(t)
+    }
+    g.turrets = keep
   },
 
   gameStepPickups() {
@@ -536,6 +835,10 @@ export default {
     g.spd = 0; g.missile = false; g.double = false; g.laser = false
     g.opts = 0; g.shield = 0; g.meter = 0
     g.bullets = []
+    // Incoming fire is cleared too. Respawning into a screen full of shots
+    // that were aimed at where you died is a death you cannot answer, and
+    // the invulnerability window is not long enough to fly out of it.
+    g.ebullets = []
     if (g.lives < 0) {
       g.over = true
       g.overAt = Date.now()
@@ -637,9 +940,42 @@ export default {
 
   gameDrawHazards(dc) {
     const g = this._game
-    for (const en of g.enemies) for (const [dx, dy] of ENEMY) dc.plot(en.x + dx, en.y + dy)
+    for (const en of g.enemies) {
+      for (const [dx, dy] of ENEMY) dc.plot(en.x + dx, en.y + dy)
+      // The wind-up, drawn as the line the shot is about to travel. This is
+      // the whole of what makes aimed fire fair rather than a gotcha: you
+      // are shown the path before anything is on it, and the shot commits
+      // to where you WERE, so moving off the line actually works.
+      if (en.tel > 0) this.gameDrawAim(dc, en.x - 3, en.y, en.aimX, en.aimY, en.tel)
+    }
+    for (const t of g.turrets) {
+      const p = this.gameTurretPos(t)
+      for (const [dx, dy] of TURRET) dc.plot(p.x + dx, p.y + (t.floor ? dy : -dy))
+      if (t.tel > 0) this.gameDrawAim(dc, p.x, p.y + (t.floor ? -3 : 3), t.aimX, t.aimY, t.tel)
+    }
+    // Enemy fire sits in the hazard layer with everything else that can
+    // kill you, while the player's own shots are a brightness tier above in
+    // gameDrawPlayer. That tiering was built for the capsule and pays for
+    // itself again here: incoming and outgoing fire are told apart by the
+    // same rule, with no new colour and no new shape to learn.
+    for (const b of g.ebullets) {
+      dc.plot(b.x, b.y)
+      dc.plot(b.x - Math.sign(b.vx), b.y)
+    }
     for (const p of g.parts) dc.plot(p.x, p.y)
     // Capsules are NOT drawn here -- see gameDrawPlayer and CAPSULE_SHELL.
+  },
+
+  /** The wind-up line, drawn from the muzzle toward where the shot will go.
+   *  It grows as the telegraph runs down, so the closer it is to firing the
+   *  further the line reaches -- a countdown you read at a glance rather
+   *  than a flash you either catch or miss. */
+  gameDrawAim(dc, x, y, aimX, aimY, tel) {
+    const dx = aimX - x, dy = aimY - y
+    const d = Math.hypot(dx, dy) || 1
+    const reach = 6 + (26 - tel) * 1.1
+    // Dashed, so it never reads as a beam that is already firing.
+    for (let i = 3; i < reach; i += 3) dc.plot(x + (dx / d) * i, y + (dy / d) * i)
   },
 
   gameDrawPlayer(dc) {
@@ -668,11 +1004,27 @@ export default {
     }
   },
 
+  /** Score, stage, ships.
+   *
+   *  The stage half is here because "I don't see how the level ends" was
+   *  the most damning thing in the first round of feedback -- and the
+   *  honest answer was that it didn't, and that nothing on screen even
+   *  suggested progress was a concept. A number and a bar are not an
+   *  ending, but they turn an endless scroll into somewhere you are
+   *  travelling through, which is most of what was actually missing. */
   gameDrawHud(s) {
     const { term } = s
     const g = this._game
-    const left = `SCORE ${String(g.score).padStart(7, '0')}`
-    term.text(1, HUD_Y, left, MUTED)
+    term.text(1, HUD_Y, `SCORE ${String(g.score).padStart(7, '0')}`, MUTED)
+
+    const bars = 14
+    const done = Math.max(0, Math.min(bars, Math.round((1 - g.stageIn / STAGE_DOTS) * bars)))
+    const bar = `STAGE ${g.stage} [${'█'.repeat(done)}${'·'.repeat(bars - done)}]`
+    const bx = Math.max(0, Math.floor((term.cols - bar.length) / 2))
+    // Brightens for the flash after a rollover, then settles back. The one
+    // moment the readout is worth looking at is the moment it changes.
+    term.text(bx, HUD_Y, bar, g.stageFlash > 0 ? (BRIGHT | BOLD) : MUTED)
+
     const right = `SHIPS ${Math.max(0, g.lives)}   [E] EXIT`
     term.text(term.cols - 1 - right.length, HUD_Y, right, MUTED)
   },
