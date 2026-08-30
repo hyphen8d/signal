@@ -37,6 +37,10 @@ node tools/dead-feedback.mjs        # npm run deadfeedback — input-feedback sw
 **Deploys need `node tools/stamp.js`.** `main.js` fetches `build.json`
 (always fresh, `?t=`) and imports every app module as `?v=<stamp>`; without a
 bump, GitHub Pages' 10-minute cache can keep a visitor on the previous build.
+The **audio assets carry the same stamp** (2026-08-29, `clipUrl()` in
+`audio/voice.js`) — they did not until a re-rendered station ID was live,
+byte-identical on the server, and the browser went on playing the old one.
+Adding a clip never exposed it; a URL nobody has fetched cannot be stale.
 
 ## The admin backend
 

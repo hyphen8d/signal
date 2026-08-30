@@ -89,7 +89,7 @@ export const WELCOME_LINE_FILE = 'audio/welcome-tuned-in.mp3'
 export let welcomeLineBufferPromise = null
 export function loadWelcomeLineBuffer() {
   if (!welcomeLineBufferPromise) {
-    welcomeLineBufferPromise = fetch(WELCOME_LINE_FILE)
+    welcomeLineBufferPromise = fetch(clipUrl(WELCOME_LINE_FILE))
       .then((r) => r.arrayBuffer())
       .then((buf) => audioCtx().decodeAudioData(buf))
       .catch(() => null)
@@ -279,10 +279,26 @@ export const stationIdBufferPromises = {}
 export { STATION_ID_CLIPS } from './station-id-clips.js'
 const { stationClipName } = await import(`./station-id-clips.js?v=${V}`)
 
+/** Every audio asset carries the build stamp, exactly as every module does.
+ *
+ *  2026-08-29 -- it did not, and that is a real gap rather than a tidiness
+ *  one. main.js versions module imports as ?v=<stamp> precisely because
+ *  GitHub Pages answers with `cache-control: max-age=600`, so without a
+ *  cache-buster a visitor can sit on the previous build for ten minutes.
+ *  The mp3s were fetched by plain path and were therefore subject to exactly
+ *  the staleness the stamp exists to prevent -- which showed up the first
+ *  time a clip was RE-rendered rather than added: the new station ID was
+ *  live, byte-identical on the server, and the browser kept playing the old
+ *  one. Adding a clip never exposed this, because a URL nobody has fetched
+ *  cannot be stale.
+ *
+ *  Same query the modules use, so one `node tools/stamp.js` busts both. */
+const clipUrl = (path) => (V ? `${path}?v=${V}` : path)
+
 export function loadStationIdBuffer(stationId) {
   if (!stationIdBufferPromises[stationId]) {
     const clip = stationClipName(stationId)
-    stationIdBufferPromises[stationId] = fetch(`audio/station-id-${clip}.mp3`)
+    stationIdBufferPromises[stationId] = fetch(clipUrl(`audio/station-id-${clip}.mp3`))
       .then((r) => r.arrayBuffer())
       .then((buf) => audioCtx().decodeAudioData(buf))
       .catch(() => null) // no clip for this station (e.g. the secret one) -- silently skip
@@ -522,7 +538,7 @@ for (const stId in STATION_LINER_FILES) {
 export const linerBufferPromises = {}
 export function loadLinerBuffer(path) {
   if (!linerBufferPromises[path]) {
-    linerBufferPromises[path] = fetch(path)
+    linerBufferPromises[path] = fetch(clipUrl(path))
       .then((r) => r.arrayBuffer())
       .then((buf) => audioCtx().decodeAudioData(buf))
       .catch(() => null)
