@@ -79,3 +79,30 @@ test('the throttle signature matches what a 429 actually looks like', () => {
   // A genuine network error is not throttling and must not stop a run.
   assert.ok(!isThrottleSignature({ probed: false, reason: 'fetch failed' }))
 })
+
+// --- the health record's orphan prune, 2026-08-30 ------------------------
+// Retiring DRIFT MODE stranded its 50 track records in roster-health.json,
+// and nothing had ever removed one, so the file grew with every curation
+// pass. Harmless -- summarise() walks the roster and looks records up, never
+// the reverse -- which is why it survived unnoticed. What matters here is the
+// two ways the cleanup can go wrong, both of which delete real history.
+import { orphanIds } from '../tools/check-roster.mjs'
+
+test('orphan prune drops records for tracks that left the roster, and only those', () => {
+  const live = new Set(['keep1', 'keep2'])
+  assert.deepEqual(orphanIds(['keep1', 'gone1', 'keep2', 'gone2'], live), ['gone1', 'gone2'])
+  assert.deepEqual(orphanIds(['keep1', 'keep2'], live), [], 'a correct record drops nothing')
+})
+
+test('an empty roster is "cannot tell", not "nothing is live"', () => {
+  // The dangerous case, and the reason this returns a sentinel rather than an
+  // empty array. A new station is committed with `tracks: []` before it is
+  // filled (the audition chicken-and-egg in CLAUDE.md), and stations.js is
+  // mid-edit for real stretches -- the daily timer firing in that window must
+  // not read "no live tracks" as licence to delete the entire record.
+  assert.equal(orphanIds(['a', 'b'], new Set()), null)
+  // And the two answers must not be confusable: [] is falsy-adjacent enough
+  // that `if (!gone)` would treat an empty result as the skip case, so the
+  // caller checks for null specifically and this pins the difference.
+  assert.notEqual(orphanIds(['a'], new Set(['a'])), null)
+})

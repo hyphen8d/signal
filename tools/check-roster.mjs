@@ -37,7 +37,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { oembed, playability, decayFlags, mapLimit, isThrottleSignature } from './lib/probe.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -148,9 +148,58 @@ function summarise(tracks, records) {
   }
 }
 
+/** Records for tracks that are no longer on the roster anywhere.
+ *
+ *  Retiring a station strands its whole tracklist in here: DRIFT MODE's 50
+ *  went orphaned in a single commit on 2026-08-30, and nothing had ever
+ *  removed one, so this file grew monotonically with every curation pass.
+ *  Nothing was WRONG as a result -- summarise() walks the roster and looks
+ *  records up, never the reverse, so an orphan cannot reach a coverage bar
+ *  or a finding. That is exactly why it went unnoticed for the life of the
+ *  tool.
+ *
+ *  Two things this must not do, both of which are easy to write by accident:
+ *
+ *  - Prune against `tracks`. That list honours --station, so pruning against
+ *    it would wipe every OTHER station's history the first time anyone
+ *    checked a single station. It reads the whole roster itself instead.
+ *  - Prune when the roster is empty. A new station is committed with
+ *    `tracks: []` before it is filled (see CLAUDE.md on the audition
+ *    chicken-and-egg), and stations.js is mid-edit for real stretches; a
+ *    sweep firing in that window would delete the entire record. An empty
+ *    roster means "cannot tell", not "nothing is live".
+ *
+ *  It is a delete, so it says what it did. The file is committed, which is
+ *  the actual undo. */
+export function orphanIds(recordIds, liveIds) {
+  // null, not [] -- "cannot tell" and "nothing to drop" must not be the same
+  // answer, since one of them means do nothing and the other means the record
+  // is already correct.
+  if (!liveIds.size) return null
+  return recordIds.filter((id) => !liveIds.has(id))
+}
+
+async function pruneOrphans(store) {
+  const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=health-prune')
+  const live = new Set([...STATIONS, ...(SECRET_STATIONS ?? [])]
+    .flatMap((st) => st.tracks.map((t) => t.youtubeId)))
+  const gone = orphanIds(Object.keys(store.records), live)
+  if (!gone) return { dropped: 0, skipped: true }
+  for (const id of gone) delete store.records[id]
+  return { dropped: gone.length, skipped: false }
+}
+
 async function main() {
   const tracks = await rosterTracks()
   const store = loadStore()
+  const prune = await pruneOrphans(store)
+  if (prune.skipped) {
+    say('! The roster reports no tracks at all, so no records were pruned -- that')
+    say('  reads as stations.js being mid-edit rather than as an empty roster.')
+  } else if (prune.dropped) {
+    saveStore(store)
+    say(`Pruned ${prune.dropped} record(s) for tracks no longer on the roster.`)
+  }
 
   let throttled = false
   if (!reportOnly) {
@@ -219,4 +268,12 @@ async function main() {
   if (summary.flaggedCount) process.exitCode = 1
 }
 
-main().catch((err) => { say(String(err?.stack ?? err)); process.exit(2) })
+// Only when RUN, never when imported. tests/probe.test.mjs imports
+// orphanIds() from here, and until 2026-08-30 that import fired a live
+// network sweep as a side effect -- the suite silently checked 40 tracks
+// against YouTube and rewrote the committed record every time it ran. An
+// entry-point check rather than roster-watch.mjs's opt-out env var, because
+// this way an importer cannot forget: that is precisely what went wrong.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => { say(String(err?.stack ?? err)); process.exit(2) })
+}
