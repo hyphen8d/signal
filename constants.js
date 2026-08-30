@@ -124,6 +124,36 @@ export const VISUALIZER_KEYS = new Set([
   'c', 'C', 'n', 'N', 'm', 'M', 'v', 'V', 'f', 'F', 't', 'T', 'e', 'E', 'Escape',
 ])
 
+// --- the way into VECTOR SCAN (2026-08-29) ------------------------------
+// The Konami code, entered inside the visualizer. See game.js.
+//
+// It is this sequence and not a spare letter key for one reason: the code
+// was born in Gradius (Nemesis on the Famicom), so for THIS game it is not
+// a generic cheat-code reference, it is the game's own. Three properties
+// fall out of that choice for free, which is why it survived being thought
+// about twice:
+//
+//   - It binds no new key. Every key in it already does its normal job on
+//     the way past, so nothing on the dead-feedback sweep changes and no
+//     key had to be taken away from the radio.
+//   - Entering it is volume-neutral. Up-up-down-down is +10 +10 -10 -10
+//     through adjustVolume(), landing exactly where it started; left and
+//     right are unbound in the visualizer, [B] is unbound there, and the
+//     final [A] is consumed by the detector before the LINE INPUT card can
+//     see it. So the code is invisible even to someone who types it by
+//     accident and then watches the screen.
+//   - It is self-documenting to precisely the people it is for, and
+//     undiscoverable to everyone else, which is what a hidden thing wants.
+//
+// Matched against e.key, so the letters are listed in both cases: the last
+// two are typed as ordinary letters and a Caps Lock user is still entering
+// the Konami code.
+export const KONAMI_CODE = [
+  'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
+  'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
+  'b', 'a',
+]
+
 // --- voice duck (2026-08-29) --------------------------------------------
 // How far the music drops under a station ID or a liner drop. -50% is the
 // ordinary broadcast figure: enough that the voice sits clearly on top,

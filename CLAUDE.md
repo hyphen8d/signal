@@ -236,6 +236,25 @@ program):
   box helpers. `tuning.js` — the band, thresholds, `freqToCol`, the three
   nearest-station questions, shuffle bag. `crt-hooks.js` — `crtBase`, distance
   degrade, ramps, glitch/bloom/focus-snap. `constants.js`, `state.js`.
+- `game.js` — VECTOR SCAN (2026-08-29), a Gradius, reached by entering the
+  Konami code inside the visualizer. It is a THIRD VIEW on the visualizer's
+  canvas, beside the effect and the `[L]` lyrics view — not a fourth
+  top-level overlay — so it inherits every paint guard the visualizer
+  already has rather than needing its own. Deliberately absent from the
+  README, the guide, and every on-screen legend: the way in is the whole
+  point of it, so treat "undocumented to the listener" as a feature with a
+  test behind it, not an oversight to tidy up. Listed here because a module
+  nothing mentions is a module someone breaks by accident.
+
+  It is the only thing in the app that draws through `src/vector.js` (the
+  Braille dot canvas — the character grid as a 160x76 framebuffer), and the
+  only thing that needs a key's *held* state, which is why `program.keyUp()`
+  exists at all after screen.js forwarded `keyup` to nothing for its whole
+  life. Its own comments carry the reasoning; two things worth knowing from
+  outside it are that the arcade power meter is drawn as TEXT (a row of
+  labelled boxes is the one part of Gradius a terminal renders better than a
+  framebuffer, and is the argument for this game over another), and that the
+  simulation runs on a fixed 60Hz step rather than the frame delta.
 
 ### Things that only make sense across files
 

@@ -42,6 +42,19 @@ const FAKE_DURATION = 214
 let bootCount = 0
 let font = null
 
+/** A KeyboardEvent's `code` for the keys this suite presses -- the physical
+ *  key, which is what a browser reports and what a held-key set has to be
+ *  keyed on. Only the shapes SIGNAL actually binds are covered; anything
+ *  else falls back to the key itself, which is close enough for a control
+ *  nothing holds down. */
+function codeFor(key) {
+  if (key === ' ') return 'Space'
+  if (key === 'Enter' || key === 'Escape' || key.startsWith('Arrow')) return key
+  if (/^[a-zA-Z]$/.test(key)) return `Key${key.toUpperCase()}`
+  if (/^[0-9]$/.test(key)) return `Digit${key}`
+  return key
+}
+
 export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
@@ -316,9 +329,27 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
      *  AudioContext and every sound silently no-ops. */
     tag,
     get now() { return now },
-    /** Dispatch a keydown the way screen.js would. */
+    /** Dispatch a keydown the way screen.js would.
+     *
+     *  Carries a `code` as well as a `key` since 2026-08-29, because the
+     *  real event does and VECTOR SCAN's held-key set is keyed on it (see
+     *  program.keyUp). Modelled off a real KeyboardEvent rather than off
+     *  what the game happens to read -- a fake built from the consumer's
+     *  assumptions is the trap CLAUDE.md's advert note is about. */
     key(key, extra = {}) {
-      program.key(screen, { key, shiftKey: false, preventDefault() {}, ...extra })
+      program.key(screen, { key, code: codeFor(key), shiftKey: false, preventDefault() {}, ...extra })
+    },
+    /** Dispatch a keyup. A key pressed with h.key() and never released here
+     *  stays HELD, which is exactly what the browser does and what the game
+     *  reads every simulation step. */
+    keyUp(key, extra = {}) {
+      program.keyUp(screen, { key, code: codeFor(key), preventDefault() {}, ...extra })
+    },
+    /** Press and release, for a key that is a command rather than a control
+     *  being held. Most of the radio's keys are this. */
+    tapKey(key, extra = {}) {
+      h.key(key, extra)
+      h.keyUp(key, extra)
     },
     /** Move the fake clock forward, ticking frame() every `step` ms. */
     advance(ms, step = 16) {

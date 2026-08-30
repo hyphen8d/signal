@@ -705,3 +705,107 @@ export function playStaticBurst(duration, peakGain, freq) {
   } catch (e) {}
 }
 
+// --- VECTOR SCAN (2026-08-29, the hidden game) --------------------------
+// Four sounds for the game behind the Konami code (see game.js). They live
+// here rather than in game.js for the reason every other sound does: this
+// file owns the AudioContext and, more to the point, speakerOut() -- the
+// hard-mute speaker bus. A game synthesising its own nodes straight to
+// ctx.destination would be the one thing on the roster [M] could not
+// silence, and it would be playing over a song the listener muted.
+//
+// Deliberately built from the same vocabulary as the radio's own control
+// sounds -- short filtered noise, cheap oscillator sweeps, nothing sampled
+// and nothing musical. The game is meant to sound like the receiver doing
+// something odd, not like a console plugged into it. Levels are set against
+// playKeyClick rather than against each other, since what they actually sit
+// on top of is a real track at the listener's own volume.
+
+/** Player shot -- a descending blip, kept quiet and short because it fires
+ *  several times a second over an actual song. */
+export function playGameShot() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const osc = ctx.createOscillator()
+    osc.type = 'square'
+    osc.frequency.setValueAtTime(1500, t)
+    osc.frequency.exponentialRampToValueAtTime(420, t + 0.06)
+    const g = ctx.createGain()
+    // Well under playKeyClick's peak: this is the one sound in the set that
+    // repeats on a held key, so it is the one that turns into a drone.
+    g.gain.setValueAtTime(0.035, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.07)
+    osc.connect(g).connect(speakerOut(ctx))
+    osc.start(t)
+    osc.stop(t + 0.09)
+  } catch (e) {}
+}
+
+/** Something died -- a filtered noise burst. `big` is the player's own
+ *  death, longer and lower so it cannot be mistaken for a kill. */
+export function playGameHit(big = false) {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const dur = big ? 0.5 : 0.13
+    const n = Math.floor(ctx.sampleRate * dur)
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n) ** 2
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'lowpass'
+    filter.frequency.setValueAtTime(big ? 1200 : 2600, t)
+    filter.frequency.exponentialRampToValueAtTime(big ? 90 : 400, t + dur)
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(big ? 0.22 : 0.09, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur)
+    src.connect(filter).connect(g).connect(speakerOut(ctx))
+    src.start(t)
+    src.stop(t + dur + 0.02)
+  } catch (e) {}
+}
+
+/** A capsule collected -- the power meter's cursor stepping on. Rising, to
+ *  read as "you gained something", against the falling shot above. */
+export function playGameCapsule() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    const osc = ctx.createOscillator()
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(600, t)
+    osc.frequency.exponentialRampToValueAtTime(1250, t + 0.08)
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(0.07, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12)
+    osc.connect(g).connect(speakerOut(ctx))
+    osc.start(t)
+    osc.stop(t + 0.14)
+  } catch (e) {}
+}
+
+/** The meter actually cashed in -- two rising notes. Distinct from
+ *  playGameCapsule on purpose: collecting and spending are different events
+ *  and the meter is the whole game, so they must not sound alike. */
+export function playGamePowerUp() {
+  try {
+    const ctx = audioCtx()
+    const t = ctx.currentTime
+    for (const [i, f] of [880, 1320].entries()) {
+      const osc = ctx.createOscillator()
+      osc.type = 'square'
+      osc.frequency.value = f
+      const g = ctx.createGain()
+      const at = t + i * 0.07
+      g.gain.setValueAtTime(0, at)
+      g.gain.linearRampToValueAtTime(0.06, at + 0.008)
+      g.gain.exponentialRampToValueAtTime(0.001, at + 0.1)
+      osc.connect(g).connect(speakerOut(ctx))
+      osc.start(at)
+      osc.stop(at + 0.12)
+    }
+  } catch (e) {}
+}
+
