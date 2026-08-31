@@ -449,6 +449,40 @@ export const STATIONS = [
       realTrack('4GhvYoo4088', 'Hypnosis', 'Windows 96'),
       realTrack('7P4fatlUbvg', 'Transient Feeling', 'Windows 96'),
       realTrack('bxCU_P0Y1CE', 'Glass Prism', 'Windows 96'),
+      // 2026-08-31 -- five more: three from Disconscious's Hologram Plaza,
+      // the record this subgenre is usually dated from and which the founding
+      // pass left off the roster entirely, plus two more Cat System Corp.
+      //
+      // The founding pass's FIRST constraint earned itself again, and at cost.
+      // Searching on remembered titles returned nail-salon tutorials and
+      // reef-tank reviews, because the titles were not real; and 'Late Night
+      // Delight' -- an ALBUM, not a track -- returned four rips between 30 and
+      // 37 minutes, which is that constraint's own worked example happening a
+      // second time. The titles below were read off the Bandcamp listings
+      // first and searched verbatim. That one change is the whole difference
+      // between a run of album rips and a run of 3-to-5-minute singles.
+      //
+      // Two Palm Mall tracks were passed over on the FONT rule rather than on
+      // taste, and the third case is the one worth writing down. 'Endless
+      // TSUURO' and the fullwidth 'I consume, therefore I am' are undrawable
+      // outright. But 'Employees Only' is credited on Palm Mall as '(with
+      // GosutoMall)' spelled with an o-macron, which is Latin Extended-A --
+      // outside ter-u16n's Latin-1 coverage, so it draws as '?' exactly like
+      // the katakana does. The profile warns that fullwidth is the easier trap
+      // to paste in by accident; a lone accented vowel in an otherwise ASCII
+      // credit is easier still.
+      //
+      // Channels are spread deliberately across four rather than taking one
+      // uploader's copy of the whole album. The profile's note that a
+      // sample-based genre on a reupload channel carries real takedown
+      // exposure cuts against concentration: one channel going down should not
+      // cost the station five tracks at once. 'xtal' is already used here and
+      // Electronic Gems is named in the profile as expected for this lane.
+      realTrack('M-3esa1G50U', 'Lunar Food Court', 'Disconscious'),
+      realTrack('7EuuRDGUMMA', 'Elevator Up', 'Disconscious'),
+      realTrack('f0PSLV_b5g0', 'Fountain Plaza', 'Disconscious'),
+      realTrack('k6xkSvMIvwk', 'Second Floor', 'Cat System Corp'),
+      realTrack('Qg7vgIdDDno', 'Veni, Vidi, Emi', 'Cat System Corp'),
     ] },
   { id: 'cold-wave', freq: 273.0, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
@@ -1155,6 +1189,31 @@ export const STATIONS = [
       realTrack('I9PtTaclmCk', "Whole Lotta Shakin' Goin' On", 'Big Maybelle'),
       realTrack('Acfhtz020wE', 'Right Behind You Baby', 'Ray Smith'),
       realTrack('ydLHY0qonl4', "It's a Man", 'Betty Hutton'),
+      // 2026-08-31 -- five more, taken from the dozen genuine gaps the
+      // 2026-08-29 Diamond City Radio check turned up and wrote into the
+      // profile. That listing, not recall, is what satisfies this station's
+      // Fallout-canon rule; seven of the twelve are still unused.
+      //
+      // Attribution, per the profile's second rule: "Dear Hearts and Gentle
+      // People" is Bob Crosby's, not Bing Crosby's. The search ranks a Bing
+      // upload high and it is the wrong answer here for the same reason the
+      // Roy Brown / Wynonie Harris note already in this file gives.
+      //
+      // Provenance runs BETTER than this station's norm for once -- all five
+      // are '- Topic' or VEVO, where the existing 35 are almost entirely
+      // archive channels, because these particular sides did get official
+      // reissue uploads. Billie Holiday's VEVO cut was taken over her
+      // '- Topic' one on licence breadth (249 countries against 123). Worth
+      // recording because the usual trade runs the other way: the better
+      // channel normally holds the NARROWER licence, and it did here too on
+      // the track next to it -- a second Roy Brown '- Topic' upload of
+      // "Mighty Mighty Man" is licensed in exactly ONE country, so the id
+      // below is the other one.
+      realTrack('fsLPj_BG3fg', 'Maybe', 'The Ink Spots'),
+      realTrack('BsTP6NUZVvQ', "It's All Over but the Crying", 'The Ink Spots'),
+      realTrack('a2FeSEiXaR0', 'Easy Living', 'Billie Holiday'),
+      realTrack('B2DkxG6-Pko', 'Mighty Mighty Man', 'Roy Brown'),
+      realTrack('hOEAGZZoq7w', 'Dear Hearts and Gentle People', 'Bob Crosby and the Bobcats'),
     ] },
   // 20th pass -- new channel added for 0 called Hackback, built around
   // artists like Tribe Called Quest, De La Soul, Slick Rick, Outkast, Wu

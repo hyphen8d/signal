@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 410 tracks total.
+Generated from stations.js. 9 stations, 420 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -67,7 +67,7 @@ Tracks (50):
 
 Ident tones (Hz): 523.3, 440, 349.2, 523.3
 
-Tracks (25):
+Tracks (30):
 
 1. **Sembikiya Restaurant** -- Cat System Corp  ([youtu.be/xAh-nngGZ6I](https://youtu.be/xAh-nngGZ6I))
 2. **Roadtrips in Spring** -- Waterfront Dining  ([youtu.be/boofE5_HtkI](https://youtu.be/boofE5_HtkI))
@@ -94,6 +94,11 @@ Tracks (25):
 23. **Hypnosis** -- Windows 96  ([youtu.be/4GhvYoo4088](https://youtu.be/4GhvYoo4088))
 24. **Transient Feeling** -- Windows 96  ([youtu.be/7P4fatlUbvg](https://youtu.be/7P4fatlUbvg))
 25. **Glass Prism** -- Windows 96  ([youtu.be/bxCU_P0Y1CE](https://youtu.be/bxCU_P0Y1CE))
+26. **Lunar Food Court** -- Disconscious  ([youtu.be/M-3esa1G50U](https://youtu.be/M-3esa1G50U))
+27. **Elevator Up** -- Disconscious  ([youtu.be/7EuuRDGUMMA](https://youtu.be/7EuuRDGUMMA))
+28. **Fountain Plaza** -- Disconscious  ([youtu.be/f0PSLV_b5g0](https://youtu.be/f0PSLV_b5g0))
+29. **Second Floor** -- Cat System Corp  ([youtu.be/k6xkSvMIvwk](https://youtu.be/k6xkSvMIvwk))
+30. **Veni, Vidi, Emi** -- Cat System Corp  ([youtu.be/Qg7vgIdDDno](https://youtu.be/Qg7vgIdDDno))
 
 ## COLD WAVE -- 273.0
 
@@ -337,7 +342,7 @@ Tracks (50):
 
 Ident tones (Hz): 392, 493.9, 493.9, 587.3
 
-Tracks (35):
+Tracks (40):
 
 1. **I Don't Want to Set the World on Fire** -- The Ink Spots  ([youtu.be/GkHd1d_UVOE](https://youtu.be/GkHd1d_UVOE))
 2. **Crawl Out Through the Fallout** -- Sheldon Allman  ([youtu.be/Q9bSOaSuScQ](https://youtu.be/Q9bSOaSuScQ))
@@ -374,6 +379,11 @@ Tracks (35):
 33. **Whole Lotta Shakin' Goin' On** -- Big Maybelle  ([youtu.be/I9PtTaclmCk](https://youtu.be/I9PtTaclmCk))
 34. **Right Behind You Baby** -- Ray Smith  ([youtu.be/Acfhtz020wE](https://youtu.be/Acfhtz020wE))
 35. **It's a Man** -- Betty Hutton  ([youtu.be/ydLHY0qonl4](https://youtu.be/ydLHY0qonl4))
+36. **Maybe** -- The Ink Spots  ([youtu.be/fsLPj_BG3fg](https://youtu.be/fsLPj_BG3fg))
+37. **It's All Over but the Crying** -- The Ink Spots  ([youtu.be/BsTP6NUZVvQ](https://youtu.be/BsTP6NUZVvQ))
+38. **Easy Living** -- Billie Holiday  ([youtu.be/a2FeSEiXaR0](https://youtu.be/a2FeSEiXaR0))
+39. **Mighty Mighty Man** -- Roy Brown  ([youtu.be/B2DkxG6-Pko](https://youtu.be/B2DkxG6-Pko))
+40. **Dear Hearts and Gentle People** -- Bob Crosby and the Bobcats  ([youtu.be/hOEAGZZoq7w](https://youtu.be/hOEAGZZoq7w))
 
 ## HACKBACK -- 808.0
 
