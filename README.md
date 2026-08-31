@@ -66,12 +66,11 @@ station" is exactly the kind of thing that's invisible from the inside.
 
 ## Tip jar
 
-SIGNAL is free, has no ads, and doesn't profile you -- no analytics cookies,
-no ad networks, no fingerprinting. It is not *no third parties*, and the
-honest version is worth stating: playback is the YouTube IFrame player, so
-Google is contacted on every visit and sees your IP whether or not you press
-anything. [PRIVACY.md](./PRIVACY.md) is the full accounting, including the
-one-per-visit anonymous summary that ships switched off. If it's become part of
+SIGNAL is free, has no ads, and doesn't profile you -- no analytics, no
+cookies beyond your own saved settings, no fingerprinting. It is not *no
+third parties*, and the honest version is worth stating: playback is the
+YouTube IFrame player, so Google is contacted on every visit and sees your
+IP whether or not you press anything. If it's become part of
 your day — something you leave running while you work, and it's made you
 smile — you can [buy me a coffee on Ko-fi](https://ko-fi.com/hyphen8d).
 Entirely optional, and the radio plays exactly the same either way.

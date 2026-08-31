@@ -29,10 +29,6 @@ export default {
   enterVisualizer(s) {
     if (this.visualizerActive) return
     this.visualizerActive = true
-    // Counted here rather than off the [V] keypress: this is the one place
-    // every way in converges, and it is past the early-return, so a press
-    // while already inside does not count a second entry.
-    this.noteMetricFeature('visualizer')
     this._vizEnterAt = Date.now()
     this._vizLastInfoDraw = 0
     // 50th pass: a stale flash from a previous visit would otherwise sit
@@ -87,7 +83,6 @@ export default {
   // volume/mute/phosphor -- the pick sticks until cycled again, it does
   // not reset the next time this station's visualizer opens.
   cycleVisualEffect(s) {
-    this.noteMetricFeature('effect')
     if (!this.lockedStation) return
     const current = this.activeVisualKey()
     const idx = VISUAL_KEYS.indexOf(current)

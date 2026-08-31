@@ -390,14 +390,6 @@
     <div class="panel-body" id="voice-body"></div>
   </div>
 
-  <div class="panel" id="panel-listening">
-    <div class="panel-head" data-toggle="panel-listening" role="button" tabindex="0" aria-controls="panel-listening">
-      <span class="chevron">&#9654;</span><span class="callsign">LISTENING</span>
-      <span class="tagline" id="listening-summary"></span>
-    </div>
-    <div class="panel-body" id="listening-body"></div>
-  </div>
-
   <div class="panel" id="panel-health">
     <div class="panel-head" data-toggle="panel-health" role="button" tabindex="0" aria-controls="panel-health">
       <span class="chevron">&#9654;</span><span class="callsign">ROSTER HEALTH</span>
@@ -686,7 +678,6 @@ function render() {
   renderPending()
   renderOverlaps()
   renderVoice()
-  renderListening()
   renderHealth()
   renderStations()
 }
@@ -1339,142 +1330,6 @@ function healthFlagHelp(f) {
   if (f.startsWith('UNVERIFIED')) return 'The probe did not complete, so nothing was actually checked. Not a finding about the track.'
   return 'playabilityStatus reported by YouTube.'
 }
-
-let listening = null
-
-// Listening share. Deliberately adjacent to ROSTER HEALTH: that panel says
-// whether a station's tracks still PLAY, this one says whether anyone is
-// listening to them, and the two questions are only useful together. A
-// station in perfect health carrying two percent of listening is a curation
-// decision waiting to be made, and neither panel can raise it alone.
-//
-// Reads through the admin server rather than the collector directly -- the
-// read token lives in that process's environment, not in this page.
-function renderListening() {
-  const body = document.getElementById('listening-body')
-  const summary = document.getElementById('listening-summary')
-  body.innerHTML = ''
-
-  if (!listening) {
-    summary.textContent = 'which stations actually get listened to, and which features ever get found'
-    body.appendChild(el('div', { class: 'save-msg' },
-      'One anonymous summary per visit, folded into daily totals. Nothing is sent unless METRICS_ENDPOINT is set in config.js — see PRIVACY.md for the exact payload.'))
-    const load = el('button', { class: 'primary' }, 'read the totals')
-    load.addEventListener('click', async () => {
-      load.disabled = true; load.textContent = 'reading…'
-      try { listening = await api('listening'); renderListening() }
-      catch (e) {
-        load.disabled = false; load.textContent = 'read the totals'
-        body.appendChild(el('div', { class: 'fatal' }, String(e.message || e)))
-      }
-    })
-    body.appendChild(load)
-    return
-  }
-
-  // Not configured is the DEFAULT state of this repo, not a fault. Saying so
-  // plainly beats an empty chart the reader has to work out how to diagnose.
-  if (!listening.configured) {
-    summary.textContent = 'no collector configured'
-    body.appendChild(el('div', { class: 'save-msg' },
-      'No collector is configured, so nothing is being counted anywhere. This is the default. tools/collector/README.md has the deploy, which is a Cloudflare Worker and two environment variables on this server.'))
-    return
-  }
-
-  const days = listening.days || []
-  if (!days.length) {
-    summary.textContent = 'collector reachable · no data yet'
-    body.appendChild(el('div', { class: 'empty' },
-      'The collector is up and has recorded nothing so far. A visit under a minute sends no summary at all, so a quiet day is genuinely empty rather than broken.'))
-    return
-  }
-
-  // Fold the days into one total. Per-day trends are a later problem; the
-  // question this panel exists for is a SHARE, which needs the sum.
-  const tot = { sessions: 0, minutes: 0, failures: 0, stations: {}, features: {}, modes: {}, consent: {} }
-  for (const d of days) {
-    tot.sessions += d.sessions || 0
-    tot.minutes += d.minutes || 0
-    tot.failures += d.failures || 0
-    for (const [k, v] of Object.entries(d.stations || {})) tot.stations[k] = (tot.stations[k] || 0) + v
-    for (const [k, v] of Object.entries(d.features || {})) tot.features[k] = (tot.features[k] || 0) + v
-    for (const [k, v] of Object.entries(d.modes || {})) tot.modes[k] = (tot.modes[k] || 0) + v
-    for (const [k, v] of Object.entries(d.consent || {})) {
-      tot.consent[k] = tot.consent[k] || { yes: 0, no: 0 }
-      tot.consent[k].yes += v.yes || 0
-      tot.consent[k].no += v.no || 0
-    }
-  }
-
-  const mob = tot.modes.mobile || 0
-  const desk = tot.modes.desktop || 0
-  const mobPct = (mob + desk) ? Math.round(mob / (mob + desk) * 100) : 0
-  summary.textContent = `${tot.sessions} sessions · ${fmtHours(tot.minutes)} · ${mobPct}% mobile` +
-    (tot.failures ? ` · ${tot.failures} track failure${tot.failures === 1 ? '' : 's'}` : '')
-
-  body.appendChild(el('div', { class: 'save-msg' },
-    `${days.length} day(s) of totals. Session minutes are rounded to five and station minutes to one, so these do not sum exactly — see PRIVACY.md for why the two are rounded differently.`))
-
-  // --- share per station, the reason to open this panel ---
-  const byId = new Map(allStations().map((st) => [st.id, st.callsign]))
-  const rows = Object.entries(tot.stations).sort((a, b) => b[1] - a[1])
-  const top = rows.length ? rows[0][1] : 0
-  const totalMins = rows.reduce((a, r) => a + r[1], 0) || 1
-
-  body.appendChild(el('div', { class: 'group-title' }, 'listening share'))
-  const bars = el('div', { class: 'health-bars' })
-  for (const [id, mins] of rows) {
-    bars.appendChild(el('div', { class: 'health-bar' },
-      el('span', { class: 'cs' }, byId.get(id) || id),
-      el('span', { class: 'track' },
-        el('span', { class: 'done', style: `width:${top ? mins / top * 100 : 0}%` })),
-      el('span', { class: 'num' }, `${Math.round(mins / totalMins * 100)}%  ${fmtHours(mins)}`)))
-  }
-  body.appendChild(bars)
-
-  // A station carrying zero is the single most actionable row here, and it
-  // is the one a chart of what WAS played can never show -- so it is named
-  // explicitly rather than left as an absence the reader has to notice.
-  //
-  // PUBLIC stations only. The secret ones are deliberately hard to reach and
-  // would sit in this list permanently, which is not a curation signal, just
-  // noise that trains you to skip the line. Whether anyone finds them at all
-  // is a different question, and the 'secret-station' row under FEATURES
-  // REACHED is where it gets answered.
-  const silent = (roster.stations || []).filter((st) => !tot.stations[st.id])
-  if (silent.length) {
-    body.appendChild(el('div', { class: 'health-note' },
-      `No listening minutes at all: ${silent.map((st) => st.callsign).join(', ')}. On a station that is reachable and healthy, that is a curation signal rather than a bug.`))
-  }
-
-  // --- features found ---
-  body.appendChild(el('div', { class: 'group-title' }, 'features reached'))
-  const feats = el('div', { class: 'health-bars' })
-  for (const [name, n] of Object.entries(tot.features).sort((a, b) => b[1] - a[1])) {
-    const pct = tot.sessions ? Math.round(n / tot.sessions * 100) : 0
-    feats.appendChild(el('div', { class: 'health-bar' },
-      el('span', { class: 'cs' }, name),
-      el('span', { class: 'track' }, el('span', { class: 'done', style: `width:${pct}%` })),
-      el('span', { class: 'num' }, `${pct}% of sessions`)))
-  }
-  body.appendChild(feats)
-
-  const consentRows = Object.entries(tot.consent)
-  if (consentRows.length) {
-    body.appendChild(el('div', { class: 'group-title' }, 'consent cards'))
-    for (const [kind, c] of consentRows) {
-      const n = c.yes + c.no
-      body.appendChild(el('div', { class: 'health-note' },
-        `${kind}: ${c.yes} yes / ${c.no} no` + (n ? ` — ${Math.round(c.yes / n * 100)}% accepted` : '')))
-    }
-  }
-
-  const again = el('button', { class: 'small', style: 'margin-top:10px' }, 'refresh')
-  again.addEventListener('click', async () => { listening = null; renderListening() })
-  body.appendChild(again)
-}
-
-const fmtHours = (mins) => mins >= 90 ? `${(mins / 60).toFixed(1)}h` : `${mins}m`
 
 function renderHealth() {
   const body = document.getElementById('health-body')

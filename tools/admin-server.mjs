@@ -664,38 +664,6 @@ async function handleApi(req, res, url) {
     return s2.end()
   }
 
-  // Listening share (2026-08-31). Sits beside ROSTER HEALTH because the two
-  // answer each other: that panel says which tracks are still playable, this
-  // one says whether anybody is listening to the station they are on. A
-  // station with immaculate health and no listening minutes is a curation
-  // question, and neither panel can raise it alone.
-  //
-  // A PROXY, not a store. The data lives in the collector (see
-  // tools/collector/), and the dashboard cannot reach it directly: the read
-  // token would have to be in the page, where it would be readable by
-  // anything that can read the page. So the token stays in this process's
-  // environment and the browser asks this server instead.
-  if (route === 'listening' && req.method === 'GET') {
-    const base = process.env.SIGNAL_STATS_URL
-    const token = process.env.SIGNAL_STATS_TOKEN
-    // Not an error. The overwhelmingly likely reason there is no collector
-    // configured is that nobody has deployed one, which is the DEFAULT
-    // state of this repo -- so it answers with what is true and lets the
-    // panel say so, rather than rendering as a failure the reader then has
-    // to diagnose.
-    if (!base || !token) {
-      return sendJson(res, 200, { configured: false, days: [] })
-    }
-    try {
-      const r = await fetch(`${base}?days=30`, { headers: { Authorization: `Bearer ${token}` } })
-      if (!r.ok) return sendJson(res, 502, { error: `collector returned HTTP ${r.status}` })
-      const data = await r.json()
-      return sendJson(res, 200, { configured: true, ...data })
-    } catch (err) {
-      return sendJson(res, 502, { error: `collector unreachable: ${String(err?.message ?? err)}` })
-    }
-  }
-
   if (route === 'audition' && req.method === 'POST') {
     const { stationId, ids = [], searches = [], limit } = await readBody(req)
     if (!stationId) return sendJson(res, 400, { error: 'stationId required' })

@@ -113,7 +113,6 @@ export default {
   acceptTapConsent(s) {
     if (this._tapConsentTier === 'live') { this.closeTapConsent(s); return }
     this.tapConsent = 'yes'
-    this.noteMetricConsent('tap', 'yes')
     saveSignalState(this)
     startAudioTap(this, s)
     // No note: the tap answers for itself a beat later through notifyTap()
@@ -127,7 +126,6 @@ export default {
   declineTapConsent(s) {
     const wasLive = this._tapConsentTier === 'live'
     this.tapConsent = 'no'
-    this.noteMetricConsent('tap', 'no')
     saveSignalState(this)
     if (wasLive) {
       stopAudioTap('unpatched')

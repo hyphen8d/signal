@@ -374,10 +374,6 @@ export default {
       acc: 0, lastT: null, step: 0,
     }
     this.gameOpen = true
-    // The one number that says whether hiding this worked or worked too
-    // well. The payload records that the game was reached, nothing about
-    // how it went -- gameHiScore stays local, as it always has.
-    this.noteMetricFeature('game')
     this.lyricsViewOpen = false
     this._heldKeys?.clear()
     return true

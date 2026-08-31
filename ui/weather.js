@@ -116,7 +116,6 @@ export default {
    *  behind it, and a keydown is one. */
   acceptWeather(s) {
     this.weatherConsent = 'yes'
-    this.noteMetricConsent('weather', 'yes')
     saveSignalState(this)
     // Same ordering as openWeather, and the comment that used to sit on the
     // line above was simply wrong: it claimed to repaint as LOCATING, but it
@@ -130,7 +129,6 @@ export default {
    *  on [W] -- "not now" should be a decision, not a door closing. */
   declineWeather(s) {
     this.weatherConsent = 'no'
-    this.noteMetricConsent('weather', 'no')
     saveSignalState(this)
     this.closeWeather(s)
   },
@@ -158,7 +156,6 @@ export default {
         // row-0 readout does not sit blank while the program thinks it has
         // consent, and so the card is not re-asked on every [W].
         this.weatherConsent = 'no'
-        this.noteMetricConsent('weather', 'no')
         saveSignalState(this)
       } else if (WX.isStale(this._wx)) {
         this._wxPhase = 'loading'
