@@ -28,7 +28,7 @@ const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter,
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
 const { GREEN_ROOM_STATION, NIN_STATION, SECRET_STATIONS, STATIONS, STATION_PRESET_ORDER } = await import(`./stations.js?v=${V}`)
-const { FREQ_MAX, FREQ_MIN, LOCK_THRESHOLD, NEAR_THRESHOLD, RESUME_CUTOFF_MS, SCAN_STEP, SEEK_STEP, STATION_COLS, VISUALIZER_IDLE_MS, WARMUP_MS, clampFreq, freqToCol, nearestLockable, nearestSignal, nearestStation, shuffledIndices } = await import(`./tuning.js?v=${V}`)
+const { FREQ_MAX, FREQ_MIN, LOCK_THRESHOLD, NEAR_THRESHOLD, RESUME_CUTOFF_MS, SCAN_STEP, SEEK_STEP, VISUALIZER_IDLE_MS, WARMUP_MS, clampFreq, freqToCol, nearestLockable, nearestSignal, nearestStation, shuffledIndices, stationColsFor } = await import(`./tuning.js?v=${V}`)
 const { VISUALS } = await import(`./visuals/index.js?v=${V}`)
 const { default: desktopUi } = await import(`./ui/desktop.js?v=${V}`)
 const { default: mobileUi } = await import(`./ui/mobile.js?v=${V}`)
@@ -3007,7 +3007,7 @@ export default {
       // made it obvious, since a dial full of DIFFERENT shapes is something
       // you actually read. The cursor column was already excluded for the
       // same reason -- this just extends that to the markers.
-      if (x !== cursorCol && !STATION_COLS.has(x)) {
+      if (x !== cursorCol && !stationColsFor().has(x)) {
         const chars = ['·', '·', '·', ':', '.']
         s.term.put(x, DIAL_Y, chars[Math.floor(Math.random() * chars.length)], FAINT)
       }

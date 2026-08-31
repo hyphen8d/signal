@@ -10,13 +10,11 @@ const { DIAL_X0, DIAL_X1 } = await import(`./layout.js?v=${V}`)
 const { SECRET_STATIONS, STATIONS } = await import(`./stations.js?v=${V}`)
 
 
-// A wide, irregular fictional band -- not the real 88-108 FM range, and not
-// clean tenths like real station assignments, on purpose (8/20: the old
-// range read as too close to an actual FM dial).
-export const FREQ_MIN = 100.0
-export const FREQ_MAX = 900.0
-
 // --- the two bands (2026-08-31) ----------------------------------------
+//
+// Both are wide, irregular and fictional -- not the real 88-108 FM range, and
+// not clean tenths like real station assignments, on purpose (8/20: the old
+// range read as too close to an actual FM dial).
 //
 // WHY A SECOND BAND AT ALL, since the obvious ask was "more presets": the
 // preset keys were never the ceiling, the DIAL is. A station's NEAR_THRESHOLD
@@ -59,6 +57,25 @@ export const BANDS = [
   { key: 'zm', label: 'ZM', freqMin: 1000.0, freqMax: 1800.0 },
 ]
 export const DEFAULT_BAND = 'ym'
+// Falls back to the first band rather than throwing, deliberately: a bad key
+// reaching here means persisted state from a build that spelled the bands
+// differently, and landing a returning listener on YM is a better answer than
+// a receiver that will not boot. lint-roster refuses an unknown band in the
+// ROSTER, which is where a typo can actually be fixed.
+export const bandFor = (key) => BANDS.find((b) => b.key === key) ?? BANDS[0]
+
+// YM's edges under the names they had when there was only one band. Derived
+// rather than repeated so the two cannot drift apart.
+//
+// EVERY REMAINING READER OF THESE IS A YM ASSUMPTION waiting to be found. The
+// seek/scan wraparound and the guide's "BAND : 100.0 - 900.0 KHZ" line both
+// still read them, which is correct while YM is the only band anyone can
+// reach and wrong the moment ZM is switchable -- seeking off the top of ZM
+// would wrap to 100.0, a frequency that band does not contain. Those call
+// sites move to bandFor(this.band) when the switch lands; these two stay for
+// the things that genuinely mean "the original band", if any survive.
+export const FREQ_MIN = BANDS[0].freqMin
+export const FREQ_MAX = BANDS[0].freqMax
 // Scaled up ~40x from the old 88-108 tuning feel (20-wide band -> 800-wide).
 export const LOCK_THRESHOLD = 6
 export const NEAR_THRESHOLD = 24
@@ -95,15 +112,31 @@ export const WARMUP_MS = 2200
 export const VISUALIZER_IDLE_MS = 4 * 60 * 1000 + 20 * 1000
 
 
-export function freqToCol(f) {
-  const pct = (f - FREQ_MIN) / (FREQ_MAX - FREQ_MIN)
+// 2026-08-31 -- these three, and the three nearest-* questions below, take
+// the band as a trailing argument that DEFAULTS to YM. The default is what
+// makes adding a second band a change nothing has to notice yet: every
+// existing caller keeps asking the question it was already asking, about the
+// band that was the only one, and the seam for phase 3 exists without a
+// hundred call sites moving in the same commit as the arithmetic.
+//
+// The dial is always 71 columns wide whatever band is on it, so a band with a
+// wider range simply has coarser columns -- ZM's 800 units across the same
+// span as YM's 800 means they happen to be identical today, which is a
+// coincidence of the ranges chosen and not something to rely on.
+export function freqToCol(f, bandKey = DEFAULT_BAND) {
+  const b = bandFor(bandKey)
+  const pct = (f - b.freqMin) / (b.freqMax - b.freqMin)
   return Math.round(DIAL_X0 + pct * (DIAL_X1 - DIAL_X0))
 }
-export function colToFreq(col) {
+export function colToFreq(col, bandKey = DEFAULT_BAND) {
+  const b = bandFor(bandKey)
   const pct = (col - DIAL_X0) / (DIAL_X1 - DIAL_X0)
-  return FREQ_MIN + pct * (FREQ_MAX - FREQ_MIN)
+  return b.freqMin + pct * (b.freqMax - b.freqMin)
 }
-export function clampFreq(f) { return Math.min(FREQ_MAX, Math.max(FREQ_MIN, f)) }
+export function clampFreq(f, bandKey = DEFAULT_BAND) {
+  const b = bandFor(bandKey)
+  return Math.min(b.freqMax, Math.max(b.freqMin, f))
+}
 // 41st pass: dial columns holding a station marker, computed once (station
 // frequencies never change at runtime). frame()'s seek shimmer skips these
 // so it stops erasing the markers -- see the bug note there. Declared HERE
@@ -114,7 +147,22 @@ export function clampFreq(f) { return Math.min(FREQ_MAX, Math.max(FREQ_MIN, f)) 
 // it has no marker to protect, and reserving its column would carve a
 // permanently shimmer-free notch in the dial at 777.7, exactly the kind of
 // tell a hidden station should not have.
-export const STATION_COLS = new Set(STATIONS.map((ch) => freqToCol(ch.freq)))
+// 2026-08-31 -- per band, and memoised per band rather than computed once,
+// because "station frequencies never change at runtime" is still true but
+// "there is one set of them" stopped being. A plain STATION_COLS spanning the
+// whole roster would have protected ZM's columns from YM's shimmer: the
+// numbers collide freely between bands (both are 71 columns wide), so a
+// station at ZM 1400 and one at YM 500 can share a column index while sharing
+// nothing a listener can see.
+const stationColsCache = new Map()
+export function stationColsFor(bandKey = DEFAULT_BAND) {
+  let cols = stationColsCache.get(bandKey)
+  if (!cols) {
+    cols = new Set(STATIONS.filter((ch) => ch.band === bandKey).map((ch) => freqToCol(ch.freq, bandKey)))
+    stationColsCache.set(bandKey, cols)
+  }
+  return cols
+}
 // 2026-08-22 -- made it possible to lock into the station
 // using the tuner by going to 777.7 even though it is a "hidden" station
 // -- includes SECRET_STATIONS alongside STATIONS, so seeking/dragging/
@@ -165,18 +213,31 @@ export const STATION_COLS = new Set(STATIONS.map((ch) => freqToCol(ch.freq)))
 // byte-identical functions (both walk STATIONS + SECRET_STATIONS). They stay
 // two NAMES because they answer two different questions -- see the policy
 // note above -- and could diverge again; only the body is shared.
-export function nearestLockable(freq) { return nearestSignal(freq) }
-export function nearestStation(freq) {
+// 2026-08-31 -- all three now answer WITHIN ONE BAND. This is the part of the
+// dual-band change that is load-bearing rather than cosmetic: a station on
+// the band you are not tuned to is not distant, it is unreachable, and a
+// nearest-* that could see across bands would put its carrier in the SIG
+// meter, clear the hiss for it and let Enter lock something that is not on
+// the dial in front of you. Filtering here rather than at the call sites is
+// what makes that impossible to forget in one of the three.
+//
+// Returns { station: null, dist: Infinity } for a band with nothing on it,
+// which every caller already handles -- that was the state of the roster
+// before any station existed, and the null path never went away.
+export function nearestLockable(freq, bandKey = DEFAULT_BAND) { return nearestSignal(freq, bandKey) }
+export function nearestStation(freq, bandKey = DEFAULT_BAND) {
   let best = null, bestDist = Infinity
   for (const ch of STATIONS) {
+    if (ch.band !== bandKey) continue
     const d = Math.abs(ch.freq - freq)
     if (d < bestDist) { bestDist = d; best = ch }
   }
   return { station: best, dist: bestDist }
 }
-export function nearestSignal(freq) {
+export function nearestSignal(freq, bandKey = DEFAULT_BAND) {
   let best = null, bestDist = Infinity
   for (const ch of [...STATIONS, ...SECRET_STATIONS]) {
+    if (ch.band !== bandKey) continue
     const d = Math.abs(ch.freq - freq)
     if (d < bestDist) { bestDist = d; best = ch }
   }

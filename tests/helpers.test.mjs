@@ -25,6 +25,48 @@ test('freqToCol/colToFreq: band edges land on the dial edges and round-trip', ()
   assert.equal(clampFreq(FREQ_MAX + 50), FREQ_MAX)
 })
 
+// 2026-08-31 -- the same three claims asked of EVERY band rather than of the
+// one that used to be the only one. The default-argument seam means the test
+// above passes whether or not freqToCol understands bands at all, so on its
+// own it would go on being green through a broken second band.
+test('freqToCol/colToFreq/clampFreq: every band maps onto the same dial', () => {
+  const { BANDS, freqToCol, colToFreq, clampFreq } = tuning
+  const { DIAL_X0, DIAL_X1 } = layout
+  assert.ok(BANDS.length >= 2, 'there is more than one band to check')
+  for (const b of BANDS) {
+    assert.equal(freqToCol(b.freqMin, b.key), DIAL_X0, `${b.label} starts at the dial's left edge`)
+    assert.equal(freqToCol(b.freqMax, b.key), DIAL_X1, `${b.label} ends at the dial's right edge`)
+    for (let col = DIAL_X0; col <= DIAL_X1; col++) {
+      assert.equal(freqToCol(colToFreq(col, b.key), b.key), col, `${b.label} round-trips column ${col}`)
+    }
+    assert.equal(clampFreq(b.freqMin - 50, b.key), b.freqMin, `${b.label} clamps below`)
+    assert.equal(clampFreq(b.freqMax + 50, b.key), b.freqMax, `${b.label} clamps above`)
+  }
+})
+
+// The load-bearing half of the dual-band change: a station on the band you
+// are not tuned to is unreachable, not distant. Written against ZM while ZM
+// is still EMPTY, which is what makes it discriminating -- drop the band
+// filter from nearestStation and these stop being null, because the whole
+// roster is on YM and every one of them is "nearest" to anything asked.
+test('the nearest-* questions do not see across bands', () => {
+  const { nearestStation, nearestSignal, nearestLockable } = tuning
+  const onYm = stations.STATIONS.filter((st) => st.band === 'ym')
+  assert.ok(onYm.length > 0, 'YM has stations to be blind to')
+  for (const st of onYm) {
+    assert.equal(nearestStation(st.freq, 'zm').station, null, `${st.callsign} is invisible from ZM`)
+    assert.equal(nearestSignal(st.freq, 'zm').station, null, `${st.callsign} puts no carrier on ZM`)
+    assert.equal(nearestLockable(st.freq, 'zm').station, null, `${st.callsign} cannot be locked from ZM`)
+  }
+  for (const secret of stations.SECRET_STATIONS) {
+    assert.equal(nearestSignal(secret.freq, 'zm').station, null, `${secret.callsign} does not leak onto ZM`)
+  }
+  // An empty band answers the question rather than throwing, because every
+  // caller already handles the no-station case -- that was the roster's
+  // state before any station existed and the null path never went away.
+  assert.equal(nearestStation(1400, 'zm').dist, Infinity)
+})
+
 test('nearestStation never finds a secret station; nearestSignal/nearestLockable do', () => {
   const { nearestStation, nearestSignal, nearestLockable } = tuning
   // 2026-08-26: was NIN_STATION alone; walks SECRET_STATIONS now that
@@ -42,12 +84,23 @@ test('nearestStation never finds a secret station; nearestSignal/nearestLockable
   for (const st of stations.STATIONS) assert.equal(nearestStation(st.freq).station, st)
 })
 
-test('STATION_COLS: every public station has its own dial column; the secret ones are absent', () => {
-  const { STATION_COLS, freqToCol } = tuning
-  assert.equal(STATION_COLS.size, stations.STATIONS.length, 'no two public stations share a column')
-  for (const secret of stations.SECRET_STATIONS) {
-    assert.ok(!STATION_COLS.has(freqToCol(secret.freq)), `${secret.callsign} draws no dial tick`)
+test('stationColsFor: every public station has its own dial column; the secret ones are absent', () => {
+  const { BANDS, stationColsFor, freqToCol } = tuning
+  for (const b of BANDS) {
+    const cols = stationColsFor(b.key)
+    const onBand = stations.STATIONS.filter((st) => st.band === b.key)
+    assert.equal(cols.size, onBand.length, `${b.label}: no two public stations share a column`)
+    for (const secret of stations.SECRET_STATIONS.filter((st) => st.band === b.key)) {
+      assert.ok(!cols.has(freqToCol(secret.freq, b.key)), `${secret.callsign} draws no dial tick`)
+    }
   }
+  // A band's set holds only its OWN stations. Column INDICES collide freely
+  // between bands -- every band is drawn on the same 71 columns -- so a set
+  // spanning the roster would have let one band's shimmer guard protect
+  // another band's markers, which share nothing a listener can see.
+  const ym = stationColsFor('ym')
+  assert.equal(stationColsFor('zm').size, 0, 'ZM has no markers to protect yet')
+  assert.equal(ym.size, stations.STATIONS.filter((st) => st.band === 'ym').length)
 })
 
 // 2026-08-26, shipped with GREEN ROOM. The array/`station.secret` refactor
