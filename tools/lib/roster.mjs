@@ -565,25 +565,50 @@ export function verifyPatch(newSrc, stationId, expect) {
 // stations.md generator -- must stay identical to tools/stations-to-md.js.
 // ---------------------------------------------------------------------
 
+/** The stations.md snapshot. THE ONLY COPY -- tools/stations-to-md.js used to
+ *  carry a byte-identical duplicate of this loop and was the one actually run
+ *  from the command line, so a change here reached the dashboard and not the
+ *  CLI. It imports this now.
+ *
+ *  Grouped by band as of 2026-08-31, which is not cosmetic: without it the
+ *  file lists 1234.0 directly beneath 133.7 with nothing to say why, and a
+ *  reader has no way to know those two are not on the same dial.
+ *
+ *  Band labels are derived by upper-casing the key rather than imported from
+ *  tuning.js, deliberately: this module has NO imports at all -- that is what
+ *  lets tools/network.html load it in a browser -- and adding one to print a
+ *  two-letter heading would break the dashboard to save nothing. */
 export function buildStationsMd(STATIONS) {
   const lines = []
   lines.push('# SIGNAL -- station roster')
   lines.push('')
   lines.push(`Generated from stations.js. ${STATIONS.length} stations, ${STATIONS.reduce((n, c) => n + c.tracks.length, 0)} tracks total.`)
   lines.push('')
-  for (const st of STATIONS) {
-    lines.push(`## ${st.callsign} -- ${st.freq.toFixed(1)}`)
-    lines.push('')
-    lines.push(`*${st.tagline}*`)
-    lines.push('')
-    lines.push(`Ident tones (Hz): ${st.ident.join(', ')}`)
-    lines.push('')
-    lines.push(`Tracks (${st.tracks.length}):`)
-    lines.push('')
-    st.tracks.forEach((t, i) => {
-      lines.push(`${i + 1}. **${t.title}** -- ${t.artist}  ([youtu.be/${t.youtubeId}](https://youtu.be/${t.youtubeId}))`)
-    })
-    lines.push('')
+  const bands = []
+  for (const st of STATIONS) if (!bands.includes(st.band)) bands.push(st.band)
+  const multi = bands.length > 1
+  for (const band of bands) {
+    const onBand = STATIONS.filter((st) => st.band === band).sort((a, b) => a.freq - b.freq)
+    if (multi) {
+      lines.push(`# ${String(band).toUpperCase()} band`)
+      lines.push('')
+      lines.push(`${onBand.length} stations, ${onBand.reduce((n, c) => n + c.tracks.length, 0)} tracks. Its own dial, its own \`1\`-\`9\` presets.`)
+      lines.push('')
+    }
+    for (const st of onBand) {
+      lines.push(`## ${st.callsign} -- ${st.freq.toFixed(1)}`)
+      lines.push('')
+      lines.push(`*${st.tagline}*`)
+      lines.push('')
+      lines.push(`Ident tones (Hz): ${st.ident.join(', ')}`)
+      lines.push('')
+      lines.push(`Tracks (${st.tracks.length}):`)
+      lines.push('')
+      st.tracks.forEach((t, i) => {
+        lines.push(`${i + 1}. **${t.title}** -- ${t.artist}  ([youtu.be/${t.youtubeId}](https://youtu.be/${t.youtubeId}))`)
+      })
+      lines.push('')
+    }
   }
   return lines.join('\n')
 }

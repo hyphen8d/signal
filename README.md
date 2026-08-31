@@ -1,7 +1,8 @@
 # SIGNAL v0.9
 
 A community-facing, unofficial internet-radio-style web toy: a terminal/CRT
-tuning-dial receiver with 9 curated stations, real songs, station idents,
+tuning-dial receiver with 10 curated stations across two bands, real songs,
+station idents,
 scanning, presets, a local weather readout, an ambient tube hum, and a power
 switch.
 
@@ -183,7 +184,7 @@ every visualizer effect, and assert on what's on the grid.
 | `Enter` | Lock onto the nearest station |
 | `S` | Scan (auto-sweep, locks when it finds a station) |
 | `1`–`9` | Jump straight to a preset station |
-| `B` | Back to the previously locked station |
+| `B` | Band -- switches the dial between **YM** (100.0-900.0) and **ZM** (1000.0-1800.0). Each band is its own dial with its own stations, its own `1`-`9` presets and its own guide pages; the tuner box and the scale row above it are named for whichever one is up. The set remembers which band you left it on |
 | `N` | Next track on the current station |
 | `Up` / `Down` | Volume |
 | `M` | Mute |
@@ -224,7 +225,7 @@ Known gaps, not oversights.
 
 ## Stations
 
-9 stations, 420 tracks total (30-50 per station -- counts are uneven by design, curation over symmetry -- plus two secret stations carrying 57 more between them). Full roster with taglines and track lists:
+10 stations across two bands, 439 tracks total (19-50 per station -- counts are uneven by design, curation over symmetry -- plus two secret stations carrying 57 more between them). Full roster with taglines and track lists:
 [`stations.md`](./stations.md) — generated straight from the live
 `STATIONS` array in `stations.js` (`tools/stations-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station

@@ -29,18 +29,23 @@ const { DUCK_TAIL_MS } = await import(`../constants.js?v=${V}`)
 //   Style            0%
 //   Speaker boost    enabled
 //
-// CIRCUIT CRUSH's ID is scripted "Serkit Crush, four eighty-eight." -- this
-// voice reads "CIRCUIT" wrong when it opens a line, and Eleven Multilingual
-// v2 has no phoneme tags, so the spelling is the fix. Its LINER is not
-// respelled: the same words read correctly mid-sentence there. See
-// CALLSIGN_RESPELL in tools/lib/voice-settings.mjs.
+// CIRCUIT CRUSH's ID is scripted "Serkit Crush." -- this voice reads
+// "CIRCUIT" wrong when it OPENS a line, and Eleven Multilingual v2 has no
+// phoneme tags, so the spelling is the fix. Its LINER is not respelled: the
+// same words read correctly mid-sentence there. See CALLSIGN_RESPELL in
+// tools/lib/voice-settings.mjs. This matters more since 2026-08-31, not
+// less: a callsign-only ID is nothing BUT an opening.
 //
-// Station ID script is "<CALLSIGN>, <frequency, spoken>." -- e.g. SYNAPSE's
-// is literally "SYNAPSE, five sixty-seven point eight." Digits are spelled
-// out; the renderer says "five six seven point eight" if given 567.8. A
-// ROUND frequency drops the decimal: HACKBACK is "eight oh eight", not
-// "eight oh eight point zero" -- a station does not announce a trailing
-// zero. tools/lib/voice-settings.mjs generates both forms.
+// Station ID script is "<CALLSIGN>." and nothing else, as of 2026-08-31.
+// It used to be "<CALLSIGN>, <frequency, spoken>." and carried a small
+// generator to say numbers the way a presenter does. The frequency came out
+// so a station can change band or dial position without its clips going
+// stale -- the argument is at ID_SCRIPT in tools/lib/voice-settings.mjs, and
+// the retired generator's two non-obvious rules are recorded there too.
+//
+// The station LINERS dropped it in the same pass, with two deliberate
+// exceptions whose hook IS the number (CIPHER's and HACKBACK's -02 clips).
+// See the transcription block further down.
 //
 // Two things to check on every new clip before it goes in, both of which
 // have bitten:
@@ -639,50 +644,76 @@ export const GENERAL_LINER_FILES = [
   'audio/oneliner06.mp3',
   'audio/oneliner07.mp3',
 ]
-// TRANSCRIBED 2026-08-29, same pass as the generals above. THE FORMAT IS THE
-// POINT: every one of these is <hook>, then the callsign and frequency, in
-// that order. A liner that opens with the callsign reads as a different
-// station entirely, and that is not obvious from the filenames -- the first
-// batch of replacements was drafted the other way round before anyone
-// listened.
+// TRANSCRIBED 2026-08-29, same pass as the generals above.
 //
-// Round frequencies drop the decimal here too, exactly as the station IDs do:
-// "Cold Wave 273", never "273 point 0".
+// THE FORMAT IS STILL THE POINT, and half of it is unchanged: every one of
+// these is <hook> FIRST, then the callsign. A liner that opens with the
+// callsign reads as a different station entirely, which is not obvious from
+// the filenames -- the first batch of replacements was drafted the other way
+// round before anyone listened.
 //
-//   cipher            "They're listening. So are we. CIPHER, 133.7."
-//   distortion-field  "We love guitar solos. DISTORTION FIELD, 199.7."
-//   cold-wave         "Machines don't get lonely, we do. COLD WAVE, 273."
-//   drift-mode        "Sleep mode activated. DRIFT MODE, 321."  (retired)
+// 2026-08-31 -- THE FREQUENCY CAME OFF THE END. It used to close every line
+// ("...COLD WAVE, two seventy-three"), for the same reason a real station
+// does it. It came out so a station can change band or dial position without
+// its clips going stale -- see ID_SCRIPT in tools/lib/voice-settings.mjs for
+// the full argument. Fifteen of the seventeen were re-rendered on that day;
+// the scripts below are what they say now.
+//
+// TWO ARE DELIBERATELY UNCHANGED, and they are the reason this is worth
+// reading rather than skimming. cipher-02 and hackback-02 are the only lines
+// whose HOOK IS THE NUMBER -- one is about why 133.7 is funny, the other is
+// "the number's not an accident" about 808. Trimming the frequency off those
+// leaves a riddle with no answer, so they keep theirs. Both stations are
+// still on those frequencies, so both lines are still true; if either station
+// ever moves, RETIRE the clip rather than re-rendering it, because there is
+// no version of that joke that survives the number changing.
+//
+// A side effect worth knowing: the old set had three clips at 8.5-8.8s, long
+// enough that the duck held the music down for roughly nine seconds, which
+// a217ca1 flagged as possibly too long. Dropping the frequency took the
+// longest RE-RENDERED clip to 6.3s. cipher-02 is still 8.5s, because it is
+// one of the two that kept its frequency -- so the flag is reduced rather
+// than cleared, and it now applies to exactly one clip.
+//
+//   cipher            "They're listening. So are we. CIPHER."
+//   distortion-field  "We love guitar solos. DISTORTION FIELD."
+//   cold-wave         "Machines don't get lonely, we do. COLD WAVE."
+//   drift-mode        "Sleep mode activated. DRIFT MODE, 321."  (retired,
+//                      never re-rendered -- the station is gone)
 //   neon-stasis       "The food court closed an hour ago. Nobody told the
-//                      music. NEON STASIS, three twenty-one."
-//   circuit-crush     "The long way home every time. CIRCUIT CRUSH, 488."
-//   atomic            "Glowing in the dark since 1955. ATOMIC, 529."
-//   city-lights       "You're tuned in to Tokyo. CITY LIGHTS, 780."
-//   hackback          "A throwback state of mind. HACKBACK, 808."
+//                      music. NEON STASIS."
+//   circuit-crush     "The long way home every time. CIRCUIT CRUSH."
+//   atomic            "Glowing in the dark since 1955. ATOMIC."
+//   city-lights       "You're tuned in to Tokyo. CITY LIGHTS."
+//   hackback          "A throwback state of mind. HACKBACK."
+//   the-crypt        "The torches went out a long time ago. The music
+//                      didn't. THE CRYPT."          (new 2026-08-31)
 //
-// The -02 clips, written 2026-08-29 to that same shape. SYNAPSE gets its
-// first: it has had none since MOMENTUM was retired and its liner was
-// dropped rather than remapped.
+// The -02 clips. SYNAPSE has only an -01: it has had none since MOMENTUM was
+// retired and its liner was dropped rather than remapped.
 //
 //   cipher            "If you know why this frequency is funny, you're in the
 //                      right place. CIPHER, one thirty-three point seven."
+//                      KEPT WITH ITS FREQUENCY -- the hook is the number.
 //   distortion-field  "Every one of these was somebody's whole personality for
-//                      a year. DISTORTION FIELD, one ninety-nine point seven."
+//                      a year. DISTORTION FIELD."
 //   cold-wave         "Drum machines, bad decisions, and a lot of reverb.
-//                      COLD WAVE, two seventy-three."
+//                      COLD WAVE."
 //   drift-mode        "Nothing here is in a hurry. Neither are you.
 //                      DRIFT MODE, three twenty-one."   (retired)
 //   neon-stasis       "Second floor, past the fountain, keep walking.
-//                      NEON STASIS, three twenty-one."
+//                      NEON STASIS."
 //   circuit-crush     "Headlights, empty road, and a synthesiser that won't
-//                      quit. CIRCUIT CRUSH, four eighty-eight."
-//   atomic            "Still on the air, whatever the counter says.
-//                      ATOMIC, five twenty-nine."
+//                      quit. CIRCUIT CRUSH."
+//   atomic            "Still on the air, whatever the counter says. ATOMIC."
 //   midnight-neon     "Somewhere it's four in the morning and this is exactly
-//                      right. SYNAPSE, five sixty-seven point eight."
+//                      right. SYNAPSE."                (the -01 file)
 //   city-lights       "Tokyo, after dark, about forty years ago.
-//                      CITY LIGHTS, seven eighty."
+//                      CITY LIGHTS."
 //   hackback          "The number's not an accident. HACKBACK, eight oh eight."
+//                      KEPT WITH ITS FREQUENCY -- the hook is the number.
+//   the-crypt        "Nobody has come down these stairs in centuries.
+//                      THE CRYPT."                    (new 2026-08-31)
 export const STATION_LINER_FILES = {
   cipher: ['audio/liner-cipher-01.mp3', 'audio/liner-cipher-02.mp3'],
   'distortion-field': ['audio/liner-distortion-field-01.mp3', 'audio/liner-distortion-field-02.mp3'],
@@ -727,6 +758,11 @@ export const STATION_LINER_FILES = {
   'midnight-neon': ['audio/liner-synapse-01.mp3'],
   'city-lights': ['audio/liner-city-lights-01.mp3', 'audio/liner-city-lights-02.mp3'],
   hackback: ['audio/liner-hackback-01.mp3', 'audio/liner-hackback-02.mp3'],
+  // 2026-08-31 -- ZM's first station, and the first pair written after the
+  // frequency came out of the format. Present-and-populated from the day it
+  // shipped, which is the case the note above says to reach for only when a
+  // station beats its clips to the dial.
+  'the-crypt': ['audio/liner-the-crypt-01.mp3', 'audio/liner-the-crypt-02.mp3'],
 }
 export const LINER_FILES = {}
 for (const stId in STATION_LINER_FILES) {

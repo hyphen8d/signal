@@ -41,7 +41,7 @@ test('[P] runs the POST readout on the always-queue and lands locked', async () 
     assert.equal(h.program._powerAnimating, false)
     assert.equal(h.program.mode, 'locked')
     assert.match(h.row(0), /SIGNAL v\d/)
-    assert.ok(h.row(3).includes('TUNING BAND'))
+    assert.ok(h.row(3).includes(h.program.bandBoxTitle()))
     assert.ok(h.row(12).includes('NOW PLAYING'))
     assert.match(h.row(2), /\[\s+(LOCKED|MUTED)\s+\]/)
     assert.ok(h.row(9).includes(h.program.lockedStation.callsign), 'callsign resolved on the STATION row')
@@ -73,7 +73,7 @@ test('guide opened during the boot-flicker tail is not punched through', async (
     h.key('x') // any other key closes it
     assert.equal(h.program.guideOpen, false)
     h.advance(700) // the frozen flicker beats fire now, onto the rebuilt chrome
-    assert.ok(h.row(3).includes('TUNING BAND'))
+    assert.ok(h.row(3).includes(h.program.bandBoxTitle()))
     assert.ok(h.row(12).includes('NOW PLAYING'))
     assert.ok(h.row(23).includes('[ENTER] LOCK'))
   } finally { h.shutdown() }
@@ -182,7 +182,7 @@ test('visualizer: every effect draws without throwing and exits back to the main
     h.key('e')
     assert.equal(h.program.visualizerActive, false)
     h.advance(400)
-    assert.ok(h.row(3).includes('TUNING BAND'))
+    assert.ok(h.row(3).includes(h.program.bandBoxTitle()))
     assert.ok(h.row(12).includes('NOW PLAYING'))
     assert.ok(h.row(9).includes(h.program.lockedStation.callsign))
   } finally { h.shutdown() }
@@ -237,7 +237,7 @@ test('a tab that never gets a frame still completes the cold-open and a power-on
     h.idle(4500)
     assert.equal(h.program.poweredOn, true, 'boot completed with rAF starved')
     h.advance(200) // first real frames after the window comes forward
-    assert.ok(h.row(3).includes('TUNING BAND'))
+    assert.ok(h.row(3).includes(h.program.bandBoxTitle()))
     assert.ok(h.row(9).includes(h.program.lockedStation.callsign))
   } finally { h.shutdown() }
 })
@@ -374,7 +374,7 @@ test('consent pass: [A] re-opens the card after a decline', async () => {
     h.key('Escape')
     assert.equal(h.program.tapConsentOpen, false)
     assert.equal(h.program.visualizerActive, false, '[A] is not a way into the visualizer')
-    assert.ok(h.find('TUNING BAND') >= 0, 'main screen rebuilt underneath')
+    assert.ok(h.find(h.program.bandBoxTitle()) >= 0, 'main screen rebuilt underneath')
   } finally { h.shutdown() }
 })
 
@@ -388,7 +388,7 @@ test('consent pass: nothing paints through the card', async () => {
     // this file's history; the card takes the same bail in frame()/_tickFx.
     h.advance(3000)
     assert.equal(h.rows().join('\n'), before, 'card is pixel-identical after 3s of frames')
-    assert.equal(h.find('TUNING BAND'), -1, 'no main-screen chrome bleeding through')
+    assert.equal(h.find(h.program.bandBoxTitle()), -1, 'no main-screen chrome bleeding through')
   } finally { h.shutdown() }
 })
 
@@ -618,7 +618,7 @@ test('[A] re-opens the LINE INPUT card from inside the visualizer', async () => 
     h.advance(200)
     assert.equal(h.program.tapConsentOpen, false)
     assert.equal(h.program.visualizerActive, true, 'and hands back to the visualizer, not the main screen')
-    assert.equal(h.find('TUNING BAND'), -1, 'no main-screen chrome bled through')
+    assert.equal(h.find(h.program.bandBoxTitle()), -1, 'no main-screen chrome bled through')
   } finally { h.shutdown() }
 })
 
@@ -777,28 +777,118 @@ test('off-station, the advertised controls answer instead of going dead', async 
     assert.equal(h.program._statusText, 'NO SIGNAL')
     assert.equal(h.program.visualizerActive, false)
     h.advance(1200)
-    // [B] BACK -- on the footer's top row, dead for a whole first session.
-    h.program.history.length = 0
-    h.key('b')
-    assert.equal(h.program._statusText, 'NO HISTORY')
-    h.advance(400)
-    assert.ok(h.find('NO HISTORY') >= 0, '[B] with an empty history says so')
+    // [B] was BACK here, and was this sweep's other finding: dead for a whole
+    // first session, because the history stack is empty until you have left a
+    // station. It is BAND as of 2026-08-31 and has no dead state to test --
+    // there is always another band to switch to. See the band tests below.
   } finally { h.shutdown() }
 })
 
-test('[B] still steps back when there IS history', async () => {
+// 2026-08-31 -- land on a named band DETERMINISTICALLY, and always by
+// switching into it. A boot picks a random station and now sets the band to
+// match, so a test can start on either one; and a band you are merely already
+// on has the cursor parked whereever that station sits, which hides its own
+// marker. Arriving via [B] always lands at the band floor, where neither band
+// has a station.
+async function toBand(h, want) {
+  for (let i = 0; i < 6 && h.program.band === want; i++) { h.key('b'); h.advance(600) }
+  for (let i = 0; i < 6 && h.program.band !== want; i++) { h.key('b'); h.advance(600) }
+  assert.equal(h.program.band, want, `could not reach band ${want}`)
+}
+
+test('a fresh boot never lands on a station from another band', async () => {
+  // A boot picks a station at RANDOM from the whole roster, which is
+  // deliberate -- it is how the second band gets found without knowing [B]
+  // exists. It used to set only the frequency, so a ZM pick left the dial
+  // showing YM: off-scale frequency, wrong band's guide index, and
+  // nearestStation blind to the station actually locked.
+  //
+  // Booted repeatedly because the bug was PROBABILISTIC -- with three of ten
+  // stations on ZM a single boot missed it seven times in ten, which is
+  // exactly why it showed up as one intermittently failing unrelated test
+  // rather than as a fault anybody could reproduce.
+  const seen = new Set()
+  for (let i = 0; i < 12; i++) {
+    const h = await boot({})
+    try {
+      h.powerOn(); h.advance(1200)
+      const st = h.program.lockedStation
+      if (!st) continue
+      seen.add(st.band)
+      assert.equal(h.program.band, st.band,
+        `booted onto ${st.callsign} (${st.band}) with the dial on ${h.program.band}`)
+    } finally { h.shutdown() }
+  }
+  assert.ok(seen.size > 0, 'at least one boot landed on a station')
+})
+
+test('[B] switches band, drops the lock, and lands at the new band floor', async () => {
   const h = await boot({})
   try {
     h.powerOn()
+    // Start from a known band: this asserts ZM's own scale numbers below, so
+    // it has to know which way [B] is about to go.
+    await toBand(h, 'ym')
     h.key(await otherPreset(h)); h.advance(2500)
-    const first = h.program.lockedStation
-    h.key(await otherPreset(h)); h.advance(2500)
-    assert.notEqual(h.program.lockedStation, first, 'test setup: two different stations')
-    h.key('b'); h.advance(2500)
-    assert.equal(h.program.lockedStation, first, '[B] returned to the previous station')
-    assert.notEqual(h.program._statusText, 'NO HISTORY')
+    assert.ok(h.program.lockedStation, 'test setup: locked onto something first')
+    const from = h.program.band
+
+    h.key('b'); h.advance(600)
+    assert.notEqual(h.program.band, from, '[B] moved to another band')
+    // The lock is dropped rather than carried: a station on the band you are
+    // no longer tuned to is not distant, it is not on this dial at all.
+    assert.equal(h.program.lockedStation, null, 'the lock did not survive the band change')
+    assert.equal(h.program.mode, 'seeking')
+    assert.ok(h.row(3).includes(h.program.bandBoxTitle()), 'the tuner box is named for the new band')
+    // The scale row is read off the grid rather than recomputed, because it
+    // is the thing a listener actually uses to know which band is up -- and
+    // because asserting against a separately imported tuning.js would be a
+    // DIFFERENT module instance from the one this program booted with (each
+    // boot gets its own ?v=), which is the trap this harness exists inside.
+    assert.ok(h.row(4).includes('1000.0'), 'the scale row shows the new band floor')
+    assert.ok(h.row(4).includes('1800.0'), 'the scale row shows the new band ceiling')
+    assert.ok(h.row(6).includes('1000.0'), 'the frequency readout landed on the floor')
+
+    // ...and back again. Two bands means one key cycles, so this returns.
+    h.key('b'); h.advance(600)
+    assert.equal(h.program.band, from, '[B] cycles rather than dead-ending')
   } finally { h.shutdown() }
 })
+
+test("each band's dial draws only its own stations' glyphs", async () => {
+  const h = await boot({})
+  try {
+    h.powerOn()
+    h.advance(1200)
+    // Written first as "an empty band draws no markers", which held only
+    // while ZM had no residents. Once SYNAPSE and CIRCUIT CRUSH crossed, the
+    // premise was gone -- so the claim moved to the one that outlives any
+    // arrangement of the roster: a dial shows its own band and nothing else.
+    // ZM FIRST, which matters: a fresh boot lands on a RANDOM station (see
+    // otherPreset's note), so the cursor may be parked on top of a marker and
+    // hiding the very glyph this test is looking for -- that is what it does,
+    // correctly, and it cost a run to spot. Reaching a band by SWITCHING to
+    // it always lands at that band's floor, column 4, and neither band has a
+    // station there. Starting on YM, this order switches into both.
+    const seen = {}
+    for (const want of ['zm', 'ym']) {
+      await toBand(h, want)
+      seen[want] = { row: h.row(5), mine: h.program.bandPresets().map((st) => st.glyph) }
+      assert.ok(seen[want].mine.length > 0, `test setup: ${want} has residents`)
+    }
+    for (const [band, { row, mine }] of Object.entries(seen)) {
+      const other = band === 'ym' ? seen.zm.mine : seen.ym.mine
+      for (const g of mine) assert.ok(row.includes(g), `${band}: own glyph ${g} is on the dial`)
+      // The discriminating half. Glyphs are unique across the roster, so an
+      // unfiltered drawDial would paint the other band's marks here.
+      for (const g of other) {
+        if (mine.includes(g)) continue
+        assert.ok(!row.includes(g), `${band}: foreign glyph ${g} must not be drawn`)
+      }
+    }
+  } finally { h.shutdown() }
+})
+
 
 test('the visualizer clicks only for keys it actually answers', async () => {
   const h = await boot({})
@@ -1614,8 +1704,13 @@ test('guide index: every station row shares the same column stops', async () => 
     h.powerOn()
     await openIndex(h)
     const C = h.program.GUIDE_INDEX_COLS
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
-    STATION_PRESET_ORDER.forEach((ch, i) => {
+    // 2026-08-31 -- the guide pages the CURRENT band, so this walks the same
+    // list the page does. It used to import the flat whole-roster order,
+    // which was the same thing until SYNAPSE and CIRCUIT CRUSH crossed to ZM
+    // and their rows stopped existing on YM's pages.
+    const order = h.program.bandPresets()
+    assert.ok(order.length > 0, 'test setup: the current band has rows to check')
+    order.forEach((ch, i) => {
       const row = h.row(5 + i)
       const num = `[${String(i + 1).padStart(2, '0')}]`
       const freq = ch.freq.toFixed(1)
@@ -1644,12 +1739,17 @@ test("guide detail: every station's desc is shown in full, not cut off", async (
   try {
     h.powerOn()
     await openIndex(h)
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    // 2026-08-31 -- the current band's stations, not the flat roster: the
+    // guide pages one band, so walking every station would step off the end
+    // of the pages that exist and then assert against whatever was still on
+    // screen. Same correction as the index test above.
+    const order = h.program.bandPresets()
+    assert.ok(order.length > 0, 'test setup: the current band has detail pages')
     // Into the first station's page from the index, then [->] walks the
-    // rest -- the detail pages step through the roster in preset order.
+    // rest -- the detail pages step through the band in preset order.
     h.key('1'); h.advance(200)
-    for (let i = 0; i < STATION_PRESET_ORDER.length; i++) {
-      const ch = STATION_PRESET_ORDER[i]
+    for (let i = 0; i < order.length; i++) {
+      const ch = order[i]
       // Rows 8-10 are the desc block. A budget overrun shows up as the
       // ellipsis the drawing code appends, on the last of them.
       const drawn = [h.row(8), h.row(9), h.row(10)].map((r) => r.trimEnd())
@@ -1694,8 +1794,13 @@ test('guide index from STANDBY claims nothing is on air', async () => {
     assert.equal(h.program.poweredOn, false, 'still in STANDBY')
     h.key('ArrowRight'); h.advance(200)
     const C = h.program.GUIDE_INDEX_COLS
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
-    STATION_PRESET_ORDER.forEach((ch, i) => {
+    // 2026-08-31 -- the guide pages the CURRENT band, so this walks the same
+    // list the page does. It used to import the flat whole-roster order,
+    // which was the same thing until SYNAPSE and CIRCUIT CRUSH crossed to ZM
+    // and their rows stopped existing on YM's pages.
+    const order = h.program.bandPresets()
+    assert.ok(order.length > 0, 'test setup: the current band has rows to check')
+    order.forEach((ch, i) => {
       assert.equal(h.row(5 + i)[C.mark], ' ', `${ch.callsign}: no marker with the set off`)
     })
     assert.equal(h.find('the station you are tuned to right now'), -1, 'and no legend for a marker that is not drawn')
@@ -1705,11 +1810,11 @@ test('guide index from STANDBY claims nothing is on air', async () => {
 test('guide station page counts its sample against the real tracklist', async () => {
   const h = await boot()
   try {
-    h.powerOn()
+    h.powerOn(); await toBand(h, 'ym')
+    const PRESETS = h.program.bandPresets()
     await openIndex(h)
     h.key('ArrowRight'); h.advance(200) // first station detail page
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
-    const ch = STATION_PRESET_ORDER[0]
+    const ch = PRESETS[0]
     assert.ok(ch.tracks.length > 6, 'this station has more than the page samples')
     assert.ok(h.find(`SAMPLE TRACKS (6 OF ${ch.tracks.length})`) >= 0,
       'six tracks with no denominator reads as the whole tracklist')
@@ -1725,11 +1830,11 @@ test('guide station header: tagline joins the callsign on the wide grid, stacks 
   // held those rows apart.
   const wide = await boot()
   try {
-    wide.powerOn()
+    wide.powerOn(); await toBand(wide, 'ym')
+    const PRESETS = wide.program.bandPresets()
     await openIndex(wide)
     wide.key('ArrowRight'); wide.advance(200)
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${wide.tag}`)
-    const ch = STATION_PRESET_ORDER[0]
+    const ch = PRESETS[0]
     const row3 = wide.row(3)
     assert.ok(row3.includes(ch.callsign), 'callsign on the header row')
     assert.ok(row3.includes(ch.tagline), 'and the tagline joins it there')
@@ -1738,11 +1843,13 @@ test('guide station header: tagline joins the callsign on the wide grid, stacks 
 
   const lite = await boot({ mobile: true })
   try {
-    lite.powerOn()
+    lite.powerOn(); await toBand(lite, 'ym')
+    // Its own binding: the wide harness's list is scoped to that try block,
+    // and these are two separate programs with their own module instances.
+    const litePresets = lite.program.bandPresets()
     await openIndex(lite)
     lite.key('ArrowRight'); lite.advance(200)
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${lite.tag}`)
-    const ch = STATION_PRESET_ORDER[0]
+    const ch = litePresets[0]
     assert.ok(lite.row(3).includes(ch.callsign), 'callsign still whole on 42 cols')
     assert.ok(!lite.row(3).includes('...'), 'and the header row never truncates')
     assert.ok(lite.row(4).trim().length > 0, 'tagline stacks below instead')
@@ -1831,7 +1938,7 @@ test('guide index and station pages keep their footers on the lite grid', async 
   // lite guide had no nav hint below page 1. Same fault page 1 already fixed.
   const h = await boot({ mobile: true })
   try {
-    h.powerOn()
+    h.powerOn(); await toBand(h, 'ym')
     assert.equal(h.term.rows, 22)
     await openIndex(h)
     assert.ok(h.row(h.term.rows - 1).includes('TAP CLOSE'), 'index footer lands inside the grid')

@@ -1,6 +1,69 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 9 stations, 420 tracks total.
+Generated from stations.js. 10 stations, 439 tracks total.
+
+# YM band
+
+7 stations, 320 tracks. Its own dial, its own `1`-`9` presets.
+
+## CIPHER -- 133.7
+
+*digital infiltration, late-night breakbeat*
+
+Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
+
+Tracks (50):
+
+1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
+2. **Omen** -- The Prodigy  ([youtu.be/xMVTKOoy1uk](https://youtu.be/xMVTKOoy1uk))
+3. **Block Rockin' Beats** -- The Chemical Brothers  ([youtu.be/iTxOKsyZ0Lw](https://youtu.be/iTxOKsyZ0Lw))
+4. **Halcyon** -- Orbital  ([youtu.be/3SwwljI-8JY](https://youtu.be/3SwwljI-8JY))
+5. **The Box** -- Orbital  ([youtu.be/yJnve05CnNE](https://youtu.be/yJnve05CnNE))
+6. **Teardrop** -- Massive Attack  ([youtu.be/u7K72X4eo_s](https://youtu.be/u7K72X4eo_s))
+7. **Born Slippy .NUXX** -- Underworld  ([youtu.be/XiMrrleH_hI](https://youtu.be/XiMrrleH_hI))
+8. **Rez** -- Underworld  ([youtu.be/F6Y7lcvubhU](https://youtu.be/F6Y7lcvubhU))
+9. **Clubbed to Death (Kurayamino Mix)** -- Rob Dougan  ([youtu.be/DzNex7Mf1bg](https://youtu.be/DzNex7Mf1bg))
+10. **Prime Audio Soup** -- Meat Beat Manifesto  ([youtu.be/7xI8mCKLiRM](https://youtu.be/7xI8mCKLiRM))
+11. **Spybreak! (Short One)** -- Propellerheads  ([youtu.be/Agbn4NzOj04](https://youtu.be/Agbn4NzOj04))
+12. **Busy Child** -- The Crystal Method  ([youtu.be/OjTC88oIRys](https://youtu.be/OjTC88oIRys))
+13. **B-Boy Stance** -- Freestylers  ([youtu.be/XAlLaGhfLq4](https://youtu.be/XAlLaGhfLq4))
+14. **Right Here, Right Now** -- Fatboy Slim  ([youtu.be/ub747pprmJ8](https://youtu.be/ub747pprmJ8))
+15. **Sour Times** -- Portishead  ([youtu.be/8B-i1vsA6jw](https://youtu.be/8B-i1vsA6jw))
+16. **No Good (Start the Dance)** -- The Prodigy  ([youtu.be/svJvT6ruolA](https://youtu.be/svJvT6ruolA))
+17. **(Can't You) Trip Like I Do** -- Filter & The Crystal Method  ([youtu.be/Q7SedYMP-PA](https://youtu.be/Q7SedYMP-PA))
+18. **Bentley's Gonna Sort You Out** -- Bentley Rhythm Ace  ([youtu.be/WrDXJp-uDoY](https://youtu.be/WrDXJp-uDoY))
+19. **The Gift** -- Way Out West  ([youtu.be/NxsevNnHfzs](https://youtu.be/NxsevNnHfzs))
+20. **Keep Hope Alive** -- The Crystal Method  ([youtu.be/LZi4qE6Ll6E](https://youtu.be/LZi4qE6Ll6E))
+21. **Atom Bomb** -- Fluke  ([youtu.be/PHMzCpy0fXc](https://youtu.be/PHMzCpy0fXc))
+22. **Leave You Far Behind** -- Lunatic Calm  ([youtu.be/maP6q3D4Hf0](https://youtu.be/maP6q3D4Hf0))
+23. **Angel** -- Massive Attack  ([youtu.be/hbe3CQamF8k](https://youtu.be/hbe3CQamF8k))
+24. **Ain't Talkin' 'bout Dub** -- Apollo 440  ([youtu.be/d0PCD7YMfeY](https://youtu.be/d0PCD7YMfeY))
+25. **Supermoves** -- Overseer  ([youtu.be/MwZmPJFNVbw](https://youtu.be/MwZmPJFNVbw))
+26. **6 Underground** -- Sneaker Pimps  ([youtu.be/Wuwfe3DRJzE](https://youtu.be/Wuwfe3DRJzE))
+27. **Def Beat** -- Junkie XL  ([youtu.be/7qZW9P7W-nc](https://youtu.be/7qZW9P7W-nc))
+28. **Stem / Long Stem** -- DJ Shadow  ([youtu.be/Ihr0y7ayGV0](https://youtu.be/Ihr0y7ayGV0))
+29. **Dirt** -- Death in Vegas  ([youtu.be/Jd_UCgMaHYQ](https://youtu.be/Jd_UCgMaHYQ))
+30. **Genius** -- Pitchshifter  ([youtu.be/sGcdcVblZ-8](https://youtu.be/sGcdcVblZ-8))
+31. **Voodoo People** -- The Prodigy  ([youtu.be/YV78vobCyIo](https://youtu.be/YV78vobCyIo))
+32. **Absurd** -- Fluke  ([youtu.be/DAQISes7iXU](https://youtu.be/DAQISes7iXU))
+33. **Ruffneck** -- Freestylers  ([youtu.be/kQ_sSs8pr1g](https://youtu.be/kQ_sSs8pr1g))
+34. **Ultrasonic Sound** -- Hive  ([youtu.be/lGqzRmDcC14](https://youtu.be/lGqzRmDcC14))
+35. **Godzilla Dub** -- ZeroFG  ([youtu.be/mloHngTITZ8](https://youtu.be/mloHngTITZ8))
+36. **Born In '94** -- Unglued  ([youtu.be/VHqc2Yqwwu4](https://youtu.be/VHqc2Yqwwu4))
+37. **Take California** -- Propellerheads  ([youtu.be/81bG15gsl70](https://youtu.be/81bG15gsl70))
+38. **Y'all Ready For Dis** -- Y U QT  ([youtu.be/OTvB4XMsg1U](https://youtu.be/OTvB4XMsg1U))
+39. **Hey Boy Hey Girl** -- The Chemical Brothers  ([youtu.be/tpKCqp9CALQ](https://youtu.be/tpKCqp9CALQ))
+40. **Setting Sun** -- The Chemical Brothers  ([youtu.be/0u3qQtvU5SQ](https://youtu.be/0u3qQtvU5SQ))
+41. **Breathe** -- The Prodigy  ([youtu.be/Wo7XxlXU3XQ](https://youtu.be/Wo7XxlXU3XQ))
+42. **Name of the Game** -- The Crystal Method  ([youtu.be/A12-KN5UijA](https://youtu.be/A12-KN5UijA))
+43. **Cowgirl** -- Underworld  ([youtu.be/qEYeT-f1Fdo](https://youtu.be/qEYeT-f1Fdo))
+44. **Inertia Creeps** -- Massive Attack  ([youtu.be/GjlklxY-fWI](https://youtu.be/GjlklxY-fWI))
+45. **Six Days** -- DJ Shadow  ([youtu.be/BEqHME6XUi8](https://youtu.be/BEqHME6XUi8))
+46. **Satan** -- Orbital  ([youtu.be/tP8tpAs9qhI](https://youtu.be/tP8tpAs9qhI))
+47. **Zion** -- Fluke  ([youtu.be/cFffoHmn8XA](https://youtu.be/cFffoHmn8XA))
+48. **Back on a Mission** -- Cirrus  ([youtu.be/Qe9vdnNQAhc](https://youtu.be/Qe9vdnNQAhc))
+49. **Battleflag** -- Lo Fidelity Allstars  ([youtu.be/B99nd2iKGOw](https://youtu.be/B99nd2iKGOw))
+50. **Ready Steady Go** -- Paul Oakenfold  ([youtu.be/MSv3Oez4O-4](https://youtu.be/MSv3Oez4O-4))
 
 ## DISTORTION FIELD -- 199.7
 
@@ -61,45 +124,6 @@ Tracks (50):
 49. **Plowed** -- Sponge  ([youtu.be/OGKRr0NmgFM](https://youtu.be/OGKRr0NmgFM))
 50. **Shine** -- Collective Soul  ([youtu.be/iuB1A2VJ3-k](https://youtu.be/iuB1A2VJ3-k))
 
-## NEON STASIS -- 321.0
-
-*closing time in a mall that never was*
-
-Ident tones (Hz): 523.3, 440, 349.2, 523.3
-
-Tracks (30):
-
-1. **Sembikiya Restaurant** -- Cat System Corp  ([youtu.be/xAh-nngGZ6I](https://youtu.be/xAh-nngGZ6I))
-2. **Roadtrips in Spring** -- Waterfront Dining  ([youtu.be/boofE5_HtkI](https://youtu.be/boofE5_HtkI))
-3. **What's Love** -- Waterfront Dining  ([youtu.be/oVnx6cxbIwQ](https://youtu.be/oVnx6cxbIwQ))
-4. **Paradise Vacations** -- Waterfront Dining  ([youtu.be/Q-hG1GSVb-8](https://youtu.be/Q-hG1GSVb-8))
-5. **Death Became Her** -- 18 Carat Affair  ([youtu.be/xe610x1aIjM](https://youtu.be/xe610x1aIjM))
-6. **Summer Night** -- ESPRIT  ([youtu.be/pgZCxhhUBMs](https://youtu.be/pgZCxhhUBMs))
-7. **Dreaming** -- Dan Mason  ([youtu.be/9tBj5zv4S1A](https://youtu.be/9tBj5zv4S1A))
-8. **Lisa Frank 420 / Modern Computing** -- Macintosh Plus  ([youtu.be/aQkPcPqTq4M](https://youtu.be/aQkPcPqTq4M))
-9. **Eccojam A1** -- Chuck Person  ([youtu.be/0T17gsA67og](https://youtu.be/0T17gsA67og))
-10. **Nobody Here** -- Sunset Corp  ([youtu.be/-RFunvF0mDw](https://youtu.be/-RFunvF0mDw))
-11. **Angel** -- Sunset Corp  ([youtu.be/dN0czUMRMU8](https://youtu.be/dN0czUMRMU8))
-12. **Dream Sequins** -- Nmesh  ([youtu.be/l7nsljmRX_s](https://youtu.be/l7nsljmRX_s))
-13. **Salsa Verde** -- Vaperror  ([youtu.be/osKY4JMmmt0](https://youtu.be/osKY4JMmmt0))
-14. **Teen Pregnancy** -- Blank Banshee  ([youtu.be/RQxDM2K-hd0](https://youtu.be/RQxDM2K-hd0))
-15. **Cherry Pepsi** -- Saint Pepsi  ([youtu.be/OrR1TGQY20Y](https://youtu.be/OrR1TGQY20Y))
-16. **Enjoy Yourself** -- Saint Pepsi  ([youtu.be/_hI0qMtdfng](https://youtu.be/_hI0qMtdfng))
-17. **Fiona Coyne** -- Skylar Spence  ([youtu.be/tCcamt8KZNQ](https://youtu.be/tCcamt8KZNQ))
-18. **Resonance** -- Home  ([youtu.be/aBhrEv5Z7uc](https://youtu.be/aBhrEv5Z7uc))
-19. **Before the Night** -- Home  ([youtu.be/D__gB1DzHIc](https://youtu.be/D__gB1DzHIc))
-20. **We're Finally Landing** -- Home  ([youtu.be/mbMoY1dxbEY](https://youtu.be/mbMoY1dxbEY))
-21. **Half Moon** -- Home  ([youtu.be/yRlBcUJZJHA](https://youtu.be/yRlBcUJZJHA))
-22. **Venus Aire** -- Windows 96  ([youtu.be/X6PnNgYSa5s](https://youtu.be/X6PnNgYSa5s))
-23. **Hypnosis** -- Windows 96  ([youtu.be/4GhvYoo4088](https://youtu.be/4GhvYoo4088))
-24. **Transient Feeling** -- Windows 96  ([youtu.be/7P4fatlUbvg](https://youtu.be/7P4fatlUbvg))
-25. **Glass Prism** -- Windows 96  ([youtu.be/bxCU_P0Y1CE](https://youtu.be/bxCU_P0Y1CE))
-26. **Lunar Food Court** -- Disconscious  ([youtu.be/M-3esa1G50U](https://youtu.be/M-3esa1G50U))
-27. **Elevator Up** -- Disconscious  ([youtu.be/7EuuRDGUMMA](https://youtu.be/7EuuRDGUMMA))
-28. **Fountain Plaza** -- Disconscious  ([youtu.be/f0PSLV_b5g0](https://youtu.be/f0PSLV_b5g0))
-29. **Second Floor** -- Cat System Corp  ([youtu.be/k6xkSvMIvwk](https://youtu.be/k6xkSvMIvwk))
-30. **Veni, Vidi, Emi** -- Cat System Corp  ([youtu.be/Qg7vgIdDDno](https://youtu.be/Qg7vgIdDDno))
-
 ## COLD WAVE -- 273.0
 
 *synthetic hearts, borrowed neon*
@@ -159,64 +183,93 @@ Tracks (50):
 49. **Hold Me Now** -- Thompson Twins  ([youtu.be/qMpBobAonKs](https://youtu.be/qMpBobAonKs))
 50. **You Spin Me Round (Like a Record)** -- Dead Or Alive  ([youtu.be/rc6vowZjWOs](https://youtu.be/rc6vowZjWOs))
 
-## SYNAPSE -- 567.8
+## NEON STASIS -- 321.0
 
-*shifting the plates of the underground*
+*closing time in a mall that never was*
 
-Ident tones (Hz): 293.7, 349.2, 415.3, 466.2
+Ident tones (Hz): 523.3, 440, 349.2, 523.3
 
-Tracks (50):
+Tracks (30):
 
-1. **TESLA** -- Mau P  ([youtu.be/rVp454wjqls](https://youtu.be/rVp454wjqls))
-2. **Take It Off** -- FISHER & Aatig  ([youtu.be/0CKkRtkzw4g](https://youtu.be/0CKkRtkzw4g))
-3. **Fancy $hit** -- CID & Taylr Renee  ([youtu.be/FhbxFnNm-S8](https://youtu.be/FhbxFnNm-S8))
-4. **Rhyme Dust** -- MK & Dom Dolla  ([youtu.be/OvW5y3lZ7rc](https://youtu.be/OvW5y3lZ7rc))
-5. **Jealous** -- Mochakk  ([youtu.be/JalJnTs3mzk](https://youtu.be/JalJnTs3mzk))
-6. **Murder Mystery** -- Jamie Jones  ([youtu.be/SYTqNepDhl8](https://youtu.be/SYTqNepDhl8))
-7. **Beggin'** -- Chris Lake & Aluna  ([youtu.be/x8mdqMcOAUo](https://youtu.be/x8mdqMcOAUo))
-8. **Where You Are (Gorgon City Remix)** -- John Summit & Hayla  ([youtu.be/gPZ1_4e3qv4](https://youtu.be/gPZ1_4e3qv4))
-9. **LEFT TO RIGHT** -- Odd Mob  ([youtu.be/i3eo3ndoCMI](https://youtu.be/i3eo3ndoCMI))
-10. **Sun Goes Down** -- Cloonee  ([youtu.be/t-8CYSBBbZE](https://youtu.be/t-8CYSBBbZE))
-11. **Lipstick** -- Alaia & Gallo  ([youtu.be/p9ko0iyt1y8](https://youtu.be/p9ko0iyt1y8))
-12. **Let Me Take You There** -- Max Styler  ([youtu.be/hVErLWiBz3M](https://youtu.be/hVErLWiBz3M))
-13. **Space Pump (Space Jam)** -- Vinter  ([youtu.be/ux3Ak1h430k](https://youtu.be/ux3Ak1h430k))
-14. **Drugs From Amsterdam** -- Mau P  ([youtu.be/juuIhW8V1Xw](https://youtu.be/juuIhW8V1Xw))
-15. **Ferrari** -- James Hype & Miggy Dela Rosa  ([youtu.be/4cCi6-16HR4](https://youtu.be/4cCi6-16HR4))
-16. **Got The Fire** -- Michael Bibi  ([youtu.be/EaHz7lvbFTk](https://youtu.be/EaHz7lvbFTk))
-17. **The Groovy Cat** -- PAWSA  ([youtu.be/vj_TYIjCMzw](https://youtu.be/vj_TYIjCMzw))
-18. **Deceiver** -- Chris Lake & Green Velvet  ([youtu.be/s-ua75beKHk](https://youtu.be/s-ua75beKHk))
-19. **Chromatic** -- Anti Up  ([youtu.be/pVMbyAYgxGU](https://youtu.be/pVMbyAYgxGU))
-20. **It's A Killa** -- FISHER & Shermanology  ([youtu.be/uhvrT1rTRQ0](https://youtu.be/uhvrT1rTRQ0))
-21. **On My Mind** -- Diplo & SIDEPIECE  ([youtu.be/TAKR_6vNJR8](https://youtu.be/TAKR_6vNJR8))
-22. **You Give Me A Feeling** -- Vintage Culture & James Hype  ([youtu.be/oWqvIzXQFkU](https://youtu.be/oWqvIzXQFkU))
-23. **Be Sharp Say Nowt** -- Patrick Topping  ([youtu.be/zEwo9ib8cVg](https://youtu.be/zEwo9ib8cVg))
-24. **Wait A Minute** -- Biscits  ([youtu.be/GxdWattQE1U](https://youtu.be/GxdWattQE1U))
-25. **Gimme Some Keys** -- Matroda  ([youtu.be/0tuIVdYVf5o](https://youtu.be/0tuIVdYVf5o))
-26. **Summer 91 (Looking Back)** -- Noizu  ([youtu.be/l3fUEyv9RLg](https://youtu.be/l3fUEyv9RLg))
-27. **Soul Sacrifice** -- Dombresky  ([youtu.be/ypZvzlpV5N4](https://youtu.be/ypZvzlpV5N4))
-28. **(It Happens) Sometimes** -- Jack Back  ([youtu.be/tYD1E9IUOzA](https://youtu.be/tYD1E9IUOzA))
-29. **Hallelujah** -- Will Clarke  ([youtu.be/tapeYww2VrA](https://youtu.be/tapeYww2VrA))
-30. **Back Tomorrow** -- Ferreck Dawn & Jem Cooke  ([youtu.be/p2KlbcmhYuM](https://youtu.be/p2KlbcmhYuM))
-31. **Losing It** -- FISHER  ([youtu.be/u31thuMehjM](https://youtu.be/u31thuMehjM))
-32. **San Frandisco** -- Dom Dolla  ([youtu.be/VFQ87_g41ZA](https://youtu.be/VFQ87_g41ZA))
-33. **Cola** -- CamelPhat & Elderbrook  ([youtu.be/qke-jOUqSXU](https://youtu.be/qke-jOUqSXU))
-34. **XTC** -- Solardo & Eli Brown  ([youtu.be/VL-TIXPivpQ](https://youtu.be/VL-TIXPivpQ))
-35. **Feel My Needs** -- Weiss  ([youtu.be/nUn0PC7098E](https://youtu.be/nUn0PC7098E))
-36. **Miracle Maker** -- Dom Dolla & Clementine Douglas  ([youtu.be/U6Xz8foh7XQ](https://youtu.be/U6Xz8foh7XQ))
-37. **Human** -- John Summit & Echoes  ([youtu.be/fqvuxA5vuv4](https://youtu.be/fqvuxA5vuv4))
-38. **Relax My Eyes** -- ANOTR & Abel Balder  ([youtu.be/JOXzs2UhkHI](https://youtu.be/JOXzs2UhkHI))
-39. **Tell Me Something Good** -- Ewan McVicar  ([youtu.be/v8bIYKwUyPM](https://youtu.be/v8bIYKwUyPM))
-40. **Asking** -- Sonny Fodera & MK  ([youtu.be/Jckql0mdf_c](https://youtu.be/Jckql0mdf_c))
-41. **Turn Off The Lights** -- Chris Lake & Alexis Roberts  ([youtu.be/E_wxPpRSgho](https://youtu.be/E_wxPpRSgho))
-42. **Stop It** -- FISHER  ([youtu.be/rwBA75RmDkc](https://youtu.be/rwBA75RmDkc))
-43. **Wild** -- James Hype  ([youtu.be/_kFKqY9oCUc](https://youtu.be/_kFKqY9oCUc))
-44. **Turbo Time** -- Patrick Topping  ([youtu.be/RgyrmIEA-1g](https://youtu.be/RgyrmIEA-1g))
-45. **Buggin'** -- Hot Since 82 & Jem Cooke  ([youtu.be/eOlLPCVTLfE](https://youtu.be/eOlLPCVTLfE))
-46. **Voodoo** -- Gorgon City  ([youtu.be/tG7NLC9dIXY](https://youtu.be/tG7NLC9dIXY))
-47. **Weak** -- Vintage Culture & Maverick Sabre  ([youtu.be/fneCWdB8d04](https://youtu.be/fneCWdB8d04))
-48. **Free Your Mind** -- Prospa & Cloonee  ([youtu.be/gJYjbDnyx-o](https://youtu.be/gJYjbDnyx-o))
-49. **Temptation** -- SIDEPIECE  ([youtu.be/6dx013HIzCU](https://youtu.be/6dx013HIzCU))
-50. **Wassup** -- Wax Motif  ([youtu.be/Fc0tcD9F4GU](https://youtu.be/Fc0tcD9F4GU))
+1. **Sembikiya Restaurant** -- Cat System Corp  ([youtu.be/xAh-nngGZ6I](https://youtu.be/xAh-nngGZ6I))
+2. **Roadtrips in Spring** -- Waterfront Dining  ([youtu.be/boofE5_HtkI](https://youtu.be/boofE5_HtkI))
+3. **What's Love** -- Waterfront Dining  ([youtu.be/oVnx6cxbIwQ](https://youtu.be/oVnx6cxbIwQ))
+4. **Paradise Vacations** -- Waterfront Dining  ([youtu.be/Q-hG1GSVb-8](https://youtu.be/Q-hG1GSVb-8))
+5. **Death Became Her** -- 18 Carat Affair  ([youtu.be/xe610x1aIjM](https://youtu.be/xe610x1aIjM))
+6. **Summer Night** -- ESPRIT  ([youtu.be/pgZCxhhUBMs](https://youtu.be/pgZCxhhUBMs))
+7. **Dreaming** -- Dan Mason  ([youtu.be/9tBj5zv4S1A](https://youtu.be/9tBj5zv4S1A))
+8. **Lisa Frank 420 / Modern Computing** -- Macintosh Plus  ([youtu.be/aQkPcPqTq4M](https://youtu.be/aQkPcPqTq4M))
+9. **Eccojam A1** -- Chuck Person  ([youtu.be/0T17gsA67og](https://youtu.be/0T17gsA67og))
+10. **Nobody Here** -- Sunset Corp  ([youtu.be/-RFunvF0mDw](https://youtu.be/-RFunvF0mDw))
+11. **Angel** -- Sunset Corp  ([youtu.be/dN0czUMRMU8](https://youtu.be/dN0czUMRMU8))
+12. **Dream Sequins** -- Nmesh  ([youtu.be/l7nsljmRX_s](https://youtu.be/l7nsljmRX_s))
+13. **Salsa Verde** -- Vaperror  ([youtu.be/osKY4JMmmt0](https://youtu.be/osKY4JMmmt0))
+14. **Teen Pregnancy** -- Blank Banshee  ([youtu.be/RQxDM2K-hd0](https://youtu.be/RQxDM2K-hd0))
+15. **Cherry Pepsi** -- Saint Pepsi  ([youtu.be/OrR1TGQY20Y](https://youtu.be/OrR1TGQY20Y))
+16. **Enjoy Yourself** -- Saint Pepsi  ([youtu.be/_hI0qMtdfng](https://youtu.be/_hI0qMtdfng))
+17. **Fiona Coyne** -- Skylar Spence  ([youtu.be/tCcamt8KZNQ](https://youtu.be/tCcamt8KZNQ))
+18. **Resonance** -- Home  ([youtu.be/aBhrEv5Z7uc](https://youtu.be/aBhrEv5Z7uc))
+19. **Before the Night** -- Home  ([youtu.be/D__gB1DzHIc](https://youtu.be/D__gB1DzHIc))
+20. **We're Finally Landing** -- Home  ([youtu.be/mbMoY1dxbEY](https://youtu.be/mbMoY1dxbEY))
+21. **Half Moon** -- Home  ([youtu.be/yRlBcUJZJHA](https://youtu.be/yRlBcUJZJHA))
+22. **Venus Aire** -- Windows 96  ([youtu.be/X6PnNgYSa5s](https://youtu.be/X6PnNgYSa5s))
+23. **Hypnosis** -- Windows 96  ([youtu.be/4GhvYoo4088](https://youtu.be/4GhvYoo4088))
+24. **Transient Feeling** -- Windows 96  ([youtu.be/7P4fatlUbvg](https://youtu.be/7P4fatlUbvg))
+25. **Glass Prism** -- Windows 96  ([youtu.be/bxCU_P0Y1CE](https://youtu.be/bxCU_P0Y1CE))
+26. **Lunar Food Court** -- Disconscious  ([youtu.be/M-3esa1G50U](https://youtu.be/M-3esa1G50U))
+27. **Elevator Up** -- Disconscious  ([youtu.be/7EuuRDGUMMA](https://youtu.be/7EuuRDGUMMA))
+28. **Fountain Plaza** -- Disconscious  ([youtu.be/f0PSLV_b5g0](https://youtu.be/f0PSLV_b5g0))
+29. **Second Floor** -- Cat System Corp  ([youtu.be/k6xkSvMIvwk](https://youtu.be/k6xkSvMIvwk))
+30. **Veni, Vidi, Emi** -- Cat System Corp  ([youtu.be/Qg7vgIdDDno](https://youtu.be/Qg7vgIdDDno))
+
+## ATOMIC -- 529.0
+
+*atomic swing, radioactive nostalgia*
+
+Ident tones (Hz): 392, 493.9, 493.9, 587.3
+
+Tracks (40):
+
+1. **I Don't Want to Set the World on Fire** -- The Ink Spots  ([youtu.be/GkHd1d_UVOE](https://youtu.be/GkHd1d_UVOE))
+2. **Crawl Out Through the Fallout** -- Sheldon Allman  ([youtu.be/Q9bSOaSuScQ](https://youtu.be/Q9bSOaSuScQ))
+3. **Butcher Pete (Part 1)** -- Roy Brown  ([youtu.be/8V7AxNJWKYU](https://youtu.be/8V7AxNJWKYU))
+4. **The Wanderer** -- Dion  ([youtu.be/daFhT6mBOWo](https://youtu.be/daFhT6mBOWo))
+5. **The End of the World** -- Skeeter Davis  ([youtu.be/DGLPvnbryGU](https://youtu.be/DGLPvnbryGU))
+6. **Atom Bomb Baby** -- The Five Stars  ([youtu.be/9qd_KDK5ChE](https://youtu.be/9qd_KDK5ChE))
+7. **Uranium Fever** -- Elton Britt  ([youtu.be/farkSCyXidI](https://youtu.be/farkSCyXidI))
+8. **Civilization (Bongo, Bongo, Bongo)** -- Andrews Sisters & Danny Kaye  ([youtu.be/VEyDNTLlRgU](https://youtu.be/VEyDNTLlRgU))
+9. **Keep A-Knockin' (But You Can't Come In)** -- Louis Jordan  ([youtu.be/6pcve7daxNM](https://youtu.be/6pcve7daxNM))
+10. **Pistol Packin' Mama** -- Bing Crosby & The Andrews Sisters  ([youtu.be/UNxgn8npVLI](https://youtu.be/UNxgn8npVLI))
+11. **Orange Colored Sky** -- Nat King Cole  ([youtu.be/ad6EL-qTGl8](https://youtu.be/ad6EL-qTGl8))
+12. **Good Rocking Tonight** -- Roy Brown  ([youtu.be/3IT8NoEe2_Q](https://youtu.be/3IT8NoEe2_Q))
+13. **Mr. Sandman** -- The Chordettes  ([youtu.be/WVgCo1L9yaY](https://youtu.be/WVgCo1L9yaY))
+14. **Sixteen Tons** -- Tennessee Ernie Ford  ([youtu.be/CSW64jVTDF0](https://youtu.be/CSW64jVTDF0))
+15. **Ghost Riders in the Sky** -- Sons of the Pioneers  ([youtu.be/zhSSJRuGw4c](https://youtu.be/zhSSJRuGw4c))
+16. **Choo Choo Ch'Boogie** -- Louis Jordan & His Tympany Five  ([youtu.be/P1EG__jgefA](https://youtu.be/P1EG__jgefA))
+17. **Boogie Woogie Bugle Boy** -- The Andrews Sisters  ([youtu.be/wf4nY0mLrrA](https://youtu.be/wf4nY0mLrrA))
+18. **Shake, Rattle and Roll** -- Big Joe Turner  ([youtu.be/MiFSYJjvgwc](https://youtu.be/MiFSYJjvgwc))
+19. **Sixty Minute Man** -- Billy Ward and His Dominoes  ([youtu.be/pJbDHw_qsFs](https://youtu.be/pJbDHw_qsFs))
+20. **It's a Sin to Tell a Lie** -- The Ink Spots  ([youtu.be/eP9nD0TsqEI](https://youtu.be/eP9nD0TsqEI))
+21. **Nightmare** -- Artie Shaw & His Orchestra  ([youtu.be/9A7vuGLocRw](https://youtu.be/9A7vuGLocRw))
+22. **Crazy He Calls Me** -- Billie Holiday  ([youtu.be/V1HiJR4KkaM](https://youtu.be/V1HiJR4KkaM))
+23. **Way Back Home** -- Bob Crosby and the Bobcats  ([youtu.be/F0qD-SKugUU](https://youtu.be/F0qD-SKugUU))
+24. **Uranium Rock** -- Warren Smith  ([youtu.be/jq2kqNTHejM](https://youtu.be/jq2kqNTHejM))
+25. **Sh-Boom** -- The Chords  ([youtu.be/xfoseSZtllo](https://youtu.be/xfoseSZtllo))
+26. **Money Honey** -- Clyde McPhatter & The Drifters  ([youtu.be/zPJ7N5_o-u8](https://youtu.be/zPJ7N5_o-u8))
+27. **Rocket 88** -- Jackie Brenston & His Delta Cats  ([youtu.be/260hXID0Yo0](https://youtu.be/260hXID0Yo0))
+28. **It's Only a Paper Moon** -- Nat King Cole  ([youtu.be/IIQFJGru-xI](https://youtu.be/IIQFJGru-xI))
+29. **Butcher Pete (Part 2)** -- Roy Brown  ([youtu.be/6VGDnqCV53w](https://youtu.be/6VGDnqCV53w))
+30. **Into Each Life Some Rain Must Fall** -- The Ink Spots & Ella Fitzgerald  ([youtu.be/ayGkA-vxrMc](https://youtu.be/ayGkA-vxrMc))
+31. **Grandma Plays the Numbers** -- Wynonie Harris  ([youtu.be/8L6dp5zFkDs](https://youtu.be/8L6dp5zFkDs))
+32. **Personality** -- Johnny Mercer  ([youtu.be/pUgC0Rq3bHM](https://youtu.be/pUgC0Rq3bHM))
+33. **Whole Lotta Shakin' Goin' On** -- Big Maybelle  ([youtu.be/I9PtTaclmCk](https://youtu.be/I9PtTaclmCk))
+34. **Right Behind You Baby** -- Ray Smith  ([youtu.be/Acfhtz020wE](https://youtu.be/Acfhtz020wE))
+35. **It's a Man** -- Betty Hutton  ([youtu.be/ydLHY0qonl4](https://youtu.be/ydLHY0qonl4))
+36. **Maybe** -- The Ink Spots  ([youtu.be/fsLPj_BG3fg](https://youtu.be/fsLPj_BG3fg))
+37. **It's All Over but the Crying** -- The Ink Spots  ([youtu.be/BsTP6NUZVvQ](https://youtu.be/BsTP6NUZVvQ))
+38. **Easy Living** -- Billie Holiday  ([youtu.be/a2FeSEiXaR0](https://youtu.be/a2FeSEiXaR0))
+39. **Mighty Mighty Man** -- Roy Brown  ([youtu.be/B2DkxG6-Pko](https://youtu.be/B2DkxG6-Pko))
+40. **Dear Hearts and Gentle People** -- Bob Crosby and the Bobcats  ([youtu.be/hOEAGZZoq7w](https://youtu.be/hOEAGZZoq7w))
 
 ## CITY LIGHTS -- 780.0
 
@@ -277,114 +330,6 @@ Tracks (50):
 49. **Bomber** -- Tatsuro Yamashita  ([youtu.be/SIGr6dc_2Sc](https://youtu.be/SIGr6dc_2Sc))
 50. **Two Call** -- Kaoru Akimoto  ([youtu.be/pSbzx-0wbs0](https://youtu.be/pSbzx-0wbs0))
 
-## CIRCUIT CRUSH -- 488.0
-
-*analog glow, the long drive home*
-
-Ident tones (Hz): 587.3, 466.2, 698.5, 932.3
-
-Tracks (50):
-
-1. **Nightcall** -- Kavinsky  ([youtu.be/ZVS6Q_lbKQ0](https://youtu.be/ZVS6Q_lbKQ0))
-2. **Sunset** -- The Midnight  ([youtu.be/URma_gu1aNE](https://youtu.be/URma_gu1aNE))
-3. **Tech Noir** -- GUNSHIP  ([youtu.be/-nC5TBv3sfU](https://youtu.be/-nC5TBv3sfU))
-4. **Running in the Night** -- FM-84 feat. Ollie Wride  ([youtu.be/TvZskcqdYcE](https://youtu.be/TvZskcqdYcE))
-5. **Future Club** -- Perturbator  ([youtu.be/RY66fdMt4vc](https://youtu.be/RY66fdMt4vc))
-6. **Turbo Killer** -- Carpenter Brut  ([youtu.be/er416Ad3R1g](https://youtu.be/er416Ad3R1g))
-7. **A Real Hero** -- Electric Youth ft. College  ([youtu.be/aPjVZgoaAtE](https://youtu.be/aPjVZgoaAtE))
-8. **On the Run** -- Timecop1983  ([youtu.be/gDpfybAvEag](https://youtu.be/gDpfybAvEag))
-9. **Riot** -- Dance With The Dead  ([youtu.be/eEELYwi-ABg](https://youtu.be/eEELYwi-ABg))
-10. **Night Force** -- Power Glove  ([youtu.be/qKauZYXABrM](https://youtu.be/qKauZYXABrM))
-11. **Redline** -- Lazerhawk  ([youtu.be/-PKV79lug54](https://youtu.be/-PKV79lug54))
-12. **Humans Are Such Easy Prey** -- Perturbator  ([youtu.be/Y8DekFFCE5c](https://youtu.be/Y8DekFFCE5c))
-13. **Body Talk** -- Mitch Murder  ([youtu.be/0x1tidUctv4](https://youtu.be/0x1tidUctv4))
-14. **The Wrath of Code** -- Dan Terminus  ([youtu.be/VUQxsBTqh1s](https://youtu.be/VUQxsBTqh1s))
-15. **Fly For Your Life** -- GUNSHIP  ([youtu.be/Jv1ZN8c4_Gs](https://youtu.be/Jv1ZN8c4_Gs))
-16. **Black Rain** -- Miami Nights 1984  ([youtu.be/Io6TL3RQ5zw](https://youtu.be/Io6TL3RQ5zw))
-17. **Tonight (feat. Back In The Future)** -- Timecop1983  ([youtu.be/2KU9i_sx4zM](https://youtu.be/2KU9i_sx4zM))
-18. **In The Face Of Evil** -- Magic Sword  ([youtu.be/G02wKufX3nw](https://youtu.be/G02wKufX3nw))
-19. **Cyanide Sisters** -- Com Truise  ([youtu.be/ntTRv7XUxM8](https://youtu.be/ntTRv7XUxM8))
-20. **Nightdrive With You** -- Anoraak  ([youtu.be/zYfs-bZS5Zw](https://youtu.be/zYfs-bZS5Zw))
-21. **Monochrome** -- Scandroid  ([youtu.be/O0LB9cIobXY](https://youtu.be/O0LB9cIobXY))
-22. **Behemoth** -- GosT  ([youtu.be/IDd5JgAcLhI](https://youtu.be/IDd5JgAcLhI))
-23. **My Mistake** -- NINA  ([youtu.be/LxIyc5qJGzQ](https://youtu.be/LxIyc5qJGzQ))
-24. **DiscoDeath** -- Robert Parker  ([youtu.be/gzRbL_Jwtzw](https://youtu.be/gzRbL_Jwtzw))
-25. **Living the Modern Life** -- SelloRekt & LA Dreams  ([youtu.be/VE3QIvywZnU](https://youtu.be/VE3QIvywZnU))
-26. **Le Perv** -- Carpenter Brut  ([youtu.be/7fDvxlK2FMc](https://youtu.be/7fDvxlK2FMc))
-27. **Days of Thunder** -- The Midnight  ([youtu.be/UiSB2Fbw9gs](https://youtu.be/UiSB2Fbw9gs))
-28. **Arcade Summer** -- FM-84  ([youtu.be/ssdA6IiP3r4](https://youtu.be/ssdA6IiP3r4))
-29. **Prelude to War** -- Volkor X  ([youtu.be/hd9xGlXGNh0](https://youtu.be/hd9xGlXGNh0))
-30. **Launcher** -- Highway Superstar  ([youtu.be/X3wVDrc8000](https://youtu.be/X3wVDrc8000))
-31. **Never Sleep Again** -- Betamaxx  ([youtu.be/jsE7RFs7bHk](https://youtu.be/jsE7RFs7bHk))
-32. **Ignition** -- Meteor  ([youtu.be/9EJJlr7Dopk](https://youtu.be/9EJJlr7Dopk))
-33. **Feral** -- Dan Terminus  ([youtu.be/HJti6_oiR1A](https://youtu.be/HJti6_oiR1A))
-34. **Fade Away** -- Trevor Something  ([youtu.be/lD69ScxsHCM](https://youtu.be/lD69ScxsHCM))
-35. **Client** -- Waveshaper  ([youtu.be/gkjk30imnXI](https://youtu.be/gkjk30imnXI))
-36. **Pulse Power** -- Dynatron  ([youtu.be/YrVFhHHpLJ0](https://youtu.be/YrVFhHHpLJ0))
-37. **Chinatown** -- Starcadian  ([youtu.be/jyO-MyJ4R1g](https://youtu.be/jyO-MyJ4R1g))
-38. **Maniac** -- Tokyo Rose  ([youtu.be/cq05Ierbz44](https://youtu.be/cq05Ierbz44))
-39. **Just Drive** -- W O L F C L U B  ([youtu.be/Z1kAGzKaLOQ](https://youtu.be/Z1kAGzKaLOQ))
-40. **Rabbit in the Headlights** -- Michael Oakley  ([youtu.be/S0A9dNsLRjc](https://youtu.be/S0A9dNsLRjc))
-41. **Web of Sin** -- Daniel Deluxe  ([youtu.be/MUAJFyr5qzA](https://youtu.be/MUAJFyr5qzA))
-42. **Source Code** -- Mega Drive  ([youtu.be/ArDVDnWTqvw](https://youtu.be/ArDVDnWTqvw))
-43. **Odd Look** -- Kavinsky  ([youtu.be/qT0iQRjHbW4](https://youtu.be/qT0iQRjHbW4))
-44. **Roller Mobster** -- Carpenter Brut  ([youtu.be/qFfybn_W8Ak](https://youtu.be/qFfybn_W8Ak))
-45. **Sentient** -- Perturbator  ([youtu.be/Q9tzrYi3Fdk](https://youtu.be/Q9tzrYi3Fdk))
-46. **Overdrive** -- Lazerhawk  ([youtu.be/5dNP-a-XXx0](https://youtu.be/5dNP-a-XXx0))
-47. **Salvation Code** -- Scandroid  ([youtu.be/JE1jylkS_7w](https://youtu.be/JE1jylkS_7w))
-48. **Interceptor** -- Mitch Murder  ([youtu.be/hugowO0sSrM](https://youtu.be/hugowO0sSrM))
-49. **Brokendate** -- Com Truise  ([youtu.be/dTkGNEl55Ug](https://youtu.be/dTkGNEl55Ug))
-50. **Sleepwalking** -- NINA  ([youtu.be/LITFNKqEz_U](https://youtu.be/LITFNKqEz_U))
-
-## ATOMIC -- 529.0
-
-*atomic swing, radioactive nostalgia*
-
-Ident tones (Hz): 392, 493.9, 493.9, 587.3
-
-Tracks (40):
-
-1. **I Don't Want to Set the World on Fire** -- The Ink Spots  ([youtu.be/GkHd1d_UVOE](https://youtu.be/GkHd1d_UVOE))
-2. **Crawl Out Through the Fallout** -- Sheldon Allman  ([youtu.be/Q9bSOaSuScQ](https://youtu.be/Q9bSOaSuScQ))
-3. **Butcher Pete (Part 1)** -- Roy Brown  ([youtu.be/8V7AxNJWKYU](https://youtu.be/8V7AxNJWKYU))
-4. **The Wanderer** -- Dion  ([youtu.be/daFhT6mBOWo](https://youtu.be/daFhT6mBOWo))
-5. **The End of the World** -- Skeeter Davis  ([youtu.be/DGLPvnbryGU](https://youtu.be/DGLPvnbryGU))
-6. **Atom Bomb Baby** -- The Five Stars  ([youtu.be/9qd_KDK5ChE](https://youtu.be/9qd_KDK5ChE))
-7. **Uranium Fever** -- Elton Britt  ([youtu.be/farkSCyXidI](https://youtu.be/farkSCyXidI))
-8. **Civilization (Bongo, Bongo, Bongo)** -- Andrews Sisters & Danny Kaye  ([youtu.be/VEyDNTLlRgU](https://youtu.be/VEyDNTLlRgU))
-9. **Keep A-Knockin' (But You Can't Come In)** -- Louis Jordan  ([youtu.be/6pcve7daxNM](https://youtu.be/6pcve7daxNM))
-10. **Pistol Packin' Mama** -- Bing Crosby & The Andrews Sisters  ([youtu.be/UNxgn8npVLI](https://youtu.be/UNxgn8npVLI))
-11. **Orange Colored Sky** -- Nat King Cole  ([youtu.be/ad6EL-qTGl8](https://youtu.be/ad6EL-qTGl8))
-12. **Good Rocking Tonight** -- Roy Brown  ([youtu.be/3IT8NoEe2_Q](https://youtu.be/3IT8NoEe2_Q))
-13. **Mr. Sandman** -- The Chordettes  ([youtu.be/WVgCo1L9yaY](https://youtu.be/WVgCo1L9yaY))
-14. **Sixteen Tons** -- Tennessee Ernie Ford  ([youtu.be/CSW64jVTDF0](https://youtu.be/CSW64jVTDF0))
-15. **Ghost Riders in the Sky** -- Sons of the Pioneers  ([youtu.be/zhSSJRuGw4c](https://youtu.be/zhSSJRuGw4c))
-16. **Choo Choo Ch'Boogie** -- Louis Jordan & His Tympany Five  ([youtu.be/P1EG__jgefA](https://youtu.be/P1EG__jgefA))
-17. **Boogie Woogie Bugle Boy** -- The Andrews Sisters  ([youtu.be/wf4nY0mLrrA](https://youtu.be/wf4nY0mLrrA))
-18. **Shake, Rattle and Roll** -- Big Joe Turner  ([youtu.be/MiFSYJjvgwc](https://youtu.be/MiFSYJjvgwc))
-19. **Sixty Minute Man** -- Billy Ward and His Dominoes  ([youtu.be/pJbDHw_qsFs](https://youtu.be/pJbDHw_qsFs))
-20. **It's a Sin to Tell a Lie** -- The Ink Spots  ([youtu.be/eP9nD0TsqEI](https://youtu.be/eP9nD0TsqEI))
-21. **Nightmare** -- Artie Shaw & His Orchestra  ([youtu.be/9A7vuGLocRw](https://youtu.be/9A7vuGLocRw))
-22. **Crazy He Calls Me** -- Billie Holiday  ([youtu.be/V1HiJR4KkaM](https://youtu.be/V1HiJR4KkaM))
-23. **Way Back Home** -- Bob Crosby and the Bobcats  ([youtu.be/F0qD-SKugUU](https://youtu.be/F0qD-SKugUU))
-24. **Uranium Rock** -- Warren Smith  ([youtu.be/jq2kqNTHejM](https://youtu.be/jq2kqNTHejM))
-25. **Sh-Boom** -- The Chords  ([youtu.be/xfoseSZtllo](https://youtu.be/xfoseSZtllo))
-26. **Money Honey** -- Clyde McPhatter & The Drifters  ([youtu.be/zPJ7N5_o-u8](https://youtu.be/zPJ7N5_o-u8))
-27. **Rocket 88** -- Jackie Brenston & His Delta Cats  ([youtu.be/260hXID0Yo0](https://youtu.be/260hXID0Yo0))
-28. **It's Only a Paper Moon** -- Nat King Cole  ([youtu.be/IIQFJGru-xI](https://youtu.be/IIQFJGru-xI))
-29. **Butcher Pete (Part 2)** -- Roy Brown  ([youtu.be/6VGDnqCV53w](https://youtu.be/6VGDnqCV53w))
-30. **Into Each Life Some Rain Must Fall** -- The Ink Spots & Ella Fitzgerald  ([youtu.be/ayGkA-vxrMc](https://youtu.be/ayGkA-vxrMc))
-31. **Grandma Plays the Numbers** -- Wynonie Harris  ([youtu.be/8L6dp5zFkDs](https://youtu.be/8L6dp5zFkDs))
-32. **Personality** -- Johnny Mercer  ([youtu.be/pUgC0Rq3bHM](https://youtu.be/pUgC0Rq3bHM))
-33. **Whole Lotta Shakin' Goin' On** -- Big Maybelle  ([youtu.be/I9PtTaclmCk](https://youtu.be/I9PtTaclmCk))
-34. **Right Behind You Baby** -- Ray Smith  ([youtu.be/Acfhtz020wE](https://youtu.be/Acfhtz020wE))
-35. **It's a Man** -- Betty Hutton  ([youtu.be/ydLHY0qonl4](https://youtu.be/ydLHY0qonl4))
-36. **Maybe** -- The Ink Spots  ([youtu.be/fsLPj_BG3fg](https://youtu.be/fsLPj_BG3fg))
-37. **It's All Over but the Crying** -- The Ink Spots  ([youtu.be/BsTP6NUZVvQ](https://youtu.be/BsTP6NUZVvQ))
-38. **Easy Living** -- Billie Holiday  ([youtu.be/a2FeSEiXaR0](https://youtu.be/a2FeSEiXaR0))
-39. **Mighty Mighty Man** -- Roy Brown  ([youtu.be/B2DkxG6-Pko](https://youtu.be/B2DkxG6-Pko))
-40. **Dear Hearts and Gentle People** -- Bob Crosby and the Bobcats  ([youtu.be/hOEAGZZoq7w](https://youtu.be/hOEAGZZoq7w))
-
 ## HACKBACK -- 808.0
 
 *golden age hip-hop, coast to coast legends*
@@ -444,61 +389,152 @@ Tracks (50):
 49. **Mistadobalina** -- Del the Funky Homosapien  ([youtu.be/BQrdjT3GHwE](https://youtu.be/BQrdjT3GHwE))
 50. **I Seen a Man Die** -- Scarface  ([youtu.be/cGwUE0V9Gqw](https://youtu.be/cGwUE0V9Gqw))
 
-## CIPHER -- 133.7
+# ZM band
 
-*digital infiltration, late-night breakbeat*
+3 stations, 119 tracks. Its own dial, its own `1`-`9` presets.
 
-Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
+## THE CRYPT -- 1031.0
+
+*a ruin, a keep, a tape left running*
+
+Ident tones (Hz): 220, 207.7, 174.6, 130.8
+
+Tracks (19):
+
+1. **Whitebark Forest** -- Mountain Realm  ([youtu.be/APZIre8Tm60](https://youtu.be/APZIre8Tm60))
+2. **Dungeon Stairs** -- Mountain Realm  ([youtu.be/YKe_zJEGcWQ](https://youtu.be/YKe_zJEGcWQ))
+3. **Horn of the Goblins** -- Mountain Realm  ([youtu.be/JhrsLP5kK4c](https://youtu.be/JhrsLP5kK4c))
+4. **The Crystal Palace** -- Mountain Realm  ([youtu.be/yHRtZ5mXnGA](https://youtu.be/yHRtZ5mXnGA))
+5. **Troll King** -- Mountain Realm  ([youtu.be/j1BFgzDEl9s](https://youtu.be/j1BFgzDEl9s))
+6. **A Fallen Warrior Stands Again** -- Mountain Realm  ([youtu.be/883e7wydHo0](https://youtu.be/883e7wydHo0))
+7. **A Broken Man Stands Tall** -- Mountain Realm  ([youtu.be/D8FOL8mjwJU](https://youtu.be/D8FOL8mjwJU))
+8. **Village in the Mist** -- Mountain Realm  ([youtu.be/XlbCqHSs_xk](https://youtu.be/XlbCqHSs_xk))
+9. **Fallen Gods** -- Mountain Realm  ([youtu.be/gQtLEuuZNNg](https://youtu.be/gQtLEuuZNNg))
+10. **Nordanvinden** -- Trollslottet  ([youtu.be/KAfpsjEbGM8](https://youtu.be/KAfpsjEbGM8))
+11. **Vinterväldet** -- Trollslottet  ([youtu.be/HTWiLqSA514](https://youtu.be/HTWiLqSA514))
+12. **Häxmästaren** -- Trollslottet  ([youtu.be/1cYGRwKwgS8](https://youtu.be/1cYGRwKwgS8))
+13. **Caverns of the Old Gods** -- Swordlender  ([youtu.be/vJ_rSbiKGTI](https://youtu.be/vJ_rSbiKGTI))
+14. **Spirit of the North** -- Swordlender  ([youtu.be/ObrgQaKlldc](https://youtu.be/ObrgQaKlldc))
+15. **Highland Enchantress** -- Swordlender  ([youtu.be/S-l36AZCOQs](https://youtu.be/S-l36AZCOQs))
+16. **The Lord of Mountains High** -- Swordlender  ([youtu.be/oVtO2dAXunU](https://youtu.be/oVtO2dAXunU))
+17. **From the Realm of Dust and Darkness** -- Vikorra Doom  ([youtu.be/VijbUkATmLc](https://youtu.be/VijbUkATmLc))
+18. **The Hall of Unhallowed Steel** -- Vikorra Doom  ([youtu.be/kFB9A2WAfpM](https://youtu.be/kFB9A2WAfpM))
+19. **Return to the Underworld** -- Vikorra Doom  ([youtu.be/WUyXqGpvs4Y](https://youtu.be/WUyXqGpvs4Y))
+
+## SYNAPSE -- 1234.0
+
+*shifting the plates of the underground*
+
+Ident tones (Hz): 293.7, 349.2, 415.3, 466.2
 
 Tracks (50):
 
-1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
-2. **Omen** -- The Prodigy  ([youtu.be/xMVTKOoy1uk](https://youtu.be/xMVTKOoy1uk))
-3. **Block Rockin' Beats** -- The Chemical Brothers  ([youtu.be/iTxOKsyZ0Lw](https://youtu.be/iTxOKsyZ0Lw))
-4. **Halcyon** -- Orbital  ([youtu.be/3SwwljI-8JY](https://youtu.be/3SwwljI-8JY))
-5. **The Box** -- Orbital  ([youtu.be/yJnve05CnNE](https://youtu.be/yJnve05CnNE))
-6. **Teardrop** -- Massive Attack  ([youtu.be/u7K72X4eo_s](https://youtu.be/u7K72X4eo_s))
-7. **Born Slippy .NUXX** -- Underworld  ([youtu.be/XiMrrleH_hI](https://youtu.be/XiMrrleH_hI))
-8. **Rez** -- Underworld  ([youtu.be/F6Y7lcvubhU](https://youtu.be/F6Y7lcvubhU))
-9. **Clubbed to Death (Kurayamino Mix)** -- Rob Dougan  ([youtu.be/DzNex7Mf1bg](https://youtu.be/DzNex7Mf1bg))
-10. **Prime Audio Soup** -- Meat Beat Manifesto  ([youtu.be/7xI8mCKLiRM](https://youtu.be/7xI8mCKLiRM))
-11. **Spybreak! (Short One)** -- Propellerheads  ([youtu.be/Agbn4NzOj04](https://youtu.be/Agbn4NzOj04))
-12. **Busy Child** -- The Crystal Method  ([youtu.be/OjTC88oIRys](https://youtu.be/OjTC88oIRys))
-13. **B-Boy Stance** -- Freestylers  ([youtu.be/XAlLaGhfLq4](https://youtu.be/XAlLaGhfLq4))
-14. **Right Here, Right Now** -- Fatboy Slim  ([youtu.be/ub747pprmJ8](https://youtu.be/ub747pprmJ8))
-15. **Sour Times** -- Portishead  ([youtu.be/8B-i1vsA6jw](https://youtu.be/8B-i1vsA6jw))
-16. **No Good (Start the Dance)** -- The Prodigy  ([youtu.be/svJvT6ruolA](https://youtu.be/svJvT6ruolA))
-17. **(Can't You) Trip Like I Do** -- Filter & The Crystal Method  ([youtu.be/Q7SedYMP-PA](https://youtu.be/Q7SedYMP-PA))
-18. **Bentley's Gonna Sort You Out** -- Bentley Rhythm Ace  ([youtu.be/WrDXJp-uDoY](https://youtu.be/WrDXJp-uDoY))
-19. **The Gift** -- Way Out West  ([youtu.be/NxsevNnHfzs](https://youtu.be/NxsevNnHfzs))
-20. **Keep Hope Alive** -- The Crystal Method  ([youtu.be/LZi4qE6Ll6E](https://youtu.be/LZi4qE6Ll6E))
-21. **Atom Bomb** -- Fluke  ([youtu.be/PHMzCpy0fXc](https://youtu.be/PHMzCpy0fXc))
-22. **Leave You Far Behind** -- Lunatic Calm  ([youtu.be/maP6q3D4Hf0](https://youtu.be/maP6q3D4Hf0))
-23. **Angel** -- Massive Attack  ([youtu.be/hbe3CQamF8k](https://youtu.be/hbe3CQamF8k))
-24. **Ain't Talkin' 'bout Dub** -- Apollo 440  ([youtu.be/d0PCD7YMfeY](https://youtu.be/d0PCD7YMfeY))
-25. **Supermoves** -- Overseer  ([youtu.be/MwZmPJFNVbw](https://youtu.be/MwZmPJFNVbw))
-26. **6 Underground** -- Sneaker Pimps  ([youtu.be/Wuwfe3DRJzE](https://youtu.be/Wuwfe3DRJzE))
-27. **Def Beat** -- Junkie XL  ([youtu.be/7qZW9P7W-nc](https://youtu.be/7qZW9P7W-nc))
-28. **Stem / Long Stem** -- DJ Shadow  ([youtu.be/Ihr0y7ayGV0](https://youtu.be/Ihr0y7ayGV0))
-29. **Dirt** -- Death in Vegas  ([youtu.be/Jd_UCgMaHYQ](https://youtu.be/Jd_UCgMaHYQ))
-30. **Genius** -- Pitchshifter  ([youtu.be/sGcdcVblZ-8](https://youtu.be/sGcdcVblZ-8))
-31. **Voodoo People** -- The Prodigy  ([youtu.be/YV78vobCyIo](https://youtu.be/YV78vobCyIo))
-32. **Absurd** -- Fluke  ([youtu.be/DAQISes7iXU](https://youtu.be/DAQISes7iXU))
-33. **Ruffneck** -- Freestylers  ([youtu.be/kQ_sSs8pr1g](https://youtu.be/kQ_sSs8pr1g))
-34. **Ultrasonic Sound** -- Hive  ([youtu.be/lGqzRmDcC14](https://youtu.be/lGqzRmDcC14))
-35. **Godzilla Dub** -- ZeroFG  ([youtu.be/mloHngTITZ8](https://youtu.be/mloHngTITZ8))
-36. **Born In '94** -- Unglued  ([youtu.be/VHqc2Yqwwu4](https://youtu.be/VHqc2Yqwwu4))
-37. **Take California** -- Propellerheads  ([youtu.be/81bG15gsl70](https://youtu.be/81bG15gsl70))
-38. **Y'all Ready For Dis** -- Y U QT  ([youtu.be/OTvB4XMsg1U](https://youtu.be/OTvB4XMsg1U))
-39. **Hey Boy Hey Girl** -- The Chemical Brothers  ([youtu.be/tpKCqp9CALQ](https://youtu.be/tpKCqp9CALQ))
-40. **Setting Sun** -- The Chemical Brothers  ([youtu.be/0u3qQtvU5SQ](https://youtu.be/0u3qQtvU5SQ))
-41. **Breathe** -- The Prodigy  ([youtu.be/Wo7XxlXU3XQ](https://youtu.be/Wo7XxlXU3XQ))
-42. **Name of the Game** -- The Crystal Method  ([youtu.be/A12-KN5UijA](https://youtu.be/A12-KN5UijA))
-43. **Cowgirl** -- Underworld  ([youtu.be/qEYeT-f1Fdo](https://youtu.be/qEYeT-f1Fdo))
-44. **Inertia Creeps** -- Massive Attack  ([youtu.be/GjlklxY-fWI](https://youtu.be/GjlklxY-fWI))
-45. **Six Days** -- DJ Shadow  ([youtu.be/BEqHME6XUi8](https://youtu.be/BEqHME6XUi8))
-46. **Satan** -- Orbital  ([youtu.be/tP8tpAs9qhI](https://youtu.be/tP8tpAs9qhI))
-47. **Zion** -- Fluke  ([youtu.be/cFffoHmn8XA](https://youtu.be/cFffoHmn8XA))
-48. **Back on a Mission** -- Cirrus  ([youtu.be/Qe9vdnNQAhc](https://youtu.be/Qe9vdnNQAhc))
-49. **Battleflag** -- Lo Fidelity Allstars  ([youtu.be/B99nd2iKGOw](https://youtu.be/B99nd2iKGOw))
-50. **Ready Steady Go** -- Paul Oakenfold  ([youtu.be/MSv3Oez4O-4](https://youtu.be/MSv3Oez4O-4))
+1. **TESLA** -- Mau P  ([youtu.be/rVp454wjqls](https://youtu.be/rVp454wjqls))
+2. **Take It Off** -- FISHER & Aatig  ([youtu.be/0CKkRtkzw4g](https://youtu.be/0CKkRtkzw4g))
+3. **Fancy $hit** -- CID & Taylr Renee  ([youtu.be/FhbxFnNm-S8](https://youtu.be/FhbxFnNm-S8))
+4. **Rhyme Dust** -- MK & Dom Dolla  ([youtu.be/OvW5y3lZ7rc](https://youtu.be/OvW5y3lZ7rc))
+5. **Jealous** -- Mochakk  ([youtu.be/JalJnTs3mzk](https://youtu.be/JalJnTs3mzk))
+6. **Murder Mystery** -- Jamie Jones  ([youtu.be/SYTqNepDhl8](https://youtu.be/SYTqNepDhl8))
+7. **Beggin'** -- Chris Lake & Aluna  ([youtu.be/x8mdqMcOAUo](https://youtu.be/x8mdqMcOAUo))
+8. **Where You Are (Gorgon City Remix)** -- John Summit & Hayla  ([youtu.be/gPZ1_4e3qv4](https://youtu.be/gPZ1_4e3qv4))
+9. **LEFT TO RIGHT** -- Odd Mob  ([youtu.be/i3eo3ndoCMI](https://youtu.be/i3eo3ndoCMI))
+10. **Sun Goes Down** -- Cloonee  ([youtu.be/t-8CYSBBbZE](https://youtu.be/t-8CYSBBbZE))
+11. **Lipstick** -- Alaia & Gallo  ([youtu.be/p9ko0iyt1y8](https://youtu.be/p9ko0iyt1y8))
+12. **Let Me Take You There** -- Max Styler  ([youtu.be/hVErLWiBz3M](https://youtu.be/hVErLWiBz3M))
+13. **Space Pump (Space Jam)** -- Vinter  ([youtu.be/ux3Ak1h430k](https://youtu.be/ux3Ak1h430k))
+14. **Drugs From Amsterdam** -- Mau P  ([youtu.be/juuIhW8V1Xw](https://youtu.be/juuIhW8V1Xw))
+15. **Ferrari** -- James Hype & Miggy Dela Rosa  ([youtu.be/4cCi6-16HR4](https://youtu.be/4cCi6-16HR4))
+16. **Got The Fire** -- Michael Bibi  ([youtu.be/EaHz7lvbFTk](https://youtu.be/EaHz7lvbFTk))
+17. **The Groovy Cat** -- PAWSA  ([youtu.be/vj_TYIjCMzw](https://youtu.be/vj_TYIjCMzw))
+18. **Deceiver** -- Chris Lake & Green Velvet  ([youtu.be/s-ua75beKHk](https://youtu.be/s-ua75beKHk))
+19. **Chromatic** -- Anti Up  ([youtu.be/pVMbyAYgxGU](https://youtu.be/pVMbyAYgxGU))
+20. **It's A Killa** -- FISHER & Shermanology  ([youtu.be/uhvrT1rTRQ0](https://youtu.be/uhvrT1rTRQ0))
+21. **On My Mind** -- Diplo & SIDEPIECE  ([youtu.be/TAKR_6vNJR8](https://youtu.be/TAKR_6vNJR8))
+22. **You Give Me A Feeling** -- Vintage Culture & James Hype  ([youtu.be/oWqvIzXQFkU](https://youtu.be/oWqvIzXQFkU))
+23. **Be Sharp Say Nowt** -- Patrick Topping  ([youtu.be/zEwo9ib8cVg](https://youtu.be/zEwo9ib8cVg))
+24. **Wait A Minute** -- Biscits  ([youtu.be/GxdWattQE1U](https://youtu.be/GxdWattQE1U))
+25. **Gimme Some Keys** -- Matroda  ([youtu.be/0tuIVdYVf5o](https://youtu.be/0tuIVdYVf5o))
+26. **Summer 91 (Looking Back)** -- Noizu  ([youtu.be/l3fUEyv9RLg](https://youtu.be/l3fUEyv9RLg))
+27. **Soul Sacrifice** -- Dombresky  ([youtu.be/ypZvzlpV5N4](https://youtu.be/ypZvzlpV5N4))
+28. **(It Happens) Sometimes** -- Jack Back  ([youtu.be/tYD1E9IUOzA](https://youtu.be/tYD1E9IUOzA))
+29. **Hallelujah** -- Will Clarke  ([youtu.be/tapeYww2VrA](https://youtu.be/tapeYww2VrA))
+30. **Back Tomorrow** -- Ferreck Dawn & Jem Cooke  ([youtu.be/p2KlbcmhYuM](https://youtu.be/p2KlbcmhYuM))
+31. **Losing It** -- FISHER  ([youtu.be/u31thuMehjM](https://youtu.be/u31thuMehjM))
+32. **San Frandisco** -- Dom Dolla  ([youtu.be/VFQ87_g41ZA](https://youtu.be/VFQ87_g41ZA))
+33. **Cola** -- CamelPhat & Elderbrook  ([youtu.be/qke-jOUqSXU](https://youtu.be/qke-jOUqSXU))
+34. **XTC** -- Solardo & Eli Brown  ([youtu.be/VL-TIXPivpQ](https://youtu.be/VL-TIXPivpQ))
+35. **Feel My Needs** -- Weiss  ([youtu.be/nUn0PC7098E](https://youtu.be/nUn0PC7098E))
+36. **Miracle Maker** -- Dom Dolla & Clementine Douglas  ([youtu.be/U6Xz8foh7XQ](https://youtu.be/U6Xz8foh7XQ))
+37. **Human** -- John Summit & Echoes  ([youtu.be/fqvuxA5vuv4](https://youtu.be/fqvuxA5vuv4))
+38. **Relax My Eyes** -- ANOTR & Abel Balder  ([youtu.be/JOXzs2UhkHI](https://youtu.be/JOXzs2UhkHI))
+39. **Tell Me Something Good** -- Ewan McVicar  ([youtu.be/v8bIYKwUyPM](https://youtu.be/v8bIYKwUyPM))
+40. **Asking** -- Sonny Fodera & MK  ([youtu.be/Jckql0mdf_c](https://youtu.be/Jckql0mdf_c))
+41. **Turn Off The Lights** -- Chris Lake & Alexis Roberts  ([youtu.be/E_wxPpRSgho](https://youtu.be/E_wxPpRSgho))
+42. **Stop It** -- FISHER  ([youtu.be/rwBA75RmDkc](https://youtu.be/rwBA75RmDkc))
+43. **Wild** -- James Hype  ([youtu.be/_kFKqY9oCUc](https://youtu.be/_kFKqY9oCUc))
+44. **Turbo Time** -- Patrick Topping  ([youtu.be/RgyrmIEA-1g](https://youtu.be/RgyrmIEA-1g))
+45. **Buggin'** -- Hot Since 82 & Jem Cooke  ([youtu.be/eOlLPCVTLfE](https://youtu.be/eOlLPCVTLfE))
+46. **Voodoo** -- Gorgon City  ([youtu.be/tG7NLC9dIXY](https://youtu.be/tG7NLC9dIXY))
+47. **Weak** -- Vintage Culture & Maverick Sabre  ([youtu.be/fneCWdB8d04](https://youtu.be/fneCWdB8d04))
+48. **Free Your Mind** -- Prospa & Cloonee  ([youtu.be/gJYjbDnyx-o](https://youtu.be/gJYjbDnyx-o))
+49. **Temptation** -- SIDEPIECE  ([youtu.be/6dx013HIzCU](https://youtu.be/6dx013HIzCU))
+50. **Wassup** -- Wax Motif  ([youtu.be/Fc0tcD9F4GU](https://youtu.be/Fc0tcD9F4GU))
+
+## CIRCUIT CRUSH -- 1688.0
+
+*analog glow, the long drive home*
+
+Ident tones (Hz): 587.3, 466.2, 698.5, 932.3
+
+Tracks (50):
+
+1. **Nightcall** -- Kavinsky  ([youtu.be/ZVS6Q_lbKQ0](https://youtu.be/ZVS6Q_lbKQ0))
+2. **Sunset** -- The Midnight  ([youtu.be/URma_gu1aNE](https://youtu.be/URma_gu1aNE))
+3. **Tech Noir** -- GUNSHIP  ([youtu.be/-nC5TBv3sfU](https://youtu.be/-nC5TBv3sfU))
+4. **Running in the Night** -- FM-84 feat. Ollie Wride  ([youtu.be/TvZskcqdYcE](https://youtu.be/TvZskcqdYcE))
+5. **Future Club** -- Perturbator  ([youtu.be/RY66fdMt4vc](https://youtu.be/RY66fdMt4vc))
+6. **Turbo Killer** -- Carpenter Brut  ([youtu.be/er416Ad3R1g](https://youtu.be/er416Ad3R1g))
+7. **A Real Hero** -- Electric Youth ft. College  ([youtu.be/aPjVZgoaAtE](https://youtu.be/aPjVZgoaAtE))
+8. **On the Run** -- Timecop1983  ([youtu.be/gDpfybAvEag](https://youtu.be/gDpfybAvEag))
+9. **Riot** -- Dance With The Dead  ([youtu.be/eEELYwi-ABg](https://youtu.be/eEELYwi-ABg))
+10. **Night Force** -- Power Glove  ([youtu.be/qKauZYXABrM](https://youtu.be/qKauZYXABrM))
+11. **Redline** -- Lazerhawk  ([youtu.be/-PKV79lug54](https://youtu.be/-PKV79lug54))
+12. **Humans Are Such Easy Prey** -- Perturbator  ([youtu.be/Y8DekFFCE5c](https://youtu.be/Y8DekFFCE5c))
+13. **Body Talk** -- Mitch Murder  ([youtu.be/0x1tidUctv4](https://youtu.be/0x1tidUctv4))
+14. **The Wrath of Code** -- Dan Terminus  ([youtu.be/VUQxsBTqh1s](https://youtu.be/VUQxsBTqh1s))
+15. **Fly For Your Life** -- GUNSHIP  ([youtu.be/Jv1ZN8c4_Gs](https://youtu.be/Jv1ZN8c4_Gs))
+16. **Black Rain** -- Miami Nights 1984  ([youtu.be/Io6TL3RQ5zw](https://youtu.be/Io6TL3RQ5zw))
+17. **Tonight (feat. Back In The Future)** -- Timecop1983  ([youtu.be/2KU9i_sx4zM](https://youtu.be/2KU9i_sx4zM))
+18. **In The Face Of Evil** -- Magic Sword  ([youtu.be/G02wKufX3nw](https://youtu.be/G02wKufX3nw))
+19. **Cyanide Sisters** -- Com Truise  ([youtu.be/ntTRv7XUxM8](https://youtu.be/ntTRv7XUxM8))
+20. **Nightdrive With You** -- Anoraak  ([youtu.be/zYfs-bZS5Zw](https://youtu.be/zYfs-bZS5Zw))
+21. **Monochrome** -- Scandroid  ([youtu.be/O0LB9cIobXY](https://youtu.be/O0LB9cIobXY))
+22. **Behemoth** -- GosT  ([youtu.be/IDd5JgAcLhI](https://youtu.be/IDd5JgAcLhI))
+23. **My Mistake** -- NINA  ([youtu.be/LxIyc5qJGzQ](https://youtu.be/LxIyc5qJGzQ))
+24. **DiscoDeath** -- Robert Parker  ([youtu.be/gzRbL_Jwtzw](https://youtu.be/gzRbL_Jwtzw))
+25. **Living the Modern Life** -- SelloRekt & LA Dreams  ([youtu.be/VE3QIvywZnU](https://youtu.be/VE3QIvywZnU))
+26. **Le Perv** -- Carpenter Brut  ([youtu.be/7fDvxlK2FMc](https://youtu.be/7fDvxlK2FMc))
+27. **Days of Thunder** -- The Midnight  ([youtu.be/UiSB2Fbw9gs](https://youtu.be/UiSB2Fbw9gs))
+28. **Arcade Summer** -- FM-84  ([youtu.be/ssdA6IiP3r4](https://youtu.be/ssdA6IiP3r4))
+29. **Prelude to War** -- Volkor X  ([youtu.be/hd9xGlXGNh0](https://youtu.be/hd9xGlXGNh0))
+30. **Launcher** -- Highway Superstar  ([youtu.be/X3wVDrc8000](https://youtu.be/X3wVDrc8000))
+31. **Never Sleep Again** -- Betamaxx  ([youtu.be/jsE7RFs7bHk](https://youtu.be/jsE7RFs7bHk))
+32. **Ignition** -- Meteor  ([youtu.be/9EJJlr7Dopk](https://youtu.be/9EJJlr7Dopk))
+33. **Feral** -- Dan Terminus  ([youtu.be/HJti6_oiR1A](https://youtu.be/HJti6_oiR1A))
+34. **Fade Away** -- Trevor Something  ([youtu.be/lD69ScxsHCM](https://youtu.be/lD69ScxsHCM))
+35. **Client** -- Waveshaper  ([youtu.be/gkjk30imnXI](https://youtu.be/gkjk30imnXI))
+36. **Pulse Power** -- Dynatron  ([youtu.be/YrVFhHHpLJ0](https://youtu.be/YrVFhHHpLJ0))
+37. **Chinatown** -- Starcadian  ([youtu.be/jyO-MyJ4R1g](https://youtu.be/jyO-MyJ4R1g))
+38. **Maniac** -- Tokyo Rose  ([youtu.be/cq05Ierbz44](https://youtu.be/cq05Ierbz44))
+39. **Just Drive** -- W O L F C L U B  ([youtu.be/Z1kAGzKaLOQ](https://youtu.be/Z1kAGzKaLOQ))
+40. **Rabbit in the Headlights** -- Michael Oakley  ([youtu.be/S0A9dNsLRjc](https://youtu.be/S0A9dNsLRjc))
+41. **Web of Sin** -- Daniel Deluxe  ([youtu.be/MUAJFyr5qzA](https://youtu.be/MUAJFyr5qzA))
+42. **Source Code** -- Mega Drive  ([youtu.be/ArDVDnWTqvw](https://youtu.be/ArDVDnWTqvw))
+43. **Odd Look** -- Kavinsky  ([youtu.be/qT0iQRjHbW4](https://youtu.be/qT0iQRjHbW4))
+44. **Roller Mobster** -- Carpenter Brut  ([youtu.be/qFfybn_W8Ak](https://youtu.be/qFfybn_W8Ak))
+45. **Sentient** -- Perturbator  ([youtu.be/Q9tzrYi3Fdk](https://youtu.be/Q9tzrYi3Fdk))
+46. **Overdrive** -- Lazerhawk  ([youtu.be/5dNP-a-XXx0](https://youtu.be/5dNP-a-XXx0))
+47. **Salvation Code** -- Scandroid  ([youtu.be/JE1jylkS_7w](https://youtu.be/JE1jylkS_7w))
+48. **Interceptor** -- Mitch Murder  ([youtu.be/hugowO0sSrM](https://youtu.be/hugowO0sSrM))
+49. **Brokendate** -- Com Truise  ([youtu.be/dTkGNEl55Ug](https://youtu.be/dTkGNEl55Ug))
+50. **Sleepwalking** -- NINA  ([youtu.be/LITFNKqEz_U](https://youtu.be/LITFNKqEz_U))

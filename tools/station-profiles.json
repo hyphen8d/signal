@@ -710,6 +710,22 @@
           "reason": "Fits the station perfectly on content (the chorus is a drug inventory naming marijuana first) and was still dropped, so it WILL look like an oversight later. The only official upload (QueensStoneAgeVEVO, bAXPUN2z2CE) is age-gated -- playabilityStatus LOGIN_REQUIRED, which the IFrame player cannot satisfy, so it would have been dead air. No Topic upload of the album track exists; Topic carries only the Reprise. Unofficial uploads were offered and declined. Re-propose only if a non-gated official source appears."
         }
       ]
+    },
+    "the-crypt": {
+      "callsign": "THE CRYPT",
+      "genre": "Dungeon synth and dark fantasy -- lo-fi keyboard music that scores an imagined ruin: modal melodies, tape hiss, cheap reverb, no drums or almost none",
+      "eraLane": "the modern revival (2010s-present) and its 1990s roots, which are the same lineage rather than two",
+      "acceptedArtists": [],
+      "constraints": [
+        "FOUNDED FROM ISSUE #52, which proposed the Cryo Chamber label and its Cryo Crypt side project. Cryo Crypt is the dungeon-synth/dark-fantasy arm and is what this station is named for. The label channel is the first place to look and the safest provenance available here.",
+        "READ TITLES OFF A REAL LISTING, never from recall. This is the constraint NEON STASIS learned twice and it costs a whole search pass when it is ignored: titles from memory are usually not real, and searching them returns unrelated video (nail-salon tutorials and reef-tank reviews, on the actual run that proved it). Open the label's Bandcamp or channel listing, copy the title, search that.",
+        "ALBUM RIPS ARE THE DEFAULT UPLOAD IN THIS GENRE and the main thing to reject. Dungeon synth is released as long-form and routinely uploaded as one 30-90 minute file. The dial announces ONE title, so the test is on the FILE, not the release: a single track is in, a full-album upload is out however good it is. Same failure mode as mallsoft, same fix -- search track names, not record names.",
+        "LENGTH ALONE IS NOT A REJECT REASON. Eight- and ten-minute pieces are normal here, the way an extended mix is normal on SYNAPSE. A long TRACK is fine; a long ALBUM is the thing above.",
+        "THE FONT CANNOT DRAW MOST OF WHAT THIS SCENE NAMES ITSELF. ter-u16n has no CJK, no fullwidth Latin and no Latin Extended-A, so runic stylings, o-macrons and the accented Nordic spellings this genre loves all render as '?' on the dial (src/term.js falls back to glyph 63). Romanise, or pick another track. A lone accented vowel in an otherwise ASCII credit is the easiest version of this to paste in by accident.",
+        "SPREAD THE CHANNELS. A sample-and-reupload scene carries real takedown exposure, so taking one uploader's copy of a whole catalogue means one strike costs the station several tracks at once.",
+        "NOT COLD WAVE AND NOT NINE INCH NAILS. Cold, synthetic and bleak already have homes on this dial. The boundary here is FANTASY -- a ruin, a forest, a keep -- rather than industrial dread or synthetic melancholy. If a candidate would sit comfortably on either of those, it belongs there instead."
+      ],
+      "rejections": []
     }
   }
 }

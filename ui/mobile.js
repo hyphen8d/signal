@@ -9,7 +9,6 @@ const V = globalThis.SIGNAL_BUILD ?? ''
 const { maybeRetryAudioTapInGesture } = await import(`../audio/tap.js?v=${V}`)
 const { VERSION_TAG } = await import(`../constants.js?v=${V}`)
 const { MBOX_X0, MBOX_X1, MSTATUS_Y, MWIDGET_DIVIDER_X, centerX, centerXRange, drawBoxBottom, drawBoxSide, drawBoxTop, fmtTime, mobileLayout, truncate, wrapLines } = await import(`../layout.js?v=${V}`)
-const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${V}`)
 const { nearestStation } = await import(`../tuning.js?v=${V}`)
 
 // 2026-08-27 -- the one threshold that splits a tap from a hold, shared by
@@ -634,9 +633,9 @@ export default {
     } finally { this._inUserGesture = false }
   },
   stepStation(s, dir) {
-    const order = STATION_PRESET_ORDER
+    const order = this.bandPresets()
     let idx = this.lockedStation ? order.indexOf(this.lockedStation) : -1
-    if (idx === -1) idx = order.indexOf(nearestStation(this.freq).station)
+    if (idx === -1) idx = order.indexOf(nearestStation(this.freq, this.band).station)
     if (idx === -1) idx = 0
     const next = order[(idx + dir + order.length) % order.length]
     this.presetTune(s, next)

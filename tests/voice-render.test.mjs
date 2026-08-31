@@ -13,7 +13,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   VOICE_NAME, MODEL_ID, VOICE_SETTINGS, TAIL_MIN_S,
-  ID_SCRIPT, spokenFrequency, CALLSIGN_RESPELL,
+  ID_SCRIPT, CALLSIGN_RESPELL,
 } from '../tools/lib/voice-settings.mjs'
 import { stationIdClipPath, stationClipName, linerClipPath } from '../audio/station-id-clips.js'
 
@@ -44,42 +44,31 @@ test('the block states the tail requirement the renderer enforces', () => {
     `the block should state the ${TAIL_MIN_S}s tail minimum the renderer pads to`)
 })
 
-test('the station ID script matches the line that produced the real clip', () => {
-  // Taken from the ElevenLabs panel that rendered station-id-synapse.mp3, so
-  // this is not a guess about the format -- it is the format.
-  assert.equal(ID_SCRIPT('SYNAPSE', spokenFrequency(567.8)),
-    'SYNAPSE, five sixty-seven point eight.')
+test('the station ID script is the callsign and nothing else', () => {
+  // 2026-08-31 -- the frequency came out of every clip so a station can move
+  // band or dial position without a re-render. What replaced the old
+  // `<callsign>, <spoken freq>.` assertion is deliberately this blunt: the
+  // whole point is that no number reaches the script.
+  // COLD WAVE rather than SYNAPSE, which this used to use: SYNAPSE gained a
+  // respelling on 2026-08-31 and stopped being an example of a callsign that
+  // passes through untouched. Picked as one the respell map does not name.
+  assert.equal(ID_SCRIPT('COLD WAVE'), 'COLD WAVE.')
+  assert.doesNotMatch(ID_SCRIPT('COLD WAVE'), /[0-9]/, 'no digits reach the renderer')
 })
 
-test('frequencies are spoken the way a presenter reads a dial', () => {
-  assert.equal(spokenFrequency(133.7), 'one thirty-three point seven')
-  assert.equal(spokenFrequency(199.7), 'one ninety-nine point seven')
-  // A round frequency drops the decimal: a station says "eight oh eight",
-  // not "eight oh eight point zero". Caught by a test render running 0.66s
-  // longer than the clip it was reproducing.
-  assert.equal(spokenFrequency(273.0), 'two seventy-three')
-  // HACKBACK. The remainder is a single digit, which the first version read
-  // as "eight eight" -- the only station on the dial that reaches this branch,
-  // and the reason the generator was run across the whole roster.
-  assert.equal(spokenFrequency(808.0), 'eight oh eight')
-  // A round hundred, which nothing on the dial currently is.
-  assert.equal(spokenFrequency(500.0), 'five hundred')
-  // ...and a real decimal still gets said.
-  assert.equal(spokenFrequency(567.8), 'five sixty-seven point eight')
-})
-
-test('every station on the dial produces a sayable line', () => {
-  // Guards the generator against a frequency shape it has never seen: a new
-  // station is one edit away, and a malformed line costs credits to discover.
-  const stations = [133.7, 199.7, 273.0, 321.0, 488.0, 529.0, 567.8, 780.0, 808.0]
-  for (const f of stations) {
-    const spoken = spokenFrequency(f)
-    assert.doesNotMatch(spoken, /undefined|NaN/, `${f} produced "${spoken}"`)
-    // "point <digit>" only where there is a digit to say.
-    const expectDecimal = Math.round((f - Math.floor(f)) * 10) !== 0
-    assert.match(spoken, expectDecimal ? /^[a-z -]+ point [a-z]+$/ : /^[a-z -]+$/,
-      `${f} produced "${spoken}"`)
-    assert.equal(/ point /.test(spoken), expectDecimal, `${f} produced "${spoken}"`)
+test('no station on the dial can put a number into its own ID', async () => {
+  // The generator used to be run across the whole roster because one
+  // frequency shape (HACKBACK's 808.0) read wrong in a way only the real
+  // roster exposed. That class of bug is gone rather than fixed, and this is
+  // what keeps it gone: whatever the dial does to frequencies, none of it
+  // reaches the script. Written against the live roster so a new station or
+  // a new band is covered without anyone remembering to add it here.
+  const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=voice-id-script')
+  for (const st of [...STATIONS, ...(SECRET_STATIONS ?? [])]) {
+    const line = ID_SCRIPT(st.callsign)
+    assert.doesNotMatch(line, /[0-9]/, `${st.callsign} put a digit in its ID`)
+    assert.doesNotMatch(line, /undefined|NaN/, `${st.callsign} produced "${line}"`)
+    assert.ok(line.endsWith('.'), `${st.callsign} produced "${line}"`)
   }
 })
 
@@ -113,13 +102,26 @@ test('liner filenames resolve through the same remap as station IDs', () => {
   assert.equal(linerClipPath('cipher', 12), 'audio/liner-cipher-12.mp3')
 })
 
-test('a callsign this voice mispronounces is respelled in the ID script', () => {
+test('a callsign this voice mispronounces is respelled in the ID script', async () => {
   // Regenerating CIRCUIT CRUSH's ID must not quietly restore the spelling
   // that sounded wrong. The liner is deliberately NOT respelled -- the same
   // words read correctly mid-sentence, and only the ID opens with them.
-  assert.equal(ID_SCRIPT('CIRCUIT CRUSH', 'four eighty-eight'),
-    'Serkit Crush, four eighty-eight.')
-  assert.equal(ID_SCRIPT('CIPHER', 'one thirty-three point seven'),
-    'CIPHER, one thirty-three point seven.')
+  assert.equal(ID_SCRIPT('CIRCUIT CRUSH'), 'Serkit Crush.')
+  assert.equal(ID_SCRIPT('CIPHER'), 'CIPHER.')
   assert.ok(CALLSIGN_RESPELL['CIRCUIT CRUSH'])
+  // 2026-08-31 -- SYNAPSE joined them the day the ID script became the
+  // callsign alone. It had been read correctly for as long as it had a
+  // frequency after it; with nothing following, the voice put a trailing
+  // vowel on the end. Pinned for the same reason CIRCUIT CRUSH is: the
+  // failure mode is REGENERATION, where the next person to re-render this
+  // station gets the wrong pronunciation back with nothing to warn them.
+  assert.equal(ID_SCRIPT('SYNAPSE'), 'Sinaps.')
+  assert.ok(CALLSIGN_RESPELL.SYNAPSE)
+  // Every respelling must still be a callsign the roster actually has --
+  // a map keyed on a station that was renamed silently stops applying.
+  const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=respell')
+  const callsigns = new Set([...STATIONS, ...SECRET_STATIONS].map((st) => st.callsign))
+  for (const name of Object.keys(CALLSIGN_RESPELL)) {
+    assert.ok(callsigns.has(name), `${name} is respelled but is not on the roster`)
+  }
 })
