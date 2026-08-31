@@ -796,6 +796,372 @@ age-gated, embedding is revoked, or a re-upload narrows the licence.
   get `EADDRINUSE`, and would not know that editing `admin-server.mjs` does
   nothing until the service restarts while editing `network.html` needs no
   restart at all.
+- **Three places stopped sending readers to a wiki with one page in it.**
+  That wiki has exactly one page — a welcome message written on the day the
+  repo went up and untouched since — and the issue chooser was the worst of
+  them, offering "the full controls reference and station roster live on the
+  wiki" as a contact link to every person about to file an issue. Someone
+  with a question was being routed away from the answer. All three now point
+  at the README's own controls table and at `stations.md`, which is
+  generated from `stations.js` and so, unlike a wiki page, cannot fall
+  behind the thing it describes. The two mentions left in this file are
+  deliberate: they describe what was true on the day they were written, and
+  a changelog edited to match the present is not a changelog.
+
+### Voice and drops (2026-08-29)
+
+Every spoken clip in `audio/` was re-examined on one pass, and almost
+nothing about them turned out to be written down. The voice was named once,
+wrongly; the scripts existed nowhere but in the audio itself.
+
+- **The voice is Nathan, not Rachel.** `audio/voice.js` credited "Rachel M
+  — Pro British Radio Presenter" as the voice behind every mp3 on disk, and
+  that line was the only place in the repo the voice was named — which makes
+  a wrong answer there worse than no answer, since it is exactly where
+  someone stands before rendering a new clip. Replaced with a full
+  provenance block (Eleven Multilingual v2, speed 0.99, stability 81%,
+  similarity 100%, style 0%, speaker boost on), and confirmed across the
+  whole set rather than the one panel it was read from: the sign-on, the
+  welcome lines, all nine station IDs, both liner pools and the retired
+  clips still sitting unreferenced are all the same voice.
+- **`tools/voice-render.mjs` (`npm run voice`)** renders a clip from the
+  command line instead of the web UI, a download and a rename. Saving those
+  steps is not the point: the two things that have actually gone wrong now
+  happen *between* the render and the file existing. Trailing silence is
+  padded to ~0.5s when a take comes back short — safe to automate, since it
+  appends digital silence and alters no audio. Peak level is measured,
+  reported against the band the existing set occupies, and deliberately
+  **not** corrected, because normalising changes the recording and a hot
+  take is better fixed by taking it again. Nothing renders without `--yes`;
+  the key comes from the environment or a gitignored file, never an argument
+  that would land in shell history.
+- **Round frequencies drop the decimal.** A station says "HACKBACK, eight oh
+  eight", not "eight oh eight point zero", and the generator said the
+  latter — wrong for six of the nine stations on the dial. Found by
+  rendering, not by reading: the test clip ran 2.09s against the existing
+  clip's 1.43s on the same callsign, same voice, same settings, and 0.66s
+  can only be words. Had the tool rendered straight over the file the way
+  its default `--out` does, the comparison that exposed it would have been
+  overwritten by the thing it was meant to expose.
+- **All nine station IDs re-rendered**, and every one came back with a short
+  tail — 0.102s to 0.390s, not one of them clearing the 0.4s the playback
+  fade needs. That settles what SYNAPSE's clipped ID was: not a bad take,
+  just the first one anybody measured. Any clip from this voice needs
+  padding. The re-render also showed the old set was *inconsistent* rather
+  than uniformly wrong — DRIFT MODE and ATOMIC barely moved, so their clips
+  already omitted the decimal, while CIRCUIT CRUSH lost 0.48s and CITY
+  LIGHTS 0.30s. Nine clips recorded across several passes had drifted into
+  two different scripts. They are one script now, every tail at 0.500s, peak
+  spread 4.1dB.
+- **The bug that run found is the one worth keeping.** The renderer derived
+  its output path from the station id, and SYNAPSE's id is still
+  `midnight-neon` — so the re-render wrote to `station-id-midnight-neon.mp3`,
+  a retired file nothing reads, while the clip the set actually fetches sat
+  untouched. The tool reported success. Nothing was wrong except the result.
+  `voice.js` had carried a comment about exactly this trap since the rename
+  and the tool still walked into it, because it could not import the map
+  (`voice.js` top-level-awaits `sfx.js`, which wants an AudioContext Node
+  does not have). The map now lives in `audio/station-id-clips.js` — pure
+  data, no imports — with two readers and one definition.
+- **The thirteen liner scripts were transcribed, and the format is the
+  finding.** Every station liner is *hook first, then the callsign and
+  frequency*. Not one opens with the callsign. That is invisible from the
+  filenames and from the code, and the thirteen replacement drafts written
+  earlier the same day all opened with the callsign and omitted the
+  frequency entirely — rendered to scratch, found to be the wrong shape, and
+  binned. That is the whole argument for transcribing first, and it cost
+  thirteen renders to learn. The transcripts independently confirm the
+  decimal rule arrived at that morning through duration analysis alone.
+- **Thirteen new liners** in the corrected shape: four generals and one per
+  station. SYNAPSE gets its first since MOMENTUM was retired, having ridden
+  generals alone ever since. HACKBACK's only works with the number last —
+  "The number's not an accident. HACKBACK, eight oh eight."
+- **Liners fire more often, and the station's own ones actually get heard.**
+  A station's own liner was landing on 4.5% of track changes, one in
+  twenty-two: the clips carrying the station's identity were the half nobody
+  heard. The rate went up a little (25% to 35%); the *mix* changed a lot — a
+  drop now picks its bucket before its clip, half station and half generals,
+  rather than drawing from a combined pool where the generals outnumbered
+  the station clips nine to two. A station's own liner now lands every ~6
+  track changes. Verified by simulating 20,000 track changes per station,
+  which also held the opt-out that keeps the secret stations silent: an
+  absent key means no liners at all, an empty array means generals only.
+- **CIRCUIT CRUSH's station ID says "Serkit".** This voice reads "CIRCUIT"
+  wrong when it *opens* a line; three spellings were rendered and judged by
+  ear. The interesting half is that it is context-dependent — the liner
+  containing the same two words mid-sentence was already right and stays
+  unrespelled. Recorded as `CALLSIGN_RESPELL` rather than fixed once in an
+  audio file, because the failure mode is regeneration: the next person to
+  re-render this station's ID would have got the wrong pronunciation back
+  with nothing to warn them.
+- **Audio assets carry the build stamp**, like every module already did. You
+  were hearing a cached clip: the re-rendered CIRCUIT CRUSH ID was deployed
+  and byte-identical on the server, and the browser went on serving its own
+  copy, because Pages answers mp3 requests with `max-age=600` and nothing
+  was busting it. `main.js` has versioned every module as `?v=<stamp>` since
+  the 2026-08-25 audit against exactly this ten-minute window; the audio was
+  fetched by plain path and had simply never been included. It never showed
+  up before because until that day clips were only ever *added*, and a URL
+  nobody has fetched cannot be stale. All 36 clip requests verified carrying
+  the stamp in a real browser.
+
+### Visualizer (2026-08-30)
+
+- **The idle trigger is retired.** The visualizer entered on its own after
+  4m20s of no input, which was right when it was purely a screensaver — a
+  receiver left running should eventually show you something other than a
+  static dial — and stopped being right once the visualizer became a place
+  with state in it. Taking the screen unasked means covering a weather card
+  someone is reading, dropping a lyrics view, and, the one that actually
+  decides it, re-arming every effect clock underneath a listener who never
+  asked to go anywhere. `[V]` is now the only way in. Mobile never had it.
+  The call is deleted rather than left behind an `if (false)`: a condition
+  that can never be true is something the next reader has to disprove.
+  `VISUALIZER_IDLE_MS` stays exported and `_lastInputAt` stays maintained,
+  so putting it back is two lines. Nothing failed when the call was removed
+  — four minutes of unattended behaviour had never been tested, and now is.
+
+### Lyrics (2026-08-30)
+
+`[L]` was one `/api/get` on the raw title, and if that missed the story
+ended. Nobody had ever asked how often it missed. `tools/lyrics-audit.mjs`
+(`npm run lyrics`) asks: on 101 tracks across all 11 stations the original
+lookup resolved **59%**. With the `/api/search` fallback, **76%**.
+
+- **A search result is not a match.** LRCLIB orders by its own relevance, so
+  for several roster tracks the top synced hit is a live cut whose timings
+  fit nothing — a search for Piggy returns a 288s live take above the album
+  version. `pickLyricMatch()` ranks by closeness to the length actually
+  playing. Taking row zero is the bug this exists to prevent.
+- **Which exposed the sync bug underneath.** Fourteen sampled tracks
+  *already* matched a recording of visibly the wrong length: a 277s lyric
+  against a 166s upload, a 224s one against 416s. Those were rendering as
+  confident drift. Past `LYRIC_DURATION_TOLERANCE` the answer is refused,
+  because `NO LYRICS AVAILABLE` beats lyrics that disagree with the song.
+  Two causes hide in that gap — a different recording, or an upload with
+  lead-in padding — and nothing separates them automatically, so both are
+  refused; an offset for the second is not built.
+- The duration is 0 when `loadTrack()` asks, so the first answer is ranked
+  and gated against nothing and the PLAYING handler asks again with the real
+  length; `rankedBy` is what stops that looping.
+- A dropped request is `'error'` and retryable, **not** `'unavailable'`.
+  Both used to write the same permanent verdict into a cache keyed by
+  `youtubeId`, so one flaky request cost that track its lyrics for the whole
+  session — on a feature whose job is to be there when you press `[L]`.
+- `parseLRC` keeps blank tags as sentinels. An empty tag *ends* a sung
+  passage, and dropping them left the previous line lit at full brightness
+  through an instrumental, still claiming to be current.
+- **Title normalisation was tried and rejected on the evidence.** The
+  roster's decorations ("Piggy (VEVO Presents)") genuinely do 404 on
+  `/api/get`, so stripping them looks obviously right; measured, it
+  recovered nothing the search fallback had not already caught. It stays in
+  the audit tool so the claim is checkable, and out of `voice.js`.
+- The harness fake was rebuilt from the real endpoints rather than from what
+  this code expects — `/api/get` returns one object or a 404, `/api/search`
+  returns an array, and both carry `duration`. The old fake answered every
+  LRCLIB URL with one shape, which could not express the fallback at all and
+  would have passed every duration gate by accident.
+
+### Roster health (2026-08-30)
+
+- **Something now remembers to run the checker.** The NIN track below had
+  been licensed in three countries since the day it was added, and the only
+  reason it got found is that somebody happened to run the deep probe by
+  hand the evening before. `tools/roster-watch.mjs` (`npm run watch`) is not
+  another checker — it is the scheduling and the speaking-up around the one
+  that already works. **The rule it exists for:** `check-roster` exits 0
+  when throttled, because it found nothing wrong; it merely never looked. So
+  the obvious scheduler — fire it, read the exit code, stay quiet on 0 —
+  reports an unfinished sweep as a clean bill of health, which is that
+  tool's own header warning leaked one level up. `roster-watch` reads the
+  `--json` summary's `throttled` flag and treats it as its own outcome.
+- **Quiet on purpose.** Clean runs say nothing, and a single throttled run
+  says nothing either — that is ordinary and self-correcting. It speaks on
+  findings, on a sweep stuck 3 runs, and on a checker broken 2 runs. A
+  notification that fires daily is wallpaper inside a week, and wallpaper is
+  how the original bug survived.
+- **Daily, batch 40, as a systemd user timer** (`tools/signal-health.service`
+  and `.timer`). 477 tracks walk in ~12 days, inside `check-roster`'s 30-day
+  staleness horizon, without tripping the rate limit. Turning the batch up
+  is the obvious temptation and a trap: a throttled run records nothing for
+  what it gave up on, so a bigger batch makes *less* progress per day.
+  Verified running under systemd rather than only from a shell, and
+  `notify-send` verified actually reaching the desktop from a unit's
+  environment — that dies silently when the user manager has no session bus,
+  which would have left this running every day and telling nobody.
+- **The dashboard can tell a stopped health check from a quiet one.** The
+  notification is a one-shot channel: dismiss it, or have the box asleep
+  when findings land, and nothing re-raises it. The ROSTER HEALTH panel now
+  opens with a liveness strip above the coverage bars. Everything else on
+  that panel renders the *record* — and a timer that got disabled and a
+  timer with nothing to report leave that record looking identical, so a
+  stopped checker would go on showing a clean, fully-covered roster forever.
+  Past a two-day grace, `scheduleHealth()` says the schedule is LATE.
+  `GET /api/health` returns `watch` alongside the record rather than adding
+  a second route, because the panel must not be able to render coverage
+  without also being able to say when that coverage was last advanced.
+- **Health records are pruned for tracks that left the roster.** Retiring
+  DRIFT MODE stranded its 50 records and nothing had ever removed one, so
+  the file grew monotonically with every curation pass. Nothing was wrong as
+  a result — `summarise()` walks the roster and looks records up, never the
+  reverse, so an orphan cannot reach a coverage bar or a finding, which is
+  exactly why it survived unnoticed. Two ways this deletes real history, both
+  guarded: pruning against the run's own track list would honour
+  `--station`, so one station's sweep would wipe every other station's
+  record; and an empty roster means "cannot tell", not "nothing is live",
+  since a new station is committed with `tracks: []` before it is filled.
+
+### Stations (2026-08-30)
+
+420 public tracks across nine stations, seven of them at 50. DRIFT MODE
+leaves the dial and NEON STASIS takes its frequency.
+
+- **One NIN track was dead for nearly everyone but the curator.** The first
+  deep probe flagged "Right Where It Belongs" at three countries. The song
+  is not the problem and neither is `- Topic` in general: NIN's Topic
+  uploads from that era are licensed in three countries while the same era's
+  video-channel uploads are at 249. The US is inside that three, which is
+  why it survived every check that ever looked at it — it played perfectly
+  from here. It was also never catchable by the tooling of its own day: the
+  track went in at 13:18, `audition.js` was not written until 16:44 that
+  afternoon, and the narrow-licence threshold landed a day after that. The
+  song stays and the upload changes; there is no wide-licence official
+  alternative, because no video was ever made for this track, so the
+  replacement is a fan upload at 249 countries picked by ear from five that
+  were probed. That trade is now the station's own — a fan upload can vanish
+  to a copyright claim where a Topic one will not — and `check-roster.mjs`
+  is what catches it when it does.
+- **NEON STASIS takes 321.0, and mallsoft replaces the ambient lane.** A
+  replacement, not a rename, so it takes a new id the way MOMENTUM →
+  MIDNIGHT NEON did. Frequency, dial glyph and the DRIFT effect are
+  inherited deliberately; the ident is genuinely new — a department-store PA
+  chime, D D U, the only ident on the dial with that shape. Two constraints
+  shaped the 25 founding tracks and both were *measured* rather than
+  reasoned about: searching the three records that define mallsoft returned
+  18 candidates of which 18 were one-file album rips running 30–90 minutes,
+  and `ter-u16n.bdf` carries no CJK and no fullwidth Latin, so the uploads'
+  own credits would have drawn on the dial as rows of question marks. Every
+  name is romanised for that reason. DRIFT MODE's 50 tracks are preserved in
+  a retirement comment and its curation profile is kept and marked retired —
+  that profile is the only surviving record of where its neoclassical
+  boundary sat, so it outlives the station.
+- **SYNAPSE reaches 50**, the last public station still at its founding
+  size. 34 artists to 47: it was unusually flat before, so the low-risk half
+  of a pass like this — second cuts by artists already trusted here — was
+  almost entirely unused. Both traps the profile warns about were live and
+  are the same question wearing two hats, *which upload is this really*: a
+  1:14 festival clip beside the 3:09 VEVO audio, and extended-vs-single,
+  where the titles routinely do not say and the durations recorded on the
+  block are the record of which was taken.
+- **ATOMIC reaches 40 and NEON STASIS 30, on titles that were looked up.**
+  ATOMIC's five come straight off the genuine gaps the Diamond City Radio
+  check recorded in the profile — that listing, not recall, is what
+  satisfies this station's Fallout-canon rule. NEON STASIS's first
+  constraint earned itself again and at cost: the first search pass used
+  titles from memory and returned nail-salon tutorials and reef-tank
+  reviews, because the titles were not real. Reading them off the Bandcamp
+  listings first and searching verbatim is the whole difference between a
+  run of album rips and a run of singles. The font rule bit somewhere new,
+  too — a credit spelled with an o-macron is Latin Extended-A, outside
+  `ter-u16n`'s coverage, so it draws as `?` exactly like katakana does. A
+  lone accented vowel in an otherwise ASCII credit is an easier trap to
+  paste in by accident than fullwidth text is.
+- **An over-long station `desc` can no longer hide.** The guide's detail
+  page gives `desc` three lines at 72 columns and marks an overrun with a
+  trailing "...", which is honest but only reaches someone who opens the
+  page — so NEON STASIS's first draft shipped 47 characters over and quietly
+  lost the end of its own sentence, invisible to the suite. `lint-roster`
+  grows a `desc` rule so the dashboard's identity editor catches it at edit
+  time, and a test walks all nine detail pages asserting what was actually
+  *drawn* rather than re-deriving the wrap. Desktop only, deliberately: the
+  42-column lite layout truncates as a matter of course.
+
+### Audio (2026-08-30)
+
+- **One voice channel: a new station ID cuts the one still playing.**
+  Reported from real listening — walking the preset keys left the previous
+  station's spoken ID running underneath the next one. `tryLock()` fires the
+  ID 500ms after a lock and the clip runs ~2.4s, so a second preset pressed
+  anywhere in that ~2.9s window started a second voice over the first. Every
+  existing guard passed while it happened: each caller re-checks
+  `lockedStation` on the far side of its async gap, but that can only stop a
+  clip that has not *started*. Once one was in the air nothing held a handle
+  on it at all. `playProcessedVoiceClip` now owns a single live handle and
+  cuts it before starting anything new — a station ID, a liner drop and the
+  network sign-on are all the same announcer, and a station has one of him.
+  Cut rather than queued, because the newest announcement is the one that
+  matches what is on the screen and queuing would make a fast walk down the
+  presets take *longer* to fall silent the more keys you pressed. Faded over
+  80ms rather than stopped dead, since cutting a buffer mid-word clicks.
+  Both source buffers are cut, not just the speech one — the hiss bed runs
+  the full length of the clip, and leaving it under the next voice is the
+  same overlap in a quieter costume.
+
+### The project itself (2026-08-30)
+
+- **A tip jar, and the Sponsor button that is more visible than it is.** A
+  Ko-fi link in the README, placed with the feedback section so the two ways
+  of reaching the author sit together. `.github/FUNDING.yml` is the half
+  that actually gets seen: GitHub renders it as a Sponsor button in the repo
+  header and sidebar on every page, rather than only for people who scroll.
+  The copy says the radio plays the same either way, which is true and is
+  the point.
+- **The Ko-fi cover is cut by the same tool that takes the hero.** A
+  1200x400 page cover was going to be a manual recrop every time the
+  receiver changes — exactly how `og.jpg` went stale, and the reason that
+  one stopped being a manual step. It *crops* where `og.jpg` pads, because a
+  3:1 box is nowhere near the hero's 4:3 and fitting the whole tube inside
+  leaves a small unreadable screen adrift in black. It takes a band instead,
+  bezel to bezel, and the offsets land on a box border rather than on a
+  rule: a band ending mid-row clips the glyphs it cuts through and reads as
+  screen damage.
+
+### Counting listeners, and then not (2026-08-31)
+
+A session-summary system was built, tested, shipped switched off, and rolled
+back inside a day. It is recorded here because the reasoning survives the
+revert and the next person to want this number should read it first.
+
+- **What it was.** The roster gets enormous curation effort spread evenly
+  across nine lanes and nothing had ever said whether that matches what
+  people listen to. A pageview counter cannot answer it: SIGNAL is one URL
+  that then runs for hours, so every session reads as one view and a bounce.
+  So the set summarised itself — one anonymous record per visit, built in
+  memory and sent on `visibilitychange`, carrying no identifier of any kind
+  (so two visits cannot be joined), no timestamps (only durations), no track
+  history (only stations), and a sorted `used` set that carries no ordering
+  to fingerprint.
+- **Three of the four bugs it hit were invisible to a passing suite**, which
+  is the part worth reading out of the history: `currentSince: 0` is falsy
+  and the fake clock starts at 0, so the first station of every session was
+  silently dropped; the collector *cleaned* map keys instead of rejecting
+  them, inventing station ids out of malformed input; and a floor constant
+  could never fire because the rounding above it already dropped everything
+  under its value — found only by mutation, since the test guarding it was
+  decorative. The fourth was plumbing: `new Response('', { status: 204 })`
+  throws, because 204 is a null-body status in the Fetch spec, which made
+  the one route that matters a 500 in a file that had passed every test it
+  had.
+- **Why it went.** The machinery was sound, but switching it on meant a
+  Cloudflare deploy, a KV namespace, a secret, two environment variables and
+  a stamp — six steps standing between the repo and a single number, for a
+  radio that is one person's project. A feature nobody will turn on is
+  carrying weight for free.
+- **A visitor count, in one line.** Cloudflare Web Analytics as a beacon
+  script answers the half of the question that is a solved problem —
+  arrivals, referrers, countries, devices — for one script tag, no backend,
+  and it works on Pages as-is. What it cannot do is written down where the
+  tag is, because someone will eventually expect it to grow: station share
+  and feature discovery need events from inside the state machine, and
+  Cloudflare Web Analytics has no custom events at all. Read the numbers as
+  a **floor** — the beacon host is on the common blocklists, and an audience
+  that likes a terminal-shaped radio skews heavily toward running a blocker.
+- **The tip jar's privacy wording is corrected, and this is independent of
+  the revert.** "Doesn't track you" was never true: `index.html` loads
+  Google's `iframe_api` on every visit, so Google is contacted whether or
+  not you press anything. It now says what actually happens, including the
+  visitor count — saying that plainly is better than a blanket claim that
+  would have quietly stopped being true.
 
 ## [0.9] — 2026-08-23
 

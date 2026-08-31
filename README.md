@@ -191,7 +191,7 @@ every visualizer effect, and assert on what's on the grid.
 | `P` | Power off / on |
 | `G` | Guide -- about/controls page, a station index, and a full detail page per station (freq/name/description/sample tracks); `<-`/`->` steps through all 11 pages, digits `1`-`9` jump straight to a station's detail page from the index, any other key closes it |
 | `C` | Cycle color (Green Phosphor, Classic Amber, Cyber Blue, Monochrome, Bubblegum Pink) |
-| `V` | Visualizer -- open a full-screen procedural display while a station is locked (also kicks in on its own after a few minutes idle). Inside it, `C` cycles color, `Shift+C` or `V` cycles the effect itself, `L` opens the synced-lyrics view (`V` or `L` comes back out), `N` skips to the next track, `M` mutes, `Up`/`Down` set volume, `A` re-opens the LINE INPUT card, `F` toggles fullscreen, `T` arms the sleep timer, and a track position bar runs along the bottom; `E` or `Escape` exits -- other keys are no-ops |
+| `V` | Visualizer -- open a full-screen procedural display while a station is locked. Inside it, `C` cycles color, `Shift+C` or `V` cycles the effect itself, `L` opens the synced-lyrics view (`V` or `L` comes back out), `N` skips to the next track, `M` mutes, `Up`/`Down` set volume, `A` re-opens the LINE INPUT card, `F` toggles fullscreen, `T` arms the sleep timer, and a track position bar runs along the bottom; `E` or `Escape` exits -- other keys are no-ops |
 | `W` | Weather -- a card with today in three parts (morning / afternoon / evening), each with a high, a condition and a chance of rain, plus sunrise and sunset; the part you are currently in is picked out. Drawn over the middle of the set rather than taking the screen, so the dial above and the meters below keep running. A live reading also sits in the title bar opposite the sleep timer, refreshed every 15 minutes while the set is on. Asks for your location the first time through a consent card, the same way `[A]` does; saying no costs nothing and `[W]` re-opens it. **Needs a secure connection** -- browsers refuse geolocation over plain `http`, so this works on the deployed site and on `localhost`, but not over a bare IP address |
 | `A` | LINE INPUT -- the audio-capture consent card. Patch a live feed into the meters, or pull it back out. Offered once on your first `[V]`; this key re-opens it on demand, from the main screen or from inside the visualizer |
 | `F` | Fullscreen -- toggles the browser's own fullscreen on the page, for running SIGNAL on a spare monitor without browser chrome. Works from the main screen and the visualizer. Note this cannot hide your browser's "sharing this tab" capture indicator if `[A]` is patched in -- that banner belongs to the browser, not the page |
@@ -263,6 +263,7 @@ isn't just an internal annoyance anymore.
   node tools/lint-roster.js                 # offline: the rules below, no network
   node tools/check-roster.mjs               # the deeper probe, in batches
   node tools/check-roster.mjs --report      # read the record, no network
+  node tools/roster-watch.mjs --status      # is the scheduled sweep still running?
   ```
 
   Checks every track ID against oEmbed and prints any that are now dead,
@@ -284,6 +285,27 @@ isn't just an internal annoyance anymore.
   one page fetch per track against an endpoint that throttles after a few
   hundred, and it stops early when throttled rather than recording results
   that say nothing.
+- **Something has to remember to run it.** The narrow-licence track above was
+  found because someone happened to run the deep probe by hand the evening
+  before; the checker already knew how to catch that rot, and nothing made
+  it look. `tools/roster-watch.mjs` (`npm run watch`) is the scheduling and
+  the speaking-up around it — one batch per run, the outcome recorded in
+  `tools/roster-watch-state.json`, and a notification **only** when a person
+  is actually needed: findings always, a sweep stuck 3 runs, a broken checker
+  2 runs. Clean runs say nothing, because a notification that fires every day
+  is wallpaper inside a week. It runs daily at batch 40 as a systemd user
+  timer (`tools/signal-health.service` and `.timer` are reference copies of
+  what's installed); that walks the whole roster in about 12 days, inside the
+  30-day staleness horizon, without tripping the rate limit. Turning the
+  batch up makes the sweep progress *less*, since a throttled run records
+  nothing for what it gave up on. The rule it exists for: `check-roster`
+  exits 0 when it was throttled, because it found nothing wrong — it merely
+  never looked — so a scheduler that trusts the exit code reports an
+  unfinished sweep as a clean bill of health. `roster-watch` reads the
+  `--json` summary's `throttled` flag instead. The admin dashboard's ROSTER
+  HEALTH panel shows the same thing as a liveness strip, since a notification
+  is a one-shot channel and a stopped checker leaves a record that looks
+  perfect.
 - **Concept-tied stations:** if a station's premise points at a real source
   (e.g. ATOMIC being an in-universe Fallout radio station), verify tracks
   against *that* source's actual tracklist, not just oEmbed -- oEmbed only
