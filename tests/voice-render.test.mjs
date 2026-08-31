@@ -49,8 +49,11 @@ test('the station ID script is the callsign and nothing else', () => {
   // band or dial position without a re-render. What replaced the old
   // `<callsign>, <spoken freq>.` assertion is deliberately this blunt: the
   // whole point is that no number reaches the script.
-  assert.equal(ID_SCRIPT('SYNAPSE'), 'SYNAPSE.')
-  assert.doesNotMatch(ID_SCRIPT('SYNAPSE'), /[0-9]/, 'no digits reach the renderer')
+  // COLD WAVE rather than SYNAPSE, which this used to use: SYNAPSE gained a
+  // respelling on 2026-08-31 and stopped being an example of a callsign that
+  // passes through untouched. Picked as one the respell map does not name.
+  assert.equal(ID_SCRIPT('COLD WAVE'), 'COLD WAVE.')
+  assert.doesNotMatch(ID_SCRIPT('COLD WAVE'), /[0-9]/, 'no digits reach the renderer')
 })
 
 test('no station on the dial can put a number into its own ID', async () => {
@@ -99,11 +102,26 @@ test('liner filenames resolve through the same remap as station IDs', () => {
   assert.equal(linerClipPath('cipher', 12), 'audio/liner-cipher-12.mp3')
 })
 
-test('a callsign this voice mispronounces is respelled in the ID script', () => {
+test('a callsign this voice mispronounces is respelled in the ID script', async () => {
   // Regenerating CIRCUIT CRUSH's ID must not quietly restore the spelling
   // that sounded wrong. The liner is deliberately NOT respelled -- the same
   // words read correctly mid-sentence, and only the ID opens with them.
   assert.equal(ID_SCRIPT('CIRCUIT CRUSH'), 'Serkit Crush.')
   assert.equal(ID_SCRIPT('CIPHER'), 'CIPHER.')
   assert.ok(CALLSIGN_RESPELL['CIRCUIT CRUSH'])
+  // 2026-08-31 -- SYNAPSE joined them the day the ID script became the
+  // callsign alone. It had been read correctly for as long as it had a
+  // frequency after it; with nothing following, the voice put a trailing
+  // vowel on the end. Pinned for the same reason CIRCUIT CRUSH is: the
+  // failure mode is REGENERATION, where the next person to re-render this
+  // station gets the wrong pronunciation back with nothing to warn them.
+  assert.equal(ID_SCRIPT('SYNAPSE'), 'Sinaps.')
+  assert.ok(CALLSIGN_RESPELL.SYNAPSE)
+  // Every respelling must still be a callsign the roster actually has --
+  // a map keyed on a station that was renamed silently stops applying.
+  const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=respell')
+  const callsigns = new Set([...STATIONS, ...SECRET_STATIONS].map((st) => st.callsign))
+  for (const name of Object.keys(CALLSIGN_RESPELL)) {
+    assert.ok(callsigns.has(name), `${name} is respelled but is not on the roster`)
+  }
 })

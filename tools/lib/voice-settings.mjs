@@ -84,6 +84,25 @@ export function peakBandFor(outPath) {
 // Confirmed by ear 2026-08-29; three spellings were rendered and 'Serkit' won.
 export const CALLSIGN_RESPELL = {
   'CIRCUIT CRUSH': 'Serkit Crush',
+  // 2026-08-31. Reported from listening: the ID came out with a trailing
+  // vowel on the end, roughly "synapse-ee", rather than the flat SIN-aps a
+  // presenter says. Five spellings were rendered to scratch and judged by
+  // ear -- SYNAPSE, Synaps, Sinaps, Sin-apse, "SIN aps" -- and Sinaps won.
+  //
+  // THIS IS THE CONTEXT RULE ARRIVING ON SCHEDULE, and worth reading as
+  // evidence rather than as one more entry. The note above says the respell
+  // applies to whatever OPENS a line, which is why CIRCUIT CRUSH needed one
+  // for its ID and not for its liner. The same day the frequency came out of
+  // the ID script, that clip stopped being "<CALLSIGN>, <frequency>" and
+  // became the callsign alone -- nothing but an opening. SYNAPSE had been
+  // read correctly for as long as it had a sentence after it.
+  //
+  // So the liner is NOT respelled, on the same reasoning as CIRCUIT CRUSH's:
+  // its callsign lands at the end of a spoken line rather than at the start.
+  // That is a prediction, not a measurement -- if SYNAPSE's liner turns out
+  // to be wrong too, the rule is subtler than "opens a line" and this comment
+  // is the thing to correct.
+  SYNAPSE: 'Sinaps',
 }
 
 /** The station ID script: the callsign, and nothing else.
