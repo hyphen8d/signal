@@ -25,6 +25,13 @@ export function saveSignalState(program) {
       volume: program.volume,
       muted: program.muted,
       phosphor: mode ? mode.key : undefined,
+      // 2026-08-31 -- which band the dial is on. Persisted UNCONDITIONALLY,
+      // unlike freq: the note above is right that a bare tuned-but-not-locked
+      // position is not worth remembering, but a band is not a position. It
+      // is the same kind of thing as the phosphor or the volume -- a state
+      // the set was left in -- and coming back to find the receiver has
+      // silently moved to the other band would read as a fault.
+      band: program.band || undefined,
       // 65th pass -- per-station [Shift+C] visualizer picks, same
       // treatment as the phosphor/volume/mute preferences above.
       visualOverrides: program.visualOverrides || {},

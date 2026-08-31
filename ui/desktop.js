@@ -11,8 +11,7 @@ const { AUDIO_BUS, audioSignalLive } = await import(`../audio/tap.js?v=${V}`)
 const { SLEEP_FADE_MS, VERSION_TAG } = await import(`../constants.js?v=${V}`)
 const { crtBase, crtDegradeForDist, flashCrtGlitch, rampCrtParams } = await import(`../crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, FREQ_Y, HINT_Y1, HINT_Y2, MBOX_X0, MBOX_X1, METERS_BOT_Y, METERS_DIVIDER_X, METERS_TOP_Y, NOWPLAYING_BOT_Y, NOWPLAYING_TOP_Y, PLAYBACK_Y, SCALE_Y, SIG_Y, STANDBY_LOGO_FONT, STANDBY_LOGO_GAP, STANDBY_LOGO_LETTER_H, STANDBY_LOGO_LETTER_W, STANDBY_LOGO_WORD, STATION_BOT_Y, STATION_TOP_Y, STATION_Y, STATUS_REVEAL_MS, STATUS_TEXT_WIDTH, STATUS_Y, TAGLINE_Y, TRACK_Y, TUNER_BOT_Y, TUNER_TOP_Y, VOL_SIG_DIVIDER_Y, VOL_Y, VU_DIVIDER_Y, VU_Y, centerX, centerXRange, drawBoxBottom, drawBoxSide, drawBoxTop, drawGrille, fmtTime, formatClock, standbyLayout, truncate } = await import(`../layout.js?v=${V}`)
-const { STATIONS, STATION_PRESET_ORDER } = await import(`../stations.js?v=${V}`)
-const { NEAR_THRESHOLD, freqToCol, nearestSignal, nearestStation } = await import(`../tuning.js?v=${V}`)
+const { NEAR_THRESHOLD, bandFor, freqToCol, nearestSignal, nearestStation } = await import(`../tuning.js?v=${V}`)
 
 export default {
 
@@ -150,7 +149,7 @@ export default {
 
     // Panel frames -- drawn once, never redrawn. Every content function
     // below only clears its own interior span, so these stay put.
-    drawBoxTop(term, TUNER_TOP_Y, BOX_X0, BOX_X1, 'TUNING BAND', MUTED)
+    drawBoxTop(term, TUNER_TOP_Y, BOX_X0, BOX_X1, this.bandBoxTitle(), MUTED)
     drawBoxSide(term, SCALE_Y, BOX_X0, BOX_X1, MUTED)
     drawBoxSide(term, DIAL_Y, BOX_X0, BOX_X1, MUTED)
     drawBoxSide(term, FREQ_Y, BOX_X0, BOX_X1, MUTED)
@@ -336,22 +335,42 @@ export default {
     this.drawStandbyClock(s)
   },
 
+  /** The tuner box's title. 2026-08-31: was the literal 'TUNING BAND', which
+   *  said the same thing on both bands and so said nothing once there were
+   *  two. The box is named for the band it is showing, and the scale row
+   *  underneath changes with it -- two agreeing signals for the price of no
+   *  extra rows, which is why the band indicator lives here rather than in a
+   *  strip of its own. */
+  bandBoxTitle() { return `${bandFor(this.band).label} BAND` },
+
   drawScale(s) {
     if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, SCALE_Y, ' ')
-    term.text(DIAL_X0 - 1, SCALE_Y, '100.0', DIM)
-    term.text(freqToCol(500) - 2, SCALE_Y, '500.0', DIM)
-    term.text(DIAL_X1 - 4, SCALE_Y, '900.0', DIM)
+    // 2026-08-31 -- read off the active band instead of three literals. The
+    // right-hand label is placed by its own LENGTH rather than a fixed
+    // DIAL_X1 - 4: ZM's edges are four digits where YM's are three, and the
+    // old offset would have hung "1700.0" one column over the box border.
+    const b = bandFor(this.band)
+    const mid = (b.freqMin + b.freqMax) / 2
+    const hi = b.freqMax.toFixed(1)
+    const midText = mid.toFixed(1)
+    term.text(DIAL_X0 - 1, SCALE_Y, b.freqMin.toFixed(1), DIM)
+    term.text(freqToCol(mid, this.band) - Math.floor(midText.length / 2), SCALE_Y, midText, DIM)
+    term.text(DIAL_X1 - hi.length + 1, SCALE_Y, hi, DIM)
   },
 
   drawDial(s) {
     if (this.mobile) return // 45th pass -- mobile has its own chrome, see mobileDrawChrome()
     const { term } = s
     for (let x = DIAL_X0; x <= DIAL_X1; x++) term.put(x, DIAL_Y, '·', FAINT)
-    const { station: near, dist } = nearestStation(this.freq)
-    for (const ch of STATIONS) {
-      const col = freqToCol(ch.freq)
+    const { station: near, dist } = nearestStation(this.freq, this.band)
+    // 2026-08-31 -- this band's stations, not every station. Column indices
+    // collide freely between bands (all of them are drawn across the same 71
+    // columns), so looping the whole roster would scatter the other band's
+    // markers across this dial at meaningless positions.
+    for (const ch of this.bandPresets()) {
+      const col = freqToCol(ch.freq, this.band)
       const glow = this.mode === 'seeking' && ch === near && dist <= NEAR_THRESHOLD
       const locked = this.mode === 'locked' && this.lockedStation === ch
       // 41st pass: each station's own marker (STATIONS[].glyph) instead of
@@ -364,7 +383,7 @@ export default {
     // 54th pass: _freqJitter is a purely cosmetic offset (see frame()'s
     // warm-up drift block) -- nearestStation()/the glow computation above
     // stay on the real this.freq, only the drawn cursor position wobbles.
-    const cursorCol = freqToCol(this.freq + (this._freqJitter || 0))
+    const cursorCol = freqToCol(this.freq + (this._freqJitter || 0), this.band)
     term.put(cursorCol, DIAL_Y, '█', BRIGHT)
   },
 
@@ -628,7 +647,7 @@ export default {
   crtIdleEvent(s, kind) {
     if (!s?.crt?.params) return
     const { term } = s
-    const { dist } = nearestSignal(this.freq)
+    const { dist } = nearestSignal(this.freq, this.band)
     // Restore to what the CURRENT tuning distance calls for, not to
     // nominal -- same reasoning as flashCrtGlitch().
     const restore = crtDegradeForDist(dist)
@@ -688,7 +707,7 @@ export default {
     if (!this.poweredOn || this.guideOpen) return
     const roll = Math.random()
     if (roll < 0.2) { flashCrtGlitch(s); return }
-    const { dist } = nearestSignal(this.freq)
+    const { dist } = nearestSignal(this.freq, this.band)
     const restore = crtDegradeForDist(dist)
     if (roll < 0.7) {
       rampCrtParams(s, { chroma: 1.4 + Math.random() * 0.8 }, { chroma: restore.chroma }, 220)
@@ -711,7 +730,7 @@ export default {
     if (this.mobile) return
     const { term } = s
     const tops = [
-      [TUNER_TOP_Y, 'TUNING BAND'], [STATION_TOP_Y, 'STATION'],
+      [TUNER_TOP_Y, this.bandBoxTitle()], [STATION_TOP_Y, 'STATION'],
       [NOWPLAYING_TOP_Y, 'NOW PLAYING'],
       // labelX1 = METERS_DIVIDER_X here (18th pass) -- without it this
       // would re-center "LEVELS" across the box's full width on every
@@ -820,7 +839,7 @@ export default {
     else {
       // 41st pass: nearestSignal, not nearestStation -- the SIG meter is a
       // reception readout, and the secret station is really there.
-      const { dist } = nearestSignal(this.freq)
+      const { dist } = nearestSignal(this.freq, this.band)
       if (dist <= NEAR_THRESHOLD) pct = 1 - dist / NEAR_THRESHOLD
     }
     if (this.mobile) this.mobileDrawSignal(s, pct)
@@ -1326,8 +1345,9 @@ export default {
     const { term } = s
     const y = rows[0] // VOL_Y
     const x0 = METERS_DIVIDER_X + 2
-    const idx = this.lockedStation ? STATION_PRESET_ORDER.indexOf(this.lockedStation) : -1
-    for (let i = 0; i < STATION_PRESET_ORDER.length; i++) {
+    const order = this.bandPresets()
+    const idx = this.lockedStation ? order.indexOf(this.lockedStation) : -1
+    for (let i = 0; i < order.length; i++) {
       term.put(x0 + i, y, String(i + 1), i === idx ? BRIGHT : FAINT)
     }
   },
@@ -1400,7 +1420,7 @@ export default {
     // landing mid-sweep before tryLock has retuned to the exact frequency)
     // can ever show a degraded S/N on a carrier the set is holding. Locked
     // is locked.
-    const pct = state === 'seeking' ? Math.min(1, nearestSignal(this.freq).dist / NEAR_THRESHOLD) : 0
+    const pct = state === 'seeking' ? Math.min(1, nearestSignal(this.freq, this.band).dist / NEAR_THRESHOLD) : 0
     const snr = Math.round(this.SNR_MAX + (this.SNR_MIN - this.SNR_MAX) * pct)
     // Same attribute convention as drawFieldReadout() below, so the two
     // readouts read as one stacked pair rather than two unrelated labels.
@@ -1604,7 +1624,7 @@ export default {
     // line2 (a real radio never had a help screen) and PLAY/PAUSE was
     // removed outright (see key() comment) rather than moved, since it's
     // not being kept anywhere.
-    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BACK'
+    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BAND'
     // 23rd pass: "[C] MODE" rather than the fuller "[C] DISPLAY" -- kept
     // short for the same reason now that GUIDE joined this line too (the
     // fixed hint row has broken before on an over-length string, see

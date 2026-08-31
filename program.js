@@ -27,8 +27,8 @@ const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUC
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
-const { GREEN_ROOM_STATION, NIN_STATION, SECRET_STATIONS, STATIONS, STATION_PRESET_ORDER } = await import(`./stations.js?v=${V}`)
-const { FREQ_MAX, FREQ_MIN, LOCK_THRESHOLD, NEAR_THRESHOLD, RESUME_CUTOFF_MS, SCAN_STEP, SEEK_STEP, VISUALIZER_IDLE_MS, WARMUP_MS, clampFreq, freqToCol, nearestLockable, nearestSignal, nearestStation, shuffledIndices, stationColsFor } = await import(`./tuning.js?v=${V}`)
+const { GREEN_ROOM_STATION, NIN_STATION, SECRET_STATIONS, STATIONS, presetOrderFor } = await import(`./stations.js?v=${V}`)
+const { BANDS, DEFAULT_BAND, LOCK_THRESHOLD, NEAR_THRESHOLD, RESUME_CUTOFF_MS, SCAN_STEP, SEEK_STEP, VISUALIZER_IDLE_MS, WARMUP_MS, bandFor, clampFreq, freqToCol, nearestLockable, nearestSignal, nearestStation, shuffledIndices, stationColsFor } = await import(`./tuning.js?v=${V}`)
 const { VISUALS } = await import(`./visuals/index.js?v=${V}`)
 const { default: desktopUi } = await import(`./ui/desktop.js?v=${V}`)
 const { default: mobileUi } = await import(`./ui/mobile.js?v=${V}`)
@@ -248,10 +248,16 @@ export default {
     // re-detecting anything itself.
     this.mobile = MOBILE_LITE
 
-    // Leftover from the old 88-108 band -- 93.0 is below the current
-    // FREQ_MIN (100.0), so the dial opened already out-of-range. Now starts
-    // exactly at FREQ_MIN.
-    this.freq = FREQ_MIN
+    // 2026-08-31 -- which band the dial is on. Every tuning question in this
+    // file passes it, so this one field is what decides which stations exist
+    // as far as the receiver is concerned. Restored from saved state further
+    // down; DEFAULT_BAND is what a first visit gets.
+    this.band = DEFAULT_BAND
+
+    // Leftover from the old 88-108 band -- 93.0 is below the current band's
+    // floor, so the dial opened already out-of-range. Now starts exactly at
+    // the bottom of whichever band is up.
+    this.freq = bandFor(this.band).freqMin
     this.mode = 'seeking' // 'seeking' | 'locked'
     this.lockedStation = null
     this.currentTrack = null
@@ -421,7 +427,11 @@ export default {
     this._sleepMinutes = 0
     this._sleepFade = 1
 
-    this.history = [] // stack of previously-locked stations, for [B] back
+    // 2026-08-31 -- `history` (the stack of previously-locked stations behind
+    // [B] BACK) is gone, along with goBack() and the push in tryLock(). [B] is
+    // the band switch now. Deleted rather than kept for a rainy day: an unread
+    // stack that tryLock() still maintains is a thing the next reader has to
+    // work out the deadness of, and git remembers it either way.
     // Set once below if a saved session is restored, so powerUp() knows
     // the player needs an actual loadTrack() call (fresh YT.Player, never
     // loaded anything) rather than just resuming playback on an already-
@@ -458,6 +468,16 @@ export default {
     // mute/unmute choice below always wins over this default.
     if (!saved && this.mobile) this.muted = true
     if (saved) {
+      // Band FIRST, and before the stationId restore further down: it decides
+      // which dial the rest of this block is talking about. Validated against
+      // BANDS rather than trusted -- a key from a build that spelled the
+      // bands differently would otherwise leave the receiver on a band that
+      // has no edges, and bandFor()'s fallback would then disagree with
+      // `this.band` about which one is up.
+      if (BANDS.some((b) => b.key === saved.band)) {
+        this.band = saved.band
+        this.freq = bandFor(this.band).freqMin
+      }
       if (typeof saved.volume === 'number') this.volume = Math.min(100, Math.max(0, saved.volume))
       if (typeof saved.muted === 'boolean') this.muted = saved.muted
       if (typeof saved.phosphor === 'string') {
@@ -475,7 +495,12 @@ export default {
       // beaten again.
       if (Number.isFinite(saved.gameHiScore)) this.gameHiScore = Math.max(0, Math.floor(saved.gameHiScore))
       if (saved.stationId) {
-        const ch = STATIONS.find((c) => c.id === saved.stationId)
+        // Must be on the band we just restored. The two agree by
+        // construction -- you can only lock what is on the dial in front of
+        // you -- but a saved payload that predates a station being MOVED
+        // between bands would not, and restoring it would boot the set
+        // showing a station its own dial cannot reach.
+        const ch = STATIONS.find((c) => c.id === saved.stationId && c.band === this.band)
         if (ch) {
           this.mode = 'locked'
           this.lockedStation = ch
@@ -911,8 +936,11 @@ export default {
     // receiver, not an OS, so this borrows that probe-block density and
     // key:value voice but keeps it in-fiction -- tuner/antenna/preset-table
     // diagnostics instead of kernel modules. Values are pulled from the
-    // real constants (FREQ_MIN/MAX, STATIONS.length) so this can't drift out
-    // of sync with the actual band/roster the way a hardcoded line could.
+    // real constants (the active band's edges, its own preset count) so this
+    // can't drift out of sync with the actual band/roster the way a hardcoded
+    // line could. 2026-08-31: both are read PER BAND -- a set that booted
+    // announcing the whole roster and one band's edges would be describing a
+    // receiver that does not exist.
     const bootLines = [
       // 2026-08-28 -- "MODEL " dropped here for the same reason it was
       // dropped from the title bar's plate (drawChrome): the set is called
@@ -923,8 +951,8 @@ export default {
       // SYNAPSE pass got caught by.
       'SG-1  SIGNAL RECEIVER',
       '',
-      `BAND        : ${FREQ_MIN.toFixed(1)} - ${FREQ_MAX.toFixed(1)} KHZ`,
-      `PRESETS     : ${STATIONS.length} STATIONS LOADED`,
+      `BAND        : ${bandFor(this.band).label} ${bandFor(this.band).freqMin.toFixed(1)} - ${bandFor(this.band).freqMax.toFixed(1)} KHZ`,
+      `PRESETS     : ${this.bandPresets().length} STATIONS LOADED`,
       'OSCILLATOR  : QUARTZ, CALIBRATING...',
       'ANTENNA     : DIPOLE, CONTINUITY OK',
       '',
@@ -1009,7 +1037,7 @@ export default {
       } },
       { delay: REVEAL_DELAY, fn: () => {
         // Full picture back -- same chrome init() draws on a fresh boot,
-        // just without touching freq/lockedStation/bags/volume/history.
+        // just without touching freq/lockedStation/bags/volume/band.
         clearAll()
         this.poweredOn = true
         this._powerAnimating = false // sequence landed, ticker can resume
@@ -1842,7 +1870,7 @@ export default {
   // --- tuning ------------------------------------------------------------
 
   retune(s, f) {
-    this.freq = clampFreq(f)
+    this.freq = clampFreq(f, this.band)
     this.drawFreq(s)
     this.drawDial(s)
     this.drawSignal(s)
@@ -1852,7 +1880,7 @@ export default {
     // line is metering (how loud the hiss is, how degraded the picture is),
     // and the secret station is a real carrier for those purposes even
     // though nothing here can lock onto it.
-    const { station: sigStation, dist } = nearestSignal(this.freq)
+    const { station: sigStation, dist } = nearestSignal(this.freq, this.band)
     setStaticIntensity(dist, sigStation && sigStation.static)
     // 32nd pass: the picture itself degrades the same way the hiss does --
     // see crtDegradeForDist(). dist is 0 exactly at a station's own freq
@@ -1940,7 +1968,7 @@ export default {
     // reusing the same bed scanning already uses. Idempotent:
     // a no-op if it's already running, so this never restarts/stutters the
     // ramp on repeated calls.
-    const sig = nearestSignal(this.freq)
+    const sig = nearestSignal(this.freq, this.band)
     startStaticNoise(sig.dist, sig.station && sig.station.static)
   },
   seekStep(s, delta) {
@@ -1951,8 +1979,12 @@ export default {
     // startScan's wraparound instead of clampFreq's dead stop at the edges.
     let f = this.freq + delta
     let wrapped = false
-    if (f > FREQ_MAX) { f = FREQ_MIN; wrapped = true }
-    else if (f < FREQ_MIN) { f = FREQ_MAX; wrapped = true }
+    // 2026-08-31 -- wraps within the CURRENT band. Reading the old global
+    // FREQ_MIN/FREQ_MAX here would have walked you off the top of ZM and
+    // dropped you at 100.0, a frequency that band does not contain.
+    const bd = bandFor(this.band)
+    if (f > bd.freqMax) { f = bd.freqMin; wrapped = true }
+    else if (f < bd.freqMin) { f = bd.freqMax; wrapped = true }
     // 38th pass: which way the dial is moving, for the SEEKING sweep in
     // the status row (see startStatusAnim).
     this._statusSweepDir = delta < 0 ? -1 : 1
@@ -1964,7 +1996,7 @@ export default {
     // nearest, same field the continuous bed uses -- see STATIONS[].static.
     // Offset above the bed's centre so a step still reads as a separate
     // event layered on the bed rather than a momentary swell of it.
-    const seekSig = nearestSignal(this.freq).station
+    const seekSig = nearestSignal(this.freq, this.band).station
     playSeekStatic((seekSig && seekSig.static ? seekSig.static : STATIC_CENTRE_DEFAULT) + 200)
     // Land-on-lock (added 2026-08-20): landing on a station while seeking
     // with arrows locks onto it automatically --
@@ -1972,7 +2004,7 @@ export default {
     // immediately instead of requiring a separate Enter press. Skip this
     // when the step started already locked on that same station, so a
     // single arrow tap doesn't just replay the lock you're already on.
-    const { station, dist } = nearestStation(this.freq)
+    const { station, dist } = nearestStation(this.freq, this.band)
     if (dist <= LOCK_THRESHOLD && !(wasLocked && this.lockedStation === station)) {
       this.tryLock(s)
       return
@@ -1988,7 +2020,7 @@ export default {
     // 777.7 that number is large while the receiver is in fact sitting on a
     // strong carrier. The bed uses the signal distance so the hiss clears
     // over the secret station the same as any other.
-    const bedSig = nearestSignal(this.freq)
+    const bedSig = nearestSignal(this.freq, this.band)
     startStaticNoise(bedSig.dist, bedSig.station && bedSig.station.static)
   },
   // 2026-08-22: optional `forced` param -- SECRET_STATIONS entries are
@@ -2003,7 +2035,7 @@ export default {
     // the secret station when parked within LOCK_THRESHOLD of 613.0. The
     // auto-lock paths (seekStep's land-on-lock, scan) still use
     // nearestStation and can't reach it -- see nearestLockable's comment.
-    const { station, dist } = forced ? { station: forced, dist: 0 } : nearestLockable(this.freq)
+    const { station, dist } = forced ? { station: forced, dist: 0 } : nearestLockable(this.freq, this.band)
     if (dist > LOCK_THRESHOLD) {
       this.setStatus(s, 'NO SIGNAL', false)
       return
@@ -2025,16 +2057,6 @@ export default {
       let pos = 0
       try { pos = this.player?.getCurrentTime?.() || 0 } catch (e) {}
       this.lastPlayback[this.lockedStation.id] = { track: this.currentTrack, position: pos, at: Date.now() }
-    }
-    // History (14th pass) -- push
-    // whatever was locked before this one so [B] can step back through
-    // recently-played stations. Only real transitions count: landing back
-    // on the station you're already on (e.g. an arrow-seek that re-locks
-    // in place) doesn't push a duplicate. Capped so it can't grow forever
-    // across a long session.
-    if (this.lockedStation && this.lockedStation !== station) {
-      this.history.push(this.lockedStation)
-      if (this.history.length > 8) this.history.shift()
     }
     this.mode = 'locked'
     this.lockedStation = station
@@ -2165,14 +2187,56 @@ export default {
     this.setPlayState(s, alreadyPlaying ? 'playing' : 'buffering')
     saveSignalState(this)
   },
-  // [B] back (14th pass) -- pops the most recently locked station off
-  // history and tunes to it via the same sweep presetTune() already gives
-  // number-key presets, so stepping back reads/sounds the same as jumping
-  // to any other preset rather than a silent instant cut.
-  goBack(s) {
-    if (!this.history.length) return
-    const station = this.history.pop()
-    this.presetTune(s, station)
+
+  /** The stations on the band the dial is currently showing, in dial order.
+   *  This is what [1-9] indexes, what the preset strip draws and what the
+   *  guide pages through -- every one of which means "on the dial in front of
+   *  you" rather than "in the roster". */
+  bandPresets() { return presetOrderFor(this.band) },
+
+  /** [B] BAND (2026-08-31). Steps to the next band and lands at its bottom
+   *  edge, seeking.
+   *
+   *  It does NOT try to keep your position: there is no honest mapping from
+   *  a frequency on one band to a frequency on another, and the two obvious
+   *  guesses are both worse than starting fresh. Same absolute number is
+   *  usually out of range; same proportional position lands you in the middle
+   *  of a band you have not looked at, which reads as the set having drifted
+   *  rather than as you having moved.
+   *
+   *  Drops the lock rather than carrying it, for the reason the whole feature
+   *  exists: a station on another band is not reachable from here, so staying
+   *  locked to it while the dial shows somewhere else would be the set lying
+   *  about where it is. powerDown()'s teardown is deliberately not reused --
+   *  this is a move, not a power cycle, and the hum and the tap stay up. */
+  cycleBand(s) {
+    const i = BANDS.findIndex((b) => b.key === this.band)
+    const next = BANDS[(i + 1) % BANDS.length]
+    this.stopScan()
+    // Band BEFORE freq: retune() and enterSeeking() both ask nearestSignal()
+    // which band they are on, and asking with the old one would read the new
+    // frequency against the band it does not belong to -- the meters would
+    // settle on a carrier that is not there.
+    this.band = next.key
+    // Dropped rather than carried. `lockedStation` normally survives seeking
+    // as "where you were", which is what lets re-locking resume the same
+    // track (RESUME_CUTOFF_MS). Across a band that memory is a lie: the
+    // station is not merely far away, it is not on this dial at all.
+    this.lockedStation = null
+    this.retune(s, next.freqMin)
+    this.enterSeeking(s)
+    // enterSeeking redraws the DIAL but not the furniture around it, which is
+    // built once at power-on and never had a reason to change since. Both
+    // pieces of it name the band: the tuner box's title, and the scale row's
+    // three numbers. Redrawn here rather than taught to drawDial, because
+    // this is the only event in the set's life that moves them.
+    this.drawChrome(s)
+    this.drawScale(s)
+    // After enterSeeking, which sets its own SEEKING status -- this has to be
+    // the word that lands, since it is the one thing the keypress did that
+    // the screen cannot otherwise show. The dial redraws under it either way.
+    this.setStatus(s, `BAND ${next.label}`, false)
+    saveSignalState(this)
   },
 
   stopScan() {
@@ -2197,14 +2261,17 @@ export default {
     if (this.mode === 'locked') this.enterSeeking(s)
     this.scanning = true
     this.setStatus(s, 'SCANNING...', false)
-    const sig = nearestSignal(this.freq)
+    const sig = nearestSignal(this.freq, this.band)
     startStaticNoise(sig.dist, sig.station && sig.station.static)
     this.scanTimer = setInterval(() => {
       let f = this.freq + SCAN_STEP
-      if (f > FREQ_MAX) f = FREQ_MIN
+      // Same band-local wrap as seekStep's -- scan must not walk off one
+      // band's top edge and reappear at another band's floor.
+      const bd = bandFor(this.band)
+      if (f > bd.freqMax) f = bd.freqMin
       this.retune(s, f)
       if (Math.abs(f - startFreq) < clearance) return
-      const { dist } = nearestStation(f)
+      const { dist } = nearestStation(f, this.band)
       if (dist <= LOCK_THRESHOLD) this.tryLock(s)
     }, 90)
   },
@@ -2261,7 +2328,7 @@ export default {
   // acknowledgment -- same flashStatus() mechanism VOL/MUTE use.
   presetTune(s, station) {
     if (this.mode === 'locked' && this.lockedStation === station) {
-      const presetNum = STATION_PRESET_ORDER.indexOf(station) + 1
+      const presetNum = this.bandPresets().indexOf(station) + 1
       this.flashStatus(s, presetNum > 0 ? `PRESET ${presetNum}` : 'LOCKED')
       return
     }
@@ -2289,7 +2356,7 @@ export default {
     // Falls back to the bare word for anything tuned by reference rather
     // than by preset -- [B] back, and the secret station (deliberately not
     // in STATION_PRESET_ORDER, so indexOf correctly returns -1 for it).
-    const presetNum = STATION_PRESET_ORDER.indexOf(station) + 1
+    const presetNum = this.bandPresets().indexOf(station) + 1
     this.setStatus(s, presetNum > 0 ? `TUNING ${presetNum}` : 'TUNING...', false)
     // 54th pass -- the physical button push, right before the tuning motor
     // (the whoosh below) engages.
@@ -2299,7 +2366,7 @@ export default {
     // distinct from both the plain seek-static hiss and the ident tone
     // that plays once the sweep lands and locks a few hundred ms later.
     playPresetWhoosh()
-    const sig = nearestSignal(this.freq)
+    const sig = nearestSignal(this.freq, this.band)
     startStaticNoise(sig.dist, sig.station && sig.station.static)
     this.scanTimer = setInterval(() => {
       i += 1
@@ -2739,17 +2806,18 @@ export default {
       // bar teaches it after that.
       case 't': case 'T': e.preventDefault(); this.flashStatus(s, this.cycleSleepTimer(s)); break
       case 'p': case 'P': e.preventDefault(); this.powerDown(s); break
-      // History back (14th pass) -- discovery/history navigation.
-      case 'b': case 'B':
-        e.preventDefault()
-        // 2026-08-27 (dead-feedback audit) -- [B] BACK sits on the footer's
-        // top row, so it is one of the five controls a first-time visitor is
-        // told about, and the history stack is empty until they have left a
-        // station. goBack()'s silent return made the most-advertised key on
-        // the screen the deadest one in the state everyone starts in.
-        if (this.history.length) this.goBack(s)
-        else this.flashStatus(s, 'NO HISTORY')
-        break
+      // [B] BAND (2026-08-31) -- was BACK, which walked a stack of recently
+      // locked stations. That key is spent on the band switch instead, and
+      // BACK is retired rather than rebound: a second band is a place you
+      // move BETWEEN constantly, so it wants the primary letter a real tuner
+      // puts it on, and it costs the footer nothing since [B] BAND is exactly
+      // as wide as [B] BACK was.
+      //
+      // Always acts, so there is no dead-feedback branch to write here: with
+      // two bands there is always another one to switch to. If a third band
+      // ever exists this stays a cycle rather than a toggle for the same
+      // reason [C] cycles phosphors -- one key, one direction, no modifier.
+      case 'b': case 'B': e.preventDefault(); this.cycleBand(s); break
       // Guide (15th pass) -- adds a G key for the guide.
       case 'g': case 'G': e.preventDefault(); this.openGuide(s); break
       // Display modes (23rd pass) -- lets users cycle display modes.
@@ -2768,12 +2836,15 @@ export default {
         break
       // Visualizer (43rd pass) -- "V" for saVer, the mnemonic
       // still works after the 44th pass rename to "Visualizer" -- manual
-      // toggle in, any time you're locked. Off-station it does nothing
-      // (mirrors [B] BACK with empty history) -- getting in is only
-      // meaningful once there's a station/track to show on the info bar.
-      // 2026-08-27 (dead-feedback audit) -- "silently", that used to read,
-      // and [B] was the precedent for it. Both say so now; see the else
-      // below and [B]'s own case.
+      // toggle in, any time you're locked. Off-station it does nothing --
+      // getting in is only meaningful once there's a station/track to show
+      // on the info bar.
+      // 2026-08-27 (dead-feedback audit) -- "silently", that used to read.
+      // The rule it was fixed under still stands and is the general one: a
+      // control the screen advertises has to ANSWER even where it cannot
+      // act. See the else below. ([B] BACK on an empty history was the
+      // other half of that pass and is retired as of 2026-08-31; [B] is the
+      // band switch now, and always acts.)
       case 'v': case 'V':
         e.preventDefault()
         if (this.mode === 'locked' && this.lockedStation) {
@@ -2801,10 +2872,9 @@ export default {
           this.enterVisualizer(s)
         } else {
           // 2026-08-27 (dead-feedback audit) -- the no-op this case's
-          // comment above describes used to be a silent one, with [B] BACK
-          // on an empty history as its precedent. Both answer now. Same word
-          // as [N] just above, for the same reason: the visualizer needs a
-          // station to show, and off-station there isn't one.
+          // comment above describes used to be a silent one. It answers now.
+          // Same word as [N] just above, for the same reason: the visualizer
+          // needs a station to show, and off-station there isn't one.
           this.flashStatus(s, 'NO SIGNAL')
         }
         break
@@ -2855,7 +2925,7 @@ export default {
         // 17th pass: STATION_PRESET_ORDER (freq-sorted), not STATIONS
         // (chronological add-order) -- see its definition for why -- so
         // preset number always matches left-to-right position on the dial.
-        const ch = STATION_PRESET_ORDER[Number(e.key) - 1]
+        const ch = this.bandPresets()[Number(e.key) - 1]
         if (ch) this.presetTune(s, ch)
         break
       }
@@ -2995,7 +3065,7 @@ export default {
     // 'seeking' window a preset sweep passes through.
     if (!this.mobile && this.mode === 'seeking' && Math.random() < 0.15) {
       const x = DIAL_X0 + Math.floor(Math.random() * (DIAL_X1 - DIAL_X0))
-      const cursorCol = freqToCol(this.freq)
+      const cursorCol = freqToCol(this.freq, this.band)
       // BUG FIXED (41st pass, found while verifying the per-station dial
       // glyphs): this shimmer picks ANY column on the dial and paints a
       // FAINT '·'/':' over it -- including the columns holding station
@@ -3007,7 +3077,7 @@ export default {
       // made it obvious, since a dial full of DIFFERENT shapes is something
       // you actually read. The cursor column was already excluded for the
       // same reason -- this just extends that to the markers.
-      if (x !== cursorCol && !stationColsFor().has(x)) {
+      if (x !== cursorCol && !stationColsFor(this.band).has(x)) {
         const chars = ['·', '·', '·', ':', '.']
         s.term.put(x, DIAL_Y, chars[Math.floor(Math.random() * chars.length)], FAINT)
       }

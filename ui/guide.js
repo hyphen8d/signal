@@ -9,7 +9,7 @@ const V = globalThis.SIGNAL_BUILD ?? ''
 const { playPanelSound, stopStaticNoise } = await import(`../audio/sfx.js?v=${V}`)
 const { VERSION_TAG } = await import(`../constants.js?v=${V}`)
 const { centerX, clearGrid, sampleTracks, truncate, wordWrap } = await import(`../layout.js?v=${V}`)
-const { STATIONS, STATION_PRESET_ORDER } = await import(`../stations.js?v=${V}`)
+const { STATIONS } = await import(`../stations.js?v=${V}`)
 
 export default {
 
@@ -60,7 +60,7 @@ export default {
   // station's detail page instead of arrowing past the ones you don't
   // care about (see key()). Any other key still closes the guide exactly
   // like before.
-  guideTotalPages() { return 2 + STATION_PRESET_ORDER.length },
+  guideTotalPages() { return 2 + this.bandPresets().length },
   /** Step the guide one page and redraw, clamped at both ends. Extracted
    *  2026-08-27 when touch gained guide paging (swipe L/R, ui/mobile.js):
    *  the arrow-key version had been inline in key(), and a second inline
@@ -346,7 +346,7 @@ export default {
       // not a hardcoded 22 -- the lite grid is 22 ROWS, so the old literal
       // put it off-grid entirely (the same fault the About page's narrow
       // branch was written to avoid).
-      STATION_PRESET_ORDER.forEach((ch, i) => {
+      this.bandPresets().forEach((ch, i) => {
         const y = 3 + i
         if (onAir(ch)) term.text(C.mark, y, '>', BOLD)
         term.text(C.preset, y, `[${String(i + 1).padStart(2, '0')}]`, DIM)
@@ -365,7 +365,7 @@ export default {
     term.text(C.callsign, 3, 'STATION', BOLD)
     term.text(C.tagline, 3, 'LANE', BOLD)
     term.text(4, 4, '-'.repeat(Math.min(72, term.cols - 8)), FAINT)
-    STATION_PRESET_ORDER.forEach((ch, i) => {
+    this.bandPresets().forEach((ch, i) => {
       const y = 5 + i
       // 41st pass, preserved: the dial marker rides the row, so the index
       // doubles as the legend for the band -- you can read off which shape
@@ -384,16 +384,16 @@ export default {
     // what the marker means (a bare '>' explains nothing), and how much is
     // actually behind these nine names -- the same "evidence of depth" the
     // detail pages' (6 OF n) counter provides, at roster scale.
-    const rowY = 5 + STATION_PRESET_ORDER.length + 1
+    const rowY = 5 + this.bandPresets().length + 1
     term.text(4, rowY, '-'.repeat(Math.min(72, term.cols - 8)), FAINT)
-    const trackTotal = STATION_PRESET_ORDER.reduce((n, ch) => n + ch.tracks.length, 0)
-    term.text(4, rowY + 1, `${STATION_PRESET_ORDER.length} STATIONS`, BOLD)
+    const trackTotal = this.bandPresets().reduce((n, ch) => n + ch.tracks.length, 0)
+    term.text(4, rowY + 1, `${this.bandPresets().length} STATIONS`, BOLD)
     term.text(18, rowY + 1, `${trackTotal} TRACKS IN ROTATION`, MUTED)
     // Deliberately NOT drawKeyLineAt: brackets are this app's marker for
     // "a control you can press" (see drawGuideKeyLine's note), and the
     // on-air marker is a status glyph, not a key. Bracketing it would teach
     // the wrong thing about every other bracket on the page.
-    if (STATION_PRESET_ORDER.some(onAir)) {
+    if (this.bandPresets().some(onAir)) {
       term.text(C.mark, rowY + 2, '>', BOLD)
       term.text(C.preset, rowY + 2, 'the station you are tuned to right now', FAINT)
     }
@@ -413,10 +413,10 @@ export default {
   // rotation the way the old `like` field could.
   drawGuidePageStation(s, i) {
     const { term } = s
-    const ch = STATION_PRESET_ORDER[i]
+    const ch = this.bandPresets()[i]
     const presetNum = String(i + 1).padStart(2, '0')
     const put = (y, text, attr) => term.text(centerX(term.cols, text), y, text, attr)
-    put(1, `SIGNAL -- STATIONS   [${presetNum}/${String(STATION_PRESET_ORDER.length).padStart(2, '0')}]`, BOLD)
+    put(1, `SIGNAL -- STATIONS   [${presetNum}/${String(this.bandPresets().length).padStart(2, '0')}]`, BOLD)
     const contentWidth = term.cols - 8
     // 41st pass: flanks the callsign the same way the STATION box does once
     // you are locked on. Deliberately NOT also led by the glyph the way the

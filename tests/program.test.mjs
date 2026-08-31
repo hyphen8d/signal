@@ -41,7 +41,7 @@ test('[P] runs the POST readout on the always-queue and lands locked', async () 
     assert.equal(h.program._powerAnimating, false)
     assert.equal(h.program.mode, 'locked')
     assert.match(h.row(0), /SIGNAL v\d/)
-    assert.ok(h.row(3).includes('TUNING BAND'))
+    assert.ok(h.row(3).includes(h.program.bandBoxTitle()))
     assert.ok(h.row(12).includes('NOW PLAYING'))
     assert.match(h.row(2), /\[\s+(LOCKED|MUTED)\s+\]/)
     assert.ok(h.row(9).includes(h.program.lockedStation.callsign), 'callsign resolved on the STATION row')
@@ -73,7 +73,7 @@ test('guide opened during the boot-flicker tail is not punched through', async (
     h.key('x') // any other key closes it
     assert.equal(h.program.guideOpen, false)
     h.advance(700) // the frozen flicker beats fire now, onto the rebuilt chrome
-    assert.ok(h.row(3).includes('TUNING BAND'))
+    assert.ok(h.row(3).includes(h.program.bandBoxTitle()))
     assert.ok(h.row(12).includes('NOW PLAYING'))
     assert.ok(h.row(23).includes('[ENTER] LOCK'))
   } finally { h.shutdown() }
@@ -182,7 +182,7 @@ test('visualizer: every effect draws without throwing and exits back to the main
     h.key('e')
     assert.equal(h.program.visualizerActive, false)
     h.advance(400)
-    assert.ok(h.row(3).includes('TUNING BAND'))
+    assert.ok(h.row(3).includes(h.program.bandBoxTitle()))
     assert.ok(h.row(12).includes('NOW PLAYING'))
     assert.ok(h.row(9).includes(h.program.lockedStation.callsign))
   } finally { h.shutdown() }
@@ -237,7 +237,7 @@ test('a tab that never gets a frame still completes the cold-open and a power-on
     h.idle(4500)
     assert.equal(h.program.poweredOn, true, 'boot completed with rAF starved')
     h.advance(200) // first real frames after the window comes forward
-    assert.ok(h.row(3).includes('TUNING BAND'))
+    assert.ok(h.row(3).includes(h.program.bandBoxTitle()))
     assert.ok(h.row(9).includes(h.program.lockedStation.callsign))
   } finally { h.shutdown() }
 })
@@ -374,7 +374,7 @@ test('consent pass: [A] re-opens the card after a decline', async () => {
     h.key('Escape')
     assert.equal(h.program.tapConsentOpen, false)
     assert.equal(h.program.visualizerActive, false, '[A] is not a way into the visualizer')
-    assert.ok(h.find('TUNING BAND') >= 0, 'main screen rebuilt underneath')
+    assert.ok(h.find(h.program.bandBoxTitle()) >= 0, 'main screen rebuilt underneath')
   } finally { h.shutdown() }
 })
 
@@ -388,7 +388,7 @@ test('consent pass: nothing paints through the card', async () => {
     // this file's history; the card takes the same bail in frame()/_tickFx.
     h.advance(3000)
     assert.equal(h.rows().join('\n'), before, 'card is pixel-identical after 3s of frames')
-    assert.equal(h.find('TUNING BAND'), -1, 'no main-screen chrome bleeding through')
+    assert.equal(h.find(h.program.bandBoxTitle()), -1, 'no main-screen chrome bleeding through')
   } finally { h.shutdown() }
 })
 
@@ -618,7 +618,7 @@ test('[A] re-opens the LINE INPUT card from inside the visualizer', async () => 
     h.advance(200)
     assert.equal(h.program.tapConsentOpen, false)
     assert.equal(h.program.visualizerActive, true, 'and hands back to the visualizer, not the main screen')
-    assert.equal(h.find('TUNING BAND'), -1, 'no main-screen chrome bled through')
+    assert.equal(h.find(h.program.bandBoxTitle()), -1, 'no main-screen chrome bled through')
   } finally { h.shutdown() }
 })
 
@@ -777,26 +777,68 @@ test('off-station, the advertised controls answer instead of going dead', async 
     assert.equal(h.program._statusText, 'NO SIGNAL')
     assert.equal(h.program.visualizerActive, false)
     h.advance(1200)
-    // [B] BACK -- on the footer's top row, dead for a whole first session.
-    h.program.history.length = 0
-    h.key('b')
-    assert.equal(h.program._statusText, 'NO HISTORY')
-    h.advance(400)
-    assert.ok(h.find('NO HISTORY') >= 0, '[B] with an empty history says so')
+    // [B] was BACK here, and was this sweep's other finding: dead for a whole
+    // first session, because the history stack is empty until you have left a
+    // station. It is BAND as of 2026-08-31 and has no dead state to test --
+    // there is always another band to switch to. See the band tests below.
   } finally { h.shutdown() }
 })
 
-test('[B] still steps back when there IS history', async () => {
+test('[B] switches band, drops the lock, and lands at the new band floor', async () => {
   const h = await boot({})
   try {
     h.powerOn()
     h.key(await otherPreset(h)); h.advance(2500)
-    const first = h.program.lockedStation
-    h.key(await otherPreset(h)); h.advance(2500)
-    assert.notEqual(h.program.lockedStation, first, 'test setup: two different stations')
-    h.key('b'); h.advance(2500)
-    assert.equal(h.program.lockedStation, first, '[B] returned to the previous station')
-    assert.notEqual(h.program._statusText, 'NO HISTORY')
+    assert.ok(h.program.lockedStation, 'test setup: locked onto something first')
+    const from = h.program.band
+
+    h.key('b'); h.advance(600)
+    assert.notEqual(h.program.band, from, '[B] moved to another band')
+    // The lock is dropped rather than carried: a station on the band you are
+    // no longer tuned to is not distant, it is not on this dial at all.
+    assert.equal(h.program.lockedStation, null, 'the lock did not survive the band change')
+    assert.equal(h.program.mode, 'seeking')
+    assert.ok(h.row(3).includes(h.program.bandBoxTitle()), 'the tuner box is named for the new band')
+    // The scale row is read off the grid rather than recomputed, because it
+    // is the thing a listener actually uses to know which band is up -- and
+    // because asserting against a separately imported tuning.js would be a
+    // DIFFERENT module instance from the one this program booted with (each
+    // boot gets its own ?v=), which is the trap this harness exists inside.
+    assert.ok(h.row(4).includes('1000.0'), 'the scale row shows the new band floor')
+    assert.ok(h.row(4).includes('1800.0'), 'the scale row shows the new band ceiling')
+    assert.ok(h.row(6).includes('1000.0'), 'the frequency readout landed on the floor')
+
+    // ...and back again. Two bands means one key cycles, so this returns.
+    h.key('b'); h.advance(600)
+    assert.equal(h.program.band, from, '[B] cycles rather than dead-ending')
+  } finally { h.shutdown() }
+})
+
+test('an empty band draws a dial with no markers and no carrier', async () => {
+  const h = await boot({})
+  try {
+    h.powerOn()
+    h.advance(1200)
+    // ZM carries nothing yet, which is a state the receiver has to render
+    // rather than a state to avoid: phase 5 fills it, and every new band or
+    // new station passes through empty on its way to existing.
+    while (h.program.band !== 'zm') { h.key('b'); h.advance(600) }
+    assert.equal(h.program.bandPresets().length, 0, 'test setup: ZM is empty')
+    // No station glyphs anywhere on the dial row. Read off the grid rather
+    // than from stationColsFor, for the module-instance reason above.
+    //
+    // The allowed set is dial TEXTURE, not an anything-goes escape: '·' is
+    // the resting dial, '█' the cursor, and ':' and '.' are the seek
+    // shimmer's own characters (see frame()'s shimmer block, which paints
+    // them at random columns while seeking). Every station glyph on the
+    // roster is outside this set, which is what makes the assertion mean
+    // something -- an unfiltered drawDial would scatter YM's ╬ Æ Þ § Ω Ø ≡ ¥ ¶
+    // across this row and fail here.
+    assert.match(h.row(5).slice(4, 76), /^[·:.\s█]*$/, 'the dial row carries no station markers')
+    // Enter on an empty band must not throw or claim a station.
+    h.key('Enter'); h.advance(600)
+    assert.equal(h.program.lockedStation, null, 'Enter found nothing to lock onto')
+    assert.equal(h.program.mode, 'seeking')
   } finally { h.shutdown() }
 })
 

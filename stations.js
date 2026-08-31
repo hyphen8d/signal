@@ -1625,6 +1625,16 @@ export const STATIONS = [
 // order always matches left-to-right position on the dial regardless of
 // STATIONS' own (chronological) order.
 export const STATION_PRESET_ORDER = [...STATIONS].sort((a, b) => a.freq - b.freq)
+// 2026-08-31 -- the preset order is per BAND now, because [1-9] means "the
+// nth station on the dial in front of you". STATION_PRESET_ORDER stays as the
+// whole-roster list: stations.md and the roster tools want every station in
+// dial order regardless of band, and re-deriving that from the bands would be
+// the same list assembled twice.
+//
+// Callers inside the app should ask for a band. A caller that takes the flat
+// list is asserting it genuinely means every station everywhere, which is
+// true of the generated docs and false of anything the receiver draws.
+export const presetOrderFor = (bandKey) => STATION_PRESET_ORDER.filter((ch) => ch.band === bandKey)
 
 // SECRET_STATIONS (2026-08-22 -- launched a secret NIN station,
 // only reachable by pressing 0") -- an array even though NIN is currently
