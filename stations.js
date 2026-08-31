@@ -1633,6 +1633,45 @@ export const STATIONS = [
       realTrack('B99nd2iKGOw', 'Battleflag', 'Lo Fidelity Allstars'),
       realTrack('MSv3Oez4O-4', 'Ready Steady Go', 'Paul Oakenfold'),
     ] },
+  // CRYO CRYPT (2026-08-31) -- ZM's third resident and the first station
+  // founded ON the second band rather than moved to it. From issue #52,
+  // which proposed the Cryo Chamber label and its Cryo Crypt side project;
+  // the side project is the dungeon-synth/dark-fantasy arm and is what this
+  // is named for.
+  //
+  // 1031.0 is the 31st of October and nothing else. The dial has carried a
+  // joke per station since the 8/20 pass and this one picked itself.
+  //
+  // WHY IT IS NOT COLD WAVE AND NOT NINE INCH NAILS, since all three are
+  // cold and none of them are cheerful: the boundary here is FANTASY -- a
+  // ruin, a keep, a forest -- rather than synthetic melancholy or industrial
+  // dread. A candidate that would sit comfortably on either of those belongs
+  // there instead. The profile says the same thing where audition.js will
+  // read it back at whoever proposes the next track.
+  //
+  // `visual: 'dread'` is BORROWED, not chosen, and is the one thing here
+  // waiting on a real decision. Every other station on the dial has an
+  // effect of its own; dread belongs to NINE INCH NAILS. It fits this
+  // station almost too well, and NIN being secret means few people will ever
+  // see both -- but "few people will notice" is the argument for a
+  // placeholder, not for a design. A bespoke effect is the eventual want.
+  //
+  // The tracklist is EMPTY on purpose and lint will say so until it is
+  // filled. audition.js needs --station to already exist in the roster, so
+  // the identity object has to land first; this is the documented order, not
+  // an unfinished commit. Nothing is added here that has not been probed.
+  { id: 'cryo-crypt', band: 'zm', freq: 1031.0, callsign: 'CRYO CRYPT',
+    tagline: 'a ruin, a keep, a tape left running',
+    freqNote: '10/31 -- All Hallows\' Eve',
+    desc: 'Dungeon synth and dark fantasy: lo-fi keyboard music scoring a place that never existed. Modal melodies under tape hiss and cheap reverb, with almost no drums and no hurry at all.',
+    ident: [220.0, 207.7, 174.6, 130.8],
+    identTempo: 0.8,
+    glyph: '\u2020',
+    static: 2100,
+    crt: { noise: 0.22, bloomAmt: 1.4, flicker: 0.14 },
+    meter: { spring: 0.35, damping: 0.6, swing: 0.8 },
+    visual: 'dread',
+    tracks: [] },
 ]
 
 // Preset-key ordering (17th pass -- presets needed to match the tuning
