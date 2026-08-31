@@ -559,12 +559,37 @@ export default {
     // had been the one restored from a save (same fields, same
     // needsTrackLoad path through powerUp()).
     if (this.mode !== 'locked') {
-      const ch = STATIONS[Math.floor(Math.random() * STATIONS.length)]
-      this.mode = 'locked'
-      this.lockedStation = ch
-      this.freq = ch.freq
-      this.currentTrack = this.nextTrack(ch)
-      this.needsTrackLoad = true
+      // 2026-08-31 -- lands on a random station ON THE CURRENT BAND, not a
+      // random station anywhere.
+      //
+      // The first version of this picked from the whole roster and set only
+      // the frequency, so roughly three boots in ten came up locked to a ZM
+      // station with the dial still on YM: frequency off the end of the
+      // scale, guide paging the wrong band, nearestStation blind to the very
+      // station that was locked. Setting `band` from the station fixed that
+      // invariant but kept the deeper mistake, which is that a receiver
+      // should not choose a BAND for you at all. A real set powers on
+      // wherever the switch was left -- restored state for someone coming
+      // back, the default for a first visit -- and that is what `this.band`
+      // already holds by the time this runs.
+      //
+      // It also removes a whole class of test flakiness rather than papering
+      // over it: every scenario written before the second band existed names
+      // stations that live on YM, and a random band made a third of those
+      // runs fail somewhere unrelated to what they were testing.
+      const pool = this.bandPresets()
+      const ch = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null
+      // A band with no stations on it is left seeking rather than forced into
+      // a lock it cannot have. Never true today, and the reason this is a
+      // guard rather than an assumption is that a band is committed before it
+      // is filled -- ZM spent its first three commits empty.
+      if (ch) {
+        this.mode = 'locked'
+        this.lockedStation = ch
+        this.freq = ch.freq
+        this.currentTrack = this.nextTrack(ch)
+        this.needsTrackLoad = true
+      }
     }
     // Only actually calls into the CRT when a non-default mode was restored
     // -- otherwise this is a same-value no-op on top of mount()'s own

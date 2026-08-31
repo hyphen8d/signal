@@ -1672,7 +1672,25 @@ export const STATIONS = [
     meter: { spring: 0.35, damping: 0.6, swing: 0.8 },
     visual: 'dread',
     tracks: [
-
+      realTrack('APZIre8Tm60', 'Whitebark Forest', 'Mountain Realm'),
+      realTrack('YKe_zJEGcWQ', 'Dungeon Stairs', 'Mountain Realm'),
+      realTrack('JhrsLP5kK4c', 'Horn of the Goblins', 'Mountain Realm'),
+      realTrack('yHRtZ5mXnGA', 'The Crystal Palace', 'Mountain Realm'),
+      realTrack('j1BFgzDEl9s', 'Troll King', 'Mountain Realm'),
+      realTrack('883e7wydHo0', 'A Fallen Warrior Stands Again', 'Mountain Realm'),
+      realTrack('D8FOL8mjwJU', 'A Broken Man Stands Tall', 'Mountain Realm'),
+      realTrack('XlbCqHSs_xk', 'Village in the Mist', 'Mountain Realm'),
+      realTrack('gQtLEuuZNNg', 'Fallen Gods', 'Mountain Realm'),
+      realTrack('KAfpsjEbGM8', 'Nordanvinden', 'Trollslottet'),
+      realTrack('HTWiLqSA514', 'Vinterväldet', 'Trollslottet'),
+      realTrack('1cYGRwKwgS8', 'Häxmästaren', 'Trollslottet'),
+      realTrack('vJ_rSbiKGTI', 'Caverns of the Old Gods', 'Swordlender'),
+      realTrack('ObrgQaKlldc', 'Spirit of the North', 'Swordlender'),
+      realTrack('S-l36AZCOQs', 'Highland Enchantress', 'Swordlender'),
+      realTrack('oVtO2dAXunU', 'The Lord of Mountains High', 'Swordlender'),
+      realTrack('VijbUkATmLc', 'From the Realm of Dust and Darkness', 'Vikorra Doom'),
+      realTrack('kFB9A2WAfpM', 'The Hall of Unhallowed Steel', 'Vikorra Doom'),
+      realTrack('WUyXqGpvs4Y', 'Return to the Underworld', 'Vikorra Doom'),
     ] },
 ]
 

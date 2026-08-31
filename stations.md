@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 10 stations, 420 tracks total.
+Generated from stations.js. 10 stations, 439 tracks total.
 
 ## DISTORTION FIELD -- 199.7
 
@@ -509,5 +509,24 @@ Tracks (50):
 
 Ident tones (Hz): 220, 207.7, 174.6, 130.8
 
-Tracks (0):
+Tracks (19):
 
+1. **Whitebark Forest** -- Mountain Realm  ([youtu.be/APZIre8Tm60](https://youtu.be/APZIre8Tm60))
+2. **Dungeon Stairs** -- Mountain Realm  ([youtu.be/YKe_zJEGcWQ](https://youtu.be/YKe_zJEGcWQ))
+3. **Horn of the Goblins** -- Mountain Realm  ([youtu.be/JhrsLP5kK4c](https://youtu.be/JhrsLP5kK4c))
+4. **The Crystal Palace** -- Mountain Realm  ([youtu.be/yHRtZ5mXnGA](https://youtu.be/yHRtZ5mXnGA))
+5. **Troll King** -- Mountain Realm  ([youtu.be/j1BFgzDEl9s](https://youtu.be/j1BFgzDEl9s))
+6. **A Fallen Warrior Stands Again** -- Mountain Realm  ([youtu.be/883e7wydHo0](https://youtu.be/883e7wydHo0))
+7. **A Broken Man Stands Tall** -- Mountain Realm  ([youtu.be/D8FOL8mjwJU](https://youtu.be/D8FOL8mjwJU))
+8. **Village in the Mist** -- Mountain Realm  ([youtu.be/XlbCqHSs_xk](https://youtu.be/XlbCqHSs_xk))
+9. **Fallen Gods** -- Mountain Realm  ([youtu.be/gQtLEuuZNNg](https://youtu.be/gQtLEuuZNNg))
+10. **Nordanvinden** -- Trollslottet  ([youtu.be/KAfpsjEbGM8](https://youtu.be/KAfpsjEbGM8))
+11. **Vinterväldet** -- Trollslottet  ([youtu.be/HTWiLqSA514](https://youtu.be/HTWiLqSA514))
+12. **Häxmästaren** -- Trollslottet  ([youtu.be/1cYGRwKwgS8](https://youtu.be/1cYGRwKwgS8))
+13. **Caverns of the Old Gods** -- Swordlender  ([youtu.be/vJ_rSbiKGTI](https://youtu.be/vJ_rSbiKGTI))
+14. **Spirit of the North** -- Swordlender  ([youtu.be/ObrgQaKlldc](https://youtu.be/ObrgQaKlldc))
+15. **Highland Enchantress** -- Swordlender  ([youtu.be/S-l36AZCOQs](https://youtu.be/S-l36AZCOQs))
+16. **The Lord of Mountains High** -- Swordlender  ([youtu.be/oVtO2dAXunU](https://youtu.be/oVtO2dAXunU))
+17. **From the Realm of Dust and Darkness** -- Vikorra Doom  ([youtu.be/VijbUkATmLc](https://youtu.be/VijbUkATmLc))
+18. **The Hall of Unhallowed Steel** -- Vikorra Doom  ([youtu.be/kFB9A2WAfpM](https://youtu.be/kFB9A2WAfpM))
+19. **Return to the Underworld** -- Vikorra Doom  ([youtu.be/WUyXqGpvs4Y](https://youtu.be/WUyXqGpvs4Y))

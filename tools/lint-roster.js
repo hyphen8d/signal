@@ -156,7 +156,12 @@ export async function lintRoster() {
   // typing a different number.
   const readmePath = path.join(here, '..', 'README.md')
   const readme = readFileSync(readmePath, 'utf8')
-  const claim = /(\d+)\s+stations,\s+(\d+)\s+tracks total\s*\((\d+)-(\d+)\s+per station\b[^)]*carrying\s+(\d+)\s+more/.exec(readme)
+  // 2026-08-31 -- `stations` may now be followed by a qualifier ("10 stations
+  // across two bands"), so the count is no longer glued to the comma.
+  // Widened rather than reverting the prose: the sentence SHOULD say there
+  // are two bands, and this rule's own failure message asks for exactly this
+  // when the wording moves.
+  const claim = /(\d+)\s+stations\b[^,]*,\s+(\d+)\s+tracks total\s*\((\d+)-(\d+)\s+per station\b[^)]*carrying\s+(\d+)\s+more/.exec(readme)
   if (!claim) {
     // Deliberately loud. If the sentence was reworded, this rule stops
     // checking anything at all and silently passes forever -- the exact

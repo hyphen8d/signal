@@ -784,10 +784,51 @@ test('off-station, the advertised controls answer instead of going dead', async 
   } finally { h.shutdown() }
 })
 
+// 2026-08-31 -- land on a named band DETERMINISTICALLY, and always by
+// switching into it. A boot picks a random station and now sets the band to
+// match, so a test can start on either one; and a band you are merely already
+// on has the cursor parked whereever that station sits, which hides its own
+// marker. Arriving via [B] always lands at the band floor, where neither band
+// has a station.
+async function toBand(h, want) {
+  for (let i = 0; i < 6 && h.program.band === want; i++) { h.key('b'); h.advance(600) }
+  for (let i = 0; i < 6 && h.program.band !== want; i++) { h.key('b'); h.advance(600) }
+  assert.equal(h.program.band, want, `could not reach band ${want}`)
+}
+
+test('a fresh boot never lands on a station from another band', async () => {
+  // A boot picks a station at RANDOM from the whole roster, which is
+  // deliberate -- it is how the second band gets found without knowing [B]
+  // exists. It used to set only the frequency, so a ZM pick left the dial
+  // showing YM: off-scale frequency, wrong band's guide index, and
+  // nearestStation blind to the station actually locked.
+  //
+  // Booted repeatedly because the bug was PROBABILISTIC -- with three of ten
+  // stations on ZM a single boot missed it seven times in ten, which is
+  // exactly why it showed up as one intermittently failing unrelated test
+  // rather than as a fault anybody could reproduce.
+  const seen = new Set()
+  for (let i = 0; i < 12; i++) {
+    const h = await boot({})
+    try {
+      h.powerOn(); h.advance(1200)
+      const st = h.program.lockedStation
+      if (!st) continue
+      seen.add(st.band)
+      assert.equal(h.program.band, st.band,
+        `booted onto ${st.callsign} (${st.band}) with the dial on ${h.program.band}`)
+    } finally { h.shutdown() }
+  }
+  assert.ok(seen.size > 0, 'at least one boot landed on a station')
+})
+
 test('[B] switches band, drops the lock, and lands at the new band floor', async () => {
   const h = await boot({})
   try {
     h.powerOn()
+    // Start from a known band: this asserts ZM's own scale numbers below, so
+    // it has to know which way [B] is about to go.
+    await toBand(h, 'ym')
     h.key(await otherPreset(h)); h.advance(2500)
     assert.ok(h.program.lockedStation, 'test setup: locked onto something first')
     const from = h.program.band
@@ -831,7 +872,7 @@ test("each band's dial draws only its own stations' glyphs", async () => {
     // station there. Starting on YM, this order switches into both.
     const seen = {}
     for (const want of ['zm', 'ym']) {
-      while (h.program.band !== want) { h.key('b'); h.advance(600) }
+      await toBand(h, want)
       seen[want] = { row: h.row(5), mine: h.program.bandPresets().map((st) => st.glyph) }
       assert.ok(seen[want].mine.length > 0, `test setup: ${want} has residents`)
     }
@@ -1769,11 +1810,11 @@ test('guide index from STANDBY claims nothing is on air', async () => {
 test('guide station page counts its sample against the real tracklist', async () => {
   const h = await boot()
   try {
-    h.powerOn()
+    h.powerOn(); await toBand(h, 'ym')
+    const PRESETS = h.program.bandPresets()
     await openIndex(h)
     h.key('ArrowRight'); h.advance(200) // first station detail page
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
-    const ch = STATION_PRESET_ORDER[0]
+    const ch = PRESETS[0]
     assert.ok(ch.tracks.length > 6, 'this station has more than the page samples')
     assert.ok(h.find(`SAMPLE TRACKS (6 OF ${ch.tracks.length})`) >= 0,
       'six tracks with no denominator reads as the whole tracklist')
@@ -1789,11 +1830,11 @@ test('guide station header: tagline joins the callsign on the wide grid, stacks 
   // held those rows apart.
   const wide = await boot()
   try {
-    wide.powerOn()
+    wide.powerOn(); await toBand(wide, 'ym')
+    const PRESETS = wide.program.bandPresets()
     await openIndex(wide)
     wide.key('ArrowRight'); wide.advance(200)
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${wide.tag}`)
-    const ch = STATION_PRESET_ORDER[0]
+    const ch = PRESETS[0]
     const row3 = wide.row(3)
     assert.ok(row3.includes(ch.callsign), 'callsign on the header row')
     assert.ok(row3.includes(ch.tagline), 'and the tagline joins it there')
@@ -1802,11 +1843,13 @@ test('guide station header: tagline joins the callsign on the wide grid, stacks 
 
   const lite = await boot({ mobile: true })
   try {
-    lite.powerOn()
+    lite.powerOn(); await toBand(lite, 'ym')
+    // Its own binding: the wide harness's list is scoped to that try block,
+    // and these are two separate programs with their own module instances.
+    const litePresets = lite.program.bandPresets()
     await openIndex(lite)
     lite.key('ArrowRight'); lite.advance(200)
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${lite.tag}`)
-    const ch = STATION_PRESET_ORDER[0]
+    const ch = litePresets[0]
     assert.ok(lite.row(3).includes(ch.callsign), 'callsign still whole on 42 cols')
     assert.ok(!lite.row(3).includes('...'), 'and the header row never truncates')
     assert.ok(lite.row(4).trim().length > 0, 'tagline stacks below instead')
@@ -1895,7 +1938,7 @@ test('guide index and station pages keep their footers on the lite grid', async 
   // lite guide had no nav hint below page 1. Same fault page 1 already fixed.
   const h = await boot({ mobile: true })
   try {
-    h.powerOn()
+    h.powerOn(); await toBand(h, 'ym')
     assert.equal(h.term.rows, 22)
     await openIndex(h)
     assert.ok(h.row(h.term.rows - 1).includes('TAP CLOSE'), 'index footer lands inside the grid')
