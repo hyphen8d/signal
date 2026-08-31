@@ -183,6 +183,25 @@ async function tuneTo(api, preset) {
 // rots.
 const OG = { out: 'og.jpg', box: '1200x630' }
 
+// The Ko-fi page's cover, same argument as og.jpg one size further along:
+// an asset that lives off this capture and would otherwise be recut by hand
+// every time the receiver changes, which is the definition of a shot that
+// rots. 1200x400 is Ko-fi's cover box.
+//
+// CROPPED where og.jpg is padded, and that difference is forced. og.jpg is
+// 1200x630, near enough the hero's 4:3 that padding costs a little black at
+// the sides. A 3:1 cover is nowhere near it: fitting the whole tube inside
+// leaves it 534 wide in a 1200 frame, a small unreadable screen adrift in
+// black. So this takes a band instead -- bezel to bezel horizontally, and
+// vertically from the brand plate down to the STATION box's bottom border.
+//
+// The offsets are chosen to land on that border rather than to a rule. A
+// band ending mid-row clips the glyphs it cuts through and reads as damage:
+// the first attempt sliced "NOW PLAYING" in half. If the desktop layout's
+// row constants move, re-cut this against layout.js rather than nudging the
+// numbers until it looks right.
+const KOFI = { out: 'kofi-cover.jpg', box: '1200x400', crop: '1195x398+40+45' }
+
 const RECIPES = {
   // [G] straight from STANDBY: no power-on, no playback. See note 3.
   async guide(api, tmp) {
@@ -197,7 +216,7 @@ const RECIPES = {
     await tuneTo(api, 3)
     await api.settleFrames()
     await api.png(path.join(tmp, 'f0.png'))
-    return { tiles: ['f0.png'], out: 'hero.jpg', derive: [OG] }
+    return { tiles: ['f0.png'], out: 'hero.jpg', derive: [OG, KOFI] }
   },
   // README: "DISTORTION FIELD's fire effect" -- preset 2, whose visual is FLAME.
   async visualizer(api, tmp) {
@@ -247,8 +266,9 @@ const RECIPES = {
 
 // `shoot.mjs og` names the file someone is actually looking for, and runs the
 // hero recipe -- og.jpg is derived from that capture and cannot be taken on
-// its own. Listed in the error message below for the same reason.
-const ALIASES = { og: 'hero' }
+// its own. Listed in the error message below for the same reason. `kofi` is
+// the same deal one size along.
+const ALIASES = { og: 'hero', kofi: 'hero' }
 const want = args.filter((a) => !a.startsWith('--')).map((a) => ALIASES[a] ?? a)
 const names = [...new Set(want.length ? want : Object.keys(RECIPES))]
 const known = [...Object.keys(RECIPES), ...Object.keys(ALIASES)].join(', ')
@@ -277,10 +297,14 @@ for (const name of names) {
     if (src.length === 1) magick([...src, '-resize', `${W}x${H}`, '-quality', '88', dest])
     else magick([...src, '+append', '-resize', '1900x', '-quality', '88', dest])
     process.stdout.write(`-> screenshots/${out}`)
-    // Fit inside the box, then pad out to it on black, centred. -resize alone
-    // would leave it 842 wide; -extent alone would crop.
+    // Two shapes of derive. Padded (og): fit inside the box, then pad out to
+    // it on black, centred -- -resize alone would leave it 842 wide, -extent
+    // alone would crop. Cropped (kofi): take the band, then `!` it to the
+    // exact box, since a 1195x398 crop is 5px and 2px shy of 1200x400 and a
+    // fit would pad those back as black slivers down two edges.
     for (const d of result.derive ?? []) {
-      magick([dest, '-resize', d.box, '-background', 'black', '-gravity', 'center', '-extent', d.box, '-quality', '88', path.join(SHOTS, d.out)])
+      if (d.crop) magick([dest, '-crop', d.crop, '+repage', '-resize', `${d.box}!`, '-quality', '88', path.join(SHOTS, d.out)])
+      else magick([dest, '-resize', d.box, '-background', 'black', '-gravity', 'center', '-extent', d.box, '-quality', '88', path.join(SHOTS, d.out)])
       process.stdout.write(` + ${d.out}`)
     }
     console.log('')
