@@ -64,6 +64,13 @@ you to know anything about the code:
 Nothing is too small. "This one track is quieter than the rest of the
 station" is exactly the kind of thing that's invisible from the inside.
 
+## Tip jar
+
+SIGNAL is free, has no ads, and doesn't track you. If it's become part of
+your day — something you leave running while you work, and it's made you
+smile — you can [buy me a coffee on Ko-fi](https://ko-fi.com/hyphen8d).
+Entirely optional, and the radio plays exactly the same either way.
+
 ## The little touches
 
 A tuning-dial radio lives or dies on texture, not just function. A few
