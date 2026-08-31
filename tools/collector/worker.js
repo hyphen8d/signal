@@ -53,19 +53,26 @@ export default {
 async function collect(req, env) {
   // Read the IP once, use it once, never write it anywhere.
   const ip = req.headers.get('CF-Connecting-IP') || ''
-  if (!(await underRateLimit(env, ip))) return new Response('', { status: 429 })
+  if (!(await underRateLimit(env, ip))) return new Response(null, { status: 429 })
 
   // Length-capped before parsing: a summary is a few hundred bytes, and
   // there is no reason to hand a megabyte to JSON.parse.
   const raw = await req.text()
-  if (raw.length > MAX_BODY_BYTES) return new Response('', { status: 413 })
+  if (raw.length > MAX_BODY_BYTES) return new Response(null, { status: 413 })
 
   let body
-  try { body = JSON.parse(raw) } catch { return new Response('', { status: 400 }) }
+  try { body = JSON.parse(raw) } catch { return new Response(null, { status: 400 }) }
   const rec = sanitise(body)
   // 204 whatever happens next. The beacon cannot see the response and the
   // listener must never be affected by it, so a rejected record is silent.
-  if (!rec) return new Response('', { status: 204 })
+  //
+  // Constructed with null, not ''. A 204 is a "null body status" in the
+  // Fetch spec and the Response constructor THROWS if given a body -- so
+  // `new Response('', { status: 204 })` is a 500 in production, on the only
+  // route that matters. Caught by simulating the Worker against a fake KV
+  // before deploying, which is the only way this shows up without a
+  // Cloudflare account and real traffic.
+  if (!rec) return new Response(null, { status: 204 })
 
   const day = new Date().toISOString().slice(0, 10)
   const key = `day:${day}`
@@ -93,7 +100,7 @@ async function collect(req, env) {
   await env.SIGNAL_STATS.put(key, JSON.stringify(cur), {
     expirationTtl: RETAIN_DAYS * 86400,
   })
-  return new Response('', { status: 204 })
+  return new Response(null, { status: 204 })
 }
 
 /** Rebuild the record from scratch rather than trusting what arrived. A
