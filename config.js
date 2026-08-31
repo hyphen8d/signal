@@ -186,3 +186,18 @@ export const RENDER = {
    *  and moves term.cx/term.cy. */
   cursor: false,
 }
+
+// ---------------------------------------------------------------------
+// Session metrics (2026-08-31)
+// ---------------------------------------------------------------------
+// Where the one-per-visit summary is sent. EMPTY IS THE DEFAULT AND MEANS
+// OFF: with no endpoint, program.js attaches no listener and makes no
+// request, so this ships dark and stays dark until someone deliberately
+// points it at a collector. See tools/collector/ for the one to deploy, and
+// PRIVACY.md for what the payload contains.
+//
+// Deliberately a build-time constant rather than anything a page can set at
+// runtime: an endpoint that could be changed from outside the bundle is a
+// redirect waiting to happen, and there is no reason a listener's browser
+// should learn this address from anywhere but the code it already loaded.
+export const METRICS_ENDPOINT = ''

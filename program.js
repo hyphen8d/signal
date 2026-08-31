@@ -22,7 +22,8 @@ import { BOLD, BRIGHT, DIM, FAINT, MUTED, NORMAL } from './src/term.js'
 const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent, playKeyClick, playModeThump, playPanelSound, playPowerOnSound, playPresetClick, playPresetWhoosh, playRelayThunk, playSeekStatic, playStaticBurst, setSpeakerLevel, setStaticIntensity, startStaticNoise, startTubeHum, stopStaticNoise, stopTubeHum } = await import(`./audio/sfx.js?v=${V}`)
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
-const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
+const { METRICS_ENDPOINT, MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
+const { buildSummary, createSession, featureForKey, noteConsent, noteFailure, noteFeature, noteStation, shouldSend } = await import(`./metrics.js?v=${V}`)
 const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
@@ -247,6 +248,10 @@ export default {
     // check. Every mobile-only draw branch below reads this rather than
     // re-detecting anything itself.
     this.mobile = MOBILE_LITE
+    // After this.mobile, which the summary reports, and before anything can
+    // lock a station. A no-op unless METRICS_ENDPOINT is set -- see
+    // initMetrics().
+    this.initMetrics()
 
     // Leftover from the old 88-108 band -- 93.0 is below the current
     // FREQ_MIN (100.0), so the dial opened already out-of-range. Now starts
@@ -694,6 +699,10 @@ export default {
     this._contentStarted = false
     this._loadStartedAt = 0
     this.poweredOn = false
+    // Nothing is playing from here, so the current station stops accruing.
+    // Without this, a set left in STANDBY overnight would credit whatever
+    // was last locked with the whole night.
+    this.noteMetricStation(null)
     this._powerAnimating = true // cleared once the STANDBY beat lands below, ~130ms
     // 43rd pass: cleared silently, not via exitVisualizer() -- the beat
     // below already clears and redraws the whole grid itself, so there's no
@@ -1207,7 +1216,10 @@ export default {
           // error state -- consistent with how ENDED already just skips.
           // 32nd pass: a one-shot chroma/roll glitch flash rides along with
           // the existing dead-video auto-skip -- see flashCrtGlitch().
-          onError: () => { if (self.mode === 'locked') { flashCrtGlitch(s); self.skip(s) } },
+          onError: () => {
+            self.noteMetricFailure()
+            if (self.mode === 'locked') { flashCrtGlitch(s); self.skip(s) }
+          },
         },
       })
     }
@@ -2038,6 +2050,10 @@ export default {
     }
     this.mode = 'locked'
     this.lockedStation = station
+    // Banks whatever the previous station accrued and starts this one's
+    // clock. Every lock funnels through here -- preset, Enter, seek-landing,
+    // swipe and secret alike -- so this is the only place it is needed.
+    this.noteMetricStation(station.id)
     // 41st pass: this station's own picture, before anything below reads the
     // baseline back (the ident bloom pulse, the focus snap, and retune()'s
     // distance degrade all settle to crtBase -- see setCrtCharacter).
@@ -2399,6 +2415,51 @@ export default {
   keyUp(s, e) {
     this._heldKeys?.delete(e.code || e.key)
   },
+  // --- session metrics (2026-08-31) -------------------------------------
+  // The counting itself is metrics.js, which is pure and knows nothing about
+  // this object. What lives here is the four lines that cannot be pure: the
+  // clock, the endpoint, the listener, and the one send.
+  //
+  // Everything below is a no-op when this._metrics is null, which is what
+  // happens whenever METRICS_ENDPOINT is unset -- the default. That is why
+  // the call sites scattered through this file are bare one-liners with no
+  // guard of their own: there is exactly one place that decides whether any
+  // of this runs, and it is initMetrics().
+  initMetrics() {
+    this._metrics = null
+    if (!shouldSend(globalThis.navigator, METRICS_ENDPOINT)) return
+    this._metrics = createSession({
+      build: String(globalThis.SIGNAL_BUILD || 'unknown'),
+      mode: this.mobile ? 'mobile' : 'desktop',
+      startedAt: Date.now(),
+    })
+    // visibilitychange rather than unload or beforeunload: those two do not
+    // fire reliably on mobile Safari at all, which is precisely the
+    // population a 'mode' field exists to measure, and a summary that
+    // systematically loses phones would be worse than no summary. 'hidden'
+    // fires on tab switch as well as on close, so the send is one-shot --
+    // _metricsSent guards a second beacon rather than the listener being
+    // removed, since the visit may still be running and still accruing.
+    globalThis.addEventListener?.('visibilitychange', () => {
+      if (globalThis.document?.visibilityState === 'hidden') this.sendMetrics()
+    })
+  },
+  noteMetricStation(id) { noteStation(this._metrics, id, Date.now()) },
+  noteMetricFeature(name) { noteFeature(this._metrics, name) },
+  noteMetricConsent(kind, answer) { noteConsent(this._metrics, kind, answer) },
+  noteMetricFailure() { noteFailure(this._metrics) },
+  sendMetrics() {
+    if (!this._metrics || this._metricsSent) return
+    const summary = buildSummary(this._metrics, Date.now())
+    if (!summary) return
+    this._metricsSent = true
+    // Failure is silence on purpose. A blocked request, an offline visitor
+    // or a collector that is down must cost the listener nothing and must
+    // never reach the screen -- this is the least important thing the page
+    // does, and it is not allowed to behave like it matters.
+    try { globalThis.navigator.sendBeacon(METRICS_ENDPOINT, JSON.stringify(summary)) } catch (e) {}
+  },
+
   key(s, e) {
     // 2026-08-22, round 4 -- same reasoning as onTouchStart's: true for
     // this function's synchronous body (and whatever it calls directly),
@@ -2434,7 +2495,15 @@ export default {
     // "click for literally any keystroke on the page". isMappedKey() below
     // draws that line: true for anything this build actually treats as a
     // command in the current mode, false for everything else.
-    if (this.isMappedKey(e)) playKeyClick()
+    if (this.isMappedKey(e)) {
+      playKeyClick()
+      // Rides the same gate as the click, deliberately: isMappedKey() is
+      // already the answer to "is this a command in the current mode", and
+      // a second, parallel notion of that is the drift this file has been
+      // bitten by before. See KEY_FEATURES in metrics.js.
+      const f = featureForKey(e.key)
+      if (f) this.noteMetricFeature(f)
+    }
     // Power toggle (12th pass) -- while off, every key except P is ignored
     // outright so nothing (seek, scan, presets, volume) can act on a set
     // that isn't switched on.
