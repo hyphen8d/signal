@@ -208,7 +208,11 @@ test('rewriting a tracks block with its own tracks is byte-identical, every stat
       patchStationTracks(SRC, st.id, st.tracks), SRC,
       `rewriting ${st.id}'s tracks with its existing tracks changed the file`)
   }
-  assert.equal(all.length, 11)
+  // Spelled out rather than derived, and it has to be updated by hand when a
+  // station is added -- which is the point. The loop above passes VACUOUSLY if
+  // loadRosterFromText ever returns nothing, so this is the guard that the
+  // sweep actually walked a roster. 12 as of CRYO CRYPT (2026-08-31).
+  assert.equal(all.length, 12)
 })
 
 test('removing a track keeps every comment not attached to it', () => {

@@ -86,46 +86,47 @@ export const CALLSIGN_RESPELL = {
   'CIRCUIT CRUSH': 'Serkit Crush',
 }
 
-/** The station ID script. Digits must be spelled out -- handed "567.8" the
- *  renderer says "five six seven point eight", which is not how a station
- *  reads its own frequency. */
-export const ID_SCRIPT = (callsign, spokenFreq) =>
-  `${CALLSIGN_RESPELL[callsign] ?? callsign}, ${spokenFreq}.`
+/** The station ID script: the callsign, and nothing else.
+ *
+ *  2026-08-31 -- the frequency came OUT. It read `<callsign>, <spoken freq>.`
+ *  from the first clip to the ninth, which is what a real station does and is
+ *  the reason it was written that way.
+ *
+ *  What changed is that frequencies stopped being permanent. The dial gained
+ *  a second band, and moving a station between bands or frequencies used to
+ *  mean re-rendering its ID and both its liners -- three clips and real money
+ *  per move, which is a toll on rearranging the roster. SYNAPSE and CIRCUIT
+ *  CRUSH crossing to ZM is what made that concrete: the moment they moved,
+ *  five clips were announcing numbers their stations no longer sat on.
+ *
+ *  So the dial position is now purely visual and a station can move forever
+ *  without touching audio. The cost is real and worth stating: a station that
+ *  never says its own frequency is slightly less like a radio than one that
+ *  does. That was traded for mobility deliberately.
+ *
+ *  CALLSIGN_RESPELL matters MORE now, not less. It applies to whatever OPENS
+ *  a line, and a callsign-only ID is nothing but an opening. */
+export const ID_SCRIPT = (callsign) => `${CALLSIGN_RESPELL[callsign] ?? callsign}.`
 
-/** 567.8 -> "five sixty-seven point eight". 808.0 -> "eight oh eight".
- *
- *  A ROUND frequency drops the decimal entirely, because that is how the
- *  existing clips read them and a station does not announce "point zero".
- *  Confirmed by the curator 2026-08-29 after a test render exposed it: the
- *  first version said "point zero" for every .0 station, and the rendered
- *  HACKBACK ID ran 2.09s of speech against the existing clip's 1.43s. Same
- *  voice, same settings, same callsign -- 0.66s can only be words. Five of
- *  the six round-frequency clips fit the shorter script on duration alone.
- *
- *  Only the shapes this dial actually produces: three digits, at most one
- *  decimal place, 100.0-900.0. */
-export function spokenFrequency(freq) {
-  const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
-  const TEENS = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
-  const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']
-  const under100 = (n) => {
-    if (n < 10) return ONES[n]
-    if (n < 20) return TEENS[n - 10]
-    const t = TENS[Math.floor(n / 10)]
-    return n % 10 ? `${t}-${ONES[n % 10]}` : t
-  }
-  const whole = Math.floor(freq)
-  const tenth = Math.round((freq - whole) * 10)
-  // 567 -> "five sixty-seven", the way a presenter reads a dial position:
-  // the hundreds digit alone, then the remainder as a number.
-  const hundreds = Math.floor(whole / 100)
-  const rest = whole % 100
-  // rest 1-9 is "oh eight", not "eight": 808.0 is read "eight oh eight", and
-  // the naive form said "eight eight". HACKBACK is the only station on the
-  // dial that hits this, which is exactly why it needed running against the
-  // real roster rather than reasoned about.
-  const head = rest === 0 ? `${ONES[hundreds]} hundred`
-    : rest < 10 ? `${ONES[hundreds]} oh ${ONES[rest]}`
-      : `${ONES[hundreds]} ${under100(rest)}`
-  return tenth === 0 ? head : `${head} point ${ONES[tenth]}`
-}
+// spokenFrequency() WAS HERE and is retired 2026-08-31 along with the
+// frequency clause in ID_SCRIPT above. It turned 567.8 into "five sixty-seven
+// point eight" for the ID script, and nothing else ever called it.
+//
+// KEPT AS A NOTE because the knowledge cost a render to find and would cost
+// another if frequencies ever go back into the audio. Two rules that are not
+// obvious until you hear them wrong:
+//
+//   - A ROUND frequency drops the decimal. A station says "HACKBACK, eight oh
+//     eight", never "eight oh eight point zero". The first version said "point
+//     zero" for every .0 station, which was wrong for six of the nine then on
+//     the dial. It was caught by DURATION, not by reading: the test render ran
+//     2.09s against the existing clip's 1.43s on the same callsign, same voice,
+//     same settings, and 0.66s can only be words.
+//
+//   - A remainder of 1-9 is "oh eight", not "eight". 808.0 is read "eight oh
+//     eight"; the naive form said "eight eight". HACKBACK was the only station
+//     on the dial that reached that branch, which is why it had to be run
+//     across the real roster rather than reasoned about.
+//
+// Recover it from git (see tools/lib/voice-settings.mjs before this date)
+// rather than rewriting it from these notes.

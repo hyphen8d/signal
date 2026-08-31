@@ -39,7 +39,7 @@ import { fileURLToPath } from 'node:url'
 import {
   VOICE_NAME, MODEL_ID, VOICE_SETTINGS, OUTPUT_FORMAT,
   TAIL_MIN_S, TAIL_AIM_S, peakBandFor,
-  ID_SCRIPT, spokenFrequency,
+  ID_SCRIPT,
 } from './lib/voice-settings.mjs'
 import { stationIdClipPath } from '../audio/station-id-clips.js'
 
@@ -102,7 +102,7 @@ async function main() {
     const { STATIONS, SECRET_STATIONS } = await import(`${ROOT}/stations.js?v=voice-render`)
     const st = [...STATIONS, ...(SECRET_STATIONS ?? [])].find((x) => x.id === stationId)
     if (!st) die(`No station "${stationId}".`)
-    text ??= ID_SCRIPT(st.callsign, spokenFrequency(st.freq))
+    text ??= ID_SCRIPT(st.callsign)
     // NOT `station-id-${stationId}.mp3`. A station whose callsign changed
     // loads a differently-named clip, and deriving the path from the id
     // wrote a re-rendered SYNAPSE over the retired midnight-neon file while
