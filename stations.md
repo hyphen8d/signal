@@ -159,7 +159,7 @@ Tracks (50):
 49. **Hold Me Now** -- Thompson Twins  ([youtu.be/qMpBobAonKs](https://youtu.be/qMpBobAonKs))
 50. **You Spin Me Round (Like a Record)** -- Dead Or Alive  ([youtu.be/rc6vowZjWOs](https://youtu.be/rc6vowZjWOs))
 
-## SYNAPSE -- 567.8
+## SYNAPSE -- 1234.0
 
 *shifting the plates of the underground*
 
@@ -277,7 +277,7 @@ Tracks (50):
 49. **Bomber** -- Tatsuro Yamashita  ([youtu.be/SIGr6dc_2Sc](https://youtu.be/SIGr6dc_2Sc))
 50. **Two Call** -- Kaoru Akimoto  ([youtu.be/pSbzx-0wbs0](https://youtu.be/pSbzx-0wbs0))
 
-## CIRCUIT CRUSH -- 488.0
+## CIRCUIT CRUSH -- 1688.0
 
 *analog glow, the long drive home*
 

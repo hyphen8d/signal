@@ -814,33 +814,40 @@ test('[B] switches band, drops the lock, and lands at the new band floor', async
   } finally { h.shutdown() }
 })
 
-test('an empty band draws a dial with no markers and no carrier', async () => {
+test("each band's dial draws only its own stations' glyphs", async () => {
   const h = await boot({})
   try {
     h.powerOn()
     h.advance(1200)
-    // ZM carries nothing yet, which is a state the receiver has to render
-    // rather than a state to avoid: phase 5 fills it, and every new band or
-    // new station passes through empty on its way to existing.
-    while (h.program.band !== 'zm') { h.key('b'); h.advance(600) }
-    assert.equal(h.program.bandPresets().length, 0, 'test setup: ZM is empty')
-    // No station glyphs anywhere on the dial row. Read off the grid rather
-    // than from stationColsFor, for the module-instance reason above.
-    //
-    // The allowed set is dial TEXTURE, not an anything-goes escape: '·' is
-    // the resting dial, '█' the cursor, and ':' and '.' are the seek
-    // shimmer's own characters (see frame()'s shimmer block, which paints
-    // them at random columns while seeking). Every station glyph on the
-    // roster is outside this set, which is what makes the assertion mean
-    // something -- an unfiltered drawDial would scatter YM's ╬ Æ Þ § Ω Ø ≡ ¥ ¶
-    // across this row and fail here.
-    assert.match(h.row(5).slice(4, 76), /^[·:.\s█]*$/, 'the dial row carries no station markers')
-    // Enter on an empty band must not throw or claim a station.
-    h.key('Enter'); h.advance(600)
-    assert.equal(h.program.lockedStation, null, 'Enter found nothing to lock onto')
-    assert.equal(h.program.mode, 'seeking')
+    // Written first as "an empty band draws no markers", which held only
+    // while ZM had no residents. Once SYNAPSE and CIRCUIT CRUSH crossed, the
+    // premise was gone -- so the claim moved to the one that outlives any
+    // arrangement of the roster: a dial shows its own band and nothing else.
+    // ZM FIRST, which matters: a fresh boot lands on a RANDOM station (see
+    // otherPreset's note), so the cursor may be parked on top of a marker and
+    // hiding the very glyph this test is looking for -- that is what it does,
+    // correctly, and it cost a run to spot. Reaching a band by SWITCHING to
+    // it always lands at that band's floor, column 4, and neither band has a
+    // station there. Starting on YM, this order switches into both.
+    const seen = {}
+    for (const want of ['zm', 'ym']) {
+      while (h.program.band !== want) { h.key('b'); h.advance(600) }
+      seen[want] = { row: h.row(5), mine: h.program.bandPresets().map((st) => st.glyph) }
+      assert.ok(seen[want].mine.length > 0, `test setup: ${want} has residents`)
+    }
+    for (const [band, { row, mine }] of Object.entries(seen)) {
+      const other = band === 'ym' ? seen.zm.mine : seen.ym.mine
+      for (const g of mine) assert.ok(row.includes(g), `${band}: own glyph ${g} is on the dial`)
+      // The discriminating half. Glyphs are unique across the roster, so an
+      // unfiltered drawDial would paint the other band's marks here.
+      for (const g of other) {
+        if (mine.includes(g)) continue
+        assert.ok(!row.includes(g), `${band}: foreign glyph ${g} must not be drawn`)
+      }
+    }
   } finally { h.shutdown() }
 })
+
 
 test('the visualizer clicks only for keys it actually answers', async () => {
   const h = await boot({})
@@ -1656,8 +1663,13 @@ test('guide index: every station row shares the same column stops', async () => 
     h.powerOn()
     await openIndex(h)
     const C = h.program.GUIDE_INDEX_COLS
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
-    STATION_PRESET_ORDER.forEach((ch, i) => {
+    // 2026-08-31 -- the guide pages the CURRENT band, so this walks the same
+    // list the page does. It used to import the flat whole-roster order,
+    // which was the same thing until SYNAPSE and CIRCUIT CRUSH crossed to ZM
+    // and their rows stopped existing on YM's pages.
+    const order = h.program.bandPresets()
+    assert.ok(order.length > 0, 'test setup: the current band has rows to check')
+    order.forEach((ch, i) => {
       const row = h.row(5 + i)
       const num = `[${String(i + 1).padStart(2, '0')}]`
       const freq = ch.freq.toFixed(1)
@@ -1686,12 +1698,17 @@ test("guide detail: every station's desc is shown in full, not cut off", async (
   try {
     h.powerOn()
     await openIndex(h)
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+    // 2026-08-31 -- the current band's stations, not the flat roster: the
+    // guide pages one band, so walking every station would step off the end
+    // of the pages that exist and then assert against whatever was still on
+    // screen. Same correction as the index test above.
+    const order = h.program.bandPresets()
+    assert.ok(order.length > 0, 'test setup: the current band has detail pages')
     // Into the first station's page from the index, then [->] walks the
-    // rest -- the detail pages step through the roster in preset order.
+    // rest -- the detail pages step through the band in preset order.
     h.key('1'); h.advance(200)
-    for (let i = 0; i < STATION_PRESET_ORDER.length; i++) {
-      const ch = STATION_PRESET_ORDER[i]
+    for (let i = 0; i < order.length; i++) {
+      const ch = order[i]
       // Rows 8-10 are the desc block. A budget overrun shows up as the
       // ellipsis the drawing code appends, on the last of them.
       const drawn = [h.row(8), h.row(9), h.row(10)].map((r) => r.trimEnd())
@@ -1736,8 +1753,13 @@ test('guide index from STANDBY claims nothing is on air', async () => {
     assert.equal(h.program.poweredOn, false, 'still in STANDBY')
     h.key('ArrowRight'); h.advance(200)
     const C = h.program.GUIDE_INDEX_COLS
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
-    STATION_PRESET_ORDER.forEach((ch, i) => {
+    // 2026-08-31 -- the guide pages the CURRENT band, so this walks the same
+    // list the page does. It used to import the flat whole-roster order,
+    // which was the same thing until SYNAPSE and CIRCUIT CRUSH crossed to ZM
+    // and their rows stopped existing on YM's pages.
+    const order = h.program.bandPresets()
+    assert.ok(order.length > 0, 'test setup: the current band has rows to check')
+    order.forEach((ch, i) => {
       assert.equal(h.row(5 + i)[C.mark], ' ', `${ch.callsign}: no marker with the set off`)
     })
     assert.equal(h.find('the station you are tuned to right now'), -1, 'and no legend for a marker that is not drawn')

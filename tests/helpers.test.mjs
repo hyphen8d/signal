@@ -50,21 +50,29 @@ test('freqToCol/colToFreq/clampFreq: every band maps onto the same dial', () => 
 // filter from nearestStation and these stop being null, because the whole
 // roster is on YM and every one of them is "nearest" to anything asked.
 test('the nearest-* questions do not see across bands', () => {
-  const { nearestStation, nearestSignal, nearestLockable } = tuning
-  const onYm = stations.STATIONS.filter((st) => st.band === 'ym')
-  assert.ok(onYm.length > 0, 'YM has stations to be blind to')
-  for (const st of onYm) {
-    assert.equal(nearestStation(st.freq, 'zm').station, null, `${st.callsign} is invisible from ZM`)
-    assert.equal(nearestSignal(st.freq, 'zm').station, null, `${st.callsign} puts no carrier on ZM`)
-    assert.equal(nearestLockable(st.freq, 'zm').station, null, `${st.callsign} cannot be locked from ZM`)
+  const { BANDS, nearestStation, nearestSignal, nearestLockable } = tuning
+  const all = [...stations.STATIONS, ...stations.SECRET_STATIONS]
+  assert.ok(new Set(all.map((s) => s.band)).size >= 2, 'the roster spans more than one band')
+  // The claim is band MEMBERSHIP, not null. An earlier version of this test
+  // asserted null, which only held while ZM was empty -- the moment a station
+  // moved there, "nearest" started returning it for any frequency asked, and
+  // the test failed while the code was right. What is actually invariant is
+  // that an answer, when there is one, is always on the band that was asked
+  // about; that survives any arrangement of the roster.
+  for (const st of all) {
+    for (const b of BANDS) {
+      for (const [name, fn] of [['nearestStation', nearestStation], ['nearestSignal', nearestSignal], ['nearestLockable', nearestLockable]]) {
+        const got = fn(st.freq, b.key).station
+        if (got) assert.equal(got.band, b.key, `${name}(${st.callsign}'s freq, ${b.label}) answered with a ${got.band} station`)
+      }
+    }
   }
-  for (const secret of stations.SECRET_STATIONS) {
-    assert.equal(nearestSignal(secret.freq, 'zm').station, null, `${secret.callsign} does not leak onto ZM`)
-  }
-  // An empty band answers the question rather than throwing, because every
-  // caller already handles the no-station case -- that was the roster's
-  // state before any station existed and the null path never went away.
-  assert.equal(nearestStation(1400, 'zm').dist, Infinity)
+  // A band with nothing on it answers rather than throwing -- every caller
+  // already handles the no-station case, and a band is committed before it is
+  // filled. Exercised through a key no station carries, since every real band
+  // now has residents.
+  assert.equal(nearestStation(1400, 'no-such-band').station, null)
+  assert.equal(nearestStation(1400, 'no-such-band').dist, Infinity)
 })
 
 test('nearestStation never finds a secret station; nearestSignal/nearestLockable do', () => {
@@ -75,13 +83,18 @@ test('nearestStation never finds a secret station; nearestSignal/nearestLockable
   // never seeked to, so it has to hold for EVERY entry, not just the
   // first one anybody wrote a test for.
   assert.ok(stations.SECRET_STATIONS.length >= 2, 'both secret stations are in the array')
+  // 2026-08-31 -- every question is asked ON THE STATION'S OWN BAND. These
+  // used to take the default, which was right while there was one band and
+  // silently wrong the moment SYNAPSE and CIRCUIT CRUSH crossed to ZM: the
+  // test would have been asking whether a ZM station is the nearest thing on
+  // YM, which is not the claim it is making.
   for (const secret of stations.SECRET_STATIONS) {
-    assert.notEqual(nearestStation(secret.freq).station, secret, `${secret.callsign} is unreachable by seek/scan`)
-    assert.equal(nearestSignal(secret.freq).station, secret, `${secret.callsign} still shows a carrier`)
-    assert.equal(nearestSignal(secret.freq).dist, 0)
-    assert.equal(nearestLockable(secret.freq).station, secret, `${secret.callsign} is lockable when parked on it`)
+    assert.notEqual(nearestStation(secret.freq, secret.band).station, secret, `${secret.callsign} is unreachable by seek/scan`)
+    assert.equal(nearestSignal(secret.freq, secret.band).station, secret, `${secret.callsign} still shows a carrier`)
+    assert.equal(nearestSignal(secret.freq, secret.band).dist, 0)
+    assert.equal(nearestLockable(secret.freq, secret.band).station, secret, `${secret.callsign} is lockable when parked on it`)
   }
-  for (const st of stations.STATIONS) assert.equal(nearestStation(st.freq).station, st)
+  for (const st of stations.STATIONS) assert.equal(nearestStation(st.freq, st.band).station, st)
 })
 
 test('stationColsFor: every public station has its own dial column; the secret ones are absent', () => {
@@ -98,9 +111,15 @@ test('stationColsFor: every public station has its own dial column; the secret o
   // between bands -- every band is drawn on the same 71 columns -- so a set
   // spanning the roster would have let one band's shimmer guard protect
   // another band's markers, which share nothing a listener can see.
-  const ym = stationColsFor('ym')
-  assert.equal(stationColsFor('zm').size, 0, 'ZM has no markers to protect yet')
-  assert.equal(ym.size, stations.STATIONS.filter((st) => st.band === 'ym').length)
+  // Each band's set holds exactly its own residents, and no band's set is
+  // the whole roster. That second claim is what an unfiltered stationColsFor
+  // would break, and it stays checkable however the roster is split.
+  const total = stations.STATIONS.length
+  for (const b of BANDS) {
+    const n = stations.STATIONS.filter((st) => st.band === b.key).length
+    assert.equal(stationColsFor(b.key).size, n, `${b.label} protects its own markers and no others`)
+    if (n < total) assert.notEqual(stationColsFor(b.key).size, total, `${b.label} is not carrying the whole roster`)
+  }
 })
 
 // 2026-08-26, shipped with GREEN ROOM. The array/`station.secret` refactor

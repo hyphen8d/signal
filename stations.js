@@ -606,7 +606,22 @@ export const STATIONS = [
   //   idealism (ry5_86xOkhk), morning - jinsang (TW7tKY6lQGo), a light of
   //   mine - kudasai (kAMml_RST1g). Ident was [329.6, 293.7, 261.6, 293.7],
   //   identTempo 1.1, gain 1.15, glyph '≡', visual 'skyline'.
-  { id: 'midnight-neon', band: 'ym', freq: 567.8, callsign: 'SYNAPSE', tagline: 'shifting the plates of the underground',
+  // MOVED TO ZM 2026-08-31, from YM 567.8. Not a demotion and not a theme:
+  // the second band needed founding residents that were already good, and
+  // sending two established stations across is what stops ZM reading as the
+  // annexe where new things are put until they prove themselves.
+  //
+  // 1234.0 keeps the joke the old number carried. 567.8's freqNote was
+  // "counting up: 5-6-7-8", which does not exist inside ZM's 1000-1800, so
+  // the gag was re-cut rather than dropped -- 1-2-3-4 is the same joke and,
+  // if anything, reads faster.
+  //
+  // The spoken clips still say "five sixty-seven point eight" until the
+  // frequency comes out of every clip (see tools/lib/voice-settings.mjs).
+  // That is the ONE thing this move breaks, and it breaks for both stations
+  // that crossed -- a station ID naming a frequency it no longer sits on is
+  // worse than one that names none.
+  { id: 'midnight-neon', band: 'zm', freq: 1234.0, callsign: 'SYNAPSE', tagline: 'shifting the plates of the underground',
     // 60th pass (2026-08-24): MOMENTUM replaced with MIDNIGHT NEON, from a
     // 40-track blues playlist and persona
     // brief -- late-night minor-key slow burns, lush brass sections, and
@@ -617,7 +632,7 @@ export const STATIONS = [
     // format. 20 of the 40 pasted tracks picked for the first cut (spread
     // across the pasted "4 hours," favoring the most iconic/likely-official
     // sources), all independently oEmbed-verified.
-    freqNote: 'counting up: 5-6-7-8',
+    freqNote: 'counting up: 1-2-3-4',
     desc: 'Tech house from the current club circuit -- rolling basslines, chopped vocal hooks, and drops built for a big room. Ibiza back rooms and the main stage, same dial.',
     // 60th pass -- fresh contour, unused elsewhere on the roster: a slow
     // three-step rise (U U U), read as a guitar bend/turnaround reaching up
@@ -945,7 +960,14 @@ export const STATIONS = [
   // now with HACKBACK's addition. If it comes back later, its full track
   // list (Johnny Cash, Ennio Morricone, Marty Robbins, Colter Wall, Nick
   // Cave, Tom Russell, Calexico) is in git history on this commit's parent.
-  { id: 'circuit-crush', band: 'ym', freq: 488.0, callsign: 'CIRCUIT CRUSH', tagline: 'analog glow, the long drive home',
+  // MOVED TO ZM 2026-08-31, from YM 488.0. See SYNAPSE's note above for why
+  // two established stations crossed rather than only new ones.
+  //
+  // 1688.0 was picked to keep the freqNote intact WITHOUT rewriting it: the
+  // gag is the 88, and every ZM frequency ending in 88 carries it. That is
+  // the whole reason this station's number is not a round one -- a station
+  // whose dial position is a joke should not lose the joke to a band change.
+  { id: 'circuit-crush', band: 'zm', freq: 1688.0, callsign: 'CIRCUIT CRUSH', tagline: 'analog glow, the long drive home',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     // round 10, 2026-08-23 (easter-egg pass): 434.5 -> 438.8, an
     // "88 mph" nod (DeLorean time-travel) for a station about a drive that
