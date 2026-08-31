@@ -15,6 +15,50 @@ const { SECRET_STATIONS, STATIONS } = await import(`./stations.js?v=${V}`)
 // range read as too close to an actual FM dial).
 export const FREQ_MIN = 100.0
 export const FREQ_MAX = 900.0
+
+// --- the two bands (2026-08-31) ----------------------------------------
+//
+// WHY A SECOND BAND AT ALL, since the obvious ask was "more presets": the
+// preset keys were never the ceiling, the DIAL is. A station's NEAR_THRESHOLD
+// zone is +/-24 units, and the dial is 71 columns (DIAL_X0 4 -> DIAL_X1 75)
+// carrying 800 units, so that zone is 4.26 COLUMNS wide on screen. 71 / 4.26
+// is about 16.7 stations before every point on the dial sits inside
+// something's near zone. Past that there is no static anywhere, and because
+// tuning distance is one shared quantity (see staticGainForDist, the S/N
+// readout and crtDegradeForDist) that takes out what you hear, what you read
+// and what the tube does, all at once. Nine more preset keys would have been
+// nine more ways to REACH stations there was nowhere to PUT.
+//
+// Note the ceiling is a property of the SCREEN, not of these numbers: making
+// the band wider just compresses everything into the same 71 columns, and at
+// 1600 units the lock zone drops under one column, where "locked" and "near"
+// stop being visually distinguishable. Columns are the scarce resource.
+//
+// WHY NOT FM/AM, which is what the issue asked for. FM/AM is a promise about
+// SOUND -- real AM is narrower, noisier, mono, and fades. This second band is
+// deliberately "the same radio, more room": no higher static floor, no
+// narrower lock, no phosphor lean. Labelling it AM would write a cheque the
+// set does not cash for anyone who knows radio. A fake pair promises only
+// "this set has two bands", which is exactly what is true, and the
+// frequencies here have been fiction since the 8/20 pass anyway.
+//
+// WHY THESE LETTERS. The trailing M reads as "modulation", so `?M` parses as
+// a band designation on sight; Y and Z sit nowhere near F or A, so neither
+// reads as a typo for the real thing. They ASCEND WITH FREQUENCY -- YM is the
+// low band, ZM the high one -- which is the whole reason they are these two
+// letters rather than an arbitrary pair.
+//
+// WHY THE RANGES DO NOT OVERLAP. The first sketch put the second band at real
+// AM's 530-1700, which collides with YM between 530 and 900 -- and CITY
+// LIGHTS already sits at 780.0, so "780.0" would have named a station on
+// either band. Held apart, every YM frequency is three digits and every ZM
+// one is four, so the DIGIT COUNT alone identifies the band even where the
+// label is cropped out. Today's highest is HACKBACK at 808.
+export const BANDS = [
+  { key: 'ym', label: 'YM', freqMin: 100.0, freqMax: 900.0 },
+  { key: 'zm', label: 'ZM', freqMin: 1000.0, freqMax: 1800.0 },
+]
+export const DEFAULT_BAND = 'ym'
 // Scaled up ~40x from the old 88-108 tuning feel (20-wide band -> 800-wide).
 export const LOCK_THRESHOLD = 6
 export const NEAR_THRESHOLD = 24

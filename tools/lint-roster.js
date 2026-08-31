@@ -7,7 +7,9 @@
 //   node --test tests/                 # tests/roster.test.mjs asserts it passes
 //
 // Rules (each cites where it comes from):
-//   - exactly 9 public stations (README "Station count": the 1-9 preset keys)
+//   - at most 9 public stations PER BAND (README "Station count": the 1-9
+//     preset keys, which are per-band as of 2026-08-31)
+//   - every station names a band that exists in tuning.js's BANDS
 //   - tagline fits the guide index's LANE column (README "Taglines").
 //     History: a flat 35 (safe for the longest callsign), then 2026-08-25's
 //     `52 - callsign.length`, which was right while the index drew one joined
@@ -25,8 +27,11 @@
 //     -- drawDial's own note)
 //   - every station.visual names a built effect (visuals/index.js), else it
 //     silently falls back to DRIFT
-//   - frequencies inside the band, unique, and at least LOCK_THRESHOLD*2
-//     apart so two carriers can never both be inside lock range at once
+//   - frequencies inside their OWN band's range, and at least LOCK_THRESHOLD*2
+//     apart from their neighbours ON THAT BAND, so two carriers can never
+//     both be inside lock range at once. Asked per band because spacing is a
+//     question about one dial: two stations a unit apart on different bands
+//     are not close in any sense a listener can reach.
 //   - no YouTube ID appears twice across the whole roster (secret included)
 //   - every track has a title and artist
 //   - README's roster sentence still matches the roster: station count, track
@@ -69,7 +74,7 @@ export const DESC_LINES = 3
 
 export async function lintRoster() {
   const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=lint')
-  const { FREQ_MIN, FREQ_MAX, LOCK_THRESHOLD } = await import('../tuning.js?v=lint')
+  const { BANDS, DEFAULT_BAND, LOCK_THRESHOLD } = await import('../tuning.js?v=lint')
   const { VISUALS } = await import('../visuals/index.js?v=lint')
   const { parseBDF } = await import('../src/bdf.js')
   const { wordWrap } = await import('../layout.js?v=lint')
@@ -78,7 +83,17 @@ export async function lintRoster() {
   const problems = []
   const warnings = []
   const all = [...STATIONS, ...SECRET_STATIONS]
-  if (STATIONS.length !== 9) problems.push(`expected exactly 9 public stations, found ${STATIONS.length}`)
+  const bandKeys = new Set(BANDS.map((b) => b.key))
+  // 2026-08-31 -- was a flat "exactly 9 public stations". The ceiling was
+  // never the roster's size, it was the [1-9] preset keys, and those are
+  // per-band now: a tenth station on ONE band is the thing with no way to
+  // reach it. So the rule moved rather than loosened. No minimum beyond one,
+  // deliberately -- a band is committed with a single station on it before it
+  // is filled, the same way a new station is committed with tracks: [].
+  for (const b of BANDS) {
+    const n = STATIONS.filter((st) => (st.band ?? DEFAULT_BAND) === b.key).length
+    if (n > 9) problems.push(`band ${b.label} has ${n} public stations; [1-9] presets fit 9`)
+  }
 
   const seenIds = new Map()
   for (const st of all) {
@@ -95,7 +110,11 @@ export async function lintRoster() {
       }
     }
     if (!Array.isArray(st.ident) || st.ident.length !== 4) problems.push(`${who}: ident has ${st.ident?.length ?? 0} tones (want 4)`)
-    if (!(st.freq >= FREQ_MIN && st.freq <= FREQ_MAX)) problems.push(`${who}: freq ${st.freq} outside ${FREQ_MIN}-${FREQ_MAX}`)
+    if (!bandKeys.has(st.band)) problems.push(`${who}: band '${st.band}' is not one of ${[...bandKeys].join(', ')}`)
+    else {
+      const b = BANDS.find((x) => x.key === st.band)
+      if (!(st.freq >= b.freqMin && st.freq <= b.freqMax)) problems.push(`${who}: freq ${st.freq} outside ${b.label}'s ${b.freqMin}-${b.freqMax}`)
+    }
     if (st.visual && !VISUALS[st.visual]) problems.push(`${who}: visual '${st.visual}' is not a built effect`)
     if (!st.secret) {
       if (!st.glyph) problems.push(`${who}: no dial glyph`)
@@ -107,10 +126,17 @@ export async function lintRoster() {
       else seenIds.set(t.youtubeId, who)
     }
   }
-  const sorted = [...all].sort((a, b) => a.freq - b.freq)
-  for (let i = 1; i < sorted.length; i++) {
-    const gap = sorted[i].freq - sorted[i - 1].freq
-    if (gap < LOCK_THRESHOLD * 2) problems.push(`${sorted[i - 1].callsign} and ${sorted[i].callsign} are only ${gap.toFixed(1)} apart (min ${LOCK_THRESHOLD * 2})`)
+  // Spacing is a question about ONE dial, so it is asked per band. Two
+  // stations a unit apart on different bands are not close to each other in
+  // any sense a listener can reach -- there is no tuning position from which
+  // both are near. Asking this across the whole roster would invent conflicts
+  // between stations that can never be on screen together.
+  for (const bd of BANDS) {
+    const sorted = all.filter((st) => st.band === bd.key).sort((a, b) => a.freq - b.freq)
+    for (let i = 1; i < sorted.length; i++) {
+      const gap = sorted[i].freq - sorted[i - 1].freq
+      if (gap < LOCK_THRESHOLD * 2) problems.push(`${bd.label}: ${sorted[i - 1].callsign} and ${sorted[i].callsign} are only ${gap.toFixed(1)} apart (min ${LOCK_THRESHOLD * 2})`)
+    }
   }
   // 2026-08-27 -- README's roster sentence is four claims about numbers that
   // live in stations.js, and it had already drifted: it read "371 tracks

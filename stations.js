@@ -78,7 +78,7 @@ export function realTrack(youtubeId, title, artist) {
 // DISTORTION FIELD/COLD WAVE/CIRCUIT CRUSH/ATOMIC 28, MOMENTUM 29,
 // DRIFT MODE/CITY LIGHTS 30) -- curation over symmetry.
 export const STATIONS = [
-  { id: 'distortion-field', freq: 199.7, callsign: 'DISTORTION FIELD', tagline: "raw nerve, '90s angst",
+  { id: 'distortion-field', band: 'ym', freq: 199.7, callsign: 'DISTORTION FIELD', tagline: "raw nerve, '90s angst",
     // 28th pass (2026-08-21): renamed from STATIC BLOOM per the
     // station-naming pass -- "DISTORTION FIELD" / "heavy guitars, raw
     // nerve, '90s angst" was the locked-in choice (option 1B). Same
@@ -342,7 +342,7 @@ export const STATIONS = [
   //   RH Negative (ljypVwBF_e8); Rafael Anton Irisarri, Forever Ago is Now
   //   (nZyYcmK7a0I).
   //
-  { id: 'neon-stasis', freq: 321.0, callsign: 'NEON STASIS', tagline: 'closing time in a mall that never was',
+  { id: 'neon-stasis', band: 'ym', freq: 321.0, callsign: 'NEON STASIS', tagline: 'closing time in a mall that never was',
     // 2026-08-30 -- mallsoft, the vaporwave subgenre that scores an empty
     // shopping centre: muzak and lounge sources slowed, drowned in hall
     // reverb and played back as if heard from the far end of a food court.
@@ -484,7 +484,7 @@ export const STATIONS = [
       realTrack('k6xkSvMIvwk', 'Second Floor', 'Cat System Corp'),
       realTrack('Qg7vgIdDDno', 'Veni, Vidi, Emi', 'Cat System Corp'),
     ] },
-  { id: 'cold-wave', freq: 273.0, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
+  { id: 'cold-wave', band: 'ym', freq: 273.0, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     // round 10, 2026-08-23 (easter-egg pass): 512.9 -> 273.0 --
     // absolute zero is -273 C, about as "cold" as a frequency can get.
@@ -606,7 +606,7 @@ export const STATIONS = [
   //   idealism (ry5_86xOkhk), morning - jinsang (TW7tKY6lQGo), a light of
   //   mine - kudasai (kAMml_RST1g). Ident was [329.6, 293.7, 261.6, 293.7],
   //   identTempo 1.1, gain 1.15, glyph '≡', visual 'skyline'.
-  { id: 'midnight-neon', freq: 567.8, callsign: 'SYNAPSE', tagline: 'shifting the plates of the underground',
+  { id: 'midnight-neon', band: 'ym', freq: 567.8, callsign: 'SYNAPSE', tagline: 'shifting the plates of the underground',
     // 60th pass (2026-08-24): MOMENTUM replaced with MIDNIGHT NEON, from a
     // 40-track blues playlist and persona
     // brief -- late-night minor-key slow burns, lush brass sections, and
@@ -806,7 +806,7 @@ export const STATIONS = [
   // 5 (288.6 between RELIC SIGNAL/QUIET HOURS, 434.5 between QUIET
   // HOURS/COLD WAVE, 650.0 between COLD WAVE/THE STUDY, 878.9 past THE
   // STUDY toward the top of the band) so none of the original 5 moved.
-  { id: 'city-lights', freq: 780.0, callsign: 'CITY LIGHTS', tagline: 'tokyo nights, city pop dreams',
+  { id: 'city-lights', band: 'ym', freq: 780.0, callsign: 'CITY LIGHTS', tagline: 'tokyo nights, city pop dreams',
     // 28th pass: renamed from HIGH RISE (option 7B). Same city pop lane,
     // same ident, same tracks -- name/tagline only.
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
@@ -945,7 +945,7 @@ export const STATIONS = [
   // now with HACKBACK's addition. If it comes back later, its full track
   // list (Johnny Cash, Ennio Morricone, Marty Robbins, Colter Wall, Nick
   // Cave, Tom Russell, Calexico) is in git history on this commit's parent.
-  { id: 'circuit-crush', freq: 488.0, callsign: 'CIRCUIT CRUSH', tagline: 'analog glow, the long drive home',
+  { id: 'circuit-crush', band: 'ym', freq: 488.0, callsign: 'CIRCUIT CRUSH', tagline: 'analog glow, the long drive home',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     // round 10, 2026-08-23 (easter-egg pass): 434.5 -> 438.8, an
     // "88 mph" nod (DeLorean time-travel) for a station about a drive that
@@ -1075,7 +1075,7 @@ export const STATIONS = [
   // "mood, mood" fragment like DISTORTION FIELD's "raw nerve, '90s angst";
   // this one was a single unbroken clause. Reworded to the same shape
   // while keeping the "counter" gag the tagline was built around.
-  { id: 'atomic', freq: 529.0, callsign: 'ATOMIC', tagline: 'atomic swing, radioactive nostalgia', // 19th pass: trimmed
+  { id: 'atomic', band: 'ym', freq: 529.0, callsign: 'ATOMIC', tagline: 'atomic swing, radioactive nostalgia', // 19th pass: trimmed
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     // 49th pass, same-day follow-up: 854.9 -> 529.0, held back in
     // round 10 but revisited once MOMENTUM's freq move
@@ -1241,7 +1241,7 @@ export const STATIONS = [
   // if anything NY-heavy. "West coast backbone" was wrong in both the
   // tagline and the desc field below (same error, inherited from an old
   // 28th-pass framing neither of us checked against the actual tracklist).
-  { id: 'hackback', freq: 808.0, callsign: 'HACKBACK', tagline: 'golden age hip-hop, coast to coast legends',
+  { id: 'hackback', band: 'ym', freq: 808.0, callsign: 'HACKBACK', tagline: 'golden age hip-hop, coast to coast legends',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     // round 10, 2026-08-23 (easter-egg pass): 888.7 -> 808.0 --
     // the Roland TR-808, the single most influential drum machine in
@@ -1387,7 +1387,7 @@ export const STATIONS = [
   // a second comma-paired fragment (genre + late-night mood, echoing the
   // desc's own "late-night infiltration runs") to match the "mood, mood"
   // shape 6 of 9 taglines already use.
-  { id: 'cipher', freq: 133.7, callsign: 'CIPHER', tagline: 'digital infiltration, late-night breakbeat',
+  { id: 'cipher', band: 'ym', freq: 133.7, callsign: 'CIPHER', tagline: 'digital infiltration, late-night breakbeat',
     // 28th pass (2026-08-21): New cyberpunk station, hacker movies/synthwave
     // aesthetic (locked-in name/tagline per the naming pass). Placed
     // at 219.8, the frequency freed by RELIC SIGNAL's retirement (see the
@@ -1660,7 +1660,7 @@ export const STATION_PRESET_ORDER = [...STATIONS].sort((a, b) => a.freq - b.freq
 // -- album years 1989/1994/1999 -- collide with DISTORTION FIELD's own
 // 199.7 "1997" gag, same decade by design; runtime dodges that entirely.)
 export const NIN_STATION = {
-  id: 'nin', freq: 613.0, callsign: 'NINE INCH NAILS', tagline: 'industrial rage, mechanical dread',
+  id: 'nin', band: 'ym', freq: 613.0, callsign: 'NINE INCH NAILS', tagline: 'industrial rage, mechanical dread',
   // Tight chromatic half-step descent (B3-Bb3-A3-Ab3) -- every other
   // station's ident jumps by a third or more, so this one's the only motif
   // on the roster that grinds down in semitones. Deliberately harsh/
@@ -1772,7 +1772,7 @@ export const NIN_STATION = {
 // are held to the subject, not to a genre -- see tools/station-profiles.json
 // for what that admits and what it rules out.
 export const GREEN_ROOM_STATION = {
-  id: 'green-room', freq: 420.0, callsign: 'GREEN ROOM', tagline: 'backstage haze, one subject only',
+  id: 'green-room', band: 'ym', freq: 420.0, callsign: 'GREEN ROOM', tagline: 'backstage haze, one subject only',
   freqNote: '420.0 -- it was never going to be anything else',
   desc: "Songs about exactly one thing, spread across fifty years and every genre that ever got around to writing one -- doom metal, G-funk, roots reggae, outlaw country, power pop. The dial found the subject, not the sound.",
   // Whole-tone descent (G4-F4-Eb4-Db4). Every other ident on the roster
