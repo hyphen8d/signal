@@ -13,34 +13,20 @@
 // and channel-prefixed identifiers were renamed to STATIONS/station-prefixed
 // at the same time, so this generator and its output file follow suit.
 
+// 2026-08-31: this file used to carry a byte-identical COPY of the generator
+// that also lives in tools/lib/roster.mjs as buildStationsMd(), which the
+// admin dashboard calls. Two copies, and this was the one people actually
+// ran -- so band grouping added to the library reached the dashboard and left
+// `npm run stations` producing the old shape. It imports the library now, and
+// the duplicate is gone rather than kept in step by hand.
+
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { STATIONS } from '../stations.js'
+import { buildStationsMd } from './lib/roster.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-
-const lines = []
-lines.push('# SIGNAL -- station roster')
-lines.push('')
-lines.push(`Generated from stations.js. ${STATIONS.length} stations, ${STATIONS.reduce((n, c) => n + c.tracks.length, 0)} tracks total.`)
-lines.push('')
-
-for (const st of STATIONS) {
-  lines.push(`## ${st.callsign} -- ${st.freq.toFixed(1)}`)
-  lines.push('')
-  lines.push(`*${st.tagline}*`)
-  lines.push('')
-  lines.push(`Ident tones (Hz): ${st.ident.join(', ')}`)
-  lines.push('')
-  lines.push(`Tracks (${st.tracks.length}):`)
-  lines.push('')
-  st.tracks.forEach((t, i) => {
-    lines.push(`${i + 1}. **${t.title}** -- ${t.artist}  ([youtu.be/${t.youtubeId}](https://youtu.be/${t.youtubeId}))`)
-  })
-  lines.push('')
-}
-
 const outPath = path.join(here, '..', 'stations.md')
-writeFileSync(outPath, lines.join('\n'))
+writeFileSync(outPath, buildStationsMd(STATIONS))
 console.log(`Wrote ${outPath}`)

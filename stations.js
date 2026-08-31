@@ -1633,7 +1633,7 @@ export const STATIONS = [
       realTrack('B99nd2iKGOw', 'Battleflag', 'Lo Fidelity Allstars'),
       realTrack('MSv3Oez4O-4', 'Ready Steady Go', 'Paul Oakenfold'),
     ] },
-  // CRYO CRYPT (2026-08-31) -- ZM's third resident and the first station
+  // THE CRYPT (2026-08-31) -- ZM's third resident and the first station
   // founded ON the second band rather than moved to it. From issue #52,
   // which proposed the Cryo Chamber label and its Cryo Crypt side project;
   // the side project is the dungeon-synth/dark-fantasy arm and is what this
@@ -1660,7 +1660,7 @@ export const STATIONS = [
   // filled. audition.js needs --station to already exist in the roster, so
   // the identity object has to land first; this is the documented order, not
   // an unfinished commit. Nothing is added here that has not been probed.
-  { id: 'cryo-crypt', band: 'zm', freq: 1031.0, callsign: 'CRYO CRYPT',
+  { id: 'the-crypt', band: 'zm', freq: 1031.0, callsign: 'THE CRYPT',
     tagline: 'a ruin, a keep, a tape left running',
     freqNote: '10/31 -- All Hallows\' Eve',
     desc: 'Dungeon synth and dark fantasy: lo-fi keyboard music scoring a place that never existed. Modal melodies under tape hiss and cheap reverb, with almost no drums and no hurry at all.',

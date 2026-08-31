@@ -154,7 +154,7 @@ export default {
     ['2-HOLD', 'GUIDE'],
   ],
   GUIDE_CONTROL_GROUPS: [
-    { head: 'TUNING', rows: [['[<-/->]', 'SEEK'], ['[ENTER]', 'LOCK'], ['[S]', 'SCAN'], ['[1-9]', 'PRESETS'], ['[B]', 'BACK']] },
+    { head: 'TUNING', rows: [['[<-/->]', 'SEEK'], ['[ENTER]', 'LOCK'], ['[S]', 'SCAN'], ['[1-9]', 'PRESETS'], ['[B]', 'BAND']] },
     // [T] added 2026-08-27. 'SLEEP' is shorter than 'NEXT TRACK', so the
     // column keeps its width; the group goes to five rows, matching TUNING,
     // which pushes drawGuideControls' return down one -- still clear of the

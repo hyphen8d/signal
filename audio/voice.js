@@ -686,8 +686,8 @@ export const GENERAL_LINER_FILES = [
 //   atomic            "Glowing in the dark since 1955. ATOMIC."
 //   city-lights       "You're tuned in to Tokyo. CITY LIGHTS."
 //   hackback          "A throwback state of mind. HACKBACK."
-//   cryo-crypt        "The torches went out a long time ago. The music
-//                      didn't. CRYO CRYPT."          (new 2026-08-31)
+//   the-crypt        "The torches went out a long time ago. The music
+//                      didn't. THE CRYPT."          (new 2026-08-31)
 //
 // The -02 clips. SYNAPSE has only an -01: it has had none since MOMENTUM was
 // retired and its liner was dropped rather than remapped.
@@ -712,8 +712,8 @@ export const GENERAL_LINER_FILES = [
 //                      CITY LIGHTS."
 //   hackback          "The number's not an accident. HACKBACK, eight oh eight."
 //                      KEPT WITH ITS FREQUENCY -- the hook is the number.
-//   cryo-crypt        "Nobody has come down these stairs in centuries.
-//                      CRYO CRYPT."                    (new 2026-08-31)
+//   the-crypt        "Nobody has come down these stairs in centuries.
+//                      THE CRYPT."                    (new 2026-08-31)
 export const STATION_LINER_FILES = {
   cipher: ['audio/liner-cipher-01.mp3', 'audio/liner-cipher-02.mp3'],
   'distortion-field': ['audio/liner-distortion-field-01.mp3', 'audio/liner-distortion-field-02.mp3'],
@@ -762,7 +762,7 @@ export const STATION_LINER_FILES = {
   // frequency came out of the format. Present-and-populated from the day it
   // shipped, which is the case the note above says to reach for only when a
   // station beats its clips to the dial.
-  'cryo-crypt': ['audio/liner-cryo-crypt-01.mp3', 'audio/liner-cryo-crypt-02.mp3'],
+  'the-crypt': ['audio/liner-the-crypt-01.mp3', 'audio/liner-the-crypt-02.mp3'],
 }
 export const LINER_FILES = {}
 for (const stId in STATION_LINER_FILES) {

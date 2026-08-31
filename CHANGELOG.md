@@ -1163,6 +1163,177 @@ revert and the next person to want this number should read it first.
   visitor count — saying that plainly is better than a blanket claim that
   would have quietly stopped being true.
 
+### Two bands (2026-08-31)
+
+`[B]` switches the dial between **YM** (100.0–900.0) and **ZM**
+(1000.0–1800.0). Each band is its own dial with its own stations, its own
+`1`–`9` presets and its own guide pages; the tuner box and the scale row
+above it are named for whichever one is up, and the set remembers which one
+you left it on. SYNAPSE and CIRCUIT CRUSH moved to ZM, and THE CRYPT was
+founded there.
+
+- **The ask was more presets, and presets were never the ceiling.** A
+  station's `NEAR_THRESHOLD` zone is ±24 units; the dial is 71 columns
+  carrying 800, so that zone is **4.26 columns** on screen and the band
+  saturates at about 17 stations. Past that, every point on the dial is
+  inside something's near zone — and because tuning distance is one shared
+  quantity, that takes out the static bed, the S/N readout and the CRT
+  degrade together. Nine more preset keys would have been nine more ways to
+  *reach* stations there was nowhere to *put*. The ceiling is a property of
+  the SCREEN, not of the numbers: widening the band just compresses
+  everything into the same 71 columns, and past a point the lock zone drops
+  under one column, where "locked" and "near" stop being distinguishable.
+- **Named YM and ZM rather than AM and FM**, which is what the issue asked
+  for. FM/AM is a promise about SOUND — real AM is narrower, noisier, mono —
+  and this second band is deliberately the same radio with more room in it.
+  A fake pair promises only "this set has two bands", which is what is true,
+  and the frequencies have been fiction since the 8/20 pass anyway. The
+  letters ascend with frequency, which is why they are those two.
+- **The ranges do not overlap, and that is load-bearing.** The first sketch
+  put the second band at real AM's 530–1700, which collides with YM between
+  530 and 900 — and CITY LIGHTS already sits at 780.0, so "780.0" would have
+  named a station on either band. Held apart, every YM frequency is three
+  digits and every ZM one is four, so the digit count alone identifies the
+  band even where the label is cropped out.
+- **`[B]` was BACK and is now BAND.** BACK walked a stack of recently locked
+  stations; the stack, `goBack()` and the push in `tryLock()` are deleted
+  outright rather than kept unread. The footer paid nothing — `[B] BAND` is
+  exactly as wide as `[B] BACK` was.
+- **The switch does not keep your place.** There is no honest mapping from a
+  frequency on one band to a frequency on another: the same absolute number
+  is usually out of range, and the same proportional position drops you
+  mid-band somewhere you have not looked, which reads as the set drifting
+  rather than as you moving. It lands at the new band's floor, seeking. The
+  lock is dropped rather than carried, because a station on the band you are
+  no longer tuned to is not distant — it is not on this dial at all.
+- **Both moved stations kept their frequency gags**, which is why those two
+  numbers and not any others. CIRCUIT CRUSH's freqNote is "88 mph, the
+  DeLorean's time-travel speed" — the joke is the 88, so 1688.0 carries it
+  with the note untouched. SYNAPSE's "counting up: 5-6-7-8" has no equivalent
+  inside 1000–1800 and was re-cut to 1-2-3-4 rather than dropped.
+- Two bugs the tests found rather than confirmed. `enterSeeking()` redraws the
+  dial but not the furniture around it — built once at power-on and never
+  previously needing to change — so the first working switch changed the
+  stations under a heading that still named the old band. And the scale row
+  placed its right-hand label at a fixed offset that fits "900.0" and hangs
+  "1800.0" over the box border.
+
+### The receiver stops choosing a band for you (2026-08-31)
+
+A fresh boot picked a station at random from the whole roster and set only the
+frequency, so roughly three boots in ten came up locked to a ZM station with
+the dial still showing YM: the frequency off the end of the scale, the guide
+paging the wrong band's index, and `nearestStation` blind to the very station
+that was locked.
+
+The first fix set the band from the station, which restored the invariant and
+kept the deeper mistake. **A receiver should not choose a band for you at
+all.** A real set powers on wherever the switch was left — restored state for
+someone coming back, the default for a first visit — and that is what the band
+field already holds by the time the boot runs. The pool is now the current
+band's stations.
+
+It surfaced as ONE INTERMITTENT TEST rather than as a fault anyone could
+reproduce, which is the shape this kind of bug takes: with three of ten
+stations on the far band, a single run missed it seven times in ten. Chasing
+it test by test was treating the symptom, and the symptom was reporting that
+the design was wrong.
+
+### Frequencies leave the voice clips (2026-08-31)
+
+Every spoken clip said its frequency: a station ID was `<CALLSIGN>, <spoken
+frequency>` and the liners closed the same way. All 26 were re-rendered
+without them.
+
+- **Why, since a real station does announce its frequency:** frequencies
+  stopped being permanent. Moving a station between bands used to cost its ID
+  and both its liners — three clips and real money per move, a toll on
+  rearranging the roster. Dial position is now purely visual and a station can
+  move forever without touching audio. The trade is real and recorded where
+  the script is.
+- **Two liners deliberately keep theirs.** CIPHER's and HACKBACK's second
+  clips are the only lines whose HOOK IS THE NUMBER — one is about why 133.7
+  is funny, the other is "the number's not an accident" about the 808.
+  Trimming those leaves a riddle with no answer. Both stations still sit on
+  those frequencies; if either ever moves, the clip is to be retired rather
+  than re-rendered.
+- **The nine general liners were never in scope** — none of them names a
+  frequency or a station at all, which reading the transcripts settled in a
+  minute and assuming would have got wrong.
+- `spokenFrequency()` retired with its two hard-won rules kept as a note where
+  it stood: a round frequency drops the decimal, and a remainder of 1–9 is "oh
+  eight" rather than "eight". Both cost a render to find and would cost
+  another if frequencies ever go back into the audio.
+- Two IDs came back outside the level band and were re-rolled to scratch and
+  measured before promoting — COLD WAVE −10.6 → −8.6dB, SYNAPSE −2.4 → −5.8dB.
+  SYNAPSE coming back hot is now a pattern rather than an incident. Every one
+  of the ten needed tail padding again, which is three sessions running: a
+  property of the voice, not of a bad take.
+- A side effect worth having: the longest re-rendered liner is 6.3s against a
+  previous 8.8s, which shortens the duck that had been holding the music down
+  for roughly nine seconds.
+
+### THE CRYPT (2026-08-31)
+
+ZM 1031.0 — the 31st of October, which is the whole of the joke. Dungeon synth
+and dark fantasy from the Cryo Crypt label, founded from issue #52. 19 tracks
+across four artists, all official `- Topic` uploads at 249 countries with
+durations cross-checked against the label's own listing.
+
+- **The first search pass could not have founded it**, and that is recorded in
+  the profile because it generalises. Two genre-level searches returned twelve
+  candidates and twelve of twelve were full-album uploads, 26:49 to 68:58 —
+  the genre is released long-form and uploaded whole, and the dial announces
+  one title. The fix is to read individual TRACK titles off a real listing and
+  search those verbatim; searching what a record is called returns records.
+  The same wall NEON STASIS hit on its founding pass.
+- **The font warning was wrong for this label.** All 63 candidate strings
+  check clean against `ter-u16n`, Swedish diacritics included — those are
+  Latin-1 Supplement, which Terminus covers. The real boundary is Latin
+  Extended-A, CJK and fullwidth.
+- Two candidates were dropped rather than trusted: real `- Topic` uploads, but
+  found by search rather than off a release page, so which album they belong
+  to was never confirmed.
+- **Named CRYO CRYPT for most of its first day**, after the label it draws
+  from, and renamed before shipping. The station id was changed with the
+  callsign rather than left behind: nothing had shipped, so there was no
+  reason to inherit the callsign/id mismatch SYNAPSE still carries as
+  `midnight-neon` -- which is the trap that once wrote a re-render over a
+  retired file and reported success. The label keeps its real name where the
+  curation profile cites it.
+- Its ID renders quiet -- two takes at -8.7 and -9.3dB, both under the band's
+  floor. The better one was kept, on the same reasoning CITY LIGHTS was left
+  0.1dB under: a third roll is as likely to be worse, and this is well below
+  what a listener can hear.
+- **An empty station makes the whole suite non-deterministic**, which the
+  documented "commit the identity object with `tracks: []` first" workflow
+  does not warn about. A fresh boot lands on a random station, so a station
+  with no tracks fails a different test on almost every run. Measured rather
+  than guessed: three runs with it present gave two different failures, three
+  with it temporarily removed gave none.
+
+### Roster tooling (2026-08-31)
+
+- **`tools/stations-to-md.js` carried a byte-identical copy** of the generator
+  that also lives in `tools/lib/roster.mjs` as `buildStationsMd()`, and it was
+  the one people actually ran — so a change to the library reached the admin
+  dashboard and left `npm run stations` producing the old shape. It imports
+  the library now and the duplicate is gone. `stations.md` is grouped by band,
+  which is not cosmetic: without it the file lists 1234.0 directly beneath
+  133.7 with nothing to say why.
+- Lint's rules moved rather than loosened. "Exactly 9 public stations" becomes
+  **at most 9 per band** — the limit was always the `1`–`9` keys, and those
+  are per-band now. Frequency range and neighbour spacing are asked against
+  the station's own band, because spacing is a question about one dial: two
+  stations a unit apart on different bands are not close in any sense a
+  listener can reach.
+- The roster-lib idempotence sweep earned itself again, catching two
+  formatting faults in a hand-written station block that no amount of reading
+  would have found — a glyph written as an escape sequence rather than the
+  literal character, and an empty tracks block that was not the patcher's
+  canonical shape. Both would have made the dashboard rewrite the file the
+  first time anyone touched that station.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
