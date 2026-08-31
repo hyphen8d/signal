@@ -101,5 +101,25 @@
        (see initPlayer), so load order genuinely doesn't matter. -->
   <script src="https://www.youtube.com/iframe_api" async></script>
   <script type="module" src="./main.js"></script>
+  <!-- Cloudflare Web Analytics (2026-08-31). Page-level only: how many
+       people arrive, roughly where from, and on what. It sets no cookies
+       and reads no client-side state, which is why it needs no consent
+       card and why the tip jar's wording below stays honest with it here.
+
+       What it deliberately does NOT answer: anything about what a listener
+       DOES. SIGNAL is one URL that then runs for hours, and this counts
+       page loads -- so every session reads as a single view whether someone
+       bounced in ten seconds or left COLD WAVE on all afternoon. Station
+       share, session length and feature discovery need events from inside
+       the state machine; that was built, shipped switched off, and rolled
+       back on 2026-08-31 because turning it on cost a Cloudflare Worker, a
+       KV namespace and six steps for one number. See fd5072d if it ever
+       comes back -- and do not expect this snippet to grow into it, because
+       Cloudflare Web Analytics has no custom events at all.
+
+       Read the numbers as a FLOOR, not a count. This host is on the common
+       blocklists, and an audience that likes a terminal-shaped radio is an
+       audience disproportionately likely to be running uBlock. -->
+  <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "42f7b00641bc4501826669a678e3a4ab"}'></script>
 </body>
 </html>
