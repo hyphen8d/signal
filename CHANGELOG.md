@@ -1385,6 +1385,53 @@ from the Ground. 1092 is the ISS going round once, in about 92 minutes.
   left CITY LIGHTS and THE CRYPT where they are. Every take was rendered to
   scratch and measured before anything was promoted.
 
+### The ZM stations fill out, and DRIFT MODE returns (2026-09-01)
+
+ZM goes to six stations. TRADEWINDS, SLOW ORBIT and THE CRYPT each reach 22
+tracks, and **DRIFT MODE is back** at 1321.0 with all 50 of the tracks it had
+when it was retired two days earlier.
+
+- **The retirement comment paid for itself.** DRIFT MODE was retired
+  2026-08-30 with its tracklist preserved in a comment written explicitly so
+  the station could be "stood back up without archaeology". It could. All 50
+  ids came out of it, the curation profile was still there marked retired, and
+  every other identity field was recoverable from git — so the revival was an
+  afternoon rather than a re-curation.
+- **The comment said 50 and a first parse found 49.** The final entry ends
+  with a full stop where every other one ends with a semicolon. Counting the
+  ids separately from the parsed entries is what caught it; a track quietly
+  missing from a revival is exactly the loss that preservation exists to
+  prevent, and it nearly happened on the last line.
+- **All 50 re-probed clean** — zero narrow licences, zero revoked embeds.
+  Retiring the station had pruned every health record it owned, so nothing
+  could vouch for those tracks and all of them had to be checked again on
+  principle. The principle was right and the answer was boring.
+- **Three fields could not come back**, because NEON STASIS inherited them
+  deliberately: the frequency, the glyph and the DRIFT effect. 1321.0 reclaims
+  the "3-2-1" gag one band up without taking it back from the station that
+  replaced it. The glyph is Ψ — Ξ was the obvious "layered stillness" pick and
+  was rejected for sitting eight columns from SYNAPSE's identical-looking
+  triple bar.
+- **`visual: 'frost'` is the fourth borrow and the pool is exhausted.** All
+  twelve effects belong to other stations, and this is the station named after
+  the one it lost. Four borrows across five recent stations is no longer a
+  placeholder pattern; it is the effect registry failing to keep up with the
+  roster.
+- **Two founding-pass gaps closed.** TRADEWINDS had zero Martin Denny — the
+  artist the genre is named after — because the one track auditioned had been
+  passed on its title; it now has Quiet Village and Firecracker. And SLOW
+  ORBIT had no Alex Cortiz because the founding pass searched the single title
+  its reference list showed, got nothing, and concluded he was absent.
+  Searching the *artist* found a channel with the catalogue on it. A missing
+  track is not a missing artist.
+- **Short IDs render quiet AND inconsistently.** DRIFT MODE's took three takes
+  — −11.2dB, −7.9dB, −6.9dB — 4.3dB of spread across three renders of the same
+  two words. That is a stronger argument for measuring before promoting than
+  "sometimes it comes back low", and it is now four stations running.
+- SLOW ORBIT's profile said a beatless track "belongs on THE CRYPT or
+  nowhere". True when written, false the moment DRIFT MODE returned to the
+  same band. Amended from both sides so a later pass cannot read only one.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

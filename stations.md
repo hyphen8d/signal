@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 13 stations, 533 tracks total.
+Generated from stations.js. 13 stations, 536 tracks total.
 
 # YM band
 
@@ -391,7 +391,7 @@ Tracks (50):
 
 # ZM band
 
-6 stations, 213 tracks. Its own dial, its own `1`-`9` presets.
+6 stations, 216 tracks. Its own dial, its own `1`-`9` presets.
 
 ## THE CRYPT -- 1031.0
 
@@ -399,7 +399,7 @@ Tracks (50):
 
 Ident tones (Hz): 220, 207.7, 174.6, 130.8
 
-Tracks (19):
+Tracks (22):
 
 1. **Whitebark Forest** -- Mountain Realm  ([youtu.be/APZIre8Tm60](https://youtu.be/APZIre8Tm60))
 2. **Dungeon Stairs** -- Mountain Realm  ([youtu.be/YKe_zJEGcWQ](https://youtu.be/YKe_zJEGcWQ))
@@ -420,6 +420,9 @@ Tracks (19):
 17. **From the Realm of Dust and Darkness** -- Vikorra Doom  ([youtu.be/VijbUkATmLc](https://youtu.be/VijbUkATmLc))
 18. **The Hall of Unhallowed Steel** -- Vikorra Doom  ([youtu.be/kFB9A2WAfpM](https://youtu.be/kFB9A2WAfpM))
 19. **Return to the Underworld** -- Vikorra Doom  ([youtu.be/WUyXqGpvs4Y](https://youtu.be/WUyXqGpvs4Y))
+20. **Midvinter** -- Trollslottet  ([youtu.be/c6My3t7Cw7Q](https://youtu.be/c6My3t7Cw7Q))
+21. **The Haunted Hyperion Woods** -- Vikorra Doom  ([youtu.be/U5QjKTtXCJI](https://youtu.be/U5QjKTtXCJI))
+22. **A Warm Hearth** -- Swordlender  ([youtu.be/vdmg4X8PdCM](https://youtu.be/vdmg4X8PdCM))
 
 ## SLOW ORBIT -- 1092.0
 

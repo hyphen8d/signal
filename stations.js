@@ -1691,6 +1691,9 @@ export const STATIONS = [
       realTrack('VijbUkATmLc', 'From the Realm of Dust and Darkness', 'Vikorra Doom'),
       realTrack('kFB9A2WAfpM', 'The Hall of Unhallowed Steel', 'Vikorra Doom'),
       realTrack('WUyXqGpvs4Y', 'Return to the Underworld', 'Vikorra Doom'),
+      realTrack('c6My3t7Cw7Q', 'Midvinter', 'Trollslottet'),
+      realTrack('U5QjKTtXCJI', 'The Haunted Hyperion Woods', 'Vikorra Doom'),
+      realTrack('vdmg4X8PdCM', 'A Warm Hearth', 'Swordlender'),
     ] },
   // SLOW ORBIT (2026-09-01) -- ZM 1092.0. Ambient and downtempo: chillout with
   // a pulse. The brief said "beats and grooves" and that is the boundary, not
