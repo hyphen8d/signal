@@ -752,7 +752,15 @@
         "THE FONT IS NOT THE OBSTACLE IT LOOKS LIKE. ter-u16n covers Latin-1, so accented Nordic and Romance spellings draw fine; what it lacks is Latin Extended-A, CJK and fullwidth. Hawaiian macrons and okina ARE outside it, so a title spelled with them needs romanising or replacing.",
         "SPREAD THE CHANNELS. A reissue-heavy catalogue lives on compilation and archive uploaders, and one takedown should not cost the station several tracks at once."
       ],
-      "rejections": []
+      "rejections": [
+        {
+          "artist": "Martin Denny",
+          "track": "Bangkok Cockfight",
+          "reason": "Passed on the TITLE, not on the music, the lane or availability -- 2026-09-01, owner's call. The candidate (vqSQZwJI0Jo) auditioned completely clean: Martin Denny's own '- Topic' upload, 2:21, embeddable, 123 countries, and it is about as squarely in this station's lane as a track can be -- Denny is the artist the whole genre is named after. Nothing mechanical or curatorial counts against it. It falls to the fact that the dial DISPLAYS the track title, in full, on a public site, and this genuine 1950s exotica title reads badly stripped of that context. Recorded here because the next pass will absolutely re-propose it otherwise: it is the most obvious Denny track in any tiki listing, and there is nothing in the mechanical checks that would ever stop it. The rest of Denny's catalogue is open -- this is one title, not the artist.",
+          "youtubeId": "vqSQZwJI0Jo",
+          "rejectedAt": "2026-09-01"
+        }
+      ]
     },
     "slow-orbit": {
       "callsign": "SLOW ORBIT",
