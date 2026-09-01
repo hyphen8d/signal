@@ -1432,6 +1432,61 @@ when it was retired two days earlier.
   nowhere". True when written, false the moment DRIFT MODE returned to the
   same band. Amended from both sides so a later pass cannot read only one.
 
+### Tagging a track (2026-09-01)
+
+**`[K]` TAG** — press it on a track you like and the set copies a shareable
+line for what is playing: the station, the track, and a link that opens SIGNAL
+tuned to exactly that. Main screen and visualizer both. Named for the TAG
+button HD Radio sets carried, which marked a song you liked so you could find
+it later — which is what gets a clipboard feature past "would a real radio have
+this?" where a SHARE button would not.
+
+- **Two keys were tried and dropped before `K`.** `Tab` was rejected on
+  accessibility rather than taste: the app is a canvas with nothing focusable
+  in it, so `Tab` is one of the few ways a keyboard-only visitor reaches
+  browser chrome, and capturing it is a keyboard trap (WCAG 2.1.2). `Shift+T`
+  was built and then backed out for a bare letter — one fewer special case, and
+  it sidesteps the Caps-Lock subtlety `Shift+C` carries a note about.
+- **Backing out `Shift+T` deleted the sleep timer.** Removing the Shift branch
+  took `case 't'` with it and left its comment orphaned above the new case, so
+  `[T]` did nothing on the main screen. `program.js` still parsed and the
+  module still loaded; grepping for the restored line is what caught it.
+- **The landing had the band bug too.** `?station=` predates the second band
+  and set only the station and the frequency, so every link to a ZM station
+  would have booted with the dial on YM — the same fault the random-boot path
+  had, in the one other place a station is chosen without tuning to it. It
+  would have shipped broken the day this key started handing people ZM links.
+  `&track=` is new alongside it, falling back to the shuffle bag when the named
+  track has since been curated away: a link outlives a curation pass, and the
+  right *station* is most of what the sharer meant.
+- **What it copies is not a bare URL, and the `og:` tags are what force that.**
+  They are static — this is a static site with no server to render a card per
+  track — so every link unfurls in Slack, Discord or Mastodon as the same
+  generic "SIGNAL — a CRT tuning-dial internet radio" over `og.jpg`, and
+  `og.jpg` is a photograph of COLD WAVE. A bare TRADEWINDS link does not merely
+  fail to name the track, it shows the WRONG STATION. The copied text is the
+  only thing in the paste that can say what is playing.
+- **It does not say "I'm listening to".** The app writes the line and the
+  person pastes it as their own words, so it has to still be true when someone
+  reads it tomorrow; a first-person present-tense claim is false within
+  minutes. The station is named because a link to a track alone is the one kind
+  of sharing a radio cannot do, and the URL goes last and bare because naive
+  autolinkers pull parentheses and trailing punctuation into the href.
+- **The `  --  ` the screen puts between title and artist is deliberately NOT
+  reused here.** Those double spaces are grid alignment for an 80-column
+  terminal and read as a typo in a chat message, so the copied line says "by".
+  It is the one place that house string is intentionally inconsistent, and a
+  test pins the exact string so it cannot be tidied up by accident.
+- **It answers where it cannot act**, per the dead-feedback rule: `NO SIGNAL`
+  off-station — the word `[N]` and `[V]` already use — and `NO CLIPBOARD` where
+  the API is absent, which is not hypothetical, since the clipboard needs a
+  secure context and so fails over a bare IP exactly as `[W]` does.
+- **The guide grid deliberately does not list it.** Added there first as a
+  sixth RECEIVER row, it ate row 13 — one of that page's blank gaps, which a
+  test asserts. `[T]` and `[A]` are in the grid *because* the footer had no
+  room for them; `[K]` is on the footer's line 1, now 77 of its 78 columns. The
+  next control that wants the footer will not fit on either line.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

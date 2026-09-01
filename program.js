@@ -2238,7 +2238,8 @@ export default {
    *  you" rather than "in the roster". */
   bandPresets() { return presetOrderFor(this.band) },
 
-  /** The link [K] copies. Split out from tagTrack() so it can be tested
+  /** The link inside what [K] copies -- see shareText() for the rest of it.
+   *  Split out from tagTrack() so it can be tested
    *  without a clipboard, which Node has none of and which needs a secure
    *  context even in a browser -- the interesting logic is the URL, and the
    *  copy is one call. Returns null off-station rather than a broken link.
@@ -2252,6 +2253,41 @@ export default {
     let base = ''
     try { base = (globalThis.location?.origin || '') + (globalThis.location?.pathname || '') } catch (e) {}
     return `${base}?station=${encodeURIComponent(st.id)}&track=${encodeURIComponent(tr.youtubeId)}`
+  },
+
+  /** What [K] actually puts on the clipboard: a line a person can read, then
+   *  the link.
+   *
+   *  IT IS NOT A BARE URL, and the reason is in index.html: the og: tags are
+   *  STATIC. This is a static site with no server to render a card per track,
+   *  so every link unfurls in Slack, Discord or Mastodon as the same generic
+   *  "SIGNAL -- a CRT tuning-dial internet radio" over og.jpg -- and og.jpg is
+   *  a photograph of COLD WAVE. So a bare TRADEWINDS link does not merely
+   *  fail to name the track, it shows the WRONG STATION. This text is the
+   *  only thing in the paste that can say what is playing.
+   *
+   *  NOT "I'm listening to". The app writes this line and the person pastes
+   *  it as their own words, so it has to still be true when someone reads it
+   *  tomorrow -- a first-person present-tense claim is false within minutes.
+   *
+   *  THE STATION IS IN IT because stations are what this thing is. The track
+   *  alone would make it a link to a song, which is the one kind of sharing
+   *  a radio cannot do.
+   *
+   *  The URL goes LAST and BARE on its own line. Parentheses and trailing
+   *  punctuation get pulled into the href by naive autolinkers, and last
+   *  position is what survives a client that flattens the newline.
+   *
+   *  'by' rather than the `  --  ` the screen puts between title and artist
+   *  (drawTrack, the mobile row, the visualizer footer). Those DOUBLE SPACES
+   *  are grid alignment for an 80-column terminal and read as a typo in a
+   *  chat message. This is the one place that house string is deliberately
+   *  not reused -- it is not an inconsistency to tidy up. */
+  shareText() {
+    const url = this.shareUrl()
+    if (!url) return null
+    return `${this.lockedStation.callsign} on SIGNAL -- ` +
+      `${this.currentTrack.title} by ${this.currentTrack.artist}\n${url}`
   },
 
   /** [K] TAG. Returns the word for the status row rather than drawing it, so
@@ -2269,15 +2305,17 @@ export default {
    *  async to be pessimistic about a call that almost never fails would cost
    *  every caller a promise. */
   tagTrack(s) {
-    const url = this.shareUrl()
-    if (this.mode !== 'locked' || !url) return 'NO SIGNAL'
+    const text = this.shareText()
+    if (this.mode !== 'locked' || !text) return 'NO SIGNAL'
     let cb = null
     try { cb = globalThis.navigator?.clipboard ?? null } catch (e) {}
     if (!cb || typeof cb.writeText !== 'function') return 'NO CLIPBOARD'
     try {
-      Promise.resolve(cb.writeText(url)).catch(() => this.flashStatus(s, 'COPY FAILED'))
+      Promise.resolve(cb.writeText(text)).catch(() => this.flashStatus(s, 'COPY FAILED'))
     } catch (e) { return 'NO CLIPBOARD' }
-    return 'LINK COPIED'
+    // 'COPIED', not 'LINK COPIED': what lands on the clipboard stopped being
+    // only a link when shareText() gained the now-playing line above it.
+    return 'COPIED'
   },
 
   /** [B] BAND (2026-08-31). Steps to the next band and lands at its bottom
