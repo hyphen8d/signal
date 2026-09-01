@@ -1692,6 +1692,75 @@ export const STATIONS = [
       realTrack('kFB9A2WAfpM', 'The Hall of Unhallowed Steel', 'Vikorra Doom'),
       realTrack('WUyXqGpvs4Y', 'Return to the Underworld', 'Vikorra Doom'),
     ] },
+  // SLOW ORBIT (2026-09-01) -- ZM 1092.0. Ambient and downtempo: chillout with
+  // a pulse. The brief said "beats and grooves" and that is the boundary, not
+  // decoration -- a track with no pulse at all belongs on THE CRYPT.
+  //
+  // 1092 is the ISS going round once, in about 92 minutes.
+  //
+  // `visual: 'flowfield'` is BORROWED from GREEN ROOM, the same placeholder
+  // arrangement THE CRYPT has with 'dread'. Drifting currents suit this lane
+  // almost too well, and GREEN ROOM being secret means few will see both.
+  { id: 'slow-orbit', band: 'zm', freq: 1092.0, callsign: 'SLOW ORBIT',
+    tagline: 'downtempo grooves, no hurry at all',
+    freqNote: '92 minutes, one orbit',
+    desc: 'Ambient and downtempo: warm pads over unhurried beats, the chillout end of electronic music where a groove is still a groove but nothing is in a rush to get anywhere.',
+    ident: [329.6, 392.0, 440.0, 587.3],
+    identTempo: 0.85,
+    glyph: '\u221e',
+    static: 1750,
+    crt: { noise: 0.14, bloomAmt: 1.9, flicker: 0.07 },
+    meter: { spring: 0.4, damping: 0.55, swing: 0.95 },
+    visual: 'flowfield',
+    tracks: [
+
+    ] },
+  // TRADEWINDS (2026-09-01) -- ZM 1559.0. Exotica and tiki lounge, played
+  // straight rather than winked at: vibraphone, bird calls, hand drums.
+  //
+  // 1559 for the '59 in it -- the era this music owned. It beat 1509 (the
+  // digits of 1950 rearranged) because the joke wants the year IN the number
+  // rather than adjacent to it, and 1559 also lands mid-dial where ZM had its
+  // widest gap.
+  //
+  // THE BOUNDARY IS WITH ATOMIC, not with anything modern, and the profile
+  // says so where audition.js will read it back: both stations live in the
+  // 1950s, but ATOMIC is Fallout canon constrained by an in-universe
+  // tracklist, and this is the Polynesian-pop fantasy specifically. Revival
+  // acts belong here alongside the originals -- a station that took only
+  // Denny and Lyman would be a museum.
+  //
+  // `visual: 'ripple'` is BORROWED from CITY LIGHTS, and this borrow is worse
+  // than the other two: CITY LIGHTS is PUBLIC, so two reachable stations now
+  // share an effect where every other pair is distinct. Water on a lagoon
+  // station is the right idea and the wrong way to get it. See the standing
+  // task for bespoke effects.
+  { id: 'tradewinds', band: 'zm', freq: 1559.0, callsign: 'TRADEWINDS',
+    tagline: 'vintage island rhythms, cocktail in hand',
+    freqNote: "'59, when exotica was everywhere",
+    desc: 'Exotica and tiki lounge: vibraphone, bird calls and steel guitar conjuring a Polynesia that never existed, from the 1950s boom and the revival acts still making it in earnest.',
+    ident: [523.3, 659.3, 783.9, 1046.5],
+    identTempo: 1.15,
+    glyph: '\u2248',
+    static: 1850,
+    crt: { noise: 0.15, bloomAmt: 2.0, flicker: 0.09 },
+    meter: { spring: 0.6, damping: 0.4, swing: 1.15 },
+    visual: 'ripple',
+    tracks: [
+      realTrack('mitt1Qnkmgo', 'Ringo Oiwake', 'Arthur Lyman'),
+      realTrack('7QO2QuXEZS4', 'Ke Kali Ne Au', 'Arthur Lyman'),
+      realTrack('8-7gJDnjUko', 'Polynesian Poppies', 'Kava Kon'),
+      realTrack('yV5JiG1DV7E', 'Palace of the Tiger Women', 'Kava Kon'),
+      realTrack('coCnRrrbBjE', 'Turkish Honey', 'Kava Kon'),
+      realTrack('o1j-KlYvPCs', 'Lagoon of Dreams', 'Ixtahuele'),
+      realTrack('4VkjMrkNv88', 'Lotus Eaters', 'Ixtahuele'),
+      realTrack('oktapcjB7WA', 'I Left My Heart at the Beach of Fdengi', 'Ixtahuele'),
+      realTrack('ChGIY1MAUOo', 'Dengue Fever', 'Ixtahuele'),
+      realTrack('T1hEe7a2tWg', 'Mysteria', 'The Tikiyaki Orchestra'),
+      realTrack('WQuShe7hJcI', 'Theme For Jetsetters', 'The Tikiyaki Orchestra'),
+      realTrack('z25ZrH2Z6oI', 'Bachelor #1', 'The Tikiyaki Orchestra'),
+      realTrack('yc7rAiO2ta4', 'Sunset on the Kona Kai', 'The Tikiyaki Orchestra'),
+    ] },
 ]
 
 // Preset-key ordering (17th pass -- presets needed to match the tuning
