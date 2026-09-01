@@ -2079,7 +2079,7 @@ test('nothing is lit while nobody is singing', async () => {
   } finally { h.shutdown() }
 })
 
-test('[K] TAG copies a link to the station AND the track', async () => {
+test('[K] TAG copies a readable line and the link, not a bare URL', async () => {
   const h = await boot({ player: true })
   try {
     h.powerOn()
@@ -2092,14 +2092,30 @@ test('[K] TAG copies a link to the station AND the track', async () => {
     assert.match(url, new RegExp(`station=${st.id}`), 'names the station')
     assert.match(url, new RegExp(`track=${tr.youtubeId}`), 'and the track')
 
+    // The exact string, because every part of it is load-bearing and the
+    // reasoning lives in shareText(). A bare URL was the first shipped shape
+    // and is the regression this pins: index.html's og: tags are static, so
+    // an unadorned link unfurls as the same generic card over a photograph of
+    // COLD WAVE whatever station it points at.
+    const text = h.program.shareText()
+    assert.equal(text, `${st.callsign} on SIGNAL -- ${tr.title} by ${tr.artist}\n${url}`)
+    // Two properties worth asserting apart from the whole, since a later
+    // edit to the wording should not be free to break either: the link is
+    // LAST (autolinkers pull trailing punctuation into the href) and the
+    // STATION is named (a link to a track alone is the one kind of sharing a
+    // radio cannot do).
+    assert.ok(text.endsWith(url), 'the link is last')
+    assert.ok(text.startsWith(st.callsign), 'the station is named first')
+    assert.doesNotMatch(text, /listening to/i, 'no first-person claim that goes stale')
+
     // The clipboard is the one part Node has none of, so it is stubbed rather
     // than skipped -- what is asserted is that the key reaches it with the
     // link, not any claim about how a real clipboard behaves.
     let written = null
     globalThis.navigator = { clipboard: { writeText: (t) => { written = t; return Promise.resolve() } } }
     try {
-      assert.equal(h.program.tagTrack(h.screen ?? {}), 'LINK COPIED')
-      assert.equal(written, url, 'the copied text is the link')
+      assert.equal(h.program.tagTrack(h.screen ?? {}), 'COPIED')
+      assert.equal(written, text, 'the clipboard got the line, not a bare URL')
     } finally { delete globalThis.navigator }
   } finally { h.shutdown() }
 })
