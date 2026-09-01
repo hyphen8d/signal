@@ -225,7 +225,7 @@ Known gaps, not oversights.
 
 ## Stations
 
-12 stations across two bands, 463 tracks total (11-50 per station -- counts are uneven by design, curation over symmetry -- plus two secret stations carrying 57 more between them). Full roster with taglines and track lists:
+12 stations across two bands, 483 tracks total (19-50 per station -- counts are uneven by design, curation over symmetry -- plus two secret stations carrying 57 more between them). Full roster with taglines and track lists:
 [`stations.md`](./stations.md) — generated straight from the live
 `STATIONS` array in `stations.js` (`tools/stations-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station

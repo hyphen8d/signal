@@ -1724,6 +1724,17 @@ export const STATIONS = [
       realTrack('bYqOS-os55U', 'Flugdrekar', 'Bistro Boy'),
       realTrack('ywlQ2N60JCQ', 'Warm Winds', 'Bistro Boy'),
       realTrack('eTTBbkvNBkE', 'A Psalm For A Friend', 'Bistro Boy'),
+      realTrack('gGnWBumLD9A', 'Fluffy Time', 'Jens Buchert'),
+      realTrack('fBo1xD_fjc8', 'Hermetic Laws', 'Jens Buchert'),
+      realTrack('xHHTLyvt7ZQ', 'Luna', 'Jens Buchert'),
+      realTrack('f73_IoHwFsc', 'Fields', 'Celeste Lear'),
+      realTrack('AOlnOPECslM', "Marielle's Dream", 'Celeste Lear'),
+      realTrack('QwS1DC9_N-c', 'Now', 'Lemongrass'),
+      realTrack('0MhS4g_LTKk', 'Where The Wild Things Were', 'Sounds from the Ground'),
+      realTrack('MTs1E4P_FCE', 'Drawn To The Woman', 'Sounds from the Ground'),
+      realTrack('6w9MBlTHR7c', 'Zooming In', 'Alex Cortiz'),
+      realTrack('GjJ1KTONcK8', 'Zooming Out', 'Alex Cortiz'),
+      realTrack('fxNAnJYXq5U', 'Searchin', 'Alex Cortiz'),
     ] },
   // TRADEWINDS (2026-09-01) -- ZM 1559.0. Exotica and tiki lounge, played
   // straight rather than winked at: vibraphone, bird calls, hand drums.
@@ -1770,6 +1781,15 @@ export const STATIONS = [
       realTrack('WQuShe7hJcI', 'Theme For Jetsetters', 'The Tikiyaki Orchestra'),
       realTrack('z25ZrH2Z6oI', 'Bachelor #1', 'The Tikiyaki Orchestra'),
       realTrack('yc7rAiO2ta4', 'Sunset on the Kona Kai', 'The Tikiyaki Orchestra'),
+      realTrack('mnROAXLBy2M', 'Quiet Village', 'Martin Denny'),
+      realTrack('IPaBrlloEJw', 'Firecracker', 'Martin Denny'),
+      realTrack('iffnJSLHiZY', 'Taboo', 'Arthur Lyman'),
+      realTrack('Ab93DcAb_JA', 'Hawaiian Paradise', 'Billy Mure'),
+      realTrack('Os2uDKAUcDs', 'Chinese Surfer', 'Kava Kon'),
+      realTrack('YxlbkVWaO_k', 'Temple of the Snake God', 'Ixtahuele'),
+      realTrack('U7SID3xCeng', 'Searching the Souq', 'Ixtahuele'),
+      realTrack('ihjVwYS-Hco', 'Aloha, Baby!', 'The Tikiyaki Orchestra'),
+      realTrack('B9LJFrwwlvM', 'In Search of Mei Ting', 'The Tikiyaki Orchestra'),
     ] },
 ]
 

@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 12 stations, 463 tracks total.
+Generated from stations.js. 12 stations, 483 tracks total.
 
 # YM band
 
@@ -391,7 +391,7 @@ Tracks (50):
 
 # ZM band
 
-5 stations, 143 tracks. Its own dial, its own `1`-`9` presets.
+5 stations, 163 tracks. Its own dial, its own `1`-`9` presets.
 
 ## THE CRYPT -- 1031.0
 
@@ -427,7 +427,7 @@ Tracks (19):
 
 Ident tones (Hz): 329.6, 392, 440, 587.3
 
-Tracks (11):
+Tracks (22):
 
 1. **After the Rain** -- Jens Buchert  ([youtu.be/aIB70PVSCnY](https://youtu.be/aIB70PVSCnY))
 2. **On the Run** -- Jens Buchert  ([youtu.be/EqwRXoAxn7I](https://youtu.be/EqwRXoAxn7I))
@@ -440,6 +440,17 @@ Tracks (11):
 9. **Flugdrekar** -- Bistro Boy  ([youtu.be/bYqOS-os55U](https://youtu.be/bYqOS-os55U))
 10. **Warm Winds** -- Bistro Boy  ([youtu.be/ywlQ2N60JCQ](https://youtu.be/ywlQ2N60JCQ))
 11. **A Psalm For A Friend** -- Bistro Boy  ([youtu.be/eTTBbkvNBkE](https://youtu.be/eTTBbkvNBkE))
+12. **Fluffy Time** -- Jens Buchert  ([youtu.be/gGnWBumLD9A](https://youtu.be/gGnWBumLD9A))
+13. **Hermetic Laws** -- Jens Buchert  ([youtu.be/fBo1xD_fjc8](https://youtu.be/fBo1xD_fjc8))
+14. **Luna** -- Jens Buchert  ([youtu.be/xHHTLyvt7ZQ](https://youtu.be/xHHTLyvt7ZQ))
+15. **Fields** -- Celeste Lear  ([youtu.be/f73_IoHwFsc](https://youtu.be/f73_IoHwFsc))
+16. **Marielle's Dream** -- Celeste Lear  ([youtu.be/AOlnOPECslM](https://youtu.be/AOlnOPECslM))
+17. **Now** -- Lemongrass  ([youtu.be/QwS1DC9_N-c](https://youtu.be/QwS1DC9_N-c))
+18. **Where The Wild Things Were** -- Sounds from the Ground  ([youtu.be/0MhS4g_LTKk](https://youtu.be/0MhS4g_LTKk))
+19. **Drawn To The Woman** -- Sounds from the Ground  ([youtu.be/MTs1E4P_FCE](https://youtu.be/MTs1E4P_FCE))
+20. **Zooming In** -- Alex Cortiz  ([youtu.be/6w9MBlTHR7c](https://youtu.be/6w9MBlTHR7c))
+21. **Zooming Out** -- Alex Cortiz  ([youtu.be/GjJ1KTONcK8](https://youtu.be/GjJ1KTONcK8))
+22. **Searchin** -- Alex Cortiz  ([youtu.be/fxNAnJYXq5U](https://youtu.be/fxNAnJYXq5U))
 
 ## SYNAPSE -- 1234.0
 
@@ -506,7 +517,7 @@ Tracks (50):
 
 Ident tones (Hz): 523.3, 659.3, 783.9, 1046.5
 
-Tracks (13):
+Tracks (22):
 
 1. **Ringo Oiwake** -- Arthur Lyman  ([youtu.be/mitt1Qnkmgo](https://youtu.be/mitt1Qnkmgo))
 2. **Ke Kali Ne Au** -- Arthur Lyman  ([youtu.be/7QO2QuXEZS4](https://youtu.be/7QO2QuXEZS4))
@@ -521,6 +532,15 @@ Tracks (13):
 11. **Theme For Jetsetters** -- The Tikiyaki Orchestra  ([youtu.be/WQuShe7hJcI](https://youtu.be/WQuShe7hJcI))
 12. **Bachelor #1** -- The Tikiyaki Orchestra  ([youtu.be/z25ZrH2Z6oI](https://youtu.be/z25ZrH2Z6oI))
 13. **Sunset on the Kona Kai** -- The Tikiyaki Orchestra  ([youtu.be/yc7rAiO2ta4](https://youtu.be/yc7rAiO2ta4))
+14. **Quiet Village** -- Martin Denny  ([youtu.be/mnROAXLBy2M](https://youtu.be/mnROAXLBy2M))
+15. **Firecracker** -- Martin Denny  ([youtu.be/IPaBrlloEJw](https://youtu.be/IPaBrlloEJw))
+16. **Taboo** -- Arthur Lyman  ([youtu.be/iffnJSLHiZY](https://youtu.be/iffnJSLHiZY))
+17. **Hawaiian Paradise** -- Billy Mure  ([youtu.be/Ab93DcAb_JA](https://youtu.be/Ab93DcAb_JA))
+18. **Chinese Surfer** -- Kava Kon  ([youtu.be/Os2uDKAUcDs](https://youtu.be/Os2uDKAUcDs))
+19. **Temple of the Snake God** -- Ixtahuele  ([youtu.be/YxlbkVWaO_k](https://youtu.be/YxlbkVWaO_k))
+20. **Searching the Souq** -- Ixtahuele  ([youtu.be/U7SID3xCeng](https://youtu.be/U7SID3xCeng))
+21. **Aloha, Baby!** -- The Tikiyaki Orchestra  ([youtu.be/ihjVwYS-Hco](https://youtu.be/ihjVwYS-Hco))
+22. **In Search of Mei Ting** -- The Tikiyaki Orchestra  ([youtu.be/B9LJFrwwlvM](https://youtu.be/B9LJFrwwlvM))
 
 ## CIRCUIT CRUSH -- 1688.0
 
