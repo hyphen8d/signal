@@ -350,6 +350,17 @@
       "rationale": "Surfaced from the owner's own tiki reference list and probed clean: Denny's '- Topic' upload, 2:21, embeddable, 123 countries. Flagged at proposal time rather than added, because the dial displays titles in full.",
       "rejectedAt": "2026-09-01",
       "rejectedReason": "title reads badly on a public dial; music and lane are not in question"
+    },
+    {
+      "stationId": "slow-orbit",
+      "youtubeId": null,
+      "title": "Under Pimp Arrest",
+      "artist": "The William Caslon Experience & Burdy",
+      "proposedBy": "claude",
+      "proposedAt": "2026-09-01",
+      "rationale": "Appeared on the owner's downtempo reference list. Flagged before searching rather than after auditioning, since a title question needs no network work to answer.",
+      "rejectedAt": "2026-09-01",
+      "rejectedReason": "title reads badly on a public dial; artist and lane are not in question"
     }
   ]
 }

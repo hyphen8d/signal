@@ -787,7 +787,15 @@
         "A FEW TITLES IN THIS LANE READ ODDLY ON A PUBLIC DIAL -- 'Under Pimp Arrest' is a genuine release and displays in full. Owner's call per candidate, made deliberately rather than discovered later.",
         "SPREAD THE CHANNELS. Netlabel and compilation uploads dominate here, so concentration on one uploader is real takedown exposure."
       ],
-      "rejections": []
+      "rejections": [
+        {
+          "artist": "The William Caslon Experience & Burdy",
+          "track": "Under Pimp Arrest",
+          "reason": "Passed on the TITLE at proposal time -- 2026-09-01, owner's call, same reasoning as TRADEWINDS' Martin Denny pass on the same day. The dial DISPLAYS track titles in full on a public site, and this one reads badly out of context. UNLIKE the Denny track, this was never auditioned: it was flagged off the reference list BEFORE a search was run, so there is no youtubeId here and no probe was spent on it. That is the cheaper order for a call of this kind, and worth repeating -- a title question can be answered by reading, before any network work. Nothing is implied about the artist or the music. The William Caslon Experience remains open for this station, and the lane it sits in is exactly right.",
+          "youtubeId": null,
+          "rejectedAt": "2026-09-01"
+        }
+      ]
     }
   }
 }
