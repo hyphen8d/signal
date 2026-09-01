@@ -2245,7 +2245,39 @@ export default {
    *  copy is one call. Returns null off-station rather than a broken link.
    *
    *  Reads location defensively: the harness has no `location` at all, and a
-   *  station that cannot build a base URL should still be taggable in tests. */
+   *  station that cannot build a base URL should still be taggable in tests.
+   *
+   *  A URL SHORTENER WAS CONSIDERED AND REJECTED (2026-09-01). The
+   *  measurement is written down here so the next person to suggest one does
+   *  not have to re-run it, and because the result is not what you would
+   *  guess: of the keyless services, only TWO answer CORS and can therefore
+   *  be called from a static page at all -- TinyURL's legacy api-create.php
+   *  (reflects the origin) and da.gd (`*`). is.gd and v.gd send NO CORS
+   *  headers, so the obvious pick is the one that cannot work here; they were
+   *  also returning "database insert failed" that day. ulvis.net is behind
+   *  Cloudflare. Both working ones were verified end to end: created, then
+   *  resolved back to this URL.
+   *
+   *  Rejected anyway, and length is why the whole idea is thinner than it
+   *  looks: this link is 71 characters, and X and Mastodon count EVERY link
+   *  as 23 however long it is -- so the saving is exactly zero in the two
+   *  places a character limit exists. Slack, Discord and iMessage have no
+   *  limit. Against that nothing: [K] would stop being synchronous and gain a
+   *  network failure mode it does not have today; a shortener that dies takes
+   *  every link ever shared with it (goo.gl did exactly that), where these
+   *  live as long as the site because they ARE the site; and it would put a
+   *  third party in the click path of every listener, in an app that
+   *  otherwise talks to nobody but YouTube and LRCLIB.
+   *
+   *  What would reopen it is a URL that gets TYPED rather than clicked --
+   *  print, or read aloud. The shape then is best-effort: fire it, use the
+   *  short link if it answers inside ~1.5s, else copy this and say nothing,
+   *  so [K] never gets slower than it is now.
+   *
+   *  Renaming the params to `?s=&t=` reaches 59 characters with no dependency
+   *  and no rot, and was declined too: `?station=tradewinds` is readable, and
+   *  that is worth more than twelve characters. Note it is nearly free to do
+   *  while no shared links exist and expensive once they do. */
   shareUrl() {
     const st = this.lockedStation
     const tr = this.currentTrack
