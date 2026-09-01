@@ -117,6 +117,13 @@ test('a callsign this voice mispronounces is respelled in the ID script', async 
   // station gets the wrong pronunciation back with nothing to warn them.
   assert.equal(ID_SCRIPT('SYNAPSE'), 'Sinaps.')
   assert.ok(CALLSIGN_RESPELL.SYNAPSE)
+  // 2026-09-01 -- TRADEWINDS came out as "trade-WINE-dz": the voice read
+  // `winds` as the verb. The fix is a SPACE rather than a phonetic
+  // respelling, which is the notable part -- "trade winds" is a real noun
+  // phrase, so splitting the compound gives the model the context to parse
+  // it without inventing a spelling.
+  assert.equal(ID_SCRIPT('TRADEWINDS'), 'Trade Winds.')
+  assert.ok(CALLSIGN_RESPELL.TRADEWINDS)
   // Every respelling must still be a callsign the roster actually has --
   // a map keyed on a station that was renamed silently stops applying.
   const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=respell')

@@ -103,6 +103,22 @@ export const CALLSIGN_RESPELL = {
   // to be wrong too, the rule is subtler than "opens a line" and this comment
   // is the thing to correct.
   SYNAPSE: 'Sinaps',
+  // 2026-09-01. Reported from listening: the ID came out as "trade-WINE-dz" --
+  // the voice read `winds` as the VERB, rhyming with finds, rather than the
+  // noun. Five spellings were rendered to scratch and judged by ear
+  // (TRADEWINDS, Trade Winds, Tradewindz, Trade Windz, Trade Winnds) and the
+  // plain two-word form won.
+  //
+  // THE FIX IS A SPACE, which is worth noting because the other two entries
+  // here are phonetic respellings. "Trade winds" is a real noun phrase, and
+  // splitting the compound gives the model the context to parse it as one --
+  // no invented spelling needed. Reach for a space before reaching for
+  // "windz" when a callsign is a compound of ordinary words.
+  //
+  // Third callsign in three days to need this, and all three were found by a
+  // person listening rather than by any check here. That is the standing cost
+  // of a callsign-only ID: it is pure opening, so every name is exposed.
+  TRADEWINDS: 'Trade Winds',
 }
 
 /** The station ID script: the callsign, and nothing else.

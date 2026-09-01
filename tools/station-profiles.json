@@ -726,6 +726,76 @@
         "NOT COLD WAVE AND NOT NINE INCH NAILS. Cold, synthetic and bleak already have homes on this dial. The boundary here is FANTASY -- a ruin, a forest, a keep -- rather than industrial dread or synthetic melancholy. If a candidate would sit comfortably on either of those, it belongs there instead."
       ],
       "rejections": []
+    },
+    "tradewinds": {
+      "callsign": "TRADEWINDS",
+      "genre": "Exotica and tiki lounge -- vibraphone, bird calls, hand drums and steel guitar, played straight rather than winked at",
+      "eraLane": "the 1950s-60s exotica boom AND its modern revival, which are one lineage rather than two",
+      "acceptedArtists": [
+        "Martin Denny",
+        "Arthur Lyman",
+        "Gene Rains",
+        "Billy Mure",
+        "Kava Kon",
+        "The Tikiyaki Orchestra",
+        "Ixtahuele",
+        "The Waitiki 7",
+        "The Agents",
+        "New Hawaiian Band"
+      ],
+      "constraints": [
+        "THE BOUNDARY THAT MATTERS IS WITH ATOMIC, not with anything modern. Both live in the 1950s and both are lounge-adjacent, so the split has to be stated: ATOMIC is Fallout canon and is constrained by an in-universe tracklist, while TRADEWINDS is EXOTICA -- the Polynesian-pop fantasy specifically. A 1950s pop vocal is ATOMIC's unless the arrangement is exotica. Andy Williams' 'Blue Hawaii' is the shape of candidate that could argue for either; it belongs here because the record it comes off is a tiki compilation, not because of its year.",
+        "REVIVAL AND ORIGINAL BOTH BELONG. Kava Kon and Ixtahuele are doing the same thing Denny and Lyman did, sincerely, and a station that took only the originals would be a museum. Mixing them is the point.",
+        "COMPILATIONS ARE THE DEFAULT SOURCE HERE and that is the main trap. This catalogue survives on reissues -- 'Ultra-Lounge', 'Swank Vinyl Exotica', 'Hawaii's Greatest Hits' -- so searches surface hour-long compilation uploads far more readily than tracks. The dial announces ONE title, so the test is on the FILE: a single track is in, a compilation upload is out however good it is. Same failure THE CRYPT hit with album rips, and NEON STASIS before it.",
+        "READ TITLES OFF A REAL LISTING, never from recall. Exotica titles are unguessable and often absurd, so a remembered one is usually not real and returns unrelated video.",
+        "SOME GENUINE TITLES FROM THIS ERA READ BADLY OUT OF CONTEXT, and the dial DISPLAYS the title. 'Bangkok Cock Fight' is a real Martin Denny track. That is the owner's call per candidate, not a rule that can be automated -- but it is a call somebody has to make consciously rather than discovering it on the dial.",
+        "THE FONT IS NOT THE OBSTACLE IT LOOKS LIKE. ter-u16n covers Latin-1, so accented Nordic and Romance spellings draw fine; what it lacks is Latin Extended-A, CJK and fullwidth. Hawaiian macrons and okina ARE outside it, so a title spelled with them needs romanising or replacing.",
+        "SPREAD THE CHANNELS. A reissue-heavy catalogue lives on compilation and archive uploaders, and one takedown should not cost the station several tracks at once."
+      ],
+      "rejections": [
+        {
+          "artist": "Martin Denny",
+          "track": "Bangkok Cockfight",
+          "reason": "Passed on the TITLE, not on the music, the lane or availability -- 2026-09-01, owner's call. The candidate (vqSQZwJI0Jo) auditioned completely clean: Martin Denny's own '- Topic' upload, 2:21, embeddable, 123 countries, and it is about as squarely in this station's lane as a track can be -- Denny is the artist the whole genre is named after. Nothing mechanical or curatorial counts against it. It falls to the fact that the dial DISPLAYS the track title, in full, on a public site, and this genuine 1950s exotica title reads badly stripped of that context. Recorded here because the next pass will absolutely re-propose it otherwise: it is the most obvious Denny track in any tiki listing, and there is nothing in the mechanical checks that would ever stop it. The rest of Denny's catalogue is open -- this is one title, not the artist.",
+          "youtubeId": "vqSQZwJI0Jo",
+          "rejectedAt": "2026-09-01"
+        }
+      ]
+    },
+    "slow-orbit": {
+      "callsign": "SLOW ORBIT",
+      "genre": "Ambient and downtempo -- chillout with a pulse: warm pads over unhurried beats, grooves rather than drones",
+      "eraLane": "the 2000s-present chillout/downtempo scene, European-leaning",
+      "acceptedArtists": [
+        "Jens Buchert",
+        "Alex Cortiz",
+        "Lemongrass",
+        "BistroBoy",
+        "Celeste Lear",
+        "Sounds From The Ground",
+        "Groovecatcher",
+        "Smooth Genestar",
+        "Fascinating Earthbound Objects",
+        "The William Caslon Experience"
+      ],
+      "constraints": [
+        "THERE IS A BEAT. That is the whole boundary against pure ambient: this lane is downtempo, so a track with no pulse at all belongs on THE CRYPT or nowhere. 'Grooves' is in the brief and should be taken literally.",
+        "NOT NEON STASIS. Mallsoft is muzak slowed and drowned in reverb -- found sound, deliberately degraded. This is PRODUCED music at full fidelity that simply moves slowly. If a candidate sounds like it is playing four storeys away, it is NEON STASIS's.",
+        "NOT CIPHER. CIPHER owns late-night breakbeat and its tempo. Anything that would make someone walk faster is CIPHER's, not this station's.",
+        "DJ MIXES AND CHILLOUT COMPILATIONS ARE THE TRAP HERE, the same shape album rips are elsewhere. This scene is distributed through 'Winter Chill Essentials'-style compilations and hour-long continuous mixes, which is precisely what the dial cannot announce. Search TRACK names, take single files.",
+        "READ TITLES OFF A REAL LISTING. The reference list is a station's recently-played view, so those titles are real; anything added later should come from a comparable listing rather than memory.",
+        "A FEW TITLES IN THIS LANE READ ODDLY ON A PUBLIC DIAL -- 'Under Pimp Arrest' is a genuine release and displays in full. Owner's call per candidate, made deliberately rather than discovered later.",
+        "SPREAD THE CHANNELS. Netlabel and compilation uploads dominate here, so concentration on one uploader is real takedown exposure."
+      ],
+      "rejections": [
+        {
+          "artist": "The William Caslon Experience & Burdy",
+          "track": "Under Pimp Arrest",
+          "reason": "Passed on the TITLE at proposal time -- 2026-09-01, owner's call, same reasoning as TRADEWINDS' Martin Denny pass on the same day. The dial DISPLAYS track titles in full on a public site, and this one reads badly out of context. UNLIKE the Denny track, this was never auditioned: it was flagged off the reference list BEFORE a search was run, so there is no youtubeId here and no probe was spent on it. That is the cheaper order for a call of this kind, and worth repeating -- a title question can be answered by reading, before any network work. Nothing is implied about the artist or the music. The William Caslon Experience remains open for this station, and the lane it sits in is exactly right.",
+          "youtubeId": null,
+          "rejectedAt": "2026-09-01"
+        }
+      ]
     }
   }
 }
