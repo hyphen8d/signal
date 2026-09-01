@@ -773,6 +773,12 @@ export const STATION_LINER_FILES = {
   // pair rather than the single clip SYNAPSE spent months on.
   'slow-orbit': ['audio/liner-slow-orbit-01.mp3', 'audio/liner-slow-orbit-02.mp3'],
   tradewinds: ['audio/liner-tradewinds-01.mp3', 'audio/liner-tradewinds-02.mp3'],
+  // 2026-09-01 -- DRIFT MODE is back, on ZM. Its key was DROPPED on
+  // retirement rather than emptied, which was right then (an absent key
+  // means no liners at all) and has to be undone deliberately now: both
+  // clips were re-rendered to the callsign-only format, since the originals
+  // announced a frequency the station no longer occupies.
+  'drift-mode': ['audio/liner-drift-mode-01.mp3', 'audio/liner-drift-mode-02.mp3'],
 }
 export const LINER_FILES = {}
 for (const stId in STATION_LINER_FILES) {

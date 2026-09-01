@@ -1691,6 +1691,9 @@ export const STATIONS = [
       realTrack('VijbUkATmLc', 'From the Realm of Dust and Darkness', 'Vikorra Doom'),
       realTrack('kFB9A2WAfpM', 'The Hall of Unhallowed Steel', 'Vikorra Doom'),
       realTrack('WUyXqGpvs4Y', 'Return to the Underworld', 'Vikorra Doom'),
+      realTrack('c6My3t7Cw7Q', 'Midvinter', 'Trollslottet'),
+      realTrack('U5QjKTtXCJI', 'The Haunted Hyperion Woods', 'Vikorra Doom'),
+      realTrack('vdmg4X8PdCM', 'A Warm Hearth', 'Swordlender'),
     ] },
   // SLOW ORBIT (2026-09-01) -- ZM 1092.0. Ambient and downtempo: chillout with
   // a pulse. The brief said "beats and grooves" and that is the boundary, not
@@ -1724,6 +1727,17 @@ export const STATIONS = [
       realTrack('bYqOS-os55U', 'Flugdrekar', 'Bistro Boy'),
       realTrack('ywlQ2N60JCQ', 'Warm Winds', 'Bistro Boy'),
       realTrack('eTTBbkvNBkE', 'A Psalm For A Friend', 'Bistro Boy'),
+      realTrack('gGnWBumLD9A', 'Fluffy Time', 'Jens Buchert'),
+      realTrack('fBo1xD_fjc8', 'Hermetic Laws', 'Jens Buchert'),
+      realTrack('xHHTLyvt7ZQ', 'Luna', 'Jens Buchert'),
+      realTrack('f73_IoHwFsc', 'Fields', 'Celeste Lear'),
+      realTrack('AOlnOPECslM', "Marielle's Dream", 'Celeste Lear'),
+      realTrack('QwS1DC9_N-c', 'Now', 'Lemongrass'),
+      realTrack('0MhS4g_LTKk', 'Where The Wild Things Were', 'Sounds from the Ground'),
+      realTrack('MTs1E4P_FCE', 'Drawn To The Woman', 'Sounds from the Ground'),
+      realTrack('6w9MBlTHR7c', 'Zooming In', 'Alex Cortiz'),
+      realTrack('GjJ1KTONcK8', 'Zooming Out', 'Alex Cortiz'),
+      realTrack('fxNAnJYXq5U', 'Searchin', 'Alex Cortiz'),
     ] },
   // TRADEWINDS (2026-09-01) -- ZM 1559.0. Exotica and tiki lounge, played
   // straight rather than winked at: vibraphone, bird calls, hand drums.
@@ -1770,6 +1784,110 @@ export const STATIONS = [
       realTrack('WQuShe7hJcI', 'Theme For Jetsetters', 'The Tikiyaki Orchestra'),
       realTrack('z25ZrH2Z6oI', 'Bachelor #1', 'The Tikiyaki Orchestra'),
       realTrack('yc7rAiO2ta4', 'Sunset on the Kona Kai', 'The Tikiyaki Orchestra'),
+      realTrack('mnROAXLBy2M', 'Quiet Village', 'Martin Denny'),
+      realTrack('IPaBrlloEJw', 'Firecracker', 'Martin Denny'),
+      realTrack('iffnJSLHiZY', 'Taboo', 'Arthur Lyman'),
+      realTrack('Ab93DcAb_JA', 'Hawaiian Paradise', 'Billy Mure'),
+      realTrack('Os2uDKAUcDs', 'Chinese Surfer', 'Kava Kon'),
+      realTrack('YxlbkVWaO_k', 'Temple of the Snake God', 'Ixtahuele'),
+      realTrack('U7SID3xCeng', 'Searching the Souq', 'Ixtahuele'),
+      realTrack('ihjVwYS-Hco', 'Aloha, Baby!', 'The Tikiyaki Orchestra'),
+      realTrack('B9LJFrwwlvM', 'In Search of Mei Ting', 'The Tikiyaki Orchestra'),
+    ] },
+  // DRIFT MODE, BROUGHT BACK 2026-09-01, on ZM rather than the band it left.
+  //
+  // Retired 2026-08-30 when NEON STASIS took its lane and its frequency. The
+  // retirement comment above promised it could be "stood back up without
+  // archaeology" and that held: all 50 track ids came back out of it, the
+  // curation profile was still there marked retired, and tagline, desc,
+  // ident, identTempo, static, crt and meter are all its own originals.
+  //
+  // THREE FIELDS COULD NOT COME BACK, because NEON STASIS inherited them
+  // deliberately when it took over: the frequency, the dial glyph and the
+  // DRIFT visualizer effect. Each needed a fresh answer.
+  //
+  // 1321.0 RECLAIMS ITS OWN JOKE. Its freqNote has always been "3-2-1,
+  // counting down to nothing", which NEON STASIS inherited along with 321.0.
+  // One band up, the same gag is free again -- different band, different
+  // digits, same idea, and nothing taken back from the station that replaced
+  // it. It also lands in ZM's widest remaining gap.
+  //
+  // The glyph is 'PSI' rather than the section sign it used to carry.
+  // Chosen the way the 41st pass says to choose one -- for legibility, not
+  // theme: real ink mass so it does not wash into the dial's own faint dots
+  // under bloom, and distinct from everything else on THIS band. 'XI' was the
+  // obvious "layered stillness" pick and was rejected precisely because it
+  // would sit eight columns from SYNAPSE's identical-looking triple bar.
+  //
+  // `visual: 'frost'` IS THE FOURTH BORROW AND THE POOL IS NOW EXHAUSTED.
+  // Every one of the twelve effects belongs to another station, and this is
+  // the station named after the one it lost. Ice and stillness are a decent
+  // fit for an ambient lane, but that is a consolation, not a design. Four
+  // borrows across five recent stations is no longer a placeholder pattern;
+  // it is the effect registry failing to keep up with the roster. See the
+  // standing task.
+  { id: 'drift-mode', band: 'zm', freq: 1321.0, callsign: 'DRIFT MODE',
+    tagline: 'fade to black, ambient descent',
+    freqNote: '3-2-1, counting down to nothing',
+    desc: 'Ambient, modern classical, and drone pieces built for stillness -- slow-moving, mostly wordless, meant to fade into the room instead of demanding it.',
+    ident: [392.0, 329.6, 370.0, 293.7],
+    identTempo: 1.35,
+    glyph: 'Ψ',
+    static: 700,
+    crt: { decay: 0.88, brightness: 1.12, bloomAmt: 1.7, scanMax: 0.6 },
+    meter: { spring: 0.16, damping: 0.72, swing: 0.55 },
+    visual: 'frost',
+    tracks: [
+      realTrack('UfcAVejslrU', 'Weightless', 'Marconi Union'),
+      realTrack('0kYc55bXJFI', 'Near Light', 'Olafur Arnalds'),
+      realTrack('YC6pJOH7bF0', 'Adamord', 'Stars of the Lid'),
+      realTrack('8L64BcCRDAE', 'Svefn-g-englar', 'Sigur Ros'),
+      realTrack('wLxbD0CkS30', "Heavy Water / I'd Rather Be Sleeping", 'Grouper'),
+      realTrack('BD3D5mCjt7I', 'Disintegration Loop 1.1', 'William Basinski'),
+      realTrack('sfBlBs25Ewk', 'An Ending (Ascent) [arr. Le Page]', 'Brian Eno / Orchestra of the Swan'),
+      realTrack('QJ-polFpeX0', 'Music for Airports: 1/1', 'Brian Eno'),
+      realTrack('jl_z5JvrKlc', 'Discreet Music', 'Brian Eno'),
+      realTrack('dIwwjy4slI8', 'Says', 'Nils Frahm'),
+      realTrack('-bc37fU36Vk', 'Requiem for Dying Mothers, Pt. 1', 'Stars of the Lid'),
+      realTrack('vTaBX_FoGWk', 'Release', 'Hammock'),
+      realTrack('ShW8YyueC1s', 'In the Fog I', 'Tim Hecker'),
+      realTrack('SwmRJQAx8eA', 'Requiem for the Static King, Pt. 1', 'A Winged Victory for the Sullen'),
+      realTrack('ngUnLL4CAck', 'A Song for Europa', 'Johann Johannsson'),
+      realTrack('mwJTwG5r5Ks', 'The Plateaux of Mirror', 'Harold Budd / Brian Eno'),
+      realTrack('2CN1qXJJODI', 'Cast of Mind', 'Kali Malone'),
+      realTrack('nvtV4fvNJpY', 'Radio Ballet', 'Eluvium'),
+      realTrack('ONQt97F9KKI', 'Opus 23', "Dustin O'Halloran"),
+      realTrack('SDru80vHKxU', 'Keep Up the Good Work', 'Julianna Barwick'),
+      realTrack('pygwK0sBUdM', 'andata', 'Ryuichi Sakamoto'),
+      realTrack('5nCRNIKkKSs', 'Rain', 'Poppy Ackroyd'),
+      realTrack('CQ8zglIXZi8', 'Nuvole Bianche', 'Ludovico Einaudi'),
+      realTrack('l81XVNzdZts', 'Everything Is a Memory', 'Slow Meadow'),
+      realTrack('TvGXQXN5CQ4', 'Green', 'Hiroshi Yoshimura'),
+      realTrack('csnryqUpO-g', 'Kobresia', 'Biosphere'),
+      realTrack('75O11W5EZAU', 'Rhubarb', 'Aphex Twin'),
+      realTrack('bWw6hMgRILQ', 'Pop 1', 'Gas'),
+      realTrack('MYtX2zYlfdA', 'Estuarine', 'Loscil'),
+      realTrack('g7Jgc1bVWbo', "Mr. Henri Rousseau's Dream", 'Midori Takada'),
+      realTrack('25zpPS_OdhQ', 'Virginal II', 'Tim Hecker'),
+      realTrack('Vi3bSG3jL_M', 'Vital', 'Grouper'),
+      realTrack('bFNbOvzvvYI', 'Oro Oro', 'Celer'),
+      realTrack('osA0Wl_-EHU', 'Reprisal', 'Rafael Anton Irisarri'),
+      realTrack('4qrEH65DeCE', 'Transit', 'Fennesz'),
+      realTrack('VmqZTrthXbA', 'The Dance No. 1', 'Laraaji'),
+      realTrack('OtJQGz9mg0I', 'Where Is the Map?', 'Chihei Hatakeyama'),
+      realTrack('Wu-7ZpcyKdA', "The maitre d' is dead", 'Christina Vantzou'),
+      realTrack('t1UkSZGoCjs', 'Finding It There', 'Goldmund'),
+      realTrack('-x3sbeokO3A', 'Abandon', 'Goldmund'),
+      realTrack('_482aKbIfdc', 'Rhytn', 'Taylor Deupree'),
+      realTrack('eu6rBUu5-SA', 'Tobiume', 'Susumu Yokota'),
+      realTrack('khBhiVhPD_Y', 'In a Landscape', 'Peter Broderick'),
+      realTrack('ga0UH5znGmw', 'Carried', 'Peter Broderick'),
+      realTrack('2Tqy6be0Juc', 'The Big Ship', 'Brian Eno'),
+      realTrack('IxGj-uXJtMY', 'Enthalpy', 'Loscil'),
+      realTrack('hctJTb01NNI', 'Microfauna', 'Eluvium'),
+      realTrack('00Ipvqnk5is', 'Sore', 'Eluvium'),
+      realTrack('ljypVwBF_e8', 'RH Negative', 'Rafael Anton Irisarri'),
+      realTrack('nZyYcmK7a0I', 'Forever Ago is Now', 'Rafael Anton Irisarri'),
     ] },
 ]
 
