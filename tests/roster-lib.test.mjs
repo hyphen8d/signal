@@ -212,7 +212,7 @@ test('rewriting a tracks block with its own tracks is byte-identical, every stat
   // station is added -- which is the point. The loop above passes VACUOUSLY if
   // loadRosterFromText ever returns nothing, so this is the guard that the
   // sweep actually walked a roster. 12 as of THE CRYPT (2026-08-31).
-  assert.equal(all.length, 12)
+  assert.equal(all.length, 14)
 })
 
 test('removing a track keeps every comment not attached to it', () => {

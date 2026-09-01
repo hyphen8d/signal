@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 10 stations, 439 tracks total.
+Generated from stations.js. 12 stations, 463 tracks total.
 
 # YM band
 
@@ -391,7 +391,7 @@ Tracks (50):
 
 # ZM band
 
-3 stations, 119 tracks. Its own dial, its own `1`-`9` presets.
+5 stations, 143 tracks. Its own dial, its own `1`-`9` presets.
 
 ## THE CRYPT -- 1031.0
 
@@ -420,6 +420,26 @@ Tracks (19):
 17. **From the Realm of Dust and Darkness** -- Vikorra Doom  ([youtu.be/VijbUkATmLc](https://youtu.be/VijbUkATmLc))
 18. **The Hall of Unhallowed Steel** -- Vikorra Doom  ([youtu.be/kFB9A2WAfpM](https://youtu.be/kFB9A2WAfpM))
 19. **Return to the Underworld** -- Vikorra Doom  ([youtu.be/WUyXqGpvs4Y](https://youtu.be/WUyXqGpvs4Y))
+
+## SLOW ORBIT -- 1092.0
+
+*downtempo grooves, no hurry at all*
+
+Ident tones (Hz): 329.6, 392, 440, 587.3
+
+Tracks (11):
+
+1. **After the Rain** -- Jens Buchert  ([youtu.be/aIB70PVSCnY](https://youtu.be/aIB70PVSCnY))
+2. **On the Run** -- Jens Buchert  ([youtu.be/EqwRXoAxn7I](https://youtu.be/EqwRXoAxn7I))
+3. **Love Double** -- Jens Buchert  ([youtu.be/h9gVHqe9dj8](https://youtu.be/h9gVHqe9dj8))
+4. **Lightful** -- Lemongrass  ([youtu.be/0nUdJeDoDY0](https://youtu.be/0nUdJeDoDY0))
+5. **Where Is Mr. Spock?** -- Lemongrass  ([youtu.be/8fpFTNmHE4c](https://youtu.be/8fpFTNmHE4c))
+6. **Mysterious You** -- Celeste Lear  ([youtu.be/tGBqcd2-_xM](https://youtu.be/tGBqcd2-_xM))
+7. **Traveler** -- Celeste Lear  ([youtu.be/O5xuh4KxyKE](https://youtu.be/O5xuh4KxyKE))
+8. **Planted** -- Sounds from the Ground  ([youtu.be/z8ajEiw6iYk](https://youtu.be/z8ajEiw6iYk))
+9. **Flugdrekar** -- Bistro Boy  ([youtu.be/bYqOS-os55U](https://youtu.be/bYqOS-os55U))
+10. **Warm Winds** -- Bistro Boy  ([youtu.be/ywlQ2N60JCQ](https://youtu.be/ywlQ2N60JCQ))
+11. **A Psalm For A Friend** -- Bistro Boy  ([youtu.be/eTTBbkvNBkE](https://youtu.be/eTTBbkvNBkE))
 
 ## SYNAPSE -- 1234.0
 
@@ -479,6 +499,28 @@ Tracks (50):
 48. **Free Your Mind** -- Prospa & Cloonee  ([youtu.be/gJYjbDnyx-o](https://youtu.be/gJYjbDnyx-o))
 49. **Temptation** -- SIDEPIECE  ([youtu.be/6dx013HIzCU](https://youtu.be/6dx013HIzCU))
 50. **Wassup** -- Wax Motif  ([youtu.be/Fc0tcD9F4GU](https://youtu.be/Fc0tcD9F4GU))
+
+## TRADEWINDS -- 1559.0
+
+*vintage island rhythms, cocktail in hand*
+
+Ident tones (Hz): 523.3, 659.3, 783.9, 1046.5
+
+Tracks (13):
+
+1. **Ringo Oiwake** -- Arthur Lyman  ([youtu.be/mitt1Qnkmgo](https://youtu.be/mitt1Qnkmgo))
+2. **Ke Kali Ne Au** -- Arthur Lyman  ([youtu.be/7QO2QuXEZS4](https://youtu.be/7QO2QuXEZS4))
+3. **Polynesian Poppies** -- Kava Kon  ([youtu.be/8-7gJDnjUko](https://youtu.be/8-7gJDnjUko))
+4. **Palace of the Tiger Women** -- Kava Kon  ([youtu.be/yV5JiG1DV7E](https://youtu.be/yV5JiG1DV7E))
+5. **Turkish Honey** -- Kava Kon  ([youtu.be/coCnRrrbBjE](https://youtu.be/coCnRrrbBjE))
+6. **Lagoon of Dreams** -- Ixtahuele  ([youtu.be/o1j-KlYvPCs](https://youtu.be/o1j-KlYvPCs))
+7. **Lotus Eaters** -- Ixtahuele  ([youtu.be/4VkjMrkNv88](https://youtu.be/4VkjMrkNv88))
+8. **I Left My Heart at the Beach of Fdengi** -- Ixtahuele  ([youtu.be/oktapcjB7WA](https://youtu.be/oktapcjB7WA))
+9. **Dengue Fever** -- Ixtahuele  ([youtu.be/ChGIY1MAUOo](https://youtu.be/ChGIY1MAUOo))
+10. **Mysteria** -- The Tikiyaki Orchestra  ([youtu.be/T1hEe7a2tWg](https://youtu.be/T1hEe7a2tWg))
+11. **Theme For Jetsetters** -- The Tikiyaki Orchestra  ([youtu.be/WQuShe7hJcI](https://youtu.be/WQuShe7hJcI))
+12. **Bachelor #1** -- The Tikiyaki Orchestra  ([youtu.be/z25ZrH2Z6oI](https://youtu.be/z25ZrH2Z6oI))
+13. **Sunset on the Kona Kai** -- The Tikiyaki Orchestra  ([youtu.be/yc7rAiO2ta4](https://youtu.be/yc7rAiO2ta4))
 
 ## CIRCUIT CRUSH -- 1688.0
 

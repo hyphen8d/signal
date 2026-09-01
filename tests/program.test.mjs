@@ -1770,13 +1770,28 @@ test("guide detail: every station's desc is shown in full, not cut off", async (
 test('guide index: the on-air marker points at the locked station, and only it', async () => {
   const h = await boot()
   try {
-    h.powerOn()
+    h.powerOn(); await toBand(h, 'ym')
+    // Re-lock after the band change: cycleBand DROPS the lock on purpose, so
+    // switching bands to reach a known one leaves the set seeking with
+    // nothing on air, and this test needs something on air to point at.
+    h.key('1'); h.advance(2500)
+    // 2026-09-01 -- the CURRENT band's stations, not the flat roster order.
+    // This walked the whole-roster list against a guide that pages ONE band,
+    // so once the roster passed ten public stations the loop ran off the end
+    // of the rows that exist and started reading the page's furniture: at
+    // twelve stations, index 10 lands on the marker LEGEND row, which draws a
+    // '>' at the mark column by design. The guide was right and the test was
+    // reading a row that is not a station.
+    //
+    // It survived the earlier per-band correction of its three neighbours
+    // only because the roster was still small enough that the index never
+    // reached that far.
     await openIndex(h)
     const C = h.program.GUIDE_INDEX_COLS
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
-    const idx = STATION_PRESET_ORDER.indexOf(h.program.lockedStation)
-    assert.ok(idx >= 0, 'powered on and locked to a public station')
-    STATION_PRESET_ORDER.forEach((ch, i) => {
+    const order = h.program.bandPresets()
+    const idx = order.indexOf(h.program.lockedStation)
+    assert.ok(idx >= 0, 'powered on and locked to a station on this band')
+    order.forEach((ch, i) => {
       const mark = h.row(5 + i)[C.mark]
       assert.equal(mark, i === idx ? '>' : ' ', `${ch.callsign}: marker only on the locked row`)
     })
