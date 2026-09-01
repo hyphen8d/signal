@@ -1334,6 +1334,57 @@ durations cross-checked against the label's own listing.
   canonical shape. Both would have made the dashboard rewrite the file the
   first time anyone touched that station.
 
+### TRADEWINDS and SLOW ORBIT (2026-09-01)
+
+ZM goes from three stations to five.
+
+**TRADEWINDS**, 1559.0 — exotica and tiki lounge, played straight rather than
+winked at. 13 tracks across Ixtahuele, The Tikiyaki Orchestra, Kava Kon and
+Arthur Lyman. The frequency is for the '59 in it, the era this music owned; it
+beat an earlier 1509 (the digits of 1950 rearranged) because the joke wants
+the year *in* the number rather than adjacent to it, and it happened to land
+in the band's widest gap.
+
+**SLOW ORBIT**, 1092.0 — ambient and downtempo, chillout with a pulse. 11
+tracks across Jens Buchert, Bistro Boy, Lemongrass, Celeste Lear and Sounds
+from the Ground. 1092 is the ISS going round once, in about 92 minutes.
+
+- **The boundary worth writing down is TRADEWINDS against ATOMIC**, not
+  against anything modern. Both live in the 1950s and both are lounge-adjacent,
+  so the profile states the split where `audition.js` reads it back: ATOMIC is
+  Fallout canon, constrained by an in-universe tracklist, and TRADEWINDS is
+  exotica — the Polynesian-pop fantasy specifically. Revival acts belong beside
+  the originals; a station that took only Denny and Lyman would be a museum,
+  which is why Kava Kon and Ixtahuele are more than half its roster.
+  SLOW ORBIT's boundary is against NEON STASIS: mallsoft is found sound
+  deliberately degraded, this is produced music at full fidelity that simply
+  moves slowly — and it has a beat, which is what separates it from THE CRYPT.
+- **The compilation trap appeared in both searches, exactly where the profiles
+  predicted it** — a 39:50 full-album upload in the tiki lane, a 49:41 "Best
+  of" in the downtempo one. Reissue and netlabel catalogues distribute that
+  way and the dial announces one title, so the test stays on the *file*.
+- **Two titles were passed on the title alone**, and the reasons are recorded
+  in both rejection files because neither reads the other. Neither is a
+  quality, lane or availability call: the dial displays track titles in full on
+  a public site. The order differed and the difference is the lesson — one was
+  flagged *after* auditioning and carries a clean probe with its rejection, the
+  other *before* any search ran and cost no network work at all. A title
+  question can always be answered by reading, and asking it first saves a probe
+  against an endpoint that throttles.
+- **The rate limit took SLOW ORBIT's entire first probe run** — `UNVERIFIED
+  (HTTP 429)` on all eleven rows, nothing beyond oEmbed checked. Waiting
+  cleared it and every row passed on the first attempt afterwards. Retrying
+  harder would not have.
+- Titles were cleaned on the way in: three carried upload decoration on
+  YouTube, and `layout.js` draws that field on the dial, so a listener would
+  have been shown the uploader's formatting as part of the song's name.
+- **Short IDs render quiet from this voice, and that is now a pattern rather
+  than an incident.** Both new callsigns came back under the band's floor on
+  the first take and both improved on a re-roll — TRADEWINDS to −7.9dB, inside
+  it; SLOW ORBIT to −8.6dB, which stays 0.6 under on the same reasoning that
+  left CITY LIGHTS and THE CRYPT where they are. Every take was rendered to
+  scratch and measured before anything was promoted.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

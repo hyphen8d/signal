@@ -714,6 +714,12 @@ export const GENERAL_LINER_FILES = [
 //                      KEPT WITH ITS FREQUENCY -- the hook is the number.
 //   the-crypt        "Nobody has come down these stairs in centuries.
 //                      THE CRYPT."                    (new 2026-08-31)
+//   slow-orbit        "Nothing here is trying to get anywhere.
+//                      SLOW ORBIT."                   (new 2026-09-01)
+//   tradewinds        "Same groove, one more time around." is SLOW ORBIT's -02;
+//                      TRADEWINDS' pair is "The bird calls are on the record,
+//                      not outside." and "Second one comes with an umbrella in
+//                      it." -- both hook-then-callsign, no frequency.
 export const STATION_LINER_FILES = {
   cipher: ['audio/liner-cipher-01.mp3', 'audio/liner-cipher-02.mp3'],
   'distortion-field': ['audio/liner-distortion-field-01.mp3', 'audio/liner-distortion-field-02.mp3'],
@@ -763,6 +769,10 @@ export const STATION_LINER_FILES = {
   // shipped, which is the case the note above says to reach for only when a
   // station beats its clips to the dial.
   'the-crypt': ['audio/liner-the-crypt-01.mp3', 'audio/liner-the-crypt-02.mp3'],
+  // 2026-09-01 -- ZM's fourth and fifth stations, both shipping with a full
+  // pair rather than the single clip SYNAPSE spent months on.
+  'slow-orbit': ['audio/liner-slow-orbit-01.mp3', 'audio/liner-slow-orbit-02.mp3'],
+  tradewinds: ['audio/liner-tradewinds-01.mp3', 'audio/liner-tradewinds-02.mp3'],
 }
 export const LINER_FILES = {}
 for (const stId in STATION_LINER_FILES) {
