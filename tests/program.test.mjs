@@ -2078,3 +2078,86 @@ test('nothing is lit while nobody is singing', async () => {
     assert.ok(h.row(midY).includes('beta line'), 'the crawl did not resume after the gap')
   } finally { h.shutdown() }
 })
+
+test('[K] TAG copies a link to the station AND the track', async () => {
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.key(await otherPreset(h)); h.advance(2500)
+    const st = h.program.lockedStation
+    const tr = h.program.currentTrack
+    assert.ok(st && tr, 'test setup: something is playing')
+
+    const url = h.program.shareUrl()
+    assert.match(url, new RegExp(`station=${st.id}`), 'names the station')
+    assert.match(url, new RegExp(`track=${tr.youtubeId}`), 'and the track')
+
+    // The clipboard is the one part Node has none of, so it is stubbed rather
+    // than skipped -- what is asserted is that the key reaches it with the
+    // link, not any claim about how a real clipboard behaves.
+    let written = null
+    globalThis.navigator = { clipboard: { writeText: (t) => { written = t; return Promise.resolve() } } }
+    try {
+      assert.equal(h.program.tagTrack(h.screen ?? {}), 'LINK COPIED')
+      assert.equal(written, url, 'the copied text is the link')
+    } finally { delete globalThis.navigator }
+  } finally { h.shutdown() }
+})
+
+test('[K] answers off-station instead of copying a broken link', async () => {
+  const h = await boot({})
+  try {
+    h.powerOn(); h.advance(1200)
+    h.key('ArrowRight'); h.advance(400)   // off the lock, into seeking
+    assert.notEqual(h.program.mode, 'locked', 'test setup: nothing is on air')
+    // The dead-feedback rule: a key the screen advertises has to say something
+    // even where it cannot act. 'NO SIGNAL' is the word [N] and [V] already
+    // use for this state, so it teaches the same thing they do.
+    assert.equal(h.program.tagTrack(h.screen ?? {}), 'NO SIGNAL')
+  } finally { h.shutdown() }
+})
+
+test('[K] says so when there is no clipboard to write to', async () => {
+  // Not hypothetical: the clipboard API needs a SECURE CONTEXT, so this is
+  // what the key does over a bare IP -- the same limit [W] weather has.
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.key(await otherPreset(h)); h.advance(2500)
+    assert.ok(h.program.currentTrack, 'test setup: something is playing')
+    delete globalThis.navigator
+    assert.equal(h.program.tagTrack(h.screen ?? {}), 'NO CLIPBOARD')
+  } finally { h.shutdown() }
+})
+
+test('a shared link lands on its band, its station and its track', async () => {
+  // The band half is the bug this test exists for. ?station= predates the
+  // second band and set only the frequency, so every link to a ZM station
+  // would have booted with the dial on YM -- and [K] hands people ZM links.
+  const { STATIONS } = await import(`../stations.js?v=sharelink`)
+  const zm = STATIONS.find((s) => s.band === 'zm' && s.tracks.length)
+  const want = zm.tracks[Math.min(3, zm.tracks.length - 1)]
+  const h = await boot({ station: zm.id, track: want.youtubeId })
+  try {
+    h.powerOn(); h.advance(1200)
+    assert.equal(h.program.lockedStation?.id, zm.id, 'landed on the named station')
+    assert.equal(h.program.band, 'zm', 'and the dial followed it to ZM')
+    assert.equal(h.program.currentTrack?.youtubeId, want.youtubeId, 'on the named track')
+  } finally { h.shutdown() }
+})
+
+test('a shared link to a track that has since been dropped still tunes the station', async () => {
+  // A link outlives a curation pass. Landing on the right STATION is most of
+  // what the sharer meant, so an unknown track falls back to the shuffle bag
+  // rather than refusing the link.
+  const { STATIONS } = await import(`../stations.js?v=sharelink2`)
+  const zm = STATIONS.find((s) => s.band === 'zm' && s.tracks.length)
+  const h = await boot({ station: zm.id, track: 'nolongerhere' })
+  try {
+    h.powerOn(); h.advance(1200)
+    assert.equal(h.program.lockedStation?.id, zm.id)
+    assert.ok(h.program.currentTrack, 'still picked something to play')
+    assert.ok(zm.tracks.some((t) => t.youtubeId === h.program.currentTrack.youtubeId),
+      'and it came from that station')
+  } finally { h.shutdown() }
+})

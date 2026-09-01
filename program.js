@@ -536,15 +536,34 @@ export default {
     // Ships in production on purpose: it is three reads and a find(), it is
     // the same shape of dev affordance as SIGNAL_FORCE_BREAK, and a
     // shareable "tune here" link is a fair thing for a radio to have.
+    // 2026-09-01 -- `&track=<youtubeId>` joins it, and the band bug below is
+    // fixed. This is what [Shift+T] writes to the clipboard, so the two halves
+    // have to agree: the key builds the link, this reads it.
     try {
-      const wanted = new URLSearchParams(globalThis.location?.search || '').get('station')
+      const params = new URLSearchParams(globalThis.location?.search || '')
+      const wanted = params.get('station')
       if (wanted) {
         const ch = [...STATIONS, ...SECRET_STATIONS].find((c) => c.id === wanted)
         if (ch) {
           this.mode = 'locked'
           this.lockedStation = ch
+          // THE BAND HAS TO FOLLOW THE STATION, and did not until now. This
+          // block predates the second band and set only the frequency, so a
+          // link to any ZM station landed with the dial still on YM: the
+          // frequency off the end of the scale, the guide paging the wrong
+          // index. Exactly the fault the random-boot path had, in the one
+          // other place a station is chosen without tuning to it -- and it
+          // would have shipped broken the day [Shift+T] started handing
+          // people ZM links.
+          this.band = ch.band ?? DEFAULT_BAND
           this.freq = ch.freq
-          this.currentTrack = this.nextTrack(ch)
+          // A named track, if it is still on that station. Falls back to the
+          // shuffle bag rather than refusing: a link outlives a curation
+          // pass, and landing on the right STATION is most of what the
+          // sharer meant even when the track has since been dropped.
+          const id = params.get('track')
+          const named = id ? ch.tracks.find((t) => t.youtubeId === id) : null
+          this.currentTrack = named || this.nextTrack(ch)
           this.needsTrackLoad = true
         }
       }
@@ -2219,6 +2238,48 @@ export default {
    *  you" rather than "in the roster". */
   bandPresets() { return presetOrderFor(this.band) },
 
+  /** The link [K] copies. Split out from tagTrack() so it can be tested
+   *  without a clipboard, which Node has none of and which needs a secure
+   *  context even in a browser -- the interesting logic is the URL, and the
+   *  copy is one call. Returns null off-station rather than a broken link.
+   *
+   *  Reads location defensively: the harness has no `location` at all, and a
+   *  station that cannot build a base URL should still be taggable in tests. */
+  shareUrl() {
+    const st = this.lockedStation
+    const tr = this.currentTrack
+    if (!st || !tr || !tr.youtubeId) return null
+    let base = ''
+    try { base = (globalThis.location?.origin || '') + (globalThis.location?.pathname || '') } catch (e) {}
+    return `${base}?station=${encodeURIComponent(st.id)}&track=${encodeURIComponent(tr.youtubeId)}`
+  },
+
+  /** [K] TAG. Returns the word for the status row rather than drawing it, so
+   *  both callers (main screen and visualizer) can put it where they need to.
+   *
+   *  ANSWERS EVEN WHEN IT CANNOT ACT, which the dead-feedback sweep requires
+   *  of anything the screen advertises: off-station there is nothing to tag,
+   *  and 'NO SIGNAL' is the word [N] and [V] already use for that state, so
+   *  it teaches the same thing they do.
+   *
+   *  The clipboard is asynchronous and can be refused -- it needs a secure
+   *  context, so this works on the deployed site and on localhost but NOT
+   *  over a bare IP, the same limit [W] weather has. The status is optimistic
+   *  and CORRECTED on rejection rather than awaited: making the whole key
+   *  async to be pessimistic about a call that almost never fails would cost
+   *  every caller a promise. */
+  tagTrack(s) {
+    const url = this.shareUrl()
+    if (this.mode !== 'locked' || !url) return 'NO SIGNAL'
+    let cb = null
+    try { cb = globalThis.navigator?.clipboard ?? null } catch (e) {}
+    if (!cb || typeof cb.writeText !== 'function') return 'NO CLIPBOARD'
+    try {
+      Promise.resolve(cb.writeText(url)).catch(() => this.flashStatus(s, 'COPY FAILED'))
+    } catch (e) { return 'NO CLIPBOARD' }
+    return 'LINK COPIED'
+  },
+
   /** [B] BAND (2026-08-31). Steps to the next band and lands at its bottom
    *  edge, seeking.
    *
@@ -2756,6 +2817,12 @@ export default {
         case 't': case 'T':
           vizFlash(this.cycleSleepTimer(s))
           return
+        // [K] TAG (2026-09-01) -- works in here for the same reason [T] does:
+        // this is the view a listener sits in while a track they like plays,
+        // so the key that says "I like this" belongs here most of all.
+        case 'k': case 'K':
+          vizFlash(this.tagTrack(s))
+          return
         case 'e': case 'E':
         case 'Escape':
           this.exitVisualizer(s)
@@ -2830,6 +2897,22 @@ export default {
       // the Guide's RECEIVER list carries it, and the readout in the title
       // bar teaches it after that.
       case 't': case 'T': e.preventDefault(); this.flashStatus(s, this.cycleSleepTimer(s)); break
+      // [K] TAG (2026-09-01) -- copies a link to what is playing.
+      //
+      // Named for the TAG button real HD Radio receivers carried: press it on
+      // a track you like and the set remembers it for you. That framing is
+      // what gets this past "would a real radio have this?", which a bare
+      // SHARE button does not -- the impulse is a radio one even though the
+      // clipboard is not.
+      //
+      // TAB was the first suggestion and was rejected outright: it is the
+      // browser's focus-navigation key, and this app is a canvas with nothing
+      // focusable in it, so capturing Tab would trap keyboard and
+      // screen-reader users with no way out of the page. Shift+T was built
+      // and then backed out in favour of a bare letter -- one fewer special
+      // case, and it sidesteps the Caps-Lock subtlety Shift+C carries a note
+      // about (e.key is 'T' for both Shift+t and Caps-Lock+t).
+      case 'k': case 'K': e.preventDefault(); this.flashStatus(s, this.tagTrack(s)); break
       case 'p': case 'P': e.preventDefault(); this.powerDown(s); break
       // [B] BAND (2026-08-31) -- was BACK, which walked a stack of recently
       // locked stations. That key is spent on the band switch instead, and

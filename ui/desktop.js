@@ -1624,7 +1624,11 @@ export default {
     // line2 (a real radio never had a help screen) and PLAY/PAUSE was
     // removed outright (see key() comment) rather than moved, since it's
     // not being kept anywhere.
-    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BAND'
+    // [K] TAG added 2026-09-01 on line1, which had room where line2 did not
+    // -- this row lands at 77 of the 78 usable columns, one to spare. The
+    // next control that wants the footer will not fit on either line, and
+    // should go to the Guide the way [T] and [A] did.
+    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BAND   [K] TAG'
     // 23rd pass: "[C] MODE" rather than the fuller "[C] DISPLAY" -- kept
     // short for the same reason now that GUIDE joined this line too (the
     // fixed hint row has broken before on an over-length string, see

@@ -159,6 +159,16 @@ export default {
     // column keeps its width; the group goes to five rows, matching TUNING,
     // which pushes drawGuideControls' return down one -- still clear of the
     // About page's own rule at row 14.
+    // [K] TAG (2026-09-01) IS DELIBERATELY NOT IN THIS GRID. It was added
+    // here first, as a sixth RECEIVER row, and that ate row 13 -- which is
+    // one of this page's blank gaps and is asserted as such. The three
+    // groups are five rows each because five is what fits; a sixth in any
+    // of them closes the space above the rule.
+    //
+    // It does not need this grid the way [T] and [A] did: those are here
+    // BECAUSE the footer had no room for them, and [K] is on the footer's
+    // line1 (see drawHint). The grid is for controls the footer cannot
+    // teach, and this one it can.
     { head: 'RECEIVER', rows: [['[UP/DN]', 'VOLUME'], ['[M]', 'MUTE'], ['[N]', 'NEXT TRACK'], ['[T]', 'SLEEP'], ['[P]', 'POWER']] },
     // [F] added 2026-08-26 (issue #8). 'FULLSCREEN' is the same 10 chars as
     // 'VISUALIZER', so the column keeps its width and the block its centring.

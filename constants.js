@@ -52,6 +52,11 @@ export const MAPPED_KEYS = new Set([
   ')',
   // 2026-08-27 -- [T] sleep timer. See SLEEP_STEPS below and key()'s case.
   't', 'T',
+  // 2026-09-01 -- [K] TAG, which copies a link to what is playing. Here
+  // for the same reason every command key is: isMappedKey() gates
+  // playKeyClick(), and a key that acts without clicking is exactly the
+  // drift the dead-feedback sweep exists to catch.
+  'k', 'K',
 ])
 
 // Sleep timer (2026-08-27) -- the minute steps [T] cycles through, then off.
@@ -121,6 +126,11 @@ export const REVEAL_CEILING_MS = 12_000
 // isMappedKey() asks their own availability check instead.
 export const VISUALIZER_KEYS = new Set([
   'ArrowUp', 'ArrowDown',
+  // 2026-09-01 -- [K] tags from in here too. This is the view someone
+  // sits in while a track they like plays, so a tag key that worked only
+  // on the main screen would be missing from the place it is wanted most
+  // -- the same argument [T] was added on.
+  'k', 'K',
   'c', 'C', 'n', 'N', 'm', 'M', 'v', 'V', 'f', 'F', 't', 'T', 'e', 'E', 'Escape',
 ])
 

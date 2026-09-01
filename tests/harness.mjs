@@ -55,7 +55,7 @@ function codeFor(key) {
   return key
 }
 
-export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null } = {}) {
+export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
   const store = new Map()
@@ -123,8 +123,13 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
   // location at all, so program.js's read of it is wrapped in a try/catch
   // and every other test in this file exercises the no-location path -- which
   // means without this option the param would have no coverage whatsoever.
-  if (station) globalThis.location = { search: `?station=${station}` }
-  else delete globalThis.location
+  // 2026-09-01 -- `track` joins it, for the &track=<youtubeId> half that
+  // [K] TAG writes into the link it copies. Same reasoning: the app reads
+  // it, so something has to be able to set it.
+  if (station) {
+    const q = `?station=${station}` + (track ? `&track=${track}` : '')
+    globalThis.location = { search: q, origin: 'https://example.test', pathname: '/signal/' }
+  } else delete globalThis.location
   // 2026-08-27 -- `lyrics` answers the ONE request this app makes that a
   // test might want to succeed: the LRCLIB lookup behind the visualizer's
   // [L] view. Pass true for the canned track below, a raw LRC string for
