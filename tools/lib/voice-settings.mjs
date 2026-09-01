@@ -99,9 +99,16 @@ export const CALLSIGN_RESPELL = {
   //
   // So the liner is NOT respelled, on the same reasoning as CIRCUIT CRUSH's:
   // its callsign lands at the end of a spoken line rather than at the start.
-  // That is a prediction, not a measurement -- if SYNAPSE's liner turns out
-  // to be wrong too, the rule is subtler than "opens a line" and this comment
-  // is the thing to correct.
+  //
+  // That was written as a prediction. IT IS A MEASUREMENT NOW -- see the
+  // TRADEWINDS entry below, which tested it properly by accident on
+  // 2026-09-01 and is the best evidence this rule has: the same callsign, the
+  // same voice, the same day, wrong in the ID and right in the liner. A
+  // controlled comparison nobody set out to run.
+  //
+  // SYNAPSE's own liner is still untested by ear, which is worth knowing but
+  // no longer load-bearing: the rule it rests on has been confirmed twice
+  // over, by CIRCUIT CRUSH and by TRADEWINDS.
   SYNAPSE: 'Sinaps',
   // 2026-09-01. Reported from listening: the ID came out as "trade-WINE-dz" --
   // the voice read `winds` as the VERB, rhyming with finds, rather than the
@@ -118,6 +125,19 @@ export const CALLSIGN_RESPELL = {
   // Third callsign in three days to need this, and all three were found by a
   // person listening rather than by any check here. That is the standing cost
   // of a callsign-only ID: it is pure opening, so every name is exposed.
+  //
+  // AND THIS ONE SETTLED THE CONTEXT RULE, by accident. Its two LINERS were
+  // rendered before the respell existed, so they say the unrespelled
+  // "TRADEWINDS" at the end of a spoken line -- and confirmed by ear the same
+  // day, they read correctly. The ID said "trade-WINE-dz"; the liners did
+  // not. Same callsign, same voice, same spelling, same day, wrong in one
+  // position and right in the other.
+  //
+  // That is the cleanest evidence the "respell applies to whatever OPENS a
+  // line" rule has ever had, and nobody set out to run it. CIRCUIT CRUSH
+  // showed the same shape in 2026-08-29 but across two different scripts;
+  // this is one string in two places. The liners are correct as they stand
+  // and should NOT be re-rendered to match the ID.
   TRADEWINDS: 'Trade Winds',
 }
 
