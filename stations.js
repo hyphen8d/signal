@@ -1791,6 +1791,52 @@ export const STATIONS = [
       realTrack('ihjVwYS-Hco', 'Aloha, Baby!', 'The Tikiyaki Orchestra'),
       realTrack('B9LJFrwwlvM', 'In Search of Mei Ting', 'The Tikiyaki Orchestra'),
     ] },
+  // DRIFT MODE, BROUGHT BACK 2026-09-01, on ZM rather than the band it left.
+  //
+  // Retired 2026-08-30 when NEON STASIS took its lane and its frequency. The
+  // retirement comment above promised it could be "stood back up without
+  // archaeology" and that held: all 50 track ids came back out of it, the
+  // curation profile was still there marked retired, and tagline, desc,
+  // ident, identTempo, static, crt and meter are all its own originals.
+  //
+  // THREE FIELDS COULD NOT COME BACK, because NEON STASIS inherited them
+  // deliberately when it took over: the frequency, the dial glyph and the
+  // DRIFT visualizer effect. Each needed a fresh answer.
+  //
+  // 1321.0 RECLAIMS ITS OWN JOKE. Its freqNote has always been "3-2-1,
+  // counting down to nothing", which NEON STASIS inherited along with 321.0.
+  // One band up, the same gag is free again -- different band, different
+  // digits, same idea, and nothing taken back from the station that replaced
+  // it. It also lands in ZM's widest remaining gap.
+  //
+  // The glyph is 'PSI' rather than the section sign it used to carry.
+  // Chosen the way the 41st pass says to choose one -- for legibility, not
+  // theme: real ink mass so it does not wash into the dial's own faint dots
+  // under bloom, and distinct from everything else on THIS band. 'XI' was the
+  // obvious "layered stillness" pick and was rejected precisely because it
+  // would sit eight columns from SYNAPSE's identical-looking triple bar.
+  //
+  // `visual: 'frost'` IS THE FOURTH BORROW AND THE POOL IS NOW EXHAUSTED.
+  // Every one of the twelve effects belongs to another station, and this is
+  // the station named after the one it lost. Ice and stillness are a decent
+  // fit for an ambient lane, but that is a consolation, not a design. Four
+  // borrows across five recent stations is no longer a placeholder pattern;
+  // it is the effect registry failing to keep up with the roster. See the
+  // standing task.
+  { id: 'drift-mode', band: 'zm', freq: 1321.0, callsign: 'DRIFT MODE',
+    tagline: 'fade to black, ambient descent',
+    freqNote: '3-2-1, counting down to nothing',
+    desc: 'Ambient, modern classical, and drone pieces built for stillness -- slow-moving, mostly wordless, meant to fade into the room instead of demanding it.',
+    ident: [392.0, 329.6, 370.0, 293.7],
+    identTempo: 1.35,
+    glyph: 'Ψ',
+    static: 700,
+    crt: { decay: 0.88, brightness: 1.12, bloomAmt: 1.7, scanMax: 0.6 },
+    meter: { spring: 0.16, damping: 0.72, swing: 0.55 },
+    visual: 'frost',
+    tracks: [
+
+    ] },
 ]
 
 // Preset-key ordering (17th pass -- presets needed to match the tuning

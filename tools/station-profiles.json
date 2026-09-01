@@ -131,10 +131,13 @@
         "Peter Broderick"
       ],
       "constraints": [
+        "REVIVED 2026-09-01 on ZM 1321.0, after being retired 2026-08-30. This profile spent that time marked retired and saying 'do not propose against this profile'; it is live again and that instruction is void. Everything below it survived the retirement and is the reason the station could come back at all -- the constraints and rejections here were the only surviving record of where its neoclassical boundary sat.",
+        "IT LOST THREE FIELDS TO NEON STASIS and they are not coming back: 321.0, the section-sign glyph, and the DRIFT visualizer effect were all inherited deliberately by the station that replaced it. The frequency gag was re-cut one band up (1321.0 keeps '3-2-1'); the glyph is PSI; the effect is borrowed. Do not 'restore' any of the three -- they belong to NEON STASIS now and taking them back would break a live station.",
         "Modern-classical-ADJACENT ambient is welcome (Arnalds, O'Halloran, Einaudi are already on the roster) -- but a piece that reads as straightforwardly classical/neoclassical, rather than ambient-with-classical-texture, is the wrong lane for this station specifically.",
         "OPEN QUESTION, found 2026-08-26: the neoclassical boundary below is not actually settled. Nils Frahm's \"Says\" is listed as rejected for being too straightforwardly classical, yet it is still on the roster, and Einaudi's \"Nuvole Bianche\" sits beside it while the constraint blesses Einaudi by name. Either the rejection was recorded and never acted on, or the line moved. Resolve it before leaning on the Richter/Frahm precedent to reject anything new -- and prefer unambiguous ambient/drone meanwhile, which is what the 2026-08-26 batch did to sidestep the question entirely.",
         "Sourcing is easy here compared with the other stations: contemporary ambient and drone is well served by artist \"- Topic\" channels, and all six of the 2026-08-26 additions are Topic with no flags at all. The real hazard is length -- full-album streams dominate search results for this genre (43, 59, 66 and 185-minute uploads all surfaced), so check duration and take the single-track upload.",
-        "Length has a FLOOR as well as a ceiling, established 2026-08-29: Boards of Canada's 'Olson' auditioned clean and was left out at 1:32, under this station's own shortest track (2:33). The ceiling is generous -- Basinski 62:11 and Eno 55:04 are on the roster -- so the hazard really is full-album uploads, not long pieces. Also reject uploads marked (Excerpt): a part of a piece is not the piece."
+        "Length has a FLOOR as well as a ceiling, established 2026-08-29: Boards of Canada's 'Olson' auditioned clean and was left out at 1:32, under this station's own shortest track (2:33). The ceiling is generous -- Basinski 62:11 and Eno 55:04 are on the roster -- so the hazard really is full-album uploads, not long pieces. Also reject uploads marked (Excerpt): a part of a piece is not the piece.",
+        "NOT SLOW ORBIT, which did not exist when this profile was written. That station is downtempo -- it has a pulse. This one is built for stillness. The two share a band now, so the boundary is worth stating from both sides: a track with a groove belongs there, a track that fades into the room belongs here."
       ],
       "rejections": [
         {
@@ -147,8 +150,7 @@
           "track": "Says",
           "reason": "Same call as the Richter track above -- too straightforwardly classical for this station's ambient/drone lane."
         }
-      ],
-      "retired": "Replaced by NEON STASIS (2026-08-30) -- same frequency (321.0), same dial glyph and the same DRIFT visualizer effect, a different lane entirely. Kept for the constraints and rejection history below, which are the only surviving record of where this station's neoclassical boundary sat; do not propose against this profile. The 50 tracks are preserved in the retirement comment above NEON STASIS in stations.js."
+      ]
     },
     "neon-stasis": {
       "callsign": "NEON STASIS",
@@ -779,7 +781,7 @@
         "The William Caslon Experience"
       ],
       "constraints": [
-        "THERE IS A BEAT. That is the whole boundary against pure ambient: this lane is downtempo, so a track with no pulse at all belongs on THE CRYPT or nowhere. 'Grooves' is in the brief and should be taken literally.",
+        "THERE IS A BEAT. That is the whole boundary against pure ambient: this lane is downtempo, so a track with no pulse at all does not belong here. 'Grooves' is in the brief and should be taken literally. AMENDED 2026-09-01: this used to say a beatless track 'belongs on THE CRYPT or nowhere', which was true when it was written and is not any more -- DRIFT MODE came back on the same band, and stillness is exactly its lane. Send beatless ambient there.",
         "NOT NEON STASIS. Mallsoft is muzak slowed and drowned in reverb -- found sound, deliberately degraded. This is PRODUCED music at full fidelity that simply moves slowly. If a candidate sounds like it is playing four storeys away, it is NEON STASIS's.",
         "NOT CIPHER. CIPHER owns late-night breakbeat and its tempo. Anything that would make someone walk faster is CIPHER's, not this station's.",
         "DJ MIXES AND CHILLOUT COMPILATIONS ARE THE TRAP HERE, the same shape album rips are elsewhere. This scene is distributed through 'Winter Chill Essentials'-style compilations and hour-long continuous mixes, which is precisely what the dial cannot announce. Search TRACK names, take single files.",
