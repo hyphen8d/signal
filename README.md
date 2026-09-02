@@ -247,12 +247,16 @@ isn't just an internal annoyance anymore.
   array, then re-run `node tools/stations-to-md.js` so `stations.md` stays
   in sync. No fixed cadence yet — add as you find good tracks, just don't
   let any one station drop below ~10.
-- **Station count:** 9 is the agreed ceiling for now — matches the `1`-`9`
-  preset keys cleanly, no spillover digit needed. `0` is not part of the
-  public preset scheme; if the roster ever grows past 9, decide how presets
-  work deliberately rather than assuming `0` is available. RELIC SIGNAL was
-  retired in v0.6 and CIPHER moved into its frequency slot, keeping the
-  count at 9.
+- **Station count:** 9 **per band** is the ceiling — it matches the `1`-`9`
+  preset keys cleanly, and `0` is not part of the public preset scheme. This
+  was a flat 9 for the whole roster until 2026-08-31, with a standing note to
+  decide deliberately rather than assume `0` was available if it ever grew
+  past that. It grew past it, and the decision was a second band rather than
+  a tenth digit: each band is its own dial with its own `1`-`9`. So the
+  ceiling moved rather than loosened — a tenth station on ONE band is still
+  the thing with no way to reach it. `tools/lint-roster.js` checks it per
+  band. RELIC SIGNAL was retired in v0.6 and CIPHER moved into its frequency
+  slot; YM has held at 7 stations since, ZM at 6.
 - **Dead videos:** the player now auto-skips on any playback error (private,
   removed, region-locked, etc.) instead of going silent mid-song — same
   behavior as pressing `[N]` manually. It doesn't retry the same ID or flag
