@@ -5,9 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 SIGNAL — a CRT/terminal internet-radio web toy. A tuning-dial receiver rendered
-entirely through a text grid, playing real YouTube tracks from 9 curated
-stations. Read `README.md` first: it carries the product intent, the controls
-reference, and the content-ops rules that constrain what may be added.
+entirely through a text grid, playing real YouTube tracks from 13 curated
+stations across two bands. Read `README.md` first: it carries the product
+intent, the controls reference, and the content-ops rules that constrain what
+may be added.
 
 ## Commands
 
@@ -428,10 +429,27 @@ and a proxy. The real second source, if a track ever justifies it, is a
 bundled `.lrc` in the repo.
 
 **Everything here was measured, not reasoned** — `npm run lyrics` samples the
-roster against the live API and reports the match rate. On 101 tracks across
-all 11 stations the original lookup (one `/api/get` on the raw title) resolved
-**59%**; the `/api/search` fallback took it to **76%**. Re-run it after
-touching any of this rather than trusting those numbers.
+roster against the live API and reports the match rate. First measured
+2026-08-30, on 101 tracks across 11 stations: the original lookup (one
+`/api/get` on the raw title) resolved **59%**, and the `/api/search` fallback
+took it to **76%**. Re-run it after touching any of this rather than trusting
+those numbers.
+
+**Re-measured 2026-09-02, and the headline fell to 30% → 53% on 120 tracks
+across 15 stations. Nothing regressed.** The four ambient/instrumental ZM
+stations added since — THE CRYPT, DRIFT MODE, SLOW ORBIT, TRADEWINDS — scored
+**0/8 each, 0/32 in total**, which is the correct answer for wordless music
+and not a matcher problem. Excluding those four the rate is 63/88 = **72%**,
+in line with the original 76%. The fallback's own contribution went *up*
+(+17pp then, +23pp now).
+
+The lesson for the next re-measure: **the headline rate is a property of the
+roster's mix, not of the lookup.** Compare it against the ceiling a roster of
+that composition can reach, or a curation pass toward instrumental music will
+read as a code regression and send someone hunting a bug that is not there.
+The practical consequence is that `[L]` on those four stations is `NO LYRICS
+AVAILABLE` essentially always — which is honest, and is what the duration gate
+below exists to keep true.
 
 Three things that look optional and are not:
 
@@ -525,11 +543,26 @@ list.
   else. Expect the better channel to hold the narrower licence; that trade
   comes up constantly. For a station tied to a concept, also check against
   whatever defines it — a source tracklist where there is one, the lyric
-  itself where the concept is a subject rather than a source. `tools/lint-roster.js` enforces the mechanical rules: 9 public
-  stations, ≥10 tracks, 4-tone idents, glyphs present in the font, `visual`
-  keys that exist, unique IDs, frequency spacing, and taglines that fit the
-  guide index line (`≤ 52 − callsign.length`; secret stations are exempt from
-  that one and from the glyph rule, since neither is ever drawn).
+  itself where the concept is a subject rather than a source.
+  `tools/lint-roster.js` enforces the mechanical rules: **at most 9 public
+  stations PER BAND**, a `band` that exists in `BANDS`, a `freq` inside that
+  band's range and spaced from its neighbours **on that band**, ≥10 tracks,
+  4-tone idents, glyphs present in the font, `visual` keys that exist, unique
+  IDs across the whole roster, descs that fit the guide's detail page, and
+  taglines within a flat `TAGLINE_MAX` of **43**. Secret stations are exempt
+  from the tagline and glyph rules, since neither is ever drawn. It also
+  asserts README's roster sentence still matches the roster — the
+  make-one-of-them-check discipline from the design-record note above.
+
+  Two of those moved, and the old shapes are the ones to unlearn. The station
+  ceiling was a flat 9 until 2026-08-31: it was never about the roster's size,
+  it was the `[1-9]` preset keys, and those went per-band when the second band
+  landed — so the rule MOVED rather than loosened, and a tenth station on ONE
+  band is still the thing with no way to reach it. The tagline budget was
+  `52 − callsign.length` until 2026-08-27, correct only while the guide index
+  drew one joined line where a long callsign ate the tagline's share of the
+  row; fixed column stops mean the LANE column is now the same 43 for every
+  station regardless of callsign.
 - **Rejections live in two files, and the dashboard is now the single
   writer for both.** `tools/station-profiles.json`'s `rejections` is the one
   that matters when you are picking tracks — `audition.js` prints it back at
