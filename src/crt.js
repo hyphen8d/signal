@@ -202,17 +202,23 @@ void main() {
     float raster = g.x * g.y;
 
     // Beam misconvergence, exaggerated into a colour fringe.
+    // textureLod, not texture: this whole block sits inside a non-uniform
+    // branch (edge varies per fragment), where implicit-derivative
+    // texture() is undefined per the GLSL ES spec. Identical output here
+    // -- neither sampler carries a mip chain, so lod 0 is the only level
+    // there is -- this just stops relying on every driver shrugging the
+    // same way about undefined behaviour.
     float o = uChroma * 0.0018;
     vec3 lum = vec3(
-      texture(uScreen, uv + vec2(o, 0.0)).r,
-      texture(uScreen, uv).r,
-      texture(uScreen, uv - vec2(o, 0.0)).r
+      textureLod(uScreen, uv + vec2(o, 0.0), 0.0).r,
+      textureLod(uScreen, uv, 0.0).r,
+      textureLod(uScreen, uv - vec2(o, 0.0), 0.0).r
     ) * raster;
 
     vec3 glass = uPhosphor * lum * uBrightness;
 
     // Glow blooms toward white.
-    float bl = texture(uBloom, uv).r * raster;
+    float bl = textureLod(uBloom, uv, 0.0).r * raster;
     glass += mix(uPhosphor, vec3(1.0), 0.35) * bl * uBloomAmt;
 
     // Aperture grille, evaluated in device pixels.

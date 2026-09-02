@@ -996,6 +996,31 @@ test('the gate reaches the collision test, not just the picture', async () => {
   } finally { h.shutdown() }
 })
 
+test('the gate reaches the bullets too, not just the ship (2026-09-02 audit, L2)', async () => {
+  // Same shape as the ship test above, for the other things that consult
+  // terrain: a shot fired through the opened corridor must survive where
+  // the UNGATED rock would have eaten it -- otherwise the break shows the
+  // player clear sky their bullets silently die in.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    let col = 0
+    for (let c = 100; c < 8000; c++) { if (terrainAt(c, g.h)[0] >= 8) { col = c; break } }
+    assert.ok(col > 0, 'setup: found no ceiling thick enough to test against')
+    const place = (gateAt) => {
+      g.scroll = col - 10
+      g.gateAt = gateAt
+      g.enemies = []; g.turrets = []; g.capsules = []
+      g.bullets = [{ x: 10, y: 4, vx: 0, vy: 0, kind: 'b' }] // inside the ungated ceiling
+      p.gameStepBullets()
+      return g.bullets.length
+    }
+    assert.equal(place(null), 0, 'setup: ungated rock at this spot must stop a shot')
+    assert.equal(place(col + 10), 1, 'the gate opened the picture but the shot still died in it')
+  } finally { h.shutdown() }
+})
+
 test('a stage rollover opens a break ahead of the ship, and holds the spawns', async () => {
   const h = await inVisualizer()
   try {
@@ -1152,6 +1177,34 @@ test('the record is written where a reload will find it', async () => {
     const { STORAGE_KEY } = await import('../state.js?v=gametest')
     const saved = JSON.parse(globalThis.localStorage.getItem(STORAGE_KEY) || '{}')
     assert.equal(saved.gameHiScore, 777, 'the record never reached storage')
+  } finally { h.shutdown() }
+})
+
+test('powering off mid-game commits a record run (2026-09-02 audit, B3)', async () => {
+  // The third door out of a run, after game over and [E]: powerDown()'s
+  // hand-copied teardown dropped gameRecordScore(), so a record ended by
+  // [P] -- or the sleep timer, whose whole audience is someone walking
+  // away -- was silently discarded. gameRecordScore's own note says the
+  // design exists to keep the good runs; this held only for two of the
+  // three exits.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    h.advance(16)
+    h.program._game.score = 4242
+    // powerDown() is called directly: [P] is deliberately not mapped inside
+    // the visualizer (you exit first), so the LIVE route here is the sleep
+    // timer expiring mid-game -- and walking the fake clock through a
+    // 15-minute timer plus the fade at 16ms steps would cost the suite more
+    // than the wiring is worth. The timer -> powerDown chain has its own
+    // coverage; this test owns powerDown's teardown.
+    h.program.powerDown(h.screen)
+    h.advance(2000)
+    assert.equal(h.program.poweredOn, false, 'the set went down')
+    assert.equal(h.program.gameHiScore, 4242, 'the record survived the power-off')
+    const { STORAGE_KEY } = await import('../state.js?v=gametest')
+    const saved = JSON.parse(globalThis.localStorage.getItem(STORAGE_KEY) || '{}')
+    assert.equal(saved.gameHiScore, 4242, 'and reached storage')
   } finally { h.shutdown() }
 })
 

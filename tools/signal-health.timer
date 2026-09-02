@@ -7,12 +7,17 @@
 #   node tools/roster-watch.mjs --status              # what the last runs did
 #   systemctl --user disable --now signal-health.timer
 #
-# WHY DAILY, AND WHY A BATCH OF 40. The roster is ~477 tracks and a full pass
-# is one watch-page fetch each, against an endpoint that starts answering 429
-# after a few hundred -- which is why check-roster.mjs is incremental in the
-# first place. 40 a day walks the whole roster in about twelve days, well
-# inside check-roster's own 30-day staleness horizon, while staying far
-# enough under the rate limit that an ordinary run never trips it.
+# WHY DAILY, AND WHY A BATCH OF 40. A full pass is one watch-page fetch per
+# track, against an endpoint that starts answering 429 after a few hundred --
+# which is why check-roster.mjs is incremental in the first place. A batch of
+# 40 stays far enough under the rate limit that an ordinary run never trips
+# it, and a full pass takes total/40 days -- which must stay well inside
+# check-roster's 30-day staleness horizon. That ratio is a moving target as
+# the roster grows (this comment once said "477 tracks, ~12 days" and was
+# stale within a week), so it is not restated here as a number:
+# `roster-watch --status` prints the live margin, and the watch warns in the
+# journal when a full pass exceeds 70% of the horizon. When it does: raise
+# the horizon before the batch -- see the trap below.
 #
 # Turning this up is the obvious temptation and it is a trap: a bigger batch
 # throttles, a throttled run records NOTHING for the tracks it gave up on,

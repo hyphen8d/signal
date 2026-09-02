@@ -18,9 +18,10 @@ different program on top of it.
 
 **https://hyphen8d.github.io/signal/**
 
-New in 0.9: a full-screen visualizer with its own transport controls for
-every station, station-spacing and naming fixes, an audio-autoplay fix, a
-hard-mute mode, and a curated track roster. Full history in
+Recently added: a second band (`[B]`) carrying the ambient wing of the
+roster, a local weather readout (`[W]`), time-synced lyrics in the
+visualizer (`[L]`), a sleep timer (`[T]`), track tagging (`[K]`), and a
+touch tier that can do nearly everything the keyboard can. Full history in
 [CHANGELOG.md](./CHANGELOG.md). The full controls reference is
 [below](#controls); the roster with taglines and track lists is in
 [stations.md](./stations.md).
@@ -210,6 +211,7 @@ own small gesture set rather than the full control surface above:
 | hold | Power off |
 | swipe left / right | Step to the next / previous station, in dial order — pages the guide while it's open |
 | swipe up / down | Next track on the current station |
+| two-finger swipe left / right | Switch band |
 | two-finger tap | Cycle color |
 | two-finger hold | Open the guide |
 
@@ -217,7 +219,7 @@ A first-ever visit on a phone starts **muted**, so nothing plays out loud
 before you've touched anything -- the hint row says `TAP TO UNMUTE` until
 you do. The guide speaks touch on this tier: it lists gestures rather than
 the keys a phone doesn't have, and it's where the full set lives now that
-the hint rows only have room for four of them.
+the hint rows only have room for five of them.
 
 Scan, presets and back still have no touch equivalent. Neither does volume,
 and that one is deliberate rather than pending -- phones have hardware
@@ -345,6 +347,16 @@ isn't just an internal annoyance anymore.
     `crt-hooks.js` (live `crt.params` drives), `constants.js`, `state.js`.
   Every app module imports its siblings as `?v=<build stamp>` — see
   `main.js` — so a deploy can never mix a fresh module with a stale one.
+- **One tuning distance feeds everything.** How far the dial sits from the
+  nearest carrier is a single shared quantity, so what you hear, see and
+  read agree by construction rather than by coincidence:
+
+  ```mermaid
+  flowchart LR
+      D(("dist")) --> E["static bed gain<br/>(what you hear)"]
+      D --> T["S/N readout<br/>(what you read)"]
+      D --> G["CRT degrade<br/>(what you see)"]
+  ```
 - `src/` — the `cyberspace-crt` engine itself (WebGL2 renderer, CRT shader
   passes, the text grid with per-row damage tracking, bitmap font parser).
 - `config.js` — tunable CRT/render parameters, phosphor tints, and

@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Map of this file (45KB — jump, don't scroll):
+
+- **What this is** / **Commands** — product intent pointer, every npm script.
+- **The admin backend** — the dashboard server, its guards, SSH/tailnet access.
+- **Architecture** — bootstrap + module identity, engine vs. app, the modules,
+  cross-file invariants (layout, stations, tuning distance, effects queue).
+- **Tests** — the harness, its fakes and their capture discipline, mutation
+  checks, the dead-feedback sweep.
+- **Weather / Synced lyrics / Voice clips** — the three subsystems with rules
+  that look optional and are not.
+- **Conventions** — comments as design record, roster/content-ops rules, the
+  health tooling, screenshots, browser-verification traps.
+
 ## What this is
 
 SIGNAL — a CRT/terminal internet-radio web toy. A tuning-dial receiver rendered
@@ -19,7 +32,7 @@ to name these scripts:
 ```bash
 node tools/admin-server.mjs         # npm run admin — the admin backend + the app, port 8080
 python3 tools/dev-server.py 8000    # dev server (no-store headers); open http://localhost:8000
-node --test tests/*.test.mjs        # npm test — headless suite, ~2s, no network
+node --test tests/*.test.mjs        # npm test — headless suite, ~11s, no network
 node tools/lint-roster.js           # npm run lint — offline roster rules
 node tools/verify-roster.js         # npm run verify — lint + oEmbed check of every track (network)
 node tools/check-roster.mjs         # npm run health — deep-probe roster tracks in batches (network)
@@ -73,7 +86,11 @@ systemctl --user disable --now signal-admin    # stop it coming back
 restart.** `tools/network.html` needs no restart at all — `serveStatic()`
 re-reads from disk per request under `no-store` — which makes the split easy
 to forget in the direction that wastes the most time: the page updates on a
-reload, the routes it is calling do not.
+reload, the routes it is calling do not. The *data* the routes serve is a
+third case since 2026-09-02: `bootState()`'s imports of tuning/visuals/
+config/lint-roster are keyed on each file's mtime, so the dashboard's limits,
+glyph and visual lists refresh on the next `/api/state` without a restart —
+only route *code* still needs one.
 
 The unit carries its own reasoning in its comments (why it binds the tailnet
 rather than loopback, why `Restart=always` with no start-rate limit, why the
@@ -102,6 +119,24 @@ Either way the `Host` allowlist stays on: every address this machine actually
 has, plus the loopback names, and nothing else. That still stops DNS
 rebinding, which needs the browser to send `Host: evil.com` — a hostname an
 attacker controls is not in the set however it resolves.
+
+The trust boundary, as one picture — each guard annotated with the attack it
+stops (2026-09-02 audit; the four paragraphs above are the authority, this is
+the shape of them):
+
+```mermaid
+flowchart TB
+    subgraph laptop [Laptop]
+        B[browser -> 127.0.0.1:8080]
+    end
+    subgraph box [Dev box]
+        G1{{"bind: loopback (default) / tailnet (unit)<br/>stops: the open LAN"}}
+        G2{{"Host allowlist, absent = refused<br/>stops: DNS rebinding"}}
+        G3{{"X-Signal-Admin on every mutating route<br/>stops: cross-origin CSRF (no preflight answered)"}}
+        S[admin-server.mjs<br/>can git push]
+    end
+    B -->|ssh -N -L 8080:127.0.0.1:8080| G1 --> G2 --> G3 --> S
+```
 
 `tools/network.html` was serverless until 2026-08-27, reading and writing
 `stations.js` through Chrome's File System Access API with the roster parser
@@ -182,6 +217,16 @@ one instance of each. A bare `import './config.js'` would create a second
 instance — that exact mistake once defeated the engine's `setPhosphor`
 identity check. Keep the pattern when adding a module; the import graph must
 stay acyclic (top-level `await import` deadlocks on a cycle).
+
+```mermaid
+flowchart LR
+    I[index.html] --> M["main.js<br/>fetch build.json?t=now"] --> S(("stamp"))
+    S --> C["config.js?v=stamp"]
+    S --> P["program.js?v=stamp"]
+    P -->|"./x.js?v=${V}"| C
+    P -.->|"bare import './config.js'"| C2["config.js — a SECOND instance:<br/>setPhosphor's identity check never matches"]
+    style C2 stroke-dasharray: 5 5
+```
 
 ### Engine (`src/`) vs. app
 
@@ -563,6 +608,27 @@ list.
   drew one joined line where a long callsign ate the tagline's share of the
   row; fixed column stops mean the LANE column is now the same 43 for every
   station regardless of callsign.
+The content-ops machinery spans seven tools and four JSON files; the next
+several bullets are its rules, and this is its shape (2026-09-02 audit — the
+bullets stay the authority):
+
+```mermaid
+flowchart LR
+    A[audition.js<br/>candidates] -->|approve| P[pending-tracks.json]
+    P -->|dashboard| R[stations.js roster]
+    A -.->|reject +reason| RJ[station-profiles.json<br/>rejections]
+    P -.->|reject +reason| RJ
+    RJ -.->|"x rejected before"| A
+    R --> L[lint-roster.js<br/>offline rules]
+    R --> V[verify-roster.js<br/>oEmbed only]
+    R --> C[check-roster.mjs<br/>deep probe, batched<br/>throttled != clean]
+    C --> H[roster-health.json]
+    W[roster-watch.mjs<br/>daily timer] --> C
+    W -->|findings only| N[notify-send]
+    H --> D[dashboard<br/>ROSTER HEALTH panel]
+    W -->|--status --json| D
+```
+
 - **Rejections live in two files, and the dashboard is now the single
   writer for both.** `tools/station-profiles.json`'s `rejections` is the one
   that matters when you are picking tracks — `audition.js` prints it back at
@@ -615,10 +681,13 @@ list.
 
   Installed as a systemd **user timer**, daily, batch 40 — see
   `tools/signal-health.{service,timer}`, reference copies of what is at
-  `~/.config/systemd/user/`, which carry the schedule reasoning (40/day walks
-  477 tracks in ~12 days, inside the 30-day staleness horizon, without ever
-  tripping the rate limit — turning the batch *up* makes the sweep progress
-  *less*, since a throttled run records nothing for what it gave up on).
+  `~/.config/systemd/user/`, which carry the schedule reasoning (a full pass
+  is total/40 days and must stay inside the 30-day staleness horizon — a
+  ratio the roster's growth erodes, so it is not restated as a number here:
+  `roster-watch --status` prints the live margin, and the watch warns in the
+  journal past 70% of the horizon. Turning the batch *up* is still the trap:
+  a throttled run records nothing for what it gave up on, so a bigger batch
+  makes the sweep progress *less*).
   `SuccessExitStatus=1` because findings are a correct outcome of a run that
   worked: the unit going red should mean the machinery broke, not that the
   roster has a problem. Local run state is `tools/roster-watch-state.json`,

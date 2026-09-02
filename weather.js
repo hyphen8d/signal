@@ -184,8 +184,21 @@ export const canLocate = (win = globalThis) =>
 /** The browser's own permission dialog. Deliberately NOT called anywhere
  *  except from the card's [Y] -- see ui/weather.js for why that matters, and
  *  audio/tap.js for the same argument made at greater length about the
- *  microphone. A refusal is an ordinary outcome, not an error: it resolves
- *  to null and the caller shows nothing. */
+ *  microphone. A refusal is an ordinary outcome, not an error.
+ *
+ *  Three resolutions, and the middle one is why there are three
+ *  (2026-09-02 audit, L3):
+ *    {lat, lon}  -- an answer.
+ *    'denied'    -- error code 1, the person said no. The only outcome a
+ *                   caller may PERSIST as a no.
+ *    null        -- no answer at all: a dismissed prompt (some browsers
+ *                   fire neither callback -- the hard timeout below exists
+ *                   for exactly that), or the position simply unavailable
+ *                   (codes 2/3). This file's own insecure-origin note makes
+ *                   the argument at length: an outcome that is not a
+ *                   decision must not be remembered as one, and until this
+ *                   split all three shapes collapsed to null and were
+ *                   persisted as a permanent refusal. */
 export function requestLocation(nav = globalThis.navigator, opts = {}) {
   return new Promise((resolve) => {
     if (!nav || !nav.geolocation) { resolve(null); return }
@@ -198,7 +211,7 @@ export function requestLocation(nav = globalThis.navigator, opts = {}) {
     const guard = setTimeout(() => done(null), opts.hardTimeoutMs ?? 12000)
     nav.geolocation.getCurrentPosition(
       (pos) => { clearTimeout(guard); done({ lat: pos.coords.latitude, lon: pos.coords.longitude }) },
-      () => { clearTimeout(guard); done(null) },
+      (err) => { clearTimeout(guard); done(err && err.code === 1 ? 'denied' : null) },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 15 * 60 * 1000 },
     )
   })

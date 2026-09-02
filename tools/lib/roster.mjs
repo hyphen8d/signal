@@ -432,7 +432,16 @@ export function patchStationField(src, stationId, fieldPath, value, opts = {}) {
   if (hit.missing) {
     if (value === null || value === undefined) return src   // removing an absent field: no-op
     const key = hit.key
-    const text = formatValue(value, opts)
+    // 2026-09-02 (audit, L6) -- when the MISSING part is a holder rather
+    // than the leaf ('crt.bloomAmt' on a station with no crt block at
+    // all), the remaining path has to come into being around the value.
+    // This used to insert the bare leaf at the holder's level -- `crt: 2`
+    // -- which verifyPatch then refused (nothing corrupt ever reached
+    // disk), but the identity editor surfaced that as a baffling error on
+    // a save that should simply have worked.
+    const parts = String(fieldPath).split('.')
+    let text = formatValue(value, opts)
+    for (let i = parts.length - 1; i > hit.depth; i--) text = `{ ${parts[i]}: ${text} }`
     const holderEnd = hit.holderEnd
     // Inline object (`{ a: 1, b: 2 }`) vs. multi-line: match what's there.
     const holderText = src.slice(hit.holderStart, holderEnd + 1)
@@ -445,7 +454,17 @@ export function patchStationField(src, stationId, fieldPath, value, opts = {}) {
     // Multi-line holder: copy the indentation of the line the closing brace
     // sits on and add one level.
     const lineStart = src.lastIndexOf('\n', holderEnd) + 1
-    const closeIndent = src.slice(lineStart, holderEnd).match(/^\s*/)[0]
+    const beforeBrace = src.slice(lineStart, holderEnd)
+    // 2026-09-02 (audit, L6) -- only when the closing brace has that line
+    // to itself. A station object closes as `] }`, sharing its line with
+    // the tracks array's `]`, and inserting a whole line above THAT put
+    // the new field inside the array -- syntactically broken, caught by
+    // verifyPatch, but the exact confusing failure this branch exists to
+    // avoid. A shared line gets the inline treatment instead.
+    if (!/^\s*$/.test(beforeBrace)) {
+      return src.slice(0, holderEnd).replace(/\s+$/, '') + `, ${key}: ${text} ` + src.slice(holderEnd)
+    }
+    const closeIndent = beforeBrace.match(/^\s*/)[0]
     return src.slice(0, lineStart) + `${closeIndent}  ${key}: ${text},\n` + src.slice(lineStart)
   }
 

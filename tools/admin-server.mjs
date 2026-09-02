@@ -30,7 +30,7 @@
 import http from 'node:http'
 import os from 'node:os'
 import { spawn } from 'node:child_process'
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, readdirSync, renameSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -75,6 +75,14 @@ function resolveHost(want) {
   process.exit(1)
 }
 const HOST = resolveHost(flag('host', '127.0.0.1'))
+// 2026-09-02 (audit, L8) -- a bare `--host=` used to parse as '' and
+// server.listen(PORT, '') binds EVERY interface: a typo away from putting a
+// server that can `git push` on the open LAN, silently, on the machine's
+// most security-relevant flag. An empty value is an error, not a default.
+if (!HOST) {
+  console.error('--host= needs a value (an address, or "tailscale"). An empty one would bind every interface.')
+  process.exit(1)
+}
 const LOOPBACK = HOST === '127.0.0.1' || HOST === 'localhost' || HOST === '::1'
 
 // Host-header allowlist. Every address this machine actually has, plus the
@@ -120,7 +128,15 @@ function writeRepoFile(rel, text) {
   if (!WRITABLE.has(rel)) throw new Error(`Refusing to write "${rel}" -- not in the writable set`)
   const p = abs(rel)
   if (!inRepo(p)) throw new Error(`Refusing to write outside the repo: ${rel}`)
-  writeFileSync(p, text)
+  // 2026-09-02 (audit, L9) -- write-to-temp then rename, so a crash
+  // mid-write can never leave a truncated stations.js or a half-written
+  // JSON store behind: rename within one directory is atomic, and the old
+  // file stays whole until the new one fully exists. (Two dashboard tabs
+  // racing each other can still last-write-wins -- that is a lock, not
+  // this, and a single-user tool does not carry one.)
+  const tmp = `${p}.tmp-${process.pid}`
+  writeFileSync(tmp, text)
+  renameSync(tmp, p)
 }
 function readJson(rel, fallback) {
   try { return JSON.parse(readRepoFile(rel)) } catch (e) { return fallback }
@@ -448,17 +464,30 @@ function renameWarnings(station) {
 async function bootState() {
   const src = readRepoFile('stations.js')
   const roster = buildRosterPayload(src)
+  // 2026-09-02 (audit, L10) -- the `?v=` is keyed on each file's own mtime,
+  // not a fixed 'admin'. A module is instanced per full URL, so the fixed
+  // key meant these imports were cached for the LIFE OF THE PROCESS: edit
+  // tuning.js or add a visual and the dashboard's limits/visual lists were
+  // stale until a unit restart -- the "page updates, routes don't" trap
+  // CLAUDE.md documents for this server's own code, reaching data, where
+  // nothing documented it. An mtime key is stable between edits (no
+  // unbounded module-cache growth on a busy dashboard) and fresh after
+  // one. The boundary: only the named file's OWN top-level bindings
+  // refresh -- its sibling imports keep their `?v=` -- which covers what
+  // the payload reads (visual keys live in index.js, limits in
+  // tuning.js/lint-roster.js, SCREEN in config.js).
+  const mt = (rel) => { try { return Math.floor(statSync(path.join(ROOT, rel)).mtimeMs) } catch (e) { return 0 } }
   const [{ VISUALS }, bdf, tuning] = await Promise.all([
-    import('../visuals/index.js?v=admin'),
+    import(`../visuals/index.js?v=admin-${mt('visuals/index.js')}`),
     import('../src/bdf.js'),
-    import('../tuning.js?v=admin'),
+    import(`../tuning.js?v=admin-${mt('tuning.js')}`),
   ])
-  const { TAGLINE_MAX } = await import('./lint-roster.js')
+  const { TAGLINE_MAX, MAX_PUBLIC_STATIONS_PER_BAND } = await import(`./lint-roster.js?v=admin-${mt('tools/lint-roster.js')}`)
   // SCREEN is the CRT baseline every station's `crt: {}` is an override on
   // top of (crt-hooks.js: `{ ...SCREEN, ...station.crt }`). The editor shows
   // it as the fallback for each field, so "no value here" reads as a real
   // number rather than as blank.
-  const { SCREEN } = await import('../config.js?v=admin')
+  const { SCREEN } = await import(`../config.js?v=admin-${mt('config.js')}`)
   const font = bdf.parseBDF(readRepoFile('fonts/ter-u16n.bdf'))
   return {
     roster,
@@ -473,7 +502,12 @@ async function bootState() {
       TAGLINE_MAX,
       FREQ_MIN: tuning.FREQ_MIN, FREQ_MAX: tuning.FREQ_MAX,
       LOCK_THRESHOLD: tuning.LOCK_THRESHOLD,
-      MIN_TRACKS: 10, IDENT_TONES: 4, MAX_PUBLIC_STATIONS: 9,
+      // 2026-09-02 (audit, L11) -- was `MAX_PUBLIC_STATIONS: 9`, a flat cap
+      // restated here after the rule moved to 9-per-band (2026-08-31).
+      // Imported from lint-roster.js now, and renamed so any future page
+      // code reaching for the old flat name fails loudly instead of
+      // rendering a limit that no longer exists.
+      MIN_TRACKS: 10, IDENT_TONES: 4, MAX_PUBLIC_STATIONS_PER_BAND,
     },
     tasks: Object.fromEntries(Object.entries(TASKS).map(([k, v]) => [k, { label: v.label, network: !!v.network }])),
     build: readJson('build.json', null),
@@ -718,11 +752,17 @@ const server = http.createServer(async (req, res) => {
   // Defence in depth against DNS rebinding: a name that resolves to
   // 127.0.0.1 would otherwise let a remote page talk to a server that only
   // ever bound to loopback.
+  // 2026-09-02 (audit, L7) -- an ABSENT Host header used to skip the check
+  // entirely (`host && ...`). Browsers always send one, so the rebinding
+  // defence never had the gap -- but an HTTP/1.0 or raw-socket client
+  // walked straight past a guard that reads as an allowlist. Absent is now
+  // refused like anything else not in the set: every legitimate client of
+  // this server is a browser or curl, and both always send Host.
   const raw = req.headers.host || ''
   const host = raw.startsWith('[') ? raw.slice(0, raw.indexOf(']') + 1) : raw.split(':')[0]
-  if (host && !ALLOWED_HOSTS.has(host)) {
+  if (!host || !ALLOWED_HOSTS.has(host)) {
     res.writeHead(403, { 'Content-Type': 'text/plain' })
-    return res.end(`this server does not answer to the host "${host}"`)
+    return res.end(host ? `this server does not answer to the host "${host}"` : 'this server requires a Host header')
   }
 
   try {

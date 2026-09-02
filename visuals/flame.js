@@ -74,7 +74,10 @@ export default {
     // toward its new target instead of snapping to it -- together that
     // turns the jitter into a slow, licking billow.
     // 48th pass: a follow-up "slow down a bit more" also dropped the
-    // per-row cooling range (0.02-0.045 -> 0.015-0.035), which was a real
+    // per-row cooling numbers (base 0.02 + spread 0.045 -> 0.015 + 0.035;
+    // as a RANGE that is 0.02-0.065 dropping to 0.015-0.05 -- the old
+    // shorthand here wrote the base+spread pair with a dash and read as a
+    // narrower range than the code draws). That was a real
     // bug, not just a tuning choice -- with cooling that low, heat barely
     // decayed over the ~21-row climb from floor to top, so the whole
     // column stayed lit almost every frame instead of tapering. That's

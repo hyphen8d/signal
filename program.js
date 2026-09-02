@@ -775,10 +775,27 @@ export default {
     // exitVisualizer(), so the game's own teardown there is not reached and
     // has to be repeated here. Left set, the next power-up would come back
     // up inside a game.
+    // 2026-09-02 (audit, B3) -- record first, then discard. The hand-copied
+    // teardown here dropped stopGame()'s gameRecordScore() call, so a
+    // record run ended by [P] -- or by the SLEEP TIMER, whose entire
+    // audience is someone walking away mid-game -- was silently thrown
+    // out: exactly the failure gameRecordScore()'s own "walking out with
+    // [E]" note says the design exists to prevent, arriving through the
+    // third door. Cheap when no game is up: it returns on !this._game.
+    this.gameRecordScore()
     this.gameOpen = false
     this._game = null
     this._heldKeys?.clear()
     this._konami.length = 0
+    // 2026-09-02 (audit, L5) -- the idle-event and grind schedules are
+    // positions on the rAF clock (`t`), and `t` keeps advancing through
+    // STANDBY. Left alone, both sat in the past after any real time off,
+    // so a roll/tear -- or a grind hit -- fired on nearly the first locked
+    // frame of the NEXT session: an "idle" event with zero idle time,
+    // reading as the set glitching the moment it warms up. Zeroed here;
+    // frame()'s scheduler re-seeds a fresh interval on first sight of 0.
+    this._nextIdleEventAt = 0
+    this._nextGrindAt = 0
     // 2026-08-25 audit: everything cosmetic that was in flight -- status
     // sweep, text resolves, CRT ramps, bloom pulses, the boot flicker tail,
     // the shimmer restore -- lives on the normal effects queue and is
@@ -1246,6 +1263,9 @@ export default {
               // length. So this is where the set earns the right to claim
               // the track, and detectBreak() holds the readout until it.
               self._contentStarted = true
+              // 2026-09-02 (audit, L4) -- a track that actually starts is
+              // what re-arms the dead-station budget; see onError below.
+              self._errorSkips = 0
               // 23rd pass -- the tab is the other surface the reveal holds
               // (updateTabTitle names the station and waits while a reveal
               // is held), and it has no per-frame redraw to pick the
@@ -1279,7 +1299,35 @@ export default {
           // error state -- consistent with how ENDED already just skips.
           // 32nd pass: a one-shot chroma/roll glitch flash rides along with
           // the existing dead-video auto-skip -- see flashCrtGlitch().
-          onError: () => { if (self.mode === 'locked') { flashCrtGlitch(s); self.skip(s) } },
+          // 2026-09-02 (audit, L4) -- with a BUDGET now: "no retry loop
+          // against the same ID" (above) was true, but a station whose
+          // every track had died -- a licence change region-locking a whole
+          // catalogue is the realistic shape -- skipped in an endless
+          // glitch loop with no user-facing state at all, each dead load a
+          // fresh error. After a full bag's worth of consecutive failures
+          // (every track got its chance; the shuffle bag guarantees no
+          // repeats inside one pass) the set drops to seeking instead: a
+          // station that has gone dead sounds like static on a real
+          // receiver, and OFF AIR is the honest word for it. The counter
+          // re-arms on any track that actually reaches PLAYING, and
+          // re-locking the station retries from zero -- the health tooling
+          // is what fixes the roster; this only stops the set thrashing
+          // until it does.
+          onError: () => {
+            if (self.mode !== 'locked') return
+            self._errorSkips = (self._errorSkips || 0) + 1
+            if (self._errorSkips >= (self.lockedStation?.tracks.length || 1)) {
+              self._errorSkips = 0
+              self.enterSeeking(s)
+              // After enterSeeking, whose own SEEKING status this replaces
+              // -- same ordering cycleBand() uses, and for the same reason:
+              // this is the one thing the screen cannot otherwise say.
+              self.setStatus(s, 'OFF AIR', false)
+              return
+            }
+            flashCrtGlitch(s)
+            self.skip(s)
+          },
         },
       })
     }
@@ -1964,6 +2012,16 @@ export default {
     if (!base) return
     let nearest = null, nearestDist = Infinity
     for (const st of SECRET_STATIONS) {
+      // 2026-09-02 (audit, L1) -- band-local, like every other nearest-*
+      // question since 2026-08-31 (see tuning.js). This loop was the one
+      // walk that never got the filter, and it was correct only by
+      // COINCIDENCE: the two bands' frequency ranges are numerically
+      // disjoint today, so no cross-band distance can come inside
+      // NEAR_THRESHOLD. The first secret station added to ZM -- or any
+      // future band whose range overlaps another's -- would have had its
+      // tease bleeding through from a dial it is not on, with nothing to
+      // say why. Filtered now, while it costs one line and no behaviour.
+      if (st.band !== this.band) continue
       const d = Math.abs(st.freq - this.freq)
       if (d < nearestDist) { nearestDist = d; nearest = st }
     }
@@ -2097,13 +2155,27 @@ export default {
     // snaps back in place) used to redraw a random new track too, which is
     // the same complaint from a different trigger -- this now resumes it
     // near-instantly instead, since almost no time will have passed.
-    if (this.lockedStation && this.currentTrack) {
+    // 2026-09-02 (audit, B2) -- NOT when a fresh prime is pending: a primed
+    // player is already holding the INCOMING station's track (cued at the
+    // start of presetTune's ~330ms sweep), so getCurrentTime() here answers
+    // for the wrong recording -- 0, or a random mid-song point once the
+    // CUED handler's seek ran. That wrote the new track's position against
+    // the OLD station, and a re-lock within RESUME_CUTOFF_MS then resumed
+    // the right track at a wrong position. presetTune() takes the honest
+    // snapshot itself, before it disturbs the player; this guard keeps the
+    // sweep-end pass here from overwriting it. Direct locks (Enter, a
+    // seek that lands) have no prime in flight and snapshot here as ever.
+    const primePending = this._primedTrack && Date.now() - this._primedTrack.at < 2000
+    if (!primePending && this.lockedStation && this.currentTrack) {
       let pos = 0
       try { pos = this.player?.getCurrentTime?.() || 0 } catch (e) {}
       this.lastPlayback[this.lockedStation.id] = { track: this.currentTrack, position: pos, at: Date.now() }
     }
     this.mode = 'locked'
     this.lockedStation = station
+    // 2026-09-02 (audit, L4) -- a fresh lock retries from zero; errors
+    // carried over from a different station must not trip the budget early.
+    this._errorSkips = 0
     // 41st pass: this station's own picture, before anything below reads the
     // baseline back (the ident bloom pulse, the focus snap, and retune()'s
     // distance degrade all settle to crtBase -- see setCrtCharacter).
@@ -2378,6 +2450,19 @@ export default {
     // as "where you were", which is what lets re-locking resume the same
     // track (RESUME_CUTOFF_MS). Across a band that memory is a lie: the
     // station is not merely far away, it is not on this dial at all.
+    // 2026-09-02 (audit, L13) -- the LOCK is a lie across bands; the RESUME
+    // memory is not, and dropping the one silently discarded the other.
+    // lastPlayback is keyed by station id and only ever consulted when
+    // re-locking that exact station, so snapshotting here costs nothing
+    // and makes a band round-trip inside the cutoff resume mid-song the
+    // way every other way of leaving a station already does. Same shape as
+    // presetTune()'s snapshot (B2), and safe for the same reason: nothing
+    // has disturbed the player yet at this point.
+    if (this.lockedStation && this.currentTrack) {
+      let pos = 0
+      try { pos = this.player?.getCurrentTime?.() || 0 } catch (e) {}
+      this.lastPlayback[this.lockedStation.id] = { track: this.currentTrack, position: pos, at: Date.now() }
+    }
     this.lockedStation = null
     this.retune(s, next.freqMin)
     this.enterSeeking(s)
@@ -2489,6 +2574,21 @@ export default {
       return
     }
     this.stopScan()
+    // 2026-09-02 (audit, B2) -- snapshot the DEPARTING station before
+    // _primeStationAudio() below cues the new one's track into the player.
+    // This used to be tryLock()'s job alone (36th pass), but on this path
+    // its snapshot runs at the END of the sweep, ~330ms after the player
+    // stopped holding the old track -- see the primePending guard there.
+    // Same shape as tryLock's own: track + position + when, keyed by the
+    // station being left. No mode check: lockedStation survives SEEKING as
+    // "where you were" (that is the whole resume memory), and the player is
+    // still holding that station's track until the prime below replaces it
+    // -- a seek-then-preset must snapshot here too or it snapshots nowhere.
+    if (this.lockedStation && this.currentTrack) {
+      let pos = 0
+      try { pos = this.player?.getCurrentTime?.() || 0 } catch (e) {}
+      this.lastPlayback[this.lockedStation.id] = { track: this.currentTrack, position: pos, at: Date.now() }
+    }
     // 2026-08-22, round 4 -- fixes switching stations leaving mute off,
     // meters showing activity, but no audio until a manual tap. The actual
     // loadTrack() for this station used to fire only

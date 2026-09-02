@@ -222,6 +222,40 @@ test('mobile lite: 42x22 grid, tap powers on, swipe steps the station', async ()
   } finally { h.shutdown() }
 })
 
+test('mobile: a two-finger swipe switches band -- the touch [B] (2026-09-02 audit, B1)', async () => {
+  // Until this gesture, [B] was the ONLY path to cycleBand(), so a phone
+  // was trapped in whichever band it booted into -- half the roster
+  // unreachable by touch since the second band landed.
+  const h = await boot({ mobile: true })
+  try {
+    h.advance(600)
+    h.tap()
+    h.advance(4000)
+    assert.equal(h.program.poweredOn, true)
+    const before = h.program.band
+    h.swipe2(1)
+    h.advance(300)
+    assert.notEqual(h.program.band, before, 'two-finger swipe cycles the band')
+    assert.equal(h.program.mode, 'seeking', 'lands seeking at the band edge, like desktop [B]')
+    assert.ok(h.find('BAND') >= 0, 'the status names the band that landed')
+    // The movement guard: the same pair of fingers WITHOUT movement must
+    // still be the color gesture, not a band change -- a swipe splits off
+    // by distance, not by replacing the tap.
+    const after = h.program.band
+    const mode = h.program.displayModeIndex
+    h.touch2tap()
+    h.advance(100)
+    assert.equal(h.program.band, after, 'a still two-finger tap does not change band')
+    assert.notEqual(h.program.displayModeIndex, mode, 'a still two-finger tap is still COLOR')
+    // And a station swipe from the seeking state locks somewhere on the
+    // NEW band -- the gesture leaves the listener somewhere usable.
+    h.swipe(1)
+    h.advance(600)
+    assert.ok(h.program.lockedStation, 'station swipe locks after a band change')
+    assert.equal(h.program.lockedStation.band, after, 'and onto the new band')
+  } finally { h.shutdown() }
+})
+
 test('a tab that never gets a frame still completes the cold-open and a power-on (fallback ticker)', async () => {
   // Found on the live site the day the queue shipped: Chrome throttles rAF
   // for a background WINDOW while visibilityState stays 'visible' on
@@ -580,7 +614,7 @@ test('guide page 1 on the lite grid teaches gestures, not keys', async () => {
     // find('HOLD') would happily match the '2-HOLD' row. Anchoring at
     // column 2 asserts the alignment at the same time.
     const rows = h.rows()
-    for (const [gesture, action] of [['SWIPE L/R', 'STATION'], ['SWIPE U/D', 'NEXT TRACK'], ['TAP', 'MUTE'], ['HOLD', 'POWER OFF'], ['2-TAP', 'COLOR'], ['2-HOLD', 'GUIDE']]) {
+    for (const [gesture, action] of [['SWIPE L/R', 'STATION'], ['SWIPE U/D', 'NEXT TRACK'], ['2-SWIPE', 'BAND'], ['TAP', 'MUTE'], ['HOLD', 'POWER OFF'], ['2-TAP', 'COLOR'], ['2-HOLD', 'GUIDE']]) {
       const row = rows.find((r) => r.slice(2).startsWith(gesture) && r.includes(action))
       assert.ok(row, `${gesture} -> ${action} listed at the control block's column stop`)
     }
@@ -751,6 +785,100 @@ const otherPreset = async (h, avoid = []) => {
   const i = STATION_PRESET_ORDER.findIndex((st) => !taken.has(st))
   return String(i + 1)
 }
+
+test('a preset switch remembers where the OLD station was, not the new track (2026-09-02 audit, B2)', async () => {
+  // The bug: _primeStationAudio() cues the NEW station's track at the START
+  // of presetTune's ~330ms sweep, and tryLock()'s snapshot read
+  // getCurrentTime() at the END of it -- so lastPlayback[old station]
+  // recorded the new track's position (0, or a random mid-song point) and
+  // a re-lock inside RESUME_CUTOFF_MS resumed the right track at a wrong
+  // position. The fake player shares the real cue semantics, which is what
+  // lets this assert on the position instead of just the track.
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    const a = h.program.lockedStation
+    assert.ok(a, 'boot locks a station')
+    h.advance(3000) // let the mid-song join land
+    // Park the playhead somewhere EARLY by hand: the random join can land
+    // near the track's end, where the resume seek's own end-clamp (the same
+    // clamp the mid-song join uses) legitimately resumes BELOW where you
+    // left -- a correct behaviour this test must not read as the bug.
+    h.program.player.seekTo(30)
+    h.advance(5000)
+    const trackA = h.program.currentTrack
+    const posA = h.program.player.getCurrentTime()
+    assert.ok(posA > 20 && posA < 60, `test setup: track A is early mid-song (${posA})`)
+    h.key(await otherPreset(h))
+    h.advance(2500) // sweep + lock on station B
+    assert.notEqual(h.program.lockedStation, a, 'switched stations')
+    const snap = h.program.lastPlayback[a.id]
+    assert.ok(snap, 'the departing station was snapshotted')
+    assert.equal(snap.track, trackA, 'the snapshot names the track that was playing')
+    assert.ok(Math.abs(snap.position - posA) < 3,
+      `the snapshot holds station A's own position (got ${snap.position}, was at ${posA})`)
+    // And the round trip: preset back inside the cutoff resumes near where
+    // the broadcast "would be now" -- not at 0, not at a random point.
+    const gapMs = 20000
+    h.advance(gapMs)
+    const presetA = String(h.program.bandPresets().indexOf(a) + 1)
+    h.key(presetA)
+    h.advance(2500)
+    assert.equal(h.program.lockedStation, a, 'back on station A')
+    assert.equal(h.program.currentTrack, trackA, 'same track resumes')
+    const resumed = h.program.player.getCurrentTime()
+    const expected = posA + (2500 + gapMs) / 1000
+    // Bounded on both sides rather than pinned: the resume seek is clamped
+    // away from the track's end (same clamp as the mid-song join), and a
+    // random join point near the end can legitimately land under `expected`.
+    // The regression this test exists for reads as a resume near ZERO or at
+    // a random unrelated point -- the snapshot assertion above is the exact
+    // half; this one only needs to see forward motion inside the window.
+    assert.ok(resumed > posA - 6 && resumed < expected + 6,
+      `resumed inside the live window (got ${resumed}, left at ${posA}, expected <= ~${expected})`)
+  } finally { h.shutdown() }
+})
+
+test('an astral codepoint draws as ?, not as a truncated glyph (2026-09-02 audit, L12)', async () => {
+  // chars is a Uint16Array: before the clamp, an emoji in a track title
+  // stored `codepoint & 0xFFFF` and drew as an unrelated BMP character --
+  // U+1F480 came out as U+F480, a private-use cell the font answers with
+  // whatever it likes. '?' is the same mark the font's own fallback uses,
+  // and it fails predictably.
+  const h = await boot()
+  try {
+    h.term.put(2, 12, '💀')
+    assert.equal(h.row(12)[2], '?', `got ${JSON.stringify(h.row(12)[2])}`)
+  } finally { h.shutdown() }
+})
+
+test('a band round-trip inside the cutoff resumes mid-song (2026-09-02 audit, L13)', async () => {
+  // cycleBand() drops the LOCK (correct: the station is not on the new
+  // dial) but used to drop the resume memory with it, so [B] away and back
+  // re-drew a fresh random track where every other way of leaving a
+  // station resumes. The snapshot is keyed by station id and only consulted
+  // when re-locking that station, so keeping it costs nothing.
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    const st = h.program.lockedStation
+    const track = h.program.currentTrack
+    h.advance(3000)
+    h.program.player.seekTo(30)   // park early -- see the B2 test's clamp note
+    h.advance(5000)
+    const pos = h.program.player.getCurrentTime()
+    h.key('b'); h.advance(800)
+    assert.notEqual(h.program.band, st.band, 'test setup: on the other band')
+    const snap = h.program.lastPlayback[st.id]
+    assert.ok(snap, 'leaving by band switch snapshots the station')
+    assert.ok(Math.abs(snap.position - pos) < 3, `snapshot holds the position (got ${snap.position}, was at ${pos})`)
+    h.key('b'); h.advance(800)    // back to the original band
+    h.key(String(h.program.bandPresets().indexOf(st) + 1))
+    h.advance(2500)
+    assert.equal(h.program.lockedStation, st, 'back on the station')
+    assert.equal(h.program.currentTrack, track, 'the same track resumes across the band round-trip')
+  } finally { h.shutdown() }
+})
 
 /** Arrow the dial off whatever the boot locked onto, into plain SEEKING. */
 const seekOffStation = (h) => {
@@ -2143,6 +2271,225 @@ test('[K] says so when there is no clipboard to write to', async () => {
     assert.ok(h.program.currentTrack, 'test setup: something is playing')
     delete globalThis.navigator
     assert.equal(h.program.tagTrack(h.screen ?? {}), 'NO CLIPBOARD')
+  } finally { h.shutdown() }
+})
+
+test('a lookup still pending at PLAYING is gated by the stashed duration (2026-09-02 audit, B4)', async () => {
+  // The very first load of a session is genuinely blind (no video in the
+  // player yet, duration 0), and 'mismatch' answers it with a synced lyric
+  // for a recording 90s off. No flush happens until after PLAYING, so the
+  // refine call lands while the chain is still pending -- the case that
+  // used to drop the duration on the floor and resolve the entry unranked
+  // and un-gated: confidently drifting lyrics for the whole play.
+  const h = await boot({ player: true, lyrics: 'mismatch' })
+  try {
+    h.powerOn() // locks a station, loads blind; PLAYING fires inside, refine stashes
+    const track = h.program.currentTrack
+    assert.ok(track, 'test setup: something is playing')
+    await h.flush() // NOW the chain resolves -- against the stash, not blind
+    h.advance(100)
+    const { lyricsStateFor } = await import(`../audio/voice.js?v=${h.tag}`)
+    assert.equal(lyricsStateFor(track), 'unavailable',
+      'a mismatched recording slipped past the gate because the lookup outlived the refine window')
+  } finally { h.shutdown() }
+})
+
+test('a refine that dies keeps the lyrics it replaced (2026-09-02 audit, B4)', async () => {
+  // Phased by call order FOR THIS TRACK (the boot lock fires its own
+  // lookup, which must not eat the phase): the blind request gets the
+  // canned answer, and every later one for the same title dies the way a
+  // dropped connection does. The refine used to route through 'pending'
+  // to 'error', costing lyrics that were already parsed -- possibly on
+  // screen in [L] -- for the session.
+  let calls = 0
+  const h = await boot({ player: true, lyrics: (u) => (u.includes('refined-away') ? (++calls <= 1 ? true : 'fail') : true) })
+  try {
+    h.powerOn()
+    const voice = await import(`../audio/voice.js?v=${h.tag}`)
+    const t = { youtubeId: 'zzB4', title: 'refined-away', artist: 'nobody' }
+    voice.ensureLyricsFetched(t, 0)   // blind: one /api/get, canned answer
+    await h.flush()
+    assert.equal(voice.lyricsStateFor(t), 'available', 'test setup: blind lookup succeeded')
+    voice.ensureLyricsFetched(t, 500) // refine: rankedBy 0 !== 500 -> refetch, which dies
+    await h.flush()
+    assert.equal(voice.lyricsStateFor(t), 'available',
+      'a dead refine downgraded lyrics that were already parsed')
+  } finally { h.shutdown() }
+})
+
+test('[K] and [0] answer to the KEYS, not just their methods (2026-09-02 audit, T1)', async () => {
+  // Mutation-proven gap: deleting key()'s `case 'k'` left the whole suite
+  // green, because every [K] test called tagTrack() directly -- the suite
+  // could not see dead wiring, and only the manual dead-feedback sweep
+  // would have caught it. These two go through key() and nothing else, so
+  // the wiring itself is what is under test. [0] is the same shape: its
+  // helpers were covered, its keypress was not (GREEN ROOM's ')' was).
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.key(await otherPreset(h)); h.advance(2500)
+    assert.ok(h.program.currentTrack, 'test setup: something is playing')
+    let written = null
+    globalThis.navigator = { clipboard: { writeText: (t) => { written = t; return Promise.resolve() } } }
+    try {
+      h.key('k')
+      h.advance(300)
+      // The link half is relative in the harness (no location.origin), so
+      // the assertion anchors on the share params rather than a scheme.
+      assert.ok(written && written.includes('?station='), 'pressing [K] reached the clipboard')
+      assert.ok(h.find('COPIED') >= 0, 'and the COPIED flash landed on screen')
+    } finally { delete globalThis.navigator }
+    h.key('0')
+    h.advance(2500)
+    assert.equal(h.program.lockedStation?.secret, true, 'pressing [0] tunes the secret station')
+  } finally { h.shutdown() }
+})
+
+test('powerDown clears the idle-event clocks (2026-09-02 audit, L5)', async () => {
+  // Both schedules are positions on the rAF clock, which keeps advancing
+  // through STANDBY -- so a set left off for an evening used to come back
+  // up with both in the past, and fired a roll/tear on nearly the first
+  // locked frame: an "idle" event with zero idle time.
+  const h = await boot()
+  try {
+    h.powerOn()
+    h.advance(3000)
+    assert.ok(h.program._nextIdleEventAt > 0, 'test setup: a schedule exists while locked')
+    h.key('p')
+    h.advance(1500)
+    assert.equal(h.program._nextIdleEventAt, 0, 'idle-event clock survives into STANDBY')
+    assert.equal(h.program._nextGrindAt, 0, 'grind clock survives into STANDBY')
+  } finally { h.shutdown() }
+})
+
+test('a fully-dead station drops to seeking instead of skipping forever (2026-09-02 audit, L4)', async () => {
+  // The realistic shape: a licence change region-locks a whole catalogue,
+  // and every track on the station errors as it loads. The old behaviour
+  // was an endless glitch-skip loop with no user-facing state; the budget
+  // gives every track one chance (a full bag has no repeats) and then the
+  // set falls off the carrier and says why.
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.key(await otherPreset(h)); h.advance(2500)
+    const station = h.program.lockedStation
+    assert.ok(station, 'test setup: locked')
+    const bag = station.tracks.length
+    // One failure is still just a skip -- the 14th-pass safety net intact.
+    h.player.fail(); h.advance(300)
+    assert.equal(h.program.mode, 'locked', 'a single dead video must not unlock the station')
+    // A dead video errors BEFORE it ever reaches PLAYING, so the failures
+    // must land faster than the fake can start the next track -- give each
+    // load one frame, not the ~700ms a live track needs to come up. (The
+    // first draft advanced 300ms per failure, and the fake -- whose tracks
+    // are all alive -- kept reaching PLAYING and re-arming the budget:
+    // which is the budget working, not the station dying.)
+    let guard = 0
+    while (h.program.mode === 'locked' && guard++ < bag + 5) { h.player.fail(); h.advance(16) }
+    assert.equal(h.program.mode, 'seeking', 'the set never gave up on a fully-dead station')
+    assert.ok(guard <= bag + 2, `gave up only after ${guard} extra failures (bag is ${bag})`)
+    h.advance(600) // the status bracket reveals over a few frames
+    assert.ok(h.find('OFF AIR') >= 0, 'and said why')
+    // Re-locking retries from zero -- the budget is per-lock, not forever.
+    h.key(String(h.program.bandPresets().indexOf(station) + 1)); h.advance(2500)
+    assert.equal(h.program.mode, 'locked', 're-locking the station should try again')
+  } finally { h.shutdown() }
+})
+
+// --- [W] weather, end to end (2026-09-02 audit, T2) ----------------------
+// The pure half lives in weather.test.mjs; until this section, no test
+// could press 'w' at all, so the consent keys and the paint guards
+// CLAUDE.md flags as fragile ran completely uncovered.
+
+test('[W]: consent by key lights the row-0 readout', async () => {
+  const h = await boot({ weather: true })
+  try {
+    h.powerOn()
+    assert.deepEqual(h.geoCalls, [], 'no location prompt before anyone says yes')
+    h.key('w')
+    assert.equal(h.program.weatherOpen, true, 'the card came up')
+    h.key('y')
+    await h.flush()
+    h.advance(200)
+    assert.deepEqual(h.geoCalls, ['getCurrentPosition'], 'the [Y] keypress is what asked')
+    assert.equal(h.program.weatherConsent, 'yes')
+    h.key('w') // close the card
+    h.advance(1100) // the next clock tick redraws row 0
+    assert.ok(h.row(0).includes('69'), `the reading reached the title bar: "${h.row(0).trim()}"`)
+  } finally { h.shutdown() }
+})
+
+test('[W]: a fetch that lands after power-down does not paint STANDBY (B5)', async () => {
+  // The async-painter class this file's own header warns about:
+  // drawWeatherReadout is called from refreshWeather's completion, and its
+  // blank() used to run before any state check -- a late fetch painted a
+  // lit inverse strip (and the reading) onto row 0 of a screen that owns
+  // every cell. Same guard covers the guide and the consent card.
+  const h = await boot({ weather: true })
+  try {
+    h.powerOn()
+    h.key('w'); h.key('y')
+    await h.flush()
+    h.advance(1100)
+    h.key('w') // the card stays up through [Y] (it repaints with the reading); close it
+    assert.equal(h.program.weatherOpen, false, 'test setup: card closed')
+    h.advance(16 * 60 * 1000)   // past WX_MAX_AGE_MS: the tick starts a refresh
+    h.key('p')                  // power down with that fetch still in flight
+    h.advance(2000)
+    await h.flush()             // NOW the fetch resolves, onto STANDBY
+    h.advance(200)
+    assert.equal(h.program.poweredOn, false)
+    assert.ok(!h.row(0).includes('69'), `a late reading painted through STANDBY: "${h.row(0).trim()}"`)
+  } finally { h.shutdown() }
+})
+
+test('[W]: failed forecasts back off instead of retrying every second (B5)', async () => {
+  const h = await boot({ weather: 'fail' })
+  try {
+    h.powerOn()
+    h.key('w'); h.key('y')
+    await h.flush()
+    assert.equal(h.wxCalls.length, 1, 'the consent attempt itself')
+    // Ten seconds of clock, promise queue drained between ticks -- the old
+    // behaviour fired one network attempt per tick here.
+    for (let i = 0; i < 10; i++) { h.advance(1000); await h.flush() }
+    assert.equal(h.wxCalls.length, 1, `a failing fetch retried ${h.wxCalls.length - 1} times inside the 60s floor`)
+    // And the floor is a floor, not a wall: a minute later it tries again.
+    for (let i = 0; i < 61; i++) { h.advance(1000); await h.flush() }
+    assert.equal(h.wxCalls.length, 2, 'recovery attempt after the floor')
+  } finally { h.shutdown() }
+})
+
+test('[W]: a dismissed prompt is NOT remembered as a refusal (2026-09-02 audit, L3)', async () => {
+  // 'silent' models the browsers where closing the prompt fires neither
+  // callback -- requestLocation()'s 12s hard timeout is the only way out.
+  // That non-answer used to be persisted as a permanent 'no', the same
+  // conflation the insecure-origin note in weather.js argues against.
+  const h = await boot({ weather: 'silent' })
+  try {
+    h.powerOn()
+    h.key('w'); h.key('y')
+    h.advance(12500)          // ride out the hard timeout
+    await h.flush()
+    h.advance(100)
+    assert.equal(h.program.weatherConsent, 'yes', 'a dismissal was recorded as a refusal')
+    assert.equal(h.geoCalls.length, 1)
+    // And the next [W] gets to ask again, inside that keypress.
+    h.key('w')                // close the card the [Y] flow left up
+    h.key('w')                // re-open: consent is yes, no location yet
+    await h.flush()
+    assert.equal(h.geoCalls.length, 2, 'the next [W] did not re-raise the prompt')
+  } finally { h.shutdown() }
+})
+
+test('[W]: a real refusal is remembered as no', async () => {
+  const h = await boot({ weather: 'deny' })
+  try {
+    h.powerOn()
+    h.key('w'); h.key('y')
+    await h.flush()
+    h.advance(100)
+    assert.equal(h.program.weatherConsent, 'no', 'code-1 denial persists, as designed')
   } finally { h.shutdown() }
 })
 

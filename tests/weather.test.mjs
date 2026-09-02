@@ -14,7 +14,19 @@ import {
   wmoShort, CONSENT_COPY, INSECURE_COPY, CARD_TEXT_W, canLocate,
 } from '../weather.js'
 
-/** A full local day of hourly readings, in Open-Meteo's shape. */
+/** A full local day of hourly readings, in Open-Meteo's shape.
+ *
+ *  CAPTURED, not assumed (2026-09-02 audit, L15) -- fetched live through
+ *  forecastUrl() itself, per the rule the LRCLIB and YT fakes follow: a
+ *  fake for an external thing gets rebuilt from the real thing once. What
+ *  the capture confirmed: `hourly` carries exactly these three arrays plus
+ *  `time`, all 24 long for forecast_days=1; `time` entries are ZONELESS
+ *  local strings ('2026-09-02T00:00' -- the char-slicing rule below depends
+ *  on that); a healthy day has no nulls anywhere; `current.temperature_2m`
+ *  is a FLOAT (73.7) that the app rounds; and daily sunrise/sunset share
+ *  the same zoneless T-hh:mm shape. Also learned: temperature_unit accepts
+ *  only 'fahrenheit'/'celsius' -- anything else is an HTTP 400, which
+ *  fetchWeather() fails soft on (readout simply absent). */
 const day = (temps, codes) => ({
   time: Array.from({ length: 24 }, (_, h) => `2026-08-29T${String(h).padStart(2, '0')}:00`),
   temperature_2m: temps,

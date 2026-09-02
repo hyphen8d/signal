@@ -31,6 +31,13 @@ const { centerXRange, drawBoxTop, drawBoxBottom, drawBoxSide } = await import(`.
 const { saveSignalState } = await import(`../state.js?v=${V}`)
 const WX = await import(`../weather.js?v=${V}`)
 
+// 2026-09-02 (audit, B5) -- the floor between forecast ATTEMPTS, read by
+// tickWeather(). Distinct from WX_MAX_AGE_MS (weather.js), which is how old
+// a SUCCESSFUL reading may grow before the next refresh: this one only
+// bites while attempts are failing, where the old behaviour was one network
+// try per second for the rest of the session.
+const WX_RETRY_MS = 60 * 1000
+
 // Row 0. The brand plate ends at 51 and the clock starts at 65, which is
 // thirteen columns -- the mirror of the sleep timer's stretch on the other
 // side of the plate.
@@ -151,12 +158,21 @@ export default {
       if (!WX.canLocate()) { this._wxInsecure = true; return }
       this._wxInsecure = false
       if (!this._wxLoc) this._wxLoc = await WX.requestLocation()
-      if (!this._wxLoc) {
-        // A real refusal, or a prompt that was dismissed. Recorded so the
-        // row-0 readout does not sit blank while the program thinks it has
-        // consent, and so the card is not re-asked on every [W].
+      if (this._wxLoc === 'denied') {
+        // 2026-09-02 (audit, L3) -- ONLY a real refusal (error code 1) is
+        // persisted. This branch used to catch dismissals and the hard
+        // timeout too, which remembered "I closed the prompt" as a
+        // permanent no -- the same conflation canLocate()'s insecure-origin
+        // note argues against, one door over. A dismissal now falls to the
+        // branch below: consent stays 'yes' with no location, the card
+        // says NO READING, and the next [W] re-raises the prompt inside
+        // that keypress -- the same re-ask-in-the-gesture shape the tab
+        // capture uses on [V].
+        this._wxLoc = null
         this.weatherConsent = 'no'
         saveSignalState(this)
+      } else if (!this._wxLoc) {
+        // No answer is not an answer -- nothing is recorded, see above.
       } else if (WX.isStale(this._wx)) {
         this._wxPhase = 'loading'
         if (this.weatherOpen) this.drawWeatherCard(s)
@@ -166,6 +182,10 @@ export default {
     } finally {
       this._wxBusy = false
       this._wxPhase = null
+      // 2026-09-02 (audit, B5) -- when the attempt ENDED, success or not;
+      // tickWeather's retry floor reads it. Set in the finally so a thrown
+      // path cannot leave the floor unarmed and the storm intact.
+      this._wxLastAttemptAt = Date.now()
       // Only NOW is "we looked and found nothing" true. Before the first
       // completed attempt there is no reading because nobody has asked yet,
       // which is a different thing and must not draw the same.
@@ -195,6 +215,16 @@ export default {
     if (this.mobile || !this.poweredOn) return
     if (this.weatherConsent !== 'yes' || !this._wxLoc) return
     if (!WX.isStale(this._wx)) return
+    // 2026-09-02 (audit, B5) -- a floor between ATTEMPTS, not just between
+    // successes. "at most once every fifteen minutes" (the header comment
+    // above) was only true while fetches succeeded: a FAILED fetch leaves
+    // `_wx` null, isStale(null) is true, and _wxBusy prevents overlap but
+    // not cadence -- so offline, or with Open-Meteo down, this fired one
+    // network attempt per second for the whole session, against a keyless
+    // public API. One try a minute is prompt recovery when the network
+    // comes back, and is noise against the 15-minute cadence
+    // (WX_MAX_AGE_MS) the healthy path already runs at.
+    if (this._wxLastAttemptAt && Date.now() - this._wxLastAttemptAt < WX_RETRY_MS) return
     this.refreshWeather(s)
   },
 
@@ -205,10 +235,25 @@ export default {
    *  clutter on the busiest row on the screen. */
   drawWeatherReadout(s) {
     if (this.mobile) return
+    // 2026-09-02 (audit, B5) -- the poweredOn check moved ABOVE the blank,
+    // and the two grid-owning overlays joined it. blank() writes lit
+    // inverse cells (they are part of the title bar's fill), and this is
+    // called from refreshWeather()'s completion -- an async painter. A
+    // fetch resolving after the guide went up, or after power-down, put a
+    // thirteen-cell inverse strip on row 0 of a screen that owns every
+    // cell: the same class of late paint the fx-queue's gating exists to
+    // stop, arriving through a promise instead of a timer. (This file's
+    // own header warns about exactly this and the first version still had
+    // it.) Cheap to drop rather than defer: row 0 is redrawn by every
+    // chrome rebuild, so the reading lands with the next tick's draw.
+    // The consent/reading checks stay AFTER the blank on purpose: a
+    // powered-on title bar wants the segment cleared even when there is
+    // nothing true to say.
+    if (!this.poweredOn || this.guideOpen || this.tapConsentOpen) return
     const { term } = s
     const blank = () => { for (let x = WX_MIN_X - 1; x <= WX_RIGHT + 1; x++) term.put(x, 0, ' ', NORMAL, 1) }
     blank()
-    if (!this.poweredOn || this.weatherConsent !== 'yes' || !this._wx) return
+    if (this.weatherConsent !== 'yes' || !this._wx) return
     const txt = `${this._wx.current.temp}${WX.unitSuffix(this._wx.units)} ${WX.wmoShort(this._wx.current.code)}`
     const x0 = Math.max(WX_MIN_X, WX_RIGHT - txt.length + 1)
     for (let i = 0; i < txt.length && x0 + i <= WX_RIGHT; i++) term.put(x0 + i, 0, txt[i], DIM, 1)

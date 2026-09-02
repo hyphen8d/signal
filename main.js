@@ -39,6 +39,34 @@ const { default: program } = await import(`./program.js?v=${stamp}`)
 
 const canvas = document.getElementById('tube')
 
+// 2026-09-02 (audit, E1) -- the tube can go dark UNDER us: a GPU driver
+// reset (a real event on the i965/Haswell dev box) fires webglcontextlost,
+// every draw call after it silently no-ops, and the rAF loop keeps running
+// -- the app looks alive while the screen shows black, forever. Same shape
+// as the covered-window trap in CLAUDE.md's conventions, but permanent.
+// Handled here rather than in src/: the engine is vendored, and the fix
+// needs the fault panel, which is this page's furniture.
+//
+// preventDefault() on the lost event is what tells the browser we want the
+// context back; when it arrives we reload rather than teaching CRT to
+// rebuild its textures and programs in place -- a fresh page load is the
+// one rebuild path exercised on every visit, and localStorage brings the
+// listener back to their station. The loop is stopped with the `stopped`
+// flag alone, NOT dispose(): dispose() force-loses the context through the
+// WEBGL_lose_context extension, which would cancel the very restoration we
+// just asked for. The audio deliberately keeps playing while the panel is
+// up -- a set with a dead tube is still a radio.
+canvas.addEventListener('webglcontextlost', (e) => {
+  e.preventDefault()
+  if (window.screen0) window.screen0.stopped = true
+  const fault = document.getElementById('fault')
+  fault.style.display = 'block'
+  fault.textContent = 'THE PICTURE DROPPED -- GPU CONTEXT LOST\n\n'
+    + 'Waiting for the driver to hand it back; the set reloads itself when it does.\n'
+    + 'If nothing happens in a few seconds, reload the page.'
+})
+canvas.addEventListener('webglcontextrestored', () => location.reload())
+
 try {
   window.screen0 = await mount(canvas, program, config)
 } catch (err) {

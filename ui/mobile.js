@@ -28,6 +28,14 @@ const { nearestStation } = await import(`../tuning.js?v=${V}`)
 // feel change needing a device, not a number to tune from a hunch.
 const TOUCH_HOLD_MS = 500
 
+// 2026-09-02 (audit, B1) -- hoisted out of onTouchEnd's single-finger branch
+// when the two-finger band swipe arrived: two gestures now split "moved" from
+// "stayed put", and one constant keeps them from ever drifting into feeling
+// different -- the same argument TOUCH_HOLD_MS makes just above. TAP_SLOP
+// stays local to the single-finger branch; it is that gesture's own idea of
+// a still finger, not a shared threshold.
+const SWIPE_MIN = 40
+
 export default {
 
   // 45th pass -- mobile's whole frame: wordmark, status line, STATION and
@@ -497,6 +505,15 @@ export default {
       this._touchActive = false
       this._twoFingerActive = true
       this._twoFingerStartTime = Date.now()
+      // 2026-09-02 (audit, B1) -- the pair's CENTROID, not either finger: a
+      // two-finger swipe's fingers rarely travel the same distance, and the
+      // midpoint moves the way the gesture feels. Ends accumulate in
+      // onTouchEnd because real fingers lift one touchend apart (see the
+      // sync note there) -- by the final event, half the gesture's geometry
+      // is only in history.
+      this._twoFingerStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2
+      this._twoFingerStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+      this._twoFingerEnds = []
       e.preventDefault()
       return
     }
@@ -523,9 +540,33 @@ export default {
       // only ever fire on the rare tick where both releases coalesced into
       // one event. Now it only resolves (and only THEN clears the flag)
       // once every finger is confirmed up.
+      for (const t of e.changedTouches) this._twoFingerEnds.push(t)
       if (e.touches.length > 0) return
       this._twoFingerActive = false
       const twoHeld = Date.now() - this._twoFingerStartTime
+      // 2026-09-02 (audit, B1) -- a two-finger SWIPE switches the band: the
+      // touch [B]. Until this, [B] was the only path to cycleBand() at all,
+      // so since the second band landed a phone was trapped in whichever
+      // band it booted or persisted into -- half the roster unreachable by
+      // touch. The gesture extends the grammar the legend already teaches
+      // (one finger moves you within the band, two fingers work the set
+      // itself) rather than inventing a new one, and it is horizontal to
+      // match the station swipe it is the bigger sibling of. Movement is
+      // measured on the centroid (see onTouchStart), and a pair that MOVED
+      // never falls through to the tap/hold split below -- without that
+      // guard a sloppy band swipe under 500ms would fire COLOR on release.
+      // Like desktop's [B], it lands you SEEKING at the new band's edge
+      // (the status says which band), and the next station swipe locks --
+      // a real set drops you into static when you flip the band switch.
+      const ends = this._twoFingerEnds
+      const endX = ends.length ? ends.reduce((n, t) => n + t.clientX, 0) / ends.length : this._twoFingerStartX
+      const endY = ends.length ? ends.reduce((n, t) => n + t.clientY, 0) / ends.length : this._twoFingerStartY
+      const sdx = endX - this._twoFingerStartX
+      const sdy = endY - this._twoFingerStartY
+      if (Math.abs(sdx) > SWIPE_MIN || Math.abs(sdy) > SWIPE_MIN) {
+        if (Math.abs(sdx) > Math.abs(sdy) && this.poweredOn && !this.guideOpen) this.cycleBand(s)
+        return
+      }
       if (twoHeld < TOUCH_HOLD_MS && this.poweredOn && !this.guideOpen) {
         this.cycleDisplayMode(s)
       } else if (twoHeld >= TOUCH_HOLD_MS && !this.guideOpen) {
@@ -556,7 +597,6 @@ export default {
     const dy = t.clientY - this._touchStartY
     const dt = Date.now() - this._touchStartTime
     const TAP_SLOP = 12
-    const SWIPE_MIN = 40
     if (Math.abs(dx) < TAP_SLOP && Math.abs(dy) < TAP_SLOP) {
       // 2026-08-27 -- a press that stays put is now read by DURATION as
       // well. The guide closes on any press, held or not (forgiving: it is

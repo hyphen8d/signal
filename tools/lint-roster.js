@@ -55,6 +55,14 @@ globalThis.matchMedia ??= () => ({ matches: false })
 // touching for a roster lint. tests/program.test.mjs asserts the two agree,
 // so the duplication cannot drift silently.
 export const TAGLINE_MAX = 43
+// 2026-09-02 (audit, L11) -- exported so the admin backend's boot payload
+// imports the cap instead of restating it. The dashboard was still sending
+// `MAX_PUBLIC_STATIONS: 9` as a FLAT limit after the rule moved to
+// 9-per-band on 2026-08-31 -- dormant only because the page did not render
+// it yet, which is exactly the wrong number waiting to be believed. One
+// authority (this file owns the [1-9]-presets reasoning, see the band loop
+// below), everyone else imports.
+export const MAX_PUBLIC_STATIONS_PER_BAND = 9
 
 // The guide's per-station detail page (drawGuidePageStation) gives `desc`
 // exactly DESC_LINES lines at DESC_WIDTH columns -- contentWidth is
@@ -92,7 +100,7 @@ export async function lintRoster() {
   // is filled, the same way a new station is committed with tracks: [].
   for (const b of BANDS) {
     const n = STATIONS.filter((st) => (st.band ?? DEFAULT_BAND) === b.key).length
-    if (n > 9) problems.push(`band ${b.label} has ${n} public stations; [1-9] presets fit 9`)
+    if (n > MAX_PUBLIC_STATIONS_PER_BAND) problems.push(`band ${b.label} has ${n} public stations; [1-9] presets fit ${MAX_PUBLIC_STATIONS_PER_BAND}`)
   }
 
   const seenIds = new Map()
@@ -183,6 +191,52 @@ export async function lintRoster() {
     for (const k of ['stations', 'total', 'min', 'max', 'secret']) {
       if (got[k] !== expect[k]) problems.push(`README roster sentence: ${k} says ${got[k]}, roster has ${expect[k]}`)
     }
+  }
+  // 2026-09-02 (audit, D1) -- index.html's meta/OG/twitter descriptions are
+  // the same roster claim one layer further out, and the layer social
+  // scrapers actually show. They are NOT covered by the README rule above,
+  // and that is exactly how they sat on "Nine curated stations" for the two
+  // weeks in which the roster grew to 13 across two bands -- the un-asserted
+  // duplicate rot CLAUDE.md's design-record note warns about, on the page
+  // most people see first. Same discipline as the README rule, including
+  // the loud miss: a reworded tag that this stops matching must fail, not
+  // silently stop checking.
+  const indexPath = path.join(here, '..', 'index.html')
+  const indexHtml = readFileSync(indexPath, 'utf8')
+  const descTags = [...indexHtml.matchAll(/(?:name="description"|property="og:description"|name="twitter:description")\s+content="([^"]*)"/g)].map((m) => m[1])
+  if (descTags.length !== 3) {
+    problems.push(`index.html: expected 3 description metas (description, og:description, twitter:description), found ${descTags.length} -- if the tags were reworked, update the regex in lint-roster.js so this keeps checking`)
+  } else {
+    for (const d of descTags) {
+      const m = /(\d+)\s+curated stations across two bands/.exec(d)
+      if (!m) problems.push(`index.html description "${d.slice(0, 40)}..." lost its "N curated stations across two bands" claim -- reword it back or update lint-roster.js`)
+      else if (+m[1] !== STATIONS.length) problems.push(`index.html description says ${m[1]} curated stations, roster has ${STATIONS.length}`)
+    }
+  }
+  // 2026-09-02 (audit, O1) -- profile keys with no station behind them.
+  // station-profiles.json is looked up strictly by current station id
+  // (audition.js, the dashboard), so a rename or removal silently strands
+  // that station's rejection history -- the exact "rejection record lost"
+  // failure the two-files rule in CLAUDE.md exists to prevent, arriving
+  // through the key instead of the file. MOMENTUM is the precedent that
+  // shaped this rule: its profile was deliberately kept when MIDNIGHT NEON
+  // took the slot (60th pass), with a `retired` note saying so -- and the
+  // 2026-09-02 audit initially read it as an accidental orphan because
+  // nothing distinguished "kept on purpose" from "lost by rename". So the
+  // rule is exactly that distinction: an orphan WITH a `retired` note is a
+  // record, an orphan WITHOUT one is a problem, and the fix is either the
+  // note (you meant it) or moving the rejections to the successor's
+  // profile (you didn't).
+  try {
+    const profiles = JSON.parse(readFileSync(path.join(here, 'station-profiles.json'), 'utf8'))
+    const ids = new Set(all.map((s) => s.id))
+    for (const key of Object.keys(profiles.stations || {})) {
+      if (!ids.has(key) && !profiles.stations[key]?.retired) {
+        problems.push(`station-profiles.json: "${key}" matches no station id and has no \`retired\` note -- a stranded rejection history; add the note or merge it into the successor's profile`)
+      }
+    }
+  } catch (e) {
+    problems.push(`station-profiles.json could not be read/parsed (${e.message}) -- the orphan-profile rule checked nothing`)
   }
   return { problems, warnings, stations: all.length, tracks: all.reduce((n, s) => n + s.tracks.length, 0) }
 }

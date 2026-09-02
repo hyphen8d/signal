@@ -102,6 +102,23 @@ test('changing the last key of an inline object keeps the closing brace spaced',
   assert.match(line, /bloomAmt: 2\.0 \}/, `lost the space before the brace: ${line}`)
 })
 
+test('a nested patch on a station with NO holder object creates the holder (2026-09-02 audit, L6)', () => {
+  // The missing-holder branch used to insert the bare leaf at the
+  // station's level -- `grind: 30` for a 'grind.minS' patch -- which
+  // verifyPatch refused (fails closed, nothing corrupt reached disk) but
+  // the identity editor surfaced as a baffling error on a save that
+  // should have worked. Station picked dynamically: any one without a
+  // grind block, so a roster pass adding grind everywhere fails this
+  // test's SETUP loudly rather than silently testing nothing.
+  const { STATIONS } = loadRosterFromText(SRC)
+  const st = STATIONS.find((s) => !s.grind)
+  assert.ok(st, 'setup: no station without a grind block left to test with')
+  const out = patchStationField(SRC, st.id, 'grind.minS', 30)
+  verifyPatch(out, st.id, { 'grind.minS': 30 })
+  const { objStart, objEnd } = findStationObjectRange(out, st.id)
+  assert.match(out.slice(objStart, objEnd + 1), /grind: \{ minS: 30 \}/, 'the holder came into being around the leaf')
+})
+
 test('a nested patch moves exactly one line and keeps every comment', () => {
   const out = patchStationField(SRC, 'distortion-field', 'crt.bloomAmt', 1.92)
   verifyPatch(out, 'distortion-field', { 'crt.bloomAmt': 1.92 })

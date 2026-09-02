@@ -40,7 +40,7 @@
 // carries the install commands and the reasoning for its schedule.
 
 import { spawn } from 'node:child_process'
-import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -120,6 +120,23 @@ export function scheduleHealth(state, nowMs = Date.now()) {
   return { status: days > SCHEDULE_GRACE_DAYS ? 'late' : 'ok', days }
 }
 
+/** 2026-09-02 (audit) -- is the sweep OUTGROWING its own horizon? A full
+ *  pass takes total/batch days, and the whole design only works while that
+ *  stays comfortably inside check-roster's staleness horizon (30d -- read
+ *  off the run summary's own staleDays, not restated here). The margin was
+ *  consuming itself silently: the timer's reasoning was written at 477
+ *  tracks (~12 days), the roster hit 593 (~15) without anything saying so,
+ *  and at ~1,100+ tracks the sweep can no longer visit every track before
+ *  it goes stale -- at which point "clean" quietly stops meaning "checked".
+ *  'tight' at 70% of the horizon: loud while there is still time to raise
+ *  the batch or accept a longer horizon, not after coverage already fell
+ *  behind. */
+export function sweepMargin(total, batch, horizonDays = 30) {
+  if (!total || !batch || !horizonDays) return null
+  const passDays = total / batch
+  return { passDays, horizonDays, batch, status: passDays > horizonDays * 0.7 ? 'tight' : 'ok' }
+}
+
 export function describe(outcome, summary, streak) {
   const cov = summary ? `${summary.checked}/${summary.total} checked` : 'no summary'
   if (outcome === 'findings') {
@@ -180,11 +197,13 @@ async function main() {
     // here follows: --json owns stdout and there is ONE code path, so the
     // dashboard and the terminal cannot disagree about what a run did.
     const sched = scheduleHealth(state)
+    const last = state.history[state.history.length - 1]
     process.stdout.write(JSON.stringify({
       lastRun: state.lastRun, lastOutcome: state.lastOutcome,
       streak: state.streak, history: state.history,
       schedule: sched.status, daysSinceRun: sched.days,
       graceDays: SCHEDULE_GRACE_DAYS,
+      margin: last ? sweepMargin(last.total, BATCH, last.staleDays) : null,
     }))
     return
   }
@@ -195,6 +214,9 @@ async function main() {
     console.log(`last run : ${state.lastRun ?? 'never'}`)
     console.log(`outcome  : ${state.lastOutcome ?? '-'}`)
     console.log(`streaks  : ${JSON.stringify(state.streak)}`)
+    const lastEntry = state.history[state.history.length - 1]
+    const margin = lastEntry ? sweepMargin(lastEntry.total, BATCH, lastEntry.staleDays) : null
+    if (margin) console.log(`margin   : full pass ~${margin.passDays.toFixed(0)}d at batch ${margin.batch}, horizon ${margin.horizonDays}d -- ${margin.status === 'tight' ? 'TIGHT, raise the batch or the horizon' : 'ok'}`)
     console.log('history  :')
     for (const h of state.history.slice(-10)) {
       console.log(`  ${h.at}  ${String(h.outcome).padEnd(10)} ${h.checked}/${h.total} checked, ${h.flagged} flagged`)
@@ -207,7 +229,11 @@ async function main() {
     // the message, which is the half that is awkward to check any other way.
     for (const outcome of ['clean', 'findings', 'incomplete', 'error']) {
       const fake = {
-        total: 477, checked: 400, throttled: outcome === 'incomplete',
+        // Deliberately round SYNTHETIC numbers -- this fixture used to
+        // carry a real roster size (477) that went stale within a week of
+        // being written, and a dry run that prints a plausible-but-old
+        // count reads as a tool that is wrong rather than one rehearsing.
+        total: 1000, checked: 900, throttled: outcome === 'incomplete',
         flaggedCount: outcome === 'findings' ? 2 : 0,
         flagged: outcome === 'findings'
           ? [{ callsign: 'NINE INCH NAILS', flags: ['NARROW-LICENCE:3'] }, { callsign: 'CIPHER', flags: ['LOGIN_REQUIRED'] }]
@@ -231,18 +257,37 @@ async function main() {
     checked: res.summary?.checked ?? 0,
     total: res.summary?.total ?? 0,
     flagged: res.summary?.flaggedCount ?? 0,
+    // The horizon the run itself was measured against, for sweepMargin() --
+    // check-roster's summary carries its own STALE_DAYS, so the margin math
+    // here can never disagree with the tool that owns the number. Old
+    // entries without the field fall back to sweepMargin's default.
+    staleDays: res.summary?.staleDays,
   }
-  writeFileSync(STATE, JSON.stringify({
+  // 2026-09-02 (audit, L9) -- temp + rename, so a crash mid-write cannot
+  // truncate the state file. loadState() fails soft to empty, which sounds
+  // harmless until you notice what empties WITH it: the streaks, which are
+  // the notification trigger -- a corrupted state file silently reset the
+  // "stalled sweep" and "broken checker" counters to zero.
+  const tmp = `${STATE}.tmp-${process.pid}`
+  writeFileSync(tmp, JSON.stringify({
     version: 1,
     lastRun: entry.at,
     lastOutcome: outcome,
     streak,
     history: [...state.history, entry].slice(-HISTORY),
   }, null, 2) + '\n')
+  renameSync(tmp, STATE)
 
   const d = describe(outcome, res.summary, streak)
   console.error(`${outcome.toUpperCase()}: ${d.title}`)
   if (res.stderr.trim()) console.error(res.stderr.trim())
+  // A journal line, not a notification: the margin tightens over weeks of
+  // curation, not overnight, and --status shows it on demand -- the rule
+  // this tool exists for is that daily noise becomes wallpaper.
+  const margin = sweepMargin(entry.total, BATCH, entry.staleDays)
+  if (margin && margin.status === 'tight') {
+    console.error(`MARGIN: a full pass now takes ~${margin.passDays.toFixed(0)}d at batch ${BATCH}, against a ${margin.horizonDays}d staleness horizon -- raise the batch or the horizon before coverage falls behind.`)
+  }
   if (shouldNotify(outcome, streak)) await notify(d)
 
   // systemd records this. 'incomplete' is NOT a failure -- the sweep will

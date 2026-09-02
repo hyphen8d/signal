@@ -188,7 +188,16 @@ export function gateEase(c, gateAt) {
  *  nicety: opening the corridor in the drawing alone would leave the rock
  *  still solid to fly into, so the break would hand the player clear sky
  *  with an invisible ceiling in it. One function, two callers, no way for
- *  the two to disagree. */
+ *  the two to disagree.
+ *
+ *  2026-09-02 (audit, L2) -- "two callers" undersold it, and the gap bit:
+ *  EVERY consumer of terrain goes through here now. The ship and the draw
+ *  were gated from day one, but bullets, enemy shots, the missile's floor
+ *  crawl, turret placement and the capsule clamp all still asked the
+ *  ungated terrainAt(), so through a break the leftovers from the old
+ *  stage interacted with rock the corridor had visibly removed. Bare
+ *  terrainAt() is for callers holding no game (the tests), and for this
+ *  function; everything inside a running game passes g.gateAt. */
 export function terrainAtGate(c, h, gateAt) {
   const [top, bot] = terrainAt(c, h)
   const e = gateEase(c, gateAt)
@@ -672,7 +681,15 @@ export default {
       b.x += b.vx
       b.y += b.vy
       if (b.kind === 'm') {
-        const [, bot] = terrainAt(Math.round(g.scroll + b.x), h)
+        // 2026-09-02 (audit, L2) -- gated, with every other terrain consumer
+        // below. terrainAtGate's "one function, two callers" note held for
+        // the ship and the draw but not for anything else that consults
+        // terrain: through a break, a missile crawled across open sky at
+        // the old floor height, shots vanished against rock the corridor
+        // had visibly removed, and a turret floated over its opened ground.
+        // Leftovers from before the break are the live case -- spawns are
+        // held through it, but what already exists keeps moving.
+        const [, bot] = terrainAtGate(Math.round(g.scroll + b.x), h, g.gateAt)
         const floor = h - 1 - bot
         // Landed: stop falling and crawl. Re-checked every step, so it
         // follows the floor back up a rising slope instead of burrowing.
@@ -685,7 +702,7 @@ export default {
       // Bullets stop at scenery; the missile is exempt, since running along
       // the floor means being inside the terrain's top dot by design.
       if (b.kind !== 'm') {
-        const [top, bot] = terrainAt(Math.round(g.scroll + b.x), h)
+        const [top, bot] = terrainAtGate(Math.round(g.scroll + b.x), h, g.gateAt) // gated -- see the missile note above
         if (b.y < top || b.y > h - 1 - bot) return false
       }
       return true
@@ -787,7 +804,7 @@ export default {
     const n = 4 + Math.floor(Math.random() * 3)
     // Spawn inside the channel the terrain will actually have when the
     // formation arrives, not the one under the right-hand edge now.
-    const [top, bot] = terrainAt(Math.round(g.scroll + w * 1.4), h)
+    const [top, bot] = terrainAtGate(Math.round(g.scroll + w * 1.4), h, g.gateAt) // gated -- the gate is a world column, so this IS the channel that arrives
     const lo = top + 8, hi = h - 1 - bot - 8
     const amp = 5 + Math.random() * 5
     const baseY = Math.max(lo + amp, Math.min(hi - amp, lo + Math.random() * Math.max(1, hi - lo)))
@@ -850,7 +867,7 @@ export default {
       // Stopped by scenery, the same as the player's own shots. Without
       // this, a surface gun could fire straight through the hill it is
       // standing on.
-      const [top, bot] = terrainAt(Math.round(g.scroll + b.x), h)
+      const [top, bot] = terrainAtGate(Math.round(g.scroll + b.x), h, g.gateAt) // gated -- see gameStepBullets' missile note
       if (b.y < top || b.y > h - 1 - bot) continue
       if (g.invuln <= 0 && Math.abs(b.x - g.ship.x) < 3.5 && Math.abs(b.y - g.ship.y) < 3) {
         this.gameLoseLife()
@@ -887,7 +904,7 @@ export default {
   gameTurretPos(t) {
     const g = this._game
     const { h } = g
-    const [top, bot] = terrainAt(t.col, h)
+    const [top, bot] = terrainAtGate(t.col, h, g.gateAt) // gated -- a turret rides the surface the player can SEE
     return { x: t.col - g.scroll, y: t.floor ? h - 1 - bot - 2 : top + 2 }
   },
 
@@ -955,7 +972,7 @@ export default {
       // capsule has no gravity. The clamp keeps one inside the channel when
       // the terrain scrolls up underneath it, so a capsule can never be
       // swallowed by the ground it is no longer falling towards.
-      const [top, bot] = terrainAt(Math.round(g.scroll + c.x), h)
+      const [top, bot] = terrainAtGate(Math.round(g.scroll + c.x), h, g.gateAt) // gated -- clamp into the channel as drawn
       c.y = Math.max(top + 3, Math.min(c.y, h - 1 - bot - 3))
       if (c.x < -4) continue
       // Widened with the sprite: the shell is 7x5 dots now, and a hitbox

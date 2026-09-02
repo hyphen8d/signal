@@ -55,7 +55,7 @@ function codeFor(key) {
   return key
 }
 
-export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null } = {}) {
+export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
   const store = new Map()
@@ -107,11 +107,39 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
   const mediaDevices = tap === 'tab'
     ? { getDisplayMedia: declined('getDisplayMedia'), getUserMedia: declined('getUserMedia') }
     : tap === 'mic' ? { getUserMedia: declined('getUserMedia') } : undefined
+  // 2026-09-02 (audit, T2) -- `weather` gives the boot a geolocation and an
+  // Open-Meteo answer, the way `lyrics` gives it LRCLIB. Until this option
+  // existed, [W] had ZERO integration coverage: weather.test.mjs covers the
+  // pure half, and no test could press 'w' at all -- so the paint guards
+  // CLAUDE.md flags as fragile, and the consent keys, ran untested.
+  //   true     -> the prompt is answered with a position, the forecast with
+  //               a canned clear 69F day (readout: "69F CLEAR").
+  //   'deny'   -> the error callback fires with code 1, a real refusal.
+  //   'silent' -> NEITHER callback fires -- a dismissed prompt, the case
+  //               requestLocation()'s own hard timeout exists for.
+  //   'fail'   -> position ok, every forecast fetch is a 500 -- the state
+  //               behind the retry-storm fix in ui/weather.js.
+  // Every geolocation ask is recorded in h.geoCalls, every forecast attempt
+  // in h.wxCalls, both for the same reason tapCalls exists: WHEN the app
+  // asks is most of what these tests assert.
+  const geoCalls = []
+  const wxCalls = []
+  const geolocation = weather ? {
+    getCurrentPosition(ok, err) {
+      geoCalls.push('getCurrentPosition')
+      if (weather === 'deny') { err({ code: 1, message: 'denied' }); return }
+      if (weather === 'silent') return
+      ok({ coords: { latitude: 40.7, longitude: -74.0 } })
+    },
+  } : undefined
+  // canLocate() also wants a secure context, which bare Node does not
+  // claim; set only for weather boots and removed again in shutdown().
+  if (weather) globalThis.isSecureContext = true
   Object.defineProperty(globalThis, 'navigator', {
     // userAgentData IS the Chromium check in audio/tap.js -- only the tab
     // tier gets it, so a 'mic' boot models Firefox/Safari desktop honestly
     // rather than by hiding getDisplayMedia from a Chromium-shaped browser.
-    value: { userAgentData: tap === 'tab' ? { mobile: false } : undefined, mediaDevices },
+    value: { userAgentData: tap === 'tab' ? { mobile: false } : undefined, mediaDevices, geolocation },
     configurable: true,
     writable: true,
   })
@@ -177,6 +205,10 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
     if (lyrics && u.includes('lrclib.net')) {
       const lrc = lrcFor(u)
       const isSearch = u.includes('/api/search')
+      // The function form may answer 'fail' to make THIS request die the
+      // way a dropped connection does -- the retryable-'error' path, which
+      // no other return value can reach (2026-09-02 audit, B4).
+      if (lrc === 'fail') return Promise.reject(new Error('lrclib down (harness)'))
       // 'search' makes the exact lookup miss so the fallback is the only
       // way through -- the path that carried 17 of the audit's points and
       // that the old single-shape fake could not reach at all.
@@ -199,6 +231,28 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
       return isSearch
         ? Promise.resolve({ ok: true, json: () => Promise.resolve([lyricRow(lrc, FAKE_DURATION)]) })
         : Promise.resolve({ ok: true, json: () => Promise.resolve(lyricRow(lrc, FAKE_DURATION)) })
+    }
+    // Shape captured live through forecastUrl() on 2026-09-02 (audit, L15)
+    // -- see weather.test.mjs's day() for the full capture notes. The
+    // payload carries only the fields fetchWeather() reads (current,
+    // hourly for bucketHours, daily sun times). The current temperature is
+    // deliberately FRACTIONAL: the live API answers floats (73.7 in the
+    // capture) and the app rounds -- an integer here would let a dropped
+    // Math.round pass unnoticed while every real reading broke the
+    // 13-column readout budget.
+    if (weather && u.includes('api.open-meteo.com')) {
+      wxCalls.push(u)
+      if (weather === 'fail') return Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve(null) })
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({
+        current: { time: '2026-09-02T16:15', interval: 900, temperature_2m: 69.4, weather_code: 0 },
+        hourly: {
+          time: Array.from({ length: 24 }, (_, hh) => `2026-09-02T${String(hh).padStart(2, '0')}:00`),
+          temperature_2m: Array.from({ length: 24 }, () => 69),
+          weather_code: Array.from({ length: 24 }, () => 0),
+          precipitation_probability: Array.from({ length: 24 }, () => 0),
+        },
+        daily: { sunrise: ['2026-09-02T06:24'], sunset: ['2026-09-02T19:12'] },
+      }) })
     }
     return Promise.reject(new Error('no network in tests'))
   }
@@ -295,8 +349,22 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         // takes its realistic beat.
         const START_DELAY_MS = 700
         const fire = (state, delay = 0) => setTimeout(() => ev.onStateChange && ev.onStateChange({ data: state }), delay)
-        const firePlaying = () => fire(YT.PlayerState.PLAYING, START_DELAY_MS)
+        // 2026-09-02 (audit, L4) -- PLAYING is per-LOAD now, and a load that
+        // failed never delivers it. The delayed PLAYING used to fire for
+        // whatever load was 700ms old regardless: harmless while no test
+        // failed more than one load, and flatly wrong the moment one
+        // modelled a fully-dead station -- a video that errors does not go
+        // on to start, and a stale PLAYING from a load the app has already
+        // skipped past is an event the real player never sends.
+        let loadSeq = 0, deadSeq = -1
+        const firePlaying = () => {
+          const seq = loadSeq
+          setTimeout(() => {
+            if (seq === loadSeq && seq !== deadSeq && ev.onStateChange) ev.onStateChange({ data: YT.PlayerState.PLAYING })
+          }, START_DELAY_MS)
+        }
         const load = (videoId, cue) => {
+          loadSeq++
           playerCalls.push(`${cue ? 'cue' : 'load'}:${videoId}`)
           base = 0; startedAt = now; playing = !cue && !adHolding; ended = false
           // Under an advert the requested video is loaded but never starts,
@@ -359,7 +427,7 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
           ended = true; playing = false; base = FAKE_DURATION
           ev.onStateChange && ev.onStateChange({ data: YT.PlayerState.ENDED })
         }
-        this.fail = () => { ev.onError && ev.onError({ data: 150 }) }
+        this.fail = () => { deadSeq = loadSeq; playing = false; ev.onError && ev.onError({ data: 150 }) }
         setTimeout(() => ev.onReady && ev.onReady({ target: this }), 0)
       },
     }
@@ -424,6 +492,25 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
     tap() { h.touch(100, 100, 100, 100) },
     /** dir > 0 swipes right (next station), < 0 left. */
     swipe(dir) { h.touch(100, 200, 100 + dir * 120, 200) },
+    /** Two-finger horizontal swipe (band switch). The fingers lift one
+     *  touchend apart, the way real hands do -- ui/mobile.js's sync note
+     *  is the reason, and a helper that coalesced both lifts into one
+     *  event would skip the accumulation path the fix exists for. */
+    swipe2(dir) {
+      const ev = (touches, changed) => ({ touches, changedTouches: changed, target: null, preventDefault() {} })
+      program.onTouchStart(screen, ev([{ clientX: 100, clientY: 180 }, { clientX: 100, clientY: 220 }], []))
+      now += 120
+      program.onTouchEnd(screen, ev([{ clientX: 100 + dir * 120, clientY: 220 }], [{ clientX: 100 + dir * 120, clientY: 180 }]))
+      program.onTouchEnd(screen, ev([], [{ clientX: 100 + dir * 120, clientY: 220 }]))
+    },
+    /** Two-finger tap (color cycle): the same staggered lift, no movement. */
+    touch2tap() {
+      const ev = (touches, changed) => ({ touches, changedTouches: changed, target: null, preventDefault() {} })
+      program.onTouchStart(screen, ev([{ clientX: 100, clientY: 180 }, { clientX: 100, clientY: 220 }], []))
+      now += 120
+      program.onTouchEnd(screen, ev([{ clientX: 100, clientY: 220 }], [{ clientX: 100, clientY: 180 }]))
+      program.onTouchEnd(screen, ev([], [{ clientX: 100, clientY: 220 }]))
+    },
     /** Like advance(), but with rAF starved: timers run, frame() never
      *  does -- a hidden, occluded or throttled tab. */
     idle(ms, step = 16) {
@@ -435,6 +522,10 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
     /** Every capture call the program has made, in order -- see the tap
      *  stub above. Empty is the assertion that matters most. */
     tapCalls,
+    /** Geolocation prompts and forecast fetch attempts, in order -- see the
+     *  weather option's note. Both empty without `weather`. */
+    geoCalls,
+    wxCalls,
     /** Fullscreen API calls the program has made, in order. See the doc stub. */
     fsCalls,
     /** loadVideoById/cueVideoById/setVolume calls, in order (player boots only). */
@@ -467,6 +558,7 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
     shutdown() {
       timers.clear()
       delete globalThis.location
+      if (weather) delete globalThis.isSecureContext
       delete globalThis.YT
       globalThis.SIGNAL_YT_READY = false
       Object.assign(globalThis, real)

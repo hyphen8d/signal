@@ -143,11 +143,15 @@ export default {
   // band, then the press that does the one thing you want first (sound),
   // then the held and two-finger variants. Kept beside the key table it
   // stands in for so a gesture added to ui/mobile.js has an obvious place
-  // to be documented -- the touch hint rows only have space for four of
-  // these six, and this page is where the rest now live.
+  // to be documented -- the touch hint rows only have space for five of
+  // these seven, and this page is where the rest now live.
+  // 2-SWIPE BAND added 2026-09-02 (audit, B1), grouped with the movement
+  // gestures it extends rather than with the other two-finger entries --
+  // the list is ordered by what the gesture DOES, not by finger count.
   GUIDE_TOUCH_ROWS: [
     ['SWIPE L/R', 'STATION'],
     ['SWIPE U/D', 'NEXT TRACK'],
+    ['2-SWIPE', 'BAND'],
     ['TAP', 'MUTE'],
     ['HOLD', 'POWER OFF'],
     ['2-TAP', 'COLOR'],
@@ -217,7 +221,7 @@ export default {
     // on a device with no keys" -- reappearing one layer up.
     //
     // No group heads here either. Wide has room to label TUNING / RECEIVER
-    // / DISPLAY and benefits from it at three columns across; six gesture
+    // / DISPLAY and benefits from it at three columns across; seven gesture
     // rows in one column are already scannable, and the heads would cost
     // three of the rows this grid does not have. Fixed column stop rather
     // than the bracket lift, since there are no brackets left to lift.
@@ -267,7 +271,7 @@ export default {
       // offered here (tests/program.test.mjs: "consent pass: mobile never
       // asks for the microphone") -- so this was a phone being told about
       // a control that tier does not have and cannot get. The rows it frees
-      // are what let the six gesture rows above breathe.
+      // are what let the seven gesture rows above breathe.
       const foot = 'SWIPE STATIONS   TAP CLOSE'
       term.text(centerX(term.cols, foot), term.rows - 1, foot, FAINT)
       return
@@ -504,8 +508,12 @@ export default {
     if (ch.freqNote) term.text(4, 5, truncate(ch.freqNote, contentWidth), wide ? MUTED : FAINT)
     term.text(4, 6, '-'.repeat(Math.min(72, contentWidth)), FAINT)
     // slice(0, 3) drops overflow SILENTLY -- no ellipsis, unlike truncate()
-    // right above it. All nine descs are 2-3 lines today so nothing is lost,
-    // but a longer one would vanish without a mark, so the cut is marked.
+    // right above it. Every desc on the roster fits 3 lines today -- and
+    // that is enforced rather than observed: lint-roster.js's DESC_LINES
+    // rule fails a roster edit that would overflow this page (the count
+    // used to be stated here as "all nine" and drifted twice; the lint
+    // rule cannot). A longer one would still vanish without a mark, so the
+    // cut is marked.
     const descLines = wordWrap(ch.desc, contentWidth)
     descLines.slice(0, 3).forEach((line, li) => {
       const last = li === 2 && descLines.length > 3

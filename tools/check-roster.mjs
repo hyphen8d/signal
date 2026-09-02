@@ -35,7 +35,7 @@
 //   node tools/check-roster.mjs --report        # read the record, no network
 //   node tools/check-roster.mjs --json          # for tools/admin-server.mjs
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { oembed, playability, decayFlags, mapLimit, isThrottleSignature } from './lib/probe.mjs'
@@ -76,7 +76,14 @@ function loadStore() {
     return { version: 1, records: {} }
   }
 }
-const saveStore = (store) => writeFileSync(STORE, JSON.stringify(store, null, 2) + '\n')
+// 2026-09-02 (audit, L9) -- temp + rename: this store is the sweep's whole
+// memory, and a crash mid-write used to be able to truncate ~600 tracks of
+// verification history in one stroke.
+const saveStore = (store) => {
+  const tmp = `${STORE}.tmp-${process.pid}`
+  writeFileSync(tmp, JSON.stringify(store, null, 2) + '\n')
+  renameSync(tmp, STORE)
+}
 
 const daysSince = (iso) => (Date.now() - Date.parse(iso)) / 86400000
 

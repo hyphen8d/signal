@@ -349,7 +349,7 @@ export const stationIdBufferPromises = {}
 // retired station-id-midnight-neon.mp3 while the live clip went untouched.
 // Two readers, one definition.
 export { STATION_ID_CLIPS } from './station-id-clips.js'
-const { stationClipName } = await import(`./station-id-clips.js?v=${V}`)
+const { stationClipName, linerClipPath } = await import(`./station-id-clips.js?v=${V}`)
 
 /** Every audio asset carries the build stamp, exactly as every module does.
  *
@@ -519,31 +519,65 @@ export function ensureLyricsFetched(track, wantSeconds = 0) {
   const id = track.youtubeId
   const entry = lyricsCache[id]
   if (entry) {
-    if (entry.state === 'pending') return
+    if (entry.state === 'pending') {
+      // 2026-09-02 (audit, B4) -- STASH the duration instead of dropping
+      // it. The refine mechanism assumed the blind lookup had resolved by
+      // the time the PLAYING handler asked again (~1s in); a track needing
+      // the /api/search fallback is two sequential round-trips and
+      // routinely still pending here, and this early-return used to eat
+      // the one duration the gate exists to check against -- the entry
+      // then resolved unranked and un-gated for the whole play. The chain
+      // below reads the stash at resolution time (wantNow), so the late
+      // answer is ranked and gated without a second fetch.
+      if (wantSeconds > 0 && !entry.want) entry.want = wantSeconds
+      return
+    }
     const retryable = entry.state === 'error' && (entry.attempts || 0) < LYRIC_MAX_ATTEMPTS
-    // Resolved blind, and we can now do better than blind.
-    const canRefine = !entry.rankedBy && wantSeconds > 0
+    // 2026-09-02 (audit, B4) -- refine whenever the duration we ranked
+    // against is not the duration actually playing, not only when it was
+    // 0. loadTrack's call can catch the player still holding the PREVIOUS
+    // video, so `rankedBy` may carry the previous track's length -- a
+    // wrong gate that the old `!entry.rankedBy` check treated as final.
+    // (The harness cannot see that variant on its own: every fake track
+    // shares one FAKE_DURATION, so "previous track's length" and "this
+    // track's length" are the same number there.) Equal durations remain
+    // the same-tick no-op cache hit loadTrack's comment promises.
+    const canRefine = wantSeconds > 0 && entry.rankedBy !== wantSeconds
     if (!retryable && !canRefine) return
   }
   const attempts = (entry && entry.state === 'error' ? entry.attempts || 0 : 0) + 1
-  lyricsCache[id] = { state: 'pending', attempts }
+  // 2026-09-02 (audit, B4) -- carry a working answer through the refine.
+  // The refetch used to overwrite an 'available' entry with 'pending', so
+  // a refine whose fetch died landed on 'error' and lyrics that were
+  // already parsed -- possibly on screen in [L] -- vanished for the
+  // session. A failed refine now restores what it replaced.
+  const prev = entry && entry.state === 'available' ? entry : null
+  lyricsCache[id] = { state: 'pending', attempts, prev }
   const q = { track_name: track.title, artist_name: track.artist }
 
   const fail = () => {
-    lyricsCache[id] = { state: 'error', attempts }
+    lyricsCache[id] = prev || { state: 'error', attempts }
+  }
+  // The freshest duration this lookup knows: a stash from a refine call
+  // that arrived while this chain was in flight beats the argument it was
+  // started with. Read at each resolution point, not captured once.
+  const wantNow = () => {
+    const e = lyricsCache[id]
+    return (e && e.state === 'pending' && e.want) || wantSeconds
   }
   fetch(`https://lrclib.net/api/get?${new URLSearchParams(q)}`)
     .then((r) => (r.ok ? r.json() : null))
     .then((data) => {
-      if (hasSynced(data) && lyricDurationOk(data.duration, wantSeconds)) {
-        resolve(id, data, wantSeconds, wantSeconds)
+      const w = wantNow()
+      if (hasSynced(data) && lyricDurationOk(data.duration, w)) {
+        resolve(id, data, w, w)
         return null
       }
       // The exact lookup missed, or matched the wrong length. Search is
       // where the 17 points came from; see the audit note above.
       return fetch(`https://lrclib.net/api/search?${new URLSearchParams(q)}`)
         .then((r) => (r.ok ? r.json() : null))
-        .then((rows) => resolve(id, pickLyricMatch(rows, wantSeconds), wantSeconds, wantSeconds))
+        .then((rows) => { const w2 = wantNow(); resolve(id, pickLyricMatch(rows, w2), w2, w2) })
     })
     .catch(fail)
 }
@@ -720,10 +754,21 @@ export const GENERAL_LINER_FILES = [
 //                      TRADEWINDS' pair is "The bird calls are on the record,
 //                      not outside." and "Second one comes with an umbrella in
 //                      it." -- both hook-then-callsign, no frequency.
-export const STATION_LINER_FILES = {
-  cipher: ['audio/liner-cipher-01.mp3', 'audio/liner-cipher-02.mp3'],
-  'distortion-field': ['audio/liner-distortion-field-01.mp3', 'audio/liner-distortion-field-02.mp3'],
-  'cold-wave': ['audio/liner-cold-wave-01.mp3', 'audio/liner-cold-wave-02.mp3'],
+// 2026-09-02 (audit, L14) -- COUNTS, not paths. This map used to spell out
+// every filename, which restated the rule linerClipPath() owns -- two
+// spellings of one rule is the exact shape of the 2026-08-29 SYNAPSE
+// incident (a re-render written to a retired file because a tool derived
+// names by its own rule). The map keeps what only it can say -- WHICH
+// stations have clips and how many, absent key still meaning "no liners at
+// all" (the secret stations' opt-out) and 0 still meaning "no station clip
+// yet, general pool applies" -- and STATION_LINER_FILES below derives the
+// paths through the one resolver, so 'midnight-neon' picks up its
+// liner-synapse-* files from STATION_CLIP_NAMES instead of a hand-written
+// exception here.
+export const STATION_LINER_COUNTS = {
+  cipher: 2,
+  'distortion-field': 2,
+  'cold-wave': 2,
   // 2026-08-30 -- DRIFT MODE retired, replaced by NEON STASIS on the same
   // frequency (see stations.js). Its two liner clips are left on disk and
   // dropped from this map rather than remapped, for exactly the reason
@@ -734,9 +779,9 @@ export const STATION_LINER_FILES = {
   // reach for if a future station ships before its clips do, because an
   // ABSENT key means no liners at all (the secret stations' opt-out) while
   // an empty one still hands the station the four generals.
-  'neon-stasis': ['audio/liner-neon-stasis-01.mp3', 'audio/liner-neon-stasis-02.mp3'],
-  'circuit-crush': ['audio/liner-circuit-crush-01.mp3', 'audio/liner-circuit-crush-02.mp3'],
-  atomic: ['audio/liner-atomic-01.mp3', 'audio/liner-atomic-02.mp3'],
+  'neon-stasis': 2,
+  'circuit-crush': 2,
+  atomic: 2,
   // 60th pass -- MOMENTUM retired (see the retirement comment above
   // MIDNIGHT NEON in STATIONS). Its liner clip (audio/liner-momentum-01.mp3,
   // voiced as "MOMENTUM") is left on disk but dropped from this map rather
@@ -761,25 +806,29 @@ export const STATION_LINER_FILES = {
   // absent-and-missing meaning "no liners at all". tests/helpers.test.mjs
   // now asserts every public station has a non-empty pool and that every
   // secret one has none, so the next retirement cannot reopen this quietly.
-  'midnight-neon': ['audio/liner-synapse-01.mp3'],
-  'city-lights': ['audio/liner-city-lights-01.mp3', 'audio/liner-city-lights-02.mp3'],
-  hackback: ['audio/liner-hackback-01.mp3', 'audio/liner-hackback-02.mp3'],
+  'midnight-neon': 1, // liner-synapse-01 -- via STATION_CLIP_NAMES, see L14 note above
+  'city-lights': 2,
+  hackback: 2,
   // 2026-08-31 -- ZM's first station, and the first pair written after the
   // frequency came out of the format. Present-and-populated from the day it
   // shipped, which is the case the note above says to reach for only when a
   // station beats its clips to the dial.
-  'the-crypt': ['audio/liner-the-crypt-01.mp3', 'audio/liner-the-crypt-02.mp3'],
+  'the-crypt': 2,
   // 2026-09-01 -- ZM's fourth and fifth stations, both shipping with a full
   // pair rather than the single clip SYNAPSE spent months on.
-  'slow-orbit': ['audio/liner-slow-orbit-01.mp3', 'audio/liner-slow-orbit-02.mp3'],
-  tradewinds: ['audio/liner-tradewinds-01.mp3', 'audio/liner-tradewinds-02.mp3'],
+  'slow-orbit': 2,
+  tradewinds: 2,
   // 2026-09-01 -- DRIFT MODE is back, on ZM. Its key was DROPPED on
   // retirement rather than emptied, which was right then (an absent key
   // means no liners at all) and has to be undone deliberately now: both
   // clips were re-rendered to the callsign-only format, since the originals
   // announced a frequency the station no longer occupies.
-  'drift-mode': ['audio/liner-drift-mode-01.mp3', 'audio/liner-drift-mode-02.mp3'],
+  'drift-mode': 2,
 }
+// Derived, one path-spelling only -- see the L14 note above the counts.
+export const STATION_LINER_FILES = Object.fromEntries(
+  Object.entries(STATION_LINER_COUNTS).map(([id, n]) =>
+    [id, Array.from({ length: n }, (_, i) => linerClipPath(id, i + 1))]))
 export const LINER_FILES = {}
 for (const stId in STATION_LINER_FILES) {
   LINER_FILES[stId] = [...STATION_LINER_FILES[stId], ...GENERAL_LINER_FILES]

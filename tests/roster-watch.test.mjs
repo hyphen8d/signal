@@ -124,3 +124,21 @@ test('a stopped schedule is detectable, because nothing else would say so', () =
   assert.equal(late.status, 'late')
   assert.equal(Math.round(late.days), 5, 'the panel prints this number')
 })
+
+test('sweepMargin says so while there is still time, not after (2026-09-02 audit)', () => {
+  // The margin consumed itself silently once already: the timer's
+  // reasoning was written at 477 tracks (~12d) and the roster reached 593
+  // (~15d) with nothing saying so. 'tight' fires at 70% of the horizon --
+  // loud while raising the batch still fixes it.
+  const { sweepMargin } = watch
+  assert.equal(sweepMargin(593, 40, 30).status, 'ok', "today's roster is inside the margin")
+  assert.equal(Math.round(sweepMargin(593, 40, 30).passDays), 15)
+  assert.equal(sweepMargin(841, 40, 30).status, 'tight', '70% of a 30d horizon is 21d = 840 tracks')
+  assert.equal(sweepMargin(840, 40, 30).status, 'ok', 'the boundary itself is still ok')
+  // Absent inputs are an absent answer, never a guess: an old state entry
+  // has no staleDays and no total yet.
+  assert.equal(sweepMargin(0, 40, 30), null)
+  assert.equal(sweepMargin(593, 0, 30), null)
+  // ...but a missing horizon falls back to the documented 30.
+  assert.equal(sweepMargin(593, 40).horizonDays, 30)
+})

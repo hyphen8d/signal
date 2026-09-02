@@ -61,7 +61,7 @@ async function mapLimit(items, limit, fn) {
 
 async function main() {
   // Offline rules first (tools/lint-roster.js) -- cheap, and a broken roster
-  // shape isn't worth 286 network requests to discover.
+  // shape isn't worth a network request per track to discover.
   const lint = await lintRoster()
   for (const w of lint.warnings) console.log(`  ! ${w}`)
   if (lint.problems.length) {

@@ -131,7 +131,12 @@ export class CellGrid {
     if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return
     this.snapToLive()
     const i = y * this.cols + x
-    const code = typeof ch === 'string' ? (ch.codePointAt(0) ?? 32) : ch
+    // chars is a Uint16Array, so a supplementary-plane codepoint (an emoji
+    // in a track title, say) would silently truncate to an unrelated BMP
+    // glyph. Clamp to '?' instead: same "no glyph for that" mark the font
+    // fallback already shows, and it fails predictably.
+    const raw = typeof ch === 'string' ? (ch.codePointAt(0) ?? 32) : ch
+    const code = raw > 0xFFFF ? 63 : raw
     if (this.chars[i] === code && this.attrs[i] === attr && this.inverse[i] === inv &&
         this.gfx[i] === undefined) return
     this.chars[i] = code
