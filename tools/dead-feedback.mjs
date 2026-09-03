@@ -56,6 +56,15 @@ Math.random = () => {
 const KEYS = [
   'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', 'Escape',
   's', 'n', 'm', 'p', 'b', 'g', 'c', 'C+shift', 'v', 'a', 'f', 'l', 'e', 't', 'y',
+  // 2026-09-02 -- 'w' and 'k' were in MAPPED_KEYS and had never been pressed
+  // here. Same hole the two-finger band swipe fell through and the same
+  // reason: this list is hand-maintained, so a key the app learns is not
+  // reported as unswept, it is simply absent from a report that still looks
+  // complete. [W] is the weather card, [K] the sleep timer -- both real
+  // controls the guide advertises. The digits stay a deliberate SAMPLE
+  // (1, 5, 0 for a preset, an off-band preset and the retired zero); the
+  // presets are one code path and nine rows of it would be noise.
+  'w', 'k',
   '1', '5', '0', ')', 'x', ' ',
 ]
 
@@ -115,6 +124,27 @@ const STATES = {
   // it relies entirely on the seeded PRNG making the control and pressed
   // runs identical but for the press. That is the seeding the header calls
   // load-bearing, being leaned on harder than anywhere else in this file.
+  // 2026-09-02 -- the weather card had no row here at all, which made it the
+  // last view in the app nothing swept. It earns one twice over: [W] and [K]
+  // were both unswept keys until this pass, and the card is the ONE overlay
+  // that deliberately does not clear the grid (weather is an aside -- the
+  // dial and meters stay lit under it), so it cannot rely on the "nothing
+  // else may paint" contract the guide and the LINE INPUT card get. That
+  // trade is why `weatherOpen` has to be repeated in every paint guard, and
+  // why CLAUDE.md calls out missing one as the way the track title draws
+  // through the card.
+  //
+  // Consent is given in setup rather than swept from the prompt: the prompt
+  // is the tap-consent card's shape, already covered by consentCard, and the
+  // interesting surface is the card with a READING on it.
+  weatherCard: async (h) => {
+    h.powerOn(); h.key('3'); h.advance(2500)
+    h.key('w')                       // opens the card on the consent prompt
+    h.key('y')                       // ...and [Y] answers it in-gesture
+    await h.flush()
+    h.advance(1200)                  // the fetch lands and the card repaints
+    if (!h.program.weatherOpen) throw new Error('sweep setup: the weather card did not open')
+  },
   vectorScan: (h) => {
     h.powerOn(); h.key('3'); h.advance(3000); h.key('v'); h.advance(1600)
     for (const k of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
@@ -128,6 +158,7 @@ const STATES = {
 }
 const BOOT_OPTS = {
   consentCard: { tap: 'tab' },
+  weatherCard: { weather: true },
   lockedPlaying: { player: true },
   lyricsView: { player: true, lyrics: true },
 }
@@ -187,7 +218,8 @@ const trial = async (setup, act, bootOpts = {}) => {
   // Captured HERE, not after the frames: half these states are mid-sweep and
   // would report where the dial ended up rather than where the key landed.
   const label = `${h.program.poweredOn ? 'on' : 'off'}/${h.program.mode}` +
-    `${h.program.visualizerActive ? '/viz' : ''}${h.program.tapConsentOpen ? '/card' : ''}${h.program.guideOpen ? '/guide' : ''}`
+    `${h.program.visualizerActive ? '/viz' : ''}${h.program.tapConsentOpen ? '/card' : ''}` +
+    `${h.program.weatherOpen ? '/wx' : ''}${h.program.guideOpen ? '/guide' : ''}`
   const clicks = act ? act.clicks(h) : null
   if (act) act.press(h)
   const frames = []
