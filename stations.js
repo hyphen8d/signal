@@ -1097,6 +1097,121 @@ export const STATIONS = [
   // "mood, mood" fragment like DISTORTION FIELD's "raw nerve, '90s angst";
   // this one was a single unbroken clause. Reworded to the same shape
   // while keeping the "counter" gag the tagline was built around.
+  // RISE UP, added 2026-09-02. Protest rock, punk and hardcore -- the station
+  // built around voices coming together rather than one voice complaining.
+  //
+  // The curation rule that makes it a station and not a playlist: protest is
+  // the SUBJECT, collective voice is the TIEBREAKER. Where two candidates are
+  // equally political, the one a room shouts back wins. That is what keeps it
+  // from drifting into "angry songs" generally, and it is why Black Flag's
+  // "Rise Above" is the thesis track rather than merely a name coincidence.
+  //
+  // 440.0 is the easter egg, in COLD WAVE's tradition (273 = absolute zero):
+  // A440 is the reference pitch every instrument in the room tunes to before
+  // anyone plays a note together. It also sits ABOVE COLD WAVE at 273, which
+  // is load-bearing rather than aesthetic -- presets are freq-sorted per band,
+  // README's hero caption names COLD WAVE as preset 3, and lint-roster.js now
+  // asserts the two agree. A frequency below 273 would renumber the presets
+  // and fail that rule. It lands as ym preset 5 and pushes ATOMIC, CITY
+  // LIGHTS and HACKBACK each up one; presets 1-3 are untouched.
+  //
+  // The ident is `==U` -- the one shape the other 13 stations do not use
+  // (see the DDD/UUU/DUD crowd) -- and it is the station in four notes: the
+  // same pitch three times, then a leap of a fifth. One voice, one voice, one
+  // voice, then everybody. It starts on A440, the frequency the station sits
+  // at, which is the sort of thing nobody notices and is the point anyway.
+  //
+  // Rage Against the Machine appears here AND on DISTORTION FIELD, which is
+  // the first artist to span two PUBLIC stations -- 395 artists and the only
+  // previous crossings (Weezer, Cypress Hill) both go into GREEN ROOM, a
+  // secret station. Deliberate, at the curator's call 2026-09-02: RATM
+  // genuinely lives in both lanes, 1992 of-era guitars for DISTORTION FIELD
+  // and the protest thesis here. `Bombtrack` stays there and does not appear
+  // here -- lint forbids a repeated youtubeId across the roster, so the two
+  // stations must draw different tracks. Both profiles record this; see
+  // tools/station-profiles.json before "fixing" it.
+  //
+  // `visual` shares flame with DISTORTION FIELD, and that is SETTLED rather
+  // than pending -- a bespoke "voices converging" effect was proposed and
+  // the curator declined it 2026-09-02 as not wanted for now. Recorded
+  // because the previous version of this note called flame provisional, and
+  // a note claiming work is outstanding when it has been declined is worse
+  // than no note: it invites someone to do it again.
+  //
+  // Sharing is precedented (frost serves COLD WAVE and DRIFT MODE, ripple
+  // serves CITY LIGHTS and TRADEWINDS) and flame genuinely suits the lane --
+  // fire is not a bad reading of an uprising. The only real cost is that the
+  // two loud-guitar stations now look alike in the visualizer. If that ever
+  // grates, a new effect is the fix, not a reshuffle of the existing ones.
+  { id: 'rise-up', band: 'ym', freq: 440.0, callsign: 'RISE UP', tagline: 'protest anthems, sung back by the room',
+    freqNote: 'A440, the note every instrument tunes to',
+    desc: 'Protest rock, punk and hardcore from 1978 onward -- songs about power and who holds it, picked so the chorus is something a room full of people can shout back at the stage.',
+    ident: [440.0, 440.0, 440.0, 659.3],
+    identTempo: 1.2,
+    glyph: '↑',
+    static: 1800,
+    crt: { noise: 0.14, bloomAmt: 1.9, brightness: 1.1 },
+    meter: { spring: 0.62, damping: 0.38, swing: 1.15 },
+    visual: 'flame',
+    tracks: [
+    // First pass, 2026-09-02. 24 tracks, 14 artists, every id probed OK +
+    // embeddable with a licence of 122-249 countries; nothing shipped on an
+    // oEmbed 200 alone. Ordered thesis-first: Black Flag's "Rise Above" is
+    // the station's argument in one song, and the shuffle bag means order is
+    // cosmetic anyway -- but the file is read by people.
+    //
+    // Provenance is deliberately mixed, and that is the curator's widened
+    // rule (2026-09-02) rather than laziness -- see the profile. Two things
+    // learned doing it that are worth keeping:
+    //
+    //   - UNKNOWN-CHANNEL is nearly meaningless on a NEW station. The flag
+    //     scores a channel against the station's OWN existing tracks, and
+    //     this station had none, so it fired on Epitaph Records and on
+    //     Against Me!'s own channel. It becomes useful on the second pass,
+    //     not the first.
+    //   - Duration matching a known album length does NOT mean it is the
+    //     album cut. Guerrilla Radio was nearly shipped as lN60upFRMsU,
+    //     which is 3:26 -- exactly the studio length -- and is "from The
+    //     Battle of MEXICO CITY", the live record. Only the title gave it
+    //     away. Replaced with n6cBRx2Ie6A (Official Audio).
+    //
+    // Two picks preferred a fan upload over an official one, on purpose:
+    // "Boom!" because systemofadownVEVO's cut runs 3:02 against the album's
+    // 2:14 (a documentary intro -- 45 seconds of talking before the song, on
+    // a RADIO), and "Fuck the System" because every official upload of it is
+    // age-gated, which the IFrame player cannot satisfy and which plays as
+    // silence rather than erroring.
+    //
+    // np3FXa4ORbY ("Fuck the System") is the one track here NOT confirmed by
+    // ear: it runs 3:33 against the age-gated Topic copy's 4:15 and the gap
+    // has no metadata explanation. It is on the audition page for exactly
+    // that reason. If it proves to be an edit, drop it -- the profile's
+    // rejection note explains how to put it back to unavailable.
+      realTrack('wDUYCyajDcs', 'Rise Above', 'Black Flag'),
+      realTrack('ga6v91ZGL1U', 'My War', 'Black Flag'),
+      realTrack('bWXazVhlyxQ', 'Killing in the Name', 'Rage Against the Machine'),
+      realTrack('3L4YrGaR8E4', 'Bulls on Parade', 'Rage Against the Machine'),
+      realTrack('n6cBRx2Ie6A', 'Guerrilla Radio', 'Rage Against the Machine'),
+      realTrack('m4L20t8Dvlg', 'Prison Song', 'System of a Down'),
+      realTrack('zUzd9KyIDrM', 'B.Y.O.B.', 'System of a Down'),
+      realTrack('Qs2aG09y5FM', 'Boom!', 'System of a Down'),
+      realTrack('v0Uc6ZWDF3c', 'Holiday in Cambodia', 'Dead Kennedys'),
+      realTrack('R-rDQs5NOP4', 'California Uber Alles', 'Dead Kennedys'),
+      realTrack('cVlddw6e8vI', 'Beat the Bastards', 'The Exploited'),
+      realTrack('np3FXa4ORbY', 'Fuck the System', 'The Exploited'),
+      realTrack('r7Hb4bxF12E', 'Sorrow', 'Bad Religion'),
+      realTrack('12kcpP-8jfM', 'American Jesus', 'Bad Religion'),
+      realTrack('9-SQGOYOjxs', 'Prayer of the Refugee', 'Rise Against'),
+      realTrack('_RYBDTnS7dg', 'Re-Education (Through Labor)', 'Rise Against'),
+      realTrack('c7RUeMCZL3Q', 'I Was a Teenage Anarchist', 'Against Me!'),
+      realTrack('1EKCAE1vDzY', 'Know Your Rights', 'The Clash'),
+      realTrack('t6cF3ayJgM4', 'White Riot', 'The Clash'),
+      realTrack('gt_Xb-ZfRXU', 'Turncoat', 'Anti-Flag'),
+      realTrack('NkAe30aEG5c', 'New Noise', 'Refused'),
+      realTrack('y4GwwuGnmAs', 'Attitude', 'Bad Brains'),
+      realTrack('-dDjjWw5v_k', 'A Speculative Fiction', 'Propagandhi'),
+      realTrack('PlGmYetiCjA', 'Alternative Ulster', 'Stiff Little Fingers'),
+    ] },
   { id: 'atomic', band: 'ym', freq: 529.0, callsign: 'ATOMIC', tagline: 'atomic swing, radioactive nostalgia', // 19th pass: trimmed
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
     // 49th pass, same-day follow-up: 854.9 -> 529.0, held back in

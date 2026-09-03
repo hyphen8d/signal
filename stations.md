@@ -1,10 +1,10 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 13 stations, 536 tracks total.
+Generated from stations.js. 14 stations, 560 tracks total.
 
 # YM band
 
-7 stations, 320 tracks. Its own dial, its own `1`-`9` presets.
+8 stations, 344 tracks. Its own dial, its own `1`-`9` presets.
 
 ## CIPHER -- 133.7
 
@@ -221,6 +221,39 @@ Tracks (30):
 28. **Fountain Plaza** -- Disconscious  ([youtu.be/f0PSLV_b5g0](https://youtu.be/f0PSLV_b5g0))
 29. **Second Floor** -- Cat System Corp  ([youtu.be/k6xkSvMIvwk](https://youtu.be/k6xkSvMIvwk))
 30. **Veni, Vidi, Emi** -- Cat System Corp  ([youtu.be/Qg7vgIdDDno](https://youtu.be/Qg7vgIdDDno))
+
+## RISE UP -- 440.0
+
+*protest anthems, sung back by the room*
+
+Ident tones (Hz): 440, 440, 440, 659.3
+
+Tracks (24):
+
+1. **Rise Above** -- Black Flag  ([youtu.be/wDUYCyajDcs](https://youtu.be/wDUYCyajDcs))
+2. **My War** -- Black Flag  ([youtu.be/ga6v91ZGL1U](https://youtu.be/ga6v91ZGL1U))
+3. **Killing in the Name** -- Rage Against the Machine  ([youtu.be/bWXazVhlyxQ](https://youtu.be/bWXazVhlyxQ))
+4. **Bulls on Parade** -- Rage Against the Machine  ([youtu.be/3L4YrGaR8E4](https://youtu.be/3L4YrGaR8E4))
+5. **Guerrilla Radio** -- Rage Against the Machine  ([youtu.be/n6cBRx2Ie6A](https://youtu.be/n6cBRx2Ie6A))
+6. **Prison Song** -- System of a Down  ([youtu.be/m4L20t8Dvlg](https://youtu.be/m4L20t8Dvlg))
+7. **B.Y.O.B.** -- System of a Down  ([youtu.be/zUzd9KyIDrM](https://youtu.be/zUzd9KyIDrM))
+8. **Boom!** -- System of a Down  ([youtu.be/Qs2aG09y5FM](https://youtu.be/Qs2aG09y5FM))
+9. **Holiday in Cambodia** -- Dead Kennedys  ([youtu.be/v0Uc6ZWDF3c](https://youtu.be/v0Uc6ZWDF3c))
+10. **California Uber Alles** -- Dead Kennedys  ([youtu.be/R-rDQs5NOP4](https://youtu.be/R-rDQs5NOP4))
+11. **Beat the Bastards** -- The Exploited  ([youtu.be/cVlddw6e8vI](https://youtu.be/cVlddw6e8vI))
+12. **Fuck the System** -- The Exploited  ([youtu.be/np3FXa4ORbY](https://youtu.be/np3FXa4ORbY))
+13. **Sorrow** -- Bad Religion  ([youtu.be/r7Hb4bxF12E](https://youtu.be/r7Hb4bxF12E))
+14. **American Jesus** -- Bad Religion  ([youtu.be/12kcpP-8jfM](https://youtu.be/12kcpP-8jfM))
+15. **Prayer of the Refugee** -- Rise Against  ([youtu.be/9-SQGOYOjxs](https://youtu.be/9-SQGOYOjxs))
+16. **Re-Education (Through Labor)** -- Rise Against  ([youtu.be/_RYBDTnS7dg](https://youtu.be/_RYBDTnS7dg))
+17. **I Was a Teenage Anarchist** -- Against Me!  ([youtu.be/c7RUeMCZL3Q](https://youtu.be/c7RUeMCZL3Q))
+18. **Know Your Rights** -- The Clash  ([youtu.be/1EKCAE1vDzY](https://youtu.be/1EKCAE1vDzY))
+19. **White Riot** -- The Clash  ([youtu.be/t6cF3ayJgM4](https://youtu.be/t6cF3ayJgM4))
+20. **Turncoat** -- Anti-Flag  ([youtu.be/gt_Xb-ZfRXU](https://youtu.be/gt_Xb-ZfRXU))
+21. **New Noise** -- Refused  ([youtu.be/NkAe30aEG5c](https://youtu.be/NkAe30aEG5c))
+22. **Attitude** -- Bad Brains  ([youtu.be/y4GwwuGnmAs](https://youtu.be/y4GwwuGnmAs))
+23. **A Speculative Fiction** -- Propagandhi  ([youtu.be/-dDjjWw5v_k](https://youtu.be/-dDjjWw5v_k))
+24. **Alternative Ulster** -- Stiff Little Fingers  ([youtu.be/PlGmYetiCjA](https://youtu.be/PlGmYetiCjA))
 
 ## ATOMIC -- 529.0
 

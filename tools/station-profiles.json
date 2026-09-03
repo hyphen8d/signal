@@ -1,805 +1,852 @@
 {
-  "_readme": [
-    "Vibe profiles for SIGNAL's station roster -- what each station actually",
-    "wants and doesn't, distilled from the rejection/correction history",
-    "scattered across program.js's comments (50+ passes of it) plus session",
-    "context that's already been lost from the file itself (the network-ops",
-    "dashboard's tracks: [] rewrite necessarily strips inline comments on",
-    "save -- see tools/network.html's own header comment).",
-    "",
-    "`acceptedArtists` is mechanical and goes stale the moment the roster",
-    "changes -- treat it as a snapshot, not a source of truth; re-derive from",
-    "program.js directly (or regenerate this block) before relying on it.",
-    "`constraints` and `rejections` are the actual value here: qualitative",
-    "judgment calls that took real back-and-forth to establish and are NOT",
-    "recoverable from the current file alone. Update this by hand (or ask",
-    "Claude to) whenever a curation pass removes tracks with a stated",
-    "reason -- capture the reason here before it's gone.",
-    "",
-    "Built 2026-08-23 (55th pass) as the first half of the pending-track-",
-    "queue feature for proposing new tracks -- this is what a suggestion gets",
-    "checked against before it's proposed."
-  ],
-  "stations": {
-    "distortion-field": {
-      "callsign": "DISTORTION FIELD",
-      "genre": "90s grunge and alternative rock -- the Seattle sound and its ripple effects",
-      "eraLane": "early-to-mid 1990s",
-      "acceptedArtists": [
-        "Nirvana",
-        "Soundgarden",
-        "Alice In Chains",
-        "Pearl Jam",
-        "Stone Temple Pilots",
-        "Screaming Trees",
-        "Hole",
-        "Temple of the Dog",
-        "Mudhoney",
-        "Bush",
-        "The Cranberries",
-        "L7",
-        "The Smashing Pumpkins",
-        "Silverchair",
-        "Foo Fighters",
-        "Toadies",
-        "Weezer",
-        "Mad Season",
-        "Beck",
-        "Everclear",
-        "Local H",
-        "Dinosaur Jr",
-        "Meat Puppets",
-        "The Breeders",
-        "Sonic Youth",
-        "Veruca Salt",
-        "Filter",
-        "Helmet",
-        "The Afghan Whigs",
-        "Melvins",
-        "Radiohead",
-        "Candlebox",
-        "Gin Blossoms",
-        "Live",
-        "Rage Against the Machine",
-        "Garbage",
-        "Sponge",
-        "Collective Soul"
-      ],
-      "constraints": [
-        "Stay in grunge/alt-rock proper -- guitars, raw vocals, radio-ready angst. Not pop-rock crossover, not post-grunge (2000s) unless it's genuinely of-era.",
-        "Rage Against the Machine was added 2026-08-29 at the curator's request and is the one artist here from outside grunge/alt-rock proper -- 1992, of-era, guitars and raw vocals, but rap-metal rather than Seattle or its ripple. A deliberate widening of the lane, not a precedent that the lane is open: this station has turned a candidate away on lane alone (Third Eye Blind, issue #27). Further rap-metal or crossover proposals still need their own argument."
-      ],
-      "rejections": [
-        {
-          "artist": "Third Eye Blind",
-          "track": "Semi-Charmed Life",
-          "reason": "Passed on the LANE, not on quality or availability -- 2026-08-27, issue #27, the first outside suggestion this station has had. The candidate (gjdLAsnR_Ws) auditioned completely clean: right recording, embeddable, wide licence, \"- Topic\" upload, artist not already here. Nothing mechanical to hold against it. It falls to this station's own first constraint instead -- \"not pop-rock crossover\" -- because Semi-Charmed Life is about as far toward the bright, jangly, radio-pop end as the decade goes, dark subject matter notwithstanding, and 1997 San Francisco is a long ripple from an early-to-mid-90s Seattle lane. Next to Nirvana, Alice In Chains and Screaming Trees it would read as the odd one out. Recorded here because the call is arguable rather than obvious: the reporter was explicitly invited to argue that the constraint is drawn too tight, and if a later pass loosens it, THIS is the track that should be reconsidered first. Note also what the stated reason was -- \"it's 90s rock, it's good\" -- an argument for the decade rather than for this station, which is the distinction the suggestion form's first bullet asks for. Closed 2026-08-28: the invited counter-argument was not made, so issue #27 was closed as a pass with this reasoning attached rather than left open indefinitely. The door was left explicitly open to reopen and argue it.",
-          "youtubeId": "gjdLAsnR_Ws",
-          "rejectedAt": "2026-08-27"
-        },
-        {
-          "artist": "The Afghan Whigs",
-          "track": "Debonair",
-          "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
-          "rejectedAt": "2026-08-29",
-          "youtubeId": "oJwWmz8Mp3U"
-        }
-      ]
+ "_readme": [
+  "Vibe profiles for SIGNAL's station roster -- what each station actually",
+  "wants and doesn't, distilled from the rejection/correction history",
+  "scattered across program.js's comments (50+ passes of it) plus session",
+  "context that's already been lost from the file itself (the network-ops",
+  "dashboard's tracks: [] rewrite necessarily strips inline comments on",
+  "save -- see tools/network.html's own header comment).",
+  "",
+  "`acceptedArtists` is mechanical and goes stale the moment the roster",
+  "changes -- treat it as a snapshot, not a source of truth; re-derive from",
+  "program.js directly (or regenerate this block) before relying on it.",
+  "`constraints` and `rejections` are the actual value here: qualitative",
+  "judgment calls that took real back-and-forth to establish and are NOT",
+  "recoverable from the current file alone. Update this by hand (or ask",
+  "Claude to) whenever a curation pass removes tracks with a stated",
+  "reason -- capture the reason here before it's gone.",
+  "",
+  "Built 2026-08-23 (55th pass) as the first half of the pending-track-",
+  "queue feature for proposing new tracks -- this is what a suggestion gets",
+  "checked against before it's proposed."
+ ],
+ "stations": {
+  "distortion-field": {
+   "callsign": "DISTORTION FIELD",
+   "genre": "90s grunge and alternative rock -- the Seattle sound and its ripple effects",
+   "eraLane": "early-to-mid 1990s",
+   "acceptedArtists": [
+    "Nirvana",
+    "Soundgarden",
+    "Alice In Chains",
+    "Pearl Jam",
+    "Stone Temple Pilots",
+    "Screaming Trees",
+    "Hole",
+    "Temple of the Dog",
+    "Mudhoney",
+    "Bush",
+    "The Cranberries",
+    "L7",
+    "The Smashing Pumpkins",
+    "Silverchair",
+    "Foo Fighters",
+    "Toadies",
+    "Weezer",
+    "Mad Season",
+    "Beck",
+    "Everclear",
+    "Local H",
+    "Dinosaur Jr",
+    "Meat Puppets",
+    "The Breeders",
+    "Sonic Youth",
+    "Veruca Salt",
+    "Filter",
+    "Helmet",
+    "The Afghan Whigs",
+    "Melvins",
+    "Radiohead",
+    "Candlebox",
+    "Gin Blossoms",
+    "Live",
+    "Rage Against the Machine",
+    "Garbage",
+    "Sponge",
+    "Collective Soul"
+   ],
+   "constraints": [
+    "Stay in grunge/alt-rock proper -- guitars, raw vocals, radio-ready angst. Not pop-rock crossover, not post-grunge (2000s) unless it's genuinely of-era.",
+    "Rage Against the Machine was added 2026-08-29 at the curator's request and is the one artist here from outside grunge/alt-rock proper -- 1992, of-era, guitars and raw vocals, but rap-metal rather than Seattle or its ripple. A deliberate widening of the lane, not a precedent that the lane is open: this station has turned a candidate away on lane alone (Third Eye Blind, issue #27). Further rap-metal or crossover proposals still need their own argument.",
+    "Rage Against the Machine now ALSO appears on RISE UP (added 2026-09-02), which makes it the first artist on two public stations. 'Bombtrack' stays here; RISE UP draws different recordings, because lint forbids a repeated youtubeId. Read with the lane note above: RATM was always the acknowledged outsider here, and the curator chose to keep it rather than move it when a station it fits arrived. So do NOT 'tidy' this by removing Bombtrack -- the overlap is the decision, not an oversight."
+   ],
+   "rejections": [
+    {
+     "artist": "Third Eye Blind",
+     "track": "Semi-Charmed Life",
+     "reason": "Passed on the LANE, not on quality or availability -- 2026-08-27, issue #27, the first outside suggestion this station has had. The candidate (gjdLAsnR_Ws) auditioned completely clean: right recording, embeddable, wide licence, \"- Topic\" upload, artist not already here. Nothing mechanical to hold against it. It falls to this station's own first constraint instead -- \"not pop-rock crossover\" -- because Semi-Charmed Life is about as far toward the bright, jangly, radio-pop end as the decade goes, dark subject matter notwithstanding, and 1997 San Francisco is a long ripple from an early-to-mid-90s Seattle lane. Next to Nirvana, Alice In Chains and Screaming Trees it would read as the odd one out. Recorded here because the call is arguable rather than obvious: the reporter was explicitly invited to argue that the constraint is drawn too tight, and if a later pass loosens it, THIS is the track that should be reconsidered first. Note also what the stated reason was -- \"it's 90s rock, it's good\" -- an argument for the decade rather than for this station, which is the distinction the suggestion form's first bullet asks for. Closed 2026-08-28: the invited counter-argument was not made, so issue #27 was closed as a pass with this reasoning attached rather than left open indefinitely. The door was left explicitly open to reopen and argue it.",
+     "youtubeId": "gjdLAsnR_Ws",
+     "rejectedAt": "2026-08-27"
     },
-    "drift-mode": {
-      "callsign": "DRIFT MODE",
-      "genre": "Ambient, modern classical, and drone -- built for stillness",
-      "eraLane": "no strict era; contemporary ambient/drone plus modern-classical-adjacent pieces",
-      "acceptedArtists": [
-        "Marconi Union",
-        "Olafur Arnalds",
-        "Stars of the Lid",
-        "Sigur Rós",
-        "Grouper",
-        "William Basinski",
-        "Brian Eno / Orchestra of the Swan",
-        "Brian Eno",
-        "Nils Frahm",
-        "Hammock",
-        "Tim Hecker",
-        "A Winged Victory for the Sullen",
-        "Jóhann Jóhannsson",
-        "Harold Budd / Brian Eno",
-        "Kali Malone",
-        "Eluvium",
-        "Dustin O'Halloran",
-        "Julianna Barwick",
-        "Ryuichi Sakamoto",
-        "Poppy Ackroyd",
-        "Ludovico Einaudi",
-        "Slow Meadow",
-        "Hiroshi Yoshimura",
-        "Biosphere",
-        "Aphex Twin",
-        "Gas",
-        "Loscil",
-        "Midori Takada",
-        "Celer",
-        "Rafael Anton Irisarri",
-        "Fennesz",
-        "Laraaji",
-        "Chihei Hatakeyama",
-        "Christina Vantzou",
-        "Goldmund",
-        "Taylor Deupree",
-        "Susumu Yokota",
-        "Peter Broderick"
-      ],
-      "constraints": [
-        "REVIVED 2026-09-01 on ZM 1321.0, after being retired 2026-08-30. This profile spent that time marked retired and saying 'do not propose against this profile'; it is live again and that instruction is void. Everything below it survived the retirement and is the reason the station could come back at all -- the constraints and rejections here were the only surviving record of where its neoclassical boundary sat.",
-        "IT LOST THREE FIELDS TO NEON STASIS and they are not coming back: 321.0, the section-sign glyph, and the DRIFT visualizer effect were all inherited deliberately by the station that replaced it. The frequency gag was re-cut one band up (1321.0 keeps '3-2-1'); the glyph is PSI; the effect is borrowed. Do not 'restore' any of the three -- they belong to NEON STASIS now and taking them back would break a live station.",
-        "Modern-classical-ADJACENT ambient is welcome (Arnalds, O'Halloran, Einaudi are already on the roster) -- but a piece that reads as straightforwardly classical/neoclassical, rather than ambient-with-classical-texture, is the wrong lane for this station specifically.",
-        "OPEN QUESTION, found 2026-08-26: the neoclassical boundary below is not actually settled. Nils Frahm's \"Says\" is listed as rejected for being too straightforwardly classical, yet it is still on the roster, and Einaudi's \"Nuvole Bianche\" sits beside it while the constraint blesses Einaudi by name. Either the rejection was recorded and never acted on, or the line moved. Resolve it before leaning on the Richter/Frahm precedent to reject anything new -- and prefer unambiguous ambient/drone meanwhile, which is what the 2026-08-26 batch did to sidestep the question entirely.",
-        "Sourcing is easy here compared with the other stations: contemporary ambient and drone is well served by artist \"- Topic\" channels, and all six of the 2026-08-26 additions are Topic with no flags at all. The real hazard is length -- full-album streams dominate search results for this genre (43, 59, 66 and 185-minute uploads all surfaced), so check duration and take the single-track upload.",
-        "Length has a FLOOR as well as a ceiling, established 2026-08-29: Boards of Canada's 'Olson' auditioned clean and was left out at 1:32, under this station's own shortest track (2:33). The ceiling is generous -- Basinski 62:11 and Eno 55:04 are on the roster -- so the hazard really is full-album uploads, not long pieces. Also reject uploads marked (Excerpt): a part of a piece is not the piece.",
-        "NOT SLOW ORBIT, which did not exist when this profile was written. That station is downtempo -- it has a pulse. This one is built for stillness. The two share a band now, so the boundary is worth stating from both sides: a track with a groove belongs there, a track that fades into the room belongs here.",
-        "CRYO CHAMBER IS AN OPEN QUESTION, not a settled yes or no (issue #52, closed 2026-09-02 after producing THE CRYPT, which answered only its dungeon-synth half). The reporter's actual point stands: the dial has no cinematic dark ambient. This station is the nearest lane and the argument cuts both ways -- FOR, Tim Hecker, Loscil, Biosphere, Celer and Rafael Anton Irisarri are already here and sit adjacent to it; AGAINST, this station's own identity sentence is music built for stillness, 'meant to fade into the room instead of demanding it', and Cryo Chamber's whole character is that it DEMANDS the room. Decide that boundary before taking any of it, the same way the SLOW ORBIT boundary above had to be stated from both sides. The alternative answer is a fourteenth station; ZM has room at 6 of 9.",
-        "CRYO CHAMBER SOURCING, probed 2026-09-02, and the label channel is the WRONG place to take files from however right it looks: it uploads whole records as single files (Alphaxone 'Subsynthetic Pulseforms' 57:56, ProtoU 'The Infinite Recall' 50:45, both flagged CHECK-VERSION / UNKNOWN-CHANNEL). The dial announces ONE title, so an hour-long file carrying ten tracks sits on one name for an hour. The artists' '- Topic' channels carry the individual tracks and probe clean -- Alphaxone 'Neuronic' 6:21 (wLFaJlABfwI) and ProtoU 'Achromic' 8:04 (PlJyqzu5lcg), both embeddable with no narrow-licence flag. Album tracks run 3-9 minutes, comfortably inside this station's 2:33 floor. Length is NOT the constraint here; one-file-one-track is. Read titles off cryochamber.bandcamp.com and search those, per THE CRYPT's rule."
-      ],
-      "rejections": [
-        {
-          "artist": "Max Richter",
-          "track": "On the Nature of Daylight",
-          "reason": "Read as classical/neoclassical proper rather than ambient -- too close to RELIC SIGNAL's retired all-classical lane. Source comment stripped by a later dashboard edit; captured from session context 2026-08-23."
-        },
-        {
-          "artist": "Nils Frahm",
-          "track": "Says",
-          "reason": "Same call as the Richter track above -- too straightforwardly classical for this station's ambient/drone lane."
-        }
-      ]
-    },
-    "neon-stasis": {
-      "callsign": "NEON STASIS",
-      "genre": "Mallsoft -- the vaporwave subgenre that scores an empty shopping centre: muzak, lounge and smooth-jazz sources slowed, drowned in hall reverb and mixed as if heard from the far end of a food court",
-      "eraLane": "Releases are roughly 2011-present; the SOURCE material they slow down is 70s-90s muzak, lounge, smooth jazz and shopping-centre PA. Both halves matter -- a modern track with no retail-nostalgia source is the wrong lane.",
-      "acceptedArtists": [],
-      "constraints": [
-        "SEARCH BY TRACK TITLE, NEVER BY ALBUM TITLE. Measured on the founding pass, 2026-08-30: three album-name searches (Palm Mall, Hologram Plaza, Yes We're Open) returned 18 candidates of which 18 were full-album uploads, 30 to 90 minutes long, and not one was usable. The same run's track-name searches returned 3-to-5-minute singles almost exclusively. This genre's canonical records are Bandcamp-native and reach YouTube mainly as one-file album rips, so the album titles a curator naturally reaches for are exactly the queries that return nothing usable.",
-        "THE FONT CANNOT DRAW THIS GENRE'S NAMES, and it fails quietly. fonts/ter-u16n.bdf carries 891 glyphs, Latin-1 and box-drawing, with NO CJK at all; src/term.js falls back to '?' (glyph 63) for anything missing. So '猫 シ Corp.' draws on the dial as '?? Corp.' and '식료품groceries' as a row of question marks. Romanise to the artist's own Latin name -- Cat System Corp (per catsystemcorp.bandcamp.com), Groceries Store (per groceries-store.bandcamp.com), ESPRIT, Telepath. This constraint is unique to this station: no other lane on the roster is named predominantly in katakana and hangul. And it is not only CJK: FULLWIDTH LATIN is missing too, which this aesthetic uses constantly -- 'ＴＥＭＰＬＥ' (U+FF34...) is as unrenderable as the katakana beside it and looks like ordinary capitals in a search result, so it is the easier of the two to paste in by accident. Convert fullwidth to ASCII and romanise the rest.",
-        "LONG IS FINE; AN ALBUM IS NOT. Inherited from DRIFT MODE, whose roster carried Basinski at 62:11 and Eno at 55:04 -- the objection to a 45-minute upload here is never its length, it is that the file holds a dozen distinct works while the dial announces one title. A genuinely continuous single piece of any length is welcome. Apply the test to the FILE, not the runtime.",
-        "Prefer '- Topic' and VEVO where they exist, which is less hopeless than it looks for a Bandcamp genre: Windows 96 - Topic, Home - Topic, Skylar Spence - Topic, ddsvevo and YungBaeVEVO were all found on the founding pass. Everything else in this lane comes off fan, archive and reupload channels (Vapor Memory, Artzie Music, Geometric Lullaby, Electronic Gems), which is normal here the way it is for CITY LIGHTS -- but a sample-based genre on a reupload channel carries real takedown exposure, so tools/check-roster.mjs matters more for this station than for most.",
-        "Mallsoft is the target, not vaporwave at large. Future funk (upbeat, disco-chopped, Yung Bae's later catalogue) is the wrong feel outright. Vaportrap and the harder end of the aesthetic (Blank Banshee) sit in the lane's history and are admissible sparingly. The test is the one the two founding examples pass: does it sound like it is playing four storeys away in a building that is about to close?"
-      ],
-      "rejections": []
-    },
-    "cold-wave": {
-      "callsign": "COLD WAVE",
-      "genre": "Synth-driven new wave and synthpop",
-      "eraLane": "early-to-mid 1980s",
-      "acceptedArtists": [
-        "New Order",
-        "The Cure",
-        "Depeche Mode",
-        "Tears for Fears",
-        "The Human League",
-        "Simple Minds",
-        "Eurythmics",
-        "Gary Numan",
-        "A Flock of Seagulls",
-        "Soft Cell",
-        "Pet Shop Boys",
-        "Duran Duran",
-        "a-ha",
-        "Orchestral Manoeuvres in the Dark",
-        "Visage",
-        "Alphaville",
-        "The Psychedelic Furs",
-        "Echo & the Bunnymen",
-        "Talk Talk",
-        "Howard Jones",
-        "Men Without Hats",
-        "Peter Schilling",
-        "Modern English",
-        "Thomas Dolby",
-        "Ultravox",
-        "Naked Eyes",
-        "Kim Wilde",
-        "Yazoo",
-        "China Crisis",
-        "Bronski Beat",
-        "Blancmange",
-        "Japan",
-        "Missing Persons",
-        "Heaven 17",
-        "Wang Chung",
-        "Real Life",
-        "Berlin",
-        "Devo",
-        "Yello",
-        "Thompson Twins",
-        "Dead Or Alive"
-      ],
-      "constraints": [
-        "Strictly synth-driven new wave/synthpop of the era -- drum machines and cold hooks. Not later-80s pop-rock crossover, not synthwave (that's a modern retro genre and belongs on CIRCUIT CRUSH instead).",
-        "Japan was on acceptedArtists from the start with no track. Reason found 2026-08-29: 'Ghosts' has no official or Topic upload anywhere, only fan channels. The artist is on the station now via 'Quiet Life', which does. Do not spend another search on Ghosts unless an official upload appears."
-      ],
-      "rejections": []
-    },
-    "midnight-neon": {
-      "callsign": "SYNAPSE",
-      "genre": "tech house -- rolling basslines, chopped vocal hooks, and drops built for a big room",
-      "eraLane": "roughly 2018 onward, weighted heavily to the last three years; this is a current-rotation station, not an archive one",
-      "acceptedArtists": [
-        "Mau P",
-        "FISHER & Aatig",
-        "CID & Taylr Renee",
-        "MK & Dom Dolla",
-        "Mochakk",
-        "Jamie Jones",
-        "Chris Lake & Aluna",
-        "John Summit & Hayla",
-        "Odd Mob",
-        "Cloonee",
-        "Alaia & Gallo",
-        "Max Styler",
-        "Vinter",
-        "James Hype & Miggy Dela Rosa",
-        "Michael Bibi",
-        "PAWSA",
-        "Chris Lake & Green Velvet",
-        "Anti Up",
-        "FISHER & Shermanology",
-        "Diplo & SIDEPIECE",
-        "Vintage Culture & James Hype",
-        "Patrick Topping",
-        "Biscits",
-        "Matroda",
-        "Noizu",
-        "Dombresky",
-        "Jack Back",
-        "Will Clarke",
-        "Ferreck Dawn & Jem Cooke",
-        "FISHER",
-        "Dom Dolla",
-        "CamelPhat & Elderbrook",
-        "Solardo & Eli Brown",
-        "Weiss",
-        "Dom Dolla & Clementine Douglas",
-        "John Summit & Echoes",
-        "ANOTR & Abel Balder",
-        "Ewan McVicar",
-        "Sonny Fodera & MK",
-        "Chris Lake & Alexis Roberts",
-        "James Hype",
-        "Hot Since 82 & Jem Cooke",
-        "Gorgon City",
-        "Vintage Culture & Maverick Sabre",
-        "Prospa & Cloonee",
-        "SIDEPIECE",
-        "Wax Motif"
-      ],
-      "constraints": [
-        "The lane deliberately spans BOTH ends of tech house: festival-scale (Dom Dolla, John Summit, FISHER, James Hype, Diplo, Chris Lake) and the Ibiza/underground end (Jamie Jones, Michael Bibi, PAWSA, Patrick Topping, Mochakk). Do not purify it toward either -- the mix is the format. The tagline says \"underground\" but the roster is honestly about half main stage, and that is intended.",
-        "Club versions are the format here, not an outlier. Durations run 2:26 to 6:44 and a six-minute mix is normal on this station in a way it is not anywhere else on the dial -- do not reject a track for length, and do not prefer a radio edit just because it is shorter.",
-        "Nearly every title here exists as BOTH an extended mix (typically 5-7 min) and a single edit (2:30-3:30). Either is acceptable, but check the duration so you know which one you actually took -- the titles frequently do not say, and re-upload channels mislabel them.",
-        "Vocal hooks are in-lane, not a compromise (\"Beggin'\", \"Ferrari\", \"Where You Are\", \"You Give Me A Feeling\"). This is not a purist instrumental station. What is out of lane: EDM/big-room, bass house, and progressive-trance crossover.",
-        "Channel provenance: prefer the artist's own channel, a label channel (Defected, Insomniac, Snatch!, Toolroom, CircoLoco, Hot Creations, Big Beat, Astralwerks, Experts Only, Dim Mak, Nervous), or a label-delivered \"- Topic\" art track. Tech house search results are DOMINATED by re-upload channels -- Myth of NYX, 7clouds, Top Hits USA, Selected., blanc, PROFOUND, Groove Bassment -- which often carry correct audio but have unverifiable provenance and unreliable mix labelling. CID's \"Fancy $hit\" was moved off one of these onto CID's own Topic delivery once a search found it; do the same rather than settling.",
-        "Trap specific to this genre: several of these artists' most-viewed uploads are FESTIVAL SETS, not tracks. A search for \"Mochakk Jealous\" returns his Circoloco Sonar set above the studio single, and Dom Dolla/Odd Mob/Cloonee all have live sets outranking their releases. Always confirm the result is the track, not an hour of one.",
-        "The festival-set trap above confirmed live 2026-08-29: searching 'FISHER Losing It' returns his Coachella 2019 set (6:36) directly beside the 4:09 studio audio. Duration is what separates them. Also note CamelPhat & Elderbrook's 'Cola' was taken at Aug 2017, five months before the stated 'roughly 2018 onward' line -- accepted on the 'roughly' and flagged in stations.js as the first to pull if that era boundary is meant strictly.",
-        "CHECK-VERSION on the word \"mix\" is a FALSE POSITIVE on this station and only this one. audition.js's SUSPECT heuristic is shared across the whole roster, where an extended mix usually means you took the wrong upload; here the club version IS the format, so the flag fires on exactly the tracks that belong. FISHER's 'Stop It (Extended Mix)' carried it on 2026-08-30 and was taken anyway. Read the duration and the channel, not the flag."
-      ],
-      "rejections": [],
-      "notes": "Roster built 2026-08-28 from a 30-title brief, replacing the temporary 60s-oldies test rotation that ran here 2026-08-25 to 2026-08-28. All 30 verified in one clean audition run (UNVERIFIED: 0), all embeddable, licence breadth 121-249 countries. Nearly all flagged UNKNOWN-CHANNEL at the time, which was correct and harmless: provenance is scored against the channels the station already used, and those were the oldies uploads this pass deleted. From the next pass onward it scores against the label/artist channels above, so the signal becomes meaningful again.",
-      "priorFormat": {
-        "retired": "MIDNIGHT NEON, late-night electric blues. Ran from the 60th pass (2026-08-24) until the SYNAPSE rename (2026-08-28). Do not propose against this; kept for the rejection history.",
-        "callsign": "MIDNIGHT NEON",
-        "genre": "late-night electric blues -- minor-key slow burns, lush horns, reverberant guitar solos",
-        "eraLane": "no fixed decade; the first 28 tracks run 1947 -> 2012, weighted to classic electric blues",
-        "constraints": [
-          "The brief is a mood, not a decade: dark highways and low-lit lounges after hours. Slow burns are welcome at length -- the roster already carries 7-9 minute cuts (Tin Pan Alley, If Trouble Was Money), so runtime is not a reason to reject.",
-          "Electric blues, not acoustic/Delta country blues -- the desc says electric and the whole station leans on amplified tone and reverb.",
-          "Sourcing differs from the guitar-rock stations: pre-1970 blues catalog has no official video, so artist \"- Topic\" channels (label-delivered Art Tracks) are the norm and are fine. Fan/compilation uploads are not -- all 28 are Topic, label, artist-official or VEVO.",
-          "Nearly every classic here has multiple near-identical Topic uploads across compilations. Check duration before picking: it is the only cheap way to catch a live take, a single edit or a modern rework (an EDM \"rework\" of a John Lee Hooker cut sits on his own Topic channel)."
-        ],
-        "rejections": [
-          {
-            "artist": "Koko Taylor",
-            "track": "I'd Rather Go Blind",
-            "reason": "Song collision -- Etta James already holds this song on the station. The artist is otherwise in-lane; a different track would be fine."
-          },
-          {
-            "artist": "John Lee Hooker",
-            "track": "It Serves Me Right to Suffer",
-            "reason": "Not a lane call -- dropped from the 2026-08-25 batch because its Topic uploads run 3:29 / 5:03 / 5:50 and none could be pinned to the album master without listening. Worth revisiting with a confirmed ID."
-          }
-        ],
-        "notes": "Introduced 60th pass (2026-08-24) from a pasted 40-track playlist + persona brief; 20 taken then, 8 more added 2026-08-25 against the brief alone -- the original 40-track list was never committed and is gone."
-      }
-    },
-    "momentum": {
-      "callsign": "MOMENTUM",
-      "genre": "Chillhop and instrumental beats for focus -- sampled jazz, lo-fi drums",
-      "eraLane": "no strict era; instrumental hip-hop/downtempo/lo-fi beats scene, roughly 2000s-present",
-      "acceptedArtists": [
-        "Nujabes",
-        "DJ Shadow",
-        "Bonobo",
-        "Tycho",
-        "Idealism",
-        "Kupla",
-        "J Dilla",
-        "Emancipator",
-        "Flawed Mangoes",
-        "Wun Two",
-        "DJ Okawari",
-        "Nosaj Thing",
-        "FloFilz",
-        "Jinsang",
-        "L'Indécis",
-        "Aso"
-      ],
-      "constraints": [
-        "Meant to hold focus without breaking it -- \"just enough melody,\" light and unobtrusive. Heavier/moodier downtempo or trip-hop proper is an adjacent but wrong-weight lane; keep it light."
-      ],
-      "rejections": [
-        {
-          "artist": "Massive Attack",
-          "track": "Teardrop",
-          "reason": "Reads as trip-hop/downtempo proper -- heavier lane than this station's lofi-chillhop winddown vibe. Source comment stripped by a later dashboard edit; captured from session context 2026-08-23."
-        },
-        {
-          "artist": "Portishead",
-          "track": "Glory Box",
-          "reason": "Same call as Massive Attack above -- too heavy/moody for MOMENTUM's light focus vibe."
-        }
-      ],
-      "retired": "Replaced by MIDNIGHT NEON (60th pass, 2026-08-24) -- same dial slot and glyph, new format. Kept for the rejection history below; do not propose against this profile."
-    },
-    "city-lights": {
-      "callsign": "CITY LIGHTS",
-      "genre": "Japanese city pop -- glossy production, funk basslines, Tokyo after dark",
-      "eraLane": "late 1970s to late 1980s",
-      "acceptedArtists": [
-        "Miki Matsubara",
-        "Tatsuro Yamashita",
-        "Taeko Onuki",
-        "Yasuha",
-        "Anri",
-        "Hiroshi Sato",
-        "Minako Yoshida",
-        "Mariya Takeuchi",
-        "Junko Ohashi",
-        "Miharu Koshi",
-        "Momoko Kikuchi",
-        "Toshiki Kadomatsu",
-        "S. Kiyotaka & Omega Tribe",
-        "Yumi Matsutoya",
-        "Meiko Nakahara",
-        "Junko Yagami",
-        "EPO",
-        "Makoto Matsushita",
-        "Kingo Hamada",
-        "Hi-Fi Set",
-        "Tomoko Aran",
-        "Masayoshi Takanaka",
-        "Kaoru Akimoto",
-        "Hitomi Tohyama",
-        "Eiichi Ohtaki",
-        "Akira Terao",
-        "Yasuko Agawa",
-        "Yurie Kokubu",
-        "Takako Mamiya",
-        "Chiemi Manabe",
-        "Naoko Gushima",
-        "Rajie",
-        "Piper"
-      ],
-      "constraints": [
-        "HARD RULE, explicit editorial decision 2026-08-20: Japanese artists only. Western yacht-rock/AOR that sounds similar (Steely Dan, Toto, etc.) does NOT belong here even though it's genre-adjacent -- this is specifically a Japan-only lane.",
-        "Verify original-artist credit carefully -- a song has been mis-credited to the wrong artist before (a listed \"Casiio\" cover turned out to actually be Yasuha's original).",
-        "Sourcing runs opposite to the guitar stations: most of this catalogue was never officially uploaded, so fan and archive channels carry roughly two thirds of the roster and are accepted here out of necessity. Prefer artist \"- Topic\", label channels (Victor, Sony Music (Japan), VAP, PANAM, MUSIC Liverary) and artist-official where they exist -- they are also the defence against the mis-credit rule above, since fan re-uploads are where covers get labelled as originals.",
-        "Check region-locking, not just oEmbed -- unique to this station. Japanese label uploads are commonly geo-fenced and an oEmbed 200 says nothing about it; confirm the video is US-available and embeddable before proposing. Watch for Night Tempo \"Showa Groove\" mixes (modern remixes), live cuts, and \"Original Basic Track\" uploads that are backing-track outtakes.",
-        "The mis-credit warning above earned itself three times in one pass (2026-08-29), all of them Topic uploads that look correct in a result list: 'AIRPORT LADY' on Ai Furihata - Topic is a cover, not Kadomatsu; 'Bomber' on Hirotaka Mori - Topic is not Yamashita; a Nanako Sato search returns 'Nanaco', a different artist. Read the CHANNEL, not the title. Related: Casiopea's Asayake has no clean upload of the 1979 original -- the available ones are 'Casiopea 3rd', the later lineup re-recording it."
-      ],
-      "rejections": []
-    },
-    "circuit-crush": {
-      "callsign": "CIRCUIT CRUSH",
-      "genre": "Synthwave and retrowave -- arpeggios, gated drums, a drive that never ends",
-      "eraLane": "modern retro genre (2010s-present), evoking 1980s aesthetics",
-      "acceptedArtists": [
-        "Kavinsky",
-        "The Midnight",
-        "GUNSHIP",
-        "FM-84 feat. Ollie Wride",
-        "Perturbator",
-        "Carpenter Brut",
-        "Electric Youth ft. College",
-        "Timecop1983",
-        "Dance With The Dead",
-        "Power Glove",
-        "Lazerhawk",
-        "Mitch Murder",
-        "Dan Terminus",
-        "Miami Nights 1984",
-        "Magic Sword",
-        "Com Truise",
-        "Anoraak",
-        "Scandroid",
-        "GosT",
-        "NINA",
-        "Robert Parker",
-        "SelloRekt & LA Dreams",
-        "FM-84",
-        "Volkor X",
-        "Highway Superstar",
-        "Betamaxx",
-        "Meteor",
-        "Trevor Something",
-        "Waveshaper",
-        "Dynatron",
-        "Starcadian",
-        "Tokyo Rose",
-        "W O L F C L U B",
-        "Michael Oakley",
-        "Daniel Deluxe",
-        "Mega Drive"
-      ],
-      "constraints": [
-        "Owns the darker/harder end of synthwave -- Perturbator, Carpenter Brut, GosT and similar belong here specifically, NOT on CIPHER, even though CIPHER is also electronic. This boundary has been deliberately enforced before (see CIPHER's rejections below).",
-        "Sourcing here is the EASIEST of any station (2026-08-29): artist '- Topic' channels plus the scene's own label channels (NewRetroWave, Aphasia Records, Mad Decent) meant all 19 candidates auditioned clean. GUNSHIP's 'Dark All Day' is the one known gap -- the only Topic upload is a Power Glove remix, the rest are fan re-uploads. Availability, not lane."
-      ],
-      "rejections": []
-    },
-    "atomic": {
-      "callsign": "ATOMIC",
-      "genre": "In-universe atomic-age broadcast -- swing, jump blues, doo-wop",
-      "eraLane": "genuine 1940s-1950s recordings only",
-      "acceptedArtists": [
-        "The Ink Spots",
-        "Sheldon Allman",
-        "Roy Brown",
-        "Dion",
-        "Skeeter Davis",
-        "The Five Stars",
-        "Elton Britt",
-        "Andrews Sisters & Danny Kaye",
-        "Louis Jordan",
-        "Bing Crosby & The Andrews Sisters",
-        "Nat King Cole",
-        "The Chordettes",
-        "Tennessee Ernie Ford",
-        "Sons of the Pioneers",
-        "Louis Jordan & His Tympany Five",
-        "The Andrews Sisters",
-        "Big Joe Turner",
-        "Billy Ward and His Dominoes",
-        "Artie Shaw & His Orchestra",
-        "Billie Holiday",
-        "Bob Crosby and the Bobcats",
-        "Warren Smith",
-        "The Chords",
-        "Clyde McPhatter & The Drifters",
-        "Jackie Brenston & His Delta Cats",
-        "The Ink Spots & Ella Fitzgerald",
-        "Wynonie Harris",
-        "Johnny Mercer",
-        "Big Maybelle",
-        "Ray Smith",
-        "Betty Hutton"
-      ],
-      "constraints": [
-        "TIGHTEST constraint on the roster: not just \"any genuine 40s/50s classic\" -- must be verifiably a real track that actually plays on Fallout 4's Diamond City Radio or Fallout 76's Appalachia Radio. A track has been pulled before for being period-correct but NOT actually on those in-game stations (checked against the Fallout Wiki tracklists).",
-        "Attribution precision matters -- credit the actual original recording artist, not a more-famous cover (e.g. \"Good Rocking Tonight\" is Roy Brown's original, not the Wynonie Harris version some sources list).",
-        "Verified against a published Diamond City Radio tracklist on 2026-08-29 rather than from memory, which is the only way to satisfy the Fallout-canon rule above. A dozen further genuine gaps exist if this station is taken to 50 -- among them Ink Spots 'Maybe' and 'It's All Over but the Crying', Billie Holiday 'Easy Living', Roy Brown 'Mighty Mighty Man', Bob Crosby 'Dear Hearts and Gentle People' and 'Happy Times', Tex Beneke 'A Wonderful Guy', The Three Suns 'Worry Worry Worry', Connee Allen 'Rocket 69' (note the spelling, Connee not Connie), Betty Hutton 'He's a Demon He's a Devil He's a Doll', Frankie Carle 'One More Tomorrow', Cole Porter 'Anything Goes'. Several of those verified clean already."
-      ],
-      "rejections": [
-        {
-          "artist": "various",
-          "track": "Jump Jive An' Wail / Minnie the Moocher / Choo Choo Ch'Boogie / Boogie Woogie Bugle Boy (original selection)",
-          "reason": "Genuine 40s/50s classics but not actually on Diamond City Radio or Appalachia Radio -- replaced with tracks verified against the real in-game tracklists (19th pass)."
-        }
-      ]
-    },
-    "hackback": {
-      "callsign": "HACKBACK",
-      "genre": "Golden-age and underground hip-hop -- boom-bap, deep cuts",
-      "eraLane": "primarily late 1980s-1990s golden age, some adjacent-era classics",
-      "acceptedArtists": [
-        "A Tribe Called Quest",
-        "De La Soul",
-        "Outkast",
-        "Wu-Tang Clan",
-        "MF DOOM",
-        "Nas",
-        "Gang Starr",
-        "Digable Planets",
-        "Dr. Dre",
-        "Ice Cube",
-        "The Pharcyde",
-        "Warren G",
-        "Pete Rock & C.L. Smooth",
-        "MF DOOM (Madvillain)",
-        "Black Star",
-        "Souls of Mischief",
-        "Cypress Hill",
-        "2Pac feat. Dr. Dre & Roger Troutman",
-        "Beastie Boys",
-        "Eric B. & Rakim",
-        "Organized Konfusion",
-        "Public Enemy",
-        "The Notorious B.I.G.",
-        "Big Daddy Kane",
-        "Queen Latifah",
-        "Geto Boys",
-        "Common",
-        "Digital Underground",
-        "The Roots",
-        "Big L",
-        "EPMD",
-        "Jeru the Damaja",
-        "N.W.A",
-        "UGK",
-        "Goodie Mob",
-        "Salt-N-Pepa",
-        "MC Lyte",
-        "Fugees",
-        "DJ Quik",
-        "Too $hort",
-        "Del the Funky Homosapien",
-        "Scarface"
-      ],
-      "constraints": [
-        "Genuinely coast-to-coast -- NY is if anything the heavier side (Tribe/De La/Wu-Tang/Nas/Gang Starr/Pete Rock/Digable Planets/MF DOOM/Black Star) alongside West Coast (Dre/Ice Cube/Warren G/2Pac/Cypress Hill) and Outkast (Atlanta). A \"west coast legends\" framing was checked against the actual tracklist and found wrong (52nd pass) -- don't skew additions toward any one coast without checking the balance first.",
-        "Coast balance, measured 2026-08-25 rather than assumed: before this pass roughly half the roster was New York. The 8-track addition was weighted away from it on purpose (3 NY, plus New Jersey, Houston, Chicago, Oakland and Philadelphia). Re-measure before the next batch instead of trusting this number -- it is a snapshot, like acceptedArtists.",
-        "Before 2026-08-25 the station had no women across 21 artists. Queen Latifah is the first. Golden-age canon has plenty more (MC Lyte, Salt-N-Pepa, Lauryn Hill/Fugees, Roxanne Shante) and none are represented yet.",
-        "On the open question under the Snoop Dogg rejection -- whether this station steers away from radio-famous tracks toward deeper cuts -- the roster itself argues against it: C.R.E.A.M., Ms. Jackson, California Love, Regulate, Insane in the Brain and It Was A Good Day are all canon hits. Treat that removal as a taste call on the track until something else suggests otherwise.",
-        "Coast balance re-measured 2026-08-29 before the batch that took this station to 50: NY was 24/43 (56%). The seven added were 2 NY, 1 NJ, 3 West, 1 South, landing NY at 26/50 (52%). Re-measure again rather than trusting that number. Women went from 1 artist to 4 (Queen Latifah, Salt-N-Pepa, MC Lyte, Fugees); Roxanne Shante is the one named in the earlier gap note still not represented. Mobb Deep's Shook Ones Pt. II is verified clean (rTKpYJ80OVQ) and was passed over on coast alone."
-      ],
-      "rejections": [
-        {
-          "artist": "Snoop Dogg (as Snoop Doggy Dogg)",
-          "track": "Gin and Juice",
-          "reason": "Removed in the 2026-08-23 curation pass. No stated reason was captured -- worth confirming whether this reflects a real boundary (e.g. steering away from more mainstream/radio-famous tracks in favor of deeper cuts) or was a one-off taste call, before treating it as a pattern."
-        }
-      ]
-    },
-    "cipher": {
-      "callsign": "CIPHER",
-      "genre": "Big beat and breakbeat electronica -- late-night hacker-movie soundtrack energy",
-      "eraLane": "primarily late 1990s-2000s big beat/breakbeat",
-      "acceptedArtists": [
-        "The Prodigy",
-        "The Chemical Brothers",
-        "Orbital",
-        "Massive Attack",
-        "Leftfield",
-        "Underworld",
-        "Rob Dougan",
-        "Meat Beat Manifesto",
-        "Propellerheads",
-        "The Crystal Method",
-        "Freestylers",
-        "Fatboy Slim",
-        "Portishead",
-        "Bentley Rhythm Ace",
-        "Way Out West",
-        "Fluke",
-        "Lunatic Calm",
-        "Apollo 440",
-        "Future Sound of London",
-        "Overseer",
-        "Sneaker Pimps",
-        "Junkie XL",
-        "DJ Shadow",
-        "Photek",
-        "Death in Vegas",
-        "UNKLE",
-        "Tricky",
-        "Pitchshifter",
-        "Hive",
-        "ZeroFG",
-        "Unglued",
-        "Y U QT",
-        "Cirrus",
-        "Lo Fidelity Allstars",
-        "Paul Oakenfold"
-      ],
-      "constraints": [
-        "Big-beat/breakbeat energy specifically -- upbeat, propulsive, \"hacker movie soundtrack.\" NOT the darker synthwave/electronic lane (that's CIRCUIT CRUSH's territory, enforced deliberately -- see its profile) and NOT moodier IDM/glitch (Aphex Twin has been rejected from this station twice, see below).",
-        "Audio-quality bar, not just genre fit: a track has been pulled purely for having dialogue/interview audio baked into the official video, even though the song itself fit (\"Da Funk\" precedent) -- check the actual video, not just that a clean studio version exists somewhere.",
-        "Photek is on this list but has NO track: Ni Ten Ichi Ryu has no official or Topic upload anywhere, only fan channels. Juno Reactor's Mona Lisa Overdrive is likewise unusable -- the 4:45 licensed cut is NARROW-LICENCE:18 and the only clean upload is the 10:09 album version. Both were wanted on 2026-08-29 and blocked on availability rather than lane; re-check if a wide-licence upload ever appears."
-      ],
-      "rejections": [
-        {
-          "artist": "Aphex Twin",
-          "track": "Windowlicker",
-          "reason": "Rejected once explicitly (34th pass, too IDM/experimental for this station's big-beat lane), accidentally re-added in a later pass without noticing the earlier rejection, caught by the network-ops dashboard's overlap checker, removed again in the 2026-08-23 curation pass. Treat Aphex Twin as firmly off-limits for this station going forward -- it's been tried and rejected twice now."
-        },
-        {
-          "artist": "Aphex Twin",
-          "track": "Come to Daddy",
-          "reason": "Same rejection as Windowlicker above, same pass."
-        },
-        {
-          "artist": "Leftfield",
-          "track": "Phat Planet",
-          "reason": "Pulled alongside the Aphex Twin tracks in the same pass -- likely the same too-heavy/experimental call, though the exact reasoning for this specific track wasn't separately documented."
-        },
-        {
-          "artist": "Daft Punk",
-          "track": "Da Funk",
-          "reason": "Not a genre rejection -- pulled because the official video's audio has dialogue/interview footage baked in, not a clean listen for a radio station."
-        },
-        {
-          "artist": "The Prodigy",
-          "track": "Mindfields",
-          "reason": "Not a taste rejection -- blocked on availability, 2026-08-27 (issue #19). Proposed for the Matrix lane and it fits; there is simply no upload that clears the bar. The \"- Topic\" upload (61V3EsoNFUQ) is licensed in 6 countries, the exact trap the narrow-licence check exists for: the US is among the 6, so a US-only check passes it and it is dead air for almost everyone else. The official Prodigy channel carries only a live-in-Russia take (f0Olyr9zRto, 6:44), and every remaining hit is a fan re-upload. Re-check if a wide-licence studio upload ever appears -- this one is worth taking then."
-        },
-        {
-          "artist": "Leftfield",
-          "track": "Song of Life",
-          "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
-          "rejectedAt": "2026-08-29",
-          "youtubeId": "QmKE9zKYx0g"
-        },
-        {
-          "artist": "The Chemical Brothers",
-          "track": "Galvanize featuring Q-Tip (Official Music Video)",
-          "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
-          "rejectedAt": "2026-08-29",
-          "youtubeId": "Xu3FTEmN-eg"
-        },
-        {
-          "artist": "Future Sound of London",
-          "track": "Papua New Guinea",
-          "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
-          "rejectedAt": "2026-08-29",
-          "youtubeId": "6QCXpHdW9ak"
-        },
-        {
-          "artist": "UNKLE",
-          "track": "Lonely Soul",
-          "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
-          "rejectedAt": "2026-08-29",
-          "youtubeId": "XrFECnl3vno"
-        },
-        {
-          "artist": "Tricky",
-          "track": "Black Steel",
-          "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
-          "rejectedAt": "2026-08-29",
-          "youtubeId": "9ZJTM03UByU"
-        },
-        {
-          "artist": "The Prodigy",
-          "track": "Firestarter (Empirion Mix)",
-          "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
-          "rejectedAt": "2026-08-29",
-          "youtubeId": "Hy4T6zvQ6jk"
-        }
-      ]
-    },
-    "nin": {
-      "callsign": "NINE INCH NAILS",
-      "genre": "Industrial rage, mechanical dread",
-      "eraLane": "Nine Inch Nails' catalog specifically",
-      "acceptedArtists": [
-        "Nine Inch Nails"
-      ],
-      "constraints": [
-        "Single-artist station by design -- 100% Nine Inch Nails. Do not propose other industrial/NIN-adjacent artists (Ministry, Skinny Puppy, etc.) without confirming first; this station's whole identity is being NIN's own dedicated frequency.",
-        "Channel provenance carries a LICENSING consequence here, found 2026-08-30. NIN's \"- Topic\" uploads from the With Teeth / Year Zero era are licensed in THREE countries; the same era's video-channel uploads are licensed in 249 (The Hand That Feeds on NineInchNailsVEVO, Survivalism on Rob Sheridan, NIN's longtime art director). Older Topic uploads are healthy -- The Fragile and Broken sit at 121 -- so this is that specific upload batch, not Topic in general. Confirmed on three separate Interscope-era Topic uploads (Right Where It Belongs, Zero Sum, Every Day Is Exactly The Same), all exactly 3. For that era prefer the video channels and check availableCountries.",
-        "The 3-country licence is INVISIBLE from the curator's chair, which is the whole reason this is written down: the US is inside that 3, so the track plays perfectly here and is dead for nearly everyone else. It was never catchable by the tooling of its own day -- the track went in 2026-08-25 13:18, audition.js was not written until 16:44 that afternoon, and the NARROW-LICENCE threshold landed a day after that. Nothing re-asked the question until check-roster.mjs was built on 2026-08-29 for exactly this, and its first deep probe of the roster found it. Never conclude a track is fine because it played, or because it passed on the day it was added.",
-        "Fan and archive channels are accepted here out of necessity and carry 7 of 29 tracks (Something I Can Never Have, Wish, The Perfect Drug, Into the Void, Somewhat Damaged, Sin, Reptile) -- used where no official upload exists. Right Where It Belongs is the standing case: no official video was ever made, so its only official upload is the 3-country Topic one and every wide-licence alternative is a fan re-upload. Prefer official where it exists; the trade is real, since a fan upload can vanish to a copyright claim where a Topic one will not, and check-roster.mjs is what catches that when it happens."
-      ],
-      "rejections": []
-    },
-    "green-room": {
-      "callsign": "GREEN ROOM",
-      "genre": "No genre. The subject is the format.",
-      "eraLane": "1970 to now, deliberately unbounded -- Black Sabbath and Kacey Musgraves are on the same rotation.",
-      "acceptedArtists": [],
-      "constraints": [
-        "The ONLY membership test is that the song is literally, lyrically about cannabis -- named, described, or the whole premise. Genre is not a constraint here and must not become one: doom metal, G-funk, roots reggae, outlaw country and power pop all belong precisely because the mix is incoherent. That incoherence IS the station.",
-        "Literal, not adjacent. 'Stoner rock' as a genre does not qualify a track -- Kyuss instrumentals, psychedelia, and 'good to smoke to' songs are the single most likely wrong proposal here. If you cannot quote the line, it does not go on.",
-        "One track per artist unless there is a real reason -- the roster is 28 songs about one subject and the same voice twice makes the joke feel thin rather than broad.",
-        "Innuendo and drug-general songs are out. 'Because I Got High' territory is fine; 'Purple Haze' (about a woman, whatever the myth says) and cocaine/pill songs are not, however famous."
-      ],
-      "rejections": [
-        {
-          "artist": "Three 6 Mafia",
-          "track": "Gotta Stay High",
-          "reason": "No such recording exists. Briefed 2026-08-26 as a literal weed track; every search resolves to \"Stay Fly\" (hook is \"I gotta stay FLY\", not about weed, so it fails this station's membership test) or to fan re-uploads that mislabel that same song \"Stay High\". \"Da Summa\" was offered as the genuine Three 6 weed track and declined -- the slot was dropped rather than filled, so the station currently carries no Memphis entry. Do not re-propose the title; it is not a recording."
-        },
-        {
-          "artist": "Queens of the Stone Age",
-          "track": "Feel Good Hit of the Summer",
-          "reason": "Fits the station perfectly on content (the chorus is a drug inventory naming marijuana first) and was still dropped, so it WILL look like an oversight later. The only official upload (QueensStoneAgeVEVO, bAXPUN2z2CE) is age-gated -- playabilityStatus LOGIN_REQUIRED, which the IFrame player cannot satisfy, so it would have been dead air. No Topic upload of the album track exists; Topic carries only the Reprise. Unofficial uploads were offered and declined. Re-propose only if a non-gated official source appears."
-        }
-      ]
-    },
-    "the-crypt": {
-      "callsign": "THE CRYPT",
-      "genre": "Dungeon synth and dark fantasy -- lo-fi keyboard music that scores an imagined ruin: modal melodies, tape hiss, cheap reverb, no drums or almost none",
-      "eraLane": "the modern revival (2010s-present) and its 1990s roots, which are the same lineage rather than two",
-      "acceptedArtists": [],
-      "constraints": [
-        "FOUNDED FROM ISSUE #52, which proposed the Cryo Chamber label and its Cryo Crypt side project. Cryo Crypt is the dungeon-synth/dark-fantasy arm and is what this station is named for. The label channel is the first place to look for TITLES and the safest provenance available here -- but not the place to take FILES from: verified 2026-09-02 on the Cryo Chamber side, it uploads whole records as single 50-58 minute files. Read the listing there, then find the single-track upload elsewhere.",
-        "READ TITLES OFF A REAL LISTING, never from recall. This is the constraint NEON STASIS learned twice and it costs a whole search pass when it is ignored: titles from memory are usually not real, and searching them returns unrelated video (nail-salon tutorials and reef-tank reviews, on the actual run that proved it). Open the label's Bandcamp or channel listing, copy the title, search that.",
-        "ALBUM RIPS ARE THE DEFAULT UPLOAD IN THIS GENRE and the main thing to reject. Dungeon synth is released as long-form and routinely uploaded as one 30-90 minute file. The dial announces ONE title, so the test is on the FILE, not the release: a single track is in, a full-album upload is out however good it is. Same failure mode as mallsoft, same fix -- search track names, not record names.",
-        "LENGTH ALONE IS NOT A REJECT REASON. Eight- and ten-minute pieces are normal here, the way an extended mix is normal on SYNAPSE. A long TRACK is fine; a long ALBUM is the thing above.",
-        "THE FONT CANNOT DRAW MOST OF WHAT THIS SCENE NAMES ITSELF. ter-u16n has no CJK, no fullwidth Latin and no Latin Extended-A, so runic stylings, o-macrons and the accented Nordic spellings this genre loves all render as '?' on the dial (src/term.js falls back to glyph 63). Romanise, or pick another track. A lone accented vowel in an otherwise ASCII credit is the easiest version of this to paste in by accident.",
-        "SPREAD THE CHANNELS. A sample-and-reupload scene carries real takedown exposure, so taking one uploader's copy of a whole catalogue means one strike costs the station several tracks at once.",
-        "NOT COLD WAVE AND NOT NINE INCH NAILS. Cold, synthetic and bleak already have homes on this dial. The boundary here is FANTASY -- a ruin, a forest, a keep -- rather than industrial dread or synthetic melancholy. If a candidate would sit comfortably on either of those, it belongs there instead."
-      ],
-      "rejections": []
-    },
-    "tradewinds": {
-      "callsign": "TRADEWINDS",
-      "genre": "Exotica and tiki lounge -- vibraphone, bird calls, hand drums and steel guitar, played straight rather than winked at",
-      "eraLane": "the 1950s-60s exotica boom AND its modern revival, which are one lineage rather than two",
-      "acceptedArtists": [
-        "Martin Denny",
-        "Arthur Lyman",
-        "Gene Rains",
-        "Billy Mure",
-        "Kava Kon",
-        "The Tikiyaki Orchestra",
-        "Ixtahuele",
-        "The Waitiki 7",
-        "The Agents",
-        "New Hawaiian Band"
-      ],
-      "constraints": [
-        "THE BOUNDARY THAT MATTERS IS WITH ATOMIC, not with anything modern. Both live in the 1950s and both are lounge-adjacent, so the split has to be stated: ATOMIC is Fallout canon and is constrained by an in-universe tracklist, while TRADEWINDS is EXOTICA -- the Polynesian-pop fantasy specifically. A 1950s pop vocal is ATOMIC's unless the arrangement is exotica. Andy Williams' 'Blue Hawaii' is the shape of candidate that could argue for either; it belongs here because the record it comes off is a tiki compilation, not because of its year.",
-        "REVIVAL AND ORIGINAL BOTH BELONG. Kava Kon and Ixtahuele are doing the same thing Denny and Lyman did, sincerely, and a station that took only the originals would be a museum. Mixing them is the point.",
-        "COMPILATIONS ARE THE DEFAULT SOURCE HERE and that is the main trap. This catalogue survives on reissues -- 'Ultra-Lounge', 'Swank Vinyl Exotica', 'Hawaii's Greatest Hits' -- so searches surface hour-long compilation uploads far more readily than tracks. The dial announces ONE title, so the test is on the FILE: a single track is in, a compilation upload is out however good it is. Same failure THE CRYPT hit with album rips, and NEON STASIS before it.",
-        "READ TITLES OFF A REAL LISTING, never from recall. Exotica titles are unguessable and often absurd, so a remembered one is usually not real and returns unrelated video.",
-        "SOME GENUINE TITLES FROM THIS ERA READ BADLY OUT OF CONTEXT, and the dial DISPLAYS the title. 'Bangkok Cock Fight' is a real Martin Denny track. That is the owner's call per candidate, not a rule that can be automated -- but it is a call somebody has to make consciously rather than discovering it on the dial.",
-        "THE FONT IS NOT THE OBSTACLE IT LOOKS LIKE. ter-u16n covers Latin-1, so accented Nordic and Romance spellings draw fine; what it lacks is Latin Extended-A, CJK and fullwidth. Hawaiian macrons and okina ARE outside it, so a title spelled with them needs romanising or replacing.",
-        "SPREAD THE CHANNELS. A reissue-heavy catalogue lives on compilation and archive uploaders, and one takedown should not cost the station several tracks at once."
-      ],
-      "rejections": [
-        {
-          "artist": "Martin Denny",
-          "track": "Bangkok Cockfight",
-          "reason": "Passed on the TITLE, not on the music, the lane or availability -- 2026-09-01, owner's call. The candidate (vqSQZwJI0Jo) auditioned completely clean: Martin Denny's own '- Topic' upload, 2:21, embeddable, 123 countries, and it is about as squarely in this station's lane as a track can be -- Denny is the artist the whole genre is named after. Nothing mechanical or curatorial counts against it. It falls to the fact that the dial DISPLAYS the track title, in full, on a public site, and this genuine 1950s exotica title reads badly stripped of that context. Recorded here because the next pass will absolutely re-propose it otherwise: it is the most obvious Denny track in any tiki listing, and there is nothing in the mechanical checks that would ever stop it. The rest of Denny's catalogue is open -- this is one title, not the artist.",
-          "youtubeId": "vqSQZwJI0Jo",
-          "rejectedAt": "2026-09-01"
-        }
-      ]
-    },
-    "slow-orbit": {
-      "callsign": "SLOW ORBIT",
-      "genre": "Ambient and downtempo -- chillout with a pulse: warm pads over unhurried beats, grooves rather than drones",
-      "eraLane": "the 2000s-present chillout/downtempo scene, European-leaning",
-      "acceptedArtists": [
-        "Jens Buchert",
-        "Alex Cortiz",
-        "Lemongrass",
-        "BistroBoy",
-        "Celeste Lear",
-        "Sounds From The Ground",
-        "Groovecatcher",
-        "Smooth Genestar",
-        "Fascinating Earthbound Objects",
-        "The William Caslon Experience"
-      ],
-      "constraints": [
-        "THERE IS A BEAT. That is the whole boundary against pure ambient: this lane is downtempo, so a track with no pulse at all does not belong here. 'Grooves' is in the brief and should be taken literally. AMENDED 2026-09-01: this used to say a beatless track 'belongs on THE CRYPT or nowhere', which was true when it was written and is not any more -- DRIFT MODE came back on the same band, and stillness is exactly its lane. Send beatless ambient there.",
-        "NOT NEON STASIS. Mallsoft is muzak slowed and drowned in reverb -- found sound, deliberately degraded. This is PRODUCED music at full fidelity that simply moves slowly. If a candidate sounds like it is playing four storeys away, it is NEON STASIS's.",
-        "NOT CIPHER. CIPHER owns late-night breakbeat and its tempo. Anything that would make someone walk faster is CIPHER's, not this station's.",
-        "DJ MIXES AND CHILLOUT COMPILATIONS ARE THE TRAP HERE, the same shape album rips are elsewhere. This scene is distributed through 'Winter Chill Essentials'-style compilations and hour-long continuous mixes, which is precisely what the dial cannot announce. Search TRACK names, take single files.",
-        "READ TITLES OFF A REAL LISTING. The reference list is a station's recently-played view, so those titles are real; anything added later should come from a comparable listing rather than memory.",
-        "A FEW TITLES IN THIS LANE READ ODDLY ON A PUBLIC DIAL -- 'Under Pimp Arrest' is a genuine release and displays in full. Owner's call per candidate, made deliberately rather than discovered later.",
-        "SPREAD THE CHANNELS. Netlabel and compilation uploads dominate here, so concentration on one uploader is real takedown exposure."
-      ],
-      "rejections": [
-        {
-          "artist": "The William Caslon Experience & Burdy",
-          "track": "Under Pimp Arrest",
-          "reason": "Passed on the TITLE at proposal time -- 2026-09-01, owner's call, same reasoning as TRADEWINDS' Martin Denny pass on the same day. The dial DISPLAYS track titles in full on a public site, and this one reads badly out of context. UNLIKE the Denny track, this was never auditioned: it was flagged off the reference list BEFORE a search was run, so there is no youtubeId here and no probe was spent on it. That is the cheaper order for a call of this kind, and worth repeating -- a title question can be answered by reading, before any network work. Nothing is implied about the artist or the music. The William Caslon Experience remains open for this station, and the lane it sits in is exactly right.",
-          "youtubeId": null,
-          "rejectedAt": "2026-09-01"
-        }
-      ]
+    {
+     "artist": "The Afghan Whigs",
+     "track": "Debonair",
+     "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
+     "rejectedAt": "2026-08-29",
+     "youtubeId": "oJwWmz8Mp3U"
     }
+   ]
+  },
+  "drift-mode": {
+   "callsign": "DRIFT MODE",
+   "genre": "Ambient, modern classical, and drone -- built for stillness",
+   "eraLane": "no strict era; contemporary ambient/drone plus modern-classical-adjacent pieces",
+   "acceptedArtists": [
+    "Marconi Union",
+    "Olafur Arnalds",
+    "Stars of the Lid",
+    "Sigur Rós",
+    "Grouper",
+    "William Basinski",
+    "Brian Eno / Orchestra of the Swan",
+    "Brian Eno",
+    "Nils Frahm",
+    "Hammock",
+    "Tim Hecker",
+    "A Winged Victory for the Sullen",
+    "Jóhann Jóhannsson",
+    "Harold Budd / Brian Eno",
+    "Kali Malone",
+    "Eluvium",
+    "Dustin O'Halloran",
+    "Julianna Barwick",
+    "Ryuichi Sakamoto",
+    "Poppy Ackroyd",
+    "Ludovico Einaudi",
+    "Slow Meadow",
+    "Hiroshi Yoshimura",
+    "Biosphere",
+    "Aphex Twin",
+    "Gas",
+    "Loscil",
+    "Midori Takada",
+    "Celer",
+    "Rafael Anton Irisarri",
+    "Fennesz",
+    "Laraaji",
+    "Chihei Hatakeyama",
+    "Christina Vantzou",
+    "Goldmund",
+    "Taylor Deupree",
+    "Susumu Yokota",
+    "Peter Broderick"
+   ],
+   "constraints": [
+    "REVIVED 2026-09-01 on ZM 1321.0, after being retired 2026-08-30. This profile spent that time marked retired and saying 'do not propose against this profile'; it is live again and that instruction is void. Everything below it survived the retirement and is the reason the station could come back at all -- the constraints and rejections here were the only surviving record of where its neoclassical boundary sat.",
+    "IT LOST THREE FIELDS TO NEON STASIS and they are not coming back: 321.0, the section-sign glyph, and the DRIFT visualizer effect were all inherited deliberately by the station that replaced it. The frequency gag was re-cut one band up (1321.0 keeps '3-2-1'); the glyph is PSI; the effect is borrowed. Do not 'restore' any of the three -- they belong to NEON STASIS now and taking them back would break a live station.",
+    "Modern-classical-ADJACENT ambient is welcome (Arnalds, O'Halloran, Einaudi are already on the roster) -- but a piece that reads as straightforwardly classical/neoclassical, rather than ambient-with-classical-texture, is the wrong lane for this station specifically.",
+    "OPEN QUESTION, found 2026-08-26: the neoclassical boundary below is not actually settled. Nils Frahm's \"Says\" is listed as rejected for being too straightforwardly classical, yet it is still on the roster, and Einaudi's \"Nuvole Bianche\" sits beside it while the constraint blesses Einaudi by name. Either the rejection was recorded and never acted on, or the line moved. Resolve it before leaning on the Richter/Frahm precedent to reject anything new -- and prefer unambiguous ambient/drone meanwhile, which is what the 2026-08-26 batch did to sidestep the question entirely.",
+    "Sourcing is easy here compared with the other stations: contemporary ambient and drone is well served by artist \"- Topic\" channels, and all six of the 2026-08-26 additions are Topic with no flags at all. The real hazard is length -- full-album streams dominate search results for this genre (43, 59, 66 and 185-minute uploads all surfaced), so check duration and take the single-track upload.",
+    "Length has a FLOOR as well as a ceiling, established 2026-08-29: Boards of Canada's 'Olson' auditioned clean and was left out at 1:32, under this station's own shortest track (2:33). The ceiling is generous -- Basinski 62:11 and Eno 55:04 are on the roster -- so the hazard really is full-album uploads, not long pieces. Also reject uploads marked (Excerpt): a part of a piece is not the piece.",
+    "NOT SLOW ORBIT, which did not exist when this profile was written. That station is downtempo -- it has a pulse. This one is built for stillness. The two share a band now, so the boundary is worth stating from both sides: a track with a groove belongs there, a track that fades into the room belongs here.",
+    "CRYO CHAMBER IS AN OPEN QUESTION, not a settled yes or no (issue #52, closed 2026-09-02 after producing THE CRYPT, which answered only its dungeon-synth half). The reporter's actual point stands: the dial has no cinematic dark ambient. This station is the nearest lane and the argument cuts both ways -- FOR, Tim Hecker, Loscil, Biosphere, Celer and Rafael Anton Irisarri are already here and sit adjacent to it; AGAINST, this station's own identity sentence is music built for stillness, 'meant to fade into the room instead of demanding it', and Cryo Chamber's whole character is that it DEMANDS the room. Decide that boundary before taking any of it, the same way the SLOW ORBIT boundary above had to be stated from both sides. The alternative answer is a fourteenth station; ZM has room at 6 of 9.",
+    "CRYO CHAMBER SOURCING, probed 2026-09-02, and the label channel is the WRONG place to take files from however right it looks: it uploads whole records as single files (Alphaxone 'Subsynthetic Pulseforms' 57:56, ProtoU 'The Infinite Recall' 50:45, both flagged CHECK-VERSION / UNKNOWN-CHANNEL). The dial announces ONE title, so an hour-long file carrying ten tracks sits on one name for an hour. The artists' '- Topic' channels carry the individual tracks and probe clean -- Alphaxone 'Neuronic' 6:21 (wLFaJlABfwI) and ProtoU 'Achromic' 8:04 (PlJyqzu5lcg), both embeddable with no narrow-licence flag. Album tracks run 3-9 minutes, comfortably inside this station's 2:33 floor. Length is NOT the constraint here; one-file-one-track is. Read titles off cryochamber.bandcamp.com and search those, per THE CRYPT's rule."
+   ],
+   "rejections": [
+    {
+     "artist": "Max Richter",
+     "track": "On the Nature of Daylight",
+     "reason": "Read as classical/neoclassical proper rather than ambient -- too close to RELIC SIGNAL's retired all-classical lane. Source comment stripped by a later dashboard edit; captured from session context 2026-08-23."
+    },
+    {
+     "artist": "Nils Frahm",
+     "track": "Says",
+     "reason": "Same call as the Richter track above -- too straightforwardly classical for this station's ambient/drone lane."
+    }
+   ]
+  },
+  "neon-stasis": {
+   "callsign": "NEON STASIS",
+   "genre": "Mallsoft -- the vaporwave subgenre that scores an empty shopping centre: muzak, lounge and smooth-jazz sources slowed, drowned in hall reverb and mixed as if heard from the far end of a food court",
+   "eraLane": "Releases are roughly 2011-present; the SOURCE material they slow down is 70s-90s muzak, lounge, smooth jazz and shopping-centre PA. Both halves matter -- a modern track with no retail-nostalgia source is the wrong lane.",
+   "acceptedArtists": [],
+   "constraints": [
+    "SEARCH BY TRACK TITLE, NEVER BY ALBUM TITLE. Measured on the founding pass, 2026-08-30: three album-name searches (Palm Mall, Hologram Plaza, Yes We're Open) returned 18 candidates of which 18 were full-album uploads, 30 to 90 minutes long, and not one was usable. The same run's track-name searches returned 3-to-5-minute singles almost exclusively. This genre's canonical records are Bandcamp-native and reach YouTube mainly as one-file album rips, so the album titles a curator naturally reaches for are exactly the queries that return nothing usable.",
+    "THE FONT CANNOT DRAW THIS GENRE'S NAMES, and it fails quietly. fonts/ter-u16n.bdf carries 891 glyphs, Latin-1 and box-drawing, with NO CJK at all; src/term.js falls back to '?' (glyph 63) for anything missing. So '猫 シ Corp.' draws on the dial as '?? Corp.' and '식료품groceries' as a row of question marks. Romanise to the artist's own Latin name -- Cat System Corp (per catsystemcorp.bandcamp.com), Groceries Store (per groceries-store.bandcamp.com), ESPRIT, Telepath. This constraint is unique to this station: no other lane on the roster is named predominantly in katakana and hangul. And it is not only CJK: FULLWIDTH LATIN is missing too, which this aesthetic uses constantly -- 'ＴＥＭＰＬＥ' (U+FF34...) is as unrenderable as the katakana beside it and looks like ordinary capitals in a search result, so it is the easier of the two to paste in by accident. Convert fullwidth to ASCII and romanise the rest.",
+    "LONG IS FINE; AN ALBUM IS NOT. Inherited from DRIFT MODE, whose roster carried Basinski at 62:11 and Eno at 55:04 -- the objection to a 45-minute upload here is never its length, it is that the file holds a dozen distinct works while the dial announces one title. A genuinely continuous single piece of any length is welcome. Apply the test to the FILE, not the runtime.",
+    "Prefer '- Topic' and VEVO where they exist, which is less hopeless than it looks for a Bandcamp genre: Windows 96 - Topic, Home - Topic, Skylar Spence - Topic, ddsvevo and YungBaeVEVO were all found on the founding pass. Everything else in this lane comes off fan, archive and reupload channels (Vapor Memory, Artzie Music, Geometric Lullaby, Electronic Gems), which is normal here the way it is for CITY LIGHTS -- but a sample-based genre on a reupload channel carries real takedown exposure, so tools/check-roster.mjs matters more for this station than for most.",
+    "Mallsoft is the target, not vaporwave at large. Future funk (upbeat, disco-chopped, Yung Bae's later catalogue) is the wrong feel outright. Vaportrap and the harder end of the aesthetic (Blank Banshee) sit in the lane's history and are admissible sparingly. The test is the one the two founding examples pass: does it sound like it is playing four storeys away in a building that is about to close?"
+   ],
+   "rejections": []
+  },
+  "cold-wave": {
+   "callsign": "COLD WAVE",
+   "genre": "Synth-driven new wave and synthpop",
+   "eraLane": "early-to-mid 1980s",
+   "acceptedArtists": [
+    "New Order",
+    "The Cure",
+    "Depeche Mode",
+    "Tears for Fears",
+    "The Human League",
+    "Simple Minds",
+    "Eurythmics",
+    "Gary Numan",
+    "A Flock of Seagulls",
+    "Soft Cell",
+    "Pet Shop Boys",
+    "Duran Duran",
+    "a-ha",
+    "Orchestral Manoeuvres in the Dark",
+    "Visage",
+    "Alphaville",
+    "The Psychedelic Furs",
+    "Echo & the Bunnymen",
+    "Talk Talk",
+    "Howard Jones",
+    "Men Without Hats",
+    "Peter Schilling",
+    "Modern English",
+    "Thomas Dolby",
+    "Ultravox",
+    "Naked Eyes",
+    "Kim Wilde",
+    "Yazoo",
+    "China Crisis",
+    "Bronski Beat",
+    "Blancmange",
+    "Japan",
+    "Missing Persons",
+    "Heaven 17",
+    "Wang Chung",
+    "Real Life",
+    "Berlin",
+    "Devo",
+    "Yello",
+    "Thompson Twins",
+    "Dead Or Alive"
+   ],
+   "constraints": [
+    "Strictly synth-driven new wave/synthpop of the era -- drum machines and cold hooks. Not later-80s pop-rock crossover, not synthwave (that's a modern retro genre and belongs on CIRCUIT CRUSH instead).",
+    "Japan was on acceptedArtists from the start with no track. Reason found 2026-08-29: 'Ghosts' has no official or Topic upload anywhere, only fan channels. The artist is on the station now via 'Quiet Life', which does. Do not spend another search on Ghosts unless an official upload appears."
+   ],
+   "rejections": []
+  },
+  "midnight-neon": {
+   "callsign": "SYNAPSE",
+   "genre": "tech house -- rolling basslines, chopped vocal hooks, and drops built for a big room",
+   "eraLane": "roughly 2018 onward, weighted heavily to the last three years; this is a current-rotation station, not an archive one",
+   "acceptedArtists": [
+    "Mau P",
+    "FISHER & Aatig",
+    "CID & Taylr Renee",
+    "MK & Dom Dolla",
+    "Mochakk",
+    "Jamie Jones",
+    "Chris Lake & Aluna",
+    "John Summit & Hayla",
+    "Odd Mob",
+    "Cloonee",
+    "Alaia & Gallo",
+    "Max Styler",
+    "Vinter",
+    "James Hype & Miggy Dela Rosa",
+    "Michael Bibi",
+    "PAWSA",
+    "Chris Lake & Green Velvet",
+    "Anti Up",
+    "FISHER & Shermanology",
+    "Diplo & SIDEPIECE",
+    "Vintage Culture & James Hype",
+    "Patrick Topping",
+    "Biscits",
+    "Matroda",
+    "Noizu",
+    "Dombresky",
+    "Jack Back",
+    "Will Clarke",
+    "Ferreck Dawn & Jem Cooke",
+    "FISHER",
+    "Dom Dolla",
+    "CamelPhat & Elderbrook",
+    "Solardo & Eli Brown",
+    "Weiss",
+    "Dom Dolla & Clementine Douglas",
+    "John Summit & Echoes",
+    "ANOTR & Abel Balder",
+    "Ewan McVicar",
+    "Sonny Fodera & MK",
+    "Chris Lake & Alexis Roberts",
+    "James Hype",
+    "Hot Since 82 & Jem Cooke",
+    "Gorgon City",
+    "Vintage Culture & Maverick Sabre",
+    "Prospa & Cloonee",
+    "SIDEPIECE",
+    "Wax Motif"
+   ],
+   "constraints": [
+    "The lane deliberately spans BOTH ends of tech house: festival-scale (Dom Dolla, John Summit, FISHER, James Hype, Diplo, Chris Lake) and the Ibiza/underground end (Jamie Jones, Michael Bibi, PAWSA, Patrick Topping, Mochakk). Do not purify it toward either -- the mix is the format. The tagline says \"underground\" but the roster is honestly about half main stage, and that is intended.",
+    "Club versions are the format here, not an outlier. Durations run 2:26 to 6:44 and a six-minute mix is normal on this station in a way it is not anywhere else on the dial -- do not reject a track for length, and do not prefer a radio edit just because it is shorter.",
+    "Nearly every title here exists as BOTH an extended mix (typically 5-7 min) and a single edit (2:30-3:30). Either is acceptable, but check the duration so you know which one you actually took -- the titles frequently do not say, and re-upload channels mislabel them.",
+    "Vocal hooks are in-lane, not a compromise (\"Beggin'\", \"Ferrari\", \"Where You Are\", \"You Give Me A Feeling\"). This is not a purist instrumental station. What is out of lane: EDM/big-room, bass house, and progressive-trance crossover.",
+    "Channel provenance: prefer the artist's own channel, a label channel (Defected, Insomniac, Snatch!, Toolroom, CircoLoco, Hot Creations, Big Beat, Astralwerks, Experts Only, Dim Mak, Nervous), or a label-delivered \"- Topic\" art track. Tech house search results are DOMINATED by re-upload channels -- Myth of NYX, 7clouds, Top Hits USA, Selected., blanc, PROFOUND, Groove Bassment -- which often carry correct audio but have unverifiable provenance and unreliable mix labelling. CID's \"Fancy $hit\" was moved off one of these onto CID's own Topic delivery once a search found it; do the same rather than settling.",
+    "Trap specific to this genre: several of these artists' most-viewed uploads are FESTIVAL SETS, not tracks. A search for \"Mochakk Jealous\" returns his Circoloco Sonar set above the studio single, and Dom Dolla/Odd Mob/Cloonee all have live sets outranking their releases. Always confirm the result is the track, not an hour of one.",
+    "The festival-set trap above confirmed live 2026-08-29: searching 'FISHER Losing It' returns his Coachella 2019 set (6:36) directly beside the 4:09 studio audio. Duration is what separates them. Also note CamelPhat & Elderbrook's 'Cola' was taken at Aug 2017, five months before the stated 'roughly 2018 onward' line -- accepted on the 'roughly' and flagged in stations.js as the first to pull if that era boundary is meant strictly.",
+    "CHECK-VERSION on the word \"mix\" is a FALSE POSITIVE on this station and only this one. audition.js's SUSPECT heuristic is shared across the whole roster, where an extended mix usually means you took the wrong upload; here the club version IS the format, so the flag fires on exactly the tracks that belong. FISHER's 'Stop It (Extended Mix)' carried it on 2026-08-30 and was taken anyway. Read the duration and the channel, not the flag."
+   ],
+   "rejections": [],
+   "notes": "Roster built 2026-08-28 from a 30-title brief, replacing the temporary 60s-oldies test rotation that ran here 2026-08-25 to 2026-08-28. All 30 verified in one clean audition run (UNVERIFIED: 0), all embeddable, licence breadth 121-249 countries. Nearly all flagged UNKNOWN-CHANNEL at the time, which was correct and harmless: provenance is scored against the channels the station already used, and those were the oldies uploads this pass deleted. From the next pass onward it scores against the label/artist channels above, so the signal becomes meaningful again.",
+   "priorFormat": {
+    "retired": "MIDNIGHT NEON, late-night electric blues. Ran from the 60th pass (2026-08-24) until the SYNAPSE rename (2026-08-28). Do not propose against this; kept for the rejection history.",
+    "callsign": "MIDNIGHT NEON",
+    "genre": "late-night electric blues -- minor-key slow burns, lush horns, reverberant guitar solos",
+    "eraLane": "no fixed decade; the first 28 tracks run 1947 -> 2012, weighted to classic electric blues",
+    "constraints": [
+     "The brief is a mood, not a decade: dark highways and low-lit lounges after hours. Slow burns are welcome at length -- the roster already carries 7-9 minute cuts (Tin Pan Alley, If Trouble Was Money), so runtime is not a reason to reject.",
+     "Electric blues, not acoustic/Delta country blues -- the desc says electric and the whole station leans on amplified tone and reverb.",
+     "Sourcing differs from the guitar-rock stations: pre-1970 blues catalog has no official video, so artist \"- Topic\" channels (label-delivered Art Tracks) are the norm and are fine. Fan/compilation uploads are not -- all 28 are Topic, label, artist-official or VEVO.",
+     "Nearly every classic here has multiple near-identical Topic uploads across compilations. Check duration before picking: it is the only cheap way to catch a live take, a single edit or a modern rework (an EDM \"rework\" of a John Lee Hooker cut sits on his own Topic channel)."
+    ],
+    "rejections": [
+     {
+      "artist": "Koko Taylor",
+      "track": "I'd Rather Go Blind",
+      "reason": "Song collision -- Etta James already holds this song on the station. The artist is otherwise in-lane; a different track would be fine."
+     },
+     {
+      "artist": "John Lee Hooker",
+      "track": "It Serves Me Right to Suffer",
+      "reason": "Not a lane call -- dropped from the 2026-08-25 batch because its Topic uploads run 3:29 / 5:03 / 5:50 and none could be pinned to the album master without listening. Worth revisiting with a confirmed ID."
+     }
+    ],
+    "notes": "Introduced 60th pass (2026-08-24) from a pasted 40-track playlist + persona brief; 20 taken then, 8 more added 2026-08-25 against the brief alone -- the original 40-track list was never committed and is gone."
+   }
+  },
+  "momentum": {
+   "callsign": "MOMENTUM",
+   "genre": "Chillhop and instrumental beats for focus -- sampled jazz, lo-fi drums",
+   "eraLane": "no strict era; instrumental hip-hop/downtempo/lo-fi beats scene, roughly 2000s-present",
+   "acceptedArtists": [
+    "Nujabes",
+    "DJ Shadow",
+    "Bonobo",
+    "Tycho",
+    "Idealism",
+    "Kupla",
+    "J Dilla",
+    "Emancipator",
+    "Flawed Mangoes",
+    "Wun Two",
+    "DJ Okawari",
+    "Nosaj Thing",
+    "FloFilz",
+    "Jinsang",
+    "L'Indécis",
+    "Aso"
+   ],
+   "constraints": [
+    "Meant to hold focus without breaking it -- \"just enough melody,\" light and unobtrusive. Heavier/moodier downtempo or trip-hop proper is an adjacent but wrong-weight lane; keep it light."
+   ],
+   "rejections": [
+    {
+     "artist": "Massive Attack",
+     "track": "Teardrop",
+     "reason": "Reads as trip-hop/downtempo proper -- heavier lane than this station's lofi-chillhop winddown vibe. Source comment stripped by a later dashboard edit; captured from session context 2026-08-23."
+    },
+    {
+     "artist": "Portishead",
+     "track": "Glory Box",
+     "reason": "Same call as Massive Attack above -- too heavy/moody for MOMENTUM's light focus vibe."
+    }
+   ],
+   "retired": "Replaced by MIDNIGHT NEON (60th pass, 2026-08-24) -- same dial slot and glyph, new format. Kept for the rejection history below; do not propose against this profile."
+  },
+  "city-lights": {
+   "callsign": "CITY LIGHTS",
+   "genre": "Japanese city pop -- glossy production, funk basslines, Tokyo after dark",
+   "eraLane": "late 1970s to late 1980s",
+   "acceptedArtists": [
+    "Miki Matsubara",
+    "Tatsuro Yamashita",
+    "Taeko Onuki",
+    "Yasuha",
+    "Anri",
+    "Hiroshi Sato",
+    "Minako Yoshida",
+    "Mariya Takeuchi",
+    "Junko Ohashi",
+    "Miharu Koshi",
+    "Momoko Kikuchi",
+    "Toshiki Kadomatsu",
+    "S. Kiyotaka & Omega Tribe",
+    "Yumi Matsutoya",
+    "Meiko Nakahara",
+    "Junko Yagami",
+    "EPO",
+    "Makoto Matsushita",
+    "Kingo Hamada",
+    "Hi-Fi Set",
+    "Tomoko Aran",
+    "Masayoshi Takanaka",
+    "Kaoru Akimoto",
+    "Hitomi Tohyama",
+    "Eiichi Ohtaki",
+    "Akira Terao",
+    "Yasuko Agawa",
+    "Yurie Kokubu",
+    "Takako Mamiya",
+    "Chiemi Manabe",
+    "Naoko Gushima",
+    "Rajie",
+    "Piper"
+   ],
+   "constraints": [
+    "HARD RULE, explicit editorial decision 2026-08-20: Japanese artists only. Western yacht-rock/AOR that sounds similar (Steely Dan, Toto, etc.) does NOT belong here even though it's genre-adjacent -- this is specifically a Japan-only lane.",
+    "Verify original-artist credit carefully -- a song has been mis-credited to the wrong artist before (a listed \"Casiio\" cover turned out to actually be Yasuha's original).",
+    "Sourcing runs opposite to the guitar stations: most of this catalogue was never officially uploaded, so fan and archive channels carry roughly two thirds of the roster and are accepted here out of necessity. Prefer artist \"- Topic\", label channels (Victor, Sony Music (Japan), VAP, PANAM, MUSIC Liverary) and artist-official where they exist -- they are also the defence against the mis-credit rule above, since fan re-uploads are where covers get labelled as originals.",
+    "Check region-locking, not just oEmbed -- unique to this station. Japanese label uploads are commonly geo-fenced and an oEmbed 200 says nothing about it; confirm the video is US-available and embeddable before proposing. Watch for Night Tempo \"Showa Groove\" mixes (modern remixes), live cuts, and \"Original Basic Track\" uploads that are backing-track outtakes.",
+    "The mis-credit warning above earned itself three times in one pass (2026-08-29), all of them Topic uploads that look correct in a result list: 'AIRPORT LADY' on Ai Furihata - Topic is a cover, not Kadomatsu; 'Bomber' on Hirotaka Mori - Topic is not Yamashita; a Nanako Sato search returns 'Nanaco', a different artist. Read the CHANNEL, not the title. Related: Casiopea's Asayake has no clean upload of the 1979 original -- the available ones are 'Casiopea 3rd', the later lineup re-recording it."
+   ],
+   "rejections": []
+  },
+  "circuit-crush": {
+   "callsign": "CIRCUIT CRUSH",
+   "genre": "Synthwave and retrowave -- arpeggios, gated drums, a drive that never ends",
+   "eraLane": "modern retro genre (2010s-present), evoking 1980s aesthetics",
+   "acceptedArtists": [
+    "Kavinsky",
+    "The Midnight",
+    "GUNSHIP",
+    "FM-84 feat. Ollie Wride",
+    "Perturbator",
+    "Carpenter Brut",
+    "Electric Youth ft. College",
+    "Timecop1983",
+    "Dance With The Dead",
+    "Power Glove",
+    "Lazerhawk",
+    "Mitch Murder",
+    "Dan Terminus",
+    "Miami Nights 1984",
+    "Magic Sword",
+    "Com Truise",
+    "Anoraak",
+    "Scandroid",
+    "GosT",
+    "NINA",
+    "Robert Parker",
+    "SelloRekt & LA Dreams",
+    "FM-84",
+    "Volkor X",
+    "Highway Superstar",
+    "Betamaxx",
+    "Meteor",
+    "Trevor Something",
+    "Waveshaper",
+    "Dynatron",
+    "Starcadian",
+    "Tokyo Rose",
+    "W O L F C L U B",
+    "Michael Oakley",
+    "Daniel Deluxe",
+    "Mega Drive"
+   ],
+   "constraints": [
+    "Owns the darker/harder end of synthwave -- Perturbator, Carpenter Brut, GosT and similar belong here specifically, NOT on CIPHER, even though CIPHER is also electronic. This boundary has been deliberately enforced before (see CIPHER's rejections below).",
+    "Sourcing here is the EASIEST of any station (2026-08-29): artist '- Topic' channels plus the scene's own label channels (NewRetroWave, Aphasia Records, Mad Decent) meant all 19 candidates auditioned clean. GUNSHIP's 'Dark All Day' is the one known gap -- the only Topic upload is a Power Glove remix, the rest are fan re-uploads. Availability, not lane."
+   ],
+   "rejections": []
+  },
+  "atomic": {
+   "callsign": "ATOMIC",
+   "genre": "In-universe atomic-age broadcast -- swing, jump blues, doo-wop",
+   "eraLane": "genuine 1940s-1950s recordings only",
+   "acceptedArtists": [
+    "The Ink Spots",
+    "Sheldon Allman",
+    "Roy Brown",
+    "Dion",
+    "Skeeter Davis",
+    "The Five Stars",
+    "Elton Britt",
+    "Andrews Sisters & Danny Kaye",
+    "Louis Jordan",
+    "Bing Crosby & The Andrews Sisters",
+    "Nat King Cole",
+    "The Chordettes",
+    "Tennessee Ernie Ford",
+    "Sons of the Pioneers",
+    "Louis Jordan & His Tympany Five",
+    "The Andrews Sisters",
+    "Big Joe Turner",
+    "Billy Ward and His Dominoes",
+    "Artie Shaw & His Orchestra",
+    "Billie Holiday",
+    "Bob Crosby and the Bobcats",
+    "Warren Smith",
+    "The Chords",
+    "Clyde McPhatter & The Drifters",
+    "Jackie Brenston & His Delta Cats",
+    "The Ink Spots & Ella Fitzgerald",
+    "Wynonie Harris",
+    "Johnny Mercer",
+    "Big Maybelle",
+    "Ray Smith",
+    "Betty Hutton"
+   ],
+   "constraints": [
+    "TIGHTEST constraint on the roster: not just \"any genuine 40s/50s classic\" -- must be verifiably a real track that actually plays on Fallout 4's Diamond City Radio or Fallout 76's Appalachia Radio. A track has been pulled before for being period-correct but NOT actually on those in-game stations (checked against the Fallout Wiki tracklists).",
+    "Attribution precision matters -- credit the actual original recording artist, not a more-famous cover (e.g. \"Good Rocking Tonight\" is Roy Brown's original, not the Wynonie Harris version some sources list).",
+    "Verified against a published Diamond City Radio tracklist on 2026-08-29 rather than from memory, which is the only way to satisfy the Fallout-canon rule above. A dozen further genuine gaps exist if this station is taken to 50 -- among them Ink Spots 'Maybe' and 'It's All Over but the Crying', Billie Holiday 'Easy Living', Roy Brown 'Mighty Mighty Man', Bob Crosby 'Dear Hearts and Gentle People' and 'Happy Times', Tex Beneke 'A Wonderful Guy', The Three Suns 'Worry Worry Worry', Connee Allen 'Rocket 69' (note the spelling, Connee not Connie), Betty Hutton 'He's a Demon He's a Devil He's a Doll', Frankie Carle 'One More Tomorrow', Cole Porter 'Anything Goes'. Several of those verified clean already."
+   ],
+   "rejections": [
+    {
+     "artist": "various",
+     "track": "Jump Jive An' Wail / Minnie the Moocher / Choo Choo Ch'Boogie / Boogie Woogie Bugle Boy (original selection)",
+     "reason": "Genuine 40s/50s classics but not actually on Diamond City Radio or Appalachia Radio -- replaced with tracks verified against the real in-game tracklists (19th pass)."
+    }
+   ]
+  },
+  "hackback": {
+   "callsign": "HACKBACK",
+   "genre": "Golden-age and underground hip-hop -- boom-bap, deep cuts",
+   "eraLane": "primarily late 1980s-1990s golden age, some adjacent-era classics",
+   "acceptedArtists": [
+    "A Tribe Called Quest",
+    "De La Soul",
+    "Outkast",
+    "Wu-Tang Clan",
+    "MF DOOM",
+    "Nas",
+    "Gang Starr",
+    "Digable Planets",
+    "Dr. Dre",
+    "Ice Cube",
+    "The Pharcyde",
+    "Warren G",
+    "Pete Rock & C.L. Smooth",
+    "MF DOOM (Madvillain)",
+    "Black Star",
+    "Souls of Mischief",
+    "Cypress Hill",
+    "2Pac feat. Dr. Dre & Roger Troutman",
+    "Beastie Boys",
+    "Eric B. & Rakim",
+    "Organized Konfusion",
+    "Public Enemy",
+    "The Notorious B.I.G.",
+    "Big Daddy Kane",
+    "Queen Latifah",
+    "Geto Boys",
+    "Common",
+    "Digital Underground",
+    "The Roots",
+    "Big L",
+    "EPMD",
+    "Jeru the Damaja",
+    "N.W.A",
+    "UGK",
+    "Goodie Mob",
+    "Salt-N-Pepa",
+    "MC Lyte",
+    "Fugees",
+    "DJ Quik",
+    "Too $hort",
+    "Del the Funky Homosapien",
+    "Scarface"
+   ],
+   "constraints": [
+    "Genuinely coast-to-coast -- NY is if anything the heavier side (Tribe/De La/Wu-Tang/Nas/Gang Starr/Pete Rock/Digable Planets/MF DOOM/Black Star) alongside West Coast (Dre/Ice Cube/Warren G/2Pac/Cypress Hill) and Outkast (Atlanta). A \"west coast legends\" framing was checked against the actual tracklist and found wrong (52nd pass) -- don't skew additions toward any one coast without checking the balance first.",
+    "Coast balance, measured 2026-08-25 rather than assumed: before this pass roughly half the roster was New York. The 8-track addition was weighted away from it on purpose (3 NY, plus New Jersey, Houston, Chicago, Oakland and Philadelphia). Re-measure before the next batch instead of trusting this number -- it is a snapshot, like acceptedArtists.",
+    "Before 2026-08-25 the station had no women across 21 artists. Queen Latifah is the first. Golden-age canon has plenty more (MC Lyte, Salt-N-Pepa, Lauryn Hill/Fugees, Roxanne Shante) and none are represented yet.",
+    "On the open question under the Snoop Dogg rejection -- whether this station steers away from radio-famous tracks toward deeper cuts -- the roster itself argues against it: C.R.E.A.M., Ms. Jackson, California Love, Regulate, Insane in the Brain and It Was A Good Day are all canon hits. Treat that removal as a taste call on the track until something else suggests otherwise.",
+    "Coast balance re-measured 2026-08-29 before the batch that took this station to 50: NY was 24/43 (56%). The seven added were 2 NY, 1 NJ, 3 West, 1 South, landing NY at 26/50 (52%). Re-measure again rather than trusting that number. Women went from 1 artist to 4 (Queen Latifah, Salt-N-Pepa, MC Lyte, Fugees); Roxanne Shante is the one named in the earlier gap note still not represented. Mobb Deep's Shook Ones Pt. II is verified clean (rTKpYJ80OVQ) and was passed over on coast alone."
+   ],
+   "rejections": [
+    {
+     "artist": "Snoop Dogg (as Snoop Doggy Dogg)",
+     "track": "Gin and Juice",
+     "reason": "Removed in the 2026-08-23 curation pass. No stated reason was captured -- worth confirming whether this reflects a real boundary (e.g. steering away from more mainstream/radio-famous tracks in favor of deeper cuts) or was a one-off taste call, before treating it as a pattern."
+    }
+   ]
+  },
+  "cipher": {
+   "callsign": "CIPHER",
+   "genre": "Big beat and breakbeat electronica -- late-night hacker-movie soundtrack energy",
+   "eraLane": "primarily late 1990s-2000s big beat/breakbeat",
+   "acceptedArtists": [
+    "The Prodigy",
+    "The Chemical Brothers",
+    "Orbital",
+    "Massive Attack",
+    "Leftfield",
+    "Underworld",
+    "Rob Dougan",
+    "Meat Beat Manifesto",
+    "Propellerheads",
+    "The Crystal Method",
+    "Freestylers",
+    "Fatboy Slim",
+    "Portishead",
+    "Bentley Rhythm Ace",
+    "Way Out West",
+    "Fluke",
+    "Lunatic Calm",
+    "Apollo 440",
+    "Future Sound of London",
+    "Overseer",
+    "Sneaker Pimps",
+    "Junkie XL",
+    "DJ Shadow",
+    "Photek",
+    "Death in Vegas",
+    "UNKLE",
+    "Tricky",
+    "Pitchshifter",
+    "Hive",
+    "ZeroFG",
+    "Unglued",
+    "Y U QT",
+    "Cirrus",
+    "Lo Fidelity Allstars",
+    "Paul Oakenfold"
+   ],
+   "constraints": [
+    "Big-beat/breakbeat energy specifically -- upbeat, propulsive, \"hacker movie soundtrack.\" NOT the darker synthwave/electronic lane (that's CIRCUIT CRUSH's territory, enforced deliberately -- see its profile) and NOT moodier IDM/glitch (Aphex Twin has been rejected from this station twice, see below).",
+    "Audio-quality bar, not just genre fit: a track has been pulled purely for having dialogue/interview audio baked into the official video, even though the song itself fit (\"Da Funk\" precedent) -- check the actual video, not just that a clean studio version exists somewhere.",
+    "Photek is on this list but has NO track: Ni Ten Ichi Ryu has no official or Topic upload anywhere, only fan channels. Juno Reactor's Mona Lisa Overdrive is likewise unusable -- the 4:45 licensed cut is NARROW-LICENCE:18 and the only clean upload is the 10:09 album version. Both were wanted on 2026-08-29 and blocked on availability rather than lane; re-check if a wide-licence upload ever appears."
+   ],
+   "rejections": [
+    {
+     "artist": "Aphex Twin",
+     "track": "Windowlicker",
+     "reason": "Rejected once explicitly (34th pass, too IDM/experimental for this station's big-beat lane), accidentally re-added in a later pass without noticing the earlier rejection, caught by the network-ops dashboard's overlap checker, removed again in the 2026-08-23 curation pass. Treat Aphex Twin as firmly off-limits for this station going forward -- it's been tried and rejected twice now."
+    },
+    {
+     "artist": "Aphex Twin",
+     "track": "Come to Daddy",
+     "reason": "Same rejection as Windowlicker above, same pass."
+    },
+    {
+     "artist": "Leftfield",
+     "track": "Phat Planet",
+     "reason": "Pulled alongside the Aphex Twin tracks in the same pass -- likely the same too-heavy/experimental call, though the exact reasoning for this specific track wasn't separately documented."
+    },
+    {
+     "artist": "Daft Punk",
+     "track": "Da Funk",
+     "reason": "Not a genre rejection -- pulled because the official video's audio has dialogue/interview footage baked in, not a clean listen for a radio station."
+    },
+    {
+     "artist": "The Prodigy",
+     "track": "Mindfields",
+     "reason": "Not a taste rejection -- blocked on availability, 2026-08-27 (issue #19). Proposed for the Matrix lane and it fits; there is simply no upload that clears the bar. The \"- Topic\" upload (61V3EsoNFUQ) is licensed in 6 countries, the exact trap the narrow-licence check exists for: the US is among the 6, so a US-only check passes it and it is dead air for almost everyone else. The official Prodigy channel carries only a live-in-Russia take (f0Olyr9zRto, 6:44), and every remaining hit is a fan re-upload. Re-check if a wide-licence studio upload ever appears -- this one is worth taking then."
+    },
+    {
+     "artist": "Leftfield",
+     "track": "Song of Life",
+     "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
+     "rejectedAt": "2026-08-29",
+     "youtubeId": "QmKE9zKYx0g"
+    },
+    {
+     "artist": "The Chemical Brothers",
+     "track": "Galvanize featuring Q-Tip (Official Music Video)",
+     "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
+     "rejectedAt": "2026-08-29",
+     "youtubeId": "Xu3FTEmN-eg"
+    },
+    {
+     "artist": "Future Sound of London",
+     "track": "Papua New Guinea",
+     "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
+     "rejectedAt": "2026-08-29",
+     "youtubeId": "6QCXpHdW9ak"
+    },
+    {
+     "artist": "UNKLE",
+     "track": "Lonely Soul",
+     "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
+     "rejectedAt": "2026-08-29",
+     "youtubeId": "XrFECnl3vno"
+    },
+    {
+     "artist": "Tricky",
+     "track": "Black Steel",
+     "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
+     "rejectedAt": "2026-08-29",
+     "youtubeId": "9ZJTM03UByU"
+    },
+    {
+     "artist": "The Prodigy",
+     "track": "Firestarter (Empirion Mix)",
+     "reason": "Removed from the station on 2026-08-28 by the curator, on personal taste and preference -- not on availability, licence, embeddability or lane mechanics. Every one of these auditioned clean and had been argued for on its merits when it went on; several came from an outside suggestion pass. Recorded because a removal with no reason reads as an oversight and gets re-proposed: this one was a judgement call and needs no further justification than that, but re-proposing it needs a NEW argument rather than a re-check of the mechanics, which will pass again.",
+     "rejectedAt": "2026-08-29",
+     "youtubeId": "Hy4T6zvQ6jk"
+    }
+   ]
+  },
+  "nin": {
+   "callsign": "NINE INCH NAILS",
+   "genre": "Industrial rage, mechanical dread",
+   "eraLane": "Nine Inch Nails' catalog specifically",
+   "acceptedArtists": [
+    "Nine Inch Nails"
+   ],
+   "constraints": [
+    "Single-artist station by design -- 100% Nine Inch Nails. Do not propose other industrial/NIN-adjacent artists (Ministry, Skinny Puppy, etc.) without confirming first; this station's whole identity is being NIN's own dedicated frequency.",
+    "Channel provenance carries a LICENSING consequence here, found 2026-08-30. NIN's \"- Topic\" uploads from the With Teeth / Year Zero era are licensed in THREE countries; the same era's video-channel uploads are licensed in 249 (The Hand That Feeds on NineInchNailsVEVO, Survivalism on Rob Sheridan, NIN's longtime art director). Older Topic uploads are healthy -- The Fragile and Broken sit at 121 -- so this is that specific upload batch, not Topic in general. Confirmed on three separate Interscope-era Topic uploads (Right Where It Belongs, Zero Sum, Every Day Is Exactly The Same), all exactly 3. For that era prefer the video channels and check availableCountries.",
+    "The 3-country licence is INVISIBLE from the curator's chair, which is the whole reason this is written down: the US is inside that 3, so the track plays perfectly here and is dead for nearly everyone else. It was never catchable by the tooling of its own day -- the track went in 2026-08-25 13:18, audition.js was not written until 16:44 that afternoon, and the NARROW-LICENCE threshold landed a day after that. Nothing re-asked the question until check-roster.mjs was built on 2026-08-29 for exactly this, and its first deep probe of the roster found it. Never conclude a track is fine because it played, or because it passed on the day it was added.",
+    "Fan and archive channels are accepted here out of necessity and carry 7 of 29 tracks (Something I Can Never Have, Wish, The Perfect Drug, Into the Void, Somewhat Damaged, Sin, Reptile) -- used where no official upload exists. Right Where It Belongs is the standing case: no official video was ever made, so its only official upload is the 3-country Topic one and every wide-licence alternative is a fan re-upload. Prefer official where it exists; the trade is real, since a fan upload can vanish to a copyright claim where a Topic one will not, and check-roster.mjs is what catches that when it happens."
+   ],
+   "rejections": []
+  },
+  "green-room": {
+   "callsign": "GREEN ROOM",
+   "genre": "No genre. The subject is the format.",
+   "eraLane": "1970 to now, deliberately unbounded -- Black Sabbath and Kacey Musgraves are on the same rotation.",
+   "acceptedArtists": [],
+   "constraints": [
+    "The ONLY membership test is that the song is literally, lyrically about cannabis -- named, described, or the whole premise. Genre is not a constraint here and must not become one: doom metal, G-funk, roots reggae, outlaw country and power pop all belong precisely because the mix is incoherent. That incoherence IS the station.",
+    "Literal, not adjacent. 'Stoner rock' as a genre does not qualify a track -- Kyuss instrumentals, psychedelia, and 'good to smoke to' songs are the single most likely wrong proposal here. If you cannot quote the line, it does not go on.",
+    "One track per artist unless there is a real reason -- the roster is 28 songs about one subject and the same voice twice makes the joke feel thin rather than broad.",
+    "Innuendo and drug-general songs are out. 'Because I Got High' territory is fine; 'Purple Haze' (about a woman, whatever the myth says) and cocaine/pill songs are not, however famous."
+   ],
+   "rejections": [
+    {
+     "artist": "Three 6 Mafia",
+     "track": "Gotta Stay High",
+     "reason": "No such recording exists. Briefed 2026-08-26 as a literal weed track; every search resolves to \"Stay Fly\" (hook is \"I gotta stay FLY\", not about weed, so it fails this station's membership test) or to fan re-uploads that mislabel that same song \"Stay High\". \"Da Summa\" was offered as the genuine Three 6 weed track and declined -- the slot was dropped rather than filled, so the station currently carries no Memphis entry. Do not re-propose the title; it is not a recording."
+    },
+    {
+     "artist": "Queens of the Stone Age",
+     "track": "Feel Good Hit of the Summer",
+     "reason": "Fits the station perfectly on content (the chorus is a drug inventory naming marijuana first) and was still dropped, so it WILL look like an oversight later. The only official upload (QueensStoneAgeVEVO, bAXPUN2z2CE) is age-gated -- playabilityStatus LOGIN_REQUIRED, which the IFrame player cannot satisfy, so it would have been dead air. No Topic upload of the album track exists; Topic carries only the Reprise. Unofficial uploads were offered and declined. Re-propose only if a non-gated official source appears."
+    }
+   ]
+  },
+  "the-crypt": {
+   "callsign": "THE CRYPT",
+   "genre": "Dungeon synth and dark fantasy -- lo-fi keyboard music that scores an imagined ruin: modal melodies, tape hiss, cheap reverb, no drums or almost none",
+   "eraLane": "the modern revival (2010s-present) and its 1990s roots, which are the same lineage rather than two",
+   "acceptedArtists": [],
+   "constraints": [
+    "FOUNDED FROM ISSUE #52, which proposed the Cryo Chamber label and its Cryo Crypt side project. Cryo Crypt is the dungeon-synth/dark-fantasy arm and is what this station is named for. The label channel is the first place to look for TITLES and the safest provenance available here -- but not the place to take FILES from: verified 2026-09-02 on the Cryo Chamber side, it uploads whole records as single 50-58 minute files. Read the listing there, then find the single-track upload elsewhere.",
+    "READ TITLES OFF A REAL LISTING, never from recall. This is the constraint NEON STASIS learned twice and it costs a whole search pass when it is ignored: titles from memory are usually not real, and searching them returns unrelated video (nail-salon tutorials and reef-tank reviews, on the actual run that proved it). Open the label's Bandcamp or channel listing, copy the title, search that.",
+    "ALBUM RIPS ARE THE DEFAULT UPLOAD IN THIS GENRE and the main thing to reject. Dungeon synth is released as long-form and routinely uploaded as one 30-90 minute file. The dial announces ONE title, so the test is on the FILE, not the release: a single track is in, a full-album upload is out however good it is. Same failure mode as mallsoft, same fix -- search track names, not record names.",
+    "LENGTH ALONE IS NOT A REJECT REASON. Eight- and ten-minute pieces are normal here, the way an extended mix is normal on SYNAPSE. A long TRACK is fine; a long ALBUM is the thing above.",
+    "THE FONT CANNOT DRAW MOST OF WHAT THIS SCENE NAMES ITSELF. ter-u16n has no CJK, no fullwidth Latin and no Latin Extended-A, so runic stylings, o-macrons and the accented Nordic spellings this genre loves all render as '?' on the dial (src/term.js falls back to glyph 63). Romanise, or pick another track. A lone accented vowel in an otherwise ASCII credit is the easiest version of this to paste in by accident.",
+    "SPREAD THE CHANNELS. A sample-and-reupload scene carries real takedown exposure, so taking one uploader's copy of a whole catalogue means one strike costs the station several tracks at once.",
+    "NOT COLD WAVE AND NOT NINE INCH NAILS. Cold, synthetic and bleak already have homes on this dial. The boundary here is FANTASY -- a ruin, a forest, a keep -- rather than industrial dread or synthetic melancholy. If a candidate would sit comfortably on either of those, it belongs there instead."
+   ],
+   "rejections": []
+  },
+  "tradewinds": {
+   "callsign": "TRADEWINDS",
+   "genre": "Exotica and tiki lounge -- vibraphone, bird calls, hand drums and steel guitar, played straight rather than winked at",
+   "eraLane": "the 1950s-60s exotica boom AND its modern revival, which are one lineage rather than two",
+   "acceptedArtists": [
+    "Martin Denny",
+    "Arthur Lyman",
+    "Gene Rains",
+    "Billy Mure",
+    "Kava Kon",
+    "The Tikiyaki Orchestra",
+    "Ixtahuele",
+    "The Waitiki 7",
+    "The Agents",
+    "New Hawaiian Band"
+   ],
+   "constraints": [
+    "THE BOUNDARY THAT MATTERS IS WITH ATOMIC, not with anything modern. Both live in the 1950s and both are lounge-adjacent, so the split has to be stated: ATOMIC is Fallout canon and is constrained by an in-universe tracklist, while TRADEWINDS is EXOTICA -- the Polynesian-pop fantasy specifically. A 1950s pop vocal is ATOMIC's unless the arrangement is exotica. Andy Williams' 'Blue Hawaii' is the shape of candidate that could argue for either; it belongs here because the record it comes off is a tiki compilation, not because of its year.",
+    "REVIVAL AND ORIGINAL BOTH BELONG. Kava Kon and Ixtahuele are doing the same thing Denny and Lyman did, sincerely, and a station that took only the originals would be a museum. Mixing them is the point.",
+    "COMPILATIONS ARE THE DEFAULT SOURCE HERE and that is the main trap. This catalogue survives on reissues -- 'Ultra-Lounge', 'Swank Vinyl Exotica', 'Hawaii's Greatest Hits' -- so searches surface hour-long compilation uploads far more readily than tracks. The dial announces ONE title, so the test is on the FILE: a single track is in, a compilation upload is out however good it is. Same failure THE CRYPT hit with album rips, and NEON STASIS before it.",
+    "READ TITLES OFF A REAL LISTING, never from recall. Exotica titles are unguessable and often absurd, so a remembered one is usually not real and returns unrelated video.",
+    "SOME GENUINE TITLES FROM THIS ERA READ BADLY OUT OF CONTEXT, and the dial DISPLAYS the title. 'Bangkok Cock Fight' is a real Martin Denny track. That is the owner's call per candidate, not a rule that can be automated -- but it is a call somebody has to make consciously rather than discovering it on the dial.",
+    "THE FONT IS NOT THE OBSTACLE IT LOOKS LIKE. ter-u16n covers Latin-1, so accented Nordic and Romance spellings draw fine; what it lacks is Latin Extended-A, CJK and fullwidth. Hawaiian macrons and okina ARE outside it, so a title spelled with them needs romanising or replacing.",
+    "SPREAD THE CHANNELS. A reissue-heavy catalogue lives on compilation and archive uploaders, and one takedown should not cost the station several tracks at once."
+   ],
+   "rejections": [
+    {
+     "artist": "Martin Denny",
+     "track": "Bangkok Cockfight",
+     "reason": "Passed on the TITLE, not on the music, the lane or availability -- 2026-09-01, owner's call. The candidate (vqSQZwJI0Jo) auditioned completely clean: Martin Denny's own '- Topic' upload, 2:21, embeddable, 123 countries, and it is about as squarely in this station's lane as a track can be -- Denny is the artist the whole genre is named after. Nothing mechanical or curatorial counts against it. It falls to the fact that the dial DISPLAYS the track title, in full, on a public site, and this genuine 1950s exotica title reads badly stripped of that context. Recorded here because the next pass will absolutely re-propose it otherwise: it is the most obvious Denny track in any tiki listing, and there is nothing in the mechanical checks that would ever stop it. The rest of Denny's catalogue is open -- this is one title, not the artist.",
+     "youtubeId": "vqSQZwJI0Jo",
+     "rejectedAt": "2026-09-01"
+    }
+   ]
+  },
+  "slow-orbit": {
+   "callsign": "SLOW ORBIT",
+   "genre": "Ambient and downtempo -- chillout with a pulse: warm pads over unhurried beats, grooves rather than drones",
+   "eraLane": "the 2000s-present chillout/downtempo scene, European-leaning",
+   "acceptedArtists": [
+    "Jens Buchert",
+    "Alex Cortiz",
+    "Lemongrass",
+    "BistroBoy",
+    "Celeste Lear",
+    "Sounds From The Ground",
+    "Groovecatcher",
+    "Smooth Genestar",
+    "Fascinating Earthbound Objects",
+    "The William Caslon Experience"
+   ],
+   "constraints": [
+    "THERE IS A BEAT. That is the whole boundary against pure ambient: this lane is downtempo, so a track with no pulse at all does not belong here. 'Grooves' is in the brief and should be taken literally. AMENDED 2026-09-01: this used to say a beatless track 'belongs on THE CRYPT or nowhere', which was true when it was written and is not any more -- DRIFT MODE came back on the same band, and stillness is exactly its lane. Send beatless ambient there.",
+    "NOT NEON STASIS. Mallsoft is muzak slowed and drowned in reverb -- found sound, deliberately degraded. This is PRODUCED music at full fidelity that simply moves slowly. If a candidate sounds like it is playing four storeys away, it is NEON STASIS's.",
+    "NOT CIPHER. CIPHER owns late-night breakbeat and its tempo. Anything that would make someone walk faster is CIPHER's, not this station's.",
+    "DJ MIXES AND CHILLOUT COMPILATIONS ARE THE TRAP HERE, the same shape album rips are elsewhere. This scene is distributed through 'Winter Chill Essentials'-style compilations and hour-long continuous mixes, which is precisely what the dial cannot announce. Search TRACK names, take single files.",
+    "READ TITLES OFF A REAL LISTING. The reference list is a station's recently-played view, so those titles are real; anything added later should come from a comparable listing rather than memory.",
+    "A FEW TITLES IN THIS LANE READ ODDLY ON A PUBLIC DIAL -- 'Under Pimp Arrest' is a genuine release and displays in full. Owner's call per candidate, made deliberately rather than discovered later.",
+    "SPREAD THE CHANNELS. Netlabel and compilation uploads dominate here, so concentration on one uploader is real takedown exposure."
+   ],
+   "rejections": [
+    {
+     "artist": "The William Caslon Experience & Burdy",
+     "track": "Under Pimp Arrest",
+     "reason": "Passed on the TITLE at proposal time -- 2026-09-01, owner's call, same reasoning as TRADEWINDS' Martin Denny pass on the same day. The dial DISPLAYS track titles in full on a public site, and this one reads badly out of context. UNLIKE the Denny track, this was never auditioned: it was flagged off the reference list BEFORE a search was run, so there is no youtubeId here and no probe was spent on it. That is the cheaper order for a call of this kind, and worth repeating -- a title question can be answered by reading, before any network work. Nothing is implied about the artist or the music. The William Caslon Experience remains open for this station, and the lane it sits in is exactly right.",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-01"
+    }
+   ]
+  },
+  "rise-up": {
+   "callsign": "RISE UP",
+   "genre": "Protest rock, punk and hardcore -- voices coming together against power",
+   "eraLane": "1978 onward; no upper bound, but the spine is US hardcore/punk plus the rap-metal and melodic-hardcore that grew out of it",
+   "acceptedArtists": [
+    "Rage Against the Machine",
+    "System of a Down",
+    "The Exploited",
+    "Rise Against",
+    "Against Me!",
+    "Dead Kennedys",
+    "Black Flag",
+    "Bad Religion",
+    "The Clash",
+    "Anti-Flag",
+    "Refused",
+    "Bad Brains",
+    "Propagandhi",
+    "Stiff Little Fingers"
+   ],
+   "constraints": [
+    "Protest is the SUBJECT, collective voice is the TIEBREAKER. Where two candidates are equally political, take the one a room shouts back. That rule is what keeps this from becoming 'angry songs' generally, and it is why Black Flag's 'Rise Above' is the thesis track rather than a name coincidence.",
+    "Guitar-loud. The curator drew this line by choosing the seed artists: no ska, no reggae, no hip-hop protest. That is not squeamishness about the politics, it is separation -- HACKBACK already holds golden-age hip-hop, and Public Enemy or The Specials here would lean on a neighbouring station rather than widen this one.",
+    "Rage Against the Machine appears here AND on DISTORTION FIELD. This is the first artist to span two PUBLIC stations: of 395 artists, the only previous crossings (Weezer, Cypress Hill) both go into GREEN ROOM, a secret station. Called deliberately by the curator on 2026-09-02, on the grounds that RATM genuinely lives in both lanes. It is NOT a general licence to duplicate artists -- anyone proposing the second such overlap needs their own argument, the same way DISTORTION FIELD's own RATM note says its lane-widening set no precedent.",
+    "'Bombtrack' (hVck6DkOi38) belongs to DISTORTION FIELD and must not be added here. Lint forbids a repeated youtubeId anywhere on the roster, so the shared artist must be represented by DIFFERENT recordings on the two stations.",
+    "Expect heavy audition attrition. The Exploited, Dead Kennedys (Alternative Tentacles, plus the Biafra rights dispute) and Black Flag (SST) are all thin or unofficial on YouTube -- exactly the NARROW-LICENCE and '- Topic' traps. Build the candidate list at roughly 2x the target and expect to lose the older UK and SST material first.",
+    "Target 22+ tracks. README asserts a per-station range of 22-50 and lint checks it, so shipping under 22 moves the roster's stated floor and needs the README sentence updated with it.",
+    "PROVENANCE IS WIDE HERE, by the curator's call 2026-09-02: an UNKNOWN-CHANNEL fan or archive upload is acceptable when it is demonstrably the right recording. Precedent exists -- CITY LIGHTS leans on archive channels because its catalogue was never officially uploaded -- and this station has the same problem for SST, Alternative Tentacles and older UK punk. Measured bonus: the fan uploads probed here carry 249-country licences against the Topic uploads' 122-123, because they are not content-ID licensed at all. STILL HARD, because these are not strictness but the track not working: LOGIN_REQUIRED (age-gated -- the IFrame player cannot satisfy it and it plays as DEAD AIR, silently), playableInEmbed false, and a licence under 20 countries (fine for us, dead for the listener). Prefer an official/Topic upload when one is clean; reach for a fan upload when it is that or nothing. CHECK-VERSION is now 'go listen', not 'reject'."
+   ],
+   "rejections": [
+    {
+     "artist": "The Exploited",
+     "track": "Fuck the System (RECOVERED -- see note)",
+     "reason": "SUPERSEDED 2026-09-02, same day, and kept rather than deleted because the reasoning is the useful part. Originally rejected on availability: every upload found was LOGIN_REQUIRED, including the band's own channel (7Ybjj50dRHc) and the Topic copy (11rViJvQRaA), and age-gating plays as dead air in the embed. The curator then widened provenance to admit fan uploads, which recovered it: np3FXa4ORbY (channel 'Pasto') probes OK, embeddable, 249 countries. OPEN QUESTION on that id: it runs 3:33 against the age-gated Topic copy's 4:15, a 42s gap that metadata cannot explain -- different mix, an edit, or trailing silence on the Topic upload. It needs a LISTEN before it ships; the mechanical half passes and the 'is it the track' half does not answer to a probe. If it turns out to be an edit, this track goes back to unavailable and this note reverts to a rejection.",
+     "youtubeId": "11rViJvQRaA",
+     "rejectedAt": "2026-09-02"
+    },
+    {
+     "artist": "Dead Kennedys",
+     "track": "Holiday in Cambodia (wrong uploads)",
+     "reason": "Not a rejection of the TRACK -- v0Uc6ZWDF3c (Topic, 225s, 123 countries) is on the shortlist and clean. This records the two decoys sitting beside it in search results, because the next pass will meet them again and they look better than they are: Qr6NOsluHYg is a ConcertsOnVEVO upload that is LOGIN_REQUIRED (age-gated, dead air in the embed), and 4TljnADEbzI is a second 'Dead Kennedys - Topic' upload at 4:38 with NARROW-LICENCE:1 -- licensed in a single country, so it would play here and be dead for everyone else. Same shape as the 6iLqsFeWswY / R-rDQs5NOP4 pair on California Uber Alles. The lesson generalises: this catalogue has multiple near-identical Topic uploads whose licence width differs wildly, so probe the specific id, never the title.",
+     "youtubeId": "Qr6NOsluHYg",
+     "rejectedAt": "2026-09-02"
+    }
+   ]
   }
+ }
 }

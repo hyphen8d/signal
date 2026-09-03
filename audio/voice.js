@@ -809,6 +809,13 @@ export const STATION_LINER_COUNTS = {
   'midnight-neon': 1, // liner-synapse-01 -- via STATION_CLIP_NAMES, see L14 note above
   'city-lights': 2,
   hackback: 2,
+  // RISE UP joins at 0: no station-specific liner has been recorded yet,
+  // and 0 means "general pool applies" where an ABSENT key would mean "no
+  // liners at all" -- the secret stations' opt-out. That distinction is the
+  // MOMENTUM bug (60th pass): deleting a key dropped that station out of the
+  // general pool too, and it played nothing. tests/helpers.test.mjs asserts
+  // every public station has a pool, which is what caught this one.
+  'rise-up': 0,
   // 2026-08-31 -- ZM's first station, and the first pair written after the
   // frequency came out of the format. Present-and-populated from the day it
   // shipped, which is the case the note above says to reach for only when a
