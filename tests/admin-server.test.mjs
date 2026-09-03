@@ -3,7 +3,9 @@
 // This is the one process in the repo that can run `git push`, and until
 // this file its three guards -- the Host allowlist, the X-Signal-Admin
 // header on every mutating route, and 404-outside-repo static serving --
-// were enforced by prose in CLAUDE.md and nothing else. These tests spawn
+// were enforced by prose in CLAUDE.md and nothing else. A fourth joined
+// them 2026-09-02: the static ALLOWLIST (S1), which is the only one of the
+// four that was ever actually exploited rather than merely reachable. These tests spawn
 // the real server on a loopback ephemeral port and make real HTTP requests,
 // because the guards live in the request path and a unit-level import
 // cannot see them.
@@ -54,7 +56,7 @@ function request(port, { method = 'GET', path: p = '/', headers = {} } = {}) {
   })
 }
 
-test('admin-server: the three request-path guards hold', async () => {
+test('admin-server: the four request-path guards hold', async () => {
   const { child, port } = await startServer()
   try {
     // Sanity: a legitimate loopback request works.
@@ -95,6 +97,40 @@ test('admin-server: the three request-path guards hold', async () => {
       sock.on('error', reject)
     })
     assert.match(noHost, /^HTTP\/1\.[01] 403/, `a request with no Host header got: ${noHost.slice(0, 40)}`)
+
+    // 2026-09-02 (audit, S1) -- the static ALLOWLIST. The repo root is a
+    // working directory, and this server was handing `.elevenlabs-key` to
+    // any tailnet peer that asked (confirmed live at 200). Asserted from
+    // both ends, because an allowlist that serves nothing would pass the
+    // refusal half alone and break the app in a way no other test here
+    // would notice.
+    for (const denied of [
+      '/.elevenlabs-key',        // the finding itself
+      '/.elevenlabs-voice-id',   // its neighbour
+      '/.git/config',            // history, not the working tree
+      '/.gitignore',             // the dot rule, generally
+      '/tools/station-profiles.json', // curation records, not app assets
+      '/tools/pending-tracks.json',
+      '/tools/admin-server.mjs', // this server's own source
+      '/tests/harness.mjs',      // a whole tree with no business being served
+      '/LICENSE',                 // no extension at all
+    ]) {
+      const r = await request(port, { path: denied, headers: { Host: '127.0.0.1' } })
+      assert.equal(r.status, 404, `${denied} must not be served, got ${r.status}`)
+    }
+    // ...and everything the app and the dashboard actually fetch still is.
+    // /tools/lib/roster.mjs is the sharp one: network.html imports it, so an
+    // over-tight allowlist takes the dashboard down with the secret.
+    for (const allowed of [
+      '/index.html', '/main.js', '/program.js', '/stations.js', '/build.json',
+      '/src/crt.js', '/ui/desktop.js', '/visuals/index.js',
+      '/fonts/ter-u16n.bdf', '/screenshots/hero.jpg',
+      '/tools/network.html',   // the dashboard
+      '/tools/lib/roster.mjs', // which imports this
+    ]) {
+      const r = await request(port, { path: allowed, headers: { Host: '127.0.0.1' } })
+      assert.equal(r.status, 200, `${allowed} must still be served, got ${r.status}`)
+    }
 
     // 2026-09-02 (audit, L11) -- the boot payload's station cap is per-band
     // and imported from lint-roster.js, not restated flat.

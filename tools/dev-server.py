@@ -14,12 +14,59 @@
 # iteration. Run with: python3 tools/dev-server.py [port]
 
 import http.server
+import os
+import posixpath
 import socketserver
 import sys
+import urllib.parse
 
 port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 
+# 2026-09-02 (audit, S1) -- the same static ALLOWLIST tools/admin-server.mjs
+# grew, for the same reason and kept deliberately identical to it: this
+# server binds EVERY interface (the '' below), so until now it handed
+# .elevenlabs-key to anything on the LAN that asked for it. Whichever of the
+# two servers is up, the same set of files is reachable and no other.
+#
+# The rules and the reasoning are documented once, beside servable() in
+# tools/admin-server.mjs -- read them there. If you change one, change both;
+# tests/admin-server.test.mjs pins the JS half, and the shapes are simple
+# enough to compare by eye.
+STATIC_DIRS = {'audio', 'fonts', 'screenshots', 'src', 'ui', 'visuals'}
+STATIC_TOP_EXT = {'.js', '.json', '.html', '.md', '.ico', '.png', '.jpg', '.svg'}
+
+
+def servable(rel):
+    if rel == '':
+        return True  # the directory index, which resolves to index.html
+    parts = rel.split('/')
+    if any(seg.startswith('.') for seg in parts):
+        return False
+    if len(parts) == 1:
+        # A bare directory name ('audio') is the listing for one of ours.
+        if parts[0] in STATIC_DIRS or parts[0] == 'tools':
+            return True
+        return os.path.splitext(rel)[1].lower() in STATIC_TOP_EXT
+    if parts[0] == 'tools':
+        if len(parts) == 2 and parts[1].endswith('.html'):
+            return True
+        return len(parts) == 3 and parts[1] == 'lib' and parts[2].endswith('.mjs')
+    return parts[0] in STATIC_DIRS
+
+
 class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
+    def send_head(self):
+        # Checked here rather than in translate_path(): this is the one hook
+        # both GET and HEAD pass through that can still refuse.
+        rel = urllib.parse.urlsplit(self.path).path
+        rel = posixpath.normpath(urllib.parse.unquote(rel)).strip('/')
+        if rel == '.':
+            rel = ''
+        if not servable(rel):
+            self.send_error(404, 'Not Found')
+            return None
+        return super().send_head()
+
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
         self.send_header('Pragma', 'no-cache')

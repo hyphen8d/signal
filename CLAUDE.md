@@ -64,10 +64,11 @@ Adding a clip never exposed it; a URL nobody has fetched cannot be stale.
 network-ops dashboard at `http://127.0.0.1:8080/admin`. It sends the same
 `Cache-Control: no-store` headers `tools/dev-server.py` does, so for an admin
 session it replaces that server rather than running beside it. Zero
-dependencies; binds loopback, checks the `Host` header, and requires an
+dependencies; binds loopback, checks the `Host` header, requires an
 `X-Signal-Admin` header on every mutating route — which a cross-origin page
-cannot send without a CORS preflight this server never answers. That last
-guard is not decorative: this process can run `git push`.
+cannot send without a CORS preflight this server never answers — and serves
+static files from an **allowlist**, not the whole repo. That third guard is
+not decorative: this process can run `git push`.
 
 **On the development box it is already running, as a systemd USER unit** —
 `tools/signal-admin.service`, a reference copy of what is installed at
@@ -133,10 +134,35 @@ flowchart TB
         G1{{"bind: loopback (default) / tailnet (unit)<br/>stops: the open LAN"}}
         G2{{"Host allowlist, absent = refused<br/>stops: DNS rebinding"}}
         G3{{"X-Signal-Admin on every mutating route<br/>stops: cross-origin CSRF (no preflight answered)"}}
+        G4{{"static allowlist, dot-segments refused<br/>stops: reading secrets out of the repo root"}}
         S[admin-server.mjs<br/>can git push]
     end
-    B -->|ssh -N -L 8080:127.0.0.1:8080| G1 --> G2 --> G3 --> S
+    B -->|ssh -N -L 8080:127.0.0.1:8080| G1 --> G2 --> G3 --> G4 --> S
 ```
+
+**The static allowlist (2026-09-02) is the one guard here that was actually
+exploited rather than merely thin.** The server maps URLs onto the repo
+ROOT, and the repo root is a working directory: `curl
+http://<tailnet-addr>:8080/.elevenlabs-key` returned 200 and the key, and
+`tools/dev-server.py` was worse while running — it binds every interface, so
+the same file went to the open LAN. `.gitignore` had kept the key out of
+git; nothing had kept it out of HTTP.
+
+The fix is an allowlist rather than the obvious dotfile denylist, and that
+choice is the point: a denylist has to anticipate `.env`, editor swap files,
+`*.pem`, a stray `stations.js.bak`, whatever the next secret is called,
+whereas naming what the app actually fetches means the next secret dropped
+in this directory is safe because nobody had to remember it. `servable()` in
+`tools/admin-server.mjs` carries the rules and the reasoning; `dev-server.py`
+holds a deliberate second copy of the same shape, and the comment in each
+points at the other — change one, change both. What it allows was derived by
+enumerating real fetches, and two of them are non-obvious: the dashboard
+imports `/tools/lib/roster.mjs`, and `audition.js` prints an **http** URL for
+its generated `tools/audition.html`, so both of those workflows break under
+a naive "serve nothing from tools/" rule. `tests/admin-server.test.mjs`
+asserts from both ends — the secrets 404, and the dashboard's own imports
+still 200 — because an allowlist that serves nothing passes the refusal half
+on its own.
 
 `tools/network.html` was serverless until 2026-08-27, reading and writing
 `stations.js` through Chrome's File System Access API with the roster parser

@@ -724,6 +724,51 @@ async function handleApi(req, res, url) {
   return sendJson(res, 404, { error: `no route ${req.method} /api/${route}` })
 }
 
+// 2026-09-02 (audit, S1) -- static serving is an ALLOWLIST, and that is the
+// whole point of it. This server maps URLs onto the repo ROOT, and the repo
+// root is a working directory: it held `.elevenlabs-key` and
+// `.elevenlabs-voice-id` in the clear, both of which this server handed to
+// any tailnet peer that asked (confirmed live, 200 + the key). A denylist
+// was the obvious fix and is the wrong one -- it has to anticipate `.env`,
+// editor swap files, `*.pem`, a stray `stations.js.bak`, whatever the next
+// secret is called -- so the rule is inverted: name what the app and the
+// dashboard actually fetch, 404 everything else, and the next secret
+// dropped in this directory is safe because nobody had to remember it.
+//
+// Derived by enumerating the real fetches, not guessed:
+//   - the six asset/module dirs below, served whole (no secrets live in
+//     any of them; they are what index.html imports and what voice.js and
+//     config.js fetch at runtime),
+//   - top-level files by extension -- this is the app's own module layer
+//     (program.js, stations.js, build.json ...), and an extension gate
+//     keeps adding a module from silently 404ing the way an explicit file
+//     list would,
+//   - and three named things under tools/: the dashboard, the two
+//     audition pages (audition.js PRINTS an http URL for its generated
+//     one -- that workflow is served, not file://), and lib/*.mjs, which
+//     network.html imports `/tools/lib/roster.mjs` from. Everything else
+//     in tools/ -- station-profiles.json, pending-tracks.json, the
+//     servers themselves -- stops being reachable, which it never should
+//     have been.
+// Any dot-prefixed segment is refused outright, so `.git/`, `.claude/` and
+// audio/'s gitignored scratch renders never reach the rules above.
+// The one residual: a secret dropped at the repo root under an allowed
+// extension (`secrets.json`). Narrow, and gitignored files belong outside
+// the served root anyway -- see the S1 note in CLAUDE.md.
+const STATIC_DIRS = new Set(['audio', 'fonts', 'screenshots', 'src', 'ui', 'visuals'])
+const STATIC_TOP_EXT = new Set(['.js', '.json', '.html', '.md', '.ico', '.png', '.jpg', '.svg'])
+
+function servable(rel) {
+  const parts = rel.split('/')
+  if (parts.some((seg) => seg.startsWith('.'))) return false
+  if (parts.length === 1) return STATIC_TOP_EXT.has(path.extname(rel).toLowerCase())
+  if (parts[0] === 'tools') {
+    if (parts.length === 2 && parts[1].endsWith('.html')) return true
+    return parts.length === 3 && parts[1] === 'lib' && parts[2].endsWith('.mjs')
+  }
+  return STATIC_DIRS.has(parts[0])
+}
+
 function serveStatic(req, res, url) {
   let rel = decodeURIComponent(url.pathname.replace(/^\/+/, ''))
   if (rel === '' ) rel = 'index.html'
@@ -734,7 +779,7 @@ function serveStatic(req, res, url) {
   // put a 404 in the log for it.
   if (rel === 'favicon.ico') { res.writeHead(204, NO_STORE); return res.end() }
   const p = path.resolve(ROOT, rel)
-  if (!inRepo(p) || !existsSync(p) || !readdirSafeIsFile(p)) {
+  if (!servable(rel) || !inRepo(p) || !existsSync(p) || !readdirSafeIsFile(p)) {
     res.writeHead(404, { 'Content-Type': 'text/plain', ...NO_STORE })
     return res.end('not found')
   }
