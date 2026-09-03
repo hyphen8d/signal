@@ -34,6 +34,11 @@
 //     are not close in any sense a listener can reach.
 //   - no YouTube ID appears twice across the whole roster (secret included)
 //   - every track has a title and artist
+//   - README's screenshot captions still name the station tools/shoot.mjs
+//     actually captures. The captions name a station; the recipes press a
+//     preset DIGIT; presets are per-band and renumber when the band gains a
+//     station. The digit is read out of shoot.mjs, not restated, so this is
+//     an assertion between the two rather than a third copy.
 //   - README's roster sentence still matches the roster: station count, track
 //     total, the per-station min-max, and the secret-station total. It had
 //     already drifted once (said 371 for a 377-track roster), and the guide's
@@ -81,7 +86,7 @@ export const DESC_WIDTH = 72
 export const DESC_LINES = 3
 
 export async function lintRoster() {
-  const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=lint')
+  const { STATIONS, SECRET_STATIONS, STATION_PRESET_ORDER } = await import('../stations.js?v=lint')
   const { BANDS, DEFAULT_BAND, LOCK_THRESHOLD } = await import('../tuning.js?v=lint')
   const { VISUALS } = await import('../visuals/index.js?v=lint')
   const { parseBDF } = await import('../src/bdf.js')
@@ -212,6 +217,56 @@ export async function lintRoster() {
       if (!m) problems.push(`index.html description "${d.slice(0, 40)}..." lost its "N curated stations across two bands" claim -- reword it back or update lint-roster.js`)
       else if (+m[1] !== STATIONS.length) problems.push(`index.html description says ${m[1]} curated stations, roster has ${STATIONS.length}`)
     }
+  }
+  // 2026-09-02 -- the SCREENSHOT captions. README names the station in two of
+  // its shots ("locked onto COLD WAVE", "DISTORTION FIELD's fire effect"),
+  // and tools/shoot.mjs captures them by pressing a PRESET DIGIT -- so the
+  // caption is true only while that digit still resolves to that station.
+  // Nothing connected the two. A station added to the default band below
+  // COLD WAVE's frequency renumbers the presets under both recipes, and the
+  // next `npm run shoot` would quietly regenerate hero.jpg showing a
+  // different station while the caption went on naming the old one. Exactly
+  // how og.jpg went stale (a shot no tool owns is a shot that rots), one
+  // level up: here the tool owns the shot and nothing owns the CLAIM.
+  //
+  // The digits are read out of shoot.mjs rather than restated here -- a
+  // third copy is what this rule exists to prevent. Presets are per-band and
+  // shoot.mjs runs on a fresh Chrome profile (mkdtempSync, no localStorage),
+  // so the band is deterministically DEFAULT_BAND; if that stops being true
+  // this rule is checking the wrong dial and should be told about the change.
+  try {
+    const shoot = readFileSync(path.join(here, 'shoot.mjs'), 'utf8')
+    const presetIn = (recipe) => {
+      const m = new RegExp(`async '?${recipe}'?\\(api, tmp\\)[\\s\\S]*?tuneTo\\(api, (\\d+)\\)`).exec(shoot)
+      return m ? Number(m[1]) : null
+    }
+    const bandOrder = STATION_PRESET_ORDER.filter((st) => st.band === DEFAULT_BAND)
+    const shots = [
+      { recipe: 'hero', re: /!\[SIGNAL, locked onto ([^\]]+)\]\(\.\/screenshots\/hero\.jpg\)/, visual: null },
+      { recipe: 'visualizer', re: /!\[The visualizer, running ([^']+)'s fire effect\]\(\.\/screenshots\/visualizer\.jpg\)/, visual: 'flame' },
+    ]
+    for (const shot of shots) {
+      const cap = shot.re.exec(readme)
+      const preset = presetIn(shot.recipe)
+      if (!cap) {
+        problems.push(`README: could not find the ${shot.recipe} screenshot caption -- if it was reworded, update the regex in lint-roster.js so this keeps checking`)
+        continue
+      }
+      if (preset === null) {
+        problems.push(`tools/shoot.mjs: could not read the preset the "${shot.recipe}" recipe tunes to -- if the recipe changed shape, update lint-roster.js so this keeps checking`)
+        continue
+      }
+      const st = bandOrder[preset - 1]
+      if (!st) {
+        problems.push(`tools/shoot.mjs: the "${shot.recipe}" recipe presses preset ${preset}, but band ${DEFAULT_BAND} has only ${bandOrder.length} stations`)
+      } else if (st.callsign !== cap[1]) {
+        problems.push(`README's ${shot.recipe} caption says "${cap[1]}", but shoot.mjs presses preset ${preset}, which on band ${DEFAULT_BAND} is ${st.callsign} -- re-shoot, recaption, or change the preset`)
+      } else if (shot.visual && st.visual !== shot.visual) {
+        problems.push(`README's ${shot.recipe} caption calls it a ${shot.visual} effect, but ${st.callsign}'s visual is now "${st.visual}"`)
+      }
+    }
+  } catch (e) {
+    problems.push(`screenshot-caption rule could not run: ${e.message}`)
   }
   // 2026-09-02 (audit, O1) -- profile keys with no station behind them.
   // station-profiles.json is looked up strictly by current station id
