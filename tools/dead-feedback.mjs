@@ -139,16 +139,25 @@ const GESTURES = {
   'swipe right': (h) => h.swipe(1),
   'swipe left': (h) => h.swipe(-1),
   'swipe up (skip)': (h) => h.touch(100, 200, 100, 60),
-  // Two-finger tap (the tint cycle, mobile's [C]) has no harness helper, and
-  // needs the real shape of the event: fingers never lift in sync, so
-  // touchend fires once per finger and onTouchEnd only resolves on the
-  // second -- see its own BUG FIXED note in ui/mobile.js.
-  'two-finger tap': (h) => {
-    const ev = (touches, changed) => ({ touches, changedTouches: changed, target: null, preventDefault() {} })
-    h.program.onTouchStart(h.screen, ev([{ clientX: 10, clientY: 10 }, { clientX: 40, clientY: 10 }], []))
-    h.program.onTouchEnd(h.screen, ev([{ clientX: 40, clientY: 10 }], [{ clientX: 10, clientY: 10 }]))
-    h.program.onTouchEnd(h.screen, ev([], [{ clientX: 40, clientY: 10 }]))
-  },
+  // 2026-09-02 -- both two-finger gestures now come from the HARNESS
+  // (h.touch2tap / h.swipe2) instead of being re-spelled here. This file
+  // used to hand-roll the tap's event sequence because no helper existed;
+  // the B1 work added both, and leaving the copy would have been two
+  // spellings of one gesture -- the duplication CLAUDE.md's design-record
+  // note says to make assert instead. A copy here cannot fail loudly: it
+  // would go on driving the OLD event shape and reporting a clean sweep of
+  // a gesture the app no longer has.
+  'two-finger tap': (h) => h.touch2tap(),
+  // 2026-09-02 -- the band swipe (B1) had NO sweep coverage at all until
+  // now: it shipped the same day this list was last read, and a gesture
+  // absent from GESTURES is not reported as untested, it is simply not
+  // reported -- the sweep still printed a complete-looking mobile section.
+  // Same silent-pass shape as a rate-limited audition run or a measurement
+  // taken against a covered window, which is why it is called out rather
+  // than quietly added. Direction is not swept: onTouchEnd routes both
+  // signs to the same cycleBand(), so left and right are one code path
+  // today.
+  'two-finger swipe (band)': (h) => h.swipe2(1),
 }
 const MOBILE_STATES = {
   standby: (h) => { h.advance(1200) },

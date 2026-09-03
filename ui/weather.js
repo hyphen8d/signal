@@ -209,8 +209,21 @@ export default {
    *  The staleness check is a timestamp compare, so running it every second
    *  costs nothing; the fetch behind it fires at most once every fifteen
    *  minutes, and only while powered on with consent already given. It never
-   *  raises a prompt -- requestLocation() is not reached from here, because
-   *  `_wxLoc` is already set by the time consent is 'yes'. */
+   *  raises a prompt -- and the `!this._wxLoc` guard below is what
+   *  guarantees that, not an invariant about consent.
+   *
+   *  2026-09-02 -- it used to be guaranteed by one, and this comment said
+   *  so: "`_wxLoc` is already set by the time consent is 'yes'". The L3
+   *  dismissal fix deliberately broke that. A dismissed prompt now leaves
+   *  consent 'yes' with NO location -- that is the entire point of it, a
+   *  dismissal is not a refusal -- so the state this sentence called
+   *  impossible is now an ordinary one, reachable by closing the browser's
+   *  prompt. Nothing misbehaved, because the `!this._wxLoc` guard was
+   *  already there doing the work. The hazard is the reasoning: a reader
+   *  who believed the old sentence could delete that guard as redundant
+   *  and hand this function a geolocation prompt fired off a 1s clock
+   *  tick, outside any user gesture -- which browsers refuse and which
+   *  would read as [W] silently breaking. */
   tickWeather(s) {
     if (this.mobile || !this.poweredOn) return
     if (this.weatherConsent !== 'yes' || !this._wxLoc) return
