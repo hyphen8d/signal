@@ -324,6 +324,10 @@ export default {
     this._konami = []
     this.gameOpen = false
     this._game = null
+    // Set from ?game=1 below and spent by powerUp()'s reveal beat. Declared
+    // here rather than only where it is read so the field exists on every
+    // boot: the read sits inside a try/catch that Node never enters at all.
+    this._bootToGame = false
     // 65th pass -- per-station visualizer effect override, keyed by
     // station.id. Empty until [Shift+C] cycles a station off its default;
     // Consent pass (2026-08-25) -- the visitor's answer to the LINE INPUT
@@ -567,6 +571,42 @@ export default {
           this.needsTrackLoad = true
         }
       }
+      // ?game=1 (2026-09-05) -- ARMS VECTOR SCAN, so the game can be handed
+      // to someone as a link rather than as a keyboard secret.
+      //
+      // This does not undo the game being hidden, and the distinction is
+      // the whole reason it is allowed to exist. Hidden means nothing ON
+      // SCREEN leads you there: no legend, no guide page, no README line,
+      // and the Konami code still the only way in from a cold visit. A link
+      // is not a discovery, it is a thing somebody GAVE you -- the person
+      // sharing it already knows, and is choosing to let you in. Keep it out
+      // of the README and off the screen for exactly that reason; the one
+      // place it is written down is CLAUDE.md, beside the rest of the game's
+      // notes.
+      //
+      // It ARMS rather than opens, and that is not squeamishness about the
+      // secret -- it is the two hard constraints this boot already has. The
+      // set lands in STANDBY and comes up on a real gesture, because
+      // autoplay policy means a page that powers itself on gets a silent
+      // radio; and startGame() needs the visualizer, which needs a locked
+      // station, which only exists once powerUp()'s reveal beat has run. So
+      // the link cannot skip the power button, and should not try: the boot
+      // sequence IS the front door, and arriving through it is most of what
+      // makes the game feel like it belongs to this set rather than being
+      // bolted onto it. powerUp() consumes the flag -- see there.
+      //
+      // Not armed on the lite layout at all. startGame() refuses there
+      // anyway (four arrow keys and a fire key, on a touch screen, at half
+      // the playfield), but refusing at THIS end is what keeps a phone from
+      // landing parked in the visualizer -- a place the link never meant to
+      // leave anyone, and one nothing on that screen explains.
+      // Any value but an explicit off. `?game=1` is what gets shared, but a
+      // link that is retyped or trimmed to `?game` should not fail SILENTLY
+      // -- a strict === '1' hands that visitor an ordinary radio with no clue
+      // why, which is the one failure mode a link meant to be passed between
+      // people cannot afford. `?game=0` still means no.
+      const g = params.get('game')
+      if (!this.mobile && g !== null && g !== '0' && g !== 'false') this._bootToGame = true
     } catch (e) { /* no location (tests/Node) -- nothing to read */ }
     // 28th pass -- sometimes it didn't automatically seek to a
     // station and the user had to figure out to use arrows or hit S -- a
@@ -1181,6 +1221,40 @@ export default {
           this.setStatus(s, 'SEEKING', false)
         }
         this.playBootFlicker(s)
+        // ?game=1 -- the arming in init() lands here. Deferred rather than
+        // called inline, and 700ms is not a guess: playBootFlicker() above
+        // schedules ~540ms of box-border redraws under the 'boot' tag, and
+        // those beats do not check visualizerActive -- they predate the
+        // visualizer's paint guards and never needed to, because [V] is a
+        // keypress and a keypress cannot land inside the beat that schedules
+        // them. Entering from here CAN, so opening the game inline would
+        // draw four box frames straight across the playfield for half a
+        // second. This waits them out instead of teaching them a guard they
+        // otherwise have no reason to carry.
+        //
+        // On the normal queue on purpose. If the visitor opens the guide or
+        // powers back off in that window, the queue stops or is emptied and
+        // this simply does not fire -- the two right answers, and neither is
+        // written here. The flag is cleared INSIDE the callback so the
+        // power-down case stays armed for the next power-on rather than
+        // eating the link.
+        if (this._bootToGame) {
+          this.fxAfter('gameboot', 700, () => {
+            // Re-asked at the moment of acting, not trusted from 700ms ago:
+            // enterVisualizer() is only ever entered from a locked station,
+            // and a [B] band change in that window drops the lock.
+            if (!this._bootToGame || this.mode !== 'locked' || !this.lockedStation) return
+            this._bootToGame = false
+            // Straight to enterVisualizer(), around the LINE INPUT consent
+            // card the [V] key raises. Same exemption frame()'s idle
+            // auto-entry already takes, and for a stronger reason: that card
+            // asks to share audio so the EFFECTS can follow the music, and
+            // the game does not read the tap at all. Asking here would put a
+            // microphone prompt in front of someone who came for a shooter.
+            this.enterVisualizer(s)
+            this.startGame(s)
+          })
+        }
       } },
     ]
     // The always-queue: this sequence IS the power transition and has to run

@@ -55,7 +55,7 @@ function codeFor(key) {
   return key
 }
 
-export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null } = {}) {
+export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null, game = false } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
   const store = new Map()
@@ -154,9 +154,14 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
   // 2026-09-01 -- `track` joins it, for the &track=<youtubeId> half that
   // [K] TAG writes into the link it copies. Same reasoning: the app reads
   // it, so something has to be able to set it.
-  if (station) {
-    const q = `?station=${station}` + (track ? `&track=${track}` : '')
-    globalThis.location = { search: q, origin: 'https://example.test', pathname: '/signal/' }
+  // 2026-09-05 -- `game` is the ?game=1 half, which arms VECTOR SCAN for the
+  // power-on. Independent of `station`: the whole point of that link is that
+  // it is handed to someone who has never been here, so it has to be
+  // exercised with no station named either.
+  if (station || game) {
+    const q = [station && `station=${station}`, station && track && `track=${track}`, game && 'game=1']
+      .filter(Boolean).join('&')
+    globalThis.location = { search: `?${q}`, origin: 'https://example.test', pathname: '/signal/' }
   } else delete globalThis.location
   // 2026-08-27 -- `lyrics` answers the ONE request this app makes that a
   // test might want to succeed: the LRCLIB lookup behind the visualizer's

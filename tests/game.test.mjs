@@ -26,7 +26,7 @@ import { boot } from './harness.mjs'
 globalThis.SIGNAL_BUILD ??= 'gametest'
 globalThis.matchMedia ??= () => ({ matches: false })
 const gameMod = await import(`../game.js?v=gametest`)
-const { terrainAt, terrainAtGate, gateEase } = gameMod
+const { terrainAt, terrainAtGate, gateEase, terrainMinGap, rampAt, scrollRate, MAX_STEPS } = gameMod
 
 const KONAMI = [
   'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
@@ -308,7 +308,13 @@ test('the simulation is frame-rate independent', async () => {
     h.program.drawGameFrame(h.screen, g.lastT + 10)
     const jumped = g.scroll - before
     assert.ok(jumped > 0, 'the world did advance')
-    assert.ok(jumped <= 6 * 0.9 + 1e-9, `capped catch-up, got ${jumped}`)
+    // Bounded against the real cap and the real scroll rate rather than
+    // against copies of them. It used to read `6 * 0.9`, which was true only
+    // while the rate was a constant -- the distance ramp (see scrollRate)
+    // broke it by four thousandths of a dot, which is the test noticing
+    // something real and reporting it as a failure of the cap. scrollRate is
+    // non-decreasing, so reading it AFTER the jump is the upper bound.
+    assert.ok(jumped <= MAX_STEPS * scrollRate(g.scroll) + 1e-9, `capped catch-up, got ${jumped}`)
   } finally { h.shutdown() }
 })
 
@@ -826,15 +832,49 @@ test('the terrain always leaves a gap the ship can fit through', async () => {
   // dots in, where no play session would ever find it.
   const { terrainAt } = await import(`../game.js?v=terrain${Date.now()}`)
   const h = 76 // the desktop playfield, 19 rows of 4 dots
-  let tightest = Infinity
-  for (let c = 0; c < 200_000; c += 7) {
+  // Swept at EVERY column, not every seventh. The clamp is live now (see
+  // terrainAt) rather than a backstop that never fired, so the guarantee is
+  // being actively enforced at the tight columns instead of being a property
+  // the sines happened to have -- and a stride of 7 samples one column in
+  // seven of the ones that matter.
+  let tightest = Infinity, floor = Infinity
+  for (let c = 0; c < 200_000; c++) {
     const [top, bot] = terrainAt(c, h)
     assert.ok(top >= 1 && bot >= 1, `terrain has thickness at ${c}: ${top}/${bot}`)
     assert.ok(Number.isFinite(top) && Number.isFinite(bot), `finite at ${c}`)
-    tightest = Math.min(tightest, h - top - bot)
+    const gap = h - top - bot
+    // Against terrainMinGap() itself, not against a copy of the number: the
+    // guarantee ramps with distance now, and a flat constant here would
+    // either fail at the far end or be vacuous at the near one.
+    assert.ok(gap >= terrainMinGap(c), `gap ${gap} < guaranteed ${terrainMinGap(c)} at ${c}`)
+    tightest = Math.min(tightest, gap)
+    floor = Math.min(floor, terrainMinGap(c))
   }
-  // The ship is 5 dots tall and needs room to react, not just to fit.
-  assert.ok(tightest >= 20, `tightest channel was ${tightest} dots`)
+  // The ship is 5 dots tall and needs room to react, not just to fit. This
+  // is the claim the ramp must never be tuned past, and it is separate from
+  // the per-column check above: that one says the code keeps its own
+  // promise, this one says the promise is worth keeping.
+  assert.ok(floor >= 15, `the guarantee itself fell to ${floor} dots`)
+  assert.ok(tightest >= 15, `tightest channel was ${tightest} dots`)
+})
+
+test('the terrain ramps: late stages are tighter than the first one', async () => {
+  // The point of the ramp. Without this the amplitude constants could be
+  // reverted to flat and every other terrain test would still pass -- which
+  // is what made stage 8 fly exactly like stage 1 in the first place.
+  const h = 76
+  const squeeze = (from, to) => {
+    let t = Infinity
+    for (let c = from; c < to; c++) { const [a, b] = terrainAt(c, h); t = Math.min(t, h - a - b) }
+    return t
+  }
+  const early = squeeze(0, 5400)          // stage 1
+  const late = squeeze(6 * 5400, 7 * 5400) // past the ramp's saturation
+  assert.ok(late < early, `late squeeze ${late} should beat early ${early}`)
+  // And the ramp saturates rather than running away for ever.
+  assert.equal(rampAt(6 * 5400), 1, 'saturated by stage 7')
+  assert.equal(rampAt(60 * 5400), 1, 'and still 1 far past it')
+  assert.ok(scrollRate(0) < scrollRate(6 * 5400), 'the scroll ramps too')
 })
 
 test('game over clears the field instead of freezing it', async () => {
@@ -1236,5 +1276,445 @@ test('GAME OVER shows the standing record when it was not beaten', async () => {
     h.advance(200)
     assert.equal(h.find('NEW RECORD'), -1, 'a losing run claimed a record')
     assert.ok(onScreen(h, 'HI 0999999'), 'the standing record is not shown')
+  } finally { h.shutdown() }
+})
+
+// --- ?game=1, the shareable way in (2026-09-05) ---------------------------
+//
+// The link exists so the game can be HANDED to someone. That is a different
+// thing from the game being discoverable, and these tests are mostly the
+// seam between the two: it opens for a visitor who was given the URL, and
+// it changes nothing for one who was not.
+
+test('?game=1 opens the game once the set is powered on', async () => {
+  const h = await boot({ game: true })
+  try {
+    // Stepped by hand rather than through h.powerOn(), which advances 4s in
+    // one go and would sail past the thing being checked: the entry has to
+    // wait out playBootFlicker's ~540ms of box-border beats, which do not
+    // check visualizerActive and would otherwise draw four box frames across
+    // the playfield. So catch the exact frame the picture reveals on.
+    h.advance(600)
+    h.key('p')
+    let guard = 0
+    while (!h.program.poweredOn && guard++ < 400) h.advance(16)
+    assert.equal(h.program.poweredOn, true, 'setup: the set came up')
+    assert.equal(h.program.gameOpen, false, 'not opened in the same beat as the reveal')
+    h.advance(800)
+    assert.equal(h.program.visualizerActive, true, 'the visualizer is up')
+    assert.equal(h.program.gameOpen, true, 'and the game is on it')
+    assert.ok(h.program._game, 'with a real simulation behind it')
+  } finally { h.shutdown() }
+})
+
+test('?game=1 does not open anything before the power gesture', async () => {
+  // The link cannot skip STANDBY, and must not look like it tried: a set
+  // that powered itself on would come up silent under autoplay policy.
+  const h = await boot({ game: true })
+  try {
+    h.advance(6000)
+    assert.equal(h.program.poweredOn, false, 'still in STANDBY')
+    assert.equal(h.program.gameOpen, false, 'and no game')
+  } finally { h.shutdown() }
+})
+
+test('?game=1 is spent once, not re-armed by a power cycle', async () => {
+  const h = await boot({ game: true })
+  try {
+    h.powerOn()
+    h.advance(800)
+    assert.equal(h.program.gameOpen, true, 'setup: opened the first time')
+    // Out through both views before the power key means anything: [P] inside
+    // the game is the game's own key, not the set's.
+    h.key('e')          // game -> effect canvas
+    h.key('e')          // visualizer -> main screen
+    assert.equal(h.program.visualizerActive, false, 'setup: back on the radio')
+    h.key('p')          // power down
+    h.advance(3000)
+    h.powerOn()
+    h.advance(800)
+    assert.equal(h.program.gameOpen, false, 'the second power-on is an ordinary one')
+  } finally { h.shutdown() }
+})
+
+test('?game=1 leaves a phone on the radio, not parked in the visualizer', async () => {
+  // startGame() refuses on the lite layout regardless. What this pins is the
+  // refusal happening at the ARMING end: enter-then-refuse would strand a
+  // phone in the visualizer, which is somewhere the link never meant to
+  // leave anyone and which nothing on that screen explains.
+  const h = await boot({ game: true, mobile: true })
+  try {
+    h.powerOn()
+    h.advance(800)
+    assert.equal(h.program.gameOpen, false, 'no game')
+    assert.equal(h.program.visualizerActive, false, 'and not stranded in the visualizer either')
+  } finally { h.shutdown() }
+})
+
+test('?game=1 composes with ?station=, so a link can name both', async () => {
+  const h = await boot({ game: true, station: 'cold-wave' })
+  try {
+    h.powerOn()
+    h.advance(800)
+    assert.equal(h.program.lockedStation?.id, 'cold-wave', 'landed on the named station')
+    assert.equal(h.program.gameOpen, true, 'and opened the game on it')
+  } finally { h.shutdown() }
+})
+
+test('a link with no ?game= is untouched by any of this', async () => {
+  const h = await boot({ station: 'cold-wave' })
+  try {
+    h.powerOn()
+    h.advance(800)
+    assert.equal(h.program.gameOpen, false, 'ordinary boot, ordinary radio')
+    assert.equal(h.program.visualizerActive, false)
+    assert.equal(h.program.lockedStation?.id, 'cold-wave', 'and ?station= still works beside it')
+  } finally { h.shutdown() }
+})
+
+test('?game survives being retyped or trimmed, and ?game=0 still means no', async () => {
+  // The silent-failure case: a link passed between people gets trimmed, and
+  // an ordinary radio with no explanation is the worst possible answer.
+  const cases = [['?game=1', true], ['?game', true], ['?game=yes', true],
+                 ['?game=0', false], ['?game=false', false], ['?other=1', false]]
+  for (const [q, want] of cases) {
+    const h = await boot()
+    // boot() only knows how to build ?station/?track/?game=1, so the raw
+    // query goes on directly and init() is re-run against it -- the param is
+    // read there and nowhere else, so this is the whole code path.
+    globalThis.location = { search: q, origin: 'https://example.test', pathname: '/signal/' }
+    try {
+      h.program.init(h.screen)
+      h.powerOn()
+      h.advance(800)
+      assert.equal(h.program.gameOpen, want, `${q} -> ${want}`)
+    } finally { h.shutdown() }
+  }
+})
+
+// --- scoring: the chain and the clean stage (2026-09-05) -----------------
+
+/** Clear a whole formation the way gameStepEnemies books it. */
+function clearWave(p, leak = 0) {
+  const g = p._game
+  p.gameSpawnWave()
+  const fid = g.fid
+  const n = g.forms.get(fid).total
+  for (let i = 0; i < leak; i++) p.gameFormationKill(fid, 40, 20, 'escaped')
+  for (let i = 0; i < n - leak; i++) p.gameFormationKill(fid, 40, 20, 'killed')
+  return n
+}
+
+test('a full clear pays, and consecutive ones multiply', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    g.score = 0
+    clearWave(p)
+    const first = g.score
+    assert.ok(first > 0, 'a full clear is worth something at all')
+    assert.equal(g.chain, 1, 'and starts the chain at one')
+    clearWave(p)
+    const second = g.score - first
+    assert.equal(g.chain, 2)
+    assert.equal(second, first * 2, 'the second clear is worth double the first')
+  } finally { h.shutdown() }
+})
+
+test('one that gets away costs the whole multiplier', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    clearWave(p); clearWave(p); clearWave(p)
+    assert.equal(g.chain, 3, 'setup: a chain of three')
+    clearWave(p, 1)
+    assert.equal(g.chain, 0, 'a leak drops it to nothing, not by one')
+    g.score = 0
+    clearWave(p)
+    assert.equal(g.chain, 1, 'and it has to be built again from one')
+  } finally { h.shutdown() }
+})
+
+test('the chain is capped, so it stops being a reason to never risk anything', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    for (let i = 0; i < 30; i++) clearWave(p)
+    assert.ok(g.chain <= 8, `chain ran away to ${g.chain}`)
+    assert.equal(g.chain, 8, 'and does reach the cap')
+    // The award tracks the cap rather than the clear count.
+    g.score = 0
+    clearWave(p)
+    assert.equal(g.score, 250 * 8, 'a clear at the cap pays the cap')
+  } finally { h.shutdown() }
+})
+
+test('dying breaks the chain and the clean stage, a shielded hit breaks neither', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    clearWave(p); clearWave(p)
+    assert.equal(g.chain, 2, 'setup')
+    // Shielded: the '?' slot's whole argument is that it costs nothing.
+    g.shield = 1
+    p.gameLoseLife()
+    assert.equal(g.chain, 2, 'the shield ate it, so the chain stands')
+    assert.equal(g.stageClean, true, 'and the stage is still clean')
+    // Unshielded.
+    p.gameLoseLife()
+    assert.equal(g.chain, 0, 'a real death breaks the chain')
+    assert.equal(g.stageClean, false, 'and marks the stage')
+  } finally { h.shutdown() }
+})
+
+test('the clean-stage bonus is paid only for a stage flown without a death', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    // Roll the stage over by travelling, which is the only way it happens.
+    const rollover = () => {
+      const stage = g.stage
+      let guard = 0
+      while (g.stage === stage && guard++ < 40000) { g.stageIn = 1; tick(h, 1) }
+      assert.equal(g.stage, stage + 1, 'setup: the stage rolled')
+    }
+    g.score = 0
+    rollover()
+    const clean = g.score
+    assert.ok(clean >= 3000, `a clean stage pays the stage AND the bonus, got ${clean}`)
+    assert.equal(g.cleanBonus, true, 'and says so for the banner')
+    assert.equal(g.stageClean, true, 're-armed for the stage now starting')
+
+    p.gameLoseLife()
+    g.score = 0
+    rollover()
+    assert.equal(g.score, 1000, 'a stage with a death pays the stage only')
+    assert.equal(g.cleanBonus, false)
+  } finally { h.shutdown() }
+})
+
+// --- the other two enemies (2026-09-05) ----------------------------------
+
+/** Pin an enemy where a test puts it.
+ *
+ *  gameStepEnemies recomputes `y` from the formation path (baseY + amp*sin)
+ *  on every step, so assigning `en.y` alone is undone before the first
+ *  collision test runs -- which reads as the hit simply not registering.
+ *  Zeroing the path is what makes a hand-placed enemy stay hand-placed. */
+function park(en, x, y) {
+  en.x = x
+  en.y = y
+  en.baseY = y
+  en.amp = 0
+  en.vx = 0
+  return en
+}
+
+/** Spawn a formation of exactly one kind, wherever the stage would allow it.
+ *  gameSpawnWave picks at random, so this asks until it gets one rather than
+ *  reaching in and building enemies by hand -- a test that hand-rolls its
+ *  subject stops proving the spawner can produce it. */
+function waveOfKind(p, kind, stage) {
+  const g = p._game
+  g.stage = stage
+  for (let i = 0; i < 400; i++) {
+    g.enemies.length = 0
+    p.gameSpawnWave()
+    if (g.enemies[0]?.kind === kind) return g.enemies.slice()
+  }
+  throw new Error(`no ${kind} formation in 400 spawns at stage ${stage}`)
+}
+
+test('stage 1 is grunts only, and the other two arrive later', async () => {
+  // Stage 1 is the only stage that gets to teach the base game.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    g.stage = 1
+    for (let i = 0; i < 300; i++) {
+      g.enemies.length = 0
+      p.gameSpawnWave()
+      for (const en of g.enemies) assert.equal(en.kind, 'grunt', 'stage 1 fields grunts only')
+    }
+    // And both do appear once their stage comes round.
+    assert.ok(waveOfKind(p, 'dive', 2).length, 'divers from stage 2')
+    assert.ok(waveOfKind(p, 'armor', 3).length, 'armour from stage 3')
+  } finally { h.shutdown() }
+})
+
+test('a formation is all one kind, so a wave asks one question', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    g.stage = 5
+    for (let i = 0; i < 200; i++) {
+      g.enemies.length = 0
+      p.gameSpawnWave()
+      const kinds = new Set(g.enemies.map((e) => e.kind))
+      assert.equal(kinds.size, 1, `mixed formation: ${[...kinds].join(',')}`)
+    }
+  } finally { h.shutdown() }
+})
+
+test('armour takes two hits, and shows the damage by losing its shell', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    const en = park(waveOfKind(p, 'armor', 3)[0], g.ship.x + 30, g.ship.y)
+    g.enemies = [en]
+    assert.equal(en.hp, 2, 'armour starts on two')
+
+    const shot = () => { g.bullets = [{ x: en.x, y: en.y, vx: 0, vy: 0, kind: null }]; p.gameStepEnemies() }
+    g.score = 0
+    shot()
+    assert.equal(g.enemies.length, 1, 'still alive after one')
+    assert.equal(en.hp, 1, 'but down to one')
+    assert.equal(g.score, 0, 'and worth nothing until it dies')
+    shot()
+    assert.equal(g.enemies.length, 0, 'the second hit kills it')
+    assert.equal(g.score, 300, 'and pays more than a grunt')
+  } finally { h.shutdown() }
+})
+
+test('a shot is spent on armour rather than passing through to the next one', async () => {
+  // The shot cap is the game's best mechanic; armour only means anything if
+  // it actually costs slots. A bullet that survived the hit would make the
+  // second hit free.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    const en = park(waveOfKind(p, 'armor', 3)[0], g.ship.x + 30, g.ship.y)
+    g.enemies = [en]
+    g.bullets = [{ x: en.x, y: en.y, vx: 0, vy: 0, kind: null }]
+    p.gameStepEnemies()
+    assert.equal(en.hp, 1, 'one hit landed')
+    assert.ok(g.bullets[0].x < -100, 'and the bullet was consumed')
+  } finally { h.shutdown() }
+})
+
+test('a diver telegraphs, then commits to where you were and not where you are', async () => {
+  // The fairness rule the aimed shot already follows. A diver that re-aimed
+  // at the moment it launched could not be dodged by moving, which would
+  // make the dashed line it draws a lie.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    const en = park(waveOfKind(p, 'dive', 2)[0], g.ship.x + 30, g.ship.y - 20)
+
+    g.enemies = [en]
+    p.gameStepEnemies()
+    assert.ok(en.diveTel > 0, 'it winds up rather than launching')
+    assert.equal(en.diving, false, 'and has not committed yet')
+    const aimedAt = { x: en.aimX, y: en.aimY }
+    assert.equal(aimedAt.y, g.ship.y, 'aimed at the ship it can see')
+
+    // Fly away during the wind-up -- the whole point of being told.
+    g.ship.y += 30
+    // The position it launches FROM, captured before the step that commits:
+    // that step also moves it, so reading afterwards measures the angle from
+    // one dive-step further along.
+    let from = { x: en.x, y: en.y }
+    let guard = 0
+    while (!en.diving && guard++ < 60) { from = { x: en.x, y: en.y }; p.gameStepEnemies() }
+    assert.equal(en.diving, true, 'it does eventually commit')
+    // Committed toward the OLD position -- down and to the left of where it
+    // sits, not down to where the ship now is.
+    assert.ok(en.dvy > 0, 'heading down toward where the ship was')
+    const toOld = Math.atan2(aimedAt.y - from.y, aimedAt.x - from.x)
+    const heading = Math.atan2(en.dvy, en.dvx)
+    assert.ok(Math.abs(heading - toOld) < 1e-6, `committed along the line it drew: ${heading} vs ${toOld}`)
+    // And decisively NOT at where the ship actually is now.
+    const toNow = Math.atan2(g.ship.y - from.y, g.ship.x - from.x)
+    assert.ok(Math.abs(heading - toNow) > 0.3, 'moving off the line actually worked')
+  } finally { h.shutdown() }
+})
+
+test('a diver never also shoots', async () => {
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program
+    for (let i = 0; i < 40; i++) {
+      for (const en of waveOfKind(p, 'dive', 4)) {
+        assert.equal(en.shooter, false, 'a diver has a way to reach you already')
+      }
+    }
+  } finally { h.shutdown() }
+})
+
+test('a diver that misses leaves the field instead of holding the clear open', async () => {
+  // It exits through the floor or the ceiling, which nothing else does. The
+  // off-screen test used to be x only, so one would live forever just past
+  // the bottom edge with its formation never completing -- and a formation
+  // that never completes is a capsule and a chain that never pay.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    const en = waveOfKind(p, 'dive', 2)[0]
+    g.enemies = [en]
+    const fid = en.fid
+    g.forms.set(fid, { total: 1, killed: 0, escaped: 0 })
+    // Already committed, heading straight down and well past the floor.
+    en.diving = true
+    en.dvx = 0
+    en.dvy = 4
+    en.y = g.h + 4
+    p.gameStepEnemies()
+    assert.equal(g.enemies.length, 0, 'it is off the field')
+    assert.equal(g.forms.has(fid), false, 'and the formation was settled')
+  } finally { h.shutdown() }
+})
+
+test('the chain readout never collides with the stage bar or SHIPS', async () => {
+  // Widths are asserted rather than trusted here, the same rule the weather
+  // card is under. The stage bar GROWS -- `STAGE 9` and `STAGE 10` are not
+  // the same width -- so a chain drawn at a hand-counted column is correct
+  // until the tenth stage and then writes through its neighbour.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    for (const stage of [1, 9, 10, 99]) {
+      for (const chain of [0, 1, 2, 8]) {
+        g.stage = stage
+        g.chain = chain
+        g.lives = 3
+        // Blank the row first, exactly as drawGameFrame does before every
+        // HUD draw. Without it each case reads the PREVIOUS case's leftovers
+        // and the "no readout below two" check fails on residue the real
+        // renderer can never show.
+        for (let x = 0; x < h.screen.term.cols; x++) h.screen.term.put(x, 1, ' ')
+        p.gameDrawHud(h.screen)
+        const row = h.row(1) // HUD_Y
+        assert.ok(row.includes('SHIPS 3   [E] EXIT'), `SHIPS intact at stage ${stage} chain ${chain}`)
+        assert.ok(row.includes(`STAGE ${stage} [`), `bar intact at stage ${stage} chain ${chain}`)
+        assert.ok(row.includes('SCORE '), 'score intact')
+        assert.ok(row.includes('HI '), 'hi intact')
+        if (chain > 1) {
+          // IT HAS TO BE ON SCREEN. The first version of this test only
+          // asserted the readout was never truncated, which a string that is
+          // never drawn satisfies perfectly -- and that is exactly what
+          // shipped: the label was too wide for the gap and silently never
+          // rendered on any stage. Assert presence first, shape second.
+          assert.ok(row.includes(`CHAIN ${chain}`), `chain missing at stage ${stage}: ${JSON.stringify(row)}`)
+          // And with clear air either side, so it never reads as joined to
+          // the bar on its left or to SHIPS on its right.
+          assert.ok(row.includes(` CHAIN ${chain} `), `chain crowded at stage ${stage}: ${JSON.stringify(row)}`)
+        } else {
+          assert.ok(!row.includes('CHAIN'), 'no readout below a chain of two')
+        }
+      }
+    }
   } finally { h.shutdown() }
 })

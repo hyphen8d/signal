@@ -1,8 +1,16 @@
 // SIGNAL -- VECTOR SCAN, the hidden game (2026-08-29).
 //
-// A Gradius. Reached only by entering the Konami code inside the
-// visualizer; nothing on screen ever mentions it, and it is in no legend,
-// no guide page and no README.
+// A Gradius. Reached by entering the Konami code inside the visualizer;
+// nothing on screen ever mentions it, and it is in no legend, no guide page
+// and no README.
+//
+// 2026-09-05 -- and by `?game=1`, which arms it for the next power-on (see
+// program.js's init and powerUp). That is a second way in but not a second
+// way to FIND it: a link has to be handed to you by someone who already
+// knows, so the screen still leads nowhere and the code is still the only
+// way in from a cold visit. Keep it off the screen and out of the README on
+// that basis -- the moment it is advertised anywhere a visitor can read, the
+// distinction collapses and so does the point of the thing.
 //
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js. The
@@ -68,7 +76,9 @@ export const METER_Y = VIZ_BOT - 1
  *  (or the covered-window 0fps case in CLAUDE.md) resumes rather than
  *  fast-forwards through the terrain. */
 export const STEP = 1 / 60
-const MAX_STEPS = 6
+// Exported so the frame-rate test can bound a catch-up against the real cap
+// rather than against a copy of the number -- see tests/game.test.mjs.
+export const MAX_STEPS = 6
 const MAX_DT = 0.25
 
 // The power meter, in the arcade's own order. The capsule cursor walks it
@@ -216,6 +226,34 @@ export function terrainAtGate(c, h, gateAt) {
 // empty all along rather than as something being taken. Emptying the boxes
 // left to right over ~0.6s is the whole fix: the same information, in the
 // order it was earned, slow enough to watch.
+// --- scoring (2026-09-05) -----------------------------------------------
+// Before this the score was 100 a kill, 150 a turret and 1000 a stage, which
+// rewards playing LONG and nothing else. There was no reason to take a risk,
+// and so no way for two runs of the same length to be worth different
+// numbers -- which makes a high score a stopwatch rather than a record.
+//
+// The chain is built on the rule the game already had. A capsule drops for
+// clearing a WHOLE formation and nothing drops if one gets past you (see
+// gameFormationKill), and that decision was already the best thing in the
+// game -- it just paid in power, never in points. Consecutive full clears
+// now multiply, so the run of clears is worth more than the clears are, and
+// letting one straggler through costs you the multiplier rather than one
+// capsule. That is the whole design: the punishment for sloppiness is
+// already there, this makes it legible as a number.
+//
+// Capped at 8 because an uncapped chain stops being a decision -- past some
+// length the only correct play is to never take a risk again, which is the
+// opposite of what it is for. At the cap a cleared formation is worth 2000
+// against roughly 500 for shooting the same five enemies out of formation,
+// so the chain is most of the score of a good run and none of a careless one.
+const FULL_CLEAR_BASE = 250
+const CHAIN_MAX = 8
+// Paid at the stage rollover for taking no deaths in that stage. Deliberately
+// large: it is the only thing in the game that rewards NOT dying as distinct
+// from surviving, and a run that reaches stage 5 clean should be plainly
+// worth more than one that reached it on its last ship.
+const CLEAN_STAGE_BONUS = 2000
+
 const WIPE_STEPS = 36
 // Options trail the ship along the path it actually flew, which is the
 // mechanic they are famous for: the trail is a ring buffer of past ship
@@ -240,6 +278,80 @@ const ENEMY = [
   [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
   [-1, 1], [0, 1], [1, 1],
 ]
+// --- the other two enemies (2026-09-05) ---------------------------------
+// Until this there was one enemy: a blob on a sine, one hit, differing only
+// in whether it was allowed to shoot. Turrets were the only other thing on
+// the field, and they are scenery that fires -- they do not change how you
+// fly. So every formation asked the same question and the shot cap, which is
+// the best mechanic in here, had nothing to choose BETWEEN.
+//
+// Both of these are shape-first. At this dot pitch the player is reading
+// silhouettes at the edge of a moving screen, so an enemy that behaves
+// differently and looks the same is not a new enemy, it is a surprise --
+// and a surprise you cannot see coming is the thing the aimed-shot telegraph
+// exists to avoid. Each one is a different outline before it is anything.
+
+// The diver: an arrowhead, pointing the way it travels. It leaves the
+// formation and comes at you, so it is the one enemy whose sprite has a
+// direction -- and it is pointed at you well before it commits.
+// Long and thin -- 9 dots by 3, against the grunt's compact 5x3 and the
+// armour's blocky 7x5. The first attempt was 7x5, the SAME bounding box as
+// the armour, differing only in which dots inside it were filled: rendered,
+// the two were three cells wide apiece and told apart by about four pixels,
+// which is not a silhouette. Aspect ratio is the cue that survives the
+// character grid, so each of the three now has its own.
+const DIVER = [
+  [1, -1], [2, -1], [3, -1],
+  [-4, 0], [-3, 0], [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0], [3, 0], [4, 0],
+  [1, 1], [2, 1], [3, 1],
+]
+// The armoured one: a hexagon, bigger than everything else on the field and
+// the only enemy that is taller than it is not. It takes two hits.
+//
+// Damage is shown by LOSING THE SHELL -- a hit one drops to the ordinary
+// ENEMY sprite -- rather than by a flash. That is not a stylistic choice: the
+// hazard layer is blitted with ONE attribute for the whole layer (see the
+// note at the top of this file), so there is no way to brighten a single
+// enemy without promoting it to a layer that means something else. Shape is
+// the only channel available, and it is the better one anyway: a flash is
+// gone in six frames, where a shell that is missing stays missing, so the
+// screen keeps telling you which one is nearly dead for as long as it lives.
+const ARMOR = [
+  [-1, -2], [0, -2], [1, -2],
+  [-2, -1], [-1, -1], [0, -1], [1, -1], [2, -1],
+  [-3, 0], [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0], [3, 0],
+  [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1],
+  [-1, 2], [0, 2], [1, 2],
+]
+/** The sprite an enemy is currently wearing. Armour that has been hit is
+ *  drawn as a plain grunt -- see ARMOR. */
+function enemySprite(en) {
+  if (en.kind === 'dive') return DIVER
+  if (en.kind === 'armor' && en.hp > 1) return ARMOR
+  return ENEMY
+}
+
+// How far ahead of the ship a diver starts its wind-up, and how long that
+// wind-up runs. The telegraph is the SAME 24 steps an aimed shot uses and
+// draws through the same gameDrawAim, so a dive announces itself in the
+// vocabulary the player already learned from being shot at -- a dashed line
+// along the path the thing is about to take.
+const DIVE_RANGE = 46
+const DIVE_TEL = 24
+// Committed at the end of the wind-up and never re-aimed, exactly as
+// gameEnemyFire commits. A diver that homed continuously could not be dodged
+// by moving, which would make its own telegraph a lie.
+const DIVE_SPEED = 1.35
+// Two hits, and worth more than two grunts: the shot cap means spending two
+// slots on one target is a real cost while something else is closing.
+const ARMOR_HP = 2
+const ARMOR_SCORE = 300
+// Stage each archetype first appears. Stage 1 is all grunts on purpose --
+// it is the only stage that gets to teach the base game, and everything here
+// is easier to read once you know what the ordinary case looks like.
+const DIVER_FROM_STAGE = 2
+const ARMOR_FROM_STAGE = 3
+
 const OPTION = [[0, -1], [-1, 0], [0, 0], [1, 0], [0, 1]]
 // The capsule got its own pass after the first playtest -- "knowing they are
 // capsules seemed hard to distinguish at first". The original was a hollow
@@ -270,6 +382,60 @@ const TURRET = [
   [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
 ]
 
+// --- the difficulty ramp (2026-09-05) -----------------------------------
+// Until this, the world never changed: terrain was a fixed pair of sines and
+// `adv` was a flat 0.9, so stage 8 flew EXACTLY like stage 1. The only thing
+// that ramped was how often enemies shot (see gameFireInterval), which meant
+// a run got noisier without ever getting harder to fly. Two minutes in, the
+// game had shown you everything it would ever do.
+//
+// Ramped on DISTANCE, not on stage number, and that is the whole design of
+// it. `terrainAt` has to stay a pure function of the column -- the stage
+// gate depends on it (see terrainAtGate), and so does every spawn, bullet
+// and turret that asks where the rock is. Keying the ramp to `g.stage` would
+// have made terrain a function of game state, breaking that; keying it to
+// `Math.floor(c / STAGE_DOTS)` keeps the purity but steps the amplitude at
+// every stage line, which renders as a one-dot ledge in the cliff face at a
+// column ~170 dots from the corridor -- close enough to see, far enough not
+// to be hidden by it. A continuous ramp has neither problem, and it also
+// ramps WITHIN a stage, which is what makes the back half of a long stage
+// feel like somewhere you have travelled to.
+//
+// Amplitude, not base. Narrowing the channel uniformly just makes a tighter
+// tube; growing the amplitudes makes the cave more SINUOUS -- the open sky
+// gets wider and the squeezes get tighter, so the shape of the terrain is
+// the thing that changed rather than its size.
+const RAMP_DOTS = 6 * STAGE_DOTS
+/** 0 at the start, 1 once the ramp has saturated. Linear with a cap: the cap
+ *  is a slope discontinuity, which is invisible, where a stepped ramp would
+ *  be a value discontinuity, which is a ledge. */
+export function rampAt(c) {
+  return Math.min(1, Math.max(0, c) / RAMP_DOTS)
+}
+const AMP_MAX = 1.45
+/** Amplitude multiplier for the terrain sines. */
+export function terrainAmp(c) { return 1 + (AMP_MAX - 1) * rampAt(c) }
+/** The channel this column is GUARANTEED to leave, in dots.
+ *
+ *  Tightens with the ramp, but only from 20 to 17 -- the amplitudes above do
+ *  most of the work, and this is the floor under them rather than the lever.
+ *  The ship is 5 dots tall, so even saturated this is three ship-heights,
+ *  which is room to react and not merely room to fit. Note the clamp in
+ *  terrainAt() is LIVE now: it used to be a backstop that never fired, and
+ *  past about half the ramp it is the thing shaping every squeeze. */
+export function terrainMinGap(c) { return Math.round(20 - 3 * rampAt(c)) }
+// Scroll. Deliberately the smallest of the three levers: it compounds with
+// both of the others (a faster world means less time to read a tighter one)
+// and with gameFireInterval's ramp on top, so a big number here multiplies
+// out into something unplayable rather than something hard. Stages are a
+// fixed number of DOTS, so this also quietly shortens them in seconds --
+// which is the right direction, since a late stage should not also be the
+// longest one you have to hold your nerve through.
+const SCROLL_BASE = 0.9, SCROLL_MAX = 1.1
+export function scrollRate(c) {
+  return SCROLL_BASE + (SCROLL_MAX - SCROLL_BASE) * rampAt(c)
+}
+
 /** Terrain profile at absolute dot column `c`, as [top, bottom] thicknesses.
  *
  *  Computed from the column index rather than kept in a buffer, the same
@@ -281,8 +447,14 @@ export function terrainAt(c, h) {
   // the first set (base 5, amps 7 and 5) left a two-row crust top and bottom
   // and thirteen empty rows between them, which is a border rather than a
   // cave. There is nothing to fly THROUGH in a corridor you cannot touch.
-  let top = 11 + 9 * Math.sin(c * 0.019) + 7 * Math.sin(c * 0.0071 + 1.3)
-  let bot = 11 + 9 * Math.sin(c * 0.015 + 2.4) + 7 * Math.sin(c * 0.0053 + 0.4)
+  // The amplitudes ride the ramp; the frequencies deliberately do NOT. A
+  // frequency that changed with distance would slide the sine's phase
+  // against the column it is drawn at, so the rock would visibly crawl
+  // rather than scroll -- and the gate's "terrain is a pure function of the
+  // column" trick would still hold while looking completely broken.
+  const k = terrainAmp(c)
+  let top = 11 + 9 * k * Math.sin(c * 0.019) + 7 * k * Math.sin(c * 0.0071 + 1.3)
+  let bot = 11 + 9 * k * Math.sin(c * 0.015 + 2.4) + 7 * k * Math.sin(c * 0.0053 + 0.4)
   top = Math.max(1, top)
   bot = Math.max(1, bot)
   // Swept over two million columns, this pair of sines runs from a 74-dot
@@ -290,15 +462,21 @@ export function terrainAt(c, h) {
   // which is what makes the terrain something you fly rather than something
   // you stay away from.
   //
-  // So the clamp below never fires TODAY, and is a backstop rather than
-  // working code: a gap the ship cannot fit through is not difficulty, it
-  // is a wall across the screen with no way past, and it would appear tens
-  // of thousands of dots into a level where no play session would find it.
-  // Anyone retuning the three constants above gets caught here rather than
-  // in a bug report. Kept honest by the terrain test, which asserts the
-  // guarantee over 200k columns and does not care which of the two
-  // mechanisms provides it.
-  const minGap = 20
+  // 2026-09-05 -- THIS CLAMP IS NOW LOAD-BEARING, and the paragraph it
+  // replaces said the opposite. It used to be a backstop that never fired,
+  // because the sines bottomed out at a 23-dot channel against a 20-dot
+  // floor. With the amplitude ramp above it fires constantly past about half
+  // the ramp, and it is what turns a cave that would otherwise seal shut
+  // into a run of just-passable squeezes.
+  //
+  // What it does NOT do is flatten them: it cuts both sides equally, so the
+  // channel stays where the sines put it and only its width is floored. The
+  // walls still undulate; they just stop meeting.
+  //
+  // Kept honest by the terrain test, which asserts the guarantee over 200k
+  // columns against terrainMinGap() itself rather than against a copy of the
+  // number -- the two cannot drift.
+  const minGap = terrainMinGap(c)
   const gap = h - top - bot
   if (gap < minGap) {
     const cut = (minGap - gap) / 2
@@ -372,6 +550,11 @@ export default {
       spd: 0, missile: false, double: false, laser: false, opts: 0, shield: 0,
       meter: 0,
       score: 0, lives: START_LIVES,
+      // Consecutive full formation clears, and whether this stage has been
+      // flown without a death. `cleanBonus` is only for the break banner --
+      // it says what the bonus that just landed was, so it has to survive
+      // stageClean being re-armed for the stage now starting.
+      chain: 0, stageClean: true, cleanBonus: false,
       // The record as it stood when this run began. Held separately from
       // program.gameHiScore, which climbs DURING the run: without the
       // snapshot there is no moment at which "did I beat it?" can still be
@@ -504,7 +687,12 @@ export default {
     // test, which found the wave timer moving one step early.
     const inBreak = g.stageBreak > 0
     const bp = inBreak ? Math.sin((1 - g.stageBreak / BREAK_STEPS) * Math.PI) : 0
-    const adv = 0.9 * (1 + (BREAK_BOOST - 1) * bp)
+    // 2026-09-05 -- the base is scrollRate(g.scroll) rather than a flat 0.9;
+    // see the ramp block near terrainAt. Read off the scroll the step STARTS
+    // at, so the rate a step advances at is the rate of the ground it is
+    // advancing over, and the break's surge still multiplies whatever the
+    // ramp has reached rather than replacing it.
+    const adv = scrollRate(g.scroll) * (1 + (BREAK_BOOST - 1) * bp)
     g.scroll += adv
     if (g.stageBreak > 0) g.stageBreak--
     // Ahead of the `over` return below, so the wipe still runs when the
@@ -584,6 +772,13 @@ export default {
       g.stageIn = STAGE_DOTS
       g.stageFlash = BREAK_STEPS
       g.score += 1000
+      // The clean-stage bonus, settled here and then re-armed for the stage
+      // now beginning. `cleanBonus` is read by the break banner, which draws
+      // for the whole break -- so it has to be the verdict on the stage just
+      // finished, not the running state of the one starting.
+      g.cleanBonus = g.stageClean
+      if (g.stageClean) g.score += CLEAN_STAGE_BONUS
+      g.stageClean = true
       // The gate is cut one screen-width plus its own half ahead, so its
       // leading edge sits exactly at the right-hand edge of the screen as
       // the break begins: the corridor opens INTO view rather than being
@@ -713,6 +908,33 @@ export default {
     const g = this._game
     const { w, h } = g
     for (const en of g.enemies) {
+      // The dive, in three states: flying the formation, winding up, gone.
+      //
+      // The wind-up starts once it is close enough to be worth answering and
+      // is fully on screen, the same two conditions that gate an aimed shot
+      // -- nothing may commit to you from inside the right-hand margin where
+      // it cannot be seen. The direction is taken at the END of the wind-up
+      // but aimed at where you were at the START of it, which is the rule
+      // gameEnemyFire follows: the dashed line you were shown is the line it
+      // actually takes, so moving off it works.
+      if (en.kind === 'dive' && !en.diving) {
+        if (en.diveTel === 0 && en.x < w - 4 && en.x - g.ship.x < DIVE_RANGE) {
+          en.diveTel = DIVE_TEL
+          en.aimX = g.ship.x
+          en.aimY = g.ship.y
+        } else if (en.diveTel > 0 && --en.diveTel === 0) {
+          const dx = en.aimX - en.x, dy = en.aimY - en.y
+          const d = Math.hypot(dx, dy) || 1
+          en.dvx = (dx / d) * DIVE_SPEED
+          en.dvy = (dy / d) * DIVE_SPEED
+          en.diving = true
+        }
+      }
+      if (en.diving) {
+        en.x += en.dvx
+        en.y += en.dvy
+        continue // a committed diver does not fly the formation or shoot
+      }
       en.x -= en.vx
       en.y = en.baseY + en.amp * Math.sin(en.x * 0.055 + en.phase)
       // Shooting back (2026-08-30). Until this, the only threat in the game
@@ -750,20 +972,39 @@ export default {
         // at this resolution feels broken.
         const rx = b.kind === 'l' ? 8 : 3
         if (Math.abs(b.x - en.x) < rx && Math.abs(b.y - en.y) < 3) {
-          dead = true
           // The laser is a beam: it keeps going through what it kills.
           if (b.kind !== 'l') b.x = -999
+          // Armour. One enemy takes at most one hit per step, because this
+          // loop breaks -- so a wall of four shots arriving together spends
+          // one and leaves the rest to fly on, rather than all four landing
+          // on the same target in the same frame. That also means the laser,
+          // which is not consumed, strips a shell and kills on the next step
+          // instead of both at once: fast, and still two hits.
+          if (--en.hp > 0) {
+            // Small burst, not the seven-particle one a kill gets. It has to
+            // read as "that landed" without reading as "that died", or the
+            // shell coming off looks like a second enemy arriving.
+            this.gameBurst(en.x, en.y, 3)
+            playGameHit(false)
+          } else dead = true
           break
         }
       }
       if (dead) {
-        g.score += 100
+        g.score += en.kind === 'armor' ? ARMOR_SCORE : 100
         this.gameBurst(en.x, en.y, 7)
         playGameHit(false)
         this.gameFormationKill(en.fid, en.x, en.y, 'killed')
         continue
       }
-      if (en.x < -6) { this.gameFormationKill(en.fid, en.x, en.y, 'escaped'); continue }
+      // Off the field. The x test was the only one there was, because until
+      // divers nothing could leave any other way; one that misses you exits
+      // through the floor or the ceiling and would otherwise live forever
+      // just off screen, holding its formation open so the clear never pays.
+      if (en.x < -6 || en.y < -6 || en.y > h + 6) {
+        this.gameFormationKill(en.fid, en.x, en.y, 'escaped')
+        continue
+      }
       // Collision with the ship.
       if (g.invuln <= 0 && Math.abs(en.x - g.ship.x) < 4 && Math.abs(en.y - g.ship.y) < 3) {
         this.gameBurst(en.x, en.y, 7)
@@ -792,7 +1033,19 @@ export default {
       // demanding attention. Being generous here is right: the capsule is
       // already the reward for the hardest thing in the game (clearing a
       // whole formation), and making you win it twice is just mean.
-      if (f.killed === f.total) g.caps.push({ x, y, vx: 0.28 })
+      if (f.killed === f.total) {
+        // The multiplier is applied BEFORE the award, so a first clear pays
+        // 1x rather than 0x and the number on screen is the one you just
+        // earned rather than the one you had.
+        g.chain = Math.min(CHAIN_MAX, g.chain + 1)
+        g.score += FULL_CLEAR_BASE * g.chain
+        g.caps.push({ x, y, vx: 0.28 })
+      } else {
+        // One got past. Note this is also where a formation broken up by
+        // RAMMING you lands -- gameStepEnemies books a collision as an
+        // escape -- which is correct: it left the field without being shot.
+        g.chain = 0
+      }
       g.forms.delete(fid)
     }
   },
@@ -805,8 +1058,17 @@ export default {
     // Spawn inside the channel the terrain will actually have when the
     // formation arrives, not the one under the right-hand edge now.
     const [top, bot] = terrainAtGate(Math.round(g.scroll + w * 1.4), h, g.gateAt) // gated -- the gate is a world column, so this IS the channel that arrives
-    const lo = top + 8, hi = h - 1 - bot - 8
-    const amp = 5 + Math.random() * 5
+    // 2026-09-05 -- the margin and the amplitude are both fitted to the
+    // channel now, and the terrain ramp is what forced it. Both used to be
+    // constants (8 dots of margin, an amp of 5-10) chosen against a channel
+    // that never got tighter than 23; against the ramp's 17 they overrun it,
+    // and `lo` would pass `hi` -- so a formation would spawn inside the rock
+    // and the whole wave would be unkillable scenery. Nothing would throw:
+    // the Math.max/min below would happily clamp to a nonsense value.
+    const chan = h - top - bot
+    const margin = Math.max(2, Math.min(8, Math.floor(chan / 3)))
+    const lo = top + margin, hi = h - 1 - bot - margin
+    const amp = Math.min(5 + Math.random() * 5, Math.max(1, (hi - lo) / 2))
     const baseY = Math.max(lo + amp, Math.min(hi - amp, lo + Math.random() * Math.max(1, hi - lo)))
     const phase = Math.random() * Math.PI * 2
     const vx = 0.8 + Math.random() * 0.5
@@ -821,10 +1083,31 @@ export default {
     const shooters = new Set()
     const nShoot = Math.max(1, Math.round(n * 0.4))
     while (shooters.size < nShoot) shooters.add(Math.floor(Math.random() * n))
+    // 2026-09-05 -- one archetype per formation, not a mixed bag.
+    //
+    // A formation is the unit the player reads and the unit the capsule is
+    // paid on, so it is also the right unit for "what kind of thing is this".
+    // Mixing types inside one would mean every wave contained every problem,
+    // which averages out to no problem at all -- and the whole reason to have
+    // three enemies is that a wave should be answerable in a way the last one
+    // was not.
+    //
+    // Grunts stay the majority at every stage. These are the exception the
+    // wave is built around, not a replacement for the base game.
+    const kinds = ['grunt']
+    if (g.stage >= DIVER_FROM_STAGE) kinds.push('dive')
+    if (g.stage >= ARMOR_FROM_STAGE) kinds.push('armor')
+    const kind = Math.random() < 0.5 ? 'grunt' : kinds[Math.floor(Math.random() * kinds.length)]
     for (let i = 0; i < n; i++) {
       g.enemies.push({
         x: w + 6 + i * 9, baseY, y: baseY, amp, phase, vx, fid,
-        shooter: shooters.has(i),
+        kind,
+        hp: kind === 'armor' ? ARMOR_HP : 1,
+        // A diver never also shoots. It already has a way to reach you, and
+        // giving it two would make the one archetype that demands a reaction
+        // the one you cannot afford to react to.
+        shooter: kind !== 'dive' && shooters.has(i),
+        diveTel: 0, diving: false, dvx: 0, dvy: 0,
         // Staggered per member, so a formation arrives as a rolling threat
         // rather than a single volley you either eat or don't.
         shootIn: this.gameFireInterval() + i * 24, tel: 0, aimX: 0, aimY: 0,
@@ -1010,6 +1293,11 @@ export default {
     this.gameBurst(g.ship.x, g.ship.y, 22)
     playGameHit(true)
     g.lives--
+    // Both scoring streaks end here. Note the SHIELD path above returns
+    // before this: a hit the shield ate is not a death, and it costs neither
+    // -- which is most of what makes the '?' slot worth banking for.
+    g.chain = 0
+    g.stageClean = false
     // The kit as it stood one instant ago, kept so the meter can be seen
     // losing it rather than simply being empty afterwards. Armed only when
     // there was something to lose: a death with an empty meter has nothing
@@ -1142,7 +1430,11 @@ export default {
   gameDrawHazards(dc) {
     const g = this._game
     for (const en of g.enemies) {
-      for (const [dx, dy] of ENEMY) dc.plot(en.x + dx, en.y + dy)
+      for (const [dx, dy] of enemySprite(en)) dc.plot(en.x + dx, en.y + dy)
+      // The dive wind-up, drawn through the same dashed aim line an aimed
+      // shot uses -- see DIVE_TEL. The muzzle is the enemy itself here,
+      // since what is about to travel that line IS the enemy.
+      if (en.diveTel > 0) this.gameDrawAim(dc, en.x, en.y, en.aimX, en.aimY, en.diveTel)
       // The wind-up, drawn as the line the shot is about to travel. This is
       // the whole of what makes aimed fire fair rather than a gotcha: you
       // are shown the path before anything is on it, and the shot commits
@@ -1240,7 +1532,48 @@ export default {
     term.text(bx, HUD_Y, bar, g.stageFlash > 0 ? (BRIGHT | BOLD) : MUTED)
 
     const right = `SHIPS ${Math.max(0, g.lives)}   [E] EXIT`
-    term.text(term.cols - 1 - right.length, HUD_Y, right, MUTED)
+    const rightX = term.cols - 1 - right.length
+    term.text(rightX, HUD_Y, right, MUTED)
+
+    // The chain, in the gap between the stage bar and SHIPS.
+    //
+    // Placed off the bar's own measured end rather than at a column counted
+    // out by hand, because the bar GROWS: `STAGE 9` and `STAGE 10` are not
+    // the same width, so a fixed column is correct until the tenth stage and
+    // then overwrites the thing next to it. Skipped entirely when it will
+    // not fit, which is the only honest answer at this width -- a truncated
+    // multiplier reads as a different number, and a wrong number here is
+    // worse than no number. tests/game.test.mjs sweeps the stage count for
+    // exactly this collision.
+    //
+    // Only drawn above 1. A chain of one is just "you cleared a formation",
+    // which the capsule already said, and a readout that is on screen
+    // permanently is furniture rather than feedback.
+    if (g.chain > 1 && !g.over) {
+      // `CHAIN n`, not `CHAIN xn`. The gap between the stage bar and SHIPS is
+      // NINE columns on an 80-wide grid, and the first version of this cost
+      // eight of them plus a blank each side -- so it never fit, and never
+      // drew, on any stage. The suite did not catch it: the test asserted the
+      // readout was never TRUNCATED, which is trivially true of a string that
+      // is never written. Rendering the row and looking at it is what caught
+      // it, and the test asserts the readout is actually present now.
+      const chain = `CHAIN ${g.chain}`
+      // Right-aligned to sit two clear of SHIPS, rather than measured
+      // forward from the bar: the bar is the thing that grows, so anchoring
+      // to the fixed end of the row is what keeps the gap stable.
+      // One blank column each side: the bar ends at bx+bar.length-1, SHIPS
+      // begins at rightX, and this lands the label exactly between them on
+      // an 80-wide grid. The guard is what happens when it does not fit --
+      // a stage number long enough to close the gap drops the readout rather
+      // than writing through either neighbour.
+      const cx = rightX - 1 - chain.length
+      if (cx > bx + bar.length) {
+        // Brightens at the cap: that is the moment the chain stops growing
+        // and starts being a thing to protect, which is a different feeling
+        // and deserves to look like one.
+        term.text(cx, HUD_Y, chain, g.chain >= CHAIN_MAX ? (BRIGHT | BOLD) : NORMAL)
+      }
+    }
   },
 
   /** The power meter -- the reason this game and not another one.
@@ -1303,6 +1636,13 @@ export default {
     if (g.stageBreak < BREAK_STEPS * 0.22) return
     const mid = GAME_TOP + Math.floor(GAME_ROWS / 2)
     const lines = [[`STAGE ${g.stage}`, BRIGHT | BOLD], ['CLEAR SKY', MUTED]]
+    // The clean-stage bonus is announced HERE and nowhere else. It is the
+    // one score event with no object on screen to attach itself to -- a kill
+    // has an explosion, a capsule has a pickup, this has only the absence of
+    // something that did not happen -- so the break is the only moment it can
+    // be told about. Third line, so it lands under the banner the break was
+    // already showing rather than needing a card of its own.
+    if (g.cleanBonus) lines.push([`NO DAMAGE  +${CLEAN_STAGE_BONUS}`, BRIGHT | BOLD])
     for (const [i, [text, attr]] of lines.entries()) {
       const x = centerX(term.cols, text)
       // Same one-cell bleed the game-over card clears, and for the same

@@ -347,6 +347,81 @@ program):
   (game over *and* walking out with `[E]` — a record that only counted when
   you died would keep the bad runs and discard the good ones).
 
+  **2026-09-05 — the flatness pass.** The game was mechanically complete and
+  structurally flat: `terrainAt` was fixed sines with no distance term and
+  `adv` was a constant, so stage 8 flew *identically* to stage 1, and the only
+  thing that ramped was how often enemies shot. Three changes, and the
+  constraint they all had to respect is that **`terrainAt` stays a pure
+  function of the column** — the stage gate depends on it, and so does every
+  spawn, bullet and turret that asks where the rock is.
+
+  - **A distance ramp** (`rampAt`, `terrainAmp`, `terrainMinGap`,
+    `scrollRate`). Keyed to the COLUMN, not to `g.stage`: keying it to game
+    state would break the purity, and keying it to `floor(c / STAGE_DOTS)`
+    keeps the purity but steps the amplitude at every stage line, which
+    renders as a one-dot ledge in the cliff ~170 dots from the corridor —
+    close enough to see, far enough not to be hidden by it. Amplitude, not
+    base, so the cave gets more *sinuous* rather than uniformly narrower
+    (measured: the squeeze goes 24 → 17 dots while open sky stays 74).
+    Frequencies deliberately do NOT ramp — that would slide the sine against
+    the column it is drawn at, so the rock would crawl rather than scroll.
+    **The `minGap` clamp is load-bearing now** where its old comment said it
+    was a backstop that never fired. Scroll is the smallest lever on purpose:
+    it compounds with the other two and with `gameFireInterval` on top.
+    Verified with a channel-following bot — 0 terrain deaths in 40k steps at
+    every stage, so the ramp adds pressure without becoming a wall.
+  - **The chain.** A full formation clear paid a capsule and zero points; it
+    now pays `FULL_CLEAR_BASE × chain`, and a leak drops the multiplier to
+    nothing. Capped at 8, because an uncapped chain makes never taking a risk
+    the only correct play. Plus `CLEAN_STAGE_BONUS` at the rollover, announced
+    on the break banner — the one score event with no object on screen to
+    attach itself to. A shielded hit breaks neither streak; that is most of
+    what the `?` slot is now worth.
+  - **Two more enemies** (`DIVER`, `ARMOR`, gated by `DIVER_FROM_STAGE` /
+    `ARMOR_FROM_STAGE`, one archetype per formation). Armour shows damage by
+    **losing its shell** rather than by flashing — the hazard layer is blitted
+    with one attribute for the whole layer, so shape is the only channel
+    available, and a missing shell stays missing where a flash is gone in six
+    frames. The diver telegraphs through the same `gameDrawAim` dashed line an
+    aimed shot uses and commits to where you *were*. All three sprites differ
+    in ASPECT (5x3, 9x3, 7x5): the first diver was 7x5, the same bounding box
+    as the armour, and rendered as three cells told apart by four pixels.
+
+  Two traps this pass hit, both worth knowing: a hand-placed enemy in a test
+  must have its formation path zeroed (`park()` in `tests/game.test.mjs`) or
+  `gameStepEnemies` moves it out from under the bullet; and the first
+  `CHAIN` readout **never fit the row and so never drew on any stage**, while
+  its test — which only asserted the label was never truncated — passed
+  perfectly, since a string that is never written is never truncated. Rendering
+  the row and looking at it is what caught it.
+
+  **`?game=1` is the shareable way in** (2026-09-05):
+  `https://<site>/?game=1`, and it composes with `?station=` — a link can
+  name the station the boot lands on *and* open the game on it. It ARMS the
+  game rather than opening it: the visitor still presses the power key, the
+  set still boots, and the game opens ~700ms after the reveal. All three of
+  those are forced, not stylistic. The set cannot power itself on (autoplay
+  policy would give a silent radio); `startGame()` needs the visualizer,
+  which needs a locked station, which only exists once the reveal beat has
+  run; and the 700ms waits out `playBootFlicker()`'s ~540ms of box-border
+  beats, which do **not** check `visualizerActive` and would otherwise draw
+  four box frames across the playfield. It goes straight to
+  `enterVisualizer()`, around the LINE INPUT consent card, on the same
+  grounds the idle auto-entry does — the game never reads the audio tap. It
+  is one-shot, and it is not armed at all on the lite layout (refusing at
+  the arming end, not at `startGame()`, is what keeps a phone from landing
+  parked in the visualizer).
+
+  **This does not make the game discoverable, and the difference is the
+  point.** Hidden means nothing on screen leads there — no legend, no guide
+  page, no README line, the Konami code still the only way in from a cold
+  visit. A link is something a person who already knows chose to hand you.
+  So this stays out of the README, off every screen, and out of `[K]`'s
+  copied link; **this file is the only place it is written down.** Advertise
+  it anywhere a visitor can read and the distinction collapses. No new
+  keybinding for it deliberately — a key would have to appear in
+  `MAPPED_KEYS`, and that is a legend.
+
 ### Things that only make sense across files
 
 - **Layout is absolute cell coordinates** (`layout.js`); no layout engine.
