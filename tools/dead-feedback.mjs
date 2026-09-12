@@ -51,6 +51,15 @@ Math.random = () => {
   return seedState / 4294967296
 }
 
+globalThis.SIGNAL_BUILD ??= 'sweep'
+globalThis.matchMedia ??= () => ({ matches: false })
+const EMPTY_PRESET_DIGITS = await (async () => {
+  const { STATIONS } = await import('../stations.js?v=sweep')
+  const { BANDS } = await import('../tuning.js?v=sweep')
+  const firstEmpty = BANDS.map((b) => STATIONS.filter((s) => s.band === b.key).length + 1)
+  return [...new Set(firstEmpty.filter((n) => n <= 9).map(String))]
+})()
+
 // Every key any view treats as a command, plus a few the app must NOT claim
 // ('x' and ' ' stand in for the Cmd+Tab keydowns that reach the window).
 const KEYS = [
@@ -60,12 +69,22 @@ const KEYS = [
   // here. Same hole the two-finger band swipe fell through and the same
   // reason: this list is hand-maintained, so a key the app learns is not
   // reported as unswept, it is simply absent from a report that still looks
-  // complete. [W] is the weather card, [K] the sleep timer -- both real
-  // controls the guide advertises. The digits stay a deliberate SAMPLE
-  // (1, 5, 0 for a preset, an off-band preset and the retired zero); the
-  // presets are one code path and nine rows of it would be noise.
+  // complete. [W] is the weather card, [K] is TAG (the share line; the
+  // sleep timer is [T], swept above) -- both real controls the guide
+  // advertises. The digits stay a deliberate SAMPLE (1, 5, 0 for a preset,
+  // an off-band preset and the retired zero); the presets are one code path
+  // and nine rows of it would be noise.
   'w', 'k',
-  '1', '5', '0', ')', 'x', ' ',
+  '1', '5', '0',
+  // 2026-09-12 (audit, L1/L16) -- plus the first digit PAST each band's
+  // station count, derived from the roster rather than typed. isMappedKey
+  // answers true for every digit 1-9, so a digit with no station behind it
+  // was the one preset shape that clicked and did nothing -- and a sample
+  // of 1/5/0 could never see it. Sweeping on the default band, the digit
+  // past the OTHER band's count usually lands on a station here and reads
+  // as a change; the one past this band's count is the row that matters.
+  ...EMPTY_PRESET_DIGITS,
+  ')', 'x', ' ',
 ]
 
 /** Arrow off whatever the boot locked onto, into plain SEEKING. */

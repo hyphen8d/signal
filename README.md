@@ -1,7 +1,7 @@
 # SIGNAL v0.9
 
 A community-facing, unofficial internet-radio-style web toy: a terminal/CRT
-tuning-dial receiver with 13 curated stations across two bands, real songs,
+tuning-dial receiver with 14 curated stations across two bands, real songs,
 station idents,
 scanning, presets, a local weather readout, an ambient tube hum, and a power
 switch.
@@ -192,7 +192,7 @@ every visualizer effect, and assert on what's on the grid.
 | `M` | Mute |
 | `T` | Sleep timer -- steps down 60 / 30 / 15 minutes and off again, the way a clock radio's SLEEP button always has. A `SLP mm:ss` countdown sits in the title bar; the last 30 seconds fade out (the VOL bar follows the fade down) and then the set switches itself off through the normal power-down. Works from the visualizer too, and the countdown stays readable in there. Never persisted -- no clock radio keeps its sleep setting across a power cut either |
 | `P` | Power off / on |
-| `G` | Guide -- about/controls page, a station index, and a full detail page per station (freq/name/description/sample tracks); `<-`/`->` steps through all 11 pages, digits `1`-`9` jump straight to a station's detail page from the index, any other key closes it |
+| `G` | Guide -- about/controls page, a station index, and a full detail page per station (freq/name/description/sample tracks); `<-`/`->` steps through every page (the index shows how many the current band has), digits `1`-`9` jump straight to a station's detail page from the index, any other key closes it |
 | `C` | Cycle color (Green Phosphor, Classic Amber, Cyber Blue, Monochrome, Bubblegum Pink) |
 | `V` | Visualizer -- open a full-screen procedural display while a station is locked. Inside it, `C` cycles color, `Shift+C` or `V` cycles the effect itself, `L` opens the synced-lyrics view (`V` or `L` comes back out), `N` skips to the next track, `M` mutes, `Up`/`Down` set volume, `A` re-opens the LINE INPUT card, `F` toggles fullscreen, `T` arms the sleep timer, and a track position bar runs along the bottom; `E` or `Escape` exits -- other keys are no-ops |
 | `W` | Weather -- a card with today in three parts (morning / afternoon / evening), each with a high, a condition and a chance of rain, plus sunrise and sunset; the part you are currently in is picked out. Drawn over the middle of the set rather than taking the screen, so the dial above and the meters below keep running. A live reading also sits in the title bar opposite the sleep timer, refreshed every 15 minutes while the set is on. Asks for your location the first time through a consent card, the same way `[A]` does; saying no costs nothing and `[W]` re-opens it. **Needs a secure connection** -- browsers refuse geolocation over plain `http`, so this works on the deployed site and on `localhost`, but not over a bare IP address |
@@ -258,7 +258,8 @@ isn't just an internal annoyance anymore.
   ceiling moved rather than loosened — a tenth station on ONE band is still
   the thing with no way to reach it. `tools/lint-roster.js` checks it per
   band. RELIC SIGNAL was retired in v0.6 and CIPHER moved into its frequency
-  slot; YM has held at 7 stations since, ZM at 6.
+  slot; both bands have stayed under the ceiling since (the per-band counts
+  are in `stations.md`, which is generated, rather than restated here).
 - **Dead videos:** the player now auto-skips on any playback error (private,
   removed, region-locked, etc.) instead of going silent mid-song — same
   behavior as pressing `[N]` manually. It doesn't retry the same ID or flag

@@ -41,7 +41,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { oembed, playability, decayFlags, mapLimit, isThrottleSignature } from './lib/probe.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const STORE = path.join(here, 'roster-health.json')
+// SIGNAL_HEALTH_STORE is for the suite only (2026-09-12): it lets a test
+// point this at a scratch record and prove --report leaves it byte-identical.
+const STORE = process.env.SIGNAL_HEALTH_STORE || path.join(here, 'roster-health.json')
 
 const args = process.argv.slice(2)
 const flag = (name, dflt) => {
@@ -199,7 +201,14 @@ async function pruneOrphans(store) {
 async function main() {
   const tracks = await rosterTracks()
   const store = loadStore()
-  const prune = await pruneOrphans(store)
+  // 2026-09-12 (audit, L4) -- `--report` is READ-ONLY, prune included. The
+  // dashboard's GET /api/health runs this, and a GET is the one request a
+  // cross-origin page can make without the X-Signal-Admin preflight -- so a
+  // prune here was a file write reachable from any tab, and mid-edit (one
+  // station at `tracks: []` while the rest are populated) a panel poll
+  // dropped that station's whole verification history. The record only
+  // moves on a real run; reading it must not.
+  const prune = reportOnly ? { dropped: 0, skipped: false } : await pruneOrphans(store)
   if (prune.skipped) {
     say('! The roster reports no tracks at all, so no records were pruned -- that')
     say('  reads as stations.js being mid-edit rather than as an empty roster.')

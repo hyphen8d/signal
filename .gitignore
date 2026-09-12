@@ -13,6 +13,12 @@ audio/*-test.mp3
 audio/.render-*.mp3
 audio/.mono-*.mp3
 audio/.pad-*.mp3
+# Write-to-temp residue from tools/admin-server.mjs and check-roster.mjs
+# (`<file>.tmp-<pid>`, renamed into place on success). A crash between the
+# write and the rename leaves one behind, and SHIP's `git add -A` would
+# otherwise commit and push it. The admin server's own temp names are also
+# dot-prefixed so the static allowlist never serves them.
+*.tmp-*
 # tools/roster-watch.mjs's own memory: when the scheduled health check last
 # ran on THIS box and how the last twenty runs went. Unlike roster-health.json
 # beside it -- which is shared knowledge about the roster and belongs in the

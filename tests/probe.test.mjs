@@ -12,7 +12,60 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { decayFlags, isThrottleSignature, NARROW_LICENCE_MAX } from '../tools/lib/probe.mjs'
+import { spawnSync } from 'node:child_process'
+import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { decayFlags, isThrottleSignature, playability, NARROW_LICENCE_MAX } from '../tools/lib/probe.mjs'
+
+test('playability reads the throttle off WHERE the answer came from', async () => {
+  // 2026-09-12 (audit, L5). fetch follows the 429's redirect, so the final
+  // URL is the tell. Stubbed at the fetch boundary: the shapes below are the
+  // two the live endpoint produces (captured 2026-08-26 / 2026-08-30), an
+  // empty sorry page and an empty youtube.com page.
+  const realFetch = globalThis.fetch
+  const answer = (url, status = 200) => async () => ({ url, status, text: async () => '<html></html>' })
+  try {
+    globalThis.fetch = answer('https://www.google.com/sorry/index?continue=...')
+    const sorry = await playability('dQw4w9WgXcQ')
+    assert.equal(sorry.probed, false)
+    assert.equal(sorry.throttled, true, 'a redirect to google.com/sorry is the throttle')
+    assert.ok(isThrottleSignature(sorry))
+
+    globalThis.fetch = answer('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+    const odd = await playability('dQw4w9WgXcQ')
+    assert.equal(odd.probed, false)
+    assert.equal(odd.reason, 'no player data')
+    assert.equal(odd.throttled, false, 'an empty page from youtube.com itself is not throttling')
+    assert.ok(!isThrottleSignature(odd), 'and must be recorded as UNVERIFIED rather than skipped')
+    assert.equal(decayFlags({ ok: true }, odd)[0], 'UNVERIFIED(no player data)')
+
+    globalThis.fetch = answer('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 429)
+    assert.ok(isThrottleSignature(await playability('dQw4w9WgXcQ')), 'a bare 429 still is')
+  } finally {
+    globalThis.fetch = realFetch
+  }
+})
+
+test('check-roster --report leaves the record byte-identical', () => {
+  // 2026-09-12 (audit, L4). The dashboard's GET /api/health runs --report,
+  // and a GET is the one request a cross-origin page can make without the
+  // X-Signal-Admin preflight -- so --report pruning orphans was a file write
+  // reachable from any tab. A record with an orphan in it is the sharp
+  // fixture: the prune, if it still ran here, would delete that row.
+  const here = path.dirname(fileURLToPath(import.meta.url))
+  const dir = mkdtempSync(path.join(tmpdir(), 'signal-health-'))
+  const store = path.join(dir, 'roster-health.json')
+  const before = JSON.stringify({ version: 1, records: { zzzzzzzzzzz: { at: '2026-09-01T00:00:00.000Z', flags: [], status: 'OK', stationId: 'nowhere' } } }, null, 2) + '\n'
+  writeFileSync(store, before)
+  const r = spawnSync(process.execPath, [path.join(here, '..', 'tools', 'check-roster.mjs'), '--report', '--json'], {
+    env: { ...process.env, SIGNAL_HEALTH_STORE: store }, encoding: 'utf8', timeout: 30000,
+  })
+  assert.equal(r.status, 0, r.stderr)
+  assert.doesNotThrow(() => JSON.parse(r.stdout), 'the report still produces its JSON summary')
+  assert.equal(readFileSync(store, 'utf8'), before, '--report wrote to the record')
+})
 
 const OK_EMBED = { ok: true, status: 200, title: 'A Song', channel: 'A Channel' }
 const healthy = { probed: true, seconds: 200, countries: 200, us: true, embeddable: true, status: 'OK' }
@@ -74,7 +127,14 @@ test('the throttle signature matches what a 429 actually looks like', () => {
   // YouTube answers 429 and redirects to google.com/sorry, a page carrying
   // none of the player fields -- so it surfaces as either shape.
   assert.ok(isThrottleSignature({ probed: false, reason: 'HTTP 429' }))
-  assert.ok(isThrottleSignature({ probed: false, reason: 'no player data' }))
+  assert.ok(isThrottleSignature({ probed: false, reason: 'no player data (google.com/sorry)', throttled: true }))
+  // 2026-09-12 (audit, L5) -- but "no player data" from youtube.com ITSELF
+  // is a real answer about an odd video (a live stream, a removed-with-shell
+  // page), not the endpoint going away. Treating it as throttling skipped
+  // that track every batch, kept it at the queue front, and counted it
+  // toward the "sweep is stuck" alarm for a reason that was not throttling.
+  assert.ok(!isThrottleSignature({ probed: false, reason: 'no player data', throttled: false }))
+  assert.ok(!isThrottleSignature({ probed: false, reason: 'no player data' }))
   assert.ok(!isThrottleSignature({ probed: true, reason: undefined }))
   // A genuine network error is not throttling and must not stop a run.
   assert.ok(!isThrottleSignature({ probed: false, reason: 'fetch failed' }))

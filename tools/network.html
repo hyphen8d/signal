@@ -614,7 +614,7 @@ const TASK_HELP = {
   stamp: 'Bumps build.json, which main.js reads to cache-bust every module. <b class="tag-write">Writes.</b> Required before any deploy — SHIP does it for you.',
   stations: 'Regenerates stations.md from stations.js. <b class="tag-write">Writes.</b> Never hand-edit that file; saves here already re-run this.',
   deadfeedback: 'Presses every key in every view and diffs against a do-nothing control, to find controls that click but change nothing. <b>~1 min.</b>',
-  shoot: 'Re-shoots screenshots/ by driving headless Chrome. <b class="tag-net">Slow</b>, <b class="tag-write">writes</b>. Run it after changing a screen the README shows.',
+  shoot: 'Re-shoots screenshots/ by driving headless Chrome against THIS server -- the tree you are about to ship, not the deployed site. <b class="tag-net">Slow</b>, <b class="tag-write">writes</b>. Run it after changing a screen the README shows, before SHIP.',
 }
 
 // The audition flags are terse on purpose in the terminal; here there is
