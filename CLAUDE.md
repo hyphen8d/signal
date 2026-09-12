@@ -551,6 +551,12 @@ Two things about it are load-bearing and easy to undo by accident:
   "nothing else may paint" contract the full-screen overlays get, so
   `weatherOpen` has to appear in the same paint guards as `guideOpen` and
   `tapConsentOpen`. Miss one and the track title draws through the card.
+  Since 2026-09-12 the three are one predicate, `overlayUp()` in
+  `ui/desktop.js`, and the painters reached from outside `frame()` — the
+  YouTube state callback, `showTrack`/`showStation` and their clears — ask
+  it; `tests/overlays.test.mjs` ends a track under each overlay and asserts
+  the overlay came back byte-identical. The card also stops a running scan
+  on open, as the other two overlays do.
 - **Geolocation needs a secure context.** On plain `http` the API exists, the
   call runs, and the error callback fires with code 1 — `PERMISSION_DENIED`,
   the same code a real refusal gives — saying "Only secure origins are

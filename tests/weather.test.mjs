@@ -11,7 +11,7 @@ import assert from 'node:assert/strict'
 import {
   bucketHours, reducePart, wmoLabel, unitsForLocale, unitSuffix,
   DAY_PARTS, forecastUrl, isStale, WX_MAX_AGE_MS,
-  wmoShort, CONSENT_COPY, INSECURE_COPY, CARD_TEXT_W, canLocate,
+  wmoShort, CONSENT_COPY, INSECURE_COPY, NO_LOCATION_COPY, CARD_TEXT_W, canLocate, locateBlocker,
 } from '../weather.js'
 
 /** A full local day of hourly readings, in Open-Meteo's shape.
@@ -148,7 +148,7 @@ test('every line of card copy fits inside the box', () => {
   // The bug this pins actually shipped into a render: a 52-character line in
   // a 50-column interior wrote through the right border and out the other
   // side of the card. Prose is easy to lengthen and the overflow is silent.
-  for (const line of [...CONSENT_COPY, ...INSECURE_COPY]) {
+  for (const line of [...CONSENT_COPY, ...INSECURE_COPY, ...NO_LOCATION_COPY]) {
     assert.ok(line.length <= CARD_TEXT_W,
       `"${line}" is ${line.length} cols, over the ${CARD_TEXT_W} the card allows`)
   }
@@ -170,6 +170,13 @@ test('an insecure origin is not mistaken for a browser without geolocation', () 
   assert.equal(canLocate({ isSecureContext: false, navigator: { geolocation: {} } }), false)
   assert.equal(canLocate({ isSecureContext: true, navigator: {} }), false)
   assert.equal(canLocate({ isSecureContext: true, navigator: { geolocation: {} } }), true)
+  // 2026-09-12 (audit, L10) -- and the two falses are told apart, because
+  // the card prints a different sentence for each: "this page is on http"
+  // is wrong advice on a secure page in a browser that simply has no API.
+  assert.equal(locateBlocker({ isSecureContext: false, navigator: { geolocation: {} } }), 'insecure')
+  assert.equal(locateBlocker({ isSecureContext: true, navigator: {} }), 'unsupported')
+  assert.equal(locateBlocker({ isSecureContext: false, navigator: {} }), 'unsupported')
+  assert.equal(locateBlocker({ isSecureContext: true, navigator: { geolocation: {} } }), null)
 })
 
 test('precipitation chance is the window peak, and absent is not zero', () => {

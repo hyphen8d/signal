@@ -366,7 +366,12 @@ export default {
         term.text(C.preset, y, `[${String(i + 1).padStart(2, '0')}]`, DIM)
         term.text(C.glyph, y, ch.glyph || ' ', NORMAL)
         term.text(11, y, ch.freq.toFixed(1), MUTED)
-        term.text(17, y, truncate(ch.callsign, term.cols - 18), BRIGHT)
+        // 2026-09-12 (audit, M12) -- 18, not 17: a ZM frequency is six
+        // characters ("1031.0" fills cols 11-16), so a callsign at 17 sat
+        // flush against it and read as "1031.0THE CRYPT". The wide branch
+        // has a gap at every stop; this one was laid out for the
+        // three-digit band and never re-measured for the second.
+        term.text(18, y, truncate(ch.callsign, term.cols - 19), BRIGHT)
       })
       // Touch footer: no arrows to press and no digits to jump with, so it
       // names the gesture that actually pages this overlay (2026-08-27).

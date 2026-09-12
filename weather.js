@@ -178,8 +178,21 @@ export function forecastUrl(lat, lon, units) {
  *  http://<tailscale-ip>:8000 is not a trustworthy origin, so this feature
  *  cannot be exercised there at all. Use localhost, which IS trustworthy by
  *  spec, or the deployed site. */
-export const canLocate = (win = globalThis) =>
-  !!(win && win.isSecureContext && win.navigator && win.navigator.geolocation)
+export const canLocate = (win = globalThis) => locateBlocker(win) === null
+
+/** 2026-09-12 (audit, L10) -- WHY location cannot be asked for, or null
+ *  when it can. canLocate() folded two different answers into one false:
+ *  an insecure origin (fixed by changing the URL, and the card says so) and
+ *  a browser with no geolocation API at all (nothing to change, nothing to
+ *  ask). The card printed the http sentence for both, so a secure page in
+ *  a browser without the API told the visitor their connection was the
+ *  problem. Two reasons, two lines of copy. Neither is a refusal and
+ *  neither is persisted -- see the note above. */
+export const locateBlocker = (win = globalThis) => {
+  if (!win || !win.navigator || !win.navigator.geolocation) return 'unsupported'
+  if (!win.isSecureContext) return 'insecure'
+  return null
+}
 
 /** The browser's own permission dialog. Deliberately NOT called anywhere
  *  except from the card's [Y] -- see ui/weather.js for why that matters, and
@@ -260,6 +273,11 @@ export const CONSENT_COPY = [
 export const INSECURE_COPY = [
   'Location needs a secure connection.',
   'This page is on http, so the browser refuses.',
+]
+// 2026-09-12 (audit, L10) -- the other reason there is nothing to ask.
+export const NO_LOCATION_COPY = [
+  'This browser has no location service.',
+  'Nothing to ask, so there is no forecast.',
 ]
 
 // How long a reading stands before it is worth asking again. Weather does
