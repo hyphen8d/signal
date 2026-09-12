@@ -94,12 +94,30 @@ export const WELCOME_LINE_FILE = 'audio/welcome-tuned-in.mp3'
 export let welcomeLineBufferPromise = null
 export function loadWelcomeLineBuffer() {
   if (!welcomeLineBufferPromise) {
-    welcomeLineBufferPromise = fetch(clipUrl(WELCOME_LINE_FILE))
-      .then((r) => r.arrayBuffer())
-      .then((buf) => audioCtx().decodeAudioData(buf))
-      .catch(() => null)
+    welcomeLineBufferPromise = fetchClipBuffer(WELCOME_LINE_FILE)
+      .catch(() => { welcomeLineBufferPromise = null; return null })
   }
   return welcomeLineBufferPromise
+}
+// 2026-09-12 (audit, L2) -- one fetch+decode for every clip loader below,
+// and the shape of its failure is the point. Each loader memoises a promise
+// per clip, and each used to end in `.catch(() => null)` on that memoised
+// promise: one dropped request -- an offline blip during the boot prefetch,
+// a 5xx from Pages -- resolved the cached promise to null for the rest of
+// the session, and that station ID or liner was gone until a reload. Same
+// bug the lyrics cache had ('error' vs 'unavailable', 2026-08-30). Only a
+// 404 is a real answer ("no clip for this station", the secret ones) and
+// is cached as null here; anything else rejects, and each loader's catch
+// DELETES its map entry before resolving null, so the next caller retries.
+// clipUrl() is a const defined further down; this is a hoisted function and
+// every loader is first CALLED from program.js after this module has fully
+// evaluated, so the const is initialised by then.
+function fetchClipBuffer(path) {
+  return fetch(clipUrl(path)).then((r) => {
+    if (r.status === 404) return null
+    if (!r.ok) throw new Error(`clip ${path}: HTTP ${r.status}`)
+    return r.arrayBuffer().then((buf) => audioCtx().decodeAudioData(buf))
+  })
 }
 // Soft-saturation curve for WaveShaperNode (MDN's standard "distortion
 // curve" shape), tuned low here for grit/grain rather than real overdrive --
@@ -186,6 +204,21 @@ function cutLiveVoice(ctx) {
 /** Exported for tests only -- the WebAudio half cannot run in Node, so the
  *  suite drives this function with a fake context instead. */
 export function _liveVoiceForTest() { return liveVoice }
+
+/** 2026-09-12 (audit, M6) -- the set's own off switch for the voice.
+ *  cutLiveVoice() above was module-private and reached only from the next
+ *  clip, so powerDown() stopped the bed, the hum, the player and the duck
+ *  and left a station ID (~2.4s) or a liner (up to 8.5s) that had already
+ *  started announcing over STANDBY; the guards in playStationId() and
+ *  maybePlayLinerDrop() only stop a clip that has NOT started. Same fade as
+ *  a cut by the next clip, for the same reason (a dead stop clicks). Takes
+ *  an optional ctx so the suite can drive it the way voice-clip.test.mjs
+ *  drives playProcessedVoiceClip(); live callers pass nothing. Returns early
+ *  when nothing is playing, before touching the AudioContext at all. */
+export function stopLiveVoice(ctx) {
+  if (!liveVoice) return
+  try { cutLiveVoice(ctx || audioCtx()) } catch (e) { liveVoice = null }
+}
 
 export function playProcessedVoiceClip(buffer, ctx, t, gainMult = 1) {
   cutLiveVoice(ctx)
@@ -370,10 +403,10 @@ const clipUrl = (path) => (V ? `${path}?v=${V}` : path)
 export function loadStationIdBuffer(stationId) {
   if (!stationIdBufferPromises[stationId]) {
     const clip = stationClipName(stationId)
-    stationIdBufferPromises[stationId] = fetch(clipUrl(`audio/station-id-${clip}.mp3`))
-      .then((r) => r.arrayBuffer())
-      .then((buf) => audioCtx().decodeAudioData(buf))
-      .catch(() => null) // no clip for this station (e.g. the secret one) -- silently skip
+    // A 404 (no clip for this station, e.g. the secret ones) resolves null
+    // and stays cached; any other failure is retryable -- see fetchClipBuffer.
+    stationIdBufferPromises[stationId] = fetchClipBuffer(`audio/station-id-${clip}.mp3`)
+      .catch(() => { delete stationIdBufferPromises[stationId]; return null })
   }
   return stationIdBufferPromises[stationId]
 }
@@ -843,10 +876,8 @@ for (const stId in STATION_LINER_FILES) {
 export const linerBufferPromises = {}
 export function loadLinerBuffer(path) {
   if (!linerBufferPromises[path]) {
-    linerBufferPromises[path] = fetch(clipUrl(path))
-      .then((r) => r.arrayBuffer())
-      .then((buf) => audioCtx().decodeAudioData(buf))
-      .catch(() => null)
+    linerBufferPromises[path] = fetchClipBuffer(path)
+      .catch(() => { delete linerBufferPromises[path]; return null }) // see fetchClipBuffer (L2)
   }
   return linerBufferPromises[path]
 }

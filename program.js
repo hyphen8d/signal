@@ -21,7 +21,7 @@ const V = globalThis.SIGNAL_BUILD ?? ''
 import { BOLD, BRIGHT, DIM, FAINT, MUTED, NORMAL } from './src/term.js'
 const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent, playKeyClick, playModeThump, playPanelSound, playPowerOnSound, playPresetClick, playPresetWhoosh, playRelayThunk, playSeekStatic, playStaticBurst, setSpeakerLevel, setStaticIntensity, startStaticNoise, startTubeHum, stopStaticNoise, stopTubeHum } = await import(`./audio/sfx.js?v=${V}`)
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
-const { LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId } = await import(`./audio/voice.js?v=${V}`)
+const { STATION_LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId, stopLiveVoice } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
 const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
@@ -241,7 +241,18 @@ export default {
     STATIONS.forEach((st) => loadStationIdBuffer(st.id))
     // 56th pass -- liner drop clips (see maybePlayLinerDrop) -- just
     // CIPHER's pilot clip for now.
-    Object.values(LINER_FILES).flat().forEach(loadLinerBuffer)
+    // 2026-09-12 (audit, M7) -- NOT any more. That note dates from one pilot
+    // clip; by now the set holds ~45 clips, ~4.3MB of mp3, and this line
+    // fetched and decoded every one of them on every visit -- re-downloaded
+    // on every stamp bump, since clipUrl() cache-busts, and held for the
+    // session as ~45 decoded PCM buffers, on a phone too. The welcome line
+    // and the station IDs stay here: they are small, and an ID has to be
+    // ready ~500ms after a lock. Liners are not on a beat anyone can hear
+    // -- maybePlayLinerDrop() already loads its clip inside its own 2.5s
+    // window, and the promise cache means each general clip is fetched
+    // once per session on first use. A station's OWN liners are warmed on
+    // lock (see tryLock), which is the only time they can be wanted.
+
 
     // 45th pass -- decided once, at boot, off config.js's viewport/pointer
     // check. Every mobile-only draw branch below reads this rather than
@@ -810,6 +821,17 @@ export default {
     // painting the drift effect over STANDBY forever after the next
     // power-up.
     this.visualizerActive = false
+    // 2026-09-12 (audit, M3) -- the weather card, same reasoning again. Its
+    // only other writers are openWeather()/closeWeather(), so a power-down
+    // that arrived with the card up (the sleep timer, until sleepExpired()
+    // learned to close it; a [P] is refused while the card is open) left
+    // weatherOpen true through STANDBY and into the next power-on: the
+    // STANDBY clock never ticked, and after [P] the set came up looking
+    // normal -- redrawMainScreen() paints no card -- while frame() bailed,
+    // the fx queue sat frozen, isMappedKey() said no to everything and
+    // key()'s weather branch ate every press. A set that ignores the
+    // keyboard, with nothing on screen to say why.
+    this.weatherOpen = false
     // VECTOR SCAN (2026-08-29) -- same reasoning as the line above, one
     // step further in: this path deliberately does NOT call
     // exitVisualizer(), so the game's own teardown there is not reached and
@@ -848,6 +870,10 @@ export default {
     // still needs to silence it explicitly.
     stopStaticNoise()
     stopTubeHum() // 42nd pass -- the noise floor dies with the set, same as everything else audio
+    // 2026-09-12 (audit, M6) -- and so does the announcer. A station ID or a
+    // liner that had already started kept talking over STANDBY; see
+    // stopLiveVoice() for why nothing else here could reach it.
+    stopLiveVoice()
     if (this.ready && this.player) this.player.pauseVideo()
     this.setPlayState(s)
     // 68th pass -- was playPowerDownSound(), a ~0.6s falling 660Hz->40Hz
@@ -1388,10 +1414,28 @@ export default {
           // is what fixes the roster; this only stops the set thrashing
           // until it does.
           onError: () => {
-            if (self.mode !== 'locked') return
+            // 2026-09-12 (audit, M1) -- a track that dies DURING the preset
+            // sweep. presetTune() primes the incoming station's track at the
+            // start of its ~330ms sweep, while mode is 'seeking'; the bare
+            // mode bail this used to open with dropped a cue error landing
+            // in that window, tryLock() then saw a fresh prime and did not
+            // reload, so the dead video stayed in the player: no PLAYING
+            // ever came, detectBreak() tripped at 4s, and STATION BREAK held
+            // forever with only a manual [N] to get out. A fresh prime is
+            // now its own case: same budget, same glitch, but re-primed
+            // with a fresh draw rather than skip() -- there is nothing
+            // locked to skip within yet. nextTrack() directly, not
+            // _primeStationAudio(): that would consult lastPlayback and can
+            // hand the same remembered dead track straight back inside
+            // RESUME_CUTOFF_MS.
+            const primed = self._primedTrack
+            const primeFresh = !!primed && Date.now() - primed.at < 2000
+            if (self.mode !== 'locked' && !primeFresh) return
+            const station = primeFresh ? primed.station : self.lockedStation
             self._errorSkips = (self._errorSkips || 0) + 1
-            if (self._errorSkips >= (self.lockedStation?.tracks.length || 1)) {
+            if (self._errorSkips >= (station?.tracks.length || 1)) {
               self._errorSkips = 0
+              self._primedTrack = null
               self.enterSeeking(s)
               // After enterSeeking, whose own SEEKING status this replaces
               // -- same ordering cycleBand() uses, and for the same reason:
@@ -1400,6 +1444,12 @@ export default {
               return
             }
             flashCrtGlitch(s)
+            if (primeFresh) {
+              const track = self.nextTrack(station)
+              self._primedTrack = { station, remembered: null, resumeGapMs: Infinity, withinCutoff: false, track, at: Date.now() }
+              self.loadTrack(track, { midSong: true })
+              return
+            }
             self.skip(s)
           },
         },
@@ -2030,6 +2080,10 @@ export default {
     // 67th pass already fixed once for the STANDBY guide key.
     if (this.tapConsentOpen) this.closeTapConsent(s)
     if (this.guideOpen) this.closeGuide(s)
+    // 2026-09-12 (audit, M3) -- the weather card was the overlay this list
+    // missed. powerDown() now also clears the flag as a backstop, but the
+    // card's own close path is the one that puts the covered rows back.
+    if (this.weatherOpen) this.closeWeather(s)
     this.powerDown(s)
   },
 
@@ -2246,7 +2300,19 @@ export default {
       this.lastPlayback[this.lockedStation.id] = { track: this.currentTrack, position: pos, at: Date.now() }
     }
     this.mode = 'locked'
+    // 2026-09-12 (audit, M6) -- a station CHANGE cuts whatever the previous
+    // station's announcer was still saying, ~830ms before the new station's
+    // own ID would have cut it (the 500ms delay below plus the sweep): a
+    // stale ID naming the station you just left, or a liner from it, has
+    // no business finishing over the new one. Guarded on an actual change
+    // so a re-lock of the same station (an arrow-seek snapping back) keeps
+    // its liner, and so the boot -- which sets lockedStation without coming
+    // through here -- never cuts the welcome line.
+    if (this.lockedStation && this.lockedStation !== station) stopLiveVoice()
     this.lockedStation = station
+    // 2026-09-12 (audit, M7) -- warm THIS station's own liner clips on
+    // lock; see init()'s prefetch note for why they no longer load at boot.
+    for (const path of STATION_LINER_FILES[station.id] || []) loadLinerBuffer(path)
     // 2026-09-02 (audit, L4) -- a fresh lock retries from zero; errors
     // carried over from a different station must not trip the budget early.
     this._errorSkips = 0
@@ -2532,7 +2598,12 @@ export default {
     // way every other way of leaving a station already does. Same shape as
     // presetTune()'s snapshot (B2), and safe for the same reason: nothing
     // has disturbed the player yet at this point.
-    if (this.lockedStation && this.currentTrack) {
+    // 2026-09-12 (audit, M2) -- "nothing has disturbed the player" is false
+    // for exactly one caller: [B] pressed inside a preset sweep, where the
+    // player already holds the incoming station's cue. Same guard as
+    // presetTune()'s and tryLock()'s.
+    const primePending = this._primedTrack && Date.now() - this._primedTrack.at < 2000
+    if (!primePending && this.lockedStation && this.currentTrack) {
       let pos = 0
       try { pos = this.player?.getCurrentTime?.() || 0 } catch (e) {}
       this.lastPlayback[this.lockedStation.id] = { track: this.currentTrack, position: pos, at: Date.now() }
@@ -2647,6 +2718,38 @@ export default {
       this.flashStatus(s, presetNum > 0 ? `PRESET ${presetNum}` : 'LOCKED')
       return
     }
+    // 2026-09-12 (audit, M2) -- the same debounce for a preset pressed
+    // AGAIN inside its own ~330ms sweep. The bail above only sees a
+    // finished lock; on the second press mode is still 'seeking', so the
+    // press fell through: it snapshotted lastPlayback again -- now reading
+    // getCurrentTime() off the freshly cued INCOMING track (the exact B2
+    // shape tryLock() was taught to refuse), so the old station remembered
+    // the new track's random seek point -- and drew a second bag entry.
+    // A fresh prime for this station means "already on the way there".
+    const priming = this._primedTrack
+    if (priming && priming.station === station && Date.now() - priming.at < 2000) {
+      const presetNum = this.bandPresets().indexOf(station) + 1
+      this.flashStatus(s, presetNum > 0 ? `PRESET ${presetNum}` : 'TUNING...')
+      return
+    }
+    // 2026-09-12 (audit, H6) -- a preset knows its band. [0] and [)] tune
+    // the secret stations by object and both live on YM; pressed with the
+    // dial on ZM, retune() clamped 613 into ZM's range and the set locked
+    // NIN at "1000.0" under a ZM BAND title, with the meters reading off
+    // ZM's nearest carrier -- the one invariant cycleBand() exists to keep,
+    // broken from the side door. A real dual-band set's preset button moves
+    // the band selector with it, so this makes the same three moves
+    // cycleBand() makes (band, chrome, scale) and then tunes as ever. The
+    // ?station= boot path already applies this rule ("the band has to
+    // follow the station"); this is the second of the two places a station
+    // is chosen without dialling to it. The lock is left to the sweep: unlike
+    // cycleBand(), it is about to be replaced by a real one, not dropped.
+    const wantBand = station.band ?? DEFAULT_BAND
+    if (wantBand !== this.band) {
+      this.band = wantBand
+      this.drawChrome(s)
+      this.drawScale(s)
+    }
     this.stopScan()
     // 2026-09-02 (audit, B2) -- snapshot the DEPARTING station before
     // _primeStationAudio() below cues the new one's track into the player.
@@ -2658,7 +2761,12 @@ export default {
     // "where you were" (that is the whole resume memory), and the player is
     // still holding that station's track until the prime below replaces it
     // -- a seek-then-preset must snapshot here too or it snapshots nowhere.
-    if (this.lockedStation && this.currentTrack) {
+    // 2026-09-12 (audit, M2) -- unless a DIFFERENT station's prime is still
+    // fresh: then the player is already holding that station's cue, not the
+    // departing one's track, and the position it would answer is a lie. The
+    // honest snapshot was taken by the first press; keep it.
+    const primePending = this._primedTrack && Date.now() - this._primedTrack.at < 2000
+    if (!primePending && this.lockedStation && this.currentTrack) {
       let pos = 0
       try { pos = this.player?.getCurrentTime?.() || 0 } catch (e) {}
       this.lastPlayback[this.lockedStation.id] = { track: this.currentTrack, position: pos, at: Date.now() }
@@ -3097,7 +3205,18 @@ export default {
       // the end of a page stack should not dismiss the overlay.
       if (e.key === 'ArrowRight') { if (!this.stepGuidePage(s, 1)) this.closeGuide(s); return }
       if (e.key === 'ArrowLeft') { if (!this.stepGuidePage(s, -1)) this.closeGuide(s); return }
-      if (this.guidePage === 2 && /^[1-9]$/.test(e.key)) { this.guidePage = 2 + Number(e.key); this.drawGuidePage(s); return }
+      // 2026-09-12 (audit, H2) -- bounded by the band's own count. The
+      // footer says [1-9] JUMP, but YM has 8 public stations and ZM has 6,
+      // and a digit past the end used to set guidePage to a station page
+      // that does not exist: drawGuidePageStation() then read `.glyph` off
+      // undefined and threw out of the key handler, with guidePage left
+      // past the last page. A digit with no station behind it now falls
+      // through to closeGuide() below, the same as an arrow with nowhere to
+      // go -- consistent with the guide's "any other key closes" model.
+      if (this.guidePage === 2 && /^[1-9]$/.test(e.key)) {
+        const n = Number(e.key)
+        if (n <= this.bandPresets().length) { this.guidePage = 2 + n; this.drawGuidePage(s); return }
+      }
       this.closeGuide(s)
       return
     }
@@ -3278,7 +3397,12 @@ export default {
         // (chronological add-order) -- see its definition for why -- so
         // preset number always matches left-to-right position on the dial.
         const ch = this.bandPresets()[Number(e.key) - 1]
+        // 2026-09-12 (audit, L1) -- a digit with no station behind it
+        // ([7]-[9] on ZM, [9] on YM) is in MAPPED_KEYS unconditionally, so it
+        // clicked like a command and answered with nothing. Same sentence
+        // shape as [N]'s NO SIGNAL: what is missing is the preset.
         if (ch) this.presetTune(s, ch)
+        else this.flashStatus(s, 'NO PRESET')
         break
       }
       // 2026-08-22: '0' bound directly to NIN_STATION, not derived from
