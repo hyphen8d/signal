@@ -2261,7 +2261,13 @@ export const GREEN_ROOM_STATION = {
     realTrack('eMK4cfXj5c0', 'Hits from the Bong', 'Cypress Hill'),
     realTrack('6cIePqdz03A', 'Legalize It', 'Peter Tosh'),
     realTrack('xBD6aStamvo', 'Mary Jane', 'Rick James'),
-    realTrack('AMUaWc46_0U', "Marijuanaut's Theme", 'Sleep'),
+    // 2026-09-12 (audit, H1): the first Topic upload (AMUaWc46_0U) went
+    // "Video unavailable" on 2026-09-11 -- caught by the daily health
+    // sweep, not by anyone listening, and oEmbed still answered 200 for
+    // it. Same track, same channel, the other Topic upload: playability
+    // OK, embeddable, 248 countries (the dead one had 123), 6:40 = the
+    // same 400s master. The curation call stands; only the upload died.
+    realTrack('v-d_M-5DEJY', "Marijuanaut's Theme", 'Sleep'),
     realTrack('O_BSg1ccGUM', 'Smoke Two Joints', 'Sublime'),
     // 4:20 exactly, which is the reason this one is on the brief at all.
     // The Topic upload is the only source that runs it to length -- the

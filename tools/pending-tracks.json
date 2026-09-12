@@ -361,6 +361,17 @@
       "rationale": "Appeared on the owner's downtempo reference list. Flagged before searching rather than after auditioning, since a title question needs no network work to answer.",
       "rejectedAt": "2026-09-01",
       "rejectedReason": "title reads badly on a public dial; artist and lane are not in question"
+    },
+    {
+      "stationId": "green-room",
+      "youtubeId": "AMUaWc46_0U",
+      "title": "Marijuanaut's Theme",
+      "artist": "Sleep",
+      "proposedBy": "roster-watch",
+      "proposedAt": "2026-09-11",
+      "rationale": "Not a proposal: the roster upload itself. Flagged UNPLAYABLE (\"Video unavailable\") by the daily health sweep on 2026-09-11 and again 2026-09-12 while oEmbed still returned 200. Recorded here so the id is never re-proposed; the track stays on GREEN ROOM under v-d_M-5DEJY (Sleep - Topic, 400s, 248 countries).",
+      "rejectedAt": "2026-09-12",
+      "rejectedReason": "upload went unavailable; swapped for the other Topic upload of the same master, song not in question"
     }
   ]
 }

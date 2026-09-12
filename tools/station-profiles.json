@@ -713,6 +713,11 @@
      "artist": "Queens of the Stone Age",
      "track": "Feel Good Hit of the Summer",
      "reason": "Fits the station perfectly on content (the chorus is a drug inventory naming marijuana first) and was still dropped, so it WILL look like an oversight later. The only official upload (QueensStoneAgeVEVO, bAXPUN2z2CE) is age-gated -- playabilityStatus LOGIN_REQUIRED, which the IFrame player cannot satisfy, so it would have been dead air. No Topic upload of the album track exists; Topic carries only the Reprise. Unofficial uploads were offered and declined. Re-propose only if a non-gated official source appears."
+    },
+    {
+     "artist": "Sleep",
+     "track": "Marijuanaut's Theme (upload AMUaWc46_0U only)",
+     "reason": "The TRACK is on the roster; this is the dead UPLOAD. The original Sleep - Topic id went \"Video unavailable\" on 2026-09-11 (health sweep, UNPLAYABLE; oEmbed still 200). Replaced 2026-09-12 by the other Sleep - Topic upload v-d_M-5DEJY -- same 400s master, playability OK, embeddable, 248 countries. Do not re-propose AMUaWc46_0U if it resurfaces in a search; do not read this as a rejection of the song."
     }
    ]
   },
