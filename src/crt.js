@@ -134,7 +134,7 @@ uniform vec2 uRes;
 uniform float uTime;
 uniform vec3 uPhosphor;
 uniform float uFill, uCurve, uBloomAmt, uMaskAmt, uMaskPitch, uVignette;
-uniform float uNoise, uFlicker, uRoll, uRollSpeed, uChroma, uBrightness, uAmbient, uBg, uGlass;
+uniform float uNoise, uFlicker, uRoll, uRollPhase, uChroma, uBrightness, uAmbient, uBg, uGlass;
 uniform float uAmbientFalloff;
 uniform float uNoiseStreak, uSnow;
 out vec4 fragColor;
@@ -192,10 +192,14 @@ void main() {
 
   if (edge > 0.0) {
     // Frame counter for anything that changes once per frame and holds within
-    // it. Wrapped at 1024: uTime is seconds since load, and in the thousands a
-    // float32 cannot resolve a per-frame step. Quantising at 60 keeps the noise
-    // at video rate on a 120Hz panel.
-    float nt = mod(floor(uTime * 60.0), 1024.0);
+    // it. Quantising at 60 keeps the noise at video rate on a 120Hz panel.
+    // uTime arrives already wrapped to [0, 1024) by render() -- see the note
+    // there: the wrap has to happen on the CPU in double precision, because
+    // a mod() applied here runs on a float32 that has already lost the
+    // per-frame step by the time a session is a day or two old. 1024 * 60
+    // is a whole number of frames, so the counter is seamless across the
+    // wrap.
+    float nt = floor(uTime * 60.0);
 
     // Outside the swept raster, dark.
     vec2 g = step(vec2(0.0), uv) * step(uv, vec2(1.0));
@@ -226,8 +230,10 @@ void main() {
 
     // Rolling shutter bar. A camera artefact, not a CRT one. Speed is how many
     // times a second the bar crosses the screen, controlled separately from
-    // depth.
-    float band = fract(uv.y - uTime * uRollSpeed);
+    // depth. The phase is integrated on the CPU (render()) and arrives in
+    // [0, 1), so it neither loses precision with session age nor jumps when
+    // the wrapped clock rolls over.
+    float band = fract(uv.y - uRollPhase);
     glass *= 1.0 + uRoll * exp(-pow((band - 0.5) / 0.09, 2.0));
 
     glass *= 1.0 - uVignette * dot(q, q);
@@ -264,6 +270,27 @@ void main() {
 
   fragColor = vec4(col, 1.0);
 }`
+
+/** Period, in seconds, the shader clock wraps at. A whole number of 1/60s
+ *  frames (1024 * 60 = 61440), so the per-frame noise counter rolls over
+ *  without a seam. See render() for why the wrap lives on the CPU. */
+export const CLOCK_WRAP_S = 1024
+
+/** The shader's clock: seconds since start, wrapped to [0, CLOCK_WRAP_S). */
+export function wrapClock(time) {
+  return ((time % CLOCK_WRAP_S) + CLOCK_WRAP_S) % CLOCK_WRAP_S
+}
+
+/** One frame of roll-bar phase, in [0, 1): `speed` is crossings per second.
+ *  Integrated rather than computed from the clock so it is continuous
+ *  across the clock wrap and across a change of speed. A backwards or
+ *  absurd dt (a clock reset, a tab asleep for an hour) contributes nothing
+ *  rather than a random phase. */
+export function advanceRollPhase(phase, dt, speed) {
+  if (!(dt > 0) || !(dt < 1) || !Number.isFinite(speed)) return phase
+  const next = (phase + dt * speed) % 1
+  return next < 0 ? next + 1 : next
+}
 
 export class CRT {
   /**
@@ -591,7 +618,27 @@ export class CRT {
     this.unit(this.progComp, 'uBloom', this.bloom[1].tex, 1)
     const u = this.progComp.u
     gl.uniform2f(u.uRes, this.canvas.width, this.canvas.height)
-    gl.uniform1f(u.uTime, time)
+    // 2026-09-12 (audit, L11): the clock is wrapped HERE, in double
+    // precision, before it becomes a float32 uniform. The shader used to do
+    // `mod(floor(uTime * 60.0), 1024.0)`, which wraps nothing: by the time
+    // uTime is in the tens of thousands (a tab left open for a day) the
+    // float32 has already dropped the per-frame step the mod was meant to
+    // protect, and the roll bar's `uTime * uRollSpeed` had the same
+    // problem with no wrap at all -- measured with Math.fround, the bar's
+    // per-frame step drifts by ~7% at 24h, judders at 48h, and the grain
+    // starts skipping frames at ~77h. Wrapping at 1024 keeps the value
+    // small enough that float32 resolves 1/60s comfortably, and 1024 * 60
+    // is a whole number of frames so the noise counter is seamless across
+    // the wrap. The roll bar is not driven by this clock any more: its
+    // phase is integrated per frame in [0, 1) (advanceRollPhase), which is
+    // continuous across the wrap for any speed, AND continuous across a
+    // speed change -- the old `time * speed` form teleported the bar to an
+    // unrelated phase whenever a glitch ramped rollSpeed, which the tween
+    // in rampCrtParams was never asking for.
+    const dt = this._lastTime == null ? 0 : time - this._lastTime
+    this._lastTime = time
+    this._rollPhase = advanceRollPhase(this._rollPhase || 0, dt, P.rollSpeed)
+    gl.uniform1f(u.uTime, wrapClock(time))
     gl.uniform3fv(u.uPhosphor, this.phosphor)
     gl.uniform1f(u.uFill, P.fill)
     gl.uniform1f(u.uCurve, P.curve)
@@ -606,7 +653,7 @@ export class CRT {
     gl.uniform1f(u.uSnow, P.snow)
     gl.uniform1f(u.uFlicker, P.flicker)
     gl.uniform1f(u.uRoll, P.roll)
-    gl.uniform1f(u.uRollSpeed, P.rollSpeed)
+    gl.uniform1f(u.uRollPhase, this._rollPhase)
     gl.uniform1f(u.uChroma, P.chroma)
     gl.uniform1f(u.uBrightness, P.brightness)
     gl.uniform1f(u.uAmbient, P.ambient)

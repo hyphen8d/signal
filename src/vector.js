@@ -58,8 +58,13 @@ export class DotCanvas {
   }
 
   plot(x, y) {
-    x |= 0
-    y |= 0
+    // 2026-09-12 (audit, L12): floor, not `|= 0`. Truncation rounds toward
+    // zero, so a dot at x in (-1, 0) -- a sprite sliding off the left edge
+    // by less than one dot -- landed in column 0 instead of vanishing, and
+    // the same at the top edge. Floor sends it to -1 and the bounds test
+    // below drops it, which is what the right and bottom edges already did.
+    x = Math.floor(x)
+    y = Math.floor(y)
     if (x < 0 || y < 0 || x >= this.w || y >= this.h) return
     const bit = DOT_BIT[y & 3][x & 1]
     this.cells[(y >> 2) * this.cols + (x >> 1)] |= 1 << bit

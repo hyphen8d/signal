@@ -353,7 +353,26 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         // not blink). Everything else fires promptly; only starting to play
         // takes its realistic beat.
         const START_DELAY_MS = 700
-        const fire = (state, delay = 0) => setTimeout(() => ev.onStateChange && ev.onStateChange({ data: state }), delay)
+        // 2026-09-12 (audit, L15): getDuration() answers 0 until the load
+        // has reached CUED or PLAYING. It used to answer the full length the
+        // instant loadVideoById/cueVideoById was called, which is the fake
+        // confirming an assumption rather than a capture: program.js's
+        // trackDuration() records the live player as reporting "nothing
+        // useful between being handed a video and reaching CUED, which is
+        // most of what loadTrack() is doing when it asks". A per-frame
+        // position bar that drew `0:00 / 3:34` in that window would have
+        // passed here and shown a length the real player never gave. Known
+        // per load: a fresh load forgets the previous video's length the
+        // way the real player's answer for the new video is 0 until it is
+        // cued. The blind first lyric lookup (CLAUDE.md's "duration is 0
+        // when loadTrack() asks") was already honest because loadTrack asks
+        // BEFORE calling the player -- that path is unchanged.
+        let durationKnown = false
+        const deliver = (state) => {
+          if (state === YT.PlayerState.CUED || state === YT.PlayerState.PLAYING) durationKnown = true
+          ev.onStateChange && ev.onStateChange({ data: state })
+        }
+        const fire = (state, delay = 0) => setTimeout(() => deliver(state), delay)
         // 2026-09-02 (audit, L4) -- PLAYING is per-LOAD now, and a load that
         // failed never delivers it. The delayed PLAYING used to fire for
         // whatever load was 700ms old regardless: harmless while no test
@@ -365,11 +384,12 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         const firePlaying = () => {
           const seq = loadSeq
           setTimeout(() => {
-            if (seq === loadSeq && seq !== deadSeq && ev.onStateChange) ev.onStateChange({ data: YT.PlayerState.PLAYING })
+            if (seq === loadSeq && seq !== deadSeq) deliver(YT.PlayerState.PLAYING)
           }, START_DELAY_MS)
         }
         const load = (videoId, cue) => {
           loadSeq++
+          durationKnown = false
           playerCalls.push(`${cue ? 'cue' : 'load'}:${videoId}`)
           base = 0; startedAt = now; playing = !cue && !adHolding; ended = false
           // Under an advert the requested video is loaded but never starts,
@@ -385,11 +405,15 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         this.volume = 100
         this.loadVideoById = (v) => { this.videoId = v; load(v, false) }
         this.cueVideoById = (v) => { this.videoId = v; load(v, true) }
-        this.playVideo = () => { if (!playing) { startedAt = now; playing = true; firePlaying() } }
+        // 2026-09-12 (audit, L18): a play request under an advert hold does
+        // nothing, as it does live -- the preroll owns the player until it
+        // ends, and endAd() is the resume path. This used to fire PLAYING
+        // through the hold, an event the real player never sends there.
+        this.playVideo = () => { if (adHolding) return; if (!playing) { startedAt = now; playing = true; firePlaying() } }
         this.pauseVideo = () => { if (playing) { base = pos(); playing = false; fire(YT.PlayerState.PAUSED) } }
         this.seekTo = (t) => { base = Math.max(0, t); startedAt = now }
         this.getCurrentTime = () => pos()
-        this.getDuration = () => (this.videoId ? FAKE_DURATION : 0)
+        this.getDuration = () => (this.videoId && durationKnown ? FAKE_DURATION : 0)
         // 2026-08-27, 22nd pass -- REWRITTEN FROM A LIVE CAPTURE, and the
         // rewrite is the whole point. The first version modelled an advert
         // the way the IFrame API was assumed to report one: getVideoData()

@@ -269,7 +269,12 @@ its config through `mount()`. Prefer solving things in the app.
 - `crt.js` — the WebGL2 passes; `crt.params` is a live object the app mutates;
   `setPhosphor(name)` no-ops when the tint is already up (persistence clear
   otherwise). Band uploads; `ResizeObserver` instead of per-frame layout reads.
-- `screen.js` (only DOM-touching file), `bdf.js`, `vector.js`.
+- `screen.js` (only DOM-touching file), `bdf.js`, `vector.js`. The frame
+  loop re-arms from a `finally` (2026-09-12), so a throw in any draw costs
+  one frame rather than freezing the tube with the audio still playing;
+  the shader clock is wrapped on the CPU (`wrapClock`) and the roll bar's
+  phase integrated per frame, since a float32 `uTime` in the tens of
+  thousands cannot resolve a frame. `tests/engine.test.mjs` holds both.
 
 ### App modules
 
