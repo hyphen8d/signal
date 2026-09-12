@@ -338,6 +338,19 @@ function enemySprite(en) {
 // along the path the thing is about to take.
 const DIVE_RANGE = 46
 const DIVE_TEL = 24
+// 2026-09-12 (audit, L13) -- and how CLOSE is too close to start one. The
+// range above was only ever a ceiling; a diver already past the ship, or
+// on top of it, still began its wind-up and then -- since it keeps flying
+// the formation for the 24 steps of the telegraph and commits to where you
+// WERE -- turned round and dived rightward at a spot behind it. Only
+// reachable with the ship parked far right, but it is the exact inverse of
+// the rule the telegraph exists to keep. An aimed shot already refuses to
+// fire inside MIN_FIRE_RANGE for the same reason (a point-blank threat is
+// unanswerable), so a dive now holds inside it too: the three conditions
+// that gate a shot are the three that gate a dive. One that never finds the
+// window flies past like a shooter that never fires, which is the right
+// answer for a threat that could not have been fair.
+const DIVE_MIN_RANGE = MIN_FIRE_RANGE
 // Committed at the end of the wind-up and never re-aimed, exactly as
 // gameEnemyFire commits. A diver that homed continuously could not be dodged
 // by moving, which would make its own telegraph a lie.
@@ -910,15 +923,17 @@ export default {
     for (const en of g.enemies) {
       // The dive, in three states: flying the formation, winding up, gone.
       //
-      // The wind-up starts once it is close enough to be worth answering and
-      // is fully on screen, the same two conditions that gate an aimed shot
-      // -- nothing may commit to you from inside the right-hand margin where
-      // it cannot be seen. The direction is taken at the END of the wind-up
-      // but aimed at where you were at the START of it, which is the rule
-      // gameEnemyFire follows: the dashed line you were shown is the line it
-      // actually takes, so moving off it works.
+      // The wind-up starts once it is close enough to be worth answering,
+      // far enough ahead to be answerable (DIVE_MIN_RANGE) and fully on
+      // screen, the same three conditions that gate an aimed shot -- nothing
+      // may commit to you from inside the right-hand margin where it cannot
+      // be seen, or from point blank. The direction is taken at the END of
+      // the wind-up but aimed at where you were at the START of it, which is
+      // the rule gameEnemyFire follows: the dashed line you were shown is
+      // the line it actually takes, so moving off it works.
       if (en.kind === 'dive' && !en.diving) {
-        if (en.diveTel === 0 && en.x < w - 4 && en.x - g.ship.x < DIVE_RANGE) {
+        const ahead = en.x - g.ship.x
+        if (en.diveTel === 0 && en.x < w - 4 && ahead < DIVE_RANGE && ahead >= DIVE_MIN_RANGE) {
           en.diveTel = DIVE_TEL
           en.aimX = g.ship.x
           en.aimY = g.ship.y
@@ -1007,6 +1022,23 @@ export default {
       }
       // Collision with the ship.
       if (g.invuln <= 0 && Math.abs(en.x - g.ship.x) < 4 && Math.abs(en.y - g.ship.y) < 3) {
+        // 2026-09-12 (audit, M8) -- the shield is consulted BEFORE the
+        // formation is booked. This used to book the enemy 'escaped' first
+        // and ask gameLoseLife second, so a shielded ram -- the one hit a
+        // shield most plausibly absorbs -- broke the chain through the back
+        // door: gameLoseLife kept the streak, as its comment promises, but
+        // the formation could never full-clear, and the next kill of it
+        // paid nothing and zeroed the chain. The '?' slot's stated value
+        // ("costs neither") was false for exactly that hit. Now a shielded
+        // ram leaves the enemy alive and flying: the 40-step invuln the
+        // shield buys carries the ship past it, and it is still there to be
+        // shot for the clear. No enemy burst either -- it did not die, and
+        // the ship's own shield burst already says "that landed".
+        if (g.shield > 0) {
+          this.gameLoseLife()
+          survivors.push(en)
+          continue
+        }
         this.gameBurst(en.x, en.y, 7)
         this.gameFormationKill(en.fid, en.x, en.y, 'escaped')
         this.gameLoseLife()
@@ -1042,8 +1074,11 @@ export default {
         g.caps.push({ x, y, vx: 0.28 })
       } else {
         // One got past. Note this is also where a formation broken up by
-        // RAMMING you lands -- gameStepEnemies books a collision as an
-        // escape -- which is correct: it left the field without being shot.
+        // RAMMING you lands -- gameStepEnemies books an UNSHIELDED
+        // collision as an escape -- which is correct: it left the field
+        // without being shot. A shielded ram is not booked at all (2026-09-12,
+        // audit M8): the enemy survives the contact and the formation stays
+        // open, so the shield really does cost neither streak.
         g.chain = 0
       }
       g.forms.delete(fid)

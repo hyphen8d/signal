@@ -1061,6 +1061,83 @@ test('the gate reaches the bullets too, not just the ship (2026-09-02 audit, L2)
   } finally { h.shutdown() }
 })
 
+test('the gate reaches every other terrain consumer too (2026-09-12 audit, L14)', async () => {
+  // The two tests above pin the ship and the player's shots; terrainAtGate's
+  // L2 note says EVERY consumer goes through it, and the other five did not
+  // have a test that could tell. Same shape for each: put the thing inside
+  // rock the UNGATED terrain would act on at a gated column, and read a
+  // number that differs when the gate is honoured. Each case was checked
+  // red by reverting that one consumer to bare terrainAt().
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    const { h: H } = g
+    // A column with a thick ceiling and a thick floor to be buried in.
+    let col = 0
+    for (let c = 100; c < 8000; c++) { const [t, b] = terrainAt(c, H); if (t >= 12 && b >= 8) { col = c; break } }
+    assert.ok(col > 0, 'setup: found no rock thick enough to test against')
+    const [uTop, uBot] = terrainAt(col, H)
+    const clearField = () => { g.enemies = []; g.turrets = []; g.caps = []; g.bullets = []; g.ebullets = []; g.invuln = 999; g.ship.x = 60; g.ship.y = Math.round(H / 2) }
+
+    // Enemy shots: one inside the ungated ceiling.
+    const shot = (gateAt) => {
+      clearField(); g.scroll = col - 10; g.gateAt = gateAt
+      g.ebullets = [{ x: 10, y: 4, vx: 0, vy: 0 }]
+      p.gameStepEnemyBullets()
+      return g.ebullets.length
+    }
+    assert.equal(shot(null), 0, 'setup: ungated rock eats an enemy shot')
+    assert.equal(shot(col + 10), 1, 'enemy shots fly through the opened corridor')
+
+    // The missile's floor crawl: one falling through the ungated floor.
+    const missile = (gateAt) => {
+      clearField(); g.scroll = col - 10; g.gateAt = gateAt
+      g.bullets = [{ x: 10, y: H - 1 - uBot + 1, vx: 0, vy: 1, kind: 'm' }]
+      p.gameStepBullets()
+      return g.bullets[0]
+    }
+    assert.equal(missile(null).vy, 0, 'setup: the ungated floor catches a missile')
+    assert.ok(missile(col + 10).vy > 0, 'a missile keeps falling where the corridor removed the floor')
+
+    // Turret placement: a ceiling turret rides the surface as drawn.
+    const turret = (gateAt) => {
+      clearField(); g.scroll = 0; g.gateAt = gateAt
+      return p.gameTurretPos({ col, floor: false }).y
+    }
+    assert.ok(turret(null) >= uTop, 'setup: ungated, the turret sits under the thick ceiling')
+    assert.ok(turret(col) < uTop, 'gated, it sits on the opened surface, inside what was rock')
+
+    // The capsule clamp: one hanging inside the ungated ceiling.
+    const capsule = (gateAt) => {
+      clearField(); g.scroll = col - 10; g.gateAt = gateAt
+      g.caps = [{ x: 10, y: 4, vx: 0 }]
+      p.gameStepPickups()
+      return g.caps[0].y
+    }
+    assert.ok(capsule(null) >= uTop, 'setup: ungated rock pushes a capsule down out of it')
+    assert.equal(capsule(col + 10), 4, 'gated, it stays where the corridor lets it hang')
+
+    // Spawn placement: the formation is fitted to the channel that arrives.
+    // Both spawns roll the SAME dice (a short cycling sequence -- not a
+    // constant, which would spin the spawner's shooter-picking loop
+    // forever), so the only thing that can differ between them is the
+    // channel they were fitted to.
+    const spawn = (gateAt) => {
+      clearField(); g.gateAt = gateAt
+      g.scroll = col - Math.round(g.w * 1.4)
+      const real = Math.random
+      let i = 0
+      Math.random = () => [0.1, 0.4, 0.7][i++ % 3]
+      try { p.gameSpawnWave() } finally { Math.random = real }
+      return g.enemies[0]
+    }
+    const ungated = spawn(null), gated = spawn(col)
+    assert.ok(ungated.baseY - ungated.amp >= uTop, 'setup: ungated, the formation is fitted under the thick ceiling')
+    assert.ok(gated.baseY < ungated.baseY, `gated, the same dice fit it higher, into what was rock (${gated.baseY} vs ${ungated.baseY})`)
+  } finally { h.shutdown() }
+})
+
 test('a stage rollover opens a break ahead of the ship, and holds the spawns', async () => {
   const h = await inVisualizer()
   try {
@@ -1471,6 +1548,42 @@ test('dying breaks the chain and the clean stage, a shielded hit breaks neither'
   } finally { h.shutdown() }
 })
 
+test('a shielded ram keeps the formation open, so the chain survives it (2026-09-12 audit, M8)', async () => {
+  // The test above calls gameLoseLife() directly and so never saw this:
+  // the collision branch in gameStepEnemies booked the rammer 'escaped'
+  // BEFORE asking about the shield, so the streak gameLoseLife kept was
+  // lost anyway when the rest of the formation was shot -- a leak had
+  // already been recorded, the clear paid nothing, and the chain went to
+  // zero. Through the real path: chain 2, shielded ram, kill the rest, and
+  // it must be chain 3 with a capsule.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    clearWave(p); clearWave(p)
+    assert.equal(g.chain, 2, 'setup')
+    const wave = waveOfKind(p, 'grunt', 1)
+    const fid = wave[0].fid
+    g.enemies = wave
+    g.bullets = []; g.caps = []
+    g.shield = 1
+    g.invuln = 0
+    g.lives = 3
+    // One of them on top of the ship.
+    park(wave[0], g.ship.x, g.ship.y)
+    for (const en of wave.slice(1)) park(en, g.ship.x + 60, g.ship.y - 20)
+    p.gameStepEnemies()
+    assert.equal(g.shield, 0, 'the shield took the ram')
+    assert.equal(g.lives, 3, 'and it cost no ship')
+    assert.equal(g.enemies.length, wave.length, 'the rammer is still on the field')
+    assert.deepEqual(g.forms.get(fid), { total: wave.length, killed: 0, escaped: 0 }, 'nothing was booked against the formation')
+    // Now shoot every one of them, the rammer included.
+    for (const en of wave) p.gameFormationKill(fid, en.x, en.y, 'killed')
+    assert.equal(g.chain, 3, 'the full clear extends the chain')
+    assert.equal(g.caps.length, 1, 'and pays the capsule')
+  } finally { h.shutdown() }
+})
+
 test('the clean-stage bonus is paid only for a stage flown without a death', async () => {
   const h = await inVisualizer()
   try {
@@ -1609,7 +1722,9 @@ test('a diver telegraphs, then commits to where you were and not where you are',
   try {
     konami(h)
     const p = h.program, g = p._game
-    const en = park(waveOfKind(p, 'dive', 2)[0], g.ship.x + 30, g.ship.y - 20)
+    // 40 ahead: inside DIVE_RANGE and outside DIVE_MIN_RANGE (2026-09-12,
+    // audit L13 -- this sat at 30, which the minimum range now refuses).
+    const en = park(waveOfKind(p, 'dive', 2)[0], g.ship.x + 40, g.ship.y - 20)
 
     g.enemies = [en]
     p.gameStepEnemies()
@@ -1636,6 +1751,33 @@ test('a diver telegraphs, then commits to where you were and not where you are',
     // And decisively NOT at where the ship actually is now.
     const toNow = Math.atan2(g.ship.y - from.y, g.ship.x - from.x)
     assert.ok(Math.abs(heading - toNow) > 0.3, 'moving off the line actually worked')
+  } finally { h.shutdown() }
+})
+
+test('a diver does not start a dive from point blank (2026-09-12 audit, L13)', async () => {
+  // The rule an aimed shot already follows. A diver keeps flying the
+  // formation through its 24-step wind-up and commits to where you WERE,
+  // so one that starts inside the minimum range is past you by the time it
+  // commits and dives rightward at a spot behind it -- the inverse of the
+  // telegraph's promise. Inside the range it holds; it may still start once
+  // it is far enough ahead, and one that never is flies past unarmed.
+  const h = await inVisualizer()
+  try {
+    konami(h)
+    const p = h.program, g = p._game
+    for (const ahead of [0, 10, 20, 33]) {
+      const en = park(waveOfKind(p, 'dive', 2)[0], g.ship.x + ahead, g.ship.y - 20)
+      g.enemies = [en]
+      for (let i = 0; i < 30; i++) p.gameStepEnemies()
+      assert.equal(en.diveTel, 0, `no wind-up from ${ahead} ahead`)
+      assert.equal(en.diving, false, `and no dive from ${ahead} ahead`)
+    }
+    // And the window still exists: the same diver just outside the minimum
+    // winds up on the first step, so this is a floor and not a ban.
+    const en = park(waveOfKind(p, 'dive', 2)[0], g.ship.x + 36, g.ship.y - 20)
+    g.enemies = [en]
+    p.gameStepEnemies()
+    assert.ok(en.diveTel > 0, 'winds up from just outside the minimum')
   } finally { h.shutdown() }
 })
 
