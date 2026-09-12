@@ -117,7 +117,15 @@ export function rampCrtParams(s, from, to, durationMs, startDelay = 0, respectPo
  *  (though in practice onError only fires while locked, i.e. dist 0). */
 export function flashCrtGlitch(s) {
   if (!s?.crt?.params) return
-  const { dist } = nearestSignal(s.program.freq)
+  // 2026-09-12 (audit, H5) -- WITH the band. This was the last band-less
+  // tuning call in the tree: without it nearestSignal() defaulted to YM, so
+  // on any ZM frequency (>= 1000) the nearest YM carrier was ~100+ units
+  // away, pct saturated, and the 150ms "restore" below wrote the full
+  // off-station degrade -- chroma 0.9, snow 0.035, roll 0.5 -- and nothing
+  // reapplied setCrtDegradation until the next retune(). A dead-video skip
+  // on THE CRYPT left the station playing with the tube looking like dead
+  // air for the rest of the lock. Same class as applySecretTease (L1).
+  const { dist } = nearestSignal(s.program.freq, s.program.band)
   const restore = crtDegradeForDist(dist)
   Object.assign(s.crt.params, { chroma: 2.4, roll: 0.5 })
   s.program.fxAfter('crt', 150, () => Object.assign(s.crt.params, restore))

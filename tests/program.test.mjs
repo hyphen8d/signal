@@ -2524,3 +2524,195 @@ test('a shared link to a track that has since been dropped still tunes the stati
       'and it came from that station')
   } finally { h.shutdown() }
 })
+
+// --- 2026-09-12 audit -----------------------------------------------------
+// Each of these replays a scenario the audit reproduced on the tree at
+// 89762cc; each was confirmed red against the pre-fix sources before the
+// fix landed (see the matching "2026-09-12 (audit, Xn)" note beside the code).
+
+const eachBand = async (fn) => {
+  for (const band of ['ym', 'zm']) {
+    const h = await boot({ player: true })
+    try {
+      h.powerOn()
+      if (band === 'zm') { h.key('b'); h.advance(300); assert.equal(h.program.band, 'zm') }
+      await fn(h, band)
+    } finally { h.shutdown() }
+  }
+}
+
+test('a guide-index digit past the band\'s station count closes the guide instead of throwing (H2)', async () => {
+  // The footer says [1-9] JUMP; YM has fewer than 9 public stations and ZM
+  // fewer still, and a digit past the end used to set guidePage to a station
+  // page that does not exist and throw out of drawGuidePageStation().
+  await eachBand(async (h, band) => {
+    const count = h.program.bandPresets().length
+    assert.ok(count < 9, `${band} has a digit with no station behind it`)
+    h.key('g'); h.advance(100)
+    h.key('ArrowRight'); h.advance(100)
+    assert.equal(h.program.guidePage, 2, 'on the index page')
+    assert.doesNotThrow(() => h.key('9'))
+    h.advance(200)
+    assert.equal(h.program.guideOpen, false, 'a digit with nowhere to go closes the guide, like an arrow with nowhere to go')
+    // And a digit WITH a station still jumps.
+    h.key('g'); h.advance(100); h.key('ArrowRight'); h.advance(100)
+    h.key(String(count)); h.advance(200)
+    assert.equal(h.program.guideOpen, true)
+    assert.equal(h.program.guidePage, 2 + count, 'the last real station page')
+  })
+})
+
+test('a dead-video glitch on a ZM station restores the picture to the station\'s baseline, not the off-station degrade (H5)', async () => {
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.key('b'); h.advance(300)
+    h.key('1'); h.advance(2000)
+    assert.equal(h.program.band, 'zm'); assert.equal(h.program.mode, 'locked')
+    const { crtBase } = await import(`../crt-hooks.js?v=${h.tag}`)
+    h.player.fail(); h.advance(3000)
+    assert.equal(h.program.mode, 'locked', 'still locked after the auto-skip')
+    for (const k of ['chroma', 'snow', 'roll']) {
+      assert.equal(h.crt.params[k], crtBase[k], `${k} back at crtBase -- the restore asked the tuning distance on the wrong band`)
+    }
+  } finally { h.shutdown() }
+})
+
+test('a secret preset pressed on ZM moves the dial to the band the station lives on (H6)', async () => {
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.key('b'); h.advance(300); assert.equal(h.program.band, 'zm')
+    h.key('0'); h.advance(1500)
+    const { NIN_STATION } = await import(`../stations.js?v=${h.tag}`)
+    assert.equal(h.program.mode, 'locked')
+    assert.equal(h.program.lockedStation, NIN_STATION)
+    assert.equal(h.program.band, NIN_STATION.band ?? 'ym', 'the band followed the station')
+    assert.equal(h.program.freq, NIN_STATION.freq, 'and the frequency is the station\'s own, not clamped into the other band')
+    assert.ok(h.find('YM BAND') >= 0, 'the chrome names the band it is now on')
+  } finally { h.shutdown() }
+})
+
+test('the sleep timer expiring under the weather card does not leave the next session deaf (M3)', async () => {
+  const h = await boot({ player: true, weather: true })
+  try {
+    h.powerOn()
+    h.key('w'); h.advance(200)
+    assert.equal(h.program.weatherOpen, true)
+    h.program._sleepMinutes = 15
+    h.program._sleepUntil = Date.now() + 500
+    h.advance(3000)
+    assert.equal(h.program.poweredOn, false, 'the timer took the set down')
+    assert.equal(h.program.weatherOpen, false, 'and the card came down with it')
+    h.key('p'); h.advance(4500)
+    assert.equal(h.program.poweredOn, true)
+    const vol = h.program.volume
+    h.key('ArrowUp'); h.advance(300)
+    assert.notEqual(h.program.volume, vol, 'the keyboard works again after re-power')
+  } finally { h.shutdown() }
+})
+
+test('a track that dies during the preset sweep is skipped rather than held as a STATION BREAK forever (M1)', async () => {
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.key(await otherPreset(h))
+    h.advance(100) // mid-sweep: the incoming track is cued, mode is still seeking
+    assert.equal(h.program.mode, 'seeking')
+    const dead = h.player.videoId
+    h.player.fail()
+    h.advance(8000)
+    assert.equal(h.program.mode, 'locked')
+    assert.notEqual(h.program.currentTrack?.youtubeId, dead, 'the dead cue was replaced')
+    assert.notEqual(h.player.videoId, dead, 'and the player is no longer holding it')
+    assert.equal(h.program.breakActive, false, 'no break hold on a track that never started')
+    assert.equal(h.find('STATION BREAK'), -1)
+  } finally { h.shutdown() }
+})
+
+test('a preset pressed twice inside its own sweep neither corrupts the resume memory nor burns a second draw (M2)', async () => {
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    h.advance(30000)
+    const from = h.program.lockedStation
+    const posA = h.player.getCurrentTime()
+    const digit = await otherPreset(h)
+    const to = h.program.bandPresets()[Number(digit) - 1]
+    const loads = () => h.playerCalls.filter((c) => c.startsWith('cue') || c.startsWith('load')).length
+    const before = loads()
+    h.key(digit); h.advance(100)
+    h.key(digit); h.advance(2000)
+    assert.equal(h.program.lockedStation, to)
+    const remembered = h.program.lastPlayback[from.id]?.position ?? -1
+    assert.ok(Math.abs(remembered - posA) < 2, `the departing station remembers where IT was (${remembered.toFixed(1)} vs ${posA.toFixed(1)}), not the incoming track's seek point`)
+    assert.equal(loads() - before, 1, 'one load for one station change')
+  } finally { h.shutdown() }
+})
+
+test('power-off and a station change both cut an announcer mid-sentence (M6)', async () => {
+  const h = await boot({ player: true })
+  try {
+    h.powerOn()
+    const voice = await import(`../audio/voice.js?v=${h.tag}`)
+    // The same minimal WebAudio fake voice-clip.test.mjs drives the chain with.
+    const param = () => ({ value: 1, setValueAtTime() { return this }, exponentialRampToValueAtTime() { return this }, linearRampToValueAtTime() { return this }, cancelScheduledValues() { return this }, cancelAndHoldAtTime() { return this }, connect() { return this } })
+    const node = (extra = {}) => ({ connect(next) { return next }, ...extra })
+    const sources = []
+    const ctx = {
+      currentTime: 0, sampleRate: 8000, destination: node(),
+      createGain: () => node({ gain: param() }),
+      createBiquadFilter: () => node({ frequency: param(), Q: param(), gain: param() }),
+      createWaveShaper: () => node({}),
+      createDelay: () => node({ delayTime: param() }),
+      createOscillator: () => { const o = node({ frequency: param(), stops: [], start() {}, stop(t) { this.stops.push(t) } }); sources.push(o); return o },
+      createBufferSource: () => { const s = node({ stops: [], start() {}, stop(t) { this.stops.push(t) }, onended: null }); sources.push(s); return s },
+      createBuffer: (_c, n) => ({ getChannelData: () => new Float32Array(n) }),
+    }
+    // The exported stop fades through the same cut a newer clip would.
+    voice.playProcessedVoiceClip({ duration: 8.5 }, ctx, 0)
+    assert.ok(voice._liveVoiceForTest(), 'a liner is in the air')
+    voice.stopLiveVoice(ctx)
+    assert.equal(voice._liveVoiceForTest(), null, 'released')
+    assert.ok(sources.length && sources.every((s) => s.stops.length && s.stops[s.stops.length - 1] > 0 && s.stops[s.stops.length - 1] < 0.2), 'every source stopped on the short fade, not dead')
+    // A station change reaches it: the previous station's voice must not
+    // finish over the new one.
+    voice.playProcessedVoiceClip({ duration: 8.5 }, ctx, 0)
+    h.key(await otherPreset(h)); h.advance(600)
+    assert.equal(h.program.mode, 'locked')
+    assert.equal(voice._liveVoiceForTest(), null, 'the old station\'s liner was cut at the lock')
+    // And power-off reaches it: nothing talks over STANDBY.
+    voice.playProcessedVoiceClip({ duration: 8.5 }, ctx, 0)
+    h.key('p'); h.advance(1500)
+    assert.equal(h.program.poweredOn, false)
+    assert.equal(voice._liveVoiceForTest(), null, 'cut by powerDown')
+  } finally { h.shutdown() }
+})
+
+test('a preset digit with no station behind it says NO PRESET rather than clicking into silence (L1)', async () => {
+  await eachBand(async (h) => {
+    const count = h.program.bandPresets().length
+    assert.ok(h.program.isMappedKey({ key: '9' }), 'the key clicks')
+    h.key('9')
+    assert.equal(h.program._statusText, 'NO PRESET', `[9] on a band with ${count} presets answers`)
+    // The status row types itself out (STATUS_REVEAL_MS per character) and
+    // the flash holds ~900ms, so look at the screen once it has settled.
+    h.advance(700)
+    assert.ok(h.find('NO PRESET') >= 0, 'and the answer is on screen')
+  })
+})
+
+test('a dropped clip fetch is retried on the next ask rather than remembered as "no clip" for the session (L2)', async () => {
+  const h = await boot({ player: true })
+  try {
+    const voice = await import(`../audio/voice.js?v=${h.tag}`)
+    const real = globalThis.fetch
+    let calls = 0
+    globalThis.fetch = (u) => { if (String(u).includes('station-id-')) calls++; return real(u) } // the harness fetch rejects every audio URL
+    try {
+      assert.equal(await voice.loadStationIdBuffer('cipher'), null)
+      assert.equal(await voice.loadStationIdBuffer('cipher'), null)
+      assert.equal(calls, 2, 'a rejected request is not cached; the second ask fetched again')
+    } finally { globalThis.fetch = real }
+  } finally { h.shutdown() }
+})
