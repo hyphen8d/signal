@@ -42,6 +42,9 @@ export class Screen {
   /** Set the beam tint by name. See PHOSPHORS in config.js. */
   setPhosphor(name) { this.crt.setPhosphor(name) }
 
+  /** Minimum gap between console reports of a frame-path throw (see frame). */
+  static ERR_EVERY_MS = 5000
+
   start() {
     addEventListener('keydown', this.onKeyDown)
     addEventListener('keyup', this.onKeyUp)
@@ -49,8 +52,36 @@ export class Screen {
     this.raf = requestAnimationFrame(t => this.frame(t))
   }
 
+  // 2026-09-12 (audit, M4): the loop survives a throw. The next
+  // requestAnimationFrame used to be the last statement of the body, so one
+  // exception anywhere in the frame path -- a visual's draw(), a weather
+  // redraw, a game step -- ended the chain for good: the tube froze on its
+  // last frame while YouTube played on, the fallback ticker kept draining
+  // effects into a grid nobody rasterised, and the fault panel never showed
+  // because that panel is wired to webglcontextlost, a dead context, not a
+  // dead loop. A "leave it on all afternoon" app has hours of exposure per
+  // session to a bug that looks like a hung machine. Re-arming from a
+  // `finally` means a bad frame costs one frame: the program keeps
+  // ticking, the picture keeps rendering, and the throw is still loud in
+  // the console. The console line is rate-limited (first one, then one per
+  // ERR_EVERY_MS with a count) because a throw that repeats every frame
+  // would otherwise log sixty times a second and choke the tab it was meant
+  // to help debug. Rendering is deliberately NOT skipped on the bad frame's
+  // way out: the rasteriser and the CRT are independent of what threw, and
+  // a frame that still renders is the difference between a hiccup and a
+  // freeze.
   frame(t) {
     if (this.stopped) return
+    try {
+      this._frame(t)
+    } catch (err) {
+      this._frameError(err, t)
+    } finally {
+      if (!this.stopped) this.raf = requestAnimationFrame(ts => this.frame(ts))
+    }
+  }
+
+  _frame(t) {
     if (!this.t0) this.t0 = t
     const { term, crt } = this
     const { RENDER } = this.config
@@ -76,7 +107,20 @@ export class Screen {
 
     crt.resize(RENDER.pixelBudget)
     crt.render(t / 1000)
-    this.raf = requestAnimationFrame(ts => this.frame(ts))
+  }
+
+  /** Report a frame-path throw without flooding: the first one verbatim,
+   *  then at most one line per ERR_EVERY_MS carrying how many were
+   *  swallowed in between. `frameErrors` is the running total, readable by
+   *  a test or a console. */
+  _frameError(err, t) {
+    this.frameErrors = (this.frameErrors || 0) + 1
+    this._errPending = (this._errPending || 0) + 1
+    if (this._errAt != null && t - this._errAt < Screen.ERR_EVERY_MS) return
+    const suppressed = this._errPending - 1
+    this._errAt = t
+    this._errPending = 0
+    console.error(`frame: ${err?.stack || err}` + (suppressed ? ` (+${suppressed} more since the last report)` : ''))
   }
 
   /** Stop the loop and free the GL context. Not restartable. */
