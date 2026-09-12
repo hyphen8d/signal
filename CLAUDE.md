@@ -290,7 +290,13 @@ program):
   Effect state lives on the program object under `_`-prefixed names; `init`
   seeds it at boot, `reset` re-arms clocks on every visualizer entry (the
   effect clock restarts at 0 — an absolute `t` kept across visits froze FLAME
-  once).
+  once, and the 2026-09-12 audit found the same shape in BREACH, RIPPLE and
+  DREAD; `tests/visuals.test.mjs` now re-enters each after a long visit and
+  reads the state back). An effect that keeps ANY `t + n` on the program
+  object needs a `reset` that clears it. The same audit found BREACH's resolve
+  words had never once rendered — drawn inside the column loop, painted over
+  by the next column — so that test also reads the words back off the grid,
+  which is the only proof a draw pass actually lands.
 - `audio/sfx.js` — AudioContext, the hard-mute speaker bus, static bed, hum,
   every synthesized control sound. `audio/voice.js` — station IDs, liners,
   welcome line (one shared "through the radio" chain), LRCLIB lyrics.

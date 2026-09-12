@@ -16,6 +16,18 @@ export const BREACH_HEX = '0123456789ABCDEF'
 // movie debris, not a generic word list.
 export const BREACH_WORDS = ['0xFF', 'ROOT', '9F3A', 'ADMIN', 'ACK', 'SYN', '404', 'AUTH', '╬╬╬']
 
+/** Would a word of `len` cells starting at column `x` on `row` share a cell
+ *  with a word some other column already holds? (2026-09-12, audit H4.) */
+export function wordCollides(cols, x, row, len) {
+  const lo = Math.max(0, x - 5), hi = Math.min(cols.length - 1, x + len)
+  for (let ox = lo; ox <= hi; ox++) {
+    const o = cols[ox]
+    if (ox === x || !o.word || o.wordRow !== row) continue
+    if (ox < x + len && x < ox + o.word.length) return true
+  }
+  return false
+}
+
 export default {
   key: 'breach',
   label: 'BREACH',
@@ -39,6 +51,14 @@ export default {
     // 2026-08-23 (live audio tap) -- the rain-speed accumulator clock
     // restarts with the effect clock.
     p._breachLastT = 0
+    // 2026-09-12 (audit, M5) -- resolveAt and wordUntil are absolute
+    // effect-clock values too, and survived here. After a two-minute
+    // visit, exit and re-enter: 30/80 columns held a word whose wordUntil
+    // was ~120s away (lit BRIGHT until the restarted clock climbed back
+    // past it) and 55/80 had no ambient resolve scheduled for minutes.
+    // Invisible only while H4 kept every word off the screen. Same
+    // FLAME-class bug the entry comment in visualizer.js describes.
+    for (const col of p._breachCols) { col.word = null; col.resolveAt = -1 }
   },
   // BREACH effect (44th pass) -- for CIPHER. Vertical hex-noise columns
   // scrolling down through the real beam-intensity tiers (bright head,
@@ -82,18 +102,30 @@ export default {
     // fast), and the glitch-word trigger chance on a peak doubled so peaks
     // visibly do something more often.
     const surge = 1 + A.pulse * 1.1
+    const cols = p._breachCols
     for (let x = 0; x < term.cols; x++) {
-      const col = p._breachCols[x]
+      const col = cols[x]
       const band = A.bands9[x % 9]
       const bandMul = auMul(A, band, 0.5, 3.2)
       col.head = (col.head + bdt * col.speed * bandMul) % 30
       if (col.resolveAt < 0) col.resolveAt = t + 2 + Math.random() * 5
       if (A.pulse > 0.6 && !col.word && Math.random() < 0.06) col.resolveAt = t
       if (t > col.resolveAt && !col.word) {
-        col.word = BREACH_WORDS[Math.floor(Math.random() * BREACH_WORDS.length)]
-        col.wordRow = 2 + Math.floor(Math.random() * 18)
-        col.wordUntil = t + 0.5 + Math.random() * 0.4
-        col.resolveAt = t + 2 + Math.random() * 5
+        const word = BREACH_WORDS[Math.floor(Math.random() * BREACH_WORDS.length)]
+        const row = 2 + Math.floor(Math.random() * 18)
+        // 2026-09-12 (audit, H4) -- two fragments landing on overlapping
+        // cells of one row read as garbage, not as two resolves, and the
+        // second pass below would otherwise let the later column win over
+        // half of the earlier word. A resolve that would collide waits for
+        // its next slot instead.
+        if (wordCollides(cols, x, row, word.length)) {
+          col.resolveAt = t + 0.5 + Math.random() * 2
+        } else {
+          col.word = word
+          col.wordRow = row
+          col.wordUntil = t + 0.5 + Math.random() * 0.4
+          col.resolveAt = t + 2 + Math.random() * 5
+        }
       }
       if (col.word && t > col.wordUntil) col.word = null
       const headY = col.head - 4
@@ -105,11 +137,24 @@ export default {
         const ch = BREACH_HEX[Math.floor((x * 7 + y * 3 + t * 20) % BREACH_HEX.length)]
         term.put(x, y, ch, visualizerLevelAttr(Math.min(1, alpha * surge * bandGlow)))
       }
-      if (col.word) {
-        for (let wi = 0; wi < col.word.length; wi++) {
-          const wx = x + wi
-          if (wx < term.cols) term.put(wx, col.wordRow, col.word[wi], BRIGHT)
-        }
+    }
+    // 2026-09-12 (audit, H4) -- the words are a SECOND pass, after every
+    // column's rain is down. They used to be written inside the column
+    // loop, so columns x+1.. repainted their own full height straight over
+    // the word that column x had just laid across them: measured over 400
+    // frames, 0 intact / 9482 broken (`SYN` rendered as `SF6`). The
+    // effect's whole design hook -- "a short span occasionally RESOLVES,
+    // holds a legible fragment for a beat" -- had never once appeared on
+    // screen, and the 65th pass doubled the resolve chance on a pulse
+    // without anyone able to see the difference. Drawn last, a word also
+    // holds over the rain of its own columns for its wordUntil beat, which
+    // is the resolve-then-dissolve the comment above describes.
+    for (let x = 0; x < term.cols; x++) {
+      const col = cols[x]
+      if (!col.word) continue
+      for (let wi = 0; wi < col.word.length; wi++) {
+        const wx = x + wi
+        if (wx < term.cols) term.put(wx, col.wordRow, col.word[wi], BRIGHT)
       }
     }
   },

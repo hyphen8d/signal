@@ -335,6 +335,56 @@ test('lyricDurationOk refuses a different recording but never guesses', () => {
   assert.equal(lyricDurationOk(undefined, undefined), true)
 })
 
+test('a synced body that parses to nothing is unavailable, not available-with-no-lines', async () => {
+  // 2026-09-12 (audit, L3) -- hasSynced() only asked for a bracket, so a
+  // body of section markers marked the track 'available' with zero lines:
+  // [L] lit bold, clicked, opened to NO LYRICS AVAILABLE and never closed
+  // itself. Millisecond tags were the other way to get there, and those
+  // now parse instead.
+  const { ensureLyricsFetched, lyricsCache, parseLRC } = voice
+  const realFetch = globalThis.fetch
+  const settle = async () => { for (let i = 0; i < 8; i++) await new Promise((r) => setTimeout(r, 0)) }
+  try {
+    const markers = { youtubeId: 'markers-case', title: 'T', artist: 'A' }
+    globalThis.fetch = async () => ({ ok: true, json: async () => ({ duration: 200, syncedLyrics: '[Verse 1]\nla la\n[Chorus]\nla' }) })
+    ensureLyricsFetched(markers, 200)
+    await settle()
+    assert.equal(lyricsCache['markers-case'].state, 'unavailable', 'an unparseable body was offered as lyrics')
+
+    const ms = { youtubeId: 'ms-case', title: 'T', artist: 'A' }
+    globalThis.fetch = async () => ({ ok: true, json: async () => ({ duration: 200, syncedLyrics: '[00:01.760]Hey\n[00:07.460]You' }) })
+    ensureLyricsFetched(ms, 200)
+    await settle()
+    assert.equal(lyricsCache['ms-case'].state, 'available')
+    assert.deepEqual(lyricsCache['ms-case'].lines, [{ time: 1.76, text: 'Hey' }, { time: 7.46, text: 'You' }])
+    assert.deepEqual(parseLRC('[01:02.345]x'), [{ time: 62.345, text: 'x' }])
+  } finally { globalThis.fetch = realFetch }
+})
+
+test('a refine is not triggered by a duration that moved less than a second', async () => {
+  // 2026-09-12 (audit, L21) -- the trigger was an exact float compare, so a
+  // getDuration() that drifted by milliseconds between PLAYING events
+  // re-fetched both endpoints each time, for a gate twelve seconds wide.
+  const { ensureLyricsFetched, lyricsCache } = voice
+  const realFetch = globalThis.fetch
+  const settle = async () => { for (let i = 0; i < 8; i++) await new Promise((r) => setTimeout(r, 0)) }
+  try {
+    const t = { youtubeId: 'drift-case', title: 'T', artist: 'A' }
+    let calls = 0
+    globalThis.fetch = async () => { calls++; return { ok: true, json: async () => ({ duration: 200, syncedLyrics: '[00:01.00]x' }) } }
+    ensureLyricsFetched(t, 200)
+    await settle()
+    assert.equal(lyricsCache['drift-case'].state, 'available')
+    const after = calls
+    ensureLyricsFetched(t, 200.4)
+    await settle()
+    assert.equal(calls, after, 'a 400ms drift re-fetched the lyrics')
+    ensureLyricsFetched(t, 230)
+    await settle()
+    assert.ok(calls > after, 'a genuinely different length was not refined')
+  } finally { globalThis.fetch = realFetch }
+})
+
 test('a dropped request is retried; a real "no match" is not', async () => {
   // Before 2026-08-30 both wrote 'unavailable' into a cache keyed by
   // youtubeId and never looked again, so ONE flaky request meant that track

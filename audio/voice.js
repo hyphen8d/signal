@@ -452,7 +452,12 @@ export const LYRIC_DURATION_TOLERANCE = 12
  *  which is the honest answer while nobody is singing. */
 export function parseLRC(lrcText) {
   const lines = []
-  const re = /^\[(\d{2}):(\d{2}(?:\.\d{1,2})?)\](.*)$/
+  // 2026-09-12 (audit, L3) -- three-decimal tags accepted. LRCLIB answers
+  // two decimals in practice (3008 lines sampled across 3 tracks, all
+  // [mm:ss.xx]), but the LRC format allows millisecond tags and a body
+  // that parsed to nothing used to be marked 'available' anyway -- see
+  // resolve() for the other half of that.
+  const re = /^\[(\d{2}):(\d{2}(?:\.\d{1,3})?)\](.*)$/
   for (const raw of lrcText.split('\n')) {
     const m = re.exec(raw.trim())
     if (!m) continue
@@ -462,7 +467,13 @@ export function parseLRC(lrcText) {
   return lines
 }
 
-const hasSynced = (d) => !!(d && typeof d.syncedLyrics === 'string' && d.syncedLyrics.includes('['))
+// 2026-09-12 (audit, L3) -- "synced" means at least one tag parseLRC can
+// place, not merely a bracket somewhere in the body. Checked here rather
+// than only in resolve() so that a /api/get hit whose body does not parse
+// falls through to the search fallback like any other miss, and so that
+// pickLyricMatch never ranks a row it could not render.
+const hasSynced = (d) =>
+  !!(d && typeof d.syncedLyrics === 'string' && d.syncedLyrics.includes('[') && parseLRC(d.syncedLyrics).length > 0)
 
 /** Best of a search result list: synced only, then closest in length to the
  *  recording actually playing.
@@ -504,7 +515,16 @@ function resolve(id, data, wantSeconds, rankedBy) {
     lyricsCache[id] = { state: 'unavailable', reason: 'duration', lrcDur: data.duration, rankedBy }
     return
   }
-  lyricsCache[id] = { state: 'available', lines: parseLRC(data.syncedLyrics), lrcDur: data.duration, rankedBy }
+  // 2026-09-12 (audit, L3) -- 'available' means "there are lines to
+  // show", not "the body contains a bracket". hasSynced() is the cheap
+  // pre-filter and it let a body of section markers ([Chorus]) or tags in
+  // a shape parseLRC does not read through as available with zero lines:
+  // [L] lit bold, the key clicked, the view opened to NO LYRICS AVAILABLE
+  // and never auto-closed, since drawVisualizerFrame only closes on
+  // 'unavailable'. An empty parse is the same verdict as no match.
+  const lines = parseLRC(data.syncedLyrics)
+  if (!lines.length) { lyricsCache[id] = { state: 'unavailable', reason: 'unparsed', rankedBy }; return }
+  lyricsCache[id] = { state: 'available', lines, lrcDur: data.duration, rankedBy }
 }
 
 /** Look up synced lyrics for a track.
@@ -542,7 +562,11 @@ export function ensureLyricsFetched(track, wantSeconds = 0) {
     // shares one FAKE_DURATION, so "previous track's length" and "this
     // track's length" are the same number there.) Equal durations remain
     // the same-tick no-op cache hit loadTrack's comment promises.
-    const canRefine = wantSeconds > 0 && entry.rankedBy !== wantSeconds
+    // 2026-09-12 (audit, L21) -- within a second is the same duration. An
+    // exact compare re-fetched both endpoints on every PLAYING event whose
+    // getDuration() had drifted by milliseconds from the last (a buffer
+    // stall, a resume), for a gate that tolerates twelve whole seconds.
+    const canRefine = wantSeconds > 0 && Math.abs((entry.rankedBy || 0) - wantSeconds) > 1
     if (!retryable && !canRefine) return
   }
   const attempts = (entry && entry.state === 'error' ? entry.attempts || 0 : 0) + 1
@@ -591,8 +615,11 @@ export function lyricsStateFor(track) {
   return entry.state === 'error' ? 'unavailable' : entry.state
 }
 
-// 56th pass -- liner drops (one in 4 chance approved; tested with cipher
-// first). Real liners fire between songs, not mid-song, so this hooks skip()
+// 56th pass -- liner drops (one in 4 chance approved at the time; the
+// value below has since moved to 0.35, and the 2026-08-29 note under it
+// is the record of why -- 2026-09-12 audit, L21: this header had gone on
+// saying "one in 4" over a number that was not). Real liners fire between
+// songs, not mid-song, so this hooks skip()
 // -- the single funnel for "new track, same station" (a natural track-end
 // via ENDED, the dead-video onError auto-skip, the skip key, and the mobile
 // swipe all route through it) -- rather than a standalone timer that would

@@ -27,6 +27,17 @@ export default {
     p._dreadGrid = Array.from({ length: DREAD_CELLS_X * DREAD_CELLS_Y }, () => Math.random() < 0.5)
     p._dreadTear = { active: false, row: 0, until: 0 }
   },
+  /** Re-arms clocks/accumulators on every visualizer entry. */
+  reset(p) {
+    // 2026-09-12 (audit, M5) -- `until` is an absolute effect-clock value.
+    // A tear active at the moment of exit (~9% of frames) came back on
+    // re-entry as a full-row BRIGHT strobe held until the restarted clock
+    // passed the old `until` -- a two-minute visit meant a two-minute
+    // tear -- and `!tear.active` gates both trigger paths, so no new tear
+    // could fire meanwhile. Nothing else here holds a clock: the grid is
+    // a random walk and the flicker is per-frame.
+    p._dreadTear.active = false
+  },
   // DREAD effect (45th pass) -- for the secret station. The one visual on
   // the roster meant to read as a little wrong to look at: a coarse panel
   // grid flickering erratically with occasional full-row tears, matching
