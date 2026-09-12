@@ -31,6 +31,23 @@ export default {
       startT: -Math.random() * RIPPLE_MAXAGE,
     }))
   },
+  /** Re-arms clocks/accumulators on every visualizer entry. */
+  reset(p) {
+    // 2026-09-12 (audit, M5) -- RIPPLE had no reset() at all. Every slot's
+    // startT is an absolute effect-clock value, so after a visit of N
+    // seconds, exit and re-enter, N seconds of slots sit with a start time
+    // in the future: skipped by the draw (age < 0) and never respawned by
+    // the age > MAXAGE check, since their age only grows more negative the
+    // further back the clock restarted. Measured: 9 of 11 slots dead on
+    // re-entry after a two-minute visit. The 57th pass's safety net kept
+    // exactly one ring alive at a time, so it read as "rain almost
+    // stopped" rather than frozen, which is how it hid. Same stagger as
+    // init(): the first rings are already mid-life, not all born at once.
+    for (const r of p._ripples) {
+      r.startT = -Math.random() * RIPPLE_MAXAGE
+      r.amp = 1
+    }
+  },
   // RIPPLE effect (45th pass) -- for CITY LIGHTS. Raindrops on a Tokyo
   // night: a handful of fixed drop points, each expanding a ring band
   // outward and fading over RIPPLE_MAXAGE seconds before respawning
