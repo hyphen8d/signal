@@ -79,10 +79,33 @@ export default {
     playPanelSound(true)
     // The guide's hygiene, for the same reason: timer-driven painters
     // pointed at the rows this card covers have to be stopped rather than
-    // merely covered. The card leaves the OTHER rows alone on purpose, so
-    // this is narrower than openGuide's -- the scan sweep and the status
-    // line are both outside the card and keep running.
+    // merely covered. The card leaves the OTHER rows alone on purpose.
+    //
+    // 2026-09-12 (audit, L9) -- the scan stops too, as it does for the
+    // guide and the LINE INPUT card. This used to say the scan and the
+    // status line "are both outside the card and keep running", and
+    // neither half was true in the way it meant: the scan is a real
+    // timer and did keep sweeping, but its lock lands on the rows the card
+    // covers (and is now refused there, see overlayUp), so it would have
+    // found a station and shown nothing; and the status row's sweep and
+    // typewriter ride the fx queue, which is gated on weatherOpen, so
+    // SCANNING... froze mid-animation while the dial beneath went on
+    // moving. Then closeWeather's redrawLockState wrote SEEKING over a
+    // scan still in progress. A scan that cannot show its result should
+    // not be running; stopping it makes the row it leaves behind true.
     this._cancelAllResolves()
+    const wasScanning = this.scanning
+    this.stopScan()
+    // The status row is outside the card and stays visible, so settle it
+    // now -- instantly, since its typewriter rides the gated queue and
+    // would otherwise stop dead at however many letters it had reached.
+    // A scan just stopped reads SEEKING (the mode it left the set in);
+    // anything else re-lands the PERSISTENT status, not whatever flash
+    // happened to be on the row, so a mid-flight VOL flash does not get
+    // promoted into the state the card comes down onto.
+    const p = this.statusPersistent
+    if (wasScanning) this.setStatus(s, 'SEEKING', false, { instant: true })
+    else if (p) this.setStatus(s, p.text, p.active, { instant: true })
     // refreshWeather() is kicked off BEFORE the first paint, not after, and
     // the ordering is the whole fix for a bug this had: its synchronous
     // prefix sets the phase, so the very first frame says LOCATING instead
@@ -155,8 +178,11 @@ export default {
       // An insecure origin is NOT a refusal, and must not be recorded as
       // one -- see canLocate()'s note. Bail before asking, so the card can
       // say what is actually wrong and the answer is not remembered.
-      if (!WX.canLocate()) { this._wxInsecure = true; return }
-      this._wxInsecure = false
+      // 2026-09-12 (audit, L10) -- holds the REASON ('insecure' or
+      // 'unsupported'), not a boolean, so the card can say which one.
+      const blocker = WX.locateBlocker()
+      if (blocker) { this._wxInsecure = blocker; return }
+      this._wxInsecure = null
       if (!this._wxLoc) this._wxLoc = await WX.requestLocation()
       if (this._wxLoc === 'denied') {
         // 2026-09-02 (audit, L3) -- ONLY a real refusal (error code 1) is
@@ -294,7 +320,10 @@ export default {
       if (this._wxInsecure) {
         // Named plainly rather than shown as a generic failure: this one is
         // fixed by changing the URL, and nothing else on the card says so.
-        WX.INSECURE_COPY.forEach((line, i) => put(11 + i, line, i === 0 ? NORMAL : MUTED))
+        // 2026-09-12 (audit, L10) -- unless there is no API to ask, which
+        // is not fixed by anything and gets its own sentence.
+        const copy = this._wxInsecure === 'unsupported' ? WX.NO_LOCATION_COPY : WX.INSECURE_COPY
+        copy.forEach((line, i) => put(11 + i, line, i === 0 ? NORMAL : MUTED))
       } else if (this._wxBusy) {
         put(12, this._wxPhase === 'loading' ? 'LOADING...' : 'LOCATING...', FAINT)
       } else if (this._wxTried) {

@@ -32,7 +32,8 @@ export default {
     // Version tag (28th pass, revised: same font/weight as SIGNAL itself,
     // no codename) -- sits right after the wordmark, one
     // space over, same BOLD as SIGNAL. Verified against the brand-plate's
-    // centerX() start (25 at 80 cols) so the two never collide.
+    // centerX() start (28 at 80 cols since 2026-08-28; 25 with "MODEL ")
+    // so the two never collide.
     term.text(9, 0, VERSION_TAG, BOLD, 1)
     // Date/time module (15th pass; repositioned 17th pass -- version number
     // removed from here and date/time put in its place, using the same
@@ -70,7 +71,9 @@ export default {
 
   /** Sleep timer readout (2026-08-27) -- the title bar's one free stretch,
    *  between the version tag (ends at 12) and the brand plate (starts at
-   *  25). Up here rather than in the LEVELS pane's switch column for one
+   *  28 since "MODEL " was dropped -- 25 before; the arithmetic below
+   *  already counted the change, the number here had not). Up here rather
+   *  than in the LEVELS pane's switch column for one
    *  reason: row 0 is the only row the visualizer keeps (see
    *  enterVisualizer's clear), so the countdown stays readable in the state
    *  someone on their way to sleep is most likely to have left the set in.
@@ -443,7 +446,9 @@ export default {
     // then clear the whole grid out from under this row, so a reveal
     // staggered across a couple hundred ms would paint text back onto an
     // already-collapsed picture. Instant while _powerAnimating.
-    const instant = same || this._powerAnimating || text === 'LOCKED' || text === 'MUTED' || text === 'NO SIGNAL'
+    // 2026-09-12 (audit, L9) -- or on request: openWeather settles the row
+    // before the card gates the queue the reveal would have ridden.
+    const instant = same || opts.instant || this._powerAnimating || text === 'LOCKED' || text === 'MUTED' || text === 'NO SIGNAL'
     if (instant) {
       this.drawStatusRow(s, text, active, text.length)
     } else {
@@ -845,12 +850,43 @@ export default {
     if (this.mobile) this.mobileDrawSignal(s, pct)
   },
 
+  /** 2026-09-12 (audit, H3) -- is any overlay covering the main screen?
+   *  One predicate for the three flags, because the bug this closes was
+   *  the trio being restated by hand at every paint site and one site
+   *  (drawPlayback) having only the first of them. frame()'s bail and the
+   *  fx queue's gate already know all three; these are the painters that
+   *  run OUTSIDE both -- the YouTube state callback, the scan timer's
+   *  lock, a track end's skip() -- and each of them has to ask the same
+   *  question rather than its own version of it. The visualizer is not in
+   *  here on purpose: it repaints its whole canvas every frame, so a stray
+   *  write under it lasts one frame, where a write under one of these
+   *  three stays until the overlay closes. */
+  overlayUp() {
+    return !!(this.guideOpen || this.tapConsentOpen || this.weatherOpen)
+  },
+
   // STATION (callsign + tagline) and NOW PLAYING (track) are separate
   // boxes now -- station identity doesn't change on a track skip, so it
   // gets its own clear/draw pair instead of being wiped and redrawn
   // alongside the track every time -- station info broken out from current
   // playing song info (8/20).
+  //
+  // 2026-09-12 (audit, H3) -- all four of these bail while an overlay is
+  // up. They are reached from outside frame()'s guards: a track ending
+  // under the weather card goes ENDED -> skip() -> clearTrack/showTrack,
+  // and the scan timer (a real timer, not the fx queue) locks through
+  // tryLock() -> showStation/showTrack. The fx queue is gated, so the
+  // resolve's LATER ticks never ran under an overlay -- but resolveText()
+  // paints its first tick synchronously, and that one frame of ▓▒░ noise
+  // landed on the card and stayed there, unsettled, because nothing was
+  // left running to settle it. Bailing is safe because every overlay's
+  // close path rebuilds these rows from state (closeGuide, closeTapConsent
+  // and closeWeather all end in redrawLockState), so what the overlay
+  // covered is redrawn from what is true when it comes down, not from
+  // what was true when it went up. The tab title is not a grid write and
+  // keeps updating -- it is the one surface still visible under the card.
   clearStation(s) {
+    if (this.overlayUp()) return
     // 45th pass -- desktop's STATION_Y/TAGLINE_Y row numbers land on
     // completely different content on mobile's shorter grid (row 9 is the
     // NOW PLAYING box's top border there, not station text), so this can't
@@ -864,6 +900,7 @@ export default {
       const L = this._mLayout
       for (const y of [L.stationCall, L.stationTag1, L.stationTag2]) {
         if (y == null) continue
+        this._cancelResolve(y) // 2026-09-12 (audit, M11) -- see clearTrack's mobile branch
         for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
       }
       return
@@ -879,6 +916,7 @@ export default {
   },
 
   showStation(s, station, opts = {}) {
+    if (this.overlayUp()) return // see clearStation (H3)
     if (this.mobile) { this.mobileShowStation(s, station, opts); return }
     const { term } = s
     this.clearStation(s)
@@ -917,11 +955,19 @@ export default {
 
   clearTrack(s) {
     const { term } = s
+    if (this.overlayUp()) { this.updateTabTitle(); return } // see clearStation (H3)
     if (this.mobile) {
       if (!this._mLayout) { this.updateTabTitle(); return }
       const L = this._mLayout
       for (const y of [L.npTrack1, L.npTrack2, L.npArtist, L.npProgress]) {
         if (y == null) continue
+        // 2026-09-12 (audit, M11) -- cancel first, as desktop's branch
+        // below does. Without it a station swipe during the held reveal
+        // (which lives until the music starts, i.e. after every lock and
+        // skip) blanked these rows and then the resolve's next tick
+        // painted noise straight back onto them, churning through the
+        // whole seeking sweep where the box should have been empty.
+        this._cancelResolve(y)
         for (let x = MBOX_X0 + 1; x < MBOX_X1; x++) term.put(x, y, ' ')
       }
       this.updateTabTitle()
@@ -935,6 +981,7 @@ export default {
   // shorter one -- a track change within a station you are already locked
   // onto is a smaller event than finding the station was.
   showTrack(s, track, opts = {}) {
+    if (this.overlayUp()) { this.updateTabTitle(track); return } // see clearStation (H3)
     if (this.mobile) { this.mobileShowTrack(s, track, opts); return }
     const { term } = s
     this.clearTrack(s)
@@ -1032,7 +1079,13 @@ export default {
     // CRT persistence artifact -- a decay/clearPersist() workaround in
     // powerDown() couldn't have fixed this either way, since nothing here
     // was reading persistence; it was a genuine second write to the buffer.
-    if (!this.poweredOn || this.guideOpen) return
+    // 2026-09-12 (audit, H3) -- guideOpen alone was the 29th pass's fix,
+    // and the two overlays added since (the LINE INPUT card, the weather
+    // card) were never added to it: a track ending under either one drew
+    // "[····] 0:00 / 3:34  > PLAYING" over the card's own key line -- on
+    // the weather consent face, over the [Y]/[N] that answer it. Same
+    // async path, same row. overlayUp() is the one predicate now.
+    if (!this.poweredOn || this.overlayUp()) return
     if (this.mobile) { this.mobileDrawPlayback(s); return }
     const { term } = s
     for (let x = BOX_X0 + 1; x < BOX_X1; x++) term.put(x, PLAYBACK_Y, ' ')
