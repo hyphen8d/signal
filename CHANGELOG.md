@@ -1487,6 +1487,143 @@ this?" where a SHARE button would not.
   room for them; `[K]` is on the footer's line 1, now 77 of its 78 columns. The
   next control that wants the footer will not fit on either line.
 
+### RISE UP joins the dial (2026-09-02)
+
+**A fourteenth public station: protest rock, punk and hardcore at 440.0 on
+YM**, 24 tracks across 14 artists, preset 5. The rule that makes it a station
+rather than a playlist is protest as the *subject* and collective voice as the
+tiebreaker — where two candidates are equally political, the one a room shouts
+back wins. Black Flag's "Rise Above" is the thesis and opens the block.
+
+- **440 is the easter egg**, in COLD WAVE's tradition (273 is absolute zero):
+  A440 is the pitch every instrument tunes to before anyone plays together.
+  It also had to sit above 273 for a mechanical reason — presets are
+  frequency-sorted per band and lint asserts the README's hero caption still
+  names COLD WAVE as preset 3, so a lower frequency would have renumbered the
+  presets and failed that rule on its first outing. The ident is the same
+  pitch three times and a leap of a fifth, starting on A440 itself.
+- **Rage Against the Machine now appears on two public stations**, the first
+  artist to do so. Called deliberately; both profiles record it so a later
+  pass does not tidy it away.
+- **Provenance was widened for this station on purpose:** a fan or archive
+  upload is acceptable when it is demonstrably the right recording, as CITY
+  LIGHTS already allows. Age-gating and licence width stayed hard.
+
+### The allowlist, and the sweep learns the new keys (2026-09-02)
+
+- **Both servers now serve an allowlist, not the repo.** The admin backend
+  mapped URLs onto the repo root, and the repo root is a working directory:
+  the gitignored ElevenLabs key was reachable over HTTP from anything on the
+  tailnet, and `tools/dev-server.py` was worse while running because it binds
+  every interface. Closed with a static allowlist of what the app actually
+  fetches, rather than a dotfile denylist — a denylist has to anticipate the
+  next secret's name. Pinned from both ends: the secrets 404 *and* the
+  dashboard's own imports still 200, because an allowlist that serves nothing
+  passes the refusal half on its own.
+- **The dead-feedback sweep learned `[W]`, `[K]` and the weather card**, and
+  a two-finger gesture nothing had swept; lint asserts the README's screenshot
+  captions against the presets `tools/shoot.mjs` actually presses; and the
+  27 fixes of the 2026-09-02 audit landed (fx-queue paint guards, the duck
+  ramp, state-restore validation, lyrics gating, tooling and docs).
+
+### The 2026-09-12 audit (2026-09-12)
+
+Eight read-only passes over the whole tree, every finding reproduced before it
+was written down, and then fixed in parallel branches. The write-up is
+`AUDIT-2026-09-12.md`. What a listener would have hit:
+
+- **Overlays no longer take paint from underneath.** A track ending under
+  the weather card or the LINE INPUT card replaced the card's own answer row
+  with the playback bar, and the station and track reveals wrote one frame of
+  noise onto any overlay and never settled — the reveal's first tick ran
+  synchronously before the rest was handed to the gated queue. One
+  `overlayUp()` predicate now guards every one of those writes; every close
+  path already rebuilt from state, so nothing is lost. Opening the weather
+  card also stops a running scan, as the guide and LINE INPUT card already
+  did, instead of letting the scan lock and announce a station behind it.
+- **BREACH's resolve words reach the screen for the first time.** The
+  effect's design hook — a column of hex rain occasionally resolving into a
+  legible fragment for a beat — was drawn inside the column loop and painted
+  over by the next column, every frame, since it was written. Measured at
+  zero intact words in 9,482. Words are a second pass now, and a test reads
+  them back off the grid, which is the only proof a draw pass lands.
+- **Three effects stopped carrying the last visit's clock.** RIPPLE, DREAD
+  and BREACH kept absolute effect-clock timestamps across a visualizer exit
+  and re-entry, the same shape that froze FLAME once: a rain that had almost
+  stopped, a tear held as a full-row strobe, thirty words lit at once. Each
+  has a `reset()` now, and a test re-enters after a long visit.
+- **The guide index's `[1-9]` jump no longer throws.** YM has 8 stations and
+  ZM has 6, and the footer said `[1-9]`; a digit past the band's count read a
+  glyph off `undefined` out of the key handler.
+- **A dead-video skip on a ZM station left the tube at full degrade** for
+  the rest of the lock: the glitch's restore asked the tuning distance
+  without a band, measured against YM, and saturated. The last band-less
+  tuning call in the tree.
+- **The secret presets switch the band first.** `[0]` and `[)]` locked a YM
+  station while the dial stayed on ZM — readout at 1000.0, meters reading
+  off the wrong band, tint up regardless.
+- **A track that died during a preset sweep was never skipped** and the
+  set held STATION BREAK forever, because the error handler bailed while the
+  mode was still SEEKING and the lock then trusted the dead cue. A
+  double-press inside the sweep also overwrote the departing station's
+  resume position with the incoming track's random seek.
+- **The sleep timer expiring under the weather card** left the card's flag
+  set through STANDBY and the next power-on, so an ordinary-looking locked
+  set ignored every key. Power-off clears it now, and cuts an in-flight
+  station ID or liner instead of letting it announce over STANDBY.
+- **Preset digits with no station behind them say `NO PRESET`** instead of
+  clicking and doing nothing.
+- **The narrow guide index** put a space between a four-digit ZM frequency
+  and the callsign; mobile station swipes during the held reveal no longer
+  leave NOW PLAYING churning noise through the sweep.
+- **A shielded ram no longer breaks the chain.** The enemy was booked as
+  escaped before the shield was consulted, so the formation could never
+  full-clear — against what the `?` slot is for. A diver also holds at point
+  blank now, the way shots do.
+- **GREEN ROOM's Sleep track moved to the upload that still plays.** The
+  daily health sweep flagged the old one as unavailable two mornings running;
+  oEmbed still said 200. Same channel, same master, wider licence.
+
+Engineering, tooling and docs:
+
+- **The frame loop survives a throw.** One exception anywhere in the frame
+  path ended the rAF chain: tube frozen, YouTube playing on, no fault panel.
+  The loop re-arms from a `finally` and rate-limits the report.
+- **The shader clock wraps on the CPU**, where a double can still count; the
+  old in-shader wrap ran after the float32 multiply and removed nothing, so a
+  tab left open for two days had a juddering roll bar. The roll bar's phase
+  is now integrated per frame, which also means it accelerates smoothly
+  through a glitch instead of jumping to a random phase on every speed
+  change.
+- **Boot fetches the station IDs and the welcome line; liners load on
+  lock.** The old prefetch pulled every clip on disk — 45 files, 4.3MB, on
+  every stamp bump, on phones — and a single dropped request cached that
+  clip as absent for the session. A rejected fetch retries now; only a 404
+  is remembered.
+- **A synced lyric that parses to no lines is `unavailable`**, not lit and
+  empty; the LRC parser accepts three-decimal timestamps; a duration that
+  moved by less than a second no longer re-fetches both LRCLIB endpoints.
+- **SHIP cannot push its own crash residue.** Roster writes go through a
+  dot-prefixed temp file that the static allowlist refuses and `.gitignore`
+  now covers; the dashboard's screenshot task shoots *this* server rather
+  than the deployed site, so a pre-SHIP regeneration captures the tree
+  being shipped rather than the previous one.
+- **Both servers' allowlists are tested from both ends**, the dot rule as a
+  unit (a mutation had left it untested), the Python copy by spawning it,
+  encoded-slash traversal and bare directory listings in the denied list.
+  `check-roster --report` is read-only. The throttle signature is read off
+  where the answer came from (`google.com/sorry`), not off a missing field a
+  broken video also lacks.
+- **The intake form and every README count are asserted against the
+  roster.** The public track-suggestion template still listed the
+  nine-station, one-band dial; it is generated from the roster now and lint
+  checks it, along with every "N curated stations" in the README (one had
+  outlived RISE UP by ten days). The dead-feedback sweep samples the first
+  empty preset digit on each band.
+- **The fake YouTube player reports no duration until CUED**, as the live
+  one does, and does not fire PLAYING during an advert hold. Nothing relied
+  on the old behaviour, which is the point of checking.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
