@@ -85,7 +85,12 @@ export const MAX_PUBLIC_STATIONS_PER_BAND = 9
 export const DESC_WIDTH = 72
 export const DESC_LINES = 3
 
-export async function lintRoster() {
+// The text overrides exist for tests/roster.test.mjs only (2026-09-12,
+// L17): the rules below carry "could not find X -- update the regex"
+// branches whose whole job is to be loud when the prose or the recipe
+// drifts, and a branch that only fires on drift is a branch no green run
+// ever exercises. Handing in drifted text is how they get exercised.
+export async function lintRoster({ readmeText, shootText, issueFormText } = {}) {
   const { STATIONS, SECRET_STATIONS, STATION_PRESET_ORDER } = await import('../stations.js?v=lint')
   const { BANDS, DEFAULT_BAND, LOCK_THRESHOLD } = await import('../tuning.js?v=lint')
   const { VISUALS } = await import('../visuals/index.js?v=lint')
@@ -168,7 +173,7 @@ export async function lintRoster() {
   // public repo making a factual claim about the product, and the fix is
   // typing a different number.
   const readmePath = path.join(here, '..', 'README.md')
-  const readme = readFileSync(readmePath, 'utf8')
+  const readme = readmeText ?? readFileSync(readmePath, 'utf8')
   // 2026-08-31 -- `stations` may now be followed by a qualifier ("10 stations
   // across two bands"), so the count is no longer glued to the comma.
   // Widened rather than reverting the prose: the sentence SHOULD say there
@@ -218,6 +223,52 @@ export async function lintRoster() {
       else if (+m[1] !== STATIONS.length) problems.push(`index.html description says ${m[1]} curated stations, roster has ${STATIONS.length}`)
     }
   }
+  // 2026-09-12 (audit, M14) -- README's opening paragraph makes the SAME
+  // claim in the SAME words, and was not covered: index.html's three metas
+  // were bumped to 14 the day RISE UP landed because the rule above made
+  // them fail, while README line 4 (and CLAUDE.md's intro, fixed by hand)
+  // went on saying 13 for ten days. Every occurrence of the phrase is
+  // checked, not just the first -- a second copy is exactly the thing that
+  // rots.
+  const intro = [...readme.matchAll(/(\d+)\s+curated stations across two bands/g)]
+  if (!intro.length) problems.push('README: lost its "N curated stations across two bands" line -- reword it back or update lint-roster.js so this keeps checking')
+  for (const m of intro) {
+    if (+m[1] !== STATIONS.length) problems.push(`README says ${m[1]} curated stations, roster has ${STATIONS.length}`)
+  }
+  // 2026-09-12 (audit, M13) -- the public track-suggestion form is a
+  // hand-typed copy of the roster, and it is the copy a contributor sees
+  // FIRST. It sat on the nine-station, one-band list (MIDNIGHT NEON still
+  // named, six current stations absent, "nine is the ceiling") for the
+  // whole life of the second band; nothing read it. Same discipline as the
+  // README and index.html rules: every public station present, in the
+  // "<BAND>-<preset> <CALLSIGN> -- ..." shape the form uses, no option
+  // naming a station that is gone, and the ceiling prose saying per band.
+  // Taglines are deliberately NOT asserted -- a tagline tweak should not
+  // fail on the intake form, and the callsign is what routes a proposal.
+  try {
+    const formPath = path.join(here, '..', '.github', 'ISSUE_TEMPLATE', 'track_suggestion.yml')
+    const form = issueFormText ?? readFileSync(formPath, 'utf8')
+    const block = /id: station\n([\s\S]*?)validations:/.exec(form)?.[1]
+    if (!block) {
+      problems.push('track_suggestion.yml: could not find the "station" dropdown -- if the form was restructured, update lint-roster.js so this keeps checking')
+    } else {
+      const options = [...block.matchAll(/^\s+- (.+)$/gm)].map((m) => m[1].trim())
+      const named = options.filter((o) => o !== 'A new station')
+      for (const bd of BANDS) {
+        STATION_PRESET_ORDER.filter((st) => (st.band ?? DEFAULT_BAND) === bd.key).forEach((st, i) => {
+          const want = `${bd.label}-${i + 1} ${st.callsign} -- `
+          if (!named.some((o) => o.startsWith(want))) problems.push(`track_suggestion.yml: no dropdown option starting "${want}" -- the intake form lists the roster by hand; add the line`)
+        })
+      }
+      for (const o of named) {
+        if (!STATIONS.some((st) => o.includes(` ${st.callsign} -- `))) problems.push(`track_suggestion.yml: option "${o}" names no current station -- remove or rename it`)
+      }
+      const desc = /id: station[\s\S]*?description: >\n([\s\S]*?)(?:#|options:)/.exec(form)?.[1] ?? ''
+      if (!/per band/.test(desc)) problems.push('track_suggestion.yml: the station dropdown\'s description no longer says the ceiling is per band')
+    }
+  } catch (e) {
+    problems.push(`issue-form rule could not run: ${e.message}`)
+  }
   // 2026-09-02 -- the SCREENSHOT captions. README names the station in two of
   // its shots ("locked onto COLD WAVE", "DISTORTION FIELD's fire effect"),
   // and tools/shoot.mjs captures them by pressing a PRESET DIGIT -- so the
@@ -235,7 +286,7 @@ export async function lintRoster() {
   // so the band is deterministically DEFAULT_BAND; if that stops being true
   // this rule is checking the wrong dial and should be told about the change.
   try {
-    const shoot = readFileSync(path.join(here, 'shoot.mjs'), 'utf8')
+    const shoot = shootText ?? readFileSync(path.join(here, 'shoot.mjs'), 'utf8')
     const presetIn = (recipe) => {
       const m = new RegExp(`async '?${recipe}'?\\(api, tmp\\)[\\s\\S]*?tuneTo\\(api, (\\d+)\\)`).exec(shoot)
       return m ? Number(m[1]) : null

@@ -30,8 +30,10 @@ port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 #
 # The rules and the reasoning are documented once, beside servable() in
 # tools/admin-server.mjs -- read them there. If you change one, change both;
-# tests/admin-server.test.mjs pins the JS half, and the shapes are simple
-# enough to compare by eye.
+# tests/admin-server.test.mjs spawns BOTH servers and runs the same
+# denied/allowed lists against each (2026-09-12, M15 -- until then only the
+# JS half was pinned, and "compare by eye" is how this copy grew a
+# directory-listing branch the JS never had, see below).
 STATIC_DIRS = {'audio', 'fonts', 'screenshots', 'src', 'ui', 'visuals'}
 STATIC_TOP_EXT = {'.js', '.json', '.html', '.md', '.ico', '.png', '.jpg', '.svg'}
 
@@ -43,9 +45,13 @@ def servable(rel):
     if any(seg.startswith('.') for seg in parts):
         return False
     if len(parts) == 1:
-        # A bare directory name ('audio') is the listing for one of ours.
-        if parts[0] in STATIC_DIRS or parts[0] == 'tools':
-            return True
+        # 2026-09-12 (audit, L6) -- a bare directory name used to be allowed
+        # here so SimpleHTTPRequestHandler could emit a listing for it. The
+        # JS server 404s the same request; nothing the app fetches is a
+        # listing; and the one for tools/ named station-profiles.json and
+        # roster-watch-state.json -- files this allowlist exists to keep
+        # unreachable. Filenames only, but the copies were meant to be
+        # identical and were not.
         return os.path.splitext(rel)[1].lower() in STATIC_TOP_EXT
     if parts[0] == 'tools':
         if len(parts) == 2 and parts[1].endswith('.html'):

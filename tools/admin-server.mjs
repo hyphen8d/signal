@@ -134,10 +134,20 @@ function writeRepoFile(rel, text) {
   // file stays whole until the new one fully exists. (Two dashboard tabs
   // racing each other can still last-write-wins -- that is a lock, not
   // this, and a single-user tool does not carry one.)
-  const tmp = `${p}.tmp-${process.pid}`
+  const tmp = tmpPathFor(p)
   writeFileSync(tmp, text)
   renameSync(tmp, p)
 }
+// 2026-09-12 (audit, M9) -- the temp file is DOT-PREFIXED, and the reason
+// is the SHIP route further down: it stages with `git add -A`, so a crash
+// between the write and the rename used to leave `stations.js.tmp-1234` at
+// the repo root, ignored by nothing, for the next SHIP to commit and push
+// to the public repo -- the same mechanism that shipped an audit doc marked
+// untracked-on-purpose. `.gitignore` now carries `*.tmp-*` as well; the dot
+// prefix is the half that ALSO keeps the residue off HTTP, since servable()
+// refuses any dot-prefixed segment and a half-written roster is not a file
+// this server should ever hand out. Exported so the test can pin both.
+export const tmpPathFor = (p) => path.join(path.dirname(p), `.${path.basename(p)}.tmp-${process.pid}`)
 function readJson(rel, fallback) {
   try { return JSON.parse(readRepoFile(rel)) } catch (e) { return fallback }
 }
@@ -150,14 +160,25 @@ const testFiles = () => readdirSync(abs('tests')).filter(f => f.endsWith('.test.
 // `network: true` is surfaced in the UI rather than enforced here -- these
 // reach YouTube and are slow, and a preflight that silently spent two
 // minutes on the network would get run less often, which defeats it.
-const TASKS = {
+//
+// 2026-09-12 (audit, M10) -- `shoot` is pointed at THIS server, not at the
+// deployed site. tools/shoot.mjs defaults to the Pages URL, which is right
+// from a terminal after a deploy and wrong from here: the dashboard's whole
+// reason for running it is "I changed a screen, re-shoot it, SHIP" -- and
+// against production that captured the PREVIOUS deploy and SHIP committed
+// the stale shots as fresh, the exact rot the tool exists to stop. This
+// process already serves the working tree no-store, so it is the honest
+// target; the URL is the address this server actually bound, because the
+// systemd unit binds the tailnet and 127.0.0.1 would not reach it there.
+const localAppUrl = () => `http://${LOOPBACK ? '127.0.0.1' : (HOST.includes(':') ? `[${HOST}]` : HOST)}:${PORT}/`
+export const TASKS = {
   lint: { label: 'lint roster', cmd: () => ['node', ['tools/lint-roster.js']] },
   test: { label: 'test suite', cmd: () => ['node', ['--test', ...testFiles()]] },
   verify: { label: 'verify roster', network: true, cmd: () => ['node', ['tools/verify-roster.js']] },
   stamp: { label: 'bump build stamp', cmd: () => ['node', ['tools/stamp.js']] },
   stations: { label: 'regenerate stations.md', cmd: () => ['node', ['tools/stations-to-md.js']] },
   deadfeedback: { label: 'input-feedback sweep', cmd: () => ['node', ['tools/dead-feedback.mjs']] },
-  shoot: { label: 'regenerate screenshots', network: true, cmd: () => ['node', ['tools/shoot.mjs']] },
+  shoot: { label: 'regenerate screenshots', network: true, cmd: () => ['node', ['tools/shoot.mjs', `--url=${localAppUrl()}`]] },
   health: { label: 'roster health batch', network: true, cmd: () => ['node', ['tools/check-roster.mjs']] },
 }
 
@@ -636,6 +657,13 @@ async function handleApi(req, res, url) {
         return s.end()
       }
     }
+    // `add -A` stages the WHOLE working tree, not the dashboard's own edits:
+    // anything untracked and not gitignored rides along with the deploy.
+    // That has happened (an audit doc, 2026-09-02), and it is why every
+    // scratch file the tools write is either gitignored or dot-prefixed --
+    // see tmpPathFor() above. Kept as -A on purpose: SHIP is "ship what is
+    // here", and a partial add would leave a tree that lint and the suite
+    // just passed differing from the one that goes out.
     for (const [label, args] of [
       ['staging', ['add', '-A']],
       ['committing', ['commit', '-m', String(message).trim()]],
@@ -750,15 +778,29 @@ async function handleApi(req, res, url) {
 //     in tools/ -- station-profiles.json, pending-tracks.json, the
 //     servers themselves -- stops being reachable, which it never should
 //     have been.
-// Any dot-prefixed segment is refused outright, so `.git/`, `.claude/` and
-// audio/'s gitignored scratch renders never reach the rules above.
+// Any dot-prefixed segment is refused outright, so `.git/`, `.claude/`,
+// the write-temp files above and audio/'s DOT-PREFIXED scratch renders
+// (`.render-*`, `.mono-*`, `.pad-*`) never reach the rules above.
+// 2026-09-12 (audit, L7) -- this used to say "gitignored scratch renders",
+// which overclaimed: `audio/*-test.mp3` is gitignored but not dot-prefixed,
+// so it IS served (confirmed live, 200). A test clip is not a secret, and a
+// rule keyed on .gitignore would be a second parser to keep in sync, so the
+// line is drawn at the dot, and that is the line the rule actually holds.
 // The one residual: a secret dropped at the repo root under an allowed
 // extension (`secrets.json`). Narrow, and gitignored files belong outside
 // the served root anyway -- see the S1 note in CLAUDE.md.
+//
+// A bare directory (`/audio`, `/tools/`) is refused too: nothing the app
+// fetches is a listing, and tools/dev-server.py used to hand one out
+// (filenames only, but filenames of records that are not served -- L6).
 const STATIC_DIRS = new Set(['audio', 'fonts', 'screenshots', 'src', 'ui', 'visuals'])
 const STATIC_TOP_EXT = new Set(['.js', '.json', '.html', '.md', '.ico', '.png', '.jpg', '.svg'])
 
-function servable(rel) {
+// Exported (2026-09-12, M15) so the dot rule can be tested as a function:
+// over HTTP a refused path and a missing path are both 404, so the only
+// dot-paths the server test could probe were ones another rule already
+// caught -- and mutating the dot rule away left that test green.
+export function servable(rel) {
   const parts = rel.split('/')
   if (parts.some((seg) => seg.startsWith('.'))) return false
   if (parts.length === 1) return STATIC_TOP_EXT.has(path.extname(rel).toLowerCase())
@@ -838,7 +880,11 @@ server.on('error', (err) => {
   throw err
 })
 
-server.listen(PORT, HOST, () => {
+// Importable without binding anything (2026-09-12, M15): the suite imports
+// servable(), tmpPathFor() and TASKS. Same opt-out shape as roster-watch.mjs;
+// run normally, nothing changes. An import that DID listen would collide
+// with the systemd unit on 8080 and exit the test process from inside.
+if (!process.env.SIGNAL_ADMIN_IMPORT) server.listen(PORT, HOST, () => {
   const shown = LOOPBACK ? '127.0.0.1' : HOST
   console.log(`SIGNAL admin  ->  http://${shown}:${PORT}/admin`)
   console.log(`the app       ->  http://${shown}:${PORT}/  (no-store, same as tools/dev-server.py)`)

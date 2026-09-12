@@ -39,19 +39,30 @@ body:
     attributes:
       label: Which station
       description: >
-        Pick "A new station" if this doesn't belong on any of the nine. Fair
-        warning -- nine is the current ceiling, since the presets are the
-        `1`-`9` keys, so a new one means retiring an existing one.
+        Pick "A new station" if this doesn't belong on any of them. Fair
+        warning -- the ceiling is nine per band, since the presets are the
+        `1`-`9` keys on each band, so a new station on a full band means
+        retiring an existing one.
+      # tools/lint-roster.js asserts this list against stations.js (every
+      # public station present as "<BAND>-<preset> <CALLSIGN> -- ...", no
+      # option naming a station that is gone, and the "per band" ceiling
+      # above). This form sat on the nine-station, one-band roster for two
+      # weeks after the second band landed -- 2026-09-12 audit, M13.
       options:
-        - 01 CIPHER -- digital infiltration, late-night breakbeat
-        - 02 DISTORTION FIELD -- raw nerve, '90s angst
-        - 03 COLD WAVE -- synthetic hearts, borrowed neon
-        - 04 DRIFT MODE -- fade to black, ambient descent
-        - 05 CIRCUIT CRUSH -- analog glow, the long drive home
-        - 06 ATOMIC -- atomic swing, radioactive nostalgia
-        - 07 MIDNIGHT NEON -- late-night blues, neon glow
-        - 08 CITY LIGHTS -- tokyo nights, city pop dreams
-        - 09 HACKBACK -- golden age hip-hop, coast to coast legends
+        - YM-1 CIPHER -- digital infiltration, late-night breakbeat
+        - YM-2 DISTORTION FIELD -- raw nerve, '90s angst
+        - YM-3 COLD WAVE -- synthetic hearts, borrowed neon
+        - YM-4 NEON STASIS -- closing time in a mall that never was
+        - YM-5 RISE UP -- protest anthems, sung back by the room
+        - YM-6 ATOMIC -- atomic swing, radioactive nostalgia
+        - YM-7 CITY LIGHTS -- tokyo nights, city pop dreams
+        - YM-8 HACKBACK -- golden age hip-hop, coast to coast legends
+        - ZM-1 THE CRYPT -- a ruin, a keep, a tape left running
+        - ZM-2 SLOW ORBIT -- downtempo grooves, no hurry at all
+        - ZM-3 SYNAPSE -- shifting the plates of the underground
+        - ZM-4 DRIFT MODE -- fade to black, ambient descent
+        - ZM-5 TRADEWINDS -- vintage island rhythms, cocktail in hand
+        - ZM-6 CIRCUIT CRUSH -- analog glow, the long drive home
         - A new station
     validations:
       required: true

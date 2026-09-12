@@ -18,7 +18,7 @@ Map of this file (45KB — jump, don't scroll):
 ## What this is
 
 SIGNAL — a CRT/terminal internet-radio web toy. A tuning-dial receiver rendered
-entirely through a text grid, playing real YouTube tracks from 13 curated
+entirely through a text grid, playing real YouTube tracks from 14 curated
 stations across two bands. Read `README.md` first: it carries the product
 intent, the controls reference, and the content-ops rules that constrain what
 may be added.
@@ -162,7 +162,14 @@ its generated `tools/audition.html`, so both of those workflows break under
 a naive "serve nothing from tools/" rule. `tests/admin-server.test.mjs`
 asserts from both ends — the secrets 404, and the dashboard's own imports
 still 200 — because an allowlist that serves nothing passes the refusal half
-on its own.
+on its own. Since 2026-09-12 it runs the same lists against BOTH servers (it
+spawns `dev-server.py` too — the Python copy had no test at all, and had
+grown a directory-listing branch the JS never had) and asks `servable()`
+directly about the dot rule: over HTTP a refused path and a missing path
+are the same 404, so mutating that rule away had left the suite green.
+The server's own write-temp files are dot-prefixed and `*.tmp-*` is
+gitignored, because SHIP's `git add -A` would otherwise push a crash's
+residue.
 
 `tools/network.html` was serverless until 2026-08-27, reading and writing
 `stations.js` through Chrome's File System Access API with the roster parser
@@ -176,6 +183,10 @@ What the served version does that the file could not:
 - **Run the Node toolchain** and stream it back: lint, the suite, verify,
   stamp, stations.md, the dead-feedback sweep, screenshots. PREFLIGHT chains
   lint → suite (roster verify is opt-in — it is the slow, networked one).
+  The screenshot task shoots THIS server — the tree about to ship — not
+  the deployed site, which `shoot.mjs` defaults to from a terminal
+  (2026-09-12: against production it captured the previous deploy and SHIP
+  committed the stale shots as fresh).
 - **Edit a station's IDENTITY** — `crt`, `meter`, `ident`, `glyph`, `visual`,
   `static`, `freq`, tagline, desc. Nothing but a hand-edit of
   `stations.js` could touch any of these before. Ident tones play through the

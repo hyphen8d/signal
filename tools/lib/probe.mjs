@@ -69,9 +69,18 @@ export async function playability(id) {
   try {
     const res = await fetch(`https://www.youtube.com/watch?v=${id}`, { headers: UA })
     const html = await res.text()
-    if (res.status !== 200) return unprobed(`HTTP ${res.status}`)
+    // 2026-09-12 (audit, L5) -- the throttle is identified by WHERE the
+    // response came from, not by what it lacked. fetch follows the 429's
+    // redirect, so the final URL is google.com/sorry whenever YouTube has
+    // stopped answering; a page with no player data that did NOT come from
+    // there is a genuinely odd video (a live stream, a removed-with-shell
+    // page) and has to be recorded as UNVERIFIED rather than treated as
+    // throttling -- which silently skipped it every batch, kept it at the
+    // queue front, and counted it toward the "sweep is stuck" alarm.
+    const throttled = /google\.com\/sorry/.test(res.url || '') || res.status === 429
+    if (res.status !== 200) return { ...unprobed(`HTTP ${res.status}`), throttled }
     const seconds = +(html.match(/"lengthSeconds":"(\d+)"/)?.[1] ?? 0)
-    if (!seconds) return unprobed('no player data')
+    if (!seconds) return { ...unprobed(throttled ? 'no player data (google.com/sorry)' : 'no player data'), throttled }
     const countries = html.match(/"availableCountries":\[([^\]]*)\]/)?.[1]
     return {
       probed: true,
@@ -117,5 +126,12 @@ export function decayFlags(e, p) {
 // hundred requests, and that page parses as "no player data" -- so a long
 // sweep degrades into a wall of UNVERIFIED that looks like findings.
 // Callers stop on this rather than spending the rest of the batch on it.
+//
+// 2026-09-12 (audit, L5) -- "no player data" on its own is NOT the
+// signature any more; playability() sets `throttled` from the final URL
+// (google.com/sorry) or a 429, and that is what is read here. A page with
+// no player data from anywhere else is a real answer about a real video and
+// gets recorded as UNVERIFIED, where it is visible, instead of being skipped
+// as if the endpoint had gone away.
 export const isThrottleSignature = (p) =>
-  !p.probed && (/^HTTP 4\d\d$/.test(p.reason) || p.reason === 'no player data')
+  !p.probed && (p.throttled === true || /^HTTP 4\d\d$/.test(p.reason))
