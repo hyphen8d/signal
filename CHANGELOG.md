@@ -1660,6 +1660,43 @@ none of them hit the rate limit.
   and *Alaska* (a personal uploader's channel), RISE UP's *Banned in D.C.*
   (loosest protest fit) and *Fuck Authority* (fan upload, length-matched).
 
+### Every station has its own visualizer (2026-09-13)
+
+Five stations had been borrowing another station's effect -- two of them
+public pairs, so tuning between CITY LIGHTS and TRADEWINDS, or DISTORTION
+FIELD and RISE UP, showed the same picture. Each now has an effect built
+from its own identity, bringing the registry to sixteen.
+
+- **LAGOON (TRADEWINDS)** -- a tiki-postcard night: a round moon, a
+  volcanic island, swell that grows with the bass and a reflection path
+  that breaks up as it does, a palm, and two tiki torches that flicker with
+  the treble and flare on the beat. The water is horizontal on purpose; the
+  borrow it replaces was rain rings.
+- **UPRISING (RISE UP)** -- the room, not a riot: two ranks of crowd, a
+  surge of arms that crosses from one side on the kick (sized by bass,
+  one per 0.9s), placards whose words are asserted legible on every frame,
+  and two stage beams. This reverses a 2026-09-02 call to keep FLAME here,
+  revisited at the curator's request; setting `visual: 'flame'` undoes it.
+- **KEEP (THE CRYPT)** -- a hand-drawn ruin on a crag under ridges and a
+  crescent moon, torchlit windows flickering independently, three layers of
+  mist, and a rare flight of bats. Nothing strobes -- the opposite
+  temperament from the NIN effect it used to borrow.
+- **ORBIT (SLOW ORBIT)** -- a shaded, turning planet with a station on a
+  tilted 30-second orbit, occluded cell by cell behind the disc; the halo
+  breathes on the beat, because this lane has one.
+- **AURORA (DRIFT MODE)** -- curtains of rays over a frozen ridge and a
+  still lake. It never reads onset or pulse, joins DRIFT in the beat-bloom
+  exclusion, and changes under 1% of cells a frame.
+
+Each effect ships with its own test file (repaint bounds, motion, re-entry
+after a long visit, and whatever it promises to show legibly), and every
+re-entry test was mutation-checked red before green. ORBIT's first
+mutation did NOT go red -- its draw self-heals a stale frame clock -- and
+the test was rewritten to break the guard that actually matters.
+`tests/program.test.mjs`'s every-effect test had cycled a fixed 12 laps,
+written for 11 effects, and would have silently skipped the last four; it
+now cycles until [V] wraps back to where it started.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

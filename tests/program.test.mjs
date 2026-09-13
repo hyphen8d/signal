@@ -168,17 +168,25 @@ test('visualizer: every effect draws without throwing and exits back to the main
     // stubbed player never reports; enter manually with [V] instead.
     h.key('v')
     assert.equal(h.program.visualizerActive, true)
+    // 2026-09-13 -- was a fixed 12 laps asserting >= 11 distinct effects,
+    // written when there were 11. Five station effects landed on top and 12
+    // laps quietly stopped reaching the last four: the test kept its name and
+    // lost its claim. Now it cycles until [V] wraps back to where it started,
+    // so it visits the whole registry however long it gets, and the floor
+    // below only catches the registry SHRINKING.
     const seen = []
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 64; i++) {
       h.advance(500) // several frames of the effect at its own clock
       const key = h.program.activeVisualKey()
+      if (seen.length && key === seen[0]) break
       seen.push(key)
       const canvas = h.rows().slice(1, 22).join('')
       assert.ok(canvas.trim().length > 0, `${key}: effect canvas is not blank`)
       assert.ok(h.row(22).includes(h.program.lockedStation.callsign), `${key}: footer names the station`)
       h.key('v') // cycle to the next effect
     }
-    assert.ok(new Set(seen).size >= 11, `cycled through every effect: ${seen.join(',')}`)
+    assert.equal(new Set(seen).size, seen.length, `each effect visited once before wrapping: ${seen.join(',')}`)
+    assert.ok(seen.length >= 16, `cycled through every effect: ${seen.join(',')}`)
     h.key('e')
     assert.equal(h.program.visualizerActive, false)
     h.advance(400)

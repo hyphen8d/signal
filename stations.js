@@ -1131,18 +1131,19 @@ export const STATIONS = [
   // stations must draw different tracks. Both profiles record this; see
   // tools/station-profiles.json before "fixing" it.
   //
-  // `visual` shares flame with DISTORTION FIELD, and that is SETTLED rather
-  // than pending -- a bespoke "voices converging" effect was proposed and
-  // the curator declined it 2026-09-02 as not wanted for now. Recorded
-  // because the previous version of this note called flame provisional, and
-  // a note claiming work is outstanding when it has been declined is worse
-  // than no note: it invites someone to do it again.
+  // `visual: 'uprising'` (2026-09-13) is this station's own. History,
+  // because it reverses a recorded call: until now it shared DISTORTION
+  // FIELD's 'flame', and on 2026-09-02 a bespoke "voices converging" effect
+  // was proposed and declined as not wanted for then. It was revisited on
+  // 2026-09-13, when the curator asked for a pass giving every borrowing
+  // station an effect of its own and RISE UP was named in it. The old note's
+  // own closing line anticipated this: "if that ever grates, a new effect is
+  // the fix, not a reshuffle of the existing ones."
   //
-  // Sharing is precedented (frost serves COLD WAVE and DRIFT MODE, ripple
-  // serves CITY LIGHTS and TRADEWINDS) and flame genuinely suits the lane --
-  // fire is not a bad reading of an uprising. The only real cost is that the
-  // two loud-guitar stations now look alike in the visualizer. If that ever
-  // grates, a new effect is the fix, not a reshuffle of the existing ones.
+  // UPRISING is the room rather than a riot: a crowd that surges across on
+  // the kick, placards whose words are asserted legible every frame, two
+  // stage beams. To go back, set this to 'flame' -- nothing else depends on
+  // it. See visuals/uprising.js.
   { id: 'rise-up', band: 'ym', freq: 440.0, callsign: 'RISE UP', tagline: 'protest anthems, sung back by the room',
     freqNote: 'A440, the note every instrument tunes to',
     desc: 'Protest rock, punk and hardcore from 1978 onward -- songs about power and who holds it, picked so the chorus is something a room full of people can shout back at the stage.',
@@ -1152,7 +1153,7 @@ export const STATIONS = [
     static: 1800,
     crt: { noise: 0.14, bloomAmt: 1.9, brightness: 1.1 },
     meter: { spring: 0.62, damping: 0.38, swing: 1.15 },
-    visual: 'flame',
+    visual: 'uprising',
     tracks: [
     // First pass, 2026-09-02. 24 tracks, 14 artists, every id probed OK +
     // embeddable with a licence of 122-249 countries; nothing shipped on an
@@ -1792,12 +1793,12 @@ export const STATIONS = [
   // there instead. The profile says the same thing where audition.js will
   // read it back at whoever proposes the next track.
   //
-  // `visual: 'dread'` is BORROWED, not chosen, and is the one thing here
-  // waiting on a real decision. Every other station on the dial has an
-  // effect of its own; dread belongs to NINE INCH NAILS. It fits this
-  // station almost too well, and NIN being secret means few people will ever
-  // see both -- but "few people will notice" is the argument for a
-  // placeholder, not for a design. A bespoke effect is the eventual want.
+  // `visual: 'keep'` (2026-09-13) is this station's own, and the borrow it
+  // replaces is worth remembering: it wore NINE INCH NAILS' 'dread' until
+  // then, which fit "almost too well" and was exactly the wrong temperament
+  // -- hostile flickering panels for a lane whose boundary is FANTASY. KEEP
+  // is the ruin itself: a castle on a crag, torchlit windows, mist, the odd
+  // flight of bats, and nothing that strobes. See visuals/keep.js.
   //
   // The tracklist is EMPTY on purpose and lint will say so until it is
   // filled. audition.js needs --station to already exist in the roster, so
@@ -1813,7 +1814,7 @@ export const STATIONS = [
     static: 2100,
     crt: { noise: 0.22, bloomAmt: 1.4, flicker: 0.14 },
     meter: { spring: 0.35, damping: 0.6, swing: 0.8 },
-    visual: 'dread',
+    visual: 'keep',
     tracks: [
       realTrack('APZIre8Tm60', 'Whitebark Forest', 'Mountain Realm'),
       realTrack('YKe_zJEGcWQ', 'Dungeon Stairs', 'Mountain Realm'),
@@ -1864,9 +1865,11 @@ export const STATIONS = [
   //
   // 1092 is the ISS going round once, in about 92 minutes.
   //
-  // `visual: 'flowfield'` is BORROWED from GREEN ROOM, the same placeholder
-  // arrangement THE CRYPT has with 'dread'. Drifting currents suit this lane
-  // almost too well, and GREEN ROOM being secret means few will see both.
+  // `visual: 'orbit'` (2026-09-13) is this station's own: a turning planet
+  // with a station going round it, the frequency made visible. It replaced a
+  // borrow of GREEN ROOM's 'flowfield'. The halo breathes on the beat,
+  // because this lane has one -- that is the profile's whole boundary
+  // against DRIFT MODE. See visuals/orbit.js.
   { id: 'slow-orbit', band: 'zm', freq: 1092.0, callsign: 'SLOW ORBIT',
     tagline: 'downtempo grooves, no hurry at all',
     freqNote: '92 minutes, one orbit',
@@ -1877,7 +1880,7 @@ export const STATIONS = [
     static: 1750,
     crt: { noise: 0.14, bloomAmt: 1.9, flicker: 0.07 },
     meter: { spring: 0.4, damping: 0.55, swing: 0.95 },
-    visual: 'flowfield',
+    visual: 'orbit',
     tracks: [
       realTrack('aIB70PVSCnY', 'After the Rain', 'Jens Buchert'),
       realTrack('EqwRXoAxn7I', 'On the Run', 'Jens Buchert'),
@@ -1943,11 +1946,12 @@ export const STATIONS = [
   // acts belong here alongside the originals -- a station that took only
   // Denny and Lyman would be a museum.
   //
-  // `visual: 'ripple'` is BORROWED from CITY LIGHTS, and this borrow is worse
-  // than the other two: CITY LIGHTS is PUBLIC, so two reachable stations now
-  // share an effect where every other pair is distinct. Water on a lagoon
-  // station is the right idea and the wrong way to get it. See the standing
-  // task for bespoke effects.
+  // `visual: 'lagoon'` (2026-09-13) is this station's own. It borrowed CITY
+  // LIGHTS' 'ripple' until then -- the worst of the borrows, since both
+  // stations are public and tuning between them showed the same rain rings.
+  // Water on a lagoon station was the right idea and rings the wrong way to
+  // get it, so LAGOON's water is horizontal: a moonlit swell, a broken
+  // reflection path, a palm and two tiki torches. See visuals/lagoon.js.
   { id: 'tradewinds', band: 'zm', freq: 1559.0, callsign: 'TRADEWINDS',
     tagline: 'vintage island rhythms, cocktail in hand',
     freqNote: "'59, when exotica was everywhere",
@@ -1958,7 +1962,7 @@ export const STATIONS = [
     static: 1850,
     crt: { noise: 0.15, bloomAmt: 2.0, flicker: 0.09 },
     meter: { spring: 0.6, damping: 0.4, swing: 1.15 },
-    visual: 'ripple',
+    visual: 'lagoon',
     tracks: [
       realTrack('mitt1Qnkmgo', 'Ringo Oiwake', 'Arthur Lyman'),
       realTrack('7QO2QuXEZS4', 'Ke Kali Ne Au', 'Arthur Lyman'),
@@ -2034,13 +2038,14 @@ export const STATIONS = [
   // obvious "layered stillness" pick and was rejected precisely because it
   // would sit eight columns from SYNAPSE's identical-looking triple bar.
   //
-  // `visual: 'frost'` IS THE FOURTH BORROW AND THE POOL IS NOW EXHAUSTED.
-  // Every one of the twelve effects belongs to another station, and this is
-  // the station named after the one it lost. Ice and stillness are a decent
-  // fit for an ambient lane, but that is a consolation, not a design. Four
-  // borrows across five recent stations is no longer a placeholder pattern;
-  // it is the effect registry failing to keep up with the roster. See the
-  // standing task.
+  // `visual: 'aurora'` (2026-09-13) is this station's own, and it closes
+  // the gap this note used to complain about: DRIFT MODE was the fourth of
+  // five stations borrowing an effect (COLD WAVE's 'frost'), and the station
+  // named after the effect it lost. AURORA is stillness with structure --
+  // curtains of rays over a frozen ridge and a lake -- rather than DRIFT's
+  // density wash, and it NEVER reads onset or pulse; visualizer.js excludes
+  // it from the beat bloom for the same reason it excludes 'drift', and a
+  // test proves a maxed beat draws the identical frame. See visuals/aurora.js.
   { id: 'drift-mode', band: 'zm', freq: 1321.0, callsign: 'DRIFT MODE',
     tagline: 'fade to black, ambient descent',
     freqNote: '3-2-1, counting down to nothing',
@@ -2051,7 +2056,7 @@ export const STATIONS = [
     static: 700,
     crt: { decay: 0.88, brightness: 1.12, bloomAmt: 1.7, scanMax: 0.6 },
     meter: { spring: 0.16, damping: 0.72, swing: 0.55 },
-    visual: 'frost',
+    visual: 'aurora',
     tracks: [
       realTrack('UfcAVejslrU', 'Weightless', 'Marconi Union'),
       realTrack('0kYc55bXJFI', 'Near Light', 'Olafur Arnalds'),
