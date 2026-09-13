@@ -1705,6 +1705,41 @@ now cycles until [V] wraps back to where it started.
   this at all. UPRISING's mass moved to shade blocks; KEEP's stone dropped to
   FAINT and its crag to shade. Coverage, not tier, is the lever for a mass.
 
+### AFTER HOURS joins ZM at 1200 (2026-09-13)
+
+A late-night jazz station: the small-group records that sound like the last
+set in a half-empty club. ZM goes to seven stations and SIGNAL to fifteen.
+It is the first station to arrive with everything the others have on day
+one -- its own visualizer, a spoken ID and its own liner pair -- rather than
+borrowing an effect and waiting on clips.
+
+- **1200 is midnight.** 'Round Midnight is the Monk tune every player on the
+  station recorded. 1959 was the first pick -- Kind of Blue, Giant Steps,
+  Mingus Ah Um and Time Out -- and is off the band, which runs 1000-1800.
+  It lands as ZM-3, so SYNAPSE, DRIFT MODE, TRADEWINDS and CIRCUIT CRUSH each
+  move up one preset key.
+- **Late night is the filter, not jazz.** The profile's test is whether a
+  track belongs at 2am with the chairs going up: ballads, modal vamps,
+  walking-tempo blues, acoustic small groups. Up-tempo burners are out even
+  when canonical, and alternate takes are different recordings.
+- **30 tracks across 19 artists** and 30 albums, curated in two halves against disjoint artist lists,, every id probed OK,
+  embeddable, not age-gated, 100-249 countries, lengths matched to
+  the original album masters.
+- **BACKROOM**, its visualizer: a club at 2am under one lamp: an upright bass and its player, a tenor with the horn up, a ride cymbal, the end of a grand, smoke climbing the beam, café tables with chairs up and one candle. Every figure is an outline around a dark interior -- the tube-check lesson from UPRISING and KEEP, applied from the start -- and a test caps full blocks at 1% of the canvas.
+- **The ident is up, down, held** -- F, A-flat, a G-flat blue note left
+  hanging -- the one four-note contour no other station uses. The glyph is a
+  note; the font has no flat sign.
+- **Voice:** "AFTER HOURS." plus two liners in the transcribed shape, hook
+  first and callsign last -- "Last call was an hour ago. Nobody's leaving."
+  and "Brushes, a slow ballad, and nowhere to be." The first ID take came
+  back at -2.5dB, hot for the ID band; the second landed at -3dB.
+- **Two licence rules that point opposite ways**, now in the profile: on Blue
+  Note / Prestige the official Topic copy is right and 249-country fan uploads
+  outrank it in search; on Columbia / Riverside / Impulse! the official artist
+  channels carry the masters at 249 while Topic sits at 123.
+- The roster-lib sweep's hand-kept station count went 16 -> 17, the one test a
+  new station is supposed to trip.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

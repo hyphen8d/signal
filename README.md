@@ -1,7 +1,7 @@
 # SIGNAL v0.9
 
 A community-facing, unofficial internet-radio-style web toy: a terminal/CRT
-tuning-dial receiver with 14 curated stations across two bands, real songs,
+tuning-dial receiver with 15 curated stations across two bands, real songs,
 station idents,
 scanning, presets, a local weather readout, an ambient tube hum, and a power
 switch.
@@ -136,7 +136,8 @@ things easy to miss from a screenshot alone:
   LED ladder for HACKBACK, a moonlit lagoon with tiki torches for
   TRADEWINDS, a ruined keep in the mist for THE CRYPT, a planet with a
   station going round it for SLOW ORBIT, northern lights over a frozen lake
-  for DRIFT MODE — each one built from the station's own identity, not a
+  for DRIFT MODE, a jazz trio under one spotlight in an emptying club for
+  AFTER HOURS — each one built from the station's own identity, not a
   generic spectrum analyzer wearing a different color per station.
 - **The meters and visualizers react to the actual music.** With the audio
   tap live (see "The live audio tap" below), the VU/EQ/FLD readouts and
@@ -231,7 +232,7 @@ Known gaps, not oversights.
 
 ## Stations
 
-14 stations across two bands, 600 tracks total (30-50 per station -- counts are uneven by design, curation over symmetry -- plus two secret stations carrying 57 more between them). Full roster with taglines and track lists:
+15 stations across two bands, 630 tracks total (30-50 per station -- counts are uneven by design, curation over symmetry -- plus two secret stations carrying 57 more between them). Full roster with taglines and track lists:
 [`stations.md`](./stations.md) — generated straight from the live
 `STATIONS` array in `stations.js` (`tools/stations-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station

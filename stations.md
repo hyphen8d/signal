@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 14 stations, 600 tracks total.
+Generated from stations.js. 15 stations, 630 tracks total.
 
 # YM band
 
@@ -434,7 +434,7 @@ Tracks (50):
 
 # ZM band
 
-6 stations, 246 tracks. Its own dial, its own `1`-`9` presets.
+7 stations, 276 tracks. Its own dial, its own `1`-`9` presets.
 
 ## THE CRYPT -- 1031.0
 
@@ -517,6 +517,45 @@ Tracks (32):
 30. **Beautiful Day** -- Fascinating Earthbound Objects  ([youtu.be/a9pqTHlPMXI](https://youtu.be/a9pqTHlPMXI))
 31. **Venice Beach** -- Celeste Lear  ([youtu.be/Ily1plRBESw](https://youtu.be/Ily1plRBESw))
 32. **Digitalis** -- Celeste Lear  ([youtu.be/zur8YJXlCQ4](https://youtu.be/zur8YJXlCQ4))
+
+## AFTER HOURS -- 1200.0
+
+*the last set, brushes and blue notes*
+
+Ident tones (Hz): 349.2, 415.3, 370, 370
+
+Tracks (30):
+
+1. **I Guess I'll Hang My Tears Out to Dry** -- Dexter Gordon  ([youtu.be/AkofGzKRFj4](https://youtu.be/AkofGzKRFj4))
+2. **Don't Explain** -- Dexter Gordon  ([youtu.be/dpjM7wwSTxI](https://youtu.be/dpjM7wwSTxI))
+3. **Along Came Betty** -- Art Blakey & The Jazz Messengers  ([youtu.be/6lJeothOwCU](https://youtu.be/6lJeothOwCU))
+4. **Soul Station** -- Hank Mobley  ([youtu.be/UfUIzb4IFgA](https://youtu.be/UfUIzb4IFgA))
+5. **I See Your Face Before Me** -- Hank Mobley  ([youtu.be/-LbQbmd-Oyc](https://youtu.be/-LbQbmd-Oyc))
+6. **Ceora** -- Lee Morgan  ([youtu.be/uRjshy_n_yE](https://youtu.be/uRjshy_n_yE))
+7. **I Remember Clifford** -- Lee Morgan  ([youtu.be/wB4xWjgbGwY](https://youtu.be/wB4xWjgbGwY))
+8. **Peace** -- Horace Silver  ([youtu.be/ieaAHwvqljg](https://youtu.be/ieaAHwvqljg))
+9. **Lonely Woman** -- Horace Silver  ([youtu.be/fJyq_F0g3KE](https://youtu.be/fJyq_F0g3KE))
+10. **Infant Eyes** -- Wayne Shorter  ([youtu.be/CYg_3pQN-LU](https://youtu.be/CYg_3pQN-LU))
+11. **Footprints** -- Wayne Shorter  ([youtu.be/LgaIUqH0w6c](https://youtu.be/LgaIUqH0w6c))
+12. **You Don't Know What Love Is** -- Sonny Rollins  ([youtu.be/YnKImTAt7kE](https://youtu.be/YnKImTAt7kE))
+13. **God Bless the Child** -- Sonny Rollins  ([youtu.be/mZNEEKtA8hU](https://youtu.be/mZNEEKtA8hU))
+14. **Midnight Blue** -- Kenny Burrell  ([youtu.be/F5xhrGqTeos](https://youtu.be/F5xhrGqTeos))
+15. **We'll Be Together Again** -- McCoy Tyner  ([youtu.be/vgB9BxK70I4](https://youtu.be/vgB9BxK70I4))
+16. **'Round Midnight** -- Miles Davis  ([youtu.be/Ys9wiGNDCvA](https://youtu.be/Ys9wiGNDCvA))
+17. **Blue in Green** -- Miles Davis  ([youtu.be/TLDflhhdPCg](https://youtu.be/TLDflhhdPCg))
+18. **Say It (Over and Over Again)** -- John Coltrane  ([youtu.be/oRh0hxV1_SU](https://youtu.be/oRh0hxV1_SU))
+19. **Naima** -- John Coltrane  ([youtu.be/bPAC6zt_1ZM](https://youtu.be/bPAC6zt_1ZM))
+20. **My Foolish Heart** -- Bill Evans  ([youtu.be/EpVXH3Vm2wg](https://youtu.be/EpVXH3Vm2wg))
+21. **Young and Foolish** -- Bill Evans  ([youtu.be/UOfwwwQUHjg](https://youtu.be/UOfwwwQUHjg))
+22. **Ruby, My Dear** -- Thelonious Monk  ([youtu.be/6haQ1gJa644](https://youtu.be/6haQ1gJa644))
+23. **Pannonica** -- Thelonious Monk  ([youtu.be/s569_FEcwAQ](https://youtu.be/s569_FEcwAQ))
+24. **Alone Together** -- Chet Baker  ([youtu.be/EssmF0evMlk](https://youtu.be/EssmF0evMlk))
+25. **My Funny Valentine** -- Chet Baker  ([youtu.be/ENFGUo_Nfso](https://youtu.be/ENFGUo_Nfso))
+26. **Goodbye Pork Pie Hat** -- Charles Mingus  ([youtu.be/CWWO_VcdnHY](https://youtu.be/CWWO_VcdnHY))
+27. **Strange Meadow Lark** -- Dave Brubeck Quartet  ([youtu.be/XJ5FMEjWr5Q](https://youtu.be/XJ5FMEjWr5Q))
+28. **Autumn Leaves** -- Cannonball Adderley  ([youtu.be/CpB7-8SGlJ0](https://youtu.be/CpB7-8SGlJ0))
+29. **You're Blasé** -- Stan Getz  ([youtu.be/GlUA8EHDPZA](https://youtu.be/GlUA8EHDPZA))
+30. **Poinciana** -- Ahmad Jamal  ([youtu.be/Z0e2G32f3IU](https://youtu.be/Z0e2G32f3IU))
 
 ## SYNAPSE -- 1234.0
 

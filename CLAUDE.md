@@ -18,7 +18,7 @@ Map of this file (45KB — jump, don't scroll):
 ## What this is
 
 SIGNAL — a CRT/terminal internet-radio web toy. A tuning-dial receiver rendered
-entirely through a text grid, playing real YouTube tracks from 14 curated
+entirely through a text grid, playing real YouTube tracks from 15 curated
 stations across two bands. Read `README.md` first: it carries the product
 intent, the controls reference, and the content-ops rules that constrain what
 may be added.

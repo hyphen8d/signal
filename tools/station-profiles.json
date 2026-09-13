@@ -991,6 +991,134 @@
      "rejectedAt": "2026-09-12"
     }
    ]
+  },
+  "after-hours": {
+   "callsign": "AFTER HOURS",
+   "genre": "Late-night jazz -- the small-group records that sound like the last set in a half-empty club: ballads, modal vamps, mid-tempo hard bop, brushes on the snare, a tenor or a trumpet taking its time",
+   "eraLane": "the 1955-1965 peak (hard bop, modal, cool, the Blue Note / Prestige / Riverside / Impulse! / Columbia records) as the spine, with room for later players who play in that language; no upper bound, but the sound has to be acoustic small-group jazz",
+   "acceptedArtists": [
+    "Miles Davis",
+    "John Coltrane",
+    "Bill Evans",
+    "Thelonious Monk",
+    "Dexter Gordon",
+    "Chet Baker",
+    "Art Blakey & The Jazz Messengers",
+    "Charles Mingus",
+    "Dave Brubeck Quartet",
+    "Cannonball Adderley",
+    "Hank Mobley",
+    "Lee Morgan",
+    "Horace Silver",
+    "Wayne Shorter",
+    "Sonny Rollins",
+    "Ahmad Jamal",
+    "Kenny Burrell",
+    "Stan Getz"
+   ],
+   "constraints": [
+    "LATE NIGHT IS THE FILTER, NOT JAZZ. Jazz is too wide a word for a lane: the test is whether the track belongs at 2am in a room with the chairs going up on the tables. Ballads, modal vamps, blues at walking tempo and mid-tempo hard bop are in; up-tempo bebop burners, big-band shouts and anything that makes the room stand up are out even when they are canonical. Take the ballad off the famous record over the famous track off it when they differ.",
+    "ACOUSTIC SMALL GROUP. Trio to sextet. No smooth jazz, no fusion or electric-era Miles, no big bands, no jazz-funk, no acid jazz -- those either belong to another station's temperament or to no station yet. Mostly instrumental; a vocal is allowed when the voice is played like an instrument (Chet Baker), and should stay rare so the station does not become a torch-song station.",
+    "THE BOUNDARIES ON THIS DIAL. Not SLOW ORBIT (produced downtempo electronics with a programmed pulse), not TRADEWINDS (exotica and lounge -- vibraphone-and-bird-call Polynesia, even where the players overlap), not ATOMIC (1950s pop vocals constrained by an in-universe list), not CITY LIGHTS (city pop). If a candidate would sit comfortably on one of those, it belongs there.",
+    "TAKE THE ALBUM MASTER. This catalogue is full of alternate takes, live versions, remasters with bonus tracks and 'Rudy Van Gelder Edition' re-releases, all titled the same. Match the length to the original album listing and prefer the canonical take; an alternate take is a different recording and needs its own reason. '- Topic' uploads are the default source here and the licence width varies wildly between near-identical copies -- probe the specific id, never the title.",
+    "READ TITLES OFF A REAL LISTING -- the album's tracklist on Wikipedia or Discogs -- never from recall. Standards are recorded by everyone, so a remembered title plus an artist is exactly how a different artist's version, or a different decade's, gets shipped under the right name.",
+    "SPREAD THE ARTISTS AND THE LABELS. The canon is dominated by a handful of names; a station that is half Miles and Coltrane reads as a playlist rather than a room. No artist above 3 tracks on the founding pass, and no single album above 2.",
+    "THE LICENCE NUMBER POINTS DIFFERENT WAYS ON THE TWO HALVES OF THIS CATALOGUE (founding pass, 2026-09-13). Blue Note / Prestige: the widest official copy is the '- Topic' upload at ~121-123 countries, and fan re-uploads show 249 and OUTRANK it in search -- prefer Topic. Columbia / Riverside / Impulse!: the OFFICIAL ARTIST CHANNELS (MilesDavisVEVO, John Coltrane, Bill Evans, Chet Baker) carry the masters at 247-249 while Topic sits at 120-123 -- prefer the official channel, and ignore audition's UNKNOWN-CHANNEL flag when the length matches. Never sort a shortlist by licence width alone.",
+    "LENGTH IS THE CHECK, AND TWO RECORDS BREAK A STRICT MATCH. 'Rudy Van Gelder Edition' / 'Remastered' in a Topic title is the same master (lengths agree within 2s); the alternate takes on those reissues are separate tracklist entries. Kind of Blue's current uploads are the pitch-corrected master, ~10s longer than Wikipedia's LP times. Mingus Ah Um exists at both the edited 1959 LP lengths and the restored reissue lengths -- the roster took the LP edit."
+   ],
+   "rejections": [
+    {
+     "artist": "Thelonious Monk",
+     "track": "Ruby, My Dear (other recordings)",
+     "reason": "Topic, 5:40 -- not the 5:26 Monk's Music master; nor is iXevf6zpnV8 (Topic, 6:19). The only copy matching the master is 6haQ1gJa644, on a non-Topic Thelonious Monk channel, which shipped.",
+     "youtubeId": "u1O9YuXNbLs",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Thelonious Monk",
+     "track": "Pannonica (excerpts)",
+     "reason": "2:35, and T9UW1zu4xmA at 3:11, both titled as the Brilliant Corners track: excerpts of an 8:50 piece. s569_FEcwAQ shipped.",
+     "youtubeId": "iSvPopN5j-0",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Dave Brubeck Quartet",
+     "track": "Strange Meadow Lark (wrong length)",
+     "reason": "Topic, 7:12 -- not the 7:22 Time Out master that shipped (XJ5FMEjWr5Q).",
+     "youtubeId": "JVGVHGTyn6w",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Charles Mingus",
+     "track": "Goodbye Pork Pie Hat (reissue length)",
+     "reason": "Topic, 5:42 -- the restored reissue, not the 4:48 original LP edit the roster took. A different choice, not a wrong upload; recorded so it is not mistaken for a free duplicate.",
+     "youtubeId": "H2x3jbX0ePk",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Miles Davis",
+     "track": "'Round Midnight (live)",
+     "reason": "8:31, live in Sweden -- not the 'Round About Midnight studio master.",
+     "youtubeId": "QV0jfcw0mvY",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Chet Baker",
+     "track": "My Funny Valentine (other recording)",
+     "reason": "9:58 -- not the 2:21 Chet Baker Sings master.",
+     "youtubeId": "UOEIQKczRPY",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Stan Getz",
+     "track": "You're Blase (False Start)",
+     "reason": "A 0:47 session fragment on the same Topic channel as the real take.",
+     "youtubeId": "ouqPK9oDsFw",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "John Coltrane",
+     "track": "The History of Naima",
+     "reason": "A documentary short on the official channel, surfaced by the track search.",
+     "youtubeId": "NLGlnSUkjVo",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Bill Evans",
+     "track": "Peace Piece",
+     "reason": "Clean (Topic, 6:44, 121 countries) and the most 2am piece in the catalogue -- held back only because it is SOLO piano and the founding profile says trio to sextet. The strongest candidate for the first exception; XDcFnV4kM-4 is a 1978 performance, not this.",
+     "youtubeId": "-49G2-0GBSA",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Lee Morgan",
+     "track": "I Remember Clifford (Blakey recording)",
+     "reason": "'Art Blakey & Lee Morgan', 5:48 -- a different recording from Lee Morgan Vol. 3's 7:07, which shipped.",
+     "youtubeId": "KVvRZWhFF4w",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Sonny Rollins",
+     "track": "You Don't Know What Love Is (vinyl rip / fan copy)",
+     "reason": "An '[LP Live]' vinyl rip on the BlueNote 33RPM channel; tLFlJIqiMLc is a fan copy 9s long. The Topic master YnKImTAt7kE shipped.",
+     "youtubeId": "yNwdthV3yYI",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Fan re-uploads of shipped tracks",
+     "reason": "Fan copies outranking the Topic masters in search, all at 249 countries: Lonely Woman (OkbwGv3QKQc), Infant Eyes (KpVx1KujaRY), Along Came Betty (CTzRHq_cH5E), Tears Out to Dry (-lI-IqSxCHo), Midnight Blue (eNWDwOsQqlw), Ceora (ECw3WAX41OA, 5s long). The Topic copy of each shipped.",
+     "youtubeId": "OkbwGv3QKQc",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Too up-tempo for the lane, however canonical",
+     "reason": "Passed on the late-night filter, not probed: Giant Steps, Countdown, Blue Rondo a la Turk, Take Five (its album slot went to the ballad), Better Git It in Your Soul, Boogie Stop Shuffle, Ah-Leu-Cha, Oleo, St. Thomas, Sister Sadie, Cheese Cake, Soy Califa, Witch Hunt, Speak No Evil, The Sidewinder, Moanin' (its slot went to Along Came Betty), Song for My Father (borderline soul-jazz; Lonely Woman took the slot).",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-13"
+    }
+   ]
   }
  }
 }
