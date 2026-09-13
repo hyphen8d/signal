@@ -814,6 +814,10 @@ export const GENERAL_LINER_FILES = [
 //                      TRADEWINDS' pair is "The bird calls are on the record,
 //                      not outside." and "Second one comes with an umbrella in
 //                      it." -- both hook-then-callsign, no frequency.
+//   after-hours       "Last call was an hour ago. Nobody's leaving.
+//                      AFTER HOURS."  and  "Brushes, a slow ballad, and
+//                      nowhere to be. AFTER HOURS."   (new 2026-09-13,
+//                      written against the transcripts above)
 // 2026-09-02 (audit, L14) -- COUNTS, not paths. This map used to spell out
 // every filename, which restated the rule linerClipPath() owns -- two
 // spellings of one rule is the exact shape of the 2026-08-29 SYNAPSE
@@ -840,6 +844,9 @@ export const STATION_LINER_COUNTS = {
   // ABSENT key means no liners at all (the secret stations' opt-out) while
   // an empty one still hands the station the four generals.
   'neon-stasis': 2,
+  // 2026-09-13 -- AFTER HOURS, rendered with the station. Scripts are in
+  // the transcript block above; hook first, callsign last, no frequency.
+  'after-hours': 2,
   'circuit-crush': 2,
   atomic: 2,
   // 60th pass -- MOMENTUM retired (see the retirement comment above

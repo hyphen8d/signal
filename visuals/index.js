@@ -49,7 +49,7 @@
 
 const V = globalThis.SIGNAL_BUILD ?? ''
 
-const ORDER = ['drift', 'flame', 'breach', 'outrun', 'ripple', 'flowfield', 'bubbletubes', 'boombap', 'dread', 'frost', 'isotope', 'lagoon', 'uprising', 'keep', 'orbit', 'aurora']
+const ORDER = ['drift', 'flame', 'breach', 'outrun', 'ripple', 'flowfield', 'bubbletubes', 'boombap', 'dread', 'frost', 'isotope', 'lagoon', 'uprising', 'keep', 'orbit', 'aurora', 'backroom']
 const mods = await Promise.all(ORDER.map((k) => import(`./${k}.js?v=${V}`)))
 /** key -> effect module, in cycle order. Falls back to DRIFT for any
  *  station whose `visual` doesn't name a built effect (see activeVisualKey). */

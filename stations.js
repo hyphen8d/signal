@@ -2109,6 +2109,107 @@ export const STATIONS = [
       realTrack('ljypVwBF_e8', 'RH Negative', 'Rafael Anton Irisarri'),
       realTrack('nZyYcmK7a0I', 'Forever Ago is Now', 'Rafael Anton Irisarri'),
     ] },
+  // AFTER HOURS (2026-09-13) -- ZM 1200.0. Late-night jazz: the small-group
+  // records that sound like the last set in a half-empty club -- ballads,
+  // modal vamps, brushes on the snare, a horn taking its time.
+  //
+  // 1200 is midnight, and 'Round Midnight is the Monk tune every one of these
+  // players recorded. 1959 was the first pick -- the year of Kind of Blue,
+  // Giant Steps, Mingus Ah Um and Time Out -- and is off the band: ZM runs
+  // 1000-1800. 1200 sits 34 below SYNAPSE and 108 above SLOW ORBIT, clear of
+  // the 12 lint wants either side. It lands as ZM-3, so SYNAPSE, DRIFT MODE,
+  // TRADEWINDS and CIRCUIT CRUSH each move up one preset key, the same
+  // renumbering RISE UP's arrival and DRIFT MODE's return already did.
+  //
+  // LATE NIGHT IS THE FILTER, NOT JAZZ, and the profile says so where
+  // audition.js reads it back: jazz is too wide a word for a lane, so the
+  // test is whether a track belongs at 2am with the chairs going up on the
+  // tables. The boundaries on this dial are SLOW ORBIT (produced downtempo),
+  // TRADEWINDS (exotica, even where the players overlap) and ATOMIC (1950s pop
+  // vocals); nothing else here is jazz at all.
+  //
+  // The ident is up, down, held -- F, A-flat, then a G-flat blue note left
+  // hanging -- a contour no other station uses, played slow. The glyph is a
+  // note; the font has no flat sign. `visual: 'backroom'` is its own from the
+  // first day, the pass after every borrowed effect was replaced.
+  { id: 'after-hours', band: 'zm', freq: 1200.0, callsign: 'AFTER HOURS',
+    tagline: 'the last set, brushes and blue notes',
+    freqNote: "midnight, as in 'Round Midnight",
+    desc: 'Late-night jazz from the small-group records of the late fifties onward: ballads, modal vamps and a horn taking its time, like the last set in a half-empty club.',
+    ident: [349.2, 415.3, 370.0, 370.0],
+    identTempo: 1.3,
+    glyph: '♪',
+    static: 1200,
+    crt: { noise: 0.1, bloomAmt: 1.8, flicker: 0.05 },
+    meter: { spring: 0.35, damping: 0.6, swing: 0.9 },
+    visual: 'backroom',
+    tracks: [
+      // Founding pass, 2026-09-13, in two halves curated in parallel against
+      // disjoint artist lists. This half is Blue Note / Prestige hard bop and
+      // one later player: every title read off the album's Wikipedia
+      // tracklist, every length matched to the original master within 3s,
+      // every id probed OK, embeddable, 100-123 countries.
+      //
+      // TOPIC OVER FAN COPIES, AND THE LICENCE NUMBER WILL ARGUE WITH YOU.
+      // Fan uploads here show 249 countries and outrank the '- Topic' copy in
+      // search, so a shortlist sorted by licence width picks the unofficial
+      // one every time. The official ceiling for this catalogue is ~121-123.
+      // 'Rudy Van Gelder Edition' / 'Remastered' in a Topic title is the SAME
+      // master (lengths agree within 2s); the alternate takes on those
+      // reissues are separate tracklist entries, which is why length and not
+      // title is the check.
+      //
+      // Late night decided the album slots: Moanin' gave up its title track
+      // for Along Came Betty, Song for My Father its title track for Silver's
+      // own Lonely Woman (not Ornette's), and The Sidewinder, St. Thomas and
+      // Soy Califa were passed as burners however canonical.
+      realTrack('AkofGzKRFj4', "I Guess I'll Hang My Tears Out to Dry", 'Dexter Gordon'),
+      realTrack('dpjM7wwSTxI', "Don't Explain", 'Dexter Gordon'),
+      realTrack('6lJeothOwCU', 'Along Came Betty', 'Art Blakey & The Jazz Messengers'),
+      realTrack('UfUIzb4IFgA', 'Soul Station', 'Hank Mobley'),
+      realTrack('-LbQbmd-Oyc', 'I See Your Face Before Me', 'Hank Mobley'),
+      realTrack('uRjshy_n_yE', 'Ceora', 'Lee Morgan'),
+      realTrack('wB4xWjgbGwY', 'I Remember Clifford', 'Lee Morgan'),
+      realTrack('ieaAHwvqljg', 'Peace', 'Horace Silver'),
+      realTrack('fJyq_F0g3KE', 'Lonely Woman', 'Horace Silver'),
+      realTrack('CYg_3pQN-LU', 'Infant Eyes', 'Wayne Shorter'),
+      realTrack('LgaIUqH0w6c', 'Footprints', 'Wayne Shorter'),
+      realTrack('YnKImTAt7kE', "You Don't Know What Love Is", 'Sonny Rollins'),
+      realTrack('mZNEEKtA8hU', 'God Bless the Child', 'Sonny Rollins'),
+      realTrack('F5xhrGqTeos', 'Midnight Blue', 'Kenny Burrell'),
+      realTrack('vgB9BxK70I4', "We'll Be Together Again", 'McCoy Tyner'),
+      // The other half: the 1955-1965 Columbia / Riverside / Impulse! / Verve
+      // core, same bar, 120-249 countries. Here the OFFICIAL ARTIST CHANNELS
+      // (MilesDavisVEVO, John Coltrane, Bill Evans, Chet Baker) carry the album
+      // masters at 247-249 where the Topic copies sit at 120-123 -- the opposite
+      // of the hard-bop half above -- so audition's UNKNOWN-CHANNEL flag is
+      // noise on this catalogue when the length matches.
+      //
+      // Two length traps. Kind of Blue: Wikipedia's 5:27 for Blue in Green is
+      // the original LP time, and every current upload is the pitch-corrected
+      // master ~10s longer, so a strict length match rejects the right take.
+      // Mingus Ah Um: Topic carries BOTH the edited 1959 LP lengths and the
+      // restored reissue; Goodbye Pork Pie Hat here is the 4:48 LP edit.
+      //
+      // Take Five gave its album slot to Strange Meadow Lark, Kind of Blue's to
+      // Blue in Green, Giant Steps' to Naima. The one vocal is Chet Baker's
+      // My Funny Valentine -- the voice played like a horn, as the profile allows.
+      realTrack('Ys9wiGNDCvA', "'Round Midnight", 'Miles Davis'),
+      realTrack('TLDflhhdPCg', 'Blue in Green', 'Miles Davis'),
+      realTrack('oRh0hxV1_SU', 'Say It (Over and Over Again)', 'John Coltrane'),
+      realTrack('bPAC6zt_1ZM', 'Naima', 'John Coltrane'),
+      realTrack('EpVXH3Vm2wg', 'My Foolish Heart', 'Bill Evans'),
+      realTrack('UOfwwwQUHjg', 'Young and Foolish', 'Bill Evans'),
+      realTrack('6haQ1gJa644', 'Ruby, My Dear', 'Thelonious Monk'),
+      realTrack('s569_FEcwAQ', 'Pannonica', 'Thelonious Monk'),
+      realTrack('EssmF0evMlk', 'Alone Together', 'Chet Baker'),
+      realTrack('ENFGUo_Nfso', 'My Funny Valentine', 'Chet Baker'),
+      realTrack('CWWO_VcdnHY', 'Goodbye Pork Pie Hat', 'Charles Mingus'),
+      realTrack('XJ5FMEjWr5Q', 'Strange Meadow Lark', 'Dave Brubeck Quartet'),
+      realTrack('CpB7-8SGlJ0', 'Autumn Leaves', 'Cannonball Adderley'),
+      realTrack('GlUA8EHDPZA', "You're Blasé", 'Stan Getz'),
+      realTrack('Z0e2G32f3IU', 'Poinciana', 'Ahmad Jamal'),
+    ] },
 ]
 
 // Preset-key ordering (17th pass -- presets needed to match the tuning
