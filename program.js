@@ -3206,8 +3206,9 @@ export default {
       if (e.key === 'ArrowRight') { if (!this.stepGuidePage(s, 1)) this.closeGuide(s); return }
       if (e.key === 'ArrowLeft') { if (!this.stepGuidePage(s, -1)) this.closeGuide(s); return }
       // 2026-09-12 (audit, H2) -- bounded by the band's own count. The
-      // footer says [1-9] JUMP, but YM has 8 public stations and ZM has 6,
-      // and a digit past the end used to set guidePage to a station page
+      // footer says [1-9] JUMP, but a band rarely fills all nine presets
+      // (count them off the roster, not this comment -- it said "ZM has 6"
+      // until AFTER HOURS made it 7 on 2026-09-13), and a digit past the end used to set guidePage to a station page
       // that does not exist: drawGuidePageStation() then read `.glyph` off
       // undefined and threw out of the key handler, with guidePage left
       // past the last page. A digit with no station behind it now falls

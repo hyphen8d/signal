@@ -13,8 +13,9 @@ const { DUCK_TAIL_MS } = await import(`../constants.js?v=${V}`)
 // VOICE PROVENANCE -- what made every mp3 in audio/, and what to match when
 // making another one.
 //
-// EVERY clip is this voice: the network sign-on and welcome lines, all nine
-// station IDs, both per-station and general liner drops, and the retired
+// EVERY clip is this voice: the network sign-on and welcome lines, every
+// station ID (the count here said "nine" long after it stopped being true),
+// both per-station and general liner drops, and the retired
 // ones still sitting on disk unreferenced. Confirmed by the curator
 // 2026-08-29, against the ElevenLabs generation panel for SYNAPSE's ID.
 // Stated as "every" on purpose -- the point of this block is that someone
