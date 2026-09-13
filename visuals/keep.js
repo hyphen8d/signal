@@ -165,7 +165,15 @@ function buildScene(cols) {
       } else {
         kind[i] = ROCK
         ch[i] = c === '#' ? '█' : c === '^' ? '▀' : '▄'
-        attr[i] = DIM
+        // 2026-09-13 (tube check) -- was DIM. On the real CRT the keep was the
+        // brightest thing in the frame by a distance: ~400 full blocks each
+        // light their whole cell, and at beam 150 under THE CRYPT's bloom the
+        // silhouette became a lit slab, the opposite of "mostly dark sky and
+        // silhouette". FAINT (100) is the fill tier the engine keeps for
+        // exactly this, and it gives the torchlit windows real contrast.
+        // The glyph stays '█': the battlement's merlon-gap rhythm is what
+        // the tests read back, and it is what makes it a castle.
+        attr[i] = FAINT
       }
     }
   })
@@ -186,8 +194,12 @@ function buildScene(cols) {
       const i = y * cols + x
       kind[i] = ROCK
       const edge = x === l || x === r
-      ch[i] = edge ? '▄' : hash2(x, y * 5) > 0.82 ? '▓' : '█'
-      attr[i] = DIM
+      // 2026-09-13 (tube check) -- the crag was '█' with '▓' speckle at DIM,
+      // and it glared for the same reason as the keep above. Inverted: '▓'
+      // with '█' speckle, at FAINT, so the rock sits a step darker than the
+      // masonry and the castle still reads as standing ON it.
+      ch[i] = edge ? '▄' : hash2(x, y * 5) > 0.82 ? '█' : '▓'
+      attr[i] = FAINT
     }
   }
 

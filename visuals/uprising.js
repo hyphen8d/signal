@@ -275,7 +275,13 @@ export default {
     // shoulders. Individual 3-wide bodies at a jittered 3-column step left a
     // hole straight down to the floor wherever two neighbours jittered apart;
     // a room has no gaps at waist height, only at head height.
-    for (let y = BACK_HEAD + 3; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) term.put(x, y, '█', FAINT)
+    // 2026-09-13 (tube check) -- was '█' at FAINT, and on the real CRT that
+    // floor was the brightest thing in the frame: a full block lights every
+    // pixel of its cell, so even beam level 100 blooms into a slab across
+    // five rows and the heads read as holes in it. Coverage, not tier, is the
+    // lever -- '▒' lights about half the cell and the room reads as a dark
+    // mass again. The headless text grid cannot show this; only the shader can.
+    for (let y = BACK_HEAD + 3; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) term.put(x, y, '▒', FAINT)
     const put = (x, y, ch, attr) => { if (x >= 0 && x < cols) term.put(x, y, ch, attr) }
     for (let n = 0; n < people.length; n++) {
       const pp = people[n]
@@ -299,11 +305,14 @@ export default {
       // Body: shoulders as lower half-blocks under the head, then solid down
       // to the floor. Neighbours overlap, so below the shoulders it is one
       // mass -- the silhouette that makes the heads read as a crowd.
+      // 2026-09-13 (tube check) -- '▓' rather than '█', for the same bloom
+      // reason as the floor above: a step denser than the floor's '▒', so a
+      // body still reads against the mass, without lighting the whole cell.
       for (let y = hy + 1; y < VIZ_BOT; y++) {
         const sh = y === hy + 1
-        put(cx - 1, y, sh ? '▄' : '█', bodyAttr)
-        put(cx, y, '█', bodyAttr)
-        put(cx + 1, y, sh ? '▄' : '█', bodyAttr)
+        put(cx - 1, y, sh ? '▄' : '▓', bodyAttr)
+        put(cx, y, '▓', bodyAttr)
+        put(cx + 1, y, sh ? '▄' : '▓', bodyAttr)
       }
       // Front rank heads stand in the back rank's bodies; clearing the cells
       // either side is the halo that keeps an `O` from vanishing into `███`.

@@ -1697,6 +1697,14 @@ the test was rewritten to break the guard that actually matters.
 written for 11 effects, and would have silently skipped the last four; it
 now cycles until [V] wraps back to where it started.
 
+- **Checked on the real tube, and two effects changed for it.** Stills through
+  the CRT shader (headless Chrome, swiftshader, frame-counted settle) showed
+  UPRISING's crowd and KEEP's castle as the brightest things on screen --
+  wide runs of full blocks light every pixel of their cells, and even the
+  FAINT and DIM beam levels bloom into slabs. The text-grid tests cannot see
+  this at all. UPRISING's mass moved to shade blocks; KEEP's stone dropped to
+  FAINT and its crag to shade. Coverage, not tier, is the lever for a mass.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
