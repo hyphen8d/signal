@@ -200,8 +200,22 @@ export default {
     // and every [C]. With one config instance, plain setPhosphor() does the
     // right thing: no-op when the tint is already up, tint + persistence
     // clear (the 2026-08-22 afterglow fix) when it actually changes.
-    this._teasing = false
     const name = secretStation ? (secretStation.forcedPhosphor || 'red') : DISPLAY_MODES[this.displayModeIndex].key
+    // 2026-09-13 -- coming off a tease onto anything but a secret station is
+    // the END of a gradual bleed, not a channel change, so it restores the
+    // named tint the way applySecretTease() already does when the dial drifts
+    // out of range: by assignment, which leaves setPhosphor() below with
+    // nothing to change and no persistence clear. Without this, tuning onto
+    // RISE UP flashed the afterglow black every time: 440 is 20 from GREEN
+    // ROOM, inside NEAR_THRESHOLD (24), so the seeking step that lands on it
+    // blends the tint and the lock a frame later saw a fresh array and
+    // cleared. That is also why 'setPhosphor identity' failed ~1 run in 5 --
+    // only when a random boot happened to land on RISE UP. Safe as an
+    // assignment now for the reason the audit note above gives: there is one
+    // config instance, so PHOSPHORS[name] IS the object setPhosphor() compares
+    // against. A secret station's own forced tint stays a hard change.
+    if (this._teasing && !secretStation && s.crt && PHOSPHORS[name]) s.crt.phosphor = PHOSPHORS[name]
+    this._teasing = false
     s.setPhosphor(name)
   },
 

@@ -144,20 +144,33 @@ test('preset sweep locks and the callsign resolves out of noise', async () => {
   } finally { h.shutdown() }
 })
 
-test('setPhosphor identity: same-tint transitions do not clear persistence', async () => {
+test('setPhosphor identity: same-tint transitions do not clear persistence, from every station', async () => {
   // The pre-audit build cleared the persistence buffer on every lock,
   // unlock and colour cycle because three config.js instances made the
   // engine's identity check fail (see main.js).
-  const h = await boot()
-  try {
-    h.powerOn()
-    const base = h.crt.clears
-    h.key('ArrowRight'); h.advance(100)
-    h.key('ArrowLeft'); h.advance(300)
-    assert.equal(h.crt.clears, base, 'seek off + re-lock: no persistence clear')
-    h.key('c'); h.advance(50)
-    assert.equal(h.crt.clears, base + 1, '[C] changes the tint: exactly one clear')
-  } finally { h.shutdown() }
+  //
+  // 2026-09-13 -- this used to run from ONE random boot, and failed about
+  // one run in five. It was never flaky: it failed every single time the
+  // boot landed on RISE UP, and passed every time it did not. RISE UP (440)
+  // sits 20 from GREEN ROOM (420), inside NEAR_THRESHOLD, so the seeking step
+  // that lands back on it blends the tint toward the secret station, and the
+  // lock that follows used to clear the afterglow. A real bug on the set,
+  // reported as noise by a test that sampled one station. So it walks every
+  // public station now: the next one placed near a secret station fails
+  // here on the first run instead of one run in fifteen.
+  const { STATIONS } = await import(`../stations.js?v=phosphor-identity`)
+  for (const st of STATIONS) {
+    const h = await boot({ station: st.id })
+    try {
+      h.powerOn()
+      const base = h.crt.clears
+      h.key('ArrowRight'); h.advance(100)
+      h.key('ArrowLeft'); h.advance(300)
+      assert.equal(h.crt.clears, base, `${st.callsign}: seek off + re-lock: no persistence clear`)
+      h.key('c'); h.advance(50)
+      assert.equal(h.crt.clears, base + 1, `${st.callsign}: [C] changes the tint: exactly one clear`)
+    } finally { h.shutdown() }
+  }
 })
 
 test('visualizer: every effect draws without throwing and exits back to the main screen', async () => {
