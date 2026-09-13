@@ -499,6 +499,19 @@ and pressing the preset you are already on is a no-op flash rather than a
 re-tune — so a hardcoded `h.key('3')` quietly does nothing about one run in
 nine. Ask `otherPreset(h)` for a digit that isn't the current station.
 
+**And the random station is always on YM.** A first visit starts on
+`DEFAULT_BAND`, so every `boot()` that does not pin a station lands on one of
+YM's stations and never on ZM. Measured 2026-09-13: 240 unpinned boots, zero
+on ZM. A scenario whose claim is "any station" has therefore never touched
+half the dial -- the RISE UP phosphor bug read as a 1-in-5 flake for exactly
+this reason. Walk `STATIONS` with `boot({ station })` when the claim is about
+every station, and ask `presetOrderFor(h.program.band)` rather than the flat
+`STATION_PRESET_ORDER` for anything preset-shaped: the flat list's first
+entries are YM's only because YM's frequencies are lower, which is a
+coincidence a ZM boot exposes. A sweep with `DEFAULT_BAND` flipped to ZM in a
+scratch copy found no ZM-only app bug, and two tests (plus `otherPreset`)
+that were indexing the flat list.
+
 `boot({ player: true })` adds a **fake YouTube player** — the real API surface
 is ten methods and three events, so the harness models it rather than stubbing
 it: position runs on the same fake clock, `seekTo`/`pause`/`play` move it, and

@@ -101,8 +101,12 @@ test('a cancelled CRT ramp settles at its resting value instead of stranding crt
   const h = await boot()
   try {
     h.powerOn()
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${globalThis.SIGNAL_BUILD}`)
-    const target = STATION_PRESET_ORDER[1]
+    // 2026-09-13 -- per band, like the preset keys it presses. The flat
+    // STATION_PRESET_ORDER only matches the keys on YM; on a ZM boot already
+    // sitting on ZM preset 2 this pressed '2' anyway, which is a no-op flash
+    // with no lock and no ramp.
+    const { presetOrderFor } = await import(`../stations.js?v=${globalThis.SIGNAL_BUILD}`)
+    const target = presetOrderFor(h.program.band)[1]
     if (h.program.lockedStation === target) { h.key('3') } else { h.key('2') }
     h.advance(340) // preset sweep is 6 x 55ms, then tryLock -> flashFocusSnap ramps
     assert.equal(h.program.mode, 'locked')
@@ -132,11 +136,17 @@ test('preset sweep locks and the callsign resolves out of noise', async () => {
   const h = await boot()
   try {
     h.powerOn()
-    const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${globalThis.SIGNAL_BUILD}`)
-    const idx = h.program.lockedStation === STATION_PRESET_ORDER[3] ? 5 : 4
+    // 2026-09-13 -- the preset keys are per band, so the expected station comes
+    // off THIS band's order. This used to index the flat STATION_PRESET_ORDER,
+    // which only agrees with the keys on YM (its frequencies sort first) --
+    // invisible while an unpinned boot always landed on YM, and wrong the
+    // moment a run booted on ZM: preset 4 there expected a YM station.
+    const { presetOrderFor } = await import(`../stations.js?v=${globalThis.SIGNAL_BUILD}`)
+    const order = presetOrderFor(h.program.band)
+    const idx = h.program.lockedStation === order[3] ? 5 : 4
     h.key(String(idx))
     h.advance(340)
-    assert.equal(h.program.lockedStation, STATION_PRESET_ORDER[idx - 1])
+    assert.equal(h.program.lockedStation, order[idx - 1])
     h.advance(600)
     assert.ok(h.row(9).includes(h.program.lockedStation.callsign))
     assert.ok(h.row(10).includes(h.program.lockedStation.tagline))
@@ -804,9 +814,14 @@ test('a restored session seeds the speaker bus at its saved volume (issue #18)',
  *  The suite has hit this before: see the cancelled-CRT-ramp test's own
  *  `if (h.program.lockedStation === target)` dance. */
 const otherPreset = async (h, avoid = []) => {
-  const { STATION_PRESET_ORDER } = await import(`../stations.js?v=${h.tag}`)
+  // 2026-09-13 -- per band. The digit keys index THIS band's stations, so the
+  // search runs over presetOrderFor(band); the flat STATION_PRESET_ORDER it
+  // used to walk only matches the keys on YM, and on a ZM boot it would hand
+  // back a digit for a YM station -- the silent no-op this helper exists to
+  // prevent, reintroduced one band over.
+  const { presetOrderFor } = await import(`../stations.js?v=${h.tag}`)
   const taken = new Set([h.program.lockedStation, ...avoid])
-  const i = STATION_PRESET_ORDER.findIndex((st) => !taken.has(st))
+  const i = presetOrderFor(h.program.band).findIndex((st) => !taken.has(st))
   return String(i + 1)
 }
 
@@ -1526,7 +1541,14 @@ test('the lite bar stands down too, and its icon stops claiming playback', async
     h.advance(400)
     h.advance(HOLD_MS + 600)
     assert.equal(h.program.breakActive, true, 'test setup: mid-break')
-    const row = h.row(y)
+    // 2026-09-13 -- the bar's row is read again NOW, not reused from before the
+    // break. A title long enough to wrap onto two lines on the 42-column lite
+    // layout ('Give Up the Funk (Tear the Roof off the Sucker)', 47 chars) is
+    // replaced by the one-line STATION BREAK, the box closes up a row, and the
+    // progress bar moves from row 13 to 12 -- so the old row number read the
+    // box's bottom border and failed ~1 run in 10, whenever the random track
+    // happened to wrap. The reflow is correct; the stale row number was not.
+    const row = h.row(h.program._mLayout.npProgress)
     assert.ok(row.includes('-:--/-:--'), `lite bar knows no time: ${row}`)
     assert.ok(!row.includes('\u2588'), `nothing filled: ${row}`)
     assert.ok(!row.includes('>'), `and the icon is not claiming playback: ${row}`)
