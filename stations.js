@@ -2210,6 +2210,112 @@ export const STATIONS = [
       realTrack('GlUA8EHDPZA', "You're Blasé", 'Stan Getz'),
       realTrack('Z0e2G32f3IU', 'Poinciana', 'Ahmad Jamal'),
     ] },
+  // MIRRORBALL (2026-09-13) -- ZM 1054.0. Disco, boogie and funk, 1974-83:
+  // four on the floor, a bass line you can walk on, strings and horns up top,
+  // a band playing it rather than a machine.
+  //
+  // 1054 for the 54 in it -- Studio 54, the door the whole genre queued
+  // outside -- named in the number rather than on the dial, the way 1559 puts
+  // '59 in TRADEWINDS. It sits 23 above THE CRYPT and 38 below SLOW ORBIT,
+  // clear of the 12 lint wants, and lands as ZM-2: SLOW ORBIT, AFTER HOURS,
+  // SYNAPSE, DRIFT MODE, TRADEWINDS and CIRCUIT CRUSH each move up one preset
+  // key. 1440 ('all night long', 1440 minutes) would have moved only two, and
+  // lost the joke.
+  //
+  // THE FLOOR IS THE FILTER, and the profile says so where audition.js reads
+  // it back: a record that gets a room up. The boundaries on this dial are
+  // CITY LIGHTS (city pop shares boogie's DNA), SYNAPSE (the nu-disco and
+  // French-touch revival is modern house) and HACKBACK (take the original,
+  // never the hip-hop record that sampled it). AFTER HOURS holds the slow
+  // end of the same era's records.
+  //
+  // The ident is root, root, octave, fifth -- a disco bass line in four notes,
+  // the '=UD' contour no other station uses, played fast. The glyph is the
+  // sun-with-rays, the font's nearest thing to a ball throwing light.
+  // `visual: 'dancefloor'` is its own from day one.
+  { id: 'mirrorball', band: 'zm', freq: 1054.0, callsign: 'MIRRORBALL',
+    tagline: 'four on the floor, strings to the ceiling',
+    freqNote: '54, the door everyone queued for',
+    desc: 'Disco, boogie and funk from the mid-seventies to the early eighties: four on the floor, a bass line you can walk on, and strings and horns built to get a room up.',
+    ident: [220.0, 220.0, 440.0, 329.6],
+    identTempo: 0.75,
+    glyph: '☼',
+    static: 1500,
+    crt: { noise: 0.12, bloomAmt: 2.1, flicker: 0.06 },
+    meter: { spring: 0.65, damping: 0.35, swing: 1.2 },
+    visual: 'dancefloor',
+    tracks: [
+      // Founding pass, 2026-09-13, in two halves curated in parallel against
+      // disjoint artist lists. This half is disco proper: every title and
+      // length read off the song's Wikipedia entry, every id probed OK,
+      // embeddable, 118-249 countries, and the version named in the notes
+      // below where it is not the album cut.
+      //
+      // LENGTH OVER LABEL, ALWAYS. YouTube's own version labels are wrong often
+      // enough to be useless here: A Taste of Honey's 'Single Version 2' upload
+      // is the 5:37 album cut, TopPop's 'Long Version' of Don't Leave Me This
+      // Way is the radio edit. And official MUSIC VIDEOS are video edits that
+      // match no released version at all (Le Freak 3:39, Mighty Real 3:55,
+      // Let's Groove 3:55) -- take the audio upload.
+      //
+      // THE TOPIC LICENCE TRAP IS WORSE THAN ON ANY OTHER STATION. KC and the
+      // Sunshine Band's Topic uploads play in 3 countries and there is no
+      // shippable copy at all, so the band is absent rather than represented
+      // badly; Chic's Le Freak 7-inch on Topic plays in 1. Upside Down is the
+      // one fan upload: the Topic copy plays in 7 countries and the official
+      // video is a 3:13 edit of nothing, so the fan copy is the only one at a
+      // listed length. It carries the takedown exposure that implies.
+      //
+      // Good Times is Chic's own 12-inch (8:15), the bass line hip-hop took --
+      // the original, per the HACKBACK boundary in the profile.
+      realTrack('7PC-AcrHEKU', 'Le Freak', 'Chic'),
+      realTrack('PP_JBPGkd-Y', 'Good Times', 'Chic'),
+      realTrack('2A8iAGiCWX0', "He's the Greatest Dancer", 'Sister Sledge'),
+      realTrack('6dYWe1c3OyU', 'I Will Survive', 'Gloria Gaynor'),
+      realTrack('c3vtOEiO6TY', 'You Make Me Feel (Mighty Real)', 'Sylvester'),
+      realTrack('pG8TyIEAqps', 'Disco Inferno', 'The Trammps'),
+      realTrack('_93PWvC2_vU', 'Boogie Wonderland', 'Earth, Wind & Fire with The Emotions'),
+      realTrack('8D4hcrkI2xU', "Let's Groove", 'Earth, Wind & Fire'),
+      realTrack('1sqE6P3XyiQ', 'You Should Be Dancing', 'Bee Gees'),
+      realTrack('fI569nw0YUQ', 'Got to Be Real', 'Cheryl Lynn'),
+      realTrack('i2FW1WJc0lg', "Ain't No Stoppin' Us Now", 'McFadden & Whitehead'),
+      realTrack('PhD58dP9kq8', 'Boogie Oogie Oogie', 'A Taste of Honey'),
+      realTrack('rUdw7V-FC_Q', "Don't Leave Me This Way", 'Thelma Houston'),
+      realTrack('dKgLx6WiYKg', 'Forget Me Nots', 'Patrice Rushen'),
+      realTrack('A4-wvmX5Tbk', 'Upside Down', 'Diana Ross'),
+      // The other half: funk and boogie, 1973-1982, same bar, 119-249 countries.
+      // Here the '- Topic' uploads are healthy (119-123) and the decoys are the
+      // artists' own official channels, which carry 'HD Remaster' VIDEO edits
+      // matching no released length (Get Down On It 4:36, I'm Every Woman 3:17).
+      //
+      // Two fan uploads, each the only copy at a listed length: Give Up the
+      // Funk (no Parliament Topic upload ever surfaced in search) and I'm Every
+      // Woman (Chaka Khan's official channel has only the video edits). Four
+      // picks run 4-6s off their listing -- Brick House, Stomp!, More Bounce to
+      // the Ounce, A Night to Remember -- inside what earlier passes accepted,
+      // and worth a listen. Rick James is absent on purpose: he already plays
+      // on GREEN ROOM. Lakeside's Fantastic Voyage was cut at the last step for
+      // a 22-country licence; Love Come Down took the slot, credited as the
+      // 1982 record credits her, which is why Evelyn King appears two ways.
+      //
+      // HACKBACK's boundary held on three records hip-hop flipped: More Bounce
+      // to the Ounce, Give Up the Funk and One Nation are the originals.
+      realTrack('QGKiC2suCHQ', 'Jungle Boogie', 'Kool & the Gang'),
+      realTrack('81wKSt0tkNs', 'Get Down On It', 'Kool & the Gang'),
+      realTrack('I3vFw6mkBIg', 'Shame', "Evelyn 'Champagne' King"),
+      realTrack('CbFiRZM8hhI', 'Love Come Down', 'Evelyn King'),
+      realTrack('_5oGtAKebps', 'Love Rollercoaster', 'Ohio Players'),
+      realTrack('gQw7b489DlE', 'One Nation Under a Groove', 'Funkadelic'),
+      realTrack('DTrMYauvX8M', 'Shake Your Pants', 'Cameo'),
+      realTrack('ZdJmXeod0RE', 'Brick House', 'Commodores'),
+      realTrack('HBi3HQaCTgY', 'Call Me', 'Skyy'),
+      realTrack('tPBDMihPRJA', 'Stomp!', 'The Brothers Johnson'),
+      realTrack('X1ijvN7ADt4', 'More Bounce to the Ounce', 'Zapp'),
+      realTrack('z9FZ0l_P1NE', 'Burn Rubber On Me (Why You Wanna Hurt Me)', 'The Gap Band'),
+      realTrack('gBWH3OWfT2Y', 'Give Up the Funk (Tear the Roof off the Sucker)', 'Parliament'),
+      realTrack('Qwvf2ilsogo', 'A Night to Remember', 'Shalamar'),
+      realTrack('eZ9B8CjIsjU', "I'm Every Woman", 'Chaka Khan'),
+    ] },
 ]
 
 // Preset-key ordering (17th pass -- presets needed to match the tuning

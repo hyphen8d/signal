@@ -1119,6 +1119,175 @@
      "rejectedAt": "2026-09-13"
     }
    ]
+  },
+  "mirrorball": {
+   "callsign": "MIRRORBALL",
+   "genre": "Disco, boogie and funk -- the dance-floor soul of the mid-seventies to early eighties: four on the floor, a bass line you can walk on, strings and horns up top, a band playing it rather than a machine",
+   "eraLane": "1974-1983 is the spine: disco from its Philadelphia and New York peak through boogie's post-disco turn, and the funk bands running alongside it. Earlier funk that fed straight into it (1970-73 James Brown, Sly) is in; the modern nu-disco revival is not",
+   "acceptedArtists": [
+    "Chic",
+    "Donna Summer",
+    "Sister Sledge",
+    "Earth, Wind & Fire",
+    "Kool & the Gang",
+    "Chaka Khan",
+    "Rufus",
+    "Parliament",
+    "Funkadelic",
+    "The Gap Band",
+    "Cameo",
+    "Shalamar",
+    "Evelyn \"Champagne\" King",
+    "Sylvester",
+    "Gloria Gaynor",
+    "The Trammps",
+    "Ohio Players",
+    "Zapp",
+    "Commodores",
+    "Skyy",
+    "The Brothers Johnson",
+    "Cheryl Lynn",
+    "McFadden & Whitehead",
+    "A Taste of Honey",
+    "Thelma Houston",
+    "Patrice Rushen",
+    "Bee Gees",
+    "Diana Ross"
+   ],
+   "constraints": [
+    "THE FLOOR IS THE FILTER. The test is whether a room gets up: disco, boogie and funk with a groove built to dance to. A funk ballad, a slow jam or a quiet-storm cut is off-lane however great the band -- that is the opposite end of the same records, and AFTER HOURS already holds the 2am room.",
+    "THE BOUNDARIES ON THIS DIAL. Not CITY LIGHTS: Japanese city pop shares boogie's DNA and some of its session players, and every city-pop record belongs there. Not SYNAPSE: the nu-disco and French-touch revival (and anything built on a sampled disco loop) is modern house. Not HACKBACK: the golden-age hip-hop that samples these records is its own station, so take the original, never the record that flipped it. Not ATOMIC or TRADEWINDS: pre-1970 soul and lounge are other lanes.",
+    "TAKE THE RECORD PEOPLE DANCED TO, AND SAY WHICH ONE. This catalogue exists as album cuts, 7-inch edits and 12-inch extended mixes of the same title, often on the same channel. Any of the three can ship -- an extended mix is a long track, not an album rip, the way SYNAPSE takes extended mixes -- but match the length to a specific listed version and name it in the notes, because 'the right song at the wrong length' is how the wrong version gets shipped. Later remixes and re-edits (anything with a remixer credit that is not the original producer) are out.",
+    "READ TITLES OFF A REAL LISTING -- the single's or album's Discogs or Wikipedia entry -- never from recall. Disco titles are often longer than the hook everyone remembers ('Ain't No Stoppin' Us Now', 'Boogie Oogie Oogie'), and the credited artist frequently differs from the name people use.",
+    "SPREAD THE ARTISTS AND THE LABELS. Chic, Donna Summer and Earth, Wind & Fire could fill a station on their own; a station that is half three acts reads as a greatest-hits disc. No artist above 2 tracks on the founding pass, and no single album above 1.",
+    "THE DIAL DISPLAYS TITLES IN FULL. Funk and disco titles are frequently double entendres; most read fine and are part of the genre, but a title that reads badly out of context on a public site is the owner's call per candidate, made at proposal time -- the same rule TRADEWINDS and SLOW ORBIT already apply.",
+    "LENGTH OVER LABEL, ALWAYS (founding pass, 2026-09-13). YouTube's version labels are wrong often enough to ignore: A Taste of Honey's 'Single Version 2 / Remastered 1999' is the 5:37 album cut, and TopPop's 'Long Version' of Don't Leave Me This Way is the 3:35 radio edit. Official MUSIC VIDEOS are video edits matching no released version (Le Freak 3:39, Mighty Real 3:55, Upside Down 3:13, Let's Groove 3:55) -- take the audio upload beside them.",
+    "THE TOPIC LICENCE TRAP IS AT ITS WORST HERE. On this catalogue the '- Topic' uploads are often licensed in 1-7 countries (KC and the Sunshine Band 3, Diana Ross 7, Chic's Le Freak 7-inch 1), while RHINO and the artist VEVO channels are near-global. Probe every specific id; a narrow Topic copy is the default, not the exception.",
+    "ON THE FUNK HALF THE DECOYS ARE THE ARTISTS' OWN CHANNELS. Topic uploads for Kool & the Gang, Cameo, Skyy, The Gap Band and Evelyn King sit at a healthy 119-123 countries; the official artist channels carry 'HD Remaster' VIDEO edits that match no released length (Get Down On It 4:36, I'm Every Woman 3:17, Ain't Nobody 3:21). Parliament, Chaka Khan and Rufus Topic uploads never surfaced in search even with 'Topic' in the query -- find those ids another way and probe them directly rather than spending searches.",
+    "RICK JAMES ALREADY PLAYS ON GREEN ROOM (Mary Jane). He is not a second-station artist by default; anyone proposing him here needs the same kind of argument RATM's crossing needed on RISE UP.",
+    "A TITLE OR CREDIT CAN CHANGE BETWEEN PRESSINGS. The Gap Band's single is 'Burn Rubber On Me' on the US 7-inch and 'Burn Rubber' on the album; Evelyn 'Champagne' King is credited 'Evelyn King' by 1982. Credit the specific release shipped, which is why she appears two ways here."
+   ],
+   "rejections": [
+    {
+     "artist": "KC and the Sunshine Band",
+     "track": "That's the Way (I Like It); Get Down Tonight",
+     "reason": "NO SHIPPABLE COPY, so the band is absent from the founding pass rather than represented badly. Both Topic uploads are licensed in 3 countries (yupPvZF6oBw, BXIBEW5MLuU); KCSUNSHINEBANDVEVO turned up only a live cut (CjnuUDoyn54); the rest are fan re-uploads (gFrd3WiOcPc, O0_H3F84Yjk, wKujl5tL9y4). Re-check on a later pass -- licences widen as well as narrow.",
+     "youtubeId": "yupPvZF6oBw",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Donna Summer",
+     "track": "I Feel Love",
+     "reason": "OWNER'S CALL, not probed out. Topic, 3:22, 123 countries -- but 3:22 matches only the 3:20 edit on a 1979 compilation, not the album 5:56, 7-inch 3:46 or 12-inch 8:16, and the VEVO copy (yEbaeLv-aOo, 3:59) matches no listed version. The larger question is the profile's own: an all-synthesiser Moroder record against 'a band playing it rather than a machine'. The most canonical disco record there is; decide the rule before re-proposing it.",
+     "youtubeId": "nTNcCKq6V2c",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Donna Summer",
+     "track": "Hot Stuff (fan uploads)",
+     "reason": "Only fan uploads surfaced (KhcaPNuaJNU 3:52, knmBAKUMPaI 3:55) against the 3:47 radio edit; no official copy found at limit 2. Donna Summer is open for the next pass with a wider search.",
+     "youtubeId": "KhcaPNuaJNU",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Chic",
+     "track": "Le Freak (7-inch / video)",
+     "reason": "Topic 7-inch licensed in 1 country; RHINO's video aXgSHL7efKg runs 3:39 against the listed 3:30 edit. The LP version 7PC-AcrHEKU shipped.",
+     "youtubeId": "IHfsRbUjTXQ",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Gloria Gaynor",
+     "track": "I Will Survive (Topic, wrong length)",
+     "reason": "4:21, matching no listed version; the 3:14 single on GloriaGaynorVEVO shipped.",
+     "youtubeId": "FHhZPp08s74",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Sylvester",
+     "track": "You Make Me Feel (Mighty Real) (video edit)",
+     "reason": "SylvesterVEVO, 3:55 against the 3:35 single -- a video edit. The 6:40 album version shipped; the Topic 2025 remaster MChQ721BxiM (6:39, 121 countries) is a fallback if it goes.",
+     "youtubeId": "gD6cPE2BHic",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "The Trammps",
+     "track": "Disco Inferno (fan re-edit)",
+     "reason": "A fan's video re-edit; the Topic radio edit shipped.",
+     "youtubeId": "u5lSeYd_riw",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Thelma Houston",
+     "track": "Don't Leave Me This Way (mislabelled)",
+     "reason": "TopPop, labelled 'Long Version' but the 3:35 radio edit. The 5:42 album version shipped.",
+     "youtubeId": "8sAbzZjXLy8",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Earth, Wind & Fire",
+     "track": "Let's Groove (video) / Boogie Wonderland (live)",
+     "reason": "The HD video is 3:55 against a 4:02 single; slfL_yWkjm8 is a live Boogie Wonderland. The album versions shipped.",
+     "youtubeId": "Lrle0x_DHBM",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Diana Ross",
+     "track": "Upside Down (official copies)",
+     "reason": "Topic licensed in 7 countries; DianaRossTV Po0BbGMSX4g is a 3:13 edit matching no listed version. The fan upload A4-wvmX5Tbk (4:06, 249 countries) shipped as the only copy at a listed length -- with the takedown exposure that implies. Replace it with an official copy the moment one appears.",
+     "youtubeId": "KhZ9yGu2wog",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Diana Ross",
+     "track": "Love Hangover",
+     "reason": "Passed on THE FLOOR IS THE FILTER, not probed: it opens as a slow ballad before the disco half arrives, and the dial announces it from the first bar.",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Lakeside",
+     "track": "Fantastic Voyage",
+     "reason": "Cut at the last step on licence, not lane: the only copy at the listed album length is Lakeside - Topic at 22 countries -- over the 20 floor, but dead for most of the world. Love Come Down took the slot. Re-probe on a later pass; UnidiscMusic's -1YjmXSyHa8 (3:47) matches no listed version. The original, not Coolio's.",
+     "youtubeId": "jop32UA5y8k",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Official-channel video edits",
+     "reason": "Official 'HD Remaster' / video edits matching no released version: Get Down On It (KoolAndTheGangVEVO, qchPLaiKocI, 4:36), I'm Every Woman (DVDCNmdi7QI, 3:17), Ain't Nobody (BNirQXe8HOA, 3:21), Love Come Down (ASiqxSwHpQ8, 3:33 vs 3:43 7-inch), Call Me (mYpNQXK6lpM, 3:48), Shake Your Pants 'Video Version' (_oS8--aE09M, 4:22).",
+     "youtubeId": "qchPLaiKocI",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Live and TV performances",
+     "reason": "Live cuts beside the studio records in search: Jungle Boogie Soul Train 1974 (-BM5wPOe0xQ), Love Rollercoaster Midnight Special (I7lLwXSqf_M), Brick House live on CommodoresVEVO (KzOJaHHlIcQ), Give Up the Funk Houston 1976 (jJvjWh2Vhu4), Ain't Nobody live (zs1L40pslPw), TopPop TV clips of Burn Rubber (tmcncGirAU4) and Fire (zqsYNc_M988).",
+     "youtubeId": "-BM5wPOe0xQ",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Wrong-length fan and compilation copies",
+     "reason": "One Nation on a second Topic copy at a compilation length (0ACP0RgMcvI, 7:30) and a fan copy 9s short (3WOZwwRH6XU); Burn Rubber fan 5:40 vs 5:30 album (zSsXRWhfN3w); More Bounce fan 5:13 matching nothing (r_IPV2zeDIc); A Night to Remember fan 5:14 (x9IimLb3b2U); Give Up the Funk near-duplicate fan copy (od-5gCO_PGE); Shame fan clip 6:24 (5sYPg32rBzo); full-album uploads of One Nation (GmDNMx9FRgI) and Chaka (MthJ14cbDt0).",
+     "youtubeId": "0ACP0RgMcvI",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Rufus and Chaka Khan",
+     "track": "Ain't Nobody",
+     "reason": "A clean backup (fan channel, 4:41 album version, 247 countries) held for spread: it would be Chaka Khan's second track. Its album is titled 'Stompin' at the Savoy - Live' but the song is a studio side; do not reject it on the title.",
+     "youtubeId": "T_3FY2kEdOI",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Ohio Players",
+     "track": "Fire",
+     "reason": "A clean backup (fan channel, 4:37 vs 4:36, 249 countries) held for spread; Love Rollercoaster is the Ohio Players slot.",
+     "youtubeId": "1xqMY8UAGgg",
+     "rejectedAt": "2026-09-13"
+    }
+   ]
   }
  }
 }

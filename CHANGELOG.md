@@ -1774,6 +1774,44 @@ borrowing an effect and waiting on clips.
   `tests/audition.test.mjs` runs the tool offline and fails on the old
   behaviour.
 
+### MIRRORBALL joins ZM at 1054 (2026-09-13)
+
+A disco, boogie and funk station: the dance-floor soul of 1974-83, four on
+the floor and a band playing it. ZM goes to eight stations and SIGNAL to
+sixteen. Same day-one kit as AFTER HOURS -- its own visualizer, a spoken ID
+and its own liner pair.
+
+- **1054 for the 54 in it** -- Studio 54, named in the number rather than on
+  the dial. It lands as ZM-2, so SLOW ORBIT, AFTER HOURS, SYNAPSE, DRIFT MODE,
+  TRADEWINDS and CIRCUIT CRUSH each move up one preset key.
+- **The floor is the filter.** A record that gets a room up; ballads and slow
+  jams from the same bands are off-lane. Boundaries on this dial: CITY LIGHTS
+  (city pop shares boogie's DNA), SYNAPSE (the nu-disco revival is modern
+  house), HACKBACK (take the original, never the record that sampled it).
+- **30 tracks from 26 acts**, curated in two halves against disjoint lists
+  (disco; funk and boogie). Every id probed OK, embeddable, not age-gated,
+  118-249 countries, every title and length read off a listing, and no act
+  shared with another station -- which is why Rick James, already on GREEN
+  ROOM, is absent. Two calls worth knowing: KC and the Sunshine Band has no
+  shippable upload at all (every official copy plays in 3 countries or
+  fewer), and Lakeside was cut at the last step for a 22-country licence.
+  Three picks are fan uploads, each the only copy at a released length.
+  Donna Summer's I Feel Love is left as the owner's call: the station's
+  own rule says a band, not a machine.
+- **DANCEFLOOR**, its visualizer: a mirror ball throwing one rotation of light spots across the
+  back wall and a perspective floor whose lit tiles step on every kick, in
+  time with or without a live tap. The floor is grid lines around dark tiles
+  with lit tiles in light shade, the ball is facets and an outline, and a
+  test caps full blocks at 1% and BRIGHT at 16 cells a frame -- the glare
+  lesson from UPRISING and KEEP, built in before anything was drawn.
+- **The ident is root, root, octave, fifth** -- a disco bass line, the one
+  contour ('=UD') no other station uses. The glyph is the sun-with-rays.
+- **Voice:** "MIRRORBALL." plus "The ball's still turning. So is everybody
+  under it." and "Nobody sits this one out." Both ID takes came back at
+  -8.2dB after padding, 0.2dB under the ID band's floor, identically -- the
+  voice's natural level on a soft word -- and the second was kept rather than
+  spending more renders on an inaudible difference.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

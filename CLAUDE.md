@@ -18,7 +18,7 @@ Map of this file (45KB — jump, don't scroll):
 ## What this is
 
 SIGNAL — a CRT/terminal internet-radio web toy. A tuning-dial receiver rendered
-entirely through a text grid, playing real YouTube tracks from 15 curated
+entirely through a text grid, playing real YouTube tracks from 16 curated
 stations across two bands. Read `README.md` first: it carries the product
 intent, the controls reference, and the content-ops rules that constrain what
 may be added.
@@ -631,6 +631,10 @@ Baker's *My Funny Valentine* — so at best 1/30 of the station can ever match,
 and `[L]` there is `NO LYRICS AVAILABLE` on 29 tracks in 30. The next audit
 will land lower than 53% for that reason alone. Exclude it with the four
 ambient stations above when comparing against earlier runs.
+MIRRORBALL (same day) pushes the other way: disco, boogie and funk are sung
+almost throughout, so it should match well above the roster average. The two
+roughly offset on the headline, which is exactly why the headline alone says
+nothing -- compare per station.
 
 Three things that look optional and are not:
 

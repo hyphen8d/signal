@@ -1,6 +1,6 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 15 stations, 630 tracks total.
+Generated from stations.js. 16 stations, 660 tracks total.
 
 # YM band
 
@@ -434,7 +434,7 @@ Tracks (50):
 
 # ZM band
 
-7 stations, 276 tracks. Its own dial, its own `1`-`9` presets.
+8 stations, 306 tracks. Its own dial, its own `1`-`9` presets.
 
 ## THE CRYPT -- 1031.0
 
@@ -476,6 +476,45 @@ Tracks (32):
 30. **Moss Shod Battlements** -- Fief  ([youtu.be/KLDjf0kuHF8](https://youtu.be/KLDjf0kuHF8))
 31. **The Knight of the Elves Blows His Horn** -- Fief  ([youtu.be/O-fowRk_8Hw](https://youtu.be/O-fowRk_8Hw))
 32. **Thorngrove** -- Old Tower  ([youtu.be/fgcAelgqRR8](https://youtu.be/fgcAelgqRR8))
+
+## MIRRORBALL -- 1054.0
+
+*four on the floor, strings to the ceiling*
+
+Ident tones (Hz): 220, 220, 440, 329.6
+
+Tracks (30):
+
+1. **Le Freak** -- Chic  ([youtu.be/7PC-AcrHEKU](https://youtu.be/7PC-AcrHEKU))
+2. **Good Times** -- Chic  ([youtu.be/PP_JBPGkd-Y](https://youtu.be/PP_JBPGkd-Y))
+3. **He's the Greatest Dancer** -- Sister Sledge  ([youtu.be/2A8iAGiCWX0](https://youtu.be/2A8iAGiCWX0))
+4. **I Will Survive** -- Gloria Gaynor  ([youtu.be/6dYWe1c3OyU](https://youtu.be/6dYWe1c3OyU))
+5. **You Make Me Feel (Mighty Real)** -- Sylvester  ([youtu.be/c3vtOEiO6TY](https://youtu.be/c3vtOEiO6TY))
+6. **Disco Inferno** -- The Trammps  ([youtu.be/pG8TyIEAqps](https://youtu.be/pG8TyIEAqps))
+7. **Boogie Wonderland** -- Earth, Wind & Fire with The Emotions  ([youtu.be/_93PWvC2_vU](https://youtu.be/_93PWvC2_vU))
+8. **Let's Groove** -- Earth, Wind & Fire  ([youtu.be/8D4hcrkI2xU](https://youtu.be/8D4hcrkI2xU))
+9. **You Should Be Dancing** -- Bee Gees  ([youtu.be/1sqE6P3XyiQ](https://youtu.be/1sqE6P3XyiQ))
+10. **Got to Be Real** -- Cheryl Lynn  ([youtu.be/fI569nw0YUQ](https://youtu.be/fI569nw0YUQ))
+11. **Ain't No Stoppin' Us Now** -- McFadden & Whitehead  ([youtu.be/i2FW1WJc0lg](https://youtu.be/i2FW1WJc0lg))
+12. **Boogie Oogie Oogie** -- A Taste of Honey  ([youtu.be/PhD58dP9kq8](https://youtu.be/PhD58dP9kq8))
+13. **Don't Leave Me This Way** -- Thelma Houston  ([youtu.be/rUdw7V-FC_Q](https://youtu.be/rUdw7V-FC_Q))
+14. **Forget Me Nots** -- Patrice Rushen  ([youtu.be/dKgLx6WiYKg](https://youtu.be/dKgLx6WiYKg))
+15. **Upside Down** -- Diana Ross  ([youtu.be/A4-wvmX5Tbk](https://youtu.be/A4-wvmX5Tbk))
+16. **Jungle Boogie** -- Kool & the Gang  ([youtu.be/QGKiC2suCHQ](https://youtu.be/QGKiC2suCHQ))
+17. **Get Down On It** -- Kool & the Gang  ([youtu.be/81wKSt0tkNs](https://youtu.be/81wKSt0tkNs))
+18. **Shame** -- Evelyn 'Champagne' King  ([youtu.be/I3vFw6mkBIg](https://youtu.be/I3vFw6mkBIg))
+19. **Love Come Down** -- Evelyn King  ([youtu.be/CbFiRZM8hhI](https://youtu.be/CbFiRZM8hhI))
+20. **Love Rollercoaster** -- Ohio Players  ([youtu.be/_5oGtAKebps](https://youtu.be/_5oGtAKebps))
+21. **One Nation Under a Groove** -- Funkadelic  ([youtu.be/gQw7b489DlE](https://youtu.be/gQw7b489DlE))
+22. **Shake Your Pants** -- Cameo  ([youtu.be/DTrMYauvX8M](https://youtu.be/DTrMYauvX8M))
+23. **Brick House** -- Commodores  ([youtu.be/ZdJmXeod0RE](https://youtu.be/ZdJmXeod0RE))
+24. **Call Me** -- Skyy  ([youtu.be/HBi3HQaCTgY](https://youtu.be/HBi3HQaCTgY))
+25. **Stomp!** -- The Brothers Johnson  ([youtu.be/tPBDMihPRJA](https://youtu.be/tPBDMihPRJA))
+26. **More Bounce to the Ounce** -- Zapp  ([youtu.be/X1ijvN7ADt4](https://youtu.be/X1ijvN7ADt4))
+27. **Burn Rubber On Me (Why You Wanna Hurt Me)** -- The Gap Band  ([youtu.be/z9FZ0l_P1NE](https://youtu.be/z9FZ0l_P1NE))
+28. **Give Up the Funk (Tear the Roof off the Sucker)** -- Parliament  ([youtu.be/gBWH3OWfT2Y](https://youtu.be/gBWH3OWfT2Y))
+29. **A Night to Remember** -- Shalamar  ([youtu.be/Qwvf2ilsogo](https://youtu.be/Qwvf2ilsogo))
+30. **I'm Every Woman** -- Chaka Khan  ([youtu.be/eZ9B8CjIsjU](https://youtu.be/eZ9B8CjIsjU))
 
 ## SLOW ORBIT -- 1092.0
 

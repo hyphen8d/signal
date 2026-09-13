@@ -58,12 +58,13 @@ body:
         - YM-7 CITY LIGHTS -- tokyo nights, city pop dreams
         - YM-8 HACKBACK -- golden age hip-hop, coast to coast legends
         - ZM-1 THE CRYPT -- a ruin, a keep, a tape left running
-        - ZM-2 SLOW ORBIT -- downtempo grooves, no hurry at all
-        - ZM-3 AFTER HOURS -- the last set, brushes and blue notes
-        - ZM-4 SYNAPSE -- shifting the plates of the underground
-        - ZM-5 DRIFT MODE -- fade to black, ambient descent
-        - ZM-6 TRADEWINDS -- vintage island rhythms, cocktail in hand
-        - ZM-7 CIRCUIT CRUSH -- analog glow, the long drive home
+        - ZM-2 MIRRORBALL -- four on the floor, strings to the ceiling
+        - ZM-3 SLOW ORBIT -- downtempo grooves, no hurry at all
+        - ZM-4 AFTER HOURS -- the last set, brushes and blue notes
+        - ZM-5 SYNAPSE -- shifting the plates of the underground
+        - ZM-6 DRIFT MODE -- fade to black, ambient descent
+        - ZM-7 TRADEWINDS -- vintage island rhythms, cocktail in hand
+        - ZM-8 CIRCUIT CRUSH -- analog glow, the long drive home
         - A new station
     validations:
       required: true
