@@ -360,7 +360,9 @@ export default {
     // station that carries it should thump. Written for DRIFT MODE and
     // inherited by NEON STASIS on 2026-08-30, where it is if anything more
     // true -- mallsoft has even less business thumping than ambient did.
-    if (this._au && key !== 'drift' && this._au.onset && this._au.bass > 0.55 &&
+    // 2026-09-13 -- AURORA joins DRIFT here: DRIFT MODE's own effect, and
+    // the station this exclusion was first written for, still must not thump.
+    if (this._au && key !== 'drift' && key !== 'aurora' && this._au.onset && this._au.bass > 0.55 &&
         Date.now() - this._auBloomAt > 1200) {
       this._auBloomAt = Date.now()
       pulseBloom(s, 0.16, 110)

@@ -133,13 +133,16 @@ things easy to miss from a screenshot alone:
   and decay for COLD WAVE, a field of drifting isotope sources for ATOMIC,
   a synthwave sun-and-grid drive (with roadside palm trees and a distant
   skyline) for CIRCUIT CRUSH, a boombox with sound rings, a VU bank and an
-  LED ladder for HACKBACK — each one built from the station's own
-  identity, not a generic spectrum analyzer wearing nine different colors.
+  LED ladder for HACKBACK, a moonlit lagoon with tiki torches for
+  TRADEWINDS, a ruined keep in the mist for THE CRYPT, a planet with a
+  station going round it for SLOW ORBIT, northern lights over a frozen lake
+  for DRIFT MODE — each one built from the station's own identity, not a
+  generic spectrum analyzer wearing a different color per station.
 - **The meters and visualizers react to the actual music.** With the audio
   tap live (see "The live audio tap" below), the VU/EQ/FLD readouts and
   every visualizer follow the real signal: the flame flares on bass hits,
-  COLD WAVE's grid nodes ignite on the beat, OUTRUN's road drives at the
-  track's intensity, and HACKBACK's boombox fires a ring on every real
+  COLD WAVE's grid nodes ignite on the beat, RISE UP's crowd surges across
+  the room on the kick, OUTRUN's road drives at the track's intensity, and HACKBACK's boombox fires a ring on every real
   onset. Each effect keeps its own identity — the music modulates the
   process, it never replaces it — and without the tap everything falls
   back to the synthetic motion it always had.
