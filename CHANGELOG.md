@@ -1865,6 +1865,36 @@ and its own liner pair.
   the sweep seeds, so its control and pressed runs still land on the same
   station.
 
+### The three thinnest stations grow (2026-09-13)
+
+NEON STASIS, AFTER HOURS and MIRRORBALL each started at 30 tracks, the
+smallest on the dial. Each gained ten, to 40, taking the public dial from 660 to 690
+  tracks and the smallest station up to 32. Twenty-eight of the thirty tracks
+  are from artists new to their station.
+
+- **NEON STASIS** -- 30 -> 40 from four artists new to the station -- Groceries Store,
+  the founding brief's other artist, finally found by searching its hangul
+  credit; Hantasi's Vacant Places and PowerPCME's Kmart 1989-1992, the oldest
+  core mallsoft on the dial; and Luxury Elite. One backup waits on the owner:
+  モールFUTURE/PAST's honest romanisation has a character the font cannot draw.
+- **AFTER HOURS** -- 30 -> 40, all ten from players new to the station (Red Garland, Sonny Clark,
+  Kenny Dorham, Paul Desmond, Ben Webster, Coleman Hawkins, Wes Montgomery,
+  Art Farmer, Keith Jarrett, Joe Henderson), so it now reads as 29 voices with
+  no artist above two. The licence rules held with a footnote: Moodsville and
+  New Jazz Topic copies came back at 62 and 74 countries, so no label has a
+  number to assume. La Mesha is now the Topic master rather than a fan copy.
+- **MIRRORBALL** -- 30 -> 40: eight acts new to the station (Heatwave, The Jacksons, Lipps
+  Inc., The O'Jays, Candi Staton, Vicki Sue Robinson, Rose Royce, Dan Hartman)
+  plus the two backups the founding pass held, Ain't Nobody and Fire. The
+  licence pattern flips for Sony/Legacy acts, whose VEVO (Audio) uploads reach
+  249 countries where Topic sits at 76; Candi Staton ships from her own
+  channel over a fan copy, on length over label, to keep fan-channel exposure
+  down.
+- Every id probed OK, embeddable, not age-gated, and absent from the rest of
+  the roster; every title read off a real listing. Rejections and learnings
+  are in each station's profile. Donna Summer's I Feel Love and Bill Evans'
+  Peace Piece remain the owner's call, as recorded.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

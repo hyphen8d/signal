@@ -159,15 +159,59 @@
    "callsign": "NEON STASIS",
    "genre": "Mallsoft -- the vaporwave subgenre that scores an empty shopping centre: muzak, lounge and smooth-jazz sources slowed, drowned in hall reverb and mixed as if heard from the far end of a food court",
    "eraLane": "Releases are roughly 2011-present; the SOURCE material they slow down is 70s-90s muzak, lounge, smooth jazz and shopping-centre PA. Both halves matter -- a modern track with no retail-nostalgia source is the wrong lane.",
-   "acceptedArtists": [],
+   "acceptedArtists": [
+    "Groceries Store",
+    "Hantasi",
+    "PowerPCME",
+    "Luxury Elite"
+   ],
    "constraints": [
     "SEARCH BY TRACK TITLE, NEVER BY ALBUM TITLE. Measured on the founding pass, 2026-08-30: three album-name searches (Palm Mall, Hologram Plaza, Yes We're Open) returned 18 candidates of which 18 were full-album uploads, 30 to 90 minutes long, and not one was usable. The same run's track-name searches returned 3-to-5-minute singles almost exclusively. This genre's canonical records are Bandcamp-native and reach YouTube mainly as one-file album rips, so the album titles a curator naturally reaches for are exactly the queries that return nothing usable.",
     "THE FONT CANNOT DRAW THIS GENRE'S NAMES, and it fails quietly. fonts/ter-u16n.bdf carries 891 glyphs, Latin-1 and box-drawing, with NO CJK at all; src/term.js falls back to '?' (glyph 63) for anything missing. So '猫 シ Corp.' draws on the dial as '?? Corp.' and '식료품groceries' as a row of question marks. Romanise to the artist's own Latin name -- Cat System Corp (per catsystemcorp.bandcamp.com), Groceries Store (per groceries-store.bandcamp.com), ESPRIT, Telepath. This constraint is unique to this station: no other lane on the roster is named predominantly in katakana and hangul. And it is not only CJK: FULLWIDTH LATIN is missing too, which this aesthetic uses constantly -- 'ＴＥＭＰＬＥ' (U+FF34...) is as unrenderable as the katakana beside it and looks like ordinary capitals in a search result, so it is the easier of the two to paste in by accident. Convert fullwidth to ASCII and romanise the rest.",
     "LONG IS FINE; AN ALBUM IS NOT. Inherited from DRIFT MODE, whose roster carried Basinski at 62:11 and Eno at 55:04 -- the objection to a 45-minute upload here is never its length, it is that the file holds a dozen distinct works while the dial announces one title. A genuinely continuous single piece of any length is welcome. Apply the test to the FILE, not the runtime.",
     "Prefer '- Topic' and VEVO where they exist, which is less hopeless than it looks for a Bandcamp genre: Windows 96 - Topic, Home - Topic, Skylar Spence - Topic, ddsvevo and YungBaeVEVO were all found on the founding pass. Everything else in this lane comes off fan, archive and reupload channels (Vapor Memory, Artzie Music, Geometric Lullaby, Electronic Gems), which is normal here the way it is for CITY LIGHTS -- but a sample-based genre on a reupload channel carries real takedown exposure, so tools/check-roster.mjs matters more for this station than for most.",
-    "Mallsoft is the target, not vaporwave at large. Future funk (upbeat, disco-chopped, Yung Bae's later catalogue) is the wrong feel outright. Vaportrap and the harder end of the aesthetic (Blank Banshee) sit in the lane's history and are admissible sparingly. The test is the one the two founding examples pass: does it sound like it is playing four storeys away in a building that is about to close?"
+    "Mallsoft is the target, not vaporwave at large. Future funk (upbeat, disco-chopped, Yung Bae's later catalogue) is the wrong feel outright. Vaportrap and the harder end of the aesthetic (Blank Banshee) sit in the lane's history and are admissible sparingly. The test is the one the two founding examples pass: does it sound like it is playing four storeys away in a building that is about to close?",
+    "SEARCH A HANGUL OR KATAKANA CREDIT WHEN THE ENGLISH NAME FINDS NOTHING (growth pass, 2026-09-13). Groceries Store's Topic channel is credited 식료품groceries; 'groceries <title>' returns grocery-budgeting videos, and only the hangul credit plus an exact title reaches the real uploads. Display the romanised name as before -- the credit is for searching, not for the dial.",
+    "A KATAKANA LOANWORD IS THE ROMANISATION TRAP A SECOND TIME. モール looks as if it romanises cleanly to 'Mall', but the honest romanisation is 'Mōru' and the ō is outside the font (GosutoMall's trap). Translating it to English instead is a mis-credit on the Telepath precedent. Such an artist is the owner's call per name, not a spelling fix.",
+    "WHERE THE SINGLE TRACKS ARE: PowerPCME's Kmart 1989-1992 (Topic) and Hantasi's Vacant Places (2012, a reupload channel) are the easiest core mallsoft to find as single tracks, and both predate Palm Mall. Luxury Elite and Groceries Store have Topic channels too."
    ],
-   "rejections": []
+   "rejections": [
+    {
+     "artist": "モールFUTURE/PAST",
+     "track": "Skyline Airways",
+     "reason": "OWNER'S CALL on the artist credit, not the track: clean (happsider, 2:49, 249 countries, Welcome to Crystal Valley Mall, DMT Tapes FL). The honest romanisation 'Mōru Future/Past' cannot be drawn by the font, and 'Mall Future/Past' would be a translation, not the artist's own spelling. Alternate: pjMZRkZi3NI 'Through The Revolving Doors' (2:34, same channel).",
+     "youtubeId": "0-3XAMIMwTw",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Full-album and discography uploads",
+     "reason": "Album rips surfaced by track searches: kCTpu9ywCII (HOUSEWARES 2021 remaster, 32 min), fKv1-5dy3ng (Groceries Store's whole discography, 2h14m), S-57xAiwmpk (a Hantasi album, 53 min), qL2mgwTwX-I and hcsVmuxfZAM (Welcome to Crystal Valley Mall, 26 min), sBxlk8FBFBY (Kmart 1989-1992, 47 min), 7N6nt_9tLn8 (a 26-minute live set).",
+     "youtubeId": "kCTpu9ywCII",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Clips, remixes and reuploads",
+     "reason": "8KlA76TjaRE (a 45-second Rubbermaid clip), x78Dj974_GI (a 31-second VRChat clip), Tz8JTgjLv8Q (a Bubble Keiki remix of Crystal, not the original), Ae-fgx27G34 (a You Are Here reupload with no Topic copy found).",
+     "youtubeId": "8KlA76TjaRE",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Passed for lane",
+     "reason": "Not mallsoft, not probed: Golden Living Room (dreampunk/new age per its own tags), Eco Virtual (weathersoft -- a clean backup, wy2Bu-iUXNY Bermuda High, 249), Cat System Corp's News at 11 Weather Channel tracks (signalwave; could fill that artist's one open slot on a lane call), New Dreams Ltd's Initiation Tape (eccojam vaporwave).",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Passed for the font or the dial",
+     "reason": "Groceries Store's hangul-titled tracks (e.g. 지하철Morning Commute); Hantasi's Kingdom Mall (15-17 minute tracks under long scripture titles); MindSpring Memories (titles in Arabic and emoticons).",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-13"
+    }
+   ]
   },
   "cold-wave": {
    "callsign": "COLD WAVE",
@@ -1014,7 +1058,18 @@
     "Sonny Rollins",
     "Ahmad Jamal",
     "Kenny Burrell",
-    "Stan Getz"
+    "Stan Getz",
+    "Red Garland",
+    "Sonny Clark",
+    "Kenny Dorham",
+    "Paul Desmond",
+    "Ben Webster",
+    "Coleman Hawkins",
+    "Wes Montgomery",
+    "Art Farmer",
+    "Keith Jarrett",
+    "Joe Henderson",
+    "McCoy Tyner"
    ],
    "constraints": [
     "LATE NIGHT IS THE FILTER, NOT JAZZ. Jazz is too wide a word for a lane: the test is whether the track belongs at 2am in a room with the chairs going up on the tables. Ballads, modal vamps, blues at walking tempo and mid-tempo hard bop are in; up-tempo bebop burners, big-band shouts and anything that makes the room stand up are out even when they are canonical. Take the ballad off the famous record over the famous track off it when they differ.",
@@ -1024,7 +1079,9 @@
     "READ TITLES OFF A REAL LISTING -- the album's tracklist on Wikipedia or Discogs -- never from recall. Standards are recorded by everyone, so a remembered title plus an artist is exactly how a different artist's version, or a different decade's, gets shipped under the right name.",
     "SPREAD THE ARTISTS AND THE LABELS. The canon is dominated by a handful of names; a station that is half Miles and Coltrane reads as a playlist rather than a room. No artist above 3 tracks on the founding pass, and no single album above 2.",
     "THE LICENCE NUMBER POINTS DIFFERENT WAYS ON THE TWO HALVES OF THIS CATALOGUE (founding pass, 2026-09-13). Blue Note / Prestige: the widest official copy is the '- Topic' upload at ~121-123 countries, and fan re-uploads show 249 and OUTRANK it in search -- prefer Topic. Columbia / Riverside / Impulse!: the OFFICIAL ARTIST CHANNELS (MilesDavisVEVO, John Coltrane, Bill Evans, Chet Baker) carry the masters at 247-249 while Topic sits at 120-123 -- prefer the official channel, and ignore audition's UNKNOWN-CHANNEL flag when the length matches. Never sort a shortlist by licence width alone.",
-    "LENGTH IS THE CHECK, AND TWO RECORDS BREAK A STRICT MATCH. 'Rudy Van Gelder Edition' / 'Remastered' in a Topic title is the same master (lengths agree within 2s); the alternate takes on those reissues are separate tracklist entries. Kind of Blue's current uploads are the pitch-corrected master, ~10s longer than Wikipedia's LP times. Mingus Ah Um exists at both the edited 1959 LP lengths and the restored reissue lengths -- the roster took the LP edit."
+    "LENGTH IS THE CHECK, AND TWO RECORDS BREAK A STRICT MATCH. 'Rudy Van Gelder Edition' / 'Remastered' in a Topic title is the same master (lengths agree within 2s); the alternate takes on those reissues are separate tracklist entries. Kind of Blue's current uploads are the pitch-corrected master, ~10s longer than Wikipedia's LP times. Mingus Ah Um exists at both the edited 1959 LP lengths and the restored reissue lengths -- the roster took the LP edit.",
+    "NO LABEL HAS A LICENCE NUMBER (growth pass, 2026-09-13). The ~123-country Topic ceiling is common, not universal: Moodsville and New Jazz Topic copies came back at 62 and 74 (Coleman Hawkins, Kenny Dorham), while a Verve Topic copy (Ben Webster) reached 249 and the official artist channels carried Riverside and Prestige masters at 247-249 (Wes Montgomery, Red Garland). Probe the specific id every time.",
+    "NEXT PASS STARTS HERE: Gerry Mulligan, \"Night Lights\" (Night Lights, 1963, Philips; 4:53 listed) is squarely in lane and was never probed -- its search dropped on the network twice. Oscar Peterson Trio \"Night Train\" (NfdNjxe1c8I, Topic, 4:53, 123) is a clean backup, held only for being the least hushed candidate."
    ],
    "rejections": [
     {
@@ -1117,6 +1174,55 @@
      "reason": "Passed on the late-night filter, not probed: Giant Steps, Countdown, Blue Rondo a la Turk, Take Five (its album slot went to the ballad), Better Git It in Your Soul, Boogie Stop Shuffle, Ah-Leu-Cha, Oleo, St. Thomas, Sister Sadie, Cheese Cake, Soy Califa, Witch Hunt, Speak No Evil, The Sidewinder, Moanin' (its slot went to Along Came Betty), Song for My Father (borderline soul-jazz; Lonely Woman took the slot).",
      "youtubeId": null,
      "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Joe Henderson",
+     "track": "La Mesha (fan copy)",
+     "reason": "JazzTuna fan upload at 249 countries that outranks the Topic master in search; the Topic copy Ns4p9lVGYjc shipped, per the Blue Note rule. lG7Hlz38wCk (Release - Topic, 6:33) is a different recording, not Page One's 9:10.",
+     "youtubeId": "cWZAH5UsoZI",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Art Farmer",
+     "track": "Darn That Dream (other recordings)",
+     "reason": "Topic, 7:09 -- not Modern Art's 3:57; nor is fCcVu-20vaw (4:24). 7mOQxBen6wk (3:59) shipped.",
+     "youtubeId": "CFbAo6nhlb0",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Full-album fan uploads",
+     "reason": "Whole records as one file, surfaced by track searches: ECL_ouklWZQ, QufxKFYOwIg, RZ2fFonzvBY, s97EdCZLvmI, r4pQv8Ynabk.",
+     "youtubeId": "ECL_ouklWZQ",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Ben Webster",
+     "track": "Soulville (vinyl rip)",
+     "reason": "A 45RPM vinyl rip at 7:53 against the 8:03 album master; the Topic copy 1HnT3H8gOT4 shipped.",
+     "youtubeId": "NCJ43YOiUD4",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Coleman Hawkins",
+     "track": "Moonglow (clip / medley)",
+     "reason": "A bassist's channel clip, and Ek7rQL4eT5g is a two-track medley. The Moodsville master g5zq14_58PA shipped.",
+     "youtubeId": "ZW3RVM-eG3w",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Paul Desmond",
+     "track": "Glad to Be Unhappy (transcription)",
+     "reason": "A solo transcription video, not the record.",
+     "youtubeId": "cQ3ov3O9Y3w",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Various",
+     "track": "Too up-tempo for the lane (growth pass)",
+     "reason": "Passed on the late-night filter, not probed: Joe Henderson's Blue Bossa (Page One's slot went to La Mesha), Wes Montgomery's Airegin and Four on Six (his slot went to the ballad), C-Jam Blues, and Oscar Peterson's C Jam Blues and Band Call.",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-13"
     }
    ]
   },
@@ -1152,7 +1258,15 @@
     "Thelma Houston",
     "Patrice Rushen",
     "Bee Gees",
-    "Diana Ross"
+    "Diana Ross",
+    "Heatwave",
+    "The Jacksons",
+    "Lipps Inc.",
+    "The O'Jays",
+    "Candi Staton",
+    "Vicki Sue Robinson",
+    "Rose Royce",
+    "Dan Hartman"
    ],
    "constraints": [
     "THE FLOOR IS THE FILTER. The test is whether a room gets up: disco, boogie and funk with a groove built to dance to. A funk ballad, a slow jam or a quiet-storm cut is off-lane however great the band -- that is the opposite end of the same records, and AFTER HOURS already holds the 2am room.",
@@ -1165,7 +1279,10 @@
     "THE TOPIC LICENCE TRAP IS AT ITS WORST HERE. On this catalogue the '- Topic' uploads are often licensed in 1-7 countries (KC and the Sunshine Band 3, Diana Ross 7, Chic's Le Freak 7-inch 1), while RHINO and the artist VEVO channels are near-global. Probe every specific id; a narrow Topic copy is the default, not the exception.",
     "ON THE FUNK HALF THE DECOYS ARE THE ARTISTS' OWN CHANNELS. Topic uploads for Kool & the Gang, Cameo, Skyy, The Gap Band and Evelyn King sit at a healthy 119-123 countries; the official artist channels carry 'HD Remaster' VIDEO edits that match no released length (Get Down On It 4:36, I'm Every Woman 3:17, Ain't Nobody 3:21). Parliament, Chaka Khan and Rufus Topic uploads never surfaced in search even with 'Topic' in the query -- find those ids another way and probe them directly rather than spending searches.",
     "RICK JAMES ALREADY PLAYS ON GREEN ROOM (Mary Jane). He is not a second-station artist by default; anyone proposing him here needs the same kind of argument RATM's crossing needed on RISE UP.",
-    "A TITLE OR CREDIT CAN CHANGE BETWEEN PRESSINGS. The Gap Band's single is 'Burn Rubber On Me' on the US 7-inch and 'Burn Rubber' on the album; Evelyn 'Champagne' King is credited 'Evelyn King' by 1982. Credit the specific release shipped, which is why she appears two ways here."
+    "A TITLE OR CREDIT CAN CHANGE BETWEEN PRESSINGS. The Gap Band's single is 'Burn Rubber On Me' on the US 7-inch and 'Burn Rubber' on the album; Evelyn 'Champagne' King is credited 'Evelyn King' by 1982. Credit the specific release shipped, which is why she appears two ways here.",
+    "THE LICENCE PATTERN FLIPS FOR SONY / LEGACY ACTS (growth pass, 2026-09-13). The Jacksons, The O'Jays and Vicki Sue Robinson have full-length '(Audio)' uploads on their VEVO channels at 249 countries while The O'Jays' Topic copy is at 76. Search 'Artist - Title (Audio)' before trusting Topic -- but the label is not a length guarantee either: Odyssey's VEVO 'Audio' of Native New Yorker is 4:23 against a 3:29 single and a 5:35 disco version.",
+    "TV CLIPS ARE IN NEARLY EVERY SEARCH. TopPop, Musikladen, Soul Train and American Bandstand performances turned up for most titles, at video lengths matching no release; budget one wasted probe per query.",
+    "NEXT PASS STARTS HERE (lengths already read, never probed): MFSB featuring The Three Degrees, TSOP (The Sound of Philadelphia) -- 3:43 album / 3:29 single / 5:48 12-inch; Peaches & Herb, Shake Your Groove Thing -- 5:45 album / 3:25 7-inch / 6:35 12-inch; Harold Melvin & the Blue Notes, Bad Luck -- 6:29 full / 3:10 single; The Emotions, Best of My Love -- 3:40. Odyssey's Native New Yorker needs a Topic probe."
    ],
    "rejections": [
     {
@@ -1285,6 +1402,69 @@
      "track": "Fire",
      "reason": "A clean backup (fan channel, 4:37 vs 4:36, 249 countries) held for spread; Love Rollercoaster is the Ohio Players slot.",
      "youtubeId": "1xqMY8UAGgg",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Heatwave",
+     "track": "Boogie Nights (video / single)",
+     "reason": "VEVO HD video at 3:18, matching no version; V2C-iHTt_4Q is a Topic 'Single Version' at 3:41 against the listed 3:36. The 5:04 album cut bJ0Rk3piR44 shipped.",
+     "youtubeId": "GTR27qWXGqU",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "The Jacksons",
+     "track": "Shake Your Body (TV / 7-inch)",
+     "reason": "TopPop TV clip at 3:41. MiL3qGoAHL0 is the VEVO 7-inch (3:49 vs 3:47, 249 countries) -- clean, and the swap if a shorter cut is ever wanted; the 8:02 album version shipped.",
+     "youtubeId": "kldVOhKe4rg",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Lipps Inc.",
+     "track": "Funkytown (TV / compilation)",
+     "reason": "Musikladen TV clip at the 2:45 video length; n1W9fa_LITU is a GoldenMusic compilation-channel single at 3:55. The album version on the artist's own channel shipped.",
+     "youtubeId": "uhzy7JaU2Zc",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "The O'Jays",
+     "track": "I Love Music (TV / narrow Topic)",
+     "reason": "Soul Train video at 3:30; tjtWS94pnc8 is Topic in only 76 countries at 3:34. The full-length VEVO copy tGmsFg-oQ6k (249) shipped.",
+     "youtubeId": "TuOnb4rAIgk",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Candi Staton",
+     "track": "Young Hearts Run Free (video edit / fan copy)",
+     "reason": "RHINO's music video at 3:42, a video edit. uwRqITGekpA (AuntieSoul34 fan, 4:09 album version) was the agent's pick; the artist's own channel FRAA-EIM4d0 (3:50 vs the 3:51 single) shipped instead, on length over label, to keep fan-channel exposure down.",
+     "youtubeId": "wddgskIRVeg",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Vicki Sue Robinson",
+     "track": "Turn the Beat Around (TV)",
+     "reason": "American Bandstand 1976 performance, 4:23. The LegacyRecordingsVEVO LP version shipped.",
+     "youtubeId": "IKpBKPaBcJo",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Odyssey",
+     "track": "Native New Yorker",
+     "reason": "No shippable copy this pass: OdysseyVEVO '(Audio)' is 4:23 against a 3:29 single and 5:35 disco version; qA7RgCib8kE is TopPop at 3:26.",
+     "youtubeId": "eZA2nJbxOCo",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Instant Funk",
+     "track": "I Got My Mind Made Up (You Can Get It Girl)",
+     "reason": "No shippable copy: TopPop clip at 2:21; aZcbDESaxhY is a fan 'disco version' at 9:48 against listed 5:17 and 3:20. Also OWNER'S CALL on the subtitle, the one title this pass that might read badly on the dial.",
+     "youtubeId": "WQv6E8acn7o",
+     "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Dan Hartman",
+     "track": "Instant Replay (video)",
+     "reason": "DanHartmanVEVO's official video at 4:00, matching none of 3:25, 5:20 or 8:15; the Topic 12-inch 9C7rHWKc8x0 shipped.",
+     "youtubeId": "jW-OfaiBs9k",
      "rejectedAt": "2026-09-13"
     }
    ]
