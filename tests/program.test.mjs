@@ -199,9 +199,10 @@ test('visualizer: every effect draws without throwing and exits back to the main
       h.key('v') // cycle to the next effect
     }
     assert.equal(new Set(seen).size, seen.length, `each effect visited once before wrapping: ${seen.join(',')}`)
-    // 17 as of BACKROOM (2026-09-13); raise it with each new effect, since a
-    // floor left below the registry size cannot see one being dropped.
-    assert.ok(seen.length >= 17, `cycled through every effect: ${seen.join(',')}`)
+    // 17 as of BACKROOM (2026-09-13), 18 as of DANCEFLOOR (same day); raise it
+    // with each new effect, since a floor left below the registry size cannot
+    // see one being dropped.
+    assert.ok(seen.length >= 18, `cycled through every effect: ${seen.join(',')}`)
     h.key('e')
     assert.equal(h.program.visualizerActive, false)
     h.advance(400)
