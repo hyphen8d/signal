@@ -964,11 +964,15 @@ async function toBand(h, want) {
 }
 
 test('a fresh boot never lands on a station from another band', async () => {
-  // A boot picks a station at RANDOM from the whole roster, which is
-  // deliberate -- it is how the second band gets found without knowing [B]
-  // exists. It used to set only the frequency, so a ZM pick left the dial
-  // showing YM: off-scale frequency, wrong band's guide index, and
-  // nearestStation blind to the station actually locked.
+  // A boot once picked a station at RANDOM from the whole roster and set
+  // only the frequency, so a ZM pick left the dial showing YM: off-scale
+  // frequency, wrong band's guide index, and nearestStation blind to the
+  // station actually locked. Since 2026-08-31 the app picks within the
+  // current band instead (see the random-preset fallback in program.js).
+  //
+  // anyBand: false (2026-09-13) -- this test's subject IS that first-visit
+  // path, so it must not take the harness's both-bands pick, which arrives
+  // through ?station= and would make the assertion pass by construction.
   //
   // Booted repeatedly because the bug was PROBABILISTIC -- with three of ten
   // stations on ZM a single boot missed it seven times in ten, which is
@@ -976,7 +980,7 @@ test('a fresh boot never lands on a station from another band', async () => {
   // rather than as a fault anybody could reproduce.
   const seen = new Set()
   for (let i = 0; i < 12; i++) {
-    const h = await boot({})
+    const h = await boot({ anyBand: false })
     try {
       h.powerOn(); h.advance(1200)
       const st = h.program.lockedStation
@@ -2380,8 +2384,10 @@ test('[K] and [0] answer to the KEYS, not just their methods (2026-09-02 audit, 
     try {
       h.key('k')
       h.advance(300)
-      // The link half is relative in the harness (no location.origin), so
-      // the assertion anchors on the share params rather than a scheme.
+      // The link half is relative on a first-visit boot (no location.origin)
+      // and absolute on the harness both-bands boot, which arrives through
+      // ?station= with a fake origin -- so the assertion anchors on the share
+      // params rather than a scheme, and holds either way.
       assert.ok(written && written.includes('?station='), 'pressing [K] reached the clipboard')
       assert.ok(h.find('COPIED') >= 0, 'and the COPIED flash landed on screen')
     } finally { delete globalThis.navigator }
@@ -2578,7 +2584,8 @@ test('a shared link to a track that has since been dropped still tunes the stati
 
 const eachBand = async (fn) => {
   for (const band of ['ym', 'zm']) {
-    const h = await boot({ player: true })
+    // anyBand: false -- each leg starts on YM and reaches ZM with one [B].
+    const h = await boot({ player: true, anyBand: false })
     try {
       h.powerOn()
       if (band === 'zm') { h.key('b'); h.advance(300); assert.equal(h.program.band, 'zm') }
@@ -2609,7 +2616,8 @@ test('a guide-index digit past the band\'s station count closes the guide instea
 })
 
 test('a dead-video glitch on a ZM station restores the picture to the station\'s baseline, not the off-station degrade (H5)', async () => {
-  const h = await boot({ player: true })
+  // anyBand: false -- one [B] from a YM start is how this reaches ZM.
+  const h = await boot({ player: true, anyBand: false })
   try {
     h.powerOn()
     h.key('b'); h.advance(300)
@@ -2625,7 +2633,8 @@ test('a dead-video glitch on a ZM station restores the picture to the station\'s
 })
 
 test('a secret preset pressed on ZM moves the dial to the band the station lives on (H6)', async () => {
-  const h = await boot({ player: true })
+  // anyBand: false -- one [B] from a YM start is how this reaches ZM.
+  const h = await boot({ player: true, anyBand: false })
   try {
     h.powerOn()
     h.key('b'); h.advance(300); assert.equal(h.program.band, 'zm')

@@ -167,7 +167,9 @@ test('mobile: a station swipe during the held reveal leaves NOW PLAYING blank, n
 })
 
 test('mobile: the narrow guide index keeps a space between a ZM frequency and the callsign (M12)', async () => {
-  const h = await boot({ mobile: true })
+  // anyBand: false -- the two-finger swipe below TOGGLES the band, so this
+  // scenario is "start on YM, swipe to ZM" and has to start on YM.
+  const h = await boot({ mobile: true, anyBand: false })
   try {
     h.advance(600); h.tap(); h.advance(4000)
     h.swipe2(1); h.advance(200)

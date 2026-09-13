@@ -1841,6 +1841,30 @@ and its own liner pair.
   timing: each was a deterministic failure on a boot state the test did not
   control. Measure per state before calling anything intermittent.
 
+### Unpinned test boots now sample both bands (2026-09-13)
+
+- **Every test that boots without naming a station now lands anywhere on the
+  dial.** A real first visit starts on `DEFAULT_BAND` and picks within it --
+  deliberately, per the app's 2026-08-31 note -- so until now the whole suite
+  sampled YM's stations only (240 unpinned boots, zero on ZM), and a bug on
+  ZM could not have shown up. The app is unchanged: `tests/harness.mjs` picks
+  a random public station from the whole roster and hands it over through the
+  existing `?station=` path, which sets the same fields the fallback does and
+  makes the band follow the station.
+- **`anyBand: false` keeps the real first-visit path** for the tests that
+  need it: the one whose subject IS that path ("a fresh boot never lands on a
+  station from another band"), and the ones whose scenario starts on YM and
+  reaches ZM with a single `[B]` or two-finger swipe -- both toggle, so they
+  only mean ZM from YM (`eachBand`, H5, H6, M12).
+- **Measured, not assumed.** 40 unpinned boots now land 21 on YM and 19 on
+  ZM, reaching 15 of the 16 public stations; 12 boots with anyBand: false all
+  land on YM. Four consecutive full-suite runs with boots drawn from both bands
+  passed 400/400 each -- 1,600 test executions, zero failures -- so the opt-outs
+  above caught every scenario that had quietly assumed a YM start.
+- `tools/dead-feedback.mjs` is unaffected: the pick uses `Math.random`, which
+  the sweep seeds, so its control and pressed runs still land on the same
+  station.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
