@@ -55,7 +55,7 @@ function codeFor(key) {
   return key
 }
 
-export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null, game = false } = {}) {
+export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null, game = false, anyBand = true } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
   const store = new Map()
@@ -158,6 +158,27 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
   // power-on. Independent of `station`: the whole point of that link is that
   // it is handed to someone who has never been here, so it has to be
   // exercised with no station named either.
+  // 2026-09-13 -- a boot that names nothing lands on a random public station
+  // from EITHER band. The app itself does not do this, deliberately: a first
+  // visit starts on DEFAULT_BAND (YM) and picks within it (see the random-
+  // preset fallback in program.js init, and its 2026-08-31 note). That left
+  // every unpinned scenario in this suite sampling YM's stations only -- 240
+  // unpinned boots, zero on ZM -- so a bug on half the dial could not show
+  // up here at all, and the RISE UP phosphor bug read as a 1-in-8 flake
+  // because it was one YM station of eight.
+  //
+  // So the harness picks, and hands the pick to the app through the same
+  // ?station= path `station` already uses: it sets the same four fields the
+  // fallback does and makes the band follow the station. `anyBand: false`
+  // keeps the app's own first-visit path -- for the tests whose subject IS
+  // that path, or whose scenario starts on YM and switches with [B]. A saved
+  // session or a ?game=1 link is left alone: those are their own boot paths.
+  // Math.random is the only source, so tools/dead-feedback.mjs's seeded
+  // control and pressed runs still pick the same station.
+  if (!station && !saved && !game && anyBand) {
+    const { STATIONS } = await import(`../stations.js?v=${tag}`)
+    station = STATIONS[Math.floor(Math.random() * STATIONS.length)].id
+  }
   if (station || game) {
     const q = [station && `station=${station}`, station && track && `track=${track}`, game && 'game=1']
       .filter(Boolean).join('&')
