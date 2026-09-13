@@ -1624,6 +1624,42 @@ Engineering, tooling and docs:
   one does, and does not fire PLAYING during an advert hold. Nothing relied
   on the old behaviour, which is the point of checking.
 
+### The thin stations fill out (2026-09-12)
+
+The four smallest stations each gain ten tracks: THE CRYPT, SLOW ORBIT and
+TRADEWINDS go 22 → 32, RISE UP 24 → 34. Forty tracks, 560 → 600 across the
+public dial, and the smallest station is now NEON STASIS at 30. Every id
+probed OK, embeddable, not age-gated, 122–249 countries; every title read
+off a real listing (Bandcamp, Discogs, the album's tracklist) rather than
+recalled. The four stations were curated in parallel on one connection and
+none of them hit the rate limit.
+
+- **Spread over depth.** THE CRYPT gets its first artists from outside the
+  Cryo Crypt label (Fief, Old Tower) while Mountain Realm stays capped at 9.
+  SLOW ORBIT finally carries three reference-list artists the founding pass
+  never found (Groovecatcher, Smooth Genestar, Fascinating Earthbound
+  Objects). RISE UP mostly adds second tracks for its one-track artists,
+  plus Pennywise.
+- **TRADEWINDS tilts back to the originals**: eight of its ten are
+  1950s–60s records, adding Gene Rains and Les Baxter. Martin Denny recorded
+  *Exotica* twice, and his Topic channel mostly carries the 1958 stereo
+  re-recording under the 1957 mono record's titles. Length is the tell, and
+  the mono originals were found elsewhere at a wider licence. Now a profile
+  constraint.
+- **Reading the tracklist before searching** passed eight SLOW ORBIT
+  titles that fail the public-dial test, and one TRADEWINDS title (Gene
+  Rains' *Bangkok Cock Fight*, by the Denny precedent), without spending a
+  probe on any of them.
+- **The decoys moved.** Album rips on THE CRYPT's own label channels, live
+  cuts on official channels (the Clash's VEVO, BBC Music) within a second
+  of the studio length, and music videos running 12–22s over the album cut.
+  Every one is recorded in `station-profiles.json` so the next pass
+  dismisses it on sight.
+- **Four picks want a listen**, because a probe cannot answer them:
+  SLOW ORBIT's *Beautiful Day* (beat checked against genre tags, not ears)
+  and *Alaska* (a personal uploader's channel), RISE UP's *Banned in D.C.*
+  (loosest protest fit) and *Fuck Authority* (fan upload, length-matched).
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

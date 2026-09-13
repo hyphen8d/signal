@@ -1,10 +1,10 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 14 stations, 560 tracks total.
+Generated from stations.js. 14 stations, 600 tracks total.
 
 # YM band
 
-8 stations, 344 tracks. Its own dial, its own `1`-`9` presets.
+8 stations, 354 tracks. Its own dial, its own `1`-`9` presets.
 
 ## CIPHER -- 133.7
 
@@ -228,7 +228,7 @@ Tracks (30):
 
 Ident tones (Hz): 440, 440, 440, 659.3
 
-Tracks (24):
+Tracks (34):
 
 1. **Rise Above** -- Black Flag  ([youtu.be/wDUYCyajDcs](https://youtu.be/wDUYCyajDcs))
 2. **My War** -- Black Flag  ([youtu.be/ga6v91ZGL1U](https://youtu.be/ga6v91ZGL1U))
@@ -254,6 +254,16 @@ Tracks (24):
 22. **Attitude** -- Bad Brains  ([youtu.be/y4GwwuGnmAs](https://youtu.be/y4GwwuGnmAs))
 23. **A Speculative Fiction** -- Propagandhi  ([youtu.be/-dDjjWw5v_k](https://youtu.be/-dDjjWw5v_k))
 24. **Alternative Ulster** -- Stiff Little Fingers  ([youtu.be/PlGmYetiCjA](https://youtu.be/PlGmYetiCjA))
+25. **Suspect Device** -- Stiff Little Fingers  ([youtu.be/on6DxBgfsDY](https://youtu.be/on6DxBgfsDY))
+26. **Die for the Government** -- Anti-Flag  ([youtu.be/IL0nhn88aVA](https://youtu.be/IL0nhn88aVA))
+27. **White People for Peace** -- Against Me!  ([youtu.be/RY9TbZMlTaI](https://youtu.be/RY9TbZMlTaI))
+28. **Banned in D.C.** -- Bad Brains  ([youtu.be/gnWKhq8l_5c](https://youtu.be/gnWKhq8l_5c))
+29. **Liberation Frequency** -- Refused  ([youtu.be/-rJ7DR0X9kw](https://youtu.be/-rJ7DR0X9kw))
+30. **Today's Empires, Tomorrow's Ashes** -- Propagandhi  ([youtu.be/lycEQJW6GFw](https://youtu.be/lycEQJW6GFw))
+31. **Clampdown** -- The Clash  ([youtu.be/_lt4O-EHNnw](https://youtu.be/_lt4O-EHNnw))
+32. **Police Story** -- Black Flag  ([youtu.be/4MGsEaDT8zE](https://youtu.be/4MGsEaDT8zE))
+33. **Fuck Authority** -- Pennywise  ([youtu.be/9ivNaKshsYE](https://youtu.be/9ivNaKshsYE))
+34. **Punk Rock Song** -- Bad Religion  ([youtu.be/sUli-Y0gZOs](https://youtu.be/sUli-Y0gZOs))
 
 ## ATOMIC -- 529.0
 
@@ -424,7 +434,7 @@ Tracks (50):
 
 # ZM band
 
-6 stations, 216 tracks. Its own dial, its own `1`-`9` presets.
+6 stations, 246 tracks. Its own dial, its own `1`-`9` presets.
 
 ## THE CRYPT -- 1031.0
 
@@ -432,7 +442,7 @@ Tracks (50):
 
 Ident tones (Hz): 220, 207.7, 174.6, 130.8
 
-Tracks (22):
+Tracks (32):
 
 1. **Whitebark Forest** -- Mountain Realm  ([youtu.be/APZIre8Tm60](https://youtu.be/APZIre8Tm60))
 2. **Dungeon Stairs** -- Mountain Realm  ([youtu.be/YKe_zJEGcWQ](https://youtu.be/YKe_zJEGcWQ))
@@ -456,6 +466,16 @@ Tracks (22):
 20. **Midvinter** -- Trollslottet  ([youtu.be/c6My3t7Cw7Q](https://youtu.be/c6My3t7Cw7Q))
 21. **The Haunted Hyperion Woods** -- Vikorra Doom  ([youtu.be/U5QjKTtXCJI](https://youtu.be/U5QjKTtXCJI))
 22. **A Warm Hearth** -- Swordlender  ([youtu.be/vdmg4X8PdCM](https://youtu.be/vdmg4X8PdCM))
+23. **Northbound** -- Swordlender  ([youtu.be/pK7DBCfzO40](https://youtu.be/pK7DBCfzO40))
+24. **Fires of Freya** -- Swordlender  ([youtu.be/KATcnegE8Mk](https://youtu.be/KATcnegE8Mk))
+25. **Aftonvärldar** -- Trollslottet  ([youtu.be/joCWy97_T1o](https://youtu.be/joCWy97_T1o))
+26. **Maskträdet** -- Trollslottet  ([youtu.be/cHvXwGaR428](https://youtu.be/cHvXwGaR428))
+27. **Trolldom** -- Trollslottet  ([youtu.be/uB0EDMs2Irc](https://youtu.be/uB0EDMs2Irc))
+28. **Dreams of My Former Throne** -- Vikorra Doom  ([youtu.be/1fMEfDmxle0](https://youtu.be/1fMEfDmxle0))
+29. **A Once Majestic Castle in Ruins** -- Vikorra Doom  ([youtu.be/-sJQqJxC8G0](https://youtu.be/-sJQqJxC8G0))
+30. **Moss Shod Battlements** -- Fief  ([youtu.be/KLDjf0kuHF8](https://youtu.be/KLDjf0kuHF8))
+31. **The Knight of the Elves Blows His Horn** -- Fief  ([youtu.be/O-fowRk_8Hw](https://youtu.be/O-fowRk_8Hw))
+32. **Thorngrove** -- Old Tower  ([youtu.be/fgcAelgqRR8](https://youtu.be/fgcAelgqRR8))
 
 ## SLOW ORBIT -- 1092.0
 
@@ -463,7 +483,7 @@ Tracks (22):
 
 Ident tones (Hz): 329.6, 392, 440, 587.3
 
-Tracks (22):
+Tracks (32):
 
 1. **After the Rain** -- Jens Buchert  ([youtu.be/aIB70PVSCnY](https://youtu.be/aIB70PVSCnY))
 2. **On the Run** -- Jens Buchert  ([youtu.be/EqwRXoAxn7I](https://youtu.be/EqwRXoAxn7I))
@@ -487,6 +507,16 @@ Tracks (22):
 20. **Zooming In** -- Alex Cortiz  ([youtu.be/6w9MBlTHR7c](https://youtu.be/6w9MBlTHR7c))
 21. **Zooming Out** -- Alex Cortiz  ([youtu.be/GjJ1KTONcK8](https://youtu.be/GjJ1KTONcK8))
 22. **Searchin** -- Alex Cortiz  ([youtu.be/fxNAnJYXq5U](https://youtu.be/fxNAnJYXq5U))
+23. **Fade Away** -- Groovecatcher  ([youtu.be/yYGybV_5FcM](https://youtu.be/yYGybV_5FcM))
+24. **Groove Diving** -- Groovecatcher  ([youtu.be/DOhyAYeAga4](https://youtu.be/DOhyAYeAga4))
+25. **Moonstruck** -- Groovecatcher  ([youtu.be/HfiXDIciI8o](https://youtu.be/HfiXDIciI8o))
+26. **Moodlander** -- Smooth Genestar  ([youtu.be/3sDO3p8AYfE](https://youtu.be/3sDO3p8AYfE))
+27. **Tokyo Codes** -- Smooth Genestar  ([youtu.be/hFMZViP06uQ](https://youtu.be/hFMZViP06uQ))
+28. **Sleepless in Reykjavik** -- Smooth Genestar  ([youtu.be/UkwiKJ9rKiA](https://youtu.be/UkwiKJ9rKiA))
+29. **Alaska** -- The William Caslon Experience  ([youtu.be/4TSNYZIZQz4](https://youtu.be/4TSNYZIZQz4))
+30. **Beautiful Day** -- Fascinating Earthbound Objects  ([youtu.be/a9pqTHlPMXI](https://youtu.be/a9pqTHlPMXI))
+31. **Venice Beach** -- Celeste Lear  ([youtu.be/Ily1plRBESw](https://youtu.be/Ily1plRBESw))
+32. **Digitalis** -- Celeste Lear  ([youtu.be/zur8YJXlCQ4](https://youtu.be/zur8YJXlCQ4))
 
 ## SYNAPSE -- 1234.0
 
@@ -612,7 +642,7 @@ Tracks (50):
 
 Ident tones (Hz): 523.3, 659.3, 783.9, 1046.5
 
-Tracks (22):
+Tracks (32):
 
 1. **Ringo Oiwake** -- Arthur Lyman  ([youtu.be/mitt1Qnkmgo](https://youtu.be/mitt1Qnkmgo))
 2. **Ke Kali Ne Au** -- Arthur Lyman  ([youtu.be/7QO2QuXEZS4](https://youtu.be/7QO2QuXEZS4))
@@ -636,6 +666,16 @@ Tracks (22):
 20. **Searching the Souq** -- Ixtahuele  ([youtu.be/U7SID3xCeng](https://youtu.be/U7SID3xCeng))
 21. **Aloha, Baby!** -- The Tikiyaki Orchestra  ([youtu.be/ihjVwYS-Hco](https://youtu.be/ihjVwYS-Hco))
 22. **In Search of Mei Ting** -- The Tikiyaki Orchestra  ([youtu.be/B9LJFrwwlvM](https://youtu.be/B9LJFrwwlvM))
+23. **Similau** -- Martin Denny  ([youtu.be/mK6ZtG1l7rk](https://youtu.be/mK6ZtG1l7rk))
+24. **Stone God** -- Martin Denny  ([youtu.be/erL4qnIIeVg](https://youtu.be/erL4qnIIeVg))
+25. **Busy Port** -- Martin Denny  ([youtu.be/eZ1BWvwz-1Y](https://youtu.be/eZ1BWvwz-1Y))
+26. **Yellow Bird** -- Arthur Lyman  ([youtu.be/UP0ocIaey4I](https://youtu.be/UP0ocIaey4I))
+27. **Akaka Falls** -- Arthur Lyman  ([youtu.be/8VoGolxjRsA](https://youtu.be/8VoGolxjRsA))
+28. **Tiki** -- The Gene Rains Group  ([youtu.be/7xRuJiHijlU](https://youtu.be/7xRuJiHijlU))
+29. **Shangri-La** -- The Gene Rains Group  ([youtu.be/yjyzRv67oBE](https://youtu.be/yjyzRv67oBE))
+30. **Sweet Pikake Serenade** -- The Waitiki 7  ([youtu.be/c7UlDiP66GI](https://youtu.be/c7UlDiP66GI))
+31. **Ruby** -- The Waitiki 7  ([youtu.be/QAPpsWcozao](https://youtu.be/QAPpsWcozao))
+32. **Jungle River Boat** -- Les Baxter  ([youtu.be/0fxAl-e6QNw](https://youtu.be/0fxAl-e6QNw))
 
 ## CIRCUIT CRUSH -- 1688.0
 
