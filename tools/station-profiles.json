@@ -735,7 +735,36 @@
     "SPREAD THE CHANNELS. A sample-and-reupload scene carries real takedown exposure, so taking one uploader's copy of a whole catalogue means one strike costs the station several tracks at once.",
     "NOT COLD WAVE AND NOT NINE INCH NAILS. Cold, synthetic and bleak already have homes on this dial. The boundary here is FANTASY -- a ruin, a forest, a keep -- rather than industrial dread or synthetic melancholy. If a candidate would sit comfortably on either of those, it belongs there instead."
    ],
-   "rejections": []
+   "rejections": [
+    {
+     "artist": "Swordlender",
+     "track": "Where Heathens Roam (full-album uploads)",
+     "reason": "ALBUM RIP, the constraint above in practice. The record as one 36:38 file on Cryo Crypt (MwwWvhlrmq0) and again on the parent Cryo Chamber channel (THIyK0Dn64s). Same shape for Struggles of a King (1SEi8OlAWsc), Trollslottet Kryptan (qJraAOi-bD8 / hX2UTtXdOpw, 58:57), Trollslottet Evigheten (YHe4tuLd5Y0), Vikorra Doom The Ghost from Sheol (dkGqf7xw4Ts), Fief VI (_0RKFegsu-A, Out of Season) and Old Tower The Old King of Witches (hq15E_p1JjI, a fan re-rip). Every one of these records has per-track '- Topic' uploads, which searching \"Artist Title\" ranks FIRST; the rip ranks second. Recorded so the next pass dismisses them on sight.",
+     "youtubeId": "MwwWvhlrmq0",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Fief",
+     "track": "Upon Her Sword the Sunlight Shone (live)",
+     "reason": "A festival recording on Bollthorn, not the studio track. The studio cut is XjAzDmdy4Sc (Fief - Topic, 5:31, 249 countries) and is a clean backup for a later pass.",
+     "youtubeId": "0-8tyl8ZN8Y",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Old Tower",
+     "track": "album teaser",
+     "reason": "A Hospital Productions teaser, not a track. Old Tower - Topic carries the real tracks (Thorngrove shipped; Night's Spell, MobljdsjRe0, is a clean backup -- YouTube titles it with a curly apostrophe the font cannot draw, so type a straight one).",
+     "youtubeId": "kGbO1IaV5lg",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Erang",
+     "track": "TOME ZERO",
+     "reason": "Passed on LANE, not probed. Its own notes describe it as bleak and composed during a depressive state -- that is COLD WAVE's territory, not a ruin or a keep. Erang is not closed; this record is.",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-12"
+    }
+   ]
   },
   "tradewinds": {
    "callsign": "TRADEWINDS",
@@ -744,14 +773,15 @@
    "acceptedArtists": [
     "Martin Denny",
     "Arthur Lyman",
-    "Gene Rains",
+    "The Gene Rains Group",
     "Billy Mure",
     "Kava Kon",
     "The Tikiyaki Orchestra",
     "Ixtahuele",
     "The Waitiki 7",
     "The Agents",
-    "New Hawaiian Band"
+    "New Hawaiian Band",
+    "Les Baxter"
    ],
    "constraints": [
     "THE BOUNDARY THAT MATTERS IS WITH ATOMIC, not with anything modern. Both live in the 1950s and both are lounge-adjacent, so the split has to be stated: ATOMIC is Fallout canon and is constrained by an in-universe tracklist, while TRADEWINDS is EXOTICA -- the Polynesian-pop fantasy specifically. A 1950s pop vocal is ATOMIC's unless the arrangement is exotica. Andy Williams' 'Blue Hawaii' is the shape of candidate that could argue for either; it belongs here because the record it comes off is a tiki compilation, not because of its year.",
@@ -760,7 +790,9 @@
     "READ TITLES OFF A REAL LISTING, never from recall. Exotica titles are unguessable and often absurd, so a remembered one is usually not real and returns unrelated video.",
     "SOME GENUINE TITLES FROM THIS ERA READ BADLY OUT OF CONTEXT, and the dial DISPLAYS the title. 'Bangkok Cock Fight' is a real Martin Denny track. That is the owner's call per candidate, not a rule that can be automated -- but it is a call somebody has to make consciously rather than discovering it on the dial.",
     "THE FONT IS NOT THE OBSTACLE IT LOOKS LIKE. ter-u16n covers Latin-1, so accented Nordic and Romance spellings draw fine; what it lacks is Latin Extended-A, CJK and fullwidth. Hawaiian macrons and okina ARE outside it, so a title spelled with them needs romanising or replacing.",
-    "SPREAD THE CHANNELS. A reissue-heavy catalogue lives on compilation and archive uploaders, and one takedown should not cost the station several tracks at once."
+    "SPREAD THE CHANNELS. A reissue-heavy catalogue lives on compilation and archive uploaders, and one takedown should not cost the station several tracks at once.",
+    "MARTIN DENNY RECORDED EXOTICA TWICE, and his Topic channel mostly carries the WRONG one. The 1957 mono album is the record the genre is dated from; the 1958 stereo re-recording has the same titles and different lengths, and Martin Denny - Topic serves it under \"Digitally Remastered 96\". Check a Denny upload's length against the 1957 listing before taking it (Similau 1:57 mono vs 2:29 stereo). The mono originals were found on Way Gone Music at 249 countries. Found 2026-09-12.",
+    "TWO ACCEPTED ARTISTS COULD NOT BE FOUND AS EXOTICA (2026-09-12 pass): \"The Agents\" searches only surface an unrelated New York band, and \"New Hawaiian Band\" appears only on 1969 Decca Hawaii's Greatest Hits LPs -- the compilation source this profile warns about. Both entries need a fuller credit from whoever added them, or removing. Unresolved, not rejected."
    ],
    "rejections": [
     {
@@ -769,6 +801,34 @@
      "reason": "Passed on the TITLE, not on the music, the lane or availability -- 2026-09-01, owner's call. The candidate (vqSQZwJI0Jo) auditioned completely clean: Martin Denny's own '- Topic' upload, 2:21, embeddable, 123 countries, and it is about as squarely in this station's lane as a track can be -- Denny is the artist the whole genre is named after. Nothing mechanical or curatorial counts against it. It falls to the fact that the dial DISPLAYS the track title, in full, on a public site, and this genuine 1950s exotica title reads badly stripped of that context. Recorded here because the next pass will absolutely re-propose it otherwise: it is the most obvious Denny track in any tiki listing, and there is nothing in the mechanical checks that would ever stop it. The rest of Denny's catalogue is open -- this is one title, not the artist.",
      "youtubeId": "vqSQZwJI0Jo",
      "rejectedAt": "2026-09-01"
+    },
+    {
+     "artist": "The Gene Rains Group",
+     "track": "Bangkok Cock Fight",
+     "reason": "Passed on the TITLE, not probed -- the same title Martin Denny's version was passed on 2026-09-01 (above), and it opens Rains in the Tropics, so every Gene Rains search meets it. Applied by that precedent; the owner can overturn both together.",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Martin Denny",
+     "track": "Similau (1958 stereo re-recording)",
+     "reason": "Probes clean (Topic, 2:29), but it is the stereo re-recording; the 1957 mono original shipped as mK6ZtG1l7rk. Same for Stone God on Topic (Sla8d5wsIEc, 3:18) -- a usable backup only if the mono upload ever dies.",
+     "youtubeId": "Kt2X9pFltkQ",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Robert Drasnin",
+     "track": "Voodoo! (full-album uploads)",
+     "reason": "Compilation/album file, 33 minutes (also CqLPhzBDcLI). The single track Voodoo is rN9HyY0ez3E (Robert Drasnin - Topic, 2:56, 123 countries), a clean backup.",
+     "youtubeId": "gD40B1nAcqw",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "The Waitiki 7",
+     "track": "Ruby (live)",
+     "reason": "A live cafe recording beside the album cut in search; the album cut QAPpsWcozao shipped.",
+     "youtubeId": "DtyB-EUPY8c",
+     "rejectedAt": "2026-09-12"
     }
    ]
   },
@@ -804,6 +864,41 @@
      "reason": "Passed on the TITLE at proposal time -- 2026-09-01, owner's call, same reasoning as TRADEWINDS' Martin Denny pass on the same day. The dial DISPLAYS track titles in full on a public site, and this one reads badly out of context. UNLIKE the Denny track, this was never auditioned: it was flagged off the reference list BEFORE a search was run, so there is no youtubeId here and no probe was spent on it. That is the cheaper order for a call of this kind, and worth repeating -- a title question can be answered by reading, before any network work. Nothing is implied about the artist or the music. The William Caslon Experience remains open for this station, and the lane it sits in is exactly right.",
      "youtubeId": null,
      "rejectedAt": "2026-09-01"
+    },
+    {
+     "artist": "Smooth Genestar",
+     "track": "Bars & Hookers; Downtempo Gangstas and Time Thieves",
+     "reason": "Passed on the TITLES off the Bandcamp listing before any search, by the Under Pimp Arrest precedent above -- no probe spent. The artist is on the station; these two titles are not.",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "The William Caslon Experience",
+     "track": "Sunflower Crips; I Am the Hate Camel; Vampire Racecar",
+     "reason": "Passed on the TITLES before any search, same precedent. Alaska shipped 2026-09-12; the catalogue is otherwise open, and it needs reading title by title.",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Fascinating Earthbound Objects",
+     "track": "i hate music; imminent car hole; sweet booty",
+     "reason": "Passed on the TITLES before any search. This netlabel artist (also transient) swings between IDM and ambient, so beyond the titles the BEAT rule has to be checked per track.",
+     "youtubeId": null,
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Various",
+     "track": "More Close Than Opran (Fila Brazillia / Herbaliser mixes)",
+     "reason": "Remixes on personal channels (also HvsjhHyU5Xw). Take the original mix if it ever appears on an official upload.",
+     "youtubeId": "qEks8A1QnCs",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Groovecatcher",
+     "track": "Pale Moon (EP preview)",
+     "reason": "A basicLUX EP preview reel, not a track. Also passed: iPlZxbLfdGk (Moodlander) and aknKIz-Nrbs (Groove Diving), re-uploads of tracks that shipped from official channels, and 08OeQiChJ0A, a fan .wmv of Fade Away.",
+     "youtubeId": "67XNbKx_sS8",
+     "rejectedAt": "2026-09-12"
     }
    ]
   },
@@ -825,7 +920,8 @@
     "Refused",
     "Bad Brains",
     "Propagandhi",
-    "Stiff Little Fingers"
+    "Stiff Little Fingers",
+    "Pennywise"
    ],
    "constraints": [
     "Protest is the SUBJECT, collective voice is the TIEBREAKER. Where two candidates are equally political, take the one a room shouts back. That rule is what keeps this from becoming 'angry songs' generally, and it is why Black Flag's 'Rise Above' is the thesis track rather than a name coincidence.",
@@ -834,7 +930,8 @@
     "'Bombtrack' (hVck6DkOi38) belongs to DISTORTION FIELD and must not be added here. Lint forbids a repeated youtubeId anywhere on the roster, so the shared artist must be represented by DIFFERENT recordings on the two stations.",
     "Expect heavy audition attrition. The Exploited, Dead Kennedys (Alternative Tentacles, plus the Biafra rights dispute) and Black Flag (SST) are all thin or unofficial on YouTube -- exactly the NARROW-LICENCE and '- Topic' traps. Build the candidate list at roughly 2x the target and expect to lose the older UK and SST material first.",
     "Target 22+ tracks. README asserts a per-station range of 22-50 and lint checks it, so shipping under 22 moves the roster's stated floor and needs the README sentence updated with it.",
-    "PROVENANCE IS WIDE HERE, by the curator's call 2026-09-02: an UNKNOWN-CHANNEL fan or archive upload is acceptable when it is demonstrably the right recording. Precedent exists -- CITY LIGHTS leans on archive channels because its catalogue was never officially uploaded -- and this station has the same problem for SST, Alternative Tentacles and older UK punk. Measured bonus: the fan uploads probed here carry 249-country licences against the Topic uploads' 122-123, because they are not content-ID licensed at all. STILL HARD, because these are not strictness but the track not working: LOGIN_REQUIRED (age-gated -- the IFrame player cannot satisfy it and it plays as DEAD AIR, silently), playableInEmbed false, and a licence under 20 countries (fine for us, dead for the listener). Prefer an official/Topic upload when one is clean; reach for a fan upload when it is that or nothing. CHECK-VERSION is now 'go listen', not 'reject'."
+    "PROVENANCE IS WIDE HERE, by the curator's call 2026-09-02: an UNKNOWN-CHANNEL fan or archive upload is acceptable when it is demonstrably the right recording. Precedent exists -- CITY LIGHTS leans on archive channels because its catalogue was never officially uploaded -- and this station has the same problem for SST, Alternative Tentacles and older UK punk. Measured bonus: the fan uploads probed here carry 249-country licences against the Topic uploads' 122-123, because they are not content-ID licensed at all. STILL HARD, because these are not strictness but the track not working: LOGIN_REQUIRED (age-gated -- the IFrame player cannot satisfy it and it plays as DEAD AIR, silently), playableInEmbed false, and a licence under 20 countries (fine for us, dead for the listener). Prefer an official/Topic upload when one is clean; reach for a fan upload when it is that or nothing. CHECK-VERSION is now 'go listen', not 'reject'.",
+    "THE DECOYS MOVED ON THE SECOND PASS (2026-09-12). Age-gating hit nothing this time; the traps were LIVE CUTS ON OFFICIAL CHANNELS (theclashVEVO, BBC Music, festival channels) and fan live uploads whose length sits within a second of the studio cut. And official MUSIC VIDEOS run 12-22s over the album length (Pennywise, IDLES, Rise Against) -- the Boom! intro problem again. Read the title for \"live\" or a venue before trusting a matching length. audition.js's CHECK-VERSION flag fires on Epitaph's standard \"(Full Album Stream)\" wording for single tracks; that one is a known false positive."
    ],
    "rejections": [
     {
@@ -850,6 +947,48 @@
      "reason": "Not a rejection of the TRACK -- v0Uc6ZWDF3c (Topic, 225s, 123 countries) is on the shortlist and clean. This records the two decoys sitting beside it in search results, because the next pass will meet them again and they look better than they are: Qr6NOsluHYg is a ConcertsOnVEVO upload that is LOGIN_REQUIRED (age-gated, dead air in the embed), and 4TljnADEbzI is a second 'Dead Kennedys - Topic' upload at 4:38 with NARROW-LICENCE:1 -- licensed in a single country, so it would play here and be dead for everyone else. Same shape as the 6iLqsFeWswY / R-rDQs5NOP4 pair on California Uber Alles. The lesson generalises: this catalogue has multiple near-identical Topic uploads whose licence width differs wildly, so probe the specific id, never the title.",
      "youtubeId": "Qr6NOsluHYg",
      "rejectedAt": "2026-09-02"
+    },
+    {
+     "artist": "Bad Brains",
+     "track": "Banned in D.C. (CBGB 1982)",
+     "reason": "Live, and 2:11 against the studio 2:12 -- the Guerrilla Radio trap exactly: only the title gives it away. The studio cut gnWKhq8l_5c (ROIR) shipped.",
+     "youtubeId": "XGzA8KXW3WI",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "The Clash",
+     "track": "Clampdown (live at Lewisham Odeon 1980)",
+     "reason": "Live, on the band's own VEVO, beside the studio upload in search. The Official Audio _lt4O-EHNnw shipped.",
+     "youtubeId": "LQ82BX0hGBM",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Stiff Little Fingers",
+     "track": "Suspect Device (fan upload)",
+     "reason": "2:48, most likely the 2:44 single version rather than the 2:36 Inflammable Material cut; the Topic album cut on6DxBgfsDY shipped.",
+     "youtubeId": "RBYoNYuUVk0",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Anti-Flag",
+     "track": "live at Sziget 2014",
+     "reason": "Live festival cut beside the studio upload in search.",
+     "youtubeId": "PGdTiP4D0vw",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "Propagandhi",
+     "track": "Today's Empires, Tomorrow's Ashes (full album)",
+     "reason": "The album as one 33-minute file; the Topic single-track upload lycEQJW6GFw shipped.",
+     "youtubeId": "hRvUHfvjqRo",
+     "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "IDLES",
+     "track": "Glastonbury 2019",
+     "reason": "Live (BBC Music). The studio video QkF_G-RF66M (Danny Nedelko) is a backup but runs 15s over the album cut, and IDLES is UK post-punk rather than the US hardcore spine -- a lane call, not only a version one.",
+     "youtubeId": "Sc63fTPttEQ",
+     "rejectedAt": "2026-09-12"
     }
    ]
   }

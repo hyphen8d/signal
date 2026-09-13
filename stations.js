@@ -1211,6 +1211,34 @@ export const STATIONS = [
       realTrack('y4GwwuGnmAs', 'Attitude', 'Bad Brains'),
       realTrack('-dDjjWw5v_k', 'A Speculative Fiction', 'Propagandhi'),
       realTrack('PlGmYetiCjA', 'Alternative Ulster', 'Stiff Little Fingers'),
+      // Second pass, 2026-09-12: 24 -> 34. Mostly a SECOND track for every
+      // artist that had one, so the station reads as fifteen bands rather than
+      // five and some guests; one new artist, Pennywise, on no other station.
+      // Titles checked against each album's tracklist, lengths against the
+      // album cut. Nothing was age-gated this time -- the decoys had moved to
+      // live cuts on OFFICIAL channels (the Clash's own VEVO, BBC Music) and
+      // fan live uploads within a second of the studio length, so the title
+      // is still the only tell. Recorded in the profile.
+      //
+      // Two picks want a listen, because a probe cannot answer them:
+      //   - Banned in D.C. is the loosest fit for "protest is the SUBJECT" --
+      //     defiance of a city-wide ban rather than a political target -- and
+      //     it earns its place on the room-shouts-it-back tiebreaker.
+      //   - Fuck Authority is a fan upload (the official Epitaph video,
+      //     j5arZGgyGSc, runs 12s over the album cut). Its 3:16 matches Land
+      //     of the Free? exactly, which Guerrilla Radio proved is not proof.
+      // Police Story takes the Topic upload over a 249-country fan copy
+      // (8K3ZujTDILc) because the profile prefers official when it is clean.
+      realTrack('on6DxBgfsDY', 'Suspect Device', 'Stiff Little Fingers'),
+      realTrack('IL0nhn88aVA', 'Die for the Government', 'Anti-Flag'),
+      realTrack('RY9TbZMlTaI', 'White People for Peace', 'Against Me!'),
+      realTrack('gnWKhq8l_5c', 'Banned in D.C.', 'Bad Brains'),
+      realTrack('-rJ7DR0X9kw', 'Liberation Frequency', 'Refused'),
+      realTrack('lycEQJW6GFw', "Today's Empires, Tomorrow's Ashes", 'Propagandhi'),
+      realTrack('_lt4O-EHNnw', 'Clampdown', 'The Clash'),
+      realTrack('4MGsEaDT8zE', 'Police Story', 'Black Flag'),
+      realTrack('9ivNaKshsYE', 'Fuck Authority', 'Pennywise'),
+      realTrack('sUli-Y0gZOs', 'Punk Rock Song', 'Bad Religion'),
     ] },
   { id: 'atomic', band: 'ym', freq: 529.0, callsign: 'ATOMIC', tagline: 'atomic swing, radioactive nostalgia', // 19th pass: trimmed
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
@@ -1809,6 +1837,26 @@ export const STATIONS = [
       realTrack('c6My3t7Cw7Q', 'Midvinter', 'Trollslottet'),
       realTrack('U5QjKTtXCJI', 'The Haunted Hyperion Woods', 'Vikorra Doom'),
       realTrack('vdmg4X8PdCM', 'A Warm Hearth', 'Swordlender'),
+      // Second pass, 2026-09-12: 22 -> 32. Every title read off a Bandcamp
+      // tracklist (the Cryo Crypt label pages, then fief. and oldtower.), then
+      // searched as "Artist Title". All ten are the artist's own '- Topic'
+      // single-track upload, probed OK and embeddable. The label channel posts the
+      // SAME records as full-album rips, on Cryo Crypt and again on Cryo Chamber;
+      // those rank second in search and are the thing to dismiss (ids in the
+      // profile). Fief and Old Tower are the first artists here from outside
+      // Cryo Crypt, and both follow the same Topic pattern. Old Tower's
+      // Thorngrove is 123 countries where the rest are 249, and it went in over a
+      // third new Swordlender for spread. Mountain Realm stays capped at 9.
+      realTrack('pK7DBCfzO40', 'Northbound', 'Swordlender'),
+      realTrack('KATcnegE8Mk', 'Fires of Freya', 'Swordlender'),
+      realTrack('joCWy97_T1o', 'Aftonvärldar', 'Trollslottet'),
+      realTrack('cHvXwGaR428', 'Maskträdet', 'Trollslottet'),
+      realTrack('uB0EDMs2Irc', 'Trolldom', 'Trollslottet'),
+      realTrack('1fMEfDmxle0', 'Dreams of My Former Throne', 'Vikorra Doom'),
+      realTrack('-sJQqJxC8G0', 'A Once Majestic Castle in Ruins', 'Vikorra Doom'),
+      realTrack('KLDjf0kuHF8', 'Moss Shod Battlements', 'Fief'),
+      realTrack('O-fowRk_8Hw', 'The Knight of the Elves Blows His Horn', 'Fief'),
+      realTrack('fgcAelgqRR8', 'Thorngrove', 'Old Tower'),
     ] },
   // SLOW ORBIT (2026-09-01) -- ZM 1092.0. Ambient and downtempo: chillout with
   // a pulse. The brief said "beats and grooves" and that is the boundary, not
@@ -1853,6 +1901,32 @@ export const STATIONS = [
       realTrack('6w9MBlTHR7c', 'Zooming In', 'Alex Cortiz'),
       realTrack('GjJ1KTONcK8', 'Zooming Out', 'Alex Cortiz'),
       realTrack('fxNAnJYXq5U', 'Searchin', 'Alex Cortiz'),
+      // Second pass, 2026-09-12: 22 -> 32, and three of the reference list's
+      // missing artists finally arrive -- Groovecatcher, Smooth Genestar,
+      // Fascinating Earthbound Objects -- plus The William Caslon Experience
+      // on a title that reads fine. Every title came off the artist's Bandcamp.
+      //
+      // Reading those tracklists BEFORE searching was worth more here than on
+      // any other station: Smooth Genestar, Caslon and FEO each have several
+      // titles that fail the public-dial test on sight, and all were passed
+      // without a probe (listed in the profile). Topic uploads in this lane sit
+      // at 122-123 countries, which is healthy; the label's own uploads
+      // (basicLUX, Groovecatcher's label) reach 249.
+      //
+      // Two to watch: Beautiful Day is from an FEO record that swings between
+      // IDM and ambient, so its beat was checked against genre tags, not ears
+      // -- listen before trusting it. And Alaska is the one pick on a personal
+      // uploader's channel; nothing official turned up.
+      realTrack('yYGybV_5FcM', 'Fade Away', 'Groovecatcher'),
+      realTrack('DOhyAYeAga4', 'Groove Diving', 'Groovecatcher'),
+      realTrack('HfiXDIciI8o', 'Moonstruck', 'Groovecatcher'),
+      realTrack('3sDO3p8AYfE', 'Moodlander', 'Smooth Genestar'),
+      realTrack('hFMZViP06uQ', 'Tokyo Codes', 'Smooth Genestar'),
+      realTrack('UkwiKJ9rKiA', 'Sleepless in Reykjavik', 'Smooth Genestar'),
+      realTrack('4TSNYZIZQz4', 'Alaska', 'The William Caslon Experience'),
+      realTrack('a9pqTHlPMXI', 'Beautiful Day', 'Fascinating Earthbound Objects'),
+      realTrack('Ily1plRBESw', 'Venice Beach', 'Celeste Lear'),
+      realTrack('zur8YJXlCQ4', 'Digitalis', 'Celeste Lear'),
     ] },
   // TRADEWINDS (2026-09-01) -- ZM 1559.0. Exotica and tiki lounge, played
   // straight rather than winked at: vibraphone, bird calls, hand drums.
@@ -1908,6 +1982,32 @@ export const STATIONS = [
       realTrack('U7SID3xCeng', 'Searching the Souq', 'Ixtahuele'),
       realTrack('ihjVwYS-Hco', 'Aloha, Baby!', 'The Tikiyaki Orchestra'),
       realTrack('B9LJFrwwlvM', 'In Search of Mei Ting', 'The Tikiyaki Orchestra'),
+      // Second pass, 2026-09-12: 22 -> 32, and it tilts back toward the
+      // originals -- eight of the ten are 1950s-60s records, because the first
+      // passes had left the revival (Ixtahuele + Tikiyaki, both capped at 6)
+      // outweighing the artists the genre is named for.
+      //
+      // THE DENNY TRAP: Martin Denny - Topic mostly carries his 1958 STEREO
+      // re-recording of Exotica, under the same titles as the 1957 mono record
+      // that started the genre. Length is the tell (Similau 2:29 stereo vs 1:57
+      // mono; Stone God 3:18 vs 3:07). Similau and Stone God below are the
+      // mono originals from Way Gone Music, 249 countries against Topic's 123;
+      // Busy Port's Topic upload is labelled Original Mono Version. Check the
+      // 1957 listing's lengths before taking any Denny Topic upload.
+      //
+      // Gene Rains is credited as The Gene Rains Group, which is how the record
+      // and its Topic channel credit him. "(Remastered)" is dropped from the
+      // display titles.
+      realTrack('mK6ZtG1l7rk', 'Similau', 'Martin Denny'),
+      realTrack('erL4qnIIeVg', 'Stone God', 'Martin Denny'),
+      realTrack('eZ1BWvwz-1Y', 'Busy Port', 'Martin Denny'),
+      realTrack('UP0ocIaey4I', 'Yellow Bird', 'Arthur Lyman'),
+      realTrack('8VoGolxjRsA', 'Akaka Falls', 'Arthur Lyman'),
+      realTrack('7xRuJiHijlU', 'Tiki', 'The Gene Rains Group'),
+      realTrack('yjyzRv67oBE', 'Shangri-La', 'The Gene Rains Group'),
+      realTrack('c7UlDiP66GI', 'Sweet Pikake Serenade', 'The Waitiki 7'),
+      realTrack('QAPpsWcozao', 'Ruby', 'The Waitiki 7'),
+      realTrack('0fxAl-e6QNw', 'Jungle River Boat', 'Les Baxter'),
     ] },
   // DRIFT MODE, BROUGHT BACK 2026-09-01, on ZM rather than the band it left.
   //
