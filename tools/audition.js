@@ -76,6 +76,15 @@ if (asJson) console.log = (...a) => console.error(...a)
 
 
 
+// 2026-09-13 -- every search that ERRORED, as opposed to one that honestly
+// found nothing. search() used to log a failure to stderr and return [], so a
+// dropped connection was indistinguishable from an empty result: the batch
+// came back short, exited 0, and the --json summary the dashboard renders
+// carried no trace of it. Both AFTER HOURS curation agents hit it on its
+// founding pass. Same rule as a throttled probe: a run that could not look
+// must never read as a run that looked and found nothing.
+const searchFailures = []
+
 async function search(query, n) {
   // sp=EgIQAQ%3D%3D restricts to videos, so playlists/channels don't crowd out
   // the results. Failures are isolated per query -- a single bad search used to
@@ -87,9 +96,20 @@ async function search(query, n) {
     if (!hits.length) console.error(`  ! no results for "${query}"`)
     return hits
   } catch (err) {
-    console.error(`  ! search failed for "${query}": ${err?.message ?? err}`)
+    const error = String(err?.message ?? err)
+    console.error(`  ! search failed for "${query}": ${error}`)
+    searchFailures.push({ query, error })
     return []
   }
+}
+
+/** The run-level half of searchFailures: said once, at the bottom, loudly. */
+function reportSearchFailures(total) {
+  console.log(`\n!! ${searchFailures.length}/${total} search(es) FAILED to run -- the candidates above are` +
+    ` INCOMPLETE, not a clean result.`)
+  for (const f of searchFailures) console.log(`   "${f.query}": ${f.error}`)
+  console.log(`   Usually a dropped connection rather than a throttle; re-run just those searches.`)
+  process.exitCode = 1
 }
 
 const mmss = s => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '?')
@@ -159,6 +179,14 @@ async function main() {
     candidates = [...new Set(found.flat())]
     console.log(`${searches.length} search(es) -> ${candidates.length} candidate(s)\n`)
   }
+  if (!candidates.length && searchFailures.length) {
+    // Not "nothing to check" -- the searches never ran. Say which, keep the
+    // JSON contract so the dashboard can show it, and exit 1 like any other
+    // incomplete run rather than 2, which means the invocation was wrong.
+    reportSearchFailures(searches.length)
+    if (asJson) process.stdout.write(JSON.stringify({ station: { id: station.id, callsign: station.callsign }, profile, mode: 'search', rows: [], unverified: 0, unverifiedReasons: [], searchFailures }))
+    process.exit(1)
+  }
   if (!candidates.length) {
     console.error('Nothing to check. Pass video IDs, or --search="..." to find some.')
     process.exit(2)
@@ -189,6 +217,8 @@ async function main() {
     process.exitCode = 1
   }
 
+  if (searchFailures.length) reportSearchFailures(searches.length)
+
   if (asJson) {
     process.stdout.write(JSON.stringify({
       station: {
@@ -204,6 +234,9 @@ async function main() {
       // table without it. A throttled run is a property of the RUN.
       unverified: unprobed.length,
       unverifiedReasons: [...new Set(unprobed.map(r => r.reason))],
+      // Hoisted for the same reason: a batch missing whole searches is a
+      // property of the RUN, and the rows alone cannot show what is absent.
+      searchFailures,
     }))
   }
 

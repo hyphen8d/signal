@@ -1749,6 +1749,31 @@ borrowing an effect and waiting on clips.
   which now warns that AFTER HOURS (one vocal in 30 tracks) lowers the next
   lyrics audit on its own.
 
+### The flaky test was a real bug (2026-09-13)
+
+- **Tuning onto RISE UP blinked the afterglow black, every time.** 440 is 20
+  from the secret GREEN ROOM (420), inside the 24 the tint tease reaches, so
+  the seeking step that lands on RISE UP blends the tube toward GREEN ROOM's
+  colour, and the lock a frame later saw that blend as a tint change and
+  cleared the persistence buffer. Only a boot that locks straight on escaped
+  it. The fix ends a tease the way the tease already ends when you tune out
+  of range -- restore the named tint without a clear -- and keeps the hard
+  flash for locking a secret station itself.
+- **That is what `setPhosphor identity` had been catching** since RISE UP
+  arrived on 2026-09-02, at roughly one run in five. Measured per starting
+  station it failed 3/3 from RISE UP and 0/3 from every other one: it was
+  never flaky, it sampled one random station per run. It now walks every
+  public station, so the next one placed near a secret station fails on the
+  first run -- and with the fix removed it names RISE UP.
+- **`tools/audition.js` no longer reports a failed search as an empty one.**
+  A dropped connection used to log to stderr and return nothing, so a batch
+  came back short and exited 0, and a run whose every search died was told
+  "Nothing to check. Pass video IDs". Failed searches are now said once at
+  the bottom, set exit 1, and appear as `searchFailures` in the `--json`
+  summary the dashboard renders. Both AFTER HOURS curation agents hit it;
+  `tests/audition.test.mjs` runs the tool offline and fails on the old
+  behaviour.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
