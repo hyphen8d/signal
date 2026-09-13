@@ -16,6 +16,22 @@ import assert from 'node:assert/strict'
 import { boot } from './harness.mjs'
 
 const RESOLVE_NOISE = /[▓▒░#%&*]/
+/** The row with the text it is SUPPOSED to show blanked out, so a noise check
+ *  only looks at what is left. Each string is removed whole, and otherwise by
+ *  its longest leading run of at least 3 characters on the row -- the
+ *  receiver truncates a long title/artist to the box, so the drawn text can be
+ *  a prefix. Blanked with spaces, not deleted, so columns stay where they were. */
+const withoutText = (row, ...texts) => {
+  let out = row
+  for (const t of texts) {
+    if (!t) continue
+    for (let n = t.length; n >= 3; n--) {
+      const i = out.indexOf(t.slice(0, n))
+      if (i !== -1) { out = out.slice(0, i) + ' '.repeat(n) + out.slice(i + n); break }
+    }
+  }
+  return out
+}
 const powerOnLocked = (h) => { h.powerOn(); h.advance(2000) }
 const snapshot = (h, y0, y1) => { const out = []; for (let y = y0; y <= y1; y++) out.push(h.row(y)); return out }
 
@@ -34,7 +50,15 @@ test('a track ending under the weather card leaves the card untouched, and the r
     h.key('w'); h.advance(700)
     assert.equal(h.program.weatherOpen, false)
     assert.ok(h.row(14).includes('PLAYING'), `playback row did not redraw after close: ${h.row(14)}`)
-    assert.ok(!RESOLVE_NOISE.test(h.row(13)), `track row still unsettled after close: ${h.row(13)}`)
+    // 2026-09-13 -- the noise check discounts the text the row is SUPPOSED to
+    // show. RESOLVE_NOISE is the scramble set ('▓▒░#%&*', ui/desktop.js), and
+    // '&' is also in half the artist credits on the dial: this failed ~1 run
+    // in 20 for two weeks, on a row that had resolved perfectly -- every
+    // failure caught was an artist like "Eric B. & Rakim" or "Echo & the
+    // Bunnymen", drawn exactly right and read as noise. A leftover scramble
+    // glyph anywhere else on the row still fails.
+    const { title, artist } = h.program.currentTrack
+    assert.ok(!RESOLVE_NOISE.test(withoutText(h.row(13), title, artist)), `track row still unsettled after close: ${h.row(13)}`)
     assert.ok(h.row(13).includes(h.program.currentTrack.title.slice(0, 12)), `track did not re-resolve after close: ${h.row(13)}`)
   } finally { h.shutdown() }
 })

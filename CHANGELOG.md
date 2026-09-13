@@ -1812,6 +1812,35 @@ and its own liner pair.
   voice's natural level on a soft word -- and the second was kept rather than
   spending more renders on an inaudible difference.
 
+### Two more flaky tests were test bugs, and half the dial was never sampled (2026-09-13)
+
+- **The weather-card overlay test (H3) failed about one run in twenty, on
+  rows that had rendered perfectly.** Its "resolve noise" check looked for
+  the scramble set `▓▒░#%&*` -- and `&` is in half the artist credits on the
+  dial. Every failure caught was an artist like "Eric B. & Rakim" or "Echo &
+  the Bunnymen", drawn exactly right. The check now blanks out the title and
+  artist the row is supposed to show before looking for scramble glyphs: 0/60
+  failures against 2/60 before, and it still goes red when the row is checked
+  mid-scramble.
+- **The mobile lite-bar break test failed about one run in ten, when the
+  random track's title wrapped.** On the 42-column layout a two-line title
+  ('Give Up the Funk (Tear the Roof off the Sucker)') is replaced by the
+  one-line STATION BREAK, the box closes up, and the progress bar moves from
+  row 13 to 12; the test reused the row number from before the break and read
+  the box's border. The reflow is correct, so the test re-reads the row.
+  Proven on a pinned wrapping title: the stale read fails, the fresh read
+  passes.
+- **A random boot never lands on ZM.** Every `boot()` without a station
+  starts on `DEFAULT_BAND`, so "any station" scenarios had only ever seen YM.
+  A sweep with ZM as the default, in a scratch copy, found no ZM-only app bug
+  -- but two tests and the `otherPreset` helper were indexing the flat
+  `STATION_PRESET_ORDER`, which matches the preset keys only on YM. They ask
+  `presetOrderFor(band)` now, and CLAUDE.md's Tests section says why.
+- Earlier the same day: the RISE UP persistence clear behind the phosphor
+  "flake" (above). Three flaky tests in one day, and not one of them was
+  timing: each was a deterministic failure on a boot state the test did not
+  control. Measure per state before calling anything intermittent.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
