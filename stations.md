@@ -1,10 +1,10 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 16 stations, 660 tracks total.
+Generated from stations.js. 16 stations, 690 tracks total.
 
 # YM band
 
-8 stations, 354 tracks. Its own dial, its own `1`-`9` presets.
+8 stations, 364 tracks. Its own dial, its own `1`-`9` presets.
 
 ## CIPHER -- 133.7
 
@@ -189,7 +189,7 @@ Tracks (50):
 
 Ident tones (Hz): 523.3, 440, 349.2, 523.3
 
-Tracks (30):
+Tracks (40):
 
 1. **Sembikiya Restaurant** -- Cat System Corp  ([youtu.be/xAh-nngGZ6I](https://youtu.be/xAh-nngGZ6I))
 2. **Roadtrips in Spring** -- Waterfront Dining  ([youtu.be/boofE5_HtkI](https://youtu.be/boofE5_HtkI))
@@ -221,6 +221,16 @@ Tracks (30):
 28. **Fountain Plaza** -- Disconscious  ([youtu.be/f0PSLV_b5g0](https://youtu.be/f0PSLV_b5g0))
 29. **Second Floor** -- Cat System Corp  ([youtu.be/k6xkSvMIvwk](https://youtu.be/k6xkSvMIvwk))
 30. **Veni, Vidi, Emi** -- Cat System Corp  ([youtu.be/Qg7vgIdDDno](https://youtu.be/Qg7vgIdDDno))
+31. **Forever Peruse** -- Groceries Store  ([youtu.be/eI2Pn2Rgh_w](https://youtu.be/eI2Pn2Rgh_w))
+32. **An Evening Spent Alone in the Vast Parking Lot** -- Groceries Store  ([youtu.be/xGmAzTXyOYc](https://youtu.be/xGmAzTXyOYc))
+33. **Manufacturer's Suggested Retail Price** -- Groceries Store  ([youtu.be/-iaqgJiDYv8](https://youtu.be/-iaqgJiDYv8))
+34. **Food Court** -- Hantasi  ([youtu.be/sB1u18vHSco](https://youtu.be/sB1u18vHSco))
+35. **Escalator** -- Hantasi  ([youtu.be/fmWJMYL09po](https://youtu.be/fmWJMYL09po))
+36. **Rubbermaid** -- PowerPCME  ([youtu.be/XpXX_M58df0](https://youtu.be/XpXX_M58df0))
+37. **Attention shoppers!** -- PowerPCME  ([youtu.be/f_uE5ORwPfw](https://youtu.be/f_uE5ORwPfw))
+38. **Parkway** -- Luxury Elite  ([youtu.be/Z7JGPByPr8s](https://youtu.be/Z7JGPByPr8s))
+39. **Upscale** -- Luxury Elite  ([youtu.be/z8KIa6tWoAE](https://youtu.be/z8KIa6tWoAE))
+40. **Crystal** -- Luxury Elite  ([youtu.be/xJLcvKeVcFI](https://youtu.be/xJLcvKeVcFI))
 
 ## RISE UP -- 440.0
 
@@ -434,7 +444,7 @@ Tracks (50):
 
 # ZM band
 
-8 stations, 306 tracks. Its own dial, its own `1`-`9` presets.
+8 stations, 326 tracks. Its own dial, its own `1`-`9` presets.
 
 ## THE CRYPT -- 1031.0
 
@@ -483,7 +493,7 @@ Tracks (32):
 
 Ident tones (Hz): 220, 220, 440, 329.6
 
-Tracks (30):
+Tracks (40):
 
 1. **Le Freak** -- Chic  ([youtu.be/7PC-AcrHEKU](https://youtu.be/7PC-AcrHEKU))
 2. **Good Times** -- Chic  ([youtu.be/PP_JBPGkd-Y](https://youtu.be/PP_JBPGkd-Y))
@@ -515,6 +525,16 @@ Tracks (30):
 28. **Give Up the Funk (Tear the Roof off the Sucker)** -- Parliament  ([youtu.be/gBWH3OWfT2Y](https://youtu.be/gBWH3OWfT2Y))
 29. **A Night to Remember** -- Shalamar  ([youtu.be/Qwvf2ilsogo](https://youtu.be/Qwvf2ilsogo))
 30. **I'm Every Woman** -- Chaka Khan  ([youtu.be/eZ9B8CjIsjU](https://youtu.be/eZ9B8CjIsjU))
+31. **Boogie Nights** -- Heatwave  ([youtu.be/bJ0Rk3piR44](https://youtu.be/bJ0Rk3piR44))
+32. **Shake Your Body (Down to the Ground)** -- The Jacksons  ([youtu.be/-qBqHnevIn4](https://youtu.be/-qBqHnevIn4))
+33. **Funkytown** -- Lipps Inc.  ([youtu.be/Z6dqIYKIBSU](https://youtu.be/Z6dqIYKIBSU))
+34. **I Love Music** -- The O'Jays  ([youtu.be/tGmsFg-oQ6k](https://youtu.be/tGmsFg-oQ6k))
+35. **Young Hearts Run Free** -- Candi Staton  ([youtu.be/FRAA-EIM4d0](https://youtu.be/FRAA-EIM4d0))
+36. **Turn the Beat Around** -- Vicki Sue Robinson  ([youtu.be/vz9pZW5OvM4](https://youtu.be/vz9pZW5OvM4))
+37. **Car Wash** -- Rose Royce  ([youtu.be/eB0aROCl530](https://youtu.be/eB0aROCl530))
+38. **Instant Replay** -- Dan Hartman  ([youtu.be/9C7rHWKc8x0](https://youtu.be/9C7rHWKc8x0))
+39. **Ain't Nobody** -- Rufus and Chaka Khan  ([youtu.be/T_3FY2kEdOI](https://youtu.be/T_3FY2kEdOI))
+40. **Fire** -- Ohio Players  ([youtu.be/1xqMY8UAGgg](https://youtu.be/1xqMY8UAGgg))
 
 ## SLOW ORBIT -- 1092.0
 
@@ -563,7 +583,7 @@ Tracks (32):
 
 Ident tones (Hz): 349.2, 415.3, 370, 370
 
-Tracks (30):
+Tracks (40):
 
 1. **I Guess I'll Hang My Tears Out to Dry** -- Dexter Gordon  ([youtu.be/AkofGzKRFj4](https://youtu.be/AkofGzKRFj4))
 2. **Don't Explain** -- Dexter Gordon  ([youtu.be/dpjM7wwSTxI](https://youtu.be/dpjM7wwSTxI))
@@ -595,6 +615,16 @@ Tracks (30):
 28. **Autumn Leaves** -- Cannonball Adderley  ([youtu.be/CpB7-8SGlJ0](https://youtu.be/CpB7-8SGlJ0))
 29. **You're Blasé** -- Stan Getz  ([youtu.be/GlUA8EHDPZA](https://youtu.be/GlUA8EHDPZA))
 30. **Poinciana** -- Ahmad Jamal  ([youtu.be/Z0e2G32f3IU](https://youtu.be/Z0e2G32f3IU))
+31. **Willow Weep for Me** -- Red Garland  ([youtu.be/nlGQmhph8UQ](https://youtu.be/nlGQmhph8UQ))
+32. **Cool Struttin'** -- Sonny Clark  ([youtu.be/Jmn7Ai-habM](https://youtu.be/Jmn7Ai-habM))
+33. **My Ideal** -- Kenny Dorham  ([youtu.be/ebIKl1Ath08](https://youtu.be/ebIKl1Ath08))
+34. **Glad to Be Unhappy** -- Paul Desmond  ([youtu.be/546Xr62-kjE](https://youtu.be/546Xr62-kjE))
+35. **Soulville** -- Ben Webster  ([youtu.be/1HnT3H8gOT4](https://youtu.be/1HnT3H8gOT4))
+36. **Moonglow** -- Coleman Hawkins  ([youtu.be/g5zq14_58PA](https://youtu.be/g5zq14_58PA))
+37. **Polka Dots and Moonbeams** -- Wes Montgomery  ([youtu.be/f7Mv6TW-xP8](https://youtu.be/f7Mv6TW-xP8))
+38. **Darn That Dream** -- Art Farmer  ([youtu.be/7mOQxBen6wk](https://youtu.be/7mOQxBen6wk))
+39. **It Never Entered My Mind** -- Keith Jarrett  ([youtu.be/xEvrZcBZbds](https://youtu.be/xEvrZcBZbds))
+40. **La Mesha** -- Joe Henderson  ([youtu.be/Ns4p9lVGYjc](https://youtu.be/Ns4p9lVGYjc))
 
 ## SYNAPSE -- 1234.0
 

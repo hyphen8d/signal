@@ -483,6 +483,27 @@ export const STATIONS = [
       realTrack('f0PSLV_b5g0', 'Fountain Plaza', 'Disconscious'),
       realTrack('k6xkSvMIvwk', 'Second Floor', 'Cat System Corp'),
       realTrack('Qg7vgIdDDno', 'Veni, Vidi, Emi', 'Cat System Corp'),
+      // Growth pass, 2026-09-13: 30 -> 40, from four artists new to the
+      // station, every title off the artist's Bandcamp and every length within
+      // a second of it. Eight of ten are '- Topic' uploads; Hantasi's two come
+      // off a reupload channel, with the takedown exposure the profile expects.
+      //
+      // Groceries Store is the founding brief's other artist and was finally
+      // found by searching its HANGUL credit plus an exact title: the English
+      // name alone returns grocery-budgeting videos. Hantasi's Vacant Places
+      // (2012) and PowerPCME's Kmart 1989-1992 are the oldest core mallsoft
+      // here, both built from real retail audio. Ten tracks from four records
+      // is deliberate for this lane -- a mallsoft record is one mall.
+      realTrack('eI2Pn2Rgh_w', 'Forever Peruse', 'Groceries Store'),
+      realTrack('xGmAzTXyOYc', 'An Evening Spent Alone in the Vast Parking Lot', 'Groceries Store'),
+      realTrack('-iaqgJiDYv8', "Manufacturer's Suggested Retail Price", 'Groceries Store'),
+      realTrack('sB1u18vHSco', 'Food Court', 'Hantasi'),
+      realTrack('fmWJMYL09po', 'Escalator', 'Hantasi'),
+      realTrack('XpXX_M58df0', 'Rubbermaid', 'PowerPCME'),
+      realTrack('f_uE5ORwPfw', 'Attention shoppers!', 'PowerPCME'),
+      realTrack('Z7JGPByPr8s', 'Parkway', 'Luxury Elite'),
+      realTrack('z8KIa6tWoAE', 'Upscale', 'Luxury Elite'),
+      realTrack('xJLcvKeVcFI', 'Crystal', 'Luxury Elite'),
     ] },
   { id: 'cold-wave', band: 'ym', freq: 273.0, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
@@ -2209,6 +2230,28 @@ export const STATIONS = [
       realTrack('CpB7-8SGlJ0', 'Autumn Leaves', 'Cannonball Adderley'),
       realTrack('GlUA8EHDPZA', "You're Blasé", 'Stan Getz'),
       realTrack('Z0e2G32f3IU', 'Poinciana', 'Ahmad Jamal'),
+      // Growth pass, 2026-09-13: 30 -> 40, all ten from players new to the
+      // station, so it reads as twenty-nine voices rather than eleven heard
+      // twice. Same bar: titles and lengths off each album's tracklist, every
+      // id probed, 62-249 countries. Red Garland is credited as Bill Evans is
+      // above -- the player, not the trio -- so one artist counts once.
+      //
+      // The two licence rules held and got a footnote: Moodsville and New Jazz
+      // Topic copies sit far below the usual ~123 (Hawkins 62, Dorham 74), so
+      // probe the id, never assume a label's number. La Mesha is the Topic
+      // master, not last pass's 249-country fan copy -- Blue Note takes Topic.
+      // Burners passed for the ballad on the same record: Blue Bossa, Airegin,
+      // Four on Six.
+      realTrack('nlGQmhph8UQ', 'Willow Weep for Me', 'Red Garland'),
+      realTrack('Jmn7Ai-habM', "Cool Struttin'", 'Sonny Clark'),
+      realTrack('ebIKl1Ath08', 'My Ideal', 'Kenny Dorham'),
+      realTrack('546Xr62-kjE', 'Glad to Be Unhappy', 'Paul Desmond'),
+      realTrack('1HnT3H8gOT4', 'Soulville', 'Ben Webster'),
+      realTrack('g5zq14_58PA', 'Moonglow', 'Coleman Hawkins'),
+      realTrack('f7Mv6TW-xP8', 'Polka Dots and Moonbeams', 'Wes Montgomery'),
+      realTrack('7mOQxBen6wk', 'Darn That Dream', 'Art Farmer'),
+      realTrack('xEvrZcBZbds', 'It Never Entered My Mind', 'Keith Jarrett'),
+      realTrack('Ns4p9lVGYjc', 'La Mesha', 'Joe Henderson'),
     ] },
   // MIRRORBALL (2026-09-13) -- ZM 1054.0. Disco, boogie and funk, 1974-83:
   // four on the floor, a bass line you can walk on, strings and horns up top,
@@ -2315,6 +2358,33 @@ export const STATIONS = [
       realTrack('gBWH3OWfT2Y', 'Give Up the Funk (Tear the Roof off the Sucker)', 'Parliament'),
       realTrack('Qwvf2ilsogo', 'A Night to Remember', 'Shalamar'),
       realTrack('eZ9B8CjIsjU', "I'm Every Woman", 'Chaka Khan'),
+      // Growth pass, 2026-09-13: 30 -> 40. Eight acts new to the station, plus
+      // the two backups the founding pass held (Ain't Nobody, Fire) -- no act
+      // above two tracks. Titles and lengths off each record's listing.
+      //
+      // THE LICENCE PATTERN FLIPS FOR SONY / LEGACY ACTS. The Jacksons, The
+      // O'Jays and Vicki Sue Robinson have full-length '(Audio)' uploads on
+      // their VEVO channels at 249 countries, while The O'Jays' Topic copy sits
+      // at 76 -- search 'Artist - Title (Audio)' before trusting Topic. The
+      // label still is not a length guarantee: Odyssey's VEVO 'Audio' runs 4:23
+      // against no listed version, which is why Native New Yorker is absent.
+      //
+      // Young Hearts Run Free is Candi Staton's own channel, titled a music
+      // video but 3:50 against the 3:51 single -- length over label, it is the
+      // record. Car Wash, Ain't Nobody and Fire are fan uploads, each the only
+      // copy at a listed length. Instant Replay is the 8:20 12-inch (8:15
+      // listed) and I Love Music the full 6:55 version (6:51): inside what
+      // earlier passes accepted, and worth a listen.
+      realTrack('bJ0Rk3piR44', 'Boogie Nights', 'Heatwave'),
+      realTrack('-qBqHnevIn4', 'Shake Your Body (Down to the Ground)', 'The Jacksons'),
+      realTrack('Z6dqIYKIBSU', 'Funkytown', 'Lipps Inc.'),
+      realTrack('tGmsFg-oQ6k', 'I Love Music', "The O'Jays"),
+      realTrack('FRAA-EIM4d0', 'Young Hearts Run Free', 'Candi Staton'),
+      realTrack('vz9pZW5OvM4', 'Turn the Beat Around', 'Vicki Sue Robinson'),
+      realTrack('eB0aROCl530', 'Car Wash', 'Rose Royce'),
+      realTrack('9C7rHWKc8x0', 'Instant Replay', 'Dan Hartman'),
+      realTrack('T_3FY2kEdOI', "Ain't Nobody", 'Rufus and Chaka Khan'),
+      realTrack('1xqMY8UAGgg', 'Fire', 'Ohio Players'),
     ] },
 ]
 
