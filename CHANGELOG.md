@@ -1739,6 +1739,15 @@ borrowing an effect and waiting on clips.
   channels carry the masters at 249 while Topic sits at 123.
 - The roster-lib sweep's hand-kept station count went 16 -> 17, the one test a
   new station is supposed to trip.
+- **Integration sweep, after it went live.** A new test asserts every public
+  station has a curation profile filed under its own callsign, with
+  constraints -- the ID clip and liner pool were already asserted, the profile
+  that audition.js and the dashboard read was not. All fifteen pass. The
+  every-effect test's floor went 16 -> 17, and three present-tense counts that
+  nothing checks were corrected: a guide comment still saying "ZM has 6",
+  voice.js saying "all nine station IDs", and CLAUDE.md's lyrics section,
+  which now warns that AFTER HOURS (one vocal in 30 tracks) lowers the next
+  lyrics audit on its own.
 
 ## [0.9] — 2026-08-23
 

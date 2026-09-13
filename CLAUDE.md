@@ -625,6 +625,13 @@ The practical consequence is that `[L]` on those four stations is `NO LYRICS
 AVAILABLE` essentially always — which is honest, and is what the duration gate
 below exists to keep true.
 
+**AFTER HOURS (2026-09-13) moves the ceiling again, before anyone re-measures.**
+Its 30 tracks are late-night small-group jazz with exactly one vocal — Chet
+Baker's *My Funny Valentine* — so at best 1/30 of the station can ever match,
+and `[L]` there is `NO LYRICS AVAILABLE` on 29 tracks in 30. The next audit
+will land lower than 53% for that reason alone. Exclude it with the four
+ambient stations above when comparing against earlier runs.
+
 Three things that look optional and are not:
 
 - **A search result is not a match.** LRCLIB orders by its own relevance, so

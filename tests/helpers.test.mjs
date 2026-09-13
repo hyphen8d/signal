@@ -284,6 +284,26 @@ test('every public station has a liner pool; every secret one has none', () => {
   }
 })
 
+test('every public station has a curation profile under its own callsign', async () => {
+  // 2026-09-13, with AFTER HOURS. A station ships with an ID clip and a liner
+  // pool, and both of those are asserted above and in voice-render.test.mjs;
+  // its curation profile was not. audition.js prints the profile's
+  // constraints and past rejections back at whoever proposes a track, and the
+  // dashboard's reject action writes into it -- a station without one gets
+  // neither, and the dashboard's only defence is a warning after the fact.
+  // The callsign check is the rename half: 'midnight-neon' is SYNAPSE's id,
+  // and a profile still describing the old station under that key would
+  // brief the next curator on the wrong lane.
+  const { readFileSync } = await import('node:fs')
+  const profiles = JSON.parse(readFileSync(new URL('../tools/station-profiles.json', import.meta.url), 'utf8')).stations
+  for (const st of stations.STATIONS) {
+    const pf = profiles[st.id]
+    assert.ok(pf, `${st.callsign} (${st.id}) has no entry in tools/station-profiles.json`)
+    assert.equal(pf.callsign, st.callsign, `profile '${st.id}' is filed under ${pf.callsign}, the station is ${st.callsign}`)
+    assert.ok(Array.isArray(pf.constraints) && pf.constraints.length > 0, `${st.callsign}: the profile states no constraints`)
+  }
+})
+
 // --- lyrics matching (2026-08-30) ----------------------------------------
 // The measured half of the lyrics work. tools/lyrics-audit.mjs found the
 // shipping lookup resolving 59% of a 101-track roster sample and the search
