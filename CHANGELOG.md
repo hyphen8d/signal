@@ -1895,6 +1895,29 @@ smallest on the dial. Each gained ten, to 40, taking the public dial from 660 to
   are in each station's profile. Donna Summer's I Feel Love and Bill Evans'
   Peace Piece remain the owner's call, as recorded.
 
+### Every finding from the day's own audit, fixed (2026-09-13)
+
+`AUDIT-2026-09-13.md` checked the nine PRs merged earlier the same day and
+found 1 HIGH, 8 MEDIUM and 14 LOW. All of them are fixed here, each with a
+test that was broken on purpose to prove it can fail. The bloom-exclusion
+design question is left open, with its comment corrected.
+
+- **Dashboard and tools.** The audition panel now says when a search failed
+  to run, and shows "no candidates" instead of an empty grid. The rename
+  check reads the real clip map, so SYNAPSE no longer gets a false "wrong
+  name" warning. Ids pasted beside a search term are checked instead of
+  silently dropped. Importing `tools/roster-watch.mjs` no longer launches a
+  health batch.
+- **Curation records.** MIRRORBALL's two promoted backups no longer show as
+  "rejected before" in audition, and the note claiming RATM was the first
+  artist on two public stations now credits Filter. Every profile's
+  accepted-artist list is regenerated from its roster (NEON STASIS had 4 of
+  20), and OutKast is credited one way across the dial.
+- **Docs.** AFTER HOURS is 40 tracks in the lyrics note and ZM-4 on the dial;
+  the `stations.js` header states the current tagline and per-band rules;
+  MIRRORBALL's quiet station ID is recorded as accepted rather than re-taken.
+<!-- SLICES-BCE -->
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
