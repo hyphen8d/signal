@@ -147,12 +147,22 @@ export default {
   // key in config.js's PHOSPHORS.
   cycleDisplayMode(s) {
     this.displayModeIndex = (this.displayModeIndex + 1) % DISPLAY_MODES.length
+    // 2026-09-13 (audit, L3) -- [C] is a channel-change-sized event even in
+    // the middle of a tease: the listener asked for a different colour, so it
+    // gets the one persistence clear every other tint change gets. Dropping
+    // the flag first keeps applyPhosphor()'s end-of-tease restore (which is by
+    // assignment, precisely so it does NOT clear) out of this path; without
+    // it [C] at 417 swapped tint with zero clears. The tease is re-applied
+    // just below against the NEW base, where it used to vanish until the
+    // next tuning step.
+    this._teasing = false
     // 2026-08-22: routed through applyPhosphor() rather than a direct
     // setPhosphor() call -- if you're locked onto the secret NIN station,
     // its forced red tint should keep overriding the visible picture even
     // as you cycle the underlying preference; applyPhosphor() is what
     // enforces that. See its comment just below.
     this.applyPhosphor(s)
+    if (this.mode !== 'locked') this.applySecretTease(s)
     // 31st pass -- the color-name flash toast was dropped: the antenna
     // pane's mode strip (see drawModeStrip()) is a persistent on-screen
     // readout of the same information the old transient toast announced,
@@ -2167,8 +2177,14 @@ export default {
       const d = Math.abs(st.freq - this.freq)
       if (d < nearestDist) { nearestDist = d; nearest = st }
     }
-    if (!nearest) return
-    const pct = 1 - Math.min(1, nearestDist / NEAR_THRESHOLD)
+    // 2026-09-13 (audit, L4) -- no secret station on this band is the same
+    // answer as one out of range: zero bleed. This used to `return` before
+    // the restore below, so a tint blended on YM and carried onto ZM by a
+    // preset sweep stayed blended, with _teasing still set, until the next
+    // lock. Unreachable from keys at the time (every cross-band path went
+    // through enterSeeking's restore), which is exactly how it would have
+    // arrived: silently, with the first ZM path that did not.
+    const pct = nearest ? 1 - Math.min(1, nearestDist / NEAR_THRESHOLD) : 0
     if (pct <= 0) {
       // Only restore if this function is what moved it -- otherwise every
       // tuning step anywhere on the band would fight applyPhosphor().
@@ -2763,6 +2779,20 @@ export default {
       this.band = wantBand
       this.drawChrome(s)
       this.drawScale(s)
+      // 2026-09-13 (audit, M2) -- and the pointer with it. The band moved but
+      // the frequency did not, so for the ~55ms before the sweep's first tick
+      // the set held a ZM frequency on the YM dial (AFTER HOURS, [0]:
+      // band=ym freq=1200). A sweep that ran to the end retuned it away; one
+      // cut short by [S], [P] or an arrow in that window left "1200.0" under
+      // the YM scale, [ TUNING... ] on the status row, a power cycle that
+      // kept it, and an arrow that wrapped to 100.0. Clamping here (retune()
+      // clamps into the current band) makes the sweep start on the new band's
+      // nearest edge, so every intermediate step of it is a frequency this
+      // band contains and there is no instant at which an interruption can
+      // strand the dial. Chosen over committing the band at the lock: that
+      // would sweep a YM target across the ZM scale, and retune() would clamp
+      // every step of it into the wrong band -- the H6 bug again.
+      this.retune(s, this.freq)
     }
     this.stopScan()
     // 2026-09-02 (audit, B2) -- snapshot the DEPARTING station before
@@ -3222,7 +3252,8 @@ export default {
       // 2026-09-12 (audit, H2) -- bounded by the band's own count. The
       // footer says [1-9] JUMP, but a band rarely fills all nine presets
       // (count them off the roster, not this comment -- it said "ZM has 6"
-      // until AFTER HOURS made it 7 on 2026-09-13), and a digit past the end used to set guidePage to a station page
+      // until AFTER HOURS and MIRRORBALL made it 8 on 2026-09-13), and a
+      // digit past the end used to set guidePage to a station page
       // that does not exist: drawGuidePageStation() then read `.glyph` off
       // undefined and threw out of the key handler, with guidePage left
       // past the last page. A digit with no station behind it now falls
@@ -3333,6 +3364,13 @@ export default {
       // band switch now, and always acts.)
       case 'v': case 'V':
         e.preventDefault()
+        // 2026-09-13 (audit, L2) -- not on the lite layout. Every effect is
+        // drawn for the 80x25 grid: on the phone's 42x22 it showed the left
+        // half of each picture, and the footer rows (22-24) fell off the grid
+        // entirely, so there was no legend saying how to get back out. Touch
+        // cannot reach this key, but a phone with a keyboard can. It answers,
+        // per the rule above, rather than going quiet.
+        if (this.mobile) { this.flashStatus(s, 'NO VISUALIZER'); break }
         if (this.mode === 'locked' && this.lockedStation) {
           // Consent pass (2026-08-25) -- the first [V] of a visitor's life
           // offers the LINE INPUT card instead of going straight in, and
@@ -3502,9 +3540,11 @@ export default {
     // and -- the one that actually decides it -- re-arming every effect
     // clock underneath a listener who never asked to go anywhere.
     //
-    // [V] is now the only way in, on desktop. Mobile never had this at all
-    // (every effect is drawn for the 80-col grid and renders as garbage in
-    // the lite layout's 42), so nothing changes there.
+    // [V] is now the only way in, on desktop. The lite layout never had the
+    // idle trigger (every effect is drawn for the 80-col grid and renders as
+    // garbage in the lite layout's 42) -- but it DID have [V], from a phone
+    // with a keyboard, until 2026-09-13 (audit, L2): that key now answers
+    // NO VISUALIZER there instead.
     //
     // The call is gone rather than left behind an `if (false)`: a condition
     // that can never be true is a thing the next reader has to disprove.
