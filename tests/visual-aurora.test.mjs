@@ -52,8 +52,20 @@ test('AURORA: draws a full canvas and never touches row 0 or the footer rows', a
     const cols = h.term.cols
     const outside = [0, ...Array.from({ length: h.term.rows - VIZ_BOT }, (_, i) => VIZ_BOT + i)]
     for (const y of outside) for (let x = 0; x < cols; x++) h.term.put(x, y, '#')
-    aurora.draw(h.program, h.screen, 12.3)
+    // 2026-09-13 (audit M7) -- and every canvas cell must be written by that
+    // draw. The sentinel half alone stayed green with the sky's blank-cell
+    // put deleted; a per-cell hit map is what can see a hole.
+    const put = h.term.put
+    const hit = new Uint8Array(cols * VIZ_BOT)
+    h.term.put = function (x, y, ...rest) {
+      if (y >= 1 && y < VIZ_BOT && x >= 0 && x < cols) hit[y * cols + x] = 1
+      return put.call(this, x, y, ...rest)
+    }
+    try { aurora.draw(h.program, h.screen, 12.3) } finally { h.term.put = put }
     for (const y of outside) assert.equal(h.row(y), '#'.repeat(cols), `row ${y} was drawn on`)
+    let missed = 0
+    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) if (!hit[y * cols + x]) missed++
+    assert.equal(missed, 0, `${missed} canvas cells were not repainted this frame`)
   } finally { h.shutdown() }
 })
 
@@ -209,9 +221,17 @@ test('AURORA: re-entry after a long visit starts on a sane clock at the current 
   // The effect clock restarts at 0 on entry. reset() clears _auroraLastT so
   // the first frame snaps the eased gains to what is playing NOW; without
   // it, a loud visit followed by mute and re-entry opens bright and fades.
+  // 2026-09-13 (audit L12) -- the two minutes are compressed: the entry stamp
+  // is moved back 120s instead of rendering 7500 frames of it. What this bug
+  // class needs is an effect clock ~120s ahead at exit, and the draw's t is
+  // computed from _vizEnterAt (visualizer.js), so that is exactly the state a
+  // real long visit leaves. Five real seconds after the jump settle the eased gains (a
+  // two-second time constant) at the synthetic level.
   const { h } = await bootAurora()
   try {
-    h.advance(120000)
+    h.advance(1000)
+    h.program._vizEnterAt -= 120000
+    h.advance(5000)
     const loudGain = Array.from(h.program._auroraGain)
     h.key('e')
     h.advance(500)

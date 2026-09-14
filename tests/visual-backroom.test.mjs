@@ -129,9 +129,16 @@ test('BACKROOM: re-entry after a long visit carries no glint clock from the prev
   // it -- a stale value in the future also blocks every new glint via the
   // rate limit -- so reset() is what this tests. Mutation-checked: with
   // reset() emptied this goes red on the first assertion below.
+  // 2026-09-13 (audit L12) -- the two minutes are compressed: the entry stamp
+  // is moved back 120s instead of rendering 7500 frames of it. What this bug
+  // class needs is an effect clock ~120s ahead at exit, and the draw's t is
+  // computed from _vizEnterAt (visualizer.js), so that is exactly the state a
+  // real long visit leaves.
   const h = await bootBackroom()
   try {
-    h.advance(120000)
+    h.advance(1000)
+    h.program._vizEnterAt -= 120000
+    h.advance(500)
     h.program._backroomGlintAt = effectT(h)
     h.program.muted = true
     h.key('e')
@@ -157,9 +164,11 @@ test('BACKROOM: the upright bass reads -- scroll, neck, bouts, bridge, endpin --
 })
 
 test('BACKROOM: one spotlight cone -- lamp, widening edges, lit air inside, black room outside', async () => {
-  const { LAMP_X, BEAM_TOP, STAGE_Y, coneHalfWidth, ART_MASK } = await backroomExports()
+  const { LAMP_X, BEAM_TOP, STAGE_Y, coneHalfWidth, artMaskFor } = await backroomExports()
   const h = await bootBackroom()
   try {
+    const cols = h.term.cols
+    const ART_MASK = artMaskFor(cols)
     let inLit = 0, inN = 0, outLit = 0, outN = 0
     for (let i = 0; i < 30; i++) {
       h.advance(200)
@@ -175,7 +184,7 @@ test('BACKROOM: one spotlight cone -- lamp, widening edges, lit air inside, blac
       for (let y = BEAM_TOP + 1; y < STAGE_Y; y++) {
         const hw = coneHalfWidth(y)
         const l = Math.round(LAMP_X - hw), rt = Math.round(LAMP_X + hw)
-        if (ART_MASK[y * 80 + l] || ART_MASK[y * 80 + rt]) continue
+        if (ART_MASK[y * cols + l] || ART_MASK[y * cols + rt]) continue
         assert.equal(h.row(y)[l] + h.row(y)[rt], '/\\', `cone edges missing on row ${y}`)
         assert.ok(rt - l > prev, `cone does not widen at row ${y}`)
         prev = rt - l
@@ -186,7 +195,7 @@ test('BACKROOM: one spotlight cone -- lamp, widening edges, lit air inside, blac
       for (let y = BEAM_TOP + 1; y < STAGE_Y; y++) {
         const hw = coneHalfWidth(y)
         for (let x = 8; x < 72; x++) {
-          if (ART_MASK[y * 80 + x]) continue
+          if (ART_MASK[y * cols + x]) continue
           const u = Math.abs(x - LAMP_X) / hw
           const lit = rows[y - 1][x] !== ' '
           if (u < 0.85) { inN++; if (lit) inLit++ } else if (u > 1.35) { outN++; if (lit) outLit++ }

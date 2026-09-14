@@ -356,12 +356,19 @@ export default {
     // as the picture breathing with the music, not a strobe. pulseBloom
     // self-clears its shared timer and settles back to the station's own
     // crtBase.bloomAmt, and idents can't contend (a lock always exits the
-    // visualizer first). The 'drift' effect is excluded: nothing about the
-    // station that carries it should thump. Written for DRIFT MODE and
-    // inherited by NEON STASIS on 2026-08-30, where it is if anything more
-    // true -- mallsoft has even less business thumping than ambient did.
-    // 2026-09-13 -- AURORA joins DRIFT here: DRIFT MODE's own effect, and
-    // the station this exclusion was first written for, still must not thump.
+    // visualizer first). Two EFFECTS are excluded, and the exclusion is keyed
+    // on the effect being drawn, not on the station: 'drift' and 'aurora'.
+    // History: it was written for DRIFT MODE when that was the YM station at
+    // 321 and carried DRIFT; on 2026-08-30 the 321 slot and the DRIFT effect
+    // passed to NEON STASIS, which inherited the exclusion (mallsoft has even
+    // less business thumping than ambient did). 2026-09-13 -- AURORA joins
+    // it as the effect the re-homed ZM DRIFT MODE now carries.
+    // What keying on the effect means (2026-09-13 audit): a station is
+    // bloom-free only while its own effect is up -- DRIFT MODE thumps again
+    // after [Shift+C] to BACKROOM -- and SLOW ORBIT (ORBIT) and THE CRYPT
+    // (KEEP), both ambient, still bloom. Whether those two should join, and
+    // whether this should key on lockedStation instead, is an open call for
+    // Matt; behaviour is deliberately unchanged here until he makes it.
     if (this._au && key !== 'drift' && key !== 'aurora' && this._au.onset && this._au.bass > 0.55 &&
         Date.now() - this._auBloomAt > 1200) {
       this._auBloomAt = Date.now()

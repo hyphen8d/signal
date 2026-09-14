@@ -140,9 +140,18 @@ test('ORBIT: re-entry after a long visit resumes the orbit where it was', async 
   // 118s backwards and this test went red. (Removing either alone stays
   // green by design -- draw() overwrites the value every frame, so a stale
   // one cannot freeze the orbit the way FLAME's did.)
+  // 2026-09-13 (audit L12) -- the two minutes are compressed: the entry stamp
+  // is moved back 120s instead of rendering 7500 frames of it. What this bug
+  // class needs is an effect clock ~120s ahead at exit, and the draw's t is
+  // computed from _vizEnterAt (visualizer.js), so that is exactly the state a
+  // real long visit leaves. The jump itself is one clamped 0.1s step, so "accumulated over
+  // the first visit" is measured against the boot's random seed, not as >100s.
   const { h, mod } = await bootOrbit()
   try {
-    h.advance(120000)
+    const seed = h.program._orbitClock
+    h.advance(1000)
+    h.program._vizEnterAt -= 120000
+    h.advance(2000)
     const before = h.program._orbitClock
     h.key('e')
     h.advance(500)
@@ -155,7 +164,7 @@ test('ORBIT: re-entry after a long visit resumes the orbit where it was', async 
     // Two seconds of frames on the new visit; the exit itself adds nothing.
     assert.ok(advanced > 1.5 && advanced < 2.5, `orbit advanced ${advanced.toFixed(2)}s over a 2s re-entry`)
     // It resumes from where it was rather than restarting the lap.
-    assert.ok(before > 100, 'orbit clock should have accumulated over the first visit')
+    assert.ok(before - seed > 2, 'orbit clock should have accumulated over the first visit')
     assert.ok(Math.abs(h.program._orbitBreath) <= 1)
     const a = canvasText(h)
     assert.ok(nonSpace(h) > 500, 'frame should still carry content after re-entry')

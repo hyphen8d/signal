@@ -25,17 +25,33 @@ async function bootUprising() {
 const canvasText = (h) => CANVAS.map((y) => h.row(y)).join('\n')
 const inked = (h) => CANVAS.reduce((n, y) => n + h.row(y).replace(/ /g, '').length, 0)
 
-test('UPRISING: fills the canvas and writes nothing outside rows 1..21', async () => {
+test('UPRISING: repaints every canvas cell and nothing outside rows 1..21', async () => {
+  // 2026-09-13 (audit M7) -- this used to check ink, the rows outside, and
+  // the floor row only, and deleting the effect's blank-cell put left it
+  // green: a hole anywhere above the crowd was invisible to it. Now a per-cell
+  // hit map over direct draws, the LAGOON/BACKROOM/DANCEFLOOR/ORBIT shape.
   const { h, fx } = await bootUprising()
   try {
     h.advance(3000)
     assert.ok(inked(h) > 300, `canvas should hold a crowd, signs and beams (saw ${inked(h)} inked cells)`)
-    // Direct draws, so nothing but the effect touches the grid in between:
-    // row 0 (title bar) and rows 22.. (the shell's footer) must survive.
-    const outside = () => [0, 22, 23, 24].map((y) => h.row(y)).join('\n')
-    const before = outside()
-    for (const t of [0.5, 3.1, 7.7, 12.2, 40]) fx.draw(h.program, { term: h.term }, t)
-    assert.equal(outside(), before, 'the effect drew outside its canvas')
+    const put = h.term.put
+    const cols = h.term.cols
+    const outside = []
+    let short = 0
+    for (const t of [0.5, 3.1, 7.7, 12.2, 40]) {
+      const hit = new Uint8Array(cols * 22)
+      h.term.put = function (x, y, ...rest) {
+        if (y < 1 || y >= 22) outside.push(`${x},${y}`)
+        else if (x >= 0 && x < cols) hit[y * cols + x] = 1
+        return put.call(this, x, y, ...rest)
+      }
+      try { fx.draw(h.program, { term: h.term }, t) } finally { h.term.put = put }
+      let missed = 0
+      for (let y = 1; y < 22; y++) for (let x = 0; x < cols; x++) if (!hit[y * cols + x]) missed++
+      if (missed) short++
+    }
+    assert.deepEqual(outside.slice(0, 5), [], `${outside.length} puts landed outside the canvas`)
+    assert.equal(short, 0, `${short} of 5 frames left canvas cells unpainted`)
     // The bottom rows are the crowd's mass, edge to edge.
     assert.ok(!h.row(21).includes(' '), `floor row has holes: ${JSON.stringify(h.row(21))}`)
   } finally { h.shutdown() }
@@ -135,9 +151,16 @@ test('UPRISING: an onset starts a surge that ripples across the crowd from one s
 })
 
 test('UPRISING: re-entry after a long visit leaves no surge clock in the future', async () => {
+  // 2026-09-13 (audit L12) -- the two minutes are compressed: the entry stamp
+  // is moved back 120s instead of rendering 7500 frames of it. What this bug
+  // class needs is an effect clock ~120s ahead at exit, and the draw's t is
+  // computed from _vizEnterAt (visualizer.js), so that is exactly the state a
+  // real long visit leaves.
   const { h } = await bootUprising()
   try {
-    h.advance(120000)
+    h.advance(1000)
+    h.program._vizEnterAt -= 120000
+    h.advance(2000)
     h.key('e')
     h.advance(500)
     h.key('v')

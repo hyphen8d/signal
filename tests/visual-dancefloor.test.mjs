@@ -183,9 +183,16 @@ test('DANCEFLOOR: re-entry after a long visit carries no beat clock from the pre
   // the floor for as long as the last visit lasted -- reset() is what this
   // tests. Mutation-checked: with reset() emptied, both the clock assertion
   // and the "floor stepped" assertion below go red.
+  // 2026-09-13 (audit L12) -- the two minutes are compressed: the entry stamp
+  // is moved back 120s instead of rendering 7500 frames of it, then two real
+  // seconds of synthetic beats stamp the clock at ~121s. The draw's t comes
+  // from _vizEnterAt (visualizer.js), so this is the state a real long visit
+  // leaves at exit.
   const { h } = await bootFloor()
   try {
-    h.advance(120000)
+    h.advance(1000)
+    h.program._vizEnterAt -= 120000
+    h.advance(2000)
     assert.ok(h.program._dancefloorBeatAt > 100, 'the floor should have been stepping through the long visit')
     h.key('e')
     h.advance(500)

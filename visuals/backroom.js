@@ -252,20 +252,30 @@ function compile(x0, y0, art) {
 }
 const COMPILED = PIECES.map((pc) => ({ ...pc, cells: compile(pc.x, pc.y, pc.art) }))
 // Cells the cone's edge line must not draw through: each art row's span,
-// one column of margin either side. Sized for the 80-column desktop grid.
+// one column of margin either side, indexed y * cols + x.
 // 2026-09-13 -- the edge crossing the tenor's shoulder read as a second
 // shoulder line; the edge only has to show where there is nothing else.
-export const ART_MASK = new Uint8Array(80 * VIZ_BOT)
-for (const pc of COMPILED) {
-  const rows = new Map()
-  for (const c of pc.cells) {
-    const r = rows.get(c.y) || [c.x, c.x]
-    rows.set(c.y, [Math.min(r[0], c.x), Math.max(r[1], c.x)])
+// 2026-09-13 (audit L5) -- this was one table indexed `y * 80`, so a term
+// of any other width read the wrong row's mask. Built per width and cached;
+// the grid is fixed for a page's life, so in practice it is built once.
+const ART_MASKS = new Map()
+export function artMaskFor(cols) {
+  let mask = ART_MASKS.get(cols)
+  if (mask) return mask
+  mask = new Uint8Array(cols * VIZ_BOT)
+  for (const pc of COMPILED) {
+    const rows = new Map()
+    for (const c of pc.cells) {
+      const r = rows.get(c.y) || [c.x, c.x]
+      rows.set(c.y, [Math.min(r[0], c.x), Math.max(r[1], c.x)])
+    }
+    for (const [y, [l, r]] of rows) {
+      if (y < 1 || y >= VIZ_BOT) continue
+      for (let x = Math.max(0, l - 1 - (pc.sway ? 1 : 0)); x <= Math.min(cols - 1, r + 1 + (pc.sway ? 1 : 0)); x++) mask[y * cols + x] = 1
+    }
   }
-  for (const [y, [l, r]] of rows) {
-    if (y < 1 || y >= VIZ_BOT) continue
-    for (let x = Math.max(0, l - 1 - (pc.sway ? 1 : 0)); x <= Math.min(79, r + 1 + (pc.sway ? 1 : 0)); x++) ART_MASK[y * 80 + x] = 1
-  }
+  ART_MASKS.set(cols, mask)
+  return mask
 }
 const TABLE_CELLS = TABLES.flatMap((tb) => compile(tb.x, TABLE_TOP, tb.art))
 
@@ -293,6 +303,7 @@ export default {
   draw(p, s, t) {
     const { term } = s
     const cols = term.cols
+    const mask = artMaskFor(cols)
     const muted = !!p.muted
     const A = muted ? SILENT_AUDIO : (p._au || syntheticAudio(t))
 
@@ -362,8 +373,8 @@ export default {
     for (let y = BEAM_TOP + 1; y < STAGE_Y; y++) {
       const hw = coneHalfWidth(y)
       const l = Math.round(LAMP_X - hw), r = Math.round(LAMP_X + hw)
-      if (l >= 0 && !ART_MASK[y * 80 + l]) term.put(l, y, '/', DIM)
-      if (r < cols && !ART_MASK[y * 80 + r]) term.put(r, y, '\\', DIM)
+      if (l >= 0 && l < cols && !mask[y * cols + l]) term.put(l, y, '/', DIM)
+      if (r >= 0 && r < cols && !mask[y * cols + r]) term.put(r, y, '\\', DIM)
     }
 
     // --- the lamp ------------------------------------------------------------
