@@ -200,6 +200,23 @@ test('servable(): the dot rule refuses a dot-segment inside an allowed directory
   }
 })
 
+test('renameWarnings(): the clip check asks the real clip map', async () => {
+  // 2026-09-13 (audit, M4) -- the check regexed audio/voice.js for a map that
+  // had moved to audio/station-id-clips.js, matched nothing, and fell back to
+  // the station id: SYNAPSE (id 'midnight-neon') was checked against the
+  // retired station-id-midnight-neon.mp3 and flagged as announcing the wrong
+  // name. The app plays station-id-synapse.mp3.
+  const synapse = await admin.renameWarnings({ id: 'midnight-neon', callsign: 'SYNAPSE' })
+  assert.deepEqual(synapse.filter((w) => w.kind === 'audio'), [], 'SYNAPSE plays its own clip -- no audio warning')
+
+  // ...and the check still fires where it should: a renamed station whose
+  // clip is filed under its id still says the old name.
+  const renamed = (await admin.renameWarnings({ id: 'cipher', callsign: 'NOT CIPHER' })).filter((w) => w.kind === 'audio')
+  assert.equal(renamed.length, 1, 'a callsign that no longer matches the clip is warned about')
+  assert.equal(renamed[0].file, 'audio/station-id-cipher.mp3')
+  assert.match(renamed[0].detail, /station-id-clips\.js/, 'the advice names the file that holds the map')
+})
+
 test('the write-temp file is dot-prefixed, unservable and gitignored', () => {
   // 2026-09-12 (audit, M9) -- SHIP stages with `add -A`, so a crash between
   // the temp write and the rename used to leave `stations.js.tmp-<pid>` at

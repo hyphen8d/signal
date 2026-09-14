@@ -1038,6 +1038,17 @@ function renderAuditionResult(out, stationId) {
       `embeddability are all UNKNOWN for them. ${audResult.unverifiedReasons.join('; ')}. ` +
       `An HTTP 429 is YouTube throttling; wait it out and re-run. Do not treat the cards below as clean.`))
   }
+  // 2026-09-13 (audit, H1) -- the same rule for searches that never RAN.
+  // audition.js started returning JSON for a failed search that day, and this
+  // page did not read it: the form sends one search, so one failure is every
+  // failure, and the panel drew the constraints over an empty grid with no
+  // word said -- a run that could not look, rendered as one that found nothing.
+  if (audResult.searchFailures?.length) {
+    out.appendChild(el('div', { class: 'unverified-banner' },
+      `${audResult.searchFailures.length} search(es) FAILED to run — the results below are INCOMPLETE, not a clean result. ` +
+      `${audResult.searchFailures.map(f => `"${f.query}": ${f.error}`).join('; ')}. ` +
+      `Usually a dropped connection rather than a throttle; re-run the search.`))
+  }
 
   const p = audResult.profile
   if (p) {
@@ -1058,6 +1069,15 @@ function renderAuditionResult(out, stationId) {
     for (const f of seen) legend.appendChild(el('span', { class: flagClass(f), title: flagHelp(f) }, f))
     out.appendChild(legend)
     out.appendChild(help(seen.map(f => `<b>${f}</b> — ${flagHelp(f)}`).join('<br>')))
+  }
+
+  // An empty grid says nothing at all; say that there is nothing, and why
+  // when the reason is known.
+  if (!(audResult.rows || []).length) {
+    out.appendChild(el('div', { class: 'empty' }, audResult.searchFailures?.length
+      ? 'no candidates — the search did not run (see above)'
+      : 'no candidates — the search found nothing to check'))
+    return
   }
 
   const grid = el('div', { class: 'aud-grid' })

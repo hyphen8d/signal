@@ -40,9 +40,9 @@
 // carries the install commands and the reasoning for its schedule.
 
 import { spawn } from 'node:child_process'
-import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, renameSync, realpathSync } from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(here, '..')
@@ -297,5 +297,15 @@ async function main() {
   else if (outcome === 'error') process.exitCode = 2
 }
 
-// Importable for tests without running anything.
-if (!process.env.SIGNAL_ROSTER_WATCH_IMPORT) await main()
+// Importable without running anything.
+//
+// 2026-09-13 (audit, L10) -- this was an OPT-OUT, `SIGNAL_ROSTER_WATCH_IMPORT`,
+// so any import that did not know to set it ran a real batch: 40 watch-page
+// probes, a rewritten roster-health.json and a new state file. An audit
+// agent did exactly that to read sweepMargin(). Now main() runs only when
+// this file IS the script node was started with; realpath because node
+// resolves a symlinked entry before it becomes import.meta.url.
+const isEntryScript = (() => {
+  try { return !!process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href } catch { return false }
+})()
+if (isEntryScript) await main()
