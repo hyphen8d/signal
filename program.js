@@ -2657,12 +2657,41 @@ export default {
 
   stopScan() {
     this.scanning = false
+    this._presetSweep = false
     if (this.scanTimer) { clearInterval(this.scanTimer); this.scanTimer = null }
     // No longer stops the static bed here (12th pass) -- stopping a scan
     // (sweep finished, or 'S' pressed to cancel it) doesn't mean a station
     // was found, so the hiss should keep going into plain seeking rather
     // than cutting out. Only an actual lock (tryLock) or power-down now
     // stops it explicitly.
+  },
+  // 2026-09-13 (after the audit) -- [S] pressed while a sweep is running.
+  // It used to call stopScan() and nothing else, which is right for the timer
+  // and wrong for everything the sweep had put on screen: an ordinary scan
+  // left [ SCANNING... ] on the status row for good, and a preset sweep cut
+  // short left [ TUNING 8 ] there while the TARGET station's track -- cued in
+  // the gesture by _primeStationAudio() so the lock at the sweep's end could
+  // reuse it -- went on playing over the static with no station locked and
+  // the previous station's name still remembered. The overlays that stop a
+  // scan already settle the row themselves (openWeather's SEEKING); this is
+  // the same settling for the key, plus the one thing only a preset sweep
+  // leaves behind. Dropping the prime is what makes a later lock load
+  // properly rather than trust a cue the listener walked away from.
+  cancelScan(s) {
+    const presetSweep = this._presetSweep
+    this.stopScan()
+    if (presetSweep) {
+      this._primedTrack = null
+      // The prime cues as a mid-song join, and the CUED handler in
+      // initPlayer() calls playVideo() once the cue lands -- so a pause
+      // issued while the cue is still loading would be undone by it. Clearing
+      // the pending join is what keeps a cancelled preset silent, not the
+      // pause alone.
+      this.pendingMidSongSeek = false
+      this.pendingResumeSeek = null
+      if (this.ready && this.player) this.player.pauseVideo()
+    }
+    this.setStatus(s, 'SEEKING', false)
   },
   startScan(s) {
     // BUG FIXED 2026-08-20: SCAN_STEP (6) and LOCK_THRESHOLD (6) are the
@@ -2833,6 +2862,7 @@ export default {
     const steps = 6
     let i = 0
     this.scanning = true
+    this._presetSweep = true
     // 38th pass: the preset number in the readout. Pressing a digit had no
     // acknowledgement on screen at all beyond the dial starting to move.
     // Falls back to the bare word for anything tuned by reference rather
@@ -2856,6 +2886,7 @@ export default {
       this.retune(s, f)
       if (i >= steps) {
         this.scanning = false
+        this._presetSweep = false
         clearInterval(this.scanTimer)
         this.scanTimer = null
         stopStaticNoise()
@@ -3270,7 +3301,7 @@ export default {
       case 'ArrowLeft': e.preventDefault(); this.seekStep(s, -SEEK_STEP); break
       case 'ArrowRight': e.preventDefault(); this.seekStep(s, SEEK_STEP); break
       case 'Enter': e.preventDefault(); this.tryLock(s); break
-      case 's': case 'S': e.preventDefault(); this.scanning ? this.stopScan() : this.startScan(s); break
+      case 's': case 'S': e.preventDefault(); this.scanning ? this.cancelScan(s) : this.startScan(s); break
       // 29th pass -- play/pause vs. mute-only was reconsidered and
       // play/pause removed. A real broadcast can't be paused, only muted or turned
       // off; play/pause was the one control that broke that fiction, since

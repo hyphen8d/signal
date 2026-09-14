@@ -53,6 +53,64 @@ for (const [key, label] of [['s', '[S]'], ['p', '[P]']]) {
   })
 }
 
+// Found while checking M2's fix (2026-09-13): [S] cutting a SAME-band preset
+// sweep short left [ TUNING 8 ] on the status row for good, and the target's
+// primed track playing over the static with nothing locked. Stopping an
+// ordinary scan with [S] left [ SCANNING... ] the same way.
+// Both orderings of the prime's CUED against the cut, because each catches a
+// different half of cancelScan(): with CUED already delivered the primed track
+// is PLAYING when [S] lands, so only the pause silences it; with CUED still in
+// flight (a real network cue) nothing is playing yet, and only clearing the
+// pending mid-song join stops the late CUED starting it.
+for (const cueLate of [false, true]) {
+test(`[S] cutting a preset sweep short settles SEEKING and silences the primed track (CUED ${cueLate ? 'after' : 'before'} the cut)`, async () => {
+  const h = await boot({ station: 'cold-wave', player: true })
+  try {
+    const { presetOrderFor } = await modules(h)
+    h.powerOn()
+    h.advance(4000)
+    const order = presetOrderFor('ym')
+    const dist = (st) => Math.abs(st.freq - h.program.freq)
+    const far = order.reduce((best, st, i) => (dist(st) > dist(order[best]) ? i : best), 0)
+    h.player.holdCues = cueLate
+    h.key(String(far + 1))
+    h.advance(150)
+    assert.equal(h.program.scanning, true, 'precondition: the sweep is still running')
+    h.key('s')
+    h.advance(3000)
+    assert.equal(h.program.mode, 'seeking')
+    assert.equal(h.program.scanning, false)
+    assert.ok(h.row(2).includes('SEEKING'), `status row after the cut: ${h.row(2)}`)
+    assert.ok(!h.row(2).includes('TUNING'), `a cancelled preset still reads TUNING: ${h.row(2)}`)
+    assert.notEqual(h.player.getPlayerState(), 1, 'the primed target track plays on with no station locked')
+    // Live, the cue's CUED can arrive AFTER the cut, and the CUED handler
+    // starts a pending mid-song join. A cancelled preset must not have one.
+    h.player.emit(5) // YT.PlayerState.CUED
+    h.advance(1500)
+    assert.notEqual(h.player.getPlayerState(), 1, 'a late CUED started the cancelled preset\'s track')
+    assert.ok(h.row(2).includes('SEEKING'), `status row after a late CUED: ${h.row(2)}`)
+  } finally { h.shutdown() }
+})
+}
+
+test('[S] stopping an ordinary scan settles SEEKING, not SCANNING...', async () => {
+  const h = await boot({ station: 'cold-wave', player: true })
+  try {
+    h.powerOn()
+    h.advance(3000)
+    h.key('ArrowRight')
+    h.advance(200)
+    h.key('s')
+    h.advance(200)
+    assert.equal(h.program.scanning, true, 'precondition: the scan is running')
+    h.key('s')
+    h.advance(2000)
+    assert.equal(h.program.scanning, false)
+    assert.ok(h.row(2).includes('SEEKING'), `status row after the stop: ${h.row(2)}`)
+    assert.ok(!h.row(2).includes('SCANNING'), `a stopped scan still reads SCANNING: ${h.row(2)}`)
+  } finally { h.shutdown() }
+})
+
 // L2 -- the lite layout has no room for any effect, or for the footer that
 // says how to leave. [V] from a phone keyboard answers instead.
 test('L2: [V] on the lite layout answers NO VISUALIZER and does not open', async () => {

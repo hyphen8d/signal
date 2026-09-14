@@ -1916,7 +1916,31 @@ design question is left open, with its comment corrected.
 - **Docs.** AFTER HOURS is 40 tracks in the lyrics note and ZM-4 on the dial;
   the `stations.js` header states the current tagline and per-band rules;
   MIRRORBALL's quiet station ID is recorded as accepted rather than re-taken.
-<!-- SLICES-BCE -->
+- **Tuning.** A preset that crosses bands now clamps the dial into the new
+  band before it sweeps, so [S], [P] or an arrow mid-sweep can no longer
+  leave a ZM frequency under the YM scale. [S] pressed during a sweep now
+  settles the set: an ordinary scan used to leave `[ SCANNING... ]` on the
+  status row for good, and a preset sweep cut short left `[ TUNING 8 ]`
+  there while the target station's track played over the static with
+  nothing locked (found while checking the band fix). [V] on the phone
+  layout says NO VISUALIZER instead of opening a half-drawn visualizer.
+  Cycling colour near a secret station clears the tube's afterglow like
+  every other colour change and keeps the bleed, and the bleed clears on a
+  band with no secret stations.
+- **Effects.** KEEP's castle is drawn in shade blocks instead of solid ones
+  and UPRISING's crowd is a step dimmer, so neither glares on the tube
+  (checked on real-shader stills; LAGOON's moon already did not). UPRISING,
+  KEEP and AURORA's repaint tests now catch an unpainted cell. DANCEFLOOR and
+  AURORA no longer assume an 80-column grid. The bloom exclusion's comment
+  now tells its history right; whether ambient stations should thump stays
+  an open call.
+- **Tests.** A first visit has its own end-to-end test (station, primed
+  track, load, PLAYING, title) -- before, one test would have caught a
+  broken fallback. The seven effect re-entry tests take under a second each
+  instead of 3-9s. The dead-feedback sweep runs on both bands, one pinned
+  station and child process each, and its scanning row starts where a scan
+  cannot lock before the first frame, so ZM no longer reports six live keys
+  as dead.
 
 ## [0.9] — 2026-08-23
 
