@@ -8,6 +8,7 @@
 const V = globalThis.SIGNAL_BUILD ?? ''
 const { audioCtx, speakerOut } = await import(`./sfx.js?v=${V}`)
 const { DUCK_TAIL_MS } = await import(`../constants.js?v=${V}`)
+const { STATIONS, SECRET_STATIONS, trackIsInstrumental } = await import(`../stations.js?v=${V}`)
 
 // ---------------------------------------------------------------------
 // VOICE PROVENANCE -- what made every mp3 in audio/, and what to match when
@@ -574,9 +575,32 @@ function resolve(id, data, wantSeconds, rankedBy) {
  *  fine and is why `rankedBy` is recorded: an entry resolved with no
  *  duration to rank or gate against is looked up ONCE more when a real
  *  duration turns up. Everything else is served from cache. */
+// 2026-09-14 -- the roster's instrumental verdicts, by youtubeId. Keyed by id
+// alone because lint keeps ids unique across the whole roster, so the lookup
+// never needs to know which station is playing. Built on first use.
+let instrumentalIds = null
+export function isInstrumental(track) {
+  if (!track || !track.youtubeId) return false
+  if (!instrumentalIds) {
+    instrumentalIds = new Set()
+    for (const st of [...STATIONS, ...(SECRET_STATIONS || [])]) {
+      for (const t of st.tracks || []) if (trackIsInstrumental(st, t)) instrumentalIds.add(t.youtubeId)
+    }
+  }
+  return instrumentalIds.has(track.youtubeId)
+}
+
 export function ensureLyricsFetched(track, wantSeconds = 0) {
   if (!track || !track.youtubeId) return
   const id = track.youtubeId
+  // An instrumental never asks LRCLIB at all: there is no answer to rank or
+  // gate, only a false positive to risk (see trackIsInstrumental in
+  // stations.js). The verdict is final, so it is written once and served
+  // from cache like any other 'unavailable'.
+  if (isInstrumental(track)) {
+    if (!lyricsCache[id]) lyricsCache[id] = { state: 'unavailable', reason: 'instrumental' }
+    return
+  }
   const entry = lyricsCache[id]
   if (entry) {
     if (entry.state === 'pending') {

@@ -427,6 +427,8 @@ One thing does leave the page, and it's unrelated to the tap: the
 visualizer's `[L]` synced-lyrics view looks each track up on
 [LRCLIB](https://lrclib.net) by title and artist when the track loads, so
 that service sees what's playing. No account, no key, nothing else sent.
+Tracks the roster marks as instrumental are never looked up at all — there
+are no words to find, and `[L]` just says INSTRUMENTAL.
 
 ## Credits
 

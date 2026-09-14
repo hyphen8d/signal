@@ -48,6 +48,12 @@ const args = process.argv.slice(2)
 const flag = (n, d) => { const h = args.find((a) => a.startsWith(`--${n}=`)); return h ? h.slice(n.length + 3) : d }
 const PER = Math.max(1, Number(flag('per', 8)))
 const ONLY = flag('station', null)
+// 2026-09-14 -- tracks the roster marks instrumental (trackIsInstrumental in
+// stations.js) are not looked up by the app, so by default they are not
+// looked up here either, and they leave the denominator: a wordless track
+// was never a miss. --check-instrumental queries them anyway and lists any
+// that DO match, which is how a sung track wrongly marked instrumental shows.
+const CHECK_INSTRUMENTAL = args.includes('--check-instrumental')
 
 const UA = { 'user-agent': 'signal-lyrics-audit/1.0 (+https://github.com/hyphen8d/signal)' }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -91,14 +97,15 @@ for (const st of stations) {
   const tr = st.tracks || []
   const step = Math.max(1, Math.floor(tr.length / PER))
   for (let i = 0; i < tr.length && sample.filter((x) => x.st === st.callsign).length < PER; i += step) {
-    sample.push({ st: st.callsign, ...tr[i] })
+    sample.push({ st: st.callsign, ...tr[i], instrumental: voice.isInstrumental(tr[i]) })
   }
 }
 console.log(`Sampling ${sample.length} track(s) across ${stations.length} station(s). Durations from roster-health.json.\n`)
 
-const tally = { exact: 0, search: 0, none: 0 }
-const recovered = [], suspect = [], ungated = []
+const tally = { exact: 0, search: 0, none: 0, instrumental: 0 }
+const recovered = [], suspect = [], ungated = [], markedButMatched = []
 for (const t of sample) {
+  if (t.instrumental && !CHECK_INSTRUMENTAL) { tally.instrumental++; continue }
   const want = health[t.youtubeId]?.seconds || 0
   const hit = await apiGet(t.title, t.artist)
   await sleep(120)
@@ -116,13 +123,25 @@ for (const t of sample) {
       suspect.push(`${t.st.padEnd(17)} ${String(t.title).slice(0, 32).padEnd(32)} playing ${want}s vs lyric ${Math.round(m.duration || 0)}s`)
     }
   }
+  if (t.instrumental) {
+    // Checked only under --check-instrumental, and never counted in the rate.
+    tally.instrumental++
+    if (via) markedButMatched.push(`${t.st.padEnd(17)} ${t.youtubeId} ${t.artist} - ${t.title}`)
+    continue
+  }
   if (via === 'exact') tally.exact++
   else if (via === 'search') { tally.search++; recovered.push(`${t.st.padEnd(17)} ${t.artist} - ${t.title}`) }
   else tally.none++
   if (match && !want) ungated.push(t.youtubeId)
 }
 
-const n = sample.length
+const n = sample.length - tally.instrumental
+if (tally.instrumental) console.log(`  (${tally.instrumental} sampled track(s) are marked instrumental in the roster and ${CHECK_INSTRUMENTAL ? 'were checked but ' : ''}are not counted below)\n`)
+if (markedButMatched.length) {
+  console.log(`Marked instrumental, but LRCLIB has a synced lyric of the right length (${markedButMatched.length}) -- listen, and fix the roster if one is sung:`)
+  for (const r of markedButMatched) console.log('  ' + r)
+  console.log('')
+}
 const ok = tally.exact + tally.search
 const pct = (v) => `${((v / n) * 100).toFixed(0)}%`
 console.log(`  /api/get   (exact title+artist) : ${String(tally.exact).padStart(3)}/${n}  ${pct(tally.exact)}`)

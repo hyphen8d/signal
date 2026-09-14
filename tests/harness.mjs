@@ -181,8 +181,17 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
   // Math.random is the only source, so tools/dead-feedback.mjs's seeded
   // control and pressed runs still pick the same station.
   if (!station && !saved && !game && anyBand) {
-    const { STATIONS } = await import(`../stations.js?v=${tag}`)
-    station = STATIONS[Math.floor(Math.random() * STATIONS.length)].id
+    const { STATIONS, trackIsInstrumental } = await import(`../stations.js?v=${tag}`)
+    // 2026-09-14 -- a scenario that brings its own lyrics answer is about
+    // what [L] does WITH lyrics, and an instrumental track never asks for them
+    // (see trackIsInstrumental in stations.js). Landing one on a station with
+    // any wordless track would fail it at random, so those boots draw only
+    // from stations where every track is sung. Every other boot keeps the
+    // whole roster.
+    const pool = lyrics == null
+      ? STATIONS
+      : STATIONS.filter((st) => !st.tracks.some((t) => trackIsInstrumental(st, t)))
+    station = pool[Math.floor(Math.random() * pool.length)].id
   }
   if (station || game) {
     const q = [station && `station=${station}`, station && track && `track=${track}`, game && 'game=1']

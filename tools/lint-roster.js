@@ -34,6 +34,10 @@
 //     are not close in any sense a listener can reach.
 //   - no YouTube ID appears twice across the whole roster (secret included)
 //   - every track has a title and artist
+//   - `instrumental` is a boolean, `vocalTracks` sits only on an instrumental
+//     station and `instrumentalTracks` only on a vocal one, and every id in
+//     either list is one of that station's own tracks (2026-09-14, the [L]
+//     opt-out -- see instrumentalProblems below)
 //   - README's screenshot captions still name the station tools/shoot.mjs
 //     actually captures. The captions name a station; the recipes press a
 //     preset DIGIT; presets are per-band and renumber when the band gains a
@@ -84,6 +88,28 @@ export const MAX_PUBLIC_STATIONS_PER_BAND = 9
 // asserting a rule mobile does not actually have.
 export const DESC_WIDTH = 72
 export const DESC_LINES = 3
+
+/** 2026-09-14 -- the instrumental opt-out for [L] (see trackIsInstrumental in
+ *  stations.js). A listed id that is not on the station is a verdict about
+ *  nothing, and the likeliest way to get one is a track swap that left the
+ *  list behind -- so the id has to be HERE, not merely somewhere. A list on
+ *  the wrong kind of station is ignored by trackIsInstrumental, which is
+ *  exactly why it has to be loud here instead. Exported so the rule can be
+ *  tested on synthetic stations; lintRoster() only ever sees the real file. */
+export function instrumentalProblems(st, who = st.id) {
+  const problems = []
+  if (st.instrumental !== undefined && typeof st.instrumental !== 'boolean') problems.push(`${who}: instrumental must be true or false, got ${JSON.stringify(st.instrumental)}`)
+  const onStation = new Set((st.tracks || []).map((t) => t.youtubeId))
+  for (const [field, wantInstrumental] of [['vocalTracks', true], ['instrumentalTracks', false]]) {
+    if (st[field] === undefined) continue
+    if (!Array.isArray(st[field])) { problems.push(`${who}: ${field} must be an array of youtubeIds`); continue }
+    if (!!st.instrumental !== wantInstrumental) {
+      problems.push(`${who}: ${field} only means something on ${wantInstrumental ? 'an instrumental' : 'a vocal'} station (instrumental: ${!!st.instrumental})`)
+    }
+    for (const id of st[field]) if (!onStation.has(id)) problems.push(`${who}: ${field} lists ${id}, which is not one of this station's tracks`)
+  }
+  return problems
+}
 
 // The text overrides exist for tests/roster.test.mjs only (2026-09-12,
 // L17): the rules below carry "could not find X -- update the regex"
@@ -143,6 +169,7 @@ export async function lintRoster({ readmeText, shootText, issueFormText } = {}) 
       if (seenIds.has(t.youtubeId)) problems.push(`${who}: ${t.youtubeId} (${t.title}) already used by ${seenIds.get(t.youtubeId)}`)
       else seenIds.set(t.youtubeId, who)
     }
+    problems.push(...instrumentalProblems(st, who))
   }
   // Spacing is a question about ONE dial, so it is asked per band. Two
   // stations a unit apart on different bands are not close to each other in

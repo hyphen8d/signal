@@ -1065,7 +1065,13 @@ test('the visualizer clicks only for keys it actually answers', async () => {
   const h = await boot({})
   try {
     h.powerOn()
-    h.key(await otherPreset(h)); h.advance(3000)
+    // 2026-09-14 -- tune to a station with no wordless tracks: on an
+    // instrumental [L] has a real answer (INSTRUMENTAL) and clicks, which is
+    // its own test above; this one is about the silence when lyrics are
+    // simply not there.
+    const { presetOrderFor, trackIsInstrumental } = await import(`../stations.js?v=${h.tag}`)
+    const wordless = presetOrderFor(h.program.band).filter((st) => st.tracks.some((t) => trackIsInstrumental(st, t)))
+    h.key(await otherPreset(h, wordless)); h.advance(3000)
     h.key('v'); h.advance(1600)
     assert.equal(h.program.visualizerActive, true, 'test setup: in the visualizer')
     // The footer legend's own set, plus volume and the exits.
@@ -1143,7 +1149,17 @@ test('mobile: a skip swipe off-station answers, since touch has no click at all'
 const inVisualizer = async (opts = {}) => {
   const h = await boot({ player: true, ...opts })
   h.powerOn()
-  h.key(await otherPreset(h))
+  // 2026-09-14 -- a scenario with its own lyrics answer must not tune to a
+  // station with wordless tracks: an instrumental never asks for lyrics (see
+  // trackIsInstrumental in stations.js), so the answer would go unused and
+  // the scenario would fail on whichever preset it happened to draw. The
+  // harness filters its boot pick the same way; this is the preset half.
+  let avoid = []
+  if (opts.lyrics != null) {
+    const { presetOrderFor, trackIsInstrumental } = await import(`../stations.js?v=${h.tag}`)
+    avoid = presetOrderFor(h.program.band).filter((st) => st.tracks.some((t) => trackIsInstrumental(st, t)))
+  }
+  h.key(await otherPreset(h, avoid))
   h.advance(3000)
   await h.flush()   // the LRCLIB chain is a real promise chain
   h.advance(100)
@@ -1152,6 +1168,38 @@ const inVisualizer = async (opts = {}) => {
   assert.equal(h.program.visualizerActive, true, 'test setup: in the visualizer')
   return h
 }
+
+test('[L] on an instrumental track says INSTRUMENTAL, clicks, and never opens the lyrics view', async () => {
+  // 2026-09-14 -- the roster's instrumental verdict (trackIsInstrumental in
+  // stations.js) is an answer, not an absence: the key says so. Data-driven,
+  // so it follows whichever station and track the roster marks, and it brings
+  // a canned lyric that would be drawn if the opt-out did not hold.
+  const { STATIONS, trackIsInstrumental } = await import(`../stations.js?v=pick-${Date.now()}`)
+  let pick = null
+  for (const st of STATIONS) {
+    const t = st.tracks.find((x) => trackIsInstrumental(st, x))
+    if (t) { pick = { station: st.id, track: t.youtubeId }; break }
+  }
+  assert.ok(pick, 'the roster marks no track instrumental, so this is untested')
+  const h = await boot({ player: true, lyrics: true, station: pick.station, track: pick.track })
+  try {
+    h.powerOn()
+    h.advance(3000)
+    await h.flush()
+    h.advance(100)
+    assert.equal(h.program.currentTrack.youtubeId, pick.track, 'test setup: on the instrumental track')
+    h.key('v')
+    h.advance(1600)
+    assert.equal(h.program.visualizerActive, true, 'test setup: in the visualizer')
+    assert.equal(h.program.isMappedKey({ key: 'l' }), true, '[L] must click on an instrumental: it has an answer')
+    h.key('l')
+    h.advance(200)
+    assert.ok(h.find('INSTRUMENTAL') !== -1, 'no INSTRUMENTAL answer on screen')
+    assert.equal(h.program.lyricsViewOpen, false, 'the lyrics view opened on an instrumental')
+    h.advance(3000)
+    assert.equal(h.find('canned lyric'), -1, 'canned lyric text reached the screen')
+  } finally { h.shutdown() }
+})
 
 test('[L] opens the lyrics view and follows the track clock', async () => {
   const h = await inVisualizer({ lyrics: true })

@@ -178,8 +178,19 @@ const STATES = {
   // no test could reach at all before the player existed, and which is where
   // the dead-feedback pattern was first found.
   lockedPlaying: async (h) => { h.powerOn(); h.key('3'); h.advance(3000); await h.flush(); h.advance(300) },
+  // 2026-09-14 -- [L] cannot open on an instrumental (trackIsInstrumental in
+  // stations.js answers INSTRUMENTAL instead), and this row used to press
+  // preset 3 on every band -- on ZM that is SLOW ORBIT, marked wordless, so
+  // the setup threw and the whole ZM sweep with it. Preset 3 is kept wherever
+  // its station is sung, so a band's report does not move for no reason, and
+  // otherwise the first sung preset that is not the station already locked.
   lyricsView: async (h) => {
-    h.powerOn(); h.key('3'); h.advance(3000)
+    const { presetOrderFor, trackIsInstrumental } = await import(`../stations.js?v=${h.tag}`)
+    const order = presetOrderFor(h.program.band)
+    const sung = (st) => !st.tracks.some((t) => trackIsInstrumental(st, t))
+    const i = order[2] && sung(order[2]) ? 2 : order.findIndex((st) => sung(st) && st !== h.program.lockedStation)
+    if (i < 0) throw new Error(`sweep setup: band ${h.program.band} has no sung station for the lyrics view`)
+    h.powerOn(); h.key(String(i + 1)); h.advance(3000)
     await h.flush()            // let the LRCLIB chain resolve
     h.advance(100); h.key('v'); h.advance(1600)
     h.key('l'); h.advance(400)
