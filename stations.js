@@ -11,8 +11,9 @@
 // reads and patches THIS file's `tracks: [...]` blocks now, not program.js.
 //
 // Content-ops rules (see README "Content ops"): verify every YouTube ID
-// against oEmbed before adding it; taglines 35 chars or under; 9 public
-// stations is the ceiling (they map onto the 1-9 preset keys); re-run
+// against oEmbed before adding it; taglines within TAGLINE_MAX (43) in
+// tools/lint-roster.js; at most 9 public stations PER BAND (they map onto
+// that band's 1-9 preset keys); re-run
 // `node tools/stations-to-md.js` after editing so stations.md stays in sync.
 
 /** Real, searched-and-verified (YouTube oEmbed) tracks per station, so each
@@ -1142,10 +1143,13 @@ export const STATIONS = [
   // voice, then everybody. It starts on A440, the frequency the station sits
   // at, which is the sort of thing nobody notices and is the point anyway.
   //
-  // Rage Against the Machine appears here AND on DISTORTION FIELD, which is
-  // the first artist to span two PUBLIC stations -- 395 artists and the only
-  // previous crossings (Weezer, Cypress Hill) both go into GREEN ROOM, a
-  // secret station. Deliberate, at the curator's call 2026-09-02: RATM
+  // Rage Against the Machine appears here AND on DISTORTION FIELD. This note
+  // called it the first artist to span two PUBLIC stations until the
+  // 2026-09-13 audit found that wrong: Filter was already on DISTORTION FIELD
+  // ('Hey Man, Nice Shot') and, credited "Filter & The Crystal Method", on
+  // CIPHER since 2026-08-28. Those two are the only public crossings; the
+  // crossings into GREEN ROOM, a secret station, are Weezer, Cypress Hill,
+  // OutKast and Dr. Dre. Deliberate, at the curator's call 2026-09-02: RATM
   // genuinely lives in both lanes, 1992 of-era guitars for DISTORTION FIELD
   // and the protest thesis here. `Bombtrack` stays there and does not appear
   // here -- lint forbids a repeated youtubeId across the roster, so the two
@@ -1403,7 +1407,7 @@ export const STATIONS = [
       realTrack('hOEAGZZoq7w', 'Dear Hearts and Gentle People', 'Bob Crosby and the Bobcats'),
     ] },
   // 20th pass -- new channel added for 0 called Hackback, built around
-  // artists like Tribe Called Quest, De La Soul, Slick Rick, Outkast, Wu
+  // artists like Tribe Called Quest, De La Soul, Slick Rick, OutKast, Wu
   // Tang, MF DOOM, MC Solaar -- golden-age/underground hip-hop station, bound to
   // the new preset key `0`.
   // 23rd pass: freq nudged 893.7 -> 888.7 -- see the freq comment on ATOMIC
@@ -1424,7 +1428,7 @@ export const STATIONS = [
   // the 25-track roster below is A Tribe Called Quest/De La Soul/
   // Wu-Tang/Nas/Gang Starr/Pete Rock & C.L. Smooth/Digable Planets/MF DOOM/
   // Black Star (all NY) alongside Dre/Ice Cube/Warren G/2Pac/Snoop/Cypress
-  // Hill (West Coast) and Outkast (Atlanta) -- genuinely coast-to-coast,
+  // Hill (West Coast) and OutKast (Atlanta) -- genuinely coast-to-coast,
   // if anything NY-heavy. "West coast backbone" was wrong in both the
   // tagline and the desc field below (same error, inherited from an old
   // 28th-pass framing neither of us checked against the actual tracklist).
@@ -1472,8 +1476,12 @@ export const STATIONS = [
       realTrack('P800UWoE9xs', 'Award Tour', 'A Tribe Called Quest'),
       realTrack('jdtKT5q-CW8', 'Me Myself and I', 'De La Soul'),
       realTrack('WX6G6sODMrQ', 'Buddy', 'De La Soul'),
-      realTrack('qrOKZeCdaRM', 'Rosa Parks', 'Outkast'),
-      realTrack('EUVo8epKwv0', 'Ms. Jackson', 'Outkast'),
+      realTrack('qrOKZeCdaRM', 'Rosa Parks', 'OutKast'),
+      realTrack('EUVo8epKwv0', 'Ms. Jackson', 'OutKast'),
+      // 2026-09-13 audit -- credited 'OutKast', the group's own styling and the
+      // one its '- Topic' channel and the Ms. Jackson video title use, so
+      // HACKBACK and GREEN ROOM no longer spell the same act two ways.
+      // (OutkastVEVO above is a channel name, not a credit.)
       realTrack('4yNQ7_7I5aE', 'C.R.E.A.M.', 'Wu-Tang Clan'),
       realTrack('LMeluRz2wv4', 'Doomsday', 'MF DOOM'),
       realTrack('lZXtabqDY-c', "It Ain't Hard to Tell", 'Nas'),
@@ -2138,9 +2146,10 @@ export const STATIONS = [
   // players recorded. 1959 was the first pick -- the year of Kind of Blue,
   // Giant Steps, Mingus Ah Um and Time Out -- and is off the band: ZM runs
   // 1000-1800. 1200 sits 34 below SYNAPSE and 108 above SLOW ORBIT, clear of
-  // the 12 lint wants either side. It lands as ZM-3, so SYNAPSE, DRIFT MODE,
-  // TRADEWINDS and CIRCUIT CRUSH each move up one preset key, the same
-  // renumbering RISE UP's arrival and DRIFT MODE's return already did.
+  // the 12 lint wants either side. It landed as ZM-3, so SYNAPSE, DRIFT MODE,
+  // TRADEWINDS and CIRCUIT CRUSH each moved up one preset key, the same
+  // renumbering RISE UP's arrival and DRIFT MODE's return already did; it has
+  // been ZM-4 since MIRRORBALL (1054) arrived below it the same day.
   //
   // LATE NIGHT IS THE FILTER, NOT JAZZ, and the profile says so where
   // audition.js reads it back: jazz is too wide a word for a lane, so the

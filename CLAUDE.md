@@ -640,9 +640,10 @@ AVAILABLE` essentially always — which is honest, and is what the duration gate
 below exists to keep true.
 
 **AFTER HOURS (2026-09-13) moves the ceiling again, before anyone re-measures.**
-Its 30 tracks are late-night small-group jazz with exactly one vocal — Chet
-Baker's *My Funny Valentine* — so at best 1/30 of the station can ever match,
-and `[L]` there is `NO LYRICS AVAILABLE` on 29 tracks in 30. The next audit
+Its 40 tracks are late-night small-group jazz with exactly one vocal — Chet
+Baker's *My Funny Valentine* — so at best 1/40 of the station can ever match,
+and `[L]` there is `NO LYRICS AVAILABLE` on 39 tracks in 40 (the ten the
+30→40 growth pass added are all instrumentals). The next audit
 will land lower than 53% for that reason alone. Exclude it with the four
 ambient stations above when comparing against earlier runs.
 MIRRORBALL (same day) pushes the other way: disco, boogie and funk are sung
