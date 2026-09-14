@@ -30,6 +30,27 @@
 // nothing visible shifts every later draw and reads as a change. There are
 // no false negatives, which is the direction that matters.
 //
+// BOTH BANDS, ONE PINNED STATION EACH (2026-09-13, audit L14). Every state
+// runs once per band, booted through `station:` onto that band's lowest
+// station. Until then the sweep swept whatever an unpinned harness boot
+// landed on: the default band while the app's own first-visit fallback
+// picked, and -- once the harness began drawing from both bands -- the same
+// single station every time (the pick is the first draw after seed(), so
+// every trial, control and pressed alike, got AFTER HOURS). Pairing is what
+// the sweep cannot lose, and a random pick only kept it by accident; a pin
+// keeps it by construction, and trial() now checks that the boot really
+// landed on the band asked for and that every pressed run booted the same
+// station as its control, throwing rather than reporting a mispaired diff.
+// `--band=ym` (or zm) sweeps one.
+//
+// With no --band, each band runs in its OWN node process, in parallel, and
+// the reports are printed one after the other. Not for speed: every
+// harness boot imports a fresh module graph (unique ?v=, which is what
+// keeps trials independent) and Node never unloads an ES module, so one
+// process sweeping both bands ran out of heap at 2GB partway into the
+// second. A child per band keeps each under the ceiling one band always
+// fit in, and parallel children keep the wall time near a single band's.
+//
 // One standing exception in the output: [F] FULLSCREEN reports as clicking
 // without changing anything in every powered-on state. It changes the whole
 // browser window, which is real feedback the text grid cannot see.
@@ -41,6 +62,31 @@
 // row is a key that is silent and inert, which is usually correct.
 
 import { boot } from '../tests/harness.mjs'
+import { spawn } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+// No --band: fan out one child per band and stop here (see the header).
+if (!process.argv.some((a) => a.startsWith('--band='))) {
+  const { BANDS } = await import('../tuning.js?v=sweep')
+  const passArgs = process.argv.slice(2)
+  const runs = BANDS.map((b) => new Promise((resolve) => {
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), `--band=${b.key}`, ...passArgs],
+      { stdio: ['ignore', 'pipe', 'inherit'] })
+    let out = ''
+    child.stdout.on('data', (d) => { out += d })
+    child.on('close', (code) => resolve({ band: b.key, out, code }))
+  }))
+  let total = 0
+  let failed = false
+  for (const r of await Promise.all(runs)) {
+    process.stdout.write(r.out)
+    const m = r.out.match(/^(\d+) key\(s\) click/m)
+    if (r.code !== 0 || !m) { failed = true; console.log(`\n[${r.band}] sweep exited ${r.code} without a total -- its rows above are incomplete`) } else total += Number(m[1])
+    console.log('')
+  }
+  console.log(`${total} key(s) click without changing anything across ${BANDS.length} bands.`)
+  process.exit(failed ? 1 : 0)
+}
 
 let seedState = 1
 const seed = () => { seedState = 0x2545F491 }
@@ -58,6 +104,20 @@ const EMPTY_PRESET_DIGITS = await (async () => {
   const { BANDS } = await import('../tuning.js?v=sweep')
   const firstEmpty = BANDS.map((b) => STATIONS.filter((s) => s.band === b.key).length + 1)
   return [...new Set(firstEmpty.filter((n) => n <= 9).map(String))]
+})()
+// One station per band to boot every trial on: the lowest frequency on it.
+// `wide` is the station with the widest gap ABOVE it on that band, which
+// the scanning row boots instead -- see SCAN_FROM_WIDE below.
+const SWEEP_BANDS = await (async () => {
+  const { STATIONS } = await import('../stations.js?v=sweep')
+  const { BANDS } = await import('../tuning.js?v=sweep')
+  return BANDS.map((b) => {
+    const on = STATIONS.filter((s) => s.band === b.key).sort((x, y) => x.freq - y.freq)
+    if (!on.length) return null
+    const wide = on.slice(0, -1).reduce((best, s, i) => (on[i + 1].freq - s.freq > best.gap
+      ? { id: s.id, gap: on[i + 1].freq - s.freq } : best), { id: on[0].id, gap: -1 })
+    return { key: b.key, station: on[0].id, wide: wide.id }
+  }).filter(Boolean)
 })()
 
 // Every key any view treats as a command, plus a few the app must NOT claim
@@ -80,9 +140,10 @@ const KEYS = [
   // station count, derived from the roster rather than typed. isMappedKey
   // answers true for every digit 1-9, so a digit with no station behind it
   // was the one preset shape that clicked and did nothing -- and a sample
-  // of 1/5/0 could never see it. Sweeping on the default band, the digit
-  // past the OTHER band's count usually lands on a station here and reads
-  // as a change; the one past this band's count is the row that matters.
+  // of 1/5/0 could never see it. Each band is swept on its own rows (see the
+  // header), so on a band's row the digit past THAT band's count is the one
+  // that matters; the digit past the other band's count usually lands on a
+  // station there and reads as a change.
   ...EMPTY_PRESET_DIGITS,
   ')', 'x', ' ',
 ]
@@ -175,6 +236,16 @@ const STATES = {
     if (!h.program.gameOpen) throw new Error('sweep setup: the game did not open')
   },
 }
+// 2026-09-13 -- the scanning row presses its keys 200ms into a scan, so it
+// only asks its question if the scan is STILL RUNNING across the 24 frames
+// that follow. From a band's lowest station it often is not: THE CRYPT sits
+// 23 below MIRRORBALL, the scan locks it by the first captured frame, and
+// the row came out as six keys that "click and change nothing" -- every one
+// of them answering, and every answer painted over by the lock landing in
+// both runs alike. So that row boots the station with the widest gap above
+// it, and trial() records whether the control's scan survived the window;
+// a row where it did not is marked rather than trusted.
+const SCAN_FROM_WIDE = new Set(['scanning'])
 const BOOT_OPTS = {
   consentCard: { tap: 'tab' },
   weatherCard: { weather: true },
@@ -229,22 +300,38 @@ const FRAME_MS = 80
  *  onto a fake clock nobody is advancing. */
 const settle = () => new Promise((r) => setTimeout(r, 0))
 
-const trial = async (setup, act, bootOpts = {}) => {
+const trial = async (setup, act, bootOpts = {}, band = null) => {
   await settle()
   seed()
-  const h = await boot(bootOpts)
+  const h = await boot(band ? { ...bootOpts, station: band.station } : bootOpts)
+  const booted = h.program.lockedStation?.id ?? null
+  if (band && (h.program.band !== band.key || booted !== band.station)) {
+    h.shutdown()
+    throw new Error(`sweep setup: asked for ${band.station} on ${band.key}, booted ${booted} on ${h.program.band}`)
+  }
   await setup(h)
   // Captured HERE, not after the frames: half these states are mid-sweep and
   // would report where the dial ended up rather than where the key landed.
-  const label = `${h.program.poweredOn ? 'on' : 'off'}/${h.program.mode}` +
+  const label = `${band ? band.key + ' ' : ''}${h.program.poweredOn ? 'on' : 'off'}/${h.program.mode}` +
     `${h.program.visualizerActive ? '/viz' : ''}${h.program.tapConsentOpen ? '/card' : ''}` +
     `${h.program.weatherOpen ? '/wx' : ''}${h.program.guideOpen ? '/guide' : ''}`
   const clicks = act ? act.clicks(h) : null
   if (act) act.press(h)
   const frames = []
   for (let i = 0; i < FRAMES; i++) { h.advance(FRAME_MS); frames.push(h.rows().join('\n')) }
+  const endScanning = !!h.program.scanning
   h.shutdown()
-  return { frames, clicks, label }
+  return { frames, clicks, label, booted, endScanning }
+}
+/** A pressed run is only comparable to a control that booted the same
+ *  station. Pinned boots make that true by construction; this is the check
+ *  that it stayed true, so a mispaired diff throws instead of reading as
+ *  "everything changed" (or, worse, "nothing did"). */
+const paired = (t, control) => {
+  if (t.booted !== control.booted) {
+    throw new Error(`sweep pairing: control booted ${control.booted}, pressed run booted ${t.booted}`)
+  }
+  return t
 }
 const same = (a, b) => a.frames.every((f, i) => f === b.frames[i])
 
@@ -252,6 +339,9 @@ const same = (a, b) => a.frames.every((f, i) => f === b.frames[i])
 // reach for when a result looks wrong rather than interesting.
 const only = (process.argv.find((a) => a.startsWith('--state=')) || '').slice(8)
 const wanted = (name) => !only || name === only
+const onlyBand = (process.argv.find((a) => a.startsWith('--band=')) || '').slice(7)
+const bands = SWEEP_BANDS.filter((b) => !onlyBand || b.key === onlyBand)
+if (!bands.length) throw new Error(`--band=${onlyBand}: no such band (have ${SWEEP_BANDS.map((b) => b.key).join(', ')})`)
 
 // 'F13' is the canary: no view has a case for it and no key set contains it,
 // so it MUST come out identical to the control. When it doesn't, this run's
@@ -269,15 +359,15 @@ const CANARY = 'F13'
 // a desynchronised run would print, so nothing is hidden by dropping it.
 const NO_CANARY = new Set(['guide1', 'guideIndex', 'guideLast'])
 
-const sweepState = async (setup, bootOpts, canary = true) => {
-  const control = await trial(setup, null, bootOpts)
+const sweepState = async (setup, bootOpts, canary = true, band = null) => {
+  const control = await trial(setup, null, bootOpts, band)
   const press = (key) => {
     const bare = key.replace('+shift', '')
     const shiftKey = key.endsWith('+shift')
     return trial(setup, {
       clicks: (h) => h.program.isMappedKey({ key: bare, shiftKey }),
       press: (h) => h.key(bare, { shiftKey }),
-    }, bootOpts)
+    }, bootOpts, band).then((t) => paired(t, control))
   }
   const before = canary ? await press(CANARY) : null
   const inert = []
@@ -290,31 +380,40 @@ const sweepState = async (setup, bootOpts, canary = true) => {
   return { control, inert, stable }
 }
 
-let lies = 0
-console.log('SIGNAL dead-feedback sweep -- `!` = clicked but changed nothing\n')
-for (const [name, setup] of Object.entries(STATES).filter(([n]) => wanted(n))) {
-  const bootOpts = BOOT_OPTS[name] ?? {}
-  const canary = !NO_CANARY.has(name)
-  let r = await sweepState(setup, bootOpts, canary)
-  if (!r.stable) r = await sweepState(setup, bootOpts, canary)
-  if (!r.stable) { console.log(`${name.padEnd(13)} [${r.control.label}]  UNSTABLE -- re-run this state alone: --state=${name}`); continue }
-  lies += r.inert.filter((i) => i.clicks).length
-  const shown = r.inert.map((i) => `${i.clicks ? '!' : ' '}${i.key}`)
-  console.log(`${name.padEnd(13)} [${r.control.label}]  no change: ${shown.join(' ') || '(none)'}`)
+const lies = Object.fromEntries(bands.map((b) => [b.key, 0]))
+console.log(`SIGNAL dead-feedback sweep [${bands.map((b) => `${b.key} on ${b.station}`).join(', ')}] -- \`!\` = clicked but changed nothing\n`)
+for (const band of bands) {
+  for (const [name, setup] of Object.entries(STATES).filter(([n]) => wanted(n))) {
+    const bootOpts = BOOT_OPTS[name] ?? {}
+    const canary = !NO_CANARY.has(name)
+    const pin = SCAN_FROM_WIDE.has(name) ? { ...band, station: band.wide } : band
+    let r = await sweepState(setup, bootOpts, canary, pin)
+    if (!r.stable) r = await sweepState(setup, bootOpts, canary, pin)
+    if (!r.stable) { console.log(`${name.padEnd(13)} [${band.key}]  UNSTABLE -- re-run this state alone: --state=${name} --band=${band.key}`); continue }
+    lies[band.key] += r.inert.filter((i) => i.clicks).length
+    const shown = r.inert.map((i) => `${i.clicks ? '!' : ' '}${i.key}`)
+    const lockedEarly = SCAN_FROM_WIDE.has(name) && !r.control.endScanning
+      ? `  (scan locked inside the window from ${pin.station} -- row unreliable)` : ''
+    console.log(`${name.padEnd(13)} [${r.control.label}]  no change: ${shown.join(' ') || '(none)'}${lockedEarly}`)
+  }
 }
 
 const mobileRows = Object.entries(MOBILE_STATES).filter(([n]) => wanted(`mobile-${n}`))
 if (mobileRows.length) console.log('\n-- mobile lite (no key click exists; a dead gesture is wholly silent) --')
-for (const [name, setup] of mobileRows) {
-  const control = await trial(setup, null, { mobile: true })
-  const inert = []
-  for (const [g, run] of Object.entries(GESTURES)) {
-    const t = await trial(setup, { clicks: () => false, press: run }, { mobile: true })
-    if (same(t, control)) inert.push(g)
+for (const band of bands) {
+  for (const [name, setup] of mobileRows) {
+    const control = await trial(setup, null, { mobile: true }, band)
+    const inert = []
+    for (const [g, run] of Object.entries(GESTURES)) {
+      const t = paired(await trial(setup, { clicks: () => false, press: run }, { mobile: true }, band), control)
+      if (same(t, control)) inert.push(g)
+    }
+    console.log(`${name.padEnd(13)} [${control.label}]  no change: ${inert.join(' | ') || '(none)'}`)
   }
-  console.log(`${name.padEnd(13)} [${control.label}]  no change: ${inert.join(' | ') || '(none)'}`)
 }
 
-console.log(`\n${lies} key(s) click without changing anything.`)
+const total = Object.values(lies).reduce((a, n) => a + n, 0)
+console.log(`\n${total} key(s) click without changing anything` +
+  ` (${Object.entries(lies).map(([b, n]) => `${b} ${n}`).join(', ')}).`)
 // [F] is the standing exception: fullscreen changes the whole window, which
 // is real feedback the text grid cannot see. Everything else should be zero.

@@ -281,7 +281,13 @@ export default {
     // five rows and the heads read as holes in it. Coverage, not tier, is the
     // lever -- '▒' lights about half the cell and the room reads as a dark
     // mass again. The headless text grid cannot show this; only the shader can.
-    for (let y = BACK_HEAD + 3; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) term.put(x, y, '▒', FAINT)
+    // 2026-09-13 (audit L6, second tube check) -- still too bright: a real-
+    // shader still showed the floor as a lit band edge to edge with the front
+    // rank's '▓' bodies standing out of it as bright bars, the strongest
+    // thing in the lower frame after the placards. Both stepped down one
+    // density: floor '░', bodies '▒'. The mass still reads -- a body is still
+    // one step denser than the floor behind it -- without lighting the room.
+    for (let y = BACK_HEAD + 3; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) term.put(x, y, '░', FAINT)
     const put = (x, y, ch, attr) => { if (x >= 0 && x < cols) term.put(x, y, ch, attr) }
     for (let n = 0; n < people.length; n++) {
       const pp = people[n]
@@ -308,11 +314,12 @@ export default {
       // 2026-09-13 (tube check) -- '▓' rather than '█', for the same bloom
       // reason as the floor above: a step denser than the floor's '▒', so a
       // body still reads against the mass, without lighting the whole cell.
+      // 2026-09-13 (audit L6) -- '▒' now, over a '░' floor: see the floor.
       for (let y = hy + 1; y < VIZ_BOT; y++) {
         const sh = y === hy + 1
-        put(cx - 1, y, sh ? '▄' : '▓', bodyAttr)
-        put(cx, y, '▓', bodyAttr)
-        put(cx + 1, y, sh ? '▄' : '▓', bodyAttr)
+        put(cx - 1, y, sh ? '▄' : '▒', bodyAttr)
+        put(cx, y, '▒', bodyAttr)
+        put(cx + 1, y, sh ? '▄' : '▒', bodyAttr)
       }
       // Front rank heads stand in the back rank's bodies; clearing the cells
       // either side is the halo that keeps an `O` from vanishing into `███`.

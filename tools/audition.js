@@ -176,8 +176,13 @@ async function main() {
   let candidates = ids
   if (searches.length) {
     const found = await mapLimit(searches, 3, q => search(q, limit))
-    candidates = [...new Set(found.flat())]
-    console.log(`${searches.length} search(es) -> ${candidates.length} candidate(s)\n`)
+    // 2026-09-13 (audit, M8) -- pasted ids used to be REPLACED by the search
+    // hits whenever a search was given, silently: the dashboard sends both
+    // fields from one form, so an id typed beside a search term was never
+    // checked and nothing said so. Ids first, so they keep their place.
+    candidates = [...new Set([...ids, ...found.flat()])]
+    console.log(`${searches.length} search(es)${ids.length ? ` + ${ids.length} pasted id(s)` : ''}` +
+      ` -> ${candidates.length} candidate(s)\n`)
   }
   if (!candidates.length && searchFailures.length) {
     // Not "nothing to check" -- the searches never ran. Say which, keep the

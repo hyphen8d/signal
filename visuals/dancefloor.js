@@ -42,7 +42,7 @@
 // Stored state: the step counter, the level latched at the last step, the
 // previous frame's pulse and the effect-clock time of the last step (the
 // rate limit). Everything else is a pure function of (x, y, t, audio); the
-// floor geometry is compiled to lookup tables once at import.
+// floor geometry is compiled to lookup tables once per grid width.
 //
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
@@ -52,8 +52,6 @@ const V = globalThis.SIGNAL_BUILD ?? ''
 const { SILENT_AUDIO, auMul, syntheticAudio } = await import(`../audio/tap.js?v=${V}`)
 const { VIZ_BOT } = await import(`../layout.js?v=${V}`)
 const { hash2 } = await import(`./shared.js?v=${V}`)
-
-const COLS = 80
 
 // --- the turn -----------------------------------------------------------------
 // Radians a second, shared by the facets and every spot -- that sharing is
@@ -138,20 +136,29 @@ const DEPTH_ROWS = [...LINE_ROWS, 24]
 export const spacingAt = (y) => TILE_W * (y - VANISH_Y) / (FRONT_Y - VANISH_Y)
 const lineX = (o, y) => BALL_CX + o * spacingAt(y)
 
-// Compiled once: for every floor cell, which grid line (if any) it carries
-// and which tile interior (if any) it is. LINE_AT stores o + TILES_X/2 + 1
-// (0 = no line); TILE_AT stores i + j * TILES_X + 1 (0 = not a tile interior);
-// MARGIN marks interior cells touching a line on a row whose tiles are wide
-// enough to afford a dark border inside a lit tile.
-const LINE_AT = new Int8Array(COLS * VIZ_BOT)
-const LINE_RUN = new Int8Array(COLS * VIZ_BOT)   // 1 = the run's '/'/'\' end
-const TILE_AT = new Int16Array(COLS * VIZ_BOT)
-const MARGIN = new Uint8Array(COLS * VIZ_BOT)
+// Compiled once per grid width: for every floor cell, which grid line (if
+// any) it carries and which tile interior (if any) it is. LINE_AT stores
+// o + TILES_X/2 + 1 (0 = no line); TILE_AT stores i + j * TILES_X + 1 (0 =
+// not a tile interior); MARGIN marks interior cells touching a line on a row
+// whose tiles are wide enough to afford a dark border inside a lit tile.
+// 2026-09-13 (audit L5) -- these were compiled at import for a fixed
+// COLS = 80 and read as `y * 80 + x`, so a term of any other width read the
+// next row's lines and tiles (stray fragments at columns 88-99 on a 100-column
+// term). Keyed on the width now and cached; the grid is fixed for a page's
+// life, so in practice this is built once. The picture stays centred on
+// BALL_CX: a wider term gets dark room either side, not a wider floor.
 const EDGE_L = new Float32Array(VIZ_BOT), EDGE_R = new Float32Array(VIZ_BOT)
-{
+for (let y = FLOOR_TOP; y < VIZ_BOT; y++) { EDGE_L[y] = lineX(-TILES_X / 2, y); EDGE_R[y] = lineX(TILES_X / 2, y) }
+const FLOOR_TABLES = new Map()
+function floorTables(COLS) {
+  let tables = FLOOR_TABLES.get(COLS)
+  if (tables) return tables
+  const LINE_AT = new Int8Array(COLS * VIZ_BOT)
+  const LINE_RUN = new Int8Array(COLS * VIZ_BOT)   // 1 = the run's '/'/'\' end
+  const TILE_AT = new Int16Array(COLS * VIZ_BOT)
+  const MARGIN = new Uint8Array(COLS * VIZ_BOT)
   const half = TILES_X / 2
   for (let y = FLOOR_TOP; y < VIZ_BOT; y++) {
-    EDGE_L[y] = lineX(-half, y); EDGE_R[y] = lineX(half, y)
     const onLineRow = LINE_ROWS.includes(y)
     for (let o = -half; o <= half; o++) {
       // A line crosses this row from its top edge to its bottom edge; draw
@@ -185,12 +192,16 @@ const EDGE_L = new Float32Array(VIZ_BOT), EDGE_R = new Float32Array(VIZ_BOT)
       if (TILE_AT[at] && sp >= 6 && ((x > 0 && LINE_AT[at - 1]) || (x < COLS - 1 && LINE_AT[at + 1]))) MARGIN[at] = 1
     }
   }
+  tables = { LINE_AT, LINE_RUN, TILE_AT, MARGIN }
+  FLOOR_TABLES.set(COLS, tables)
+  return tables
 }
 
-/** Tile index (i + j * TILES_X) whose interior cell (x, y) is, or -1. */
-export function floorTileAt(x, y) {
-  if (x < 0 || x >= COLS || y < 0 || y >= VIZ_BOT) return -1
-  return TILE_AT[y * COLS + x] - 1
+/** Tile index (i + j * TILES_X) whose interior cell (x, y) is, or -1, on a
+ *  grid `cols` wide (the 80-column desktop grid by default). */
+export function floorTileAt(x, y, cols = 80) {
+  if (x < 0 || x >= cols || y < 0 || y >= VIZ_BOT) return -1
+  return floorTables(cols).TILE_AT[y * cols + x] - 1
 }
 
 /** Whether tile (i, j) is lit on step n with level lvl (0..1). The floor
@@ -307,6 +318,7 @@ export default {
   draw(p, s, t) {
     const { term } = s
     const cols = term.cols
+    const { LINE_AT, LINE_RUN, TILE_AT, MARGIN } = floorTables(cols)
     const muted = !!p.muted
     const A = muted ? SILENT_AUDIO : (p._au || syntheticAudio(t))
 
@@ -333,7 +345,7 @@ export default {
       const lineRow = LINE_ROWS.includes(y)
       const l = Math.round(EDGE_L[y]), r = Math.round(EDGE_R[y])
       for (let x = 0; x < cols; x++) {
-        const at = y * COLS + x
+        const at = y * cols + x
         const ln = LINE_AT[at]
         const tile = TILE_AT[at] - 1
         if (tile >= 0) {

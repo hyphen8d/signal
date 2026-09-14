@@ -14,9 +14,40 @@
 
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { spawnSync } from 'node:child_process'
+import path from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
-process.env.SIGNAL_ROSTER_WATCH_IMPORT = '1'
+const WATCH = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'tools', 'roster-watch.mjs')
+
+// 2026-09-13 (audit, L10) -- main() used to fire on import unless an env var
+// said otherwise, and an import that did not know about it ran a real
+// 40-probe batch. So the import is proven inert in a CHILD first, carrying
+// `--status --json` (reads state, prints JSON, no network, no writes), and
+// only then imported here. Order matters: the first version of this test
+// imported at the top of the file, and when the guard was broken on purpose
+// to check the test could fail, THIS process ran a real batch -- the exact
+// accident the fix is for. A broken guard now fails the file before import.
+const env = { ...process.env }
+delete env.SIGNAL_ROSTER_WATCH_IMPORT
+const importProbe = spawnSync(process.execPath, [
+  '--input-type=module', '-e',
+  `await import(${JSON.stringify(pathToFileURL(WATCH).href)}); process.stdout.write('IMPORTED')`,
+  'not-the-script', '--status', '--json',
+], { encoding: 'utf8', env, timeout: 30000 })
+if (importProbe.stdout !== 'IMPORTED') {
+  throw new Error('tools/roster-watch.mjs runs main() on import -- refusing to import it here, where that would ' +
+    `launch a real health batch. Child stdout:\n${importProbe.stdout}\nstderr:\n${importProbe.stderr}`)
+}
 const watch = await import('../tools/roster-watch.mjs')
+
+test('importing the module runs nothing; running it as the script does', () => {
+  assert.equal(importProbe.stdout, 'IMPORTED', 'an import must not run main()')
+
+  const run = spawnSync(process.execPath, [WATCH, '--status', '--json'], { encoding: 'utf8', env, timeout: 30000 })
+  assert.equal(run.status, 0, run.stderr)
+  assert.ok('schedule' in JSON.parse(run.stdout), 'run as the script, main() answers --status --json')
+})
 const { classify, shouldNotify, bumpStreak, describe: describeRun } = watch
 
 const summary = (over = {}) => ({

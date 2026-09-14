@@ -132,12 +132,15 @@ const LIT = 0.14
 
 const smooth = (u) => u * u * (3 - 2 * u)
 
-export default {
-  key: 'aurora',
-  label: 'AURORA',
-  /** Seeds this effect's state on the program object (once, at boot). */
-  init(p, term) {
-    const cols = term.cols
+/** Sizes every per-column table for a grid `cols` wide and snaps the gains
+ *  on the next frame. Called from init, and from draw whenever the term's
+ *  width is not the one the tables were built for. 2026-09-13 (audit L5) --
+ *  the tables were sized once at init, so a draw on a wider term read past
+ *  the ridge and wrote its light into the wrong rows (20 cells missed a
+ *  frame on a 100-column term). The grid is fixed for a page's life, so in
+ *  practice this runs once; KEEP's buildScene is the same shape. */
+function shapeFor(p, cols) {
+  {
     // The ridge is a pure function of the column and never moves -- the
     // landscape is still, only the sky lives -- so it is computed once
     // here, and needs nothing in reset(). `_auroraEdge[x]` is the crest's
@@ -166,6 +169,15 @@ export default {
     p._auroraCap = new Uint8Array(cols * VIZ_BOT)
     p._auroraGain = new Float32Array(NC)
     p._auroraLastT = null
+  }
+}
+
+export default {
+  key: 'aurora',
+  label: 'AURORA',
+  /** Seeds this effect's state on the program object (once, at boot). */
+  init(p, term) {
+    shapeFor(p, term.cols)
   },
   /** Re-arms clocks/accumulators on every visualizer entry. */
   reset(p) {
@@ -182,6 +194,7 @@ export default {
   draw(p, s, t) {
     const { term } = s
     const cols = term.cols
+    if (!p._auroraEdge || p._auroraEdge.length !== cols) shapeFor(p, cols)
     const A = p.muted ? SILENT_AUDIO : (p._au || syntheticAudio(t))
     const H = AURORA_HORIZON
     const edge = p._auroraEdge, slope = p._auroraSlope

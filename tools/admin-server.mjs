@@ -354,7 +354,7 @@ function saveTracks(stationId, tracks) {
   return { trackCount: tracks.length, keptComments, droppedComments }
 }
 
-function saveIdentity(stationId, fields) {
+async function saveIdentity(stationId, fields) {
   const src = readRepoFile('stations.js')
   let next = src
   for (const [fieldPath, value] of Object.entries(fields)) {
@@ -372,7 +372,7 @@ function saveIdentity(stationId, fields) {
   const station = [...STATIONS, ...SECRET_STATIONS].find(s => s.id === stationId)
   return {
     changed: Object.keys(fields).length,
-    warnings: renamed ? renameWarnings(station) : [],
+    warnings: renamed ? await renameWarnings(station) : [],
   }
 }
 
@@ -445,7 +445,7 @@ function rejectTrack({ stationId, youtubeId, title, artist, reason, entry }) {
 // to be noticed. This is a WARNING, never a refusal -- the divergence is
 // legitimate and expected in the window between renaming a station and
 // re-recording its ident.
-function renameWarnings(station) {
+export async function renameWarnings(station) {
   const out = []
   if (!station) return out
 
@@ -459,24 +459,35 @@ function renameWarnings(station) {
     })
   }
 
-  // The clip resolved by convention vs. the one voice.js actually maps to.
-  // Read rather than imported: voice.js pulls in the WebAudio chain at load,
-  // which this process has no business touching.
-  let mapped = station.id
+  // The clip this station really plays on lock, from the player's own resolver.
+  //
+  // 2026-09-13 (audit, M4) -- this used to regex audio/voice.js for
+  // `const STATION_ID_CLIPS = {`. The map moved to audio/station-id-clips.js
+  // (voice.js only re-exports it), the regex matched nothing, and every
+  // station fell back to its id -- so SYNAPSE (id 'midnight-neon') was checked
+  // against the RETIRED station-id-midnight-neon.mp3 and warned that it
+  // announces a name not on the screen, while the app plays
+  // station-id-synapse.mp3. station-id-clips.js is pure data with no imports,
+  // so it is imported rather than read -- the reason voice.js was read (it
+  // pulls in the WebAudio chain) never applied to it. Keyed on the file's
+  // mtime for the same reason bootState()'s imports are: an edited map is
+  // seen on the next save without a unit restart.
+  let clipPath = `audio/station-id-${station.id}.mp3`
   try {
-    const voice = readRepoFile('audio/voice.js')
-    const block = voice.match(/const STATION_ID_CLIPS = \{([\s\S]*?)\}/)?.[1] ?? ''
-    const hit = block.match(new RegExp(`['"]${station.id}['"]\\s*:\\s*['"]([\\w-]+)['"]`))
-    if (hit) mapped = hit[1]
+    let mtime = 0
+    try { mtime = Math.floor(statSync(abs('audio/station-id-clips.js')).mtimeMs) } catch (e) { /* key 0 */ }
+    const { stationIdClipPath } = await import(`../audio/station-id-clips.js?v=admin-${mtime}`)
+    clipPath = stationIdClipPath(station.id)
   } catch (e) { /* leave as the convention */ }
+  const clipName = path.basename(clipPath, '.mp3').replace(/^station-id-/, '')
   const slug = station.callsign.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-  if (existsSync(abs(`audio/station-id-${mapped}.mp3`)) && mapped !== slug) {
+  if (existsSync(abs(clipPath)) && clipName !== slug) {
     out.push({
       kind: 'audio',
-      file: `audio/station-id-${mapped}.mp3`,
+      file: clipPath,
       detail: `is the clip this station plays on lock, but the callsign is now "${station.callsign}". `
         + `If that recording says something else, the station announces a name that is not on the screen. `
-        + `Fix by adding an entry to STATION_ID_CLIPS in audio/voice.js.`,
+        + `Fix by re-recording it, or by mapping the id to a new clip in STATION_CLIP_NAMES in audio/station-id-clips.js.`,
     })
   }
   return out
@@ -577,7 +588,7 @@ async function handleApi(req, res, url) {
   if (route === 'save-identity' && req.method === 'POST') {
     const { stationId, fields } = await readBody(req)
     if (!stationId || !fields || typeof fields !== 'object') return sendJson(res, 400, { error: 'stationId and fields{} required' })
-    try { return sendJson(res, 200, { ok: true, ...saveIdentity(stationId, fields) }) }
+    try { return sendJson(res, 200, { ok: true, ...(await saveIdentity(stationId, fields)) }) }
     catch (err) { return sendJson(res, 409, { error: String(err?.message ?? err) }) }
   }
 

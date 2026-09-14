@@ -58,6 +58,12 @@ const { DUCK_TAIL_MS } = await import(`../constants.js?v=${V}`)
 //     set (peak -2.1dB against a typical -5dB) and still sits louder than
 //     everything else, which the duck cannot fix because it scales the
 //     music, not the voice.
+//     MIRRORBALL's ID (2026-09-13) errs the other way: peak -8.2dB, just
+//     under the -8..-3dB band the station IDs occupy. Accepted rather than
+//     re-rendered (2026-09-13 audit, L7) -- COLD WAVE, SLOW ORBIT and THE
+//     CRYPT already sit at -8.6, -8.6 and -8.7, so it is inside the set's
+//     real spread. Re-take it only if it sounds quiet beside AFTER HOURS
+//     (-3.3dB), the loudest of that day's clips.
 //
 // This block replaces a line that named "Rachel M -- Pro British Radio
 // Presenter" as the voice. That was wrong for the whole set, not merely out

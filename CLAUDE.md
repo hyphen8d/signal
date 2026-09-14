@@ -32,7 +32,7 @@ to name these scripts:
 ```bash
 node tools/admin-server.mjs         # npm run admin — the admin backend + the app, port 8080
 python3 tools/dev-server.py 8000    # dev server (no-store headers); open http://localhost:8000
-node --test tests/*.test.mjs        # npm test — headless suite, ~11s, no network
+node --test tests/*.test.mjs        # npm test — headless suite, ~37s, no network
 node tools/lint-roster.js           # npm run lint — offline roster rules
 node tools/verify-roster.js         # npm run verify — lint + oEmbed check of every track (network)
 node tools/check-roster.mjs         # npm run health — deep-probe roster tracks in batches (network)
@@ -512,6 +512,12 @@ YM and reaches ZM with one `[B]` or a two-finger swipe (both TOGGLE, so
 they only mean "ZM" from YM). Anything preset-shaped should ask
 `presetOrderFor(h.program.band)`, never the flat `STATION_PRESET_ORDER`,
 whose first entries are YM's only because YM's frequencies sort lower.
+The cost of that change was the app's own first-visit fallback, which the
+unpinned boots no longer reach: breaking it used to fail six tests and then
+failed one (2026-09-13 audit, L11). `tests/first-visit.test.mjs` is the
+scenario that keeps it covered -- station, primed track, load, PLAYING,
+title -- so change what an unpinned boot does and re-check what the old
+default reached, not only what the new one does.
 
 `boot({ player: true })` adds a **fake YouTube player** — the real API surface
 is ten methods and three events, so the harness models it rather than stubbing
@@ -561,7 +567,9 @@ behaviour, confirm the suite goes red, and check the *right* tests went red.
 `tools/dead-feedback.mjs` drives the same harness as a **sweep** rather than
 as assertions: every key in every view, each pressed run diffed against a
 do-nothing control run from the same PRNG seed, so a key that changes nothing
-anywhere on the grid shows up as such. Run it after touching `key()`,
+anywhere on the grid shows up as such. It sweeps both bands, each pinned to
+its lowest station and run in its own child process (one process sweeping
+both runs out of heap: every boot's fresh module graph stays loaded). Run it after touching `key()`,
 `isMappedKey()`, `MAPPED_KEYS`/`VISUALIZER_KEYS` or the touch gestures. Two
 rules it exists to keep: a key that CLICKS has to change something (the click
 is gated by `isMappedKey`, which is meant to mirror what `key()` actually
@@ -640,9 +648,10 @@ AVAILABLE` essentially always — which is honest, and is what the duration gate
 below exists to keep true.
 
 **AFTER HOURS (2026-09-13) moves the ceiling again, before anyone re-measures.**
-Its 30 tracks are late-night small-group jazz with exactly one vocal — Chet
-Baker's *My Funny Valentine* — so at best 1/30 of the station can ever match,
-and `[L]` there is `NO LYRICS AVAILABLE` on 29 tracks in 30. The next audit
+Its 40 tracks are late-night small-group jazz with exactly one vocal — Chet
+Baker's *My Funny Valentine* — so at best 1/40 of the station can ever match,
+and `[L]` there is `NO LYRICS AVAILABLE` on 39 tracks in 40 (the ten the
+30→40 growth pass added are all instrumentals). The next audit
 will land lower than 53% for that reason alone. Exclude it with the four
 ambient stations above when comparing against earlier runs.
 MIRRORBALL (same day) pushes the other way: disco, boogie and funk are sung

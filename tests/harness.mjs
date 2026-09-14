@@ -168,8 +168,13 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
   // because it was one YM station of eight.
   //
   // So the harness picks, and hands the pick to the app through the same
-  // ?station= path `station` already uses: it sets the same four fields the
-  // fallback does and makes the band follow the station. `anyBand: false`
+  // ?station= path `station` already uses. That is a DIFFERENT boot path
+  // from the fallback, not a copy of it: besides locking the station and
+  // priming a track it moves the band to the station's, and it installs a
+  // `location` with an origin (below), so shareUrl() builds an absolute
+  // link where a first visit's is relative. The random-preset fallback
+  // itself never runs on these boots -- tests/first-visit.test.mjs is the
+  // scenario that keeps it covered (2026-09-13 audit, L11). `anyBand: false`
   // keeps the app's own first-visit path -- for the tests whose subject IS
   // that path, or whose scenario starts on YM and switches with [B]. A saved
   // session or a ?game=1 link is left alone: those are their own boot paths.
@@ -417,7 +422,7 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
           // so the one event the app keys on -- PLAYING -- simply does not
           // arrive. BUFFERING is what a real preroll reports on the way in.
           if (adHolding) fire(YT.PlayerState.BUFFERING)
-          else if (cue) fire(YT.PlayerState.CUED)
+          else if (cue) { if (!fake.holdCues) fire(YT.PlayerState.CUED) }
           else firePlaying()
         }
         fake = this
@@ -478,6 +483,14 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
           ev.onStateChange && ev.onStateChange({ data: YT.PlayerState.ENDED })
         }
         this.fail = () => { deadSeq = loadSeq; playing = false; ev.onError && ev.onError({ data: 150 }) }
+        // 2026-09-13 -- deliver a state event now, as a slow network reply
+        // would. The fake queues CUED at 0ms, so it always lands before any
+        // key a test can press; live, a cue takes real time, and whatever the
+        // listener does in that window runs BEFORE CUED arrives. A test that
+        // needs that ordering sets `holdCues = true` before the load (load()
+        // then queues no CUED at all), acts, and emits CUED itself.
+        this.holdCues = false
+        this.emit = (state) => deliver(state)
         setTimeout(() => ev.onReady && ev.onReady({ target: this }), 0)
       },
     }
