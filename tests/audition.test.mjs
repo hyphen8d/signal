@@ -35,3 +35,24 @@ test('a search that fails is reported as a failure, not as zero results', () => 
     ['Miles Davis Blue in Green', 'Bill Evans Peace Piece'], 'the JSON summary names every failed search')
   assert.deepEqual(summary.rows, [])
 })
+
+test('pasted ids are checked alongside search results, not replaced by them', () => {
+  // 2026-09-13 (audit, M8) -- the dashboard's form sends a search and pasted
+  // ids together, and `candidates = found.flat()` threw the ids away without
+  // a word. One search here finds AAAAAAAAAAA, one fails, and BBBBBBBBBBB is
+  // pasted: both ids must come back as rows. Every other fetch rejects, so
+  // the rows are dead -- which is fine; the question is which ids were asked.
+  const stub = 'data:text/javascript,' + encodeURIComponent(
+    'globalThis.fetch = async (u) => { u = String(u);' +
+    ' if (u.includes("/results?") && u.includes("good")) return new Response(\'"videoId":"AAAAAAAAAAA"\');' +
+    ' throw new TypeError("fetch failed") }')
+  const r = spawnSync(process.execPath, [
+    `--import=${stub}`, AUDITION, '--station=after-hours', '--json',
+    '--search=good', '--search=bad', 'BBBBBBBBBBB',
+  ], { encoding: 'utf8', timeout: 30000 })
+  const summary = JSON.parse(r.stdout)
+  assert.deepEqual(summary.rows.map((row) => row.id).sort(), ['AAAAAAAAAAA', 'BBBBBBBBBBB'],
+    `both the search hit and the pasted id are checked; stderr:\n${r.stderr}`)
+  assert.deepEqual(summary.searchFailures.map((f) => f.query), ['bad'], 'the failed search is still reported')
+  assert.equal(r.status, 1, 'a run with a failed search is still incomplete')
+})
