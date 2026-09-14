@@ -659,6 +659,35 @@ almost throughout, so it should match well above the roster average. The two
 roughly offset on the headline, which is exactly why the headline alone says
 nothing -- compare per station.
 
+**Re-measured 2026-09-14 (build 2026-09-14.1), and the headline is 33% → 56%
+on 144 tracks across 18 stations. Nothing regressed; the offset predicted
+above is what happened.** The run had zero HTTP errors, so no miss below is a
+throttled request in disguise (the tool folds those into "no synced lyrics" —
+check for that before trusting a low number). Per station, of 8 sampled:
+DISTORTION FIELD, SYNAPSE, RISE UP, HACKBACK, MIRRORBALL, NIN and GREEN ROOM
+**8/8**; COLD WAVE 7; ATOMIC and CIPHER 6; CIRCUIT CRUSH 3; CITY LIGHTS 2;
+AFTER HOURS 1; and **0/8** on THE CRYPT, DRIFT MODE, SLOW ORBIT, TRADEWINDS and
+NEON STASIS. Excluding the five wordless stations (the four ambient ones plus
+AFTER HOURS) the rate is 80/104 = **77%**, against 72% on 2026-09-02 and 76%
+originally. NEON STASIS belongs on that list too — mallsoft is slowed,
+sampled muzak, as wordless in practice as the ambient set — and excluding it
+as well gives 80/96 = 83%. The fallback's share held at +24pp (+23pp before).
+
+Two caveats that keep the per-station numbers honest. First, **11 of the 81
+matches were never duration-gated**: the tracks added 2026-09-13 have no length
+in `tools/roster-health.json` until the health sweep reaches them, so
+MIRRORBALL's 8/8, two of RISE UP's and AFTER HOURS' one were accepted against
+nothing. Read MIRRORBALL as an upper bound until those ids are probed. Second,
+**that AFTER HOURS match is a false positive the gate cannot catch.** Bill
+Evans' solo-piano "Young and Foolish" (`UOfwwwQUHjg`, 356s) resolves via
+`/api/search` to a synced entry credited to Bill Evans (album "Lucky Young Jazz
+Piano", 354s) — two seconds apart, well inside `LYRIC_DURATION_TOLERANCE`, so
+`[L]` will draw words over an instrumental. The gate proves the recording is
+the right *length*, not that anyone sings on it, and a jazz standard's sung
+lyric filed against an instrumentalist is exactly the case where those differ.
+Nothing in `voice.js` is wrong; the fix, if one is wanted, is an explicit
+instrumental opt-out per track or per station, not a tighter gate.
+
 Three things that look optional and are not:
 
 - **A search result is not a match.** LRCLIB orders by its own relevance, so
