@@ -100,9 +100,16 @@ test('LAGOON: re-entry after a long visit carries no flare from the previous vis
   // no synthetic onset can overwrite it during the check -- without that, a
   // missing reset() hides behind the next random onset about three runs in
   // four. The draw does not self-heal it, so reset() is what this tests.
+  // 2026-09-13 (audit L12) -- the two minutes are compressed: the entry stamp
+  // is moved back 120s instead of rendering 7500 frames of it. What this bug
+  // class needs is an effect clock ~120s ahead at exit, and the draw's t is
+  // computed from _vizEnterAt (visualizer.js), so that is exactly the state a
+  // real long visit leaves. Still red with reset() emptied.
   const h = await bootLagoon()
   try {
-    h.advance(120000)
+    h.advance(1000)
+    h.program._vizEnterAt -= 120000
+    h.advance(500)
     h.program._lagoonFlareAt = effectT(h)
     h.program.muted = true
     h.key('e')

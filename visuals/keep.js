@@ -1,6 +1,6 @@
 // SIGNAL -- visualizer effect "KEEP" (THE CRYPT). 2026-09-13.
 //
-// A ruined castle keep at night: a solid block-character silhouette on a
+// A ruined castle keep at night: a shaded block-character silhouette on a
 // rocky crag -- a crenellated keep, one tall tower, one broken tower and a
 // breached curtain wall -- under a crescent moon and sparse stars, with dim
 // mountain ridges behind it, a few windows lit by torchlight, and mist
@@ -29,7 +29,7 @@ const { hash2 } = await import(`./shared.js?v=${V}`)
 
 // The castle, as art rather than as procedure: a silhouette is only worth
 // drawing if it reads as a castle at a glance, and hand-placed merlons read
-// where generated ones read as a bar chart. Legend: '#' solid block, '^'
+// where generated ones read as a bar chart. Legend: '#' masonry ('▓'), '^'
 // upper half, '_' lower half, 'w' a torch-lit window, 'o' a dark window,
 // 'g' the gate (dark, and never shows stars or mist through it), ' ' sky.
 // Every row is padded to the same width at build time. Row 0 of the art is
@@ -164,15 +164,25 @@ function buildScene(cols) {
         kind[i] = GATE; ch[i] = ' '
       } else {
         kind[i] = ROCK
-        ch[i] = c === '#' ? '█' : c === '^' ? '▀' : '▄'
+        ch[i] = c === '#' ? '▓' : c === '^' ? '▀' : '▄'
         // 2026-09-13 (tube check) -- was DIM. On the real CRT the keep was the
         // brightest thing in the frame by a distance: ~400 full blocks each
         // light their whole cell, and at beam 150 under THE CRYPT's bloom the
         // silhouette became a lit slab, the opposite of "mostly dark sky and
         // silhouette". FAINT (100) is the fill tier the engine keeps for
         // exactly this, and it gives the torchlit windows real contrast.
-        // The glyph stays '█': the battlement's merlon-gap rhythm is what
-        // the tests read back, and it is what makes it a castle.
+        // 2026-09-13 (audit M1) -- and the tier was not enough on its own.
+        // FAINT kept the glyph as '█', and the audit measured up to 356 of
+        // them a frame in runs of 24: exactly the full-block slab UPRISING's
+        // tube check and backroom.js's header both record as blooming on the
+        // real shader at ANY tier, because '█' lights every pixel of its
+        // cell. Masonry is '▓' now -- about three quarters of the cell, the
+        // density UPRISING's bodies settled on -- so the keep is still the
+        // one solid mass in the frame without being a lit one. The merlon-gap
+        // rhythm the tests read back is unchanged; only the glyph moved.
+        // Full blocks are left to the accents: the torchlit windows and the
+        // crescent's thickest cells. tests/visual-keep.test.mjs caps '█' at 1%
+        // of the canvas, BACKROOM's cap, on both layouts.
         attr[i] = FAINT
       }
     }
@@ -180,8 +190,8 @@ function buildScene(cols) {
 
   // The crag: flares out below the castle's footing and runs off the
   // bottom of the canvas, jagged at the edges by a hash so it reads as
-  // rock rather than a plinth. '▓' speckle is the only thing telling
-  // stone from masonry in a single-tier silhouette.
+  // rock rather than a plinth. Speckle is the only thing telling stone from
+  // masonry in a single-tier silhouette.
   const baseY = KEEP_ART_TOP + KEEP_ART.length
   for (let y = baseY; y < rows; y++) {
     const k = y - baseY + 1
@@ -198,7 +208,10 @@ function buildScene(cols) {
       // and it glared for the same reason as the keep above. Inverted: '▓'
       // with '█' speckle, at FAINT, so the rock sits a step darker than the
       // masonry and the castle still reads as standing ON it.
-      ch[i] = edge ? '▄' : hash2(x, y * 5) > 0.82 ? '█' : '▓'
+      // 2026-09-13 (audit M1) -- stepped down once more with the masonry:
+      // '▒' with '▓' speckle, so the rock is still the darker of the two
+      // and no '█' is left in it at all.
+      ch[i] = edge ? '▄' : hash2(x, y * 5) > 0.82 ? '▓' : '▒'
       attr[i] = FAINT
     }
   }

@@ -178,6 +178,14 @@ export default {
             continue
           }
           // Moon.
+          // 2026-09-13 (audit L6, tube check) -- the fill is up to ~44 BRIGHT
+          // '@' a frame in runs of 8, which on paper is the slab shape KEEP
+          // and UPRISING glared with. Checked on the real shader (headless
+          // swiftshader still of TRADEWINDS): it does not slab. '@' is a
+          // stroked glyph that lights a fraction of its cell, so the disc
+          // reads as a bright textured face with the '#' maria and 'O' rim
+          // still legible, not as a lit block. Left as it is; the lesson is
+          // coverage, not tier -- a BRIGHT '█' fill here would be the bug.
           const mdx = x - MOON_X, mdy = (y - MOON_Y) * ASPECT
           const md = Math.sqrt(mdx * mdx + mdy * mdy)
           if (md < MOON_R + 0.5) {

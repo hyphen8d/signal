@@ -109,3 +109,92 @@ test('DREAD: a tear active at exit does not come back as a held strobe (M5)', as
     assert.ok(!tear.active || tear.until <= t + 0.2, `tear held until ${tear.until.toFixed(1)}s on a clock at ${t.toFixed(1)}s`)
   } finally { h.shutdown() }
 })
+
+test('the 2026-09-13 effects draw correctly at a width other than the one they booted at (audit L5)', async () => {
+  // The grid is fixed for a page's life, so this is latent -- but three of
+  // these effects kept width-shaped state that only held at 80 columns:
+  // AURORA sized its buffers at init, DANCEFLOOR and BACKROOM compiled
+  // tables indexed `y * 80`. Two claims, each able to catch one shape:
+  //  1. drawing on a W-column term after init for 80 gives exactly the frame
+  //     a fresh init at W gives (state sized at init), every cell repainted,
+  //     nothing outside rows 1..21;
+  //  2. DANCEFLOOR and BACKROOM are fixed art centred on column 40, so on a
+  //     100-column term the far right is dark room -- a table indexed for 80
+  //     wraps into the next row and draws floor fragments there.
+  const { readFileSync } = await import('node:fs')
+  const { Term } = await import('../src/term.js')
+  const { parseBDF } = await import('../src/bdf.js')
+  const font = parseBDF(readFileSync(new URL('../fonts/ter-u16n.bdf', import.meta.url), 'utf8'))
+  const NEW = ['lagoon', 'uprising', 'keep', 'orbit', 'aurora', 'backroom', 'dancefloor']
+  const VIZ_BOT = 22
+  const h = await boot({ station: 'tradewinds' })
+  const rnd = Math.random
+  try {
+    h.powerOn()
+    const { VISUALS } = await import(`../visuals/index.js?v=${globalThis.SIGNAL_BUILD}`)
+    const p = h.program
+    const seeded = () => { let a = 0x9e3779b9; Math.random = () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
+    const signal = { level: 0.6, bass: 0.5, mid: 0.4, treble: 0.3, bands9: new Array(9).fill(0.45), onset: false, pulse: 0.2 }
+    const run = (fx, cols, initTerm) => {
+      const term = new Term(font, cols, 25, 6, 5)
+      seeded()
+      p.muted = false
+      p._au = signal
+      fx.init(p, initTerm === 'self' ? term : h.term)
+      fx.reset(p)
+      const put = term.put
+      const outside = []
+      let missed = 0
+      for (let f = 0; f < 30; f++) {
+        const hit = new Uint8Array(cols * VIZ_BOT)
+        term.put = function (x, y, ...rest) {
+          if (y < 1 || y >= VIZ_BOT) outside.push(y)
+          else if (x >= 0 && x < cols) hit[y * cols + x] = 1
+          return put.call(this, x, y, ...rest)
+        }
+        try { fx.draw(p, { term }, 5 + f / 30) } finally { term.put = put }
+        for (let i = cols; i < cols * VIZ_BOT; i++) if (!hit[i]) missed++
+      }
+      const rows = Array.from({ length: VIZ_BOT - 1 }, (_, i) => {
+        let s = ''
+        for (let x = 0; x < cols; x++) s += String.fromCodePoint(term.chars[(i + 1) * cols + x]) + term.attrs[(i + 1) * cols + x]
+        return s
+      })
+      return { rows, outside, missed, term }
+    }
+    for (const cols of [60, 100]) {
+      for (const key of NEW) {
+        const fx = VISUALS[key]
+        const carried = run(fx, cols, 'boot')
+        const fresh = run(fx, cols, 'self')
+        assert.deepEqual(carried.outside.slice(0, 3), [], `${key} at ${cols} cols wrote outside the canvas`)
+        assert.equal(carried.missed, 0, `${key} at ${cols} cols left ${carried.missed} cell-frames unpainted`)
+        const diff = carried.rows.findIndex((r, i) => r !== fresh.rows[i])
+        assert.equal(diff, -1, `${key} at ${cols} cols: row ${diff + 1} differs from a fresh init at that width`)
+        if (cols === 100 && (key === 'dancefloor' || key === 'backroom')) {
+          // Fixed art at fixed columns: the first 80 columns of a 100-column
+          // frame are the 80-column frame. This is the half that catches a
+          // table indexed `y * 80` which init does not rebuild (BACKROOM's
+          // mask) -- the carried-vs-fresh comparison above cannot, since
+          // both runs read the same wrong table.
+          const narrow = run(fx, 80, 'self')
+          const cellsDiffer = []
+          for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < 80; x++) {
+            const a = y * 80 + x, b = y * 100 + x
+            if (narrow.term.chars[a] !== fresh.term.chars[b] || narrow.term.attrs[a] !== fresh.term.attrs[b]) cellsDiffer.push(`${x},${y}`)
+          }
+          assert.deepEqual(cellsDiffer.slice(0, 5), [], `${key} at 100 cols: ${cellsDiffer.length} cells in the first 80 columns differ from the 80-column frame`)
+          const stray = []
+          for (let y = 1; y < VIZ_BOT; y++) for (let x = 86; x < cols; x++) {
+            const ch = String.fromCodePoint(fresh.term.chars[y * cols + x])
+            if (ch !== ' ') stray.push(`${x},${y}:${ch}`)
+          }
+          assert.deepEqual(stray.slice(0, 5), [], `${key} drew ${stray.length} cells in the dark room right of its art`)
+        }
+      }
+    }
+  } finally {
+    Math.random = rnd
+    h.shutdown()
+  }
+})
