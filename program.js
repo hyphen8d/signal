@@ -21,7 +21,7 @@ const V = globalThis.SIGNAL_BUILD ?? ''
 import { BOLD, BRIGHT, DIM, FAINT, MUTED, NORMAL } from './src/term.js'
 const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent, playKeyClick, playModeThump, playPanelSound, playPowerOnSound, playPresetClick, playPresetWhoosh, playRelayThunk, playSeekStatic, playStaticBurst, setSpeakerLevel, setStaticIntensity, startStaticNoise, startTubeHum, stopStaticNoise, stopTubeHum } = await import(`./audio/sfx.js?v=${V}`)
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
-const { STATION_LINER_FILES, ensureLyricsFetched, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId, stopLiveVoice } = await import(`./audio/voice.js?v=${V}`)
+const { STATION_LINER_FILES, ensureLyricsFetched, isInstrumental, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId, stopLiveVoice } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
 const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
@@ -2963,7 +2963,7 @@ export default {
       // silent-and-changing is the correct half of that pairing, not the
       // flagged one.
       if (this.gameOpen) return false
-      if (e.key === 'l' || e.key === 'L') return lyricsStateFor(this.currentTrack) === 'available'
+      if (e.key === 'l' || e.key === 'L') return lyricsStateFor(this.currentTrack) === 'available' || isInstrumental(this.currentTrack)
       if (e.key === 'a' || e.key === 'A') return this.canOpenTapConsent()
       return VISUALIZER_KEYS.has(e.key)
     }
@@ -3186,6 +3186,11 @@ export default {
           // 2026-08-24 -- silently does nothing (no flash) when lyrics
           // aren't available for the current track, same restraint as [N]
           // above: a key that can't act shouldn't feel like it broke.
+          // 2026-09-14 -- except for an instrumental, which has a true answer
+          // rather than an absence: the roster says nobody sings on it, so
+          // the key says so (and isMappedKey clicks for it). "NO LYRICS"
+          // would read as a lookup that failed; this is not one.
+          if (isInstrumental(this.currentTrack)) { vizFlash('INSTRUMENTAL'); return }
           if (lyricsStateFor(this.currentTrack) !== 'available') return
           this.lyricsViewOpen = !this.lyricsViewOpen
           this.drawVisualizerInfo(s)

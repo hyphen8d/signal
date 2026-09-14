@@ -4,11 +4,30 @@
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { lintRoster } from '../tools/lint-roster.js'
+import { lintRoster, instrumentalProblems } from '../tools/lint-roster.js'
 
 globalThis.SIGNAL_BUILD ??= 'roster'
 globalThis.matchMedia ??= () => ({ matches: false })
 const { STATIONS, SECRET_STATIONS } = await import('../stations.js?v=roster')
+
+// 2026-09-14 -- the instrumental opt-out's fields. Synthetic stations, because
+// the real roster only ever shows the rule passing.
+test('instrumental fields: a verdict about a track that is not there, or on the wrong kind of station, is loud', () => {
+  const tracks = [{ youtubeId: 'AAAAAAAAAAA' }, { youtubeId: 'BBBBBBBBBBB' }]
+  assert.deepEqual(instrumentalProblems({ id: 'ok-i', tracks, instrumental: true, vocalTracks: ['AAAAAAAAAAA'] }), [])
+  assert.deepEqual(instrumentalProblems({ id: 'ok-v', tracks, instrumentalTracks: ['BBBBBBBBBBB'] }), [])
+  assert.deepEqual(instrumentalProblems({ id: 'plain', tracks }), [], 'no fields at all is the common case')
+  const one = (st, want) => {
+    const p = instrumentalProblems(st)
+    assert.equal(p.length, 1, `expected one problem for ${JSON.stringify(st)}, got ${JSON.stringify(p)}`)
+    assert.match(p[0], want)
+  }
+  one({ id: 'str', tracks, instrumental: 'yes' }, /must be true or false/)
+  one({ id: 'wrong-kind-v', tracks, vocalTracks: ['AAAAAAAAAAA'] }, /vocalTracks only means something on an instrumental station/)
+  one({ id: 'wrong-kind-i', tracks, instrumental: true, instrumentalTracks: ['AAAAAAAAAAA'] }, /instrumentalTracks only means something on a vocal station/)
+  one({ id: 'stale', tracks, instrumental: true, vocalTracks: ['ZZZZZZZZZZZ'] }, /lists ZZZZZZZZZZZ, which is not one of this station's tracks/)
+  one({ id: 'not-array', tracks, instrumental: true, vocalTracks: 'AAAAAAAAAAA' }, /must be an array/)
+})
 
 test('stations.js passes the roster rules', async (t) => {
   const { problems, warnings, stations, tracks } = await lintRoster()

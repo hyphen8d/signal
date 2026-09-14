@@ -451,7 +451,9 @@ program):
   grid is fixed for the page's life and mobile has parallel `mobile*` draw paths.
 - **A station is an identity object** (`stations.js`): `freq callsign tagline
   desc freqNote ident identTempo glyph static crt meter idleEvent grind
-  visual tracks`; secret stations carry `secret: true` and `forcedPhosphor`
+  visual tracks`, plus the optional `instrumental vocalTracks
+  instrumentalTracks` that keep `[L]` from looking up wordless tracks (see
+  Synced lyrics); secret stations carry `secret: true` and `forcedPhosphor`
   and are read generically — don't reintroduce id comparisons.
 - **Adding a secret station** is five edits and no new call sites, because
   `SECRET_STATIONS` is walked rather than indexed and every secret behaviour
@@ -687,6 +689,33 @@ the right *length*, not that anyone sings on it, and a jazz standard's sung
 lyric filed against an instrumentalist is exactly the case where those differ.
 Nothing in `voice.js` is wrong; the fix, if one is wanted, is an explicit
 instrumental opt-out per track or per station, not a tighter gate.
+
+**That opt-out was built 2026-09-14.** A station can say `instrumental: true`,
+with `vocalTracks: [ids]` for the sung exceptions; a vocal station can list
+`instrumentalTracks: [ids]`. `trackIsInstrumental()` in `stations.js` is the
+one reading of those fields, and `voice.js` builds a youtubeId set from it
+(ids are unique roster-wide, so no call site has to say which station is
+playing). An instrumental never reaches LRCLIB: `ensureLyricsFetched` writes
+`'unavailable'` with `reason: 'instrumental'` and returns, and `[L]` in the
+visualizer flashes INSTRUMENTAL and clicks, where a plain miss stays silent.
+Four things about it worth knowing:
+
+- **Station fields, not a fourth `realTrack()` argument.** The dashboard's
+  tracks patcher writes back exactly three arguments and would drop a
+  per-track flag the first time anyone saved that station; `patchStationField`
+  leaves fields it is not editing alone.
+- **A verdict is curation, so it needs evidence.** Mark a station only after
+  checking every track, not a sample -- a sung track left unexcepted loses its
+  lyrics silently. `tools/lyrics-audit.mjs` leaves marked tracks out of the
+  rate by default, and `--check-instrumental` looks them up anyway and lists
+  any with a right-length synced lyric, which is how a wrong verdict shows.
+- **Lint guards the lists** (`instrumentalProblems`): every listed id must be
+  one of that station's tracks, and each list must sit on the right kind of
+  station, since `trackIsInstrumental` quietly ignores one on the wrong kind.
+- **Lyrics tests must not land on wordless tracks.** A boot that passes
+  `lyrics` and names no station draws only from stations with no instrumental
+  track, and `inVisualizer` avoids them when it presses a preset -- otherwise a
+  canned lyric goes unused and the scenario fails at random.
 
 Three things that look optional and are not:
 

@@ -1974,6 +1974,37 @@ station's liners by ear whenever its ID needed a respell.
 - The stale `gradius` worktree was removed: its one README fix had already
   landed on main.
 
+### [L] knows an instrumental when it hears one (2026-09-14)
+
+The lyrics lookup could prove a synced lyric was the right *length*, and
+nothing could prove anyone sings on the recording -- so Bill Evans'
+solo-piano "Young and Foolish" on AFTER HOURS matched a sung entry two
+seconds off its own length, and `[L]` would have drawn words over a piano.
+
+- **The roster now says which tracks are wordless.** A station can be marked
+  `instrumental: true` with `vocalTracks` for its sung exceptions, and a
+  vocal station can list `instrumentalTracks`. Those tracks are never looked
+  up on LRCLIB, and `[L]` answers INSTRUMENTAL instead of staying silent.
+- **Six stations are marked instrumental:** THE CRYPT, SLOW ORBIT and
+  TRADEWINDS outright; AFTER HOURS with Chet Baker's My Funny Valentine as
+  its one sung track; DRIFT MODE with Sigur Rós, two Grouper tracks and
+  Fennesz's Transit (David Sylvian's vocal); NEON STASIS with Skylar
+  Spence's Fiona Coyne. That stops two false positives the duration gate
+  let through, both on AFTER HOURS: Bill Evans' Young and Foolish, and Paul
+  Desmond's Glad to Be Unhappy matched to the words of Imagination.
+- **Four tracks keep their lyrics pending a listen**, listed as sung but
+  not verified: Hammock's Release and Biosphere's Kobresia on DRIFT MODE,
+  Blank Banshee's Teen Pregnancy and Saint Pepsi's Cherry Pepsi on NEON
+  STASIS. They behave exactly as before; each station's note says what to
+  check.
+- **Every verdict came from checking every track**, not a sample: each
+  candidate station's full roster was looked up on LRCLIB and every hit
+  judged sung or not before anything was marked.
+- Lint checks every listed id is on its station and each list is on the
+  right kind of station. `tools/lyrics-audit.mjs` leaves marked tracks out
+  of the match rate, and `--check-instrumental` looks them up anyway to
+  catch a sung track marked wrongly.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

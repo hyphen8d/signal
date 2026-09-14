@@ -27,6 +27,32 @@ export function realTrack(youtubeId, title, artist) {
   return { id: `yt:${youtubeId}:real`, youtubeId, title, artist }
 }
 
+/** 2026-09-14 -- is this track instrumental, so [L] should never look for
+ *  lyrics? Three station fields answer it, all optional:
+ *
+ *    instrumental: true          the whole station is wordless
+ *    vocalTracks: ['<id>', ...]  on an instrumental station, the sung ones
+ *    instrumentalTracks: [...]   on a vocal station, the wordless ones
+ *
+ *  Why it exists: LRCLIB's duration gate refuses a lyric of the wrong LENGTH,
+ *  and nothing refuses a lyric for a recording nobody sings on. Bill Evans'
+ *  solo-piano "Young and Foolish" on AFTER HOURS matched a sung entry two
+ *  seconds off its own length, so [L] would have drawn words over a piano
+ *  (lyrics re-measure, 2026-09-14). A lyric service cannot know a take is
+ *  instrumental; the curator does, so the roster says so.
+ *
+ *  Station-level on purpose, not a fourth realTrack() argument: the
+ *  dashboard's tracks patcher (tools/lib/roster.mjs trackLine) writes back
+ *  exactly three arguments and would silently drop a per-track flag, while
+ *  patchStationField() leaves fields it is not editing byte-for-byte alone.
+ *  tools/lint-roster.js checks every id listed here is on that station and
+ *  that each list sits on the right kind of station. */
+export function trackIsInstrumental(station, track) {
+  if (!station || !track) return false
+  if (station.instrumental) return !(station.vocalTracks || []).includes(track.youtubeId)
+  return (station.instrumentalTracks || []).includes(track.youtubeId)
+}
+
 // `tagline` replaces the old plain genre label -- settled on short creative
 // descriptions instead of e.g. "flow / focus". These are a
 // first draft, easy to swap.
@@ -381,6 +407,15 @@ export const STATIONS = [
     crt: { decay: 0.88, brightness: 1.12, bloomAmt: 1.7, scanMax: 0.6 },
     meter: { spring: 0.16, damping: 0.72, swing: 0.55 },
     visual: 'drift',
+    // 2026-09-14 -- instrumental for [L]: every track was looked up on LRCLIB
+    // and each hit judged sung or not (full-roster sweep, 0 errors). Sung:
+    // Skylar Spence's Fiona Coyne. KEPT PENDING A LISTEN, not verified sung:
+    // Blank Banshee's Teen Pregnancy and Saint Pepsi's Cherry Pepsi, both
+    // built from chopped vocal samples yet matched to right-length synced
+    // entries of those chops -- unclear whether the timings follow the track.
+    // Both behave as before; drop them if a listen says the lyric drifts.
+    instrumental: true,
+    vocalTracks: ['tCcamt8KZNQ', 'RQxDM2K-hd0', 'OrR1TGQY20Y'],
     tracks: [
       // The founding 25, 2026-08-30. All checked on the strict probe, not
       // just oEmbed: playabilityStatus, playableInEmbed and licence breadth
@@ -1844,6 +1879,10 @@ export const STATIONS = [
     crt: { noise: 0.22, bloomAmt: 1.4, flicker: 0.14 },
     meter: { spring: 0.35, damping: 0.6, swing: 0.8 },
     visual: 'keep',
+    // 2026-09-14 -- instrumental for [L]: every track was looked up on LRCLIB
+    // and each hit judged sung or not (full-roster sweep, 0 errors). No track
+    // returned any lyric at all.
+    instrumental: true,
     tracks: [
       realTrack('APZIre8Tm60', 'Whitebark Forest', 'Mountain Realm'),
       realTrack('YKe_zJEGcWQ', 'Dungeon Stairs', 'Mountain Realm'),
@@ -1910,6 +1949,10 @@ export const STATIONS = [
     crt: { noise: 0.14, bloomAmt: 1.9, flicker: 0.07 },
     meter: { spring: 0.4, damping: 0.55, swing: 0.95 },
     visual: 'orbit',
+    // 2026-09-14 -- instrumental for [L]: every track was looked up on LRCLIB
+    // and each hit judged sung or not (full-roster sweep, 0 errors). No track
+    // returned any lyric at all, so marking it loses nothing.
+    instrumental: true,
     tracks: [
       realTrack('aIB70PVSCnY', 'After the Rain', 'Jens Buchert'),
       realTrack('EqwRXoAxn7I', 'On the Run', 'Jens Buchert'),
@@ -1992,6 +2035,11 @@ export const STATIONS = [
     crt: { noise: 0.15, bloomAmt: 2.0, flicker: 0.09 },
     meter: { spring: 0.6, damping: 0.4, swing: 1.15 },
     visual: 'lagoon',
+    // 2026-09-14 -- instrumental for [L]: every track was looked up on LRCLIB
+    // and each hit judged sung or not (full-roster sweep, 0 errors). Two
+    // hits, both plain-only lyrics of other artists' sung versions (Similau,
+    // Yellow Bird), already refused.
+    instrumental: true,
     tracks: [
       realTrack('mitt1Qnkmgo', 'Ringo Oiwake', 'Arthur Lyman'),
       realTrack('7QO2QuXEZS4', 'Ke Kali Ne Au', 'Arthur Lyman'),
@@ -2086,6 +2134,17 @@ export const STATIONS = [
     crt: { decay: 0.88, brightness: 1.12, bloomAmt: 1.7, scanMax: 0.6 },
     meter: { spring: 0.16, damping: 0.72, swing: 0.55 },
     visual: 'aurora',
+    // 2026-09-14 -- instrumental for [L]: every track was looked up on LRCLIB
+    // and each hit judged sung or not (full-roster sweep, 0 errors). Sung:
+    // Svefn-g-englar (Sigur Ros), Heavy Water and Vital (Grouper), Transit
+    // (the Fennesz version with David Sylvian's vocal). KEPT PENDING A
+    // LISTEN, not verified sung: Hammock's Release (matched a six-line "I see
+    // the lighthouse" lyric; unsure the Love in the Void cut has it) and
+    // Biosphere's Kobresia (a transcribed spoken Russian sample). Both behave
+    // as they did before this field; drop them from the list if a listen says
+    // wordless.
+    instrumental: true,
+    vocalTracks: ['8L64BcCRDAE', 'wLxbD0CkS30', 'Vi3bSG3jL_M', '4qrEH65DeCE', 'vTaBX_FoGWk', 'csnryqUpO-g'],
     tracks: [
       realTrack('UfcAVejslrU', 'Weightless', 'Marconi Union'),
       realTrack('0kYc55bXJFI', 'Near Light', 'Olafur Arnalds'),
@@ -2173,6 +2232,15 @@ export const STATIONS = [
     crt: { noise: 0.1, bloomAmt: 1.8, flicker: 0.05 },
     meter: { spring: 0.35, damping: 0.6, swing: 0.9 },
     visual: 'backroom',
+    // 2026-09-14 -- instrumental for [L]: every track was looked up on LRCLIB
+    // and each hit judged sung or not (full-roster sweep, 0 errors). Two
+    // false positives the duration gate accepted -- Bill Evans' solo-piano
+    // Young and Foolish, and Paul Desmond's Glad to Be Unhappy matched to the
+    // words of Imagination at the same 344s -- which is why this field
+    // exists. The one sung track is Chet Baker's My Funny Valentine (the 141s
+    // Chet Baker Sings cut).
+    instrumental: true,
+    vocalTracks: ['ENFGUo_Nfso'],
     tracks: [
       // Founding pass, 2026-09-13, in two halves curated in parallel against
       // disjoint artist lists. This half is Blue Note / Prestige hard bop and

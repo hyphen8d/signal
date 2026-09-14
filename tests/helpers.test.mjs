@@ -381,6 +381,66 @@ test('a synced body that parses to nothing is unavailable, not available-with-no
   } finally { globalThis.fetch = realFetch }
 })
 
+test('trackIsInstrumental: a station verdict with per-track exceptions both ways', async () => {
+  // 2026-09-14 -- the opt-out that keeps [L] from drawing words over a piano.
+  const { trackIsInstrumental } = await import(`../stations.js?v=${globalThis.SIGNAL_BUILD}`)
+  const a = { youtubeId: 'AAAAAAAAAAA' }, b = { youtubeId: 'BBBBBBBBBBB' }
+  const wordless = { instrumental: true, vocalTracks: ['BBBBBBBBBBB'], tracks: [a, b] }
+  assert.equal(trackIsInstrumental(wordless, a), true, 'an instrumental station\'s ordinary track')
+  assert.equal(trackIsInstrumental(wordless, b), false, 'the sung exception on an instrumental station')
+  const sung = { instrumentalTracks: ['AAAAAAAAAAA'], tracks: [a, b] }
+  assert.equal(trackIsInstrumental(sung, a), true, 'the wordless exception on a vocal station')
+  assert.equal(trackIsInstrumental(sung, b), false, 'a vocal station\'s ordinary track')
+  assert.equal(trackIsInstrumental({ tracks: [a] }, a), false, 'no fields means sung')
+  assert.equal(trackIsInstrumental(null, a), false)
+})
+
+test('an instrumental track never asks LRCLIB, and every roster verdict reaches voice.js', async () => {
+  const { ensureLyricsFetched, lyricsStateFor, lyricsCache, isInstrumental } = voice
+  const { STATIONS, SECRET_STATIONS, trackIsInstrumental } = await import(`../stations.js?v=${globalThis.SIGNAL_BUILD}`)
+  const all = [...STATIONS, ...(SECRET_STATIONS || [])]
+  let instrumentalTrack = null, sungTrack = null
+  for (const st of all) {
+    for (const t of st.tracks) {
+      assert.equal(isInstrumental(t), trackIsInstrumental(st, t), `${st.callsign} ${t.youtubeId}: voice.js and the roster disagree`)
+      if (trackIsInstrumental(st, t)) instrumentalTrack ??= t
+      else sungTrack ??= t
+    }
+  }
+  assert.ok(instrumentalTrack, 'the roster marks no track instrumental, so the opt-out is untested')
+  // The exceptions are the half a consistency check cannot see: voice.js and
+  // trackIsInstrumental agreeing proves nothing if both have stopped reading
+  // vocalTracks. So each listed id is asserted against what the list MEANS.
+  let sungException = null
+  for (const st of all) {
+    for (const id of st.vocalTracks || []) {
+      assert.equal(isInstrumental({ youtubeId: id }), false, `${st.callsign} lists ${id} as sung, but it is treated as instrumental`)
+      sungException ??= st.tracks.find((t) => t.youtubeId === id)
+    }
+    for (const id of st.instrumentalTracks || []) {
+      assert.equal(isInstrumental({ youtubeId: id }), true, `${st.callsign} lists ${id} as wordless, but it is still looked up`)
+    }
+  }
+  assert.ok(sungException, 'no station lists a sung exception, so vocalTracks is untested')
+  const realFetch = globalThis.fetch
+  const settle = async () => { for (let i = 0; i < 8; i++) await new Promise((r) => setTimeout(r, 0)) }
+  try {
+    let calls = 0
+    globalThis.fetch = async () => { calls++; return { ok: true, json: async () => ({ duration: 200, syncedLyrics: '[00:01.00]words over a piano' }) } }
+    ensureLyricsFetched(instrumentalTrack, 200)
+    ensureLyricsFetched(instrumentalTrack, 350)   // a refine must not ask either
+    await settle()
+    assert.equal(calls, 0, 'an instrumental track sent a lyrics request')
+    assert.equal(lyricsStateFor(instrumentalTrack), 'unavailable')
+    assert.equal(lyricsCache[instrumentalTrack.youtubeId].reason, 'instrumental')
+    // Control: the same stub serves a sung track, so the stub itself works.
+    delete lyricsCache[sungTrack.youtubeId]
+    ensureLyricsFetched(sungTrack, 200)
+    await settle()
+    assert.ok(calls > 0, 'control: a sung track made no request, so the zero above proves nothing')
+  } finally { globalThis.fetch = realFetch }
+})
+
 test('a refine is not triggered by a duration that moved less than a second', async () => {
   // 2026-09-12 (audit, L21) -- the trigger was an exact float compare, so a
   // getDuration() that drifted by milliseconds between PLAYING events
