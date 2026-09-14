@@ -1957,6 +1957,23 @@ callsign closing a line needs no respelling. Both claims are corrected in
 space into every script that says a compound callsign, and to check a
 station's liners by ear whenever its ID needed a respell.
 
+### Housekeeping (2026-09-14)
+
+- **Lyrics re-measured** on 144 tracks across 18 stations, with no throttled
+  requests: 56% overall (53% on 2026-09-02), 77% on the stations that have
+  vocals (72% before). No matcher regression. MIRRORBALL's 8/8 is an upper
+  bound until the health sweep records its tracks' lengths, since those
+  matches went unchecked against duration. One real false positive is
+  recorded in CLAUDE.md: Bill Evans' solo-piano "Young and Foolish" on
+  AFTER HOURS matches a sung LRCLIB entry within 2s of its length, so `[L]`
+  can draw words over an instrumental. The duration gate cannot refuse it;
+  the fix would be an instrumental opt-out, not a tighter gate.
+- **README screenshot** `display-modes.jpg` shows the current eight-station
+  YM dial (shipped with the TRADEWINDS change above).
+- **Roster health record** committed as the daily timer left it.
+- The stale `gradius` worktree was removed: its one README fix had already
+  landed on main.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
