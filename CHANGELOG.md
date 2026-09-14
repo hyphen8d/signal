@@ -1942,6 +1942,21 @@ design question is left open, with its comment corrected.
   cannot lock before the first frame, so ZM no longer reports six live keys
   as dead.
 
+### TRADEWINDS says its own name (2026-09-14)
+
+Both TRADEWINDS liners said "trade-whines" -- the voice reading `winds` as
+the verb, the same misreading its station ID had until 2026-08-31. They were
+re-rendered with the callsign written as "Trade Winds" (hooks unchanged:
+"The bird calls are on the record, not outside." and "Second one comes with
+an umbrella in it."), both inside the liner level band with a 0.5s tail.
+
+The design record had said the opposite: that the original liners were
+confirmed by ear and should not be re-rendered, and that they proved a
+callsign closing a line needs no respelling. Both claims are corrected in
+`tools/lib/voice-settings.mjs`; the standing advice is now to write the
+space into every script that says a compound callsign, and to check a
+station's liners by ear whenever its ID needed a respell.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

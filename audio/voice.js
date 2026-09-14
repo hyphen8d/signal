@@ -821,6 +821,9 @@ export const GENERAL_LINER_FILES = [
 //                      TRADEWINDS' pair is "The bird calls are on the record,
 //                      not outside." and "Second one comes with an umbrella in
 //                      it." -- both hook-then-callsign, no frequency.
+//                      RE-RENDERED 2026-09-14 with the callsign scripted as
+//                      "Trade Winds": the originals said "trade-whines" (see
+//                      the TRADEWINDS entry in tools/lib/voice-settings.mjs).
 //   after-hours       "Last call was an hour ago. Nobody's leaving.
 //                      AFTER HOURS."  and  "Brushes, a slow ballad, and
 //                      nowhere to be. AFTER HOURS."   (new 2026-09-13,

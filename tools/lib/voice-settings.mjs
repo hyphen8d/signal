@@ -100,15 +100,13 @@ export const CALLSIGN_RESPELL = {
   // So the liner is NOT respelled, on the same reasoning as CIRCUIT CRUSH's:
   // its callsign lands at the end of a spoken line rather than at the start.
   //
-  // That was written as a prediction. IT IS A MEASUREMENT NOW -- see the
-  // TRADEWINDS entry below, which tested it properly by accident on
-  // 2026-09-01 and is the best evidence this rule has: the same callsign, the
-  // same voice, the same day, wrong in the ID and right in the liner. A
-  // controlled comparison nobody set out to run.
-  //
-  // SYNAPSE's own liner is still untested by ear, which is worth knowing but
-  // no longer load-bearing: the rule it rests on has been confirmed twice
-  // over, by CIRCUIT CRUSH and by TRADEWINDS.
+  // That was written as a prediction, and for a while it was recorded as a
+  // measurement on the strength of TRADEWINDS' liners. 2026-09-14: those
+  // liners turned out to say "trade-whines" too -- see the TRADEWINDS entry
+  // below -- so the rule is back to resting on CIRCUIT CRUSH alone, and
+  // SYNAPSE's own liner is still untested by ear. Treat "the closing position
+  // is safe" as unproven: when a callsign needs a respell in its ID, check its
+  // liners by ear rather than assuming they escaped.
   SYNAPSE: 'Sinaps',
   // 2026-09-01. Reported from listening: the ID came out as "trade-WINE-dz" --
   // the voice read `winds` as the VERB, rhyming with finds, rather than the
@@ -126,18 +124,22 @@ export const CALLSIGN_RESPELL = {
   // person listening rather than by any check here. That is the standing cost
   // of a callsign-only ID: it is pure opening, so every name is exposed.
   //
-  // AND THIS ONE SETTLED THE CONTEXT RULE, by accident. Its two LINERS were
-  // rendered before the respell existed, so they say the unrespelled
-  // "TRADEWINDS" at the end of a spoken line -- and confirmed by ear the same
-  // day, they read correctly. The ID said "trade-WINE-dz"; the liners did
-  // not. Same callsign, same voice, same spelling, same day, wrong in one
-  // position and right in the other.
+  // 2026-09-14 -- CORRECTED. This entry used to say the two LINERS, rendered
+  // before the respell existed with the bare "TRADEWINDS" closing each line,
+  // had been "confirmed by ear the same day" to read correctly, and that they
+  // "should NOT be re-rendered to match the ID" -- and it held them up as the
+  // cleanest evidence for the "respell only what OPENS a line" rule. Matt
+  // listened on 2026-09-13 and both liners say "trade-whines": the same verb
+  // misreading as the ID, in the closing position the rule said was safe.
+  // Both were re-rendered with "Trade Winds" written into the script (the
+  // liners go through --text, so this map never touched them).
   //
-  // That is the cleanest evidence the "respell applies to whatever OPENS a
-  // line" rule has ever had, and nobody set out to run it. CIRCUIT CRUSH
-  // showed the same shape in 2026-08-29 but across two different scripts;
-  // this is one string in two places. The liners are correct as they stand
-  // and should NOT be re-rendered to match the ID.
+  // So the "confirmed by ear" note was wrong, and the rule has lost its best
+  // evidence. What stands: CIRCUIT CRUSH's liner reads fine unrespelled, and
+  // SYNAPSE's liner is untested. What to do with a callsign that is a
+  // compound of ordinary words: write the space into EVERY script that says
+  // it, liner as well as ID, rather than trusting position to save it -- a
+  // wrong clip costs a listener noticing, and the space costs nothing.
   TRADEWINDS: 'Trade Winds',
 }
 
