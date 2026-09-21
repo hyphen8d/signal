@@ -38,6 +38,11 @@ const { default: weatherUi } = await import(`./ui/weather.js?v=${V}`)
 const { default: visualizer } = await import(`./visualizer.js?v=${V}`)
 const { default: game } = await import(`./game.js?v=${V}`)
 
+// How often a running tab asks build.json whether a deploy has landed (see
+// tickBuild). GitHub Pages' own cache is 10 minutes, so polling faster than
+// that mostly re-reads the same answer.
+export const BUILD_POLL_MS = 30 * 60 * 1000
+
 // --- program ---------------------------------------------------------------
 
 export default {
@@ -767,6 +772,8 @@ export default {
       // be replaced. Cheap -- a timestamp compare per second, with a network
       // call behind it at most once every fifteen minutes.
       this.tickWeather(s)
+      // 2026-09-21 -- and the new-build check (see tickBuild). Data again.
+      this.tickBuild(s)
       if (this.guideOpen || this.tapConsentOpen || this.weatherOpen || this._powerAnimating) return
       if (this.poweredOn) { this.drawClock(s); this.drawSleep(s) }
       else this.drawStandbyClock(s)
@@ -824,6 +831,50 @@ export default {
   // beat, no death spiral, no reboot on the way back either -- see
   // powerUp()'s pacing note. Removing nearly all the timer surface here
   // also removes nearly all the room for a race like the [I] one to recur.
+  // 2026-09-21 -- a tab left playing for hours picks up a deploy at the
+  // next power cycle. Adapted from Cyberspace TERMINAL (app/src/update.ts),
+  // which never swaps a build under a running session and promotes one only
+  // at a reboot. main.js reads build.json once, at load, so until now a
+  // radio left on across a deploy kept the old build until the tab closed --
+  // and this is an app people leave on.
+  //
+  // Why power-OFF is the moment, not power-on: a reload lands in STANDBY,
+  // which is exactly where a switched-off set already is, so the listener
+  // sees the set they just turned off. Reloading at power-ON would throw
+  // away the keypress that is the page's autoplay gesture and leave a
+  // silent set asking to be switched on twice. Already in STANDBY when the
+  // new build turns up (a tab left off overnight): reload now, there is
+  // nothing to interrupt -- unless the guide is up, which [G] opens from
+  // STANDBY and which would vanish mid-read; it waits for the next tick.
+  //
+  // Polled every 30 minutes on the clock ticker, like the weather: a
+  // timestamp compare per second, one ~30-byte no-store fetch behind it. A
+  // failed fetch is a no-op, never a reload. The reload drops the query
+  // string: ?game=1 is one-shot, and localStorage brings the station back.
+  tickBuild(s) {
+    const now = Date.now()
+    if (this._buildPending) {
+      if (!this.poweredOn && !this._powerAnimating && !this.guideOpen) this.reloadForBuild()
+      return
+    }
+    if (this._buildCheckedAt && now - this._buildCheckedAt < BUILD_POLL_MS) return
+    const first = !this._buildCheckedAt
+    this._buildCheckedAt = now
+    if (first) return // main.js just fetched it; the first real check is BUILD_POLL_MS out
+    try {
+      fetch(`./build.json?t=${now}`, { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+          if (j?.build && String(j.build) !== String(globalThis.SIGNAL_BUILD)) this._buildPending = String(j.build)
+        })
+        .catch(() => {})
+    } catch (e) {}
+  },
+  reloadForBuild() {
+    this._buildPending = null
+    saveSignalState(this)
+    try { globalThis.location.replace(globalThis.location.pathname) } catch (e) {}
+  },
   powerDown(s) {
     if (!this.poweredOn) return
     // 2026-08-27 -- a sleep timer belongs to the session that armed it. This
@@ -845,6 +896,7 @@ export default {
     // painting the drift effect over STANDBY forever after the next
     // power-up.
     this.visualizerActive = false
+    this.restoreTubeDecay(s) // 2026-09-21 -- an effect's own afterglow stays with the visualizer
     // 2026-09-12 (audit, M3) -- the weather card, same reasoning again. Its
     // only other writers are openWeather()/closeWeather(), so a power-down
     // that arrived with the card up (the sleep timer, until sleepExpired()

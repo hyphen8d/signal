@@ -10,7 +10,7 @@ const V = globalThis.SIGNAL_BUILD ?? ''
 const { playPanelSound } = await import(`./audio/sfx.js?v=${V}`)
 const { AUDIO_BUS, audioSignalLive } = await import(`./audio/tap.js?v=${V}`)
 const { lyricsCache, lyricsStateFor } = await import(`./audio/voice.js?v=${V}`)
-const { pulseBloom } = await import(`./crt-hooks.js?v=${V}`)
+const { crtBase, pulseBloom } = await import(`./crt-hooks.js?v=${V}`)
 const { VIZ_BAR_Y, VIZ_BOT, VIZ_INFO_Y1, VIZ_INFO_Y2, centerX, clearGrid, fmtTime, truncate } = await import(`./layout.js?v=${V}`)
 const { saveSignalState } = await import(`./state.js?v=${V}`)
 const { VISUALS, VISUAL_KEYS } = await import(`./visuals/index.js?v=${V}`)
@@ -103,6 +103,7 @@ export default {
     this._heldKeys?.clear()
     this._konami.length = 0
     this._lastInputAt = Date.now()
+    this.restoreTubeDecay(s)
     playPanelSound(false)
     // Same rebuild closeGuide() uses: full clear, then chrome/frames/meters,
     // then whatever the actual lock/status state was underneath (the
@@ -112,6 +113,13 @@ export default {
     clearGrid(term)
     this.redrawMainScreen(s)
     this.redrawLockState(s)
+  },
+  /** An effect's own `decay` (see drawVisualizerFrame) must not outlive
+   *  the visualizer: the dial under a 0.9 afterglow ghosts every digit.
+   *  Called from exitVisualizer() and from powerDown(), which leaves the
+   *  visualizer without going through exitVisualizer(). */
+  restoreTubeDecay(s) {
+    if (s?.crt?.params) s.crt.params.decay = crtBase.decay
   },
   // The visualizer's own footer: a live station/track readout plus the
   // control legend and the position bar, in place of the main screen's
@@ -398,9 +406,26 @@ export default {
     // so skipping the effect call entirely is the contract being kept, not
     // a special case. Ahead of [L] because startGame() closes the lyrics
     // view on the way in and nothing can reopen it while the game is up.
+    // 2026-09-21 -- an effect may declare a minimum phosphor `decay` (adapted
+    // from Cyberspace TERMINAL's screensaver host, where each saver sets it
+    // on entry: its matrix rain gets its streaks from the tube rather than
+    // from a drawn gradient). Written every frame rather than on entry
+    // because the effect can change under a running visualizer by four
+    // routes -- [Shift+C], a retune (setCrtCharacter() rewrites every param),
+    // [L] and the game -- and a per-frame write is correct after all four
+    // without any of them having to know. The lyrics view and the game keep
+    // the station's own persistence: text crawling under a long afterglow
+    // smears, and the game's bullets are drawn as dots on purpose.
+    // restoreTubeDecay() puts the station's value back on the way out.
+    const fx = VISUALS[key]
+    // A floor, not an override: an ambient station already running its own
+    // long persistence (DRIFT MODE's 0.88) keeps it under any effect.
+    const own = !this.gameOpen && !this.lyricsViewOpen && fx.decay
+    const decay = own ? Math.max(own, crtBase.decay) : crtBase.decay
+    if (s.crt?.params && s.crt.params.decay !== decay) s.crt.params.decay = decay
     if (this.gameOpen) this.drawGameFrame(s, (Date.now() - this._vizEnterAt) / 1000)
     else if (this.lyricsViewOpen) this.drawLyricsView(s)
-    else VISUALS[key].draw(this, s, (Date.now() - this._vizEnterAt) / 1000)
+    else fx.draw(this, s, (Date.now() - this._vizEnterAt) / 1000)
     // Info footer updates on the same cadence drawPlayback() already uses
     // for the normal progress bar -- plenty for a running clock, and cheap
     // (two 80-wide inverse rows) next to the effect's own per-frame cost.

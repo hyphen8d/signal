@@ -444,5 +444,6 @@ Matthew Arevalo.
 Two things in the tree are not SIGNAL's to license and keep their own
 copyright notices, both reproduced in [`NOTICE`](./NOTICE): `src/` is
 `cyberspace-crt`, Copyright (c) 2026 Unremarkable Garden, MIT on the same
-terms; and the bitmap fonts in `fonts/` are Copyright (C) 2014 Dimitar
+terms (as are a few app-side pieces adapted from the same author's
+[Cyberspace TERMINAL](https://github.com/unremarkablegarden/cyberspace-terminal)); and the bitmap fonts in `fonts/` are Copyright (C) 2014 Dimitar
 Toshkov Zhekov under the SIL Open Font License 1.1 (see `fonts/OFL.txt`).

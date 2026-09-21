@@ -90,6 +90,9 @@ const ALLOWED = [
   '/fonts/ter-u16n.bdf', '/screenshots/hero.jpg',
   '/tools/network.html',   // the dashboard
   '/tools/lib/roster.mjs', // which imports this
+  // 2026-09-21 -- the install manifest and what it names. A manifest that
+  // 404s fails silently: the page still works, it just cannot be installed.
+  '/manifest.json', '/icon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png',
 ]
 async function staticAllowlistHolds(port, label) {
   for (const denied of DENIED) {

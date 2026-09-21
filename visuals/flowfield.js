@@ -16,6 +16,13 @@ export const FLOW_GLYPHS = ['-', '\\', '|', '/']
 export default {
   key: 'flowfield',
   label: 'FLOW FIELD',
+  // 2026-09-21 -- the first effect to set its own afterglow (see
+  // drawVisualizerFrame). A current map is lines in motion, and the tube's
+  // persistence turns each streak glyph into a short trail behind it for
+  // free -- the trick Cyberspace TERMINAL's matrix saver uses at the same
+  // 0.88. Not yet watched in motion on a real GPU: headless capture runs
+  // at ~3fps, where persistence cannot show what it does at 60.
+  decay: 0.88,
   // 65th pass -- CLOUDS (ATOMIC's old Geiger-counter-replacement effect,
   // drifting metaball clouds via makeCloudShape()) permanently removed.
   // See the 65th-pass note above VISUAL_METHODS for why.

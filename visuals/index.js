@@ -1,6 +1,8 @@
 // SIGNAL -- the visualizer registry: every effect module, in the order [V]
-// cycles them. Each effect is { key, label, init?(p, term), reset?(p),
-// draw(p, s, t) }; its state lives on the program object under the same
+// cycles them. Each effect is { key, label, decay?, init?(p, term), reset?(p),
+// draw(p, s, t) }; `decay` (2026-09-21) is the phosphor persistence the tube
+// runs at while the effect is up, in place of the station's -- see
+// drawVisualizerFrame(). Its state lives on the program object under the same
 // _-prefixed names it always had. Split out of program.js in the 2026-08-25 audit --
 // the notes below are the history of what used to be VISUAL_METHODS.
 //

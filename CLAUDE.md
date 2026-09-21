@@ -57,6 +57,9 @@ The **audio assets carry the same stamp** (2026-08-29, `clipUrl()` in
 `audio/voice.js`) — they did not until a re-rendered station ID was live,
 byte-identical on the server, and the browser went on playing the old one.
 Adding a clip never exposed it; a URL nobody has fetched cannot be stale.
+A tab already open across a deploy re-reads `build.json` every 30 minutes and
+reloads at the next power-off (`tickBuild()` in `program.js`, 2026-09-21), so
+a deploy reaches a radio left playing without anyone closing the tab.
 
 ## The admin backend
 
@@ -313,6 +316,13 @@ program):
   words had never once rendered — drawn inside the column loop, painted over
   by the next column — so that test also reads the words back off the grid,
   which is the only proof a draw pass actually lands.
+  Since 2026-09-21 an effect may also declare `decay` (a minimum phosphor
+  persistence, applied per frame by `drawVisualizerFrame` and restored on
+  exit and power-off), and FLAME draws through `putGlyph()` bitmaps, not
+  characters. Two traps there: a same-reference `putGlyph()` is a no-op, so
+  a bitmap rewritten in place never re-rasters (alternate two per cell); and
+  `NORMAL` is attribute **0**, so never use 0 to mean "blank". A
+  character-reading test sees a pixel cell as a space -- read `term.gfx`.
 - `audio/sfx.js` — AudioContext, the hard-mute speaker bus, static bed, hum,
   every synthesized control sound. `audio/voice.js` — station IDs, liners,
   welcome line (one shared "through the radio" chain), LRCLIB lyrics.

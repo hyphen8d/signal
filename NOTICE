@@ -23,6 +23,14 @@ src/ -- cyberspace-crt
 
     Upstream: https://github.com/unremarkablegarden/cyberspace-crt
 
+    Some app-side code is also adapted from Cyberspace TERMINAL, the same
+    author's later project built on this engine, under the same MIT terms
+    and copyright: the degauss sound (audio/sfx.js playDegauss), FLAME's
+    beam-resolution fire (visuals/flame.js), the per-effect phosphor decay
+    (visualizer.js), and the reload-at-power-cycle build check (program.js
+    tickBuild). Each file says so where the adapted code sits.
+    https://github.com/unremarkablegarden/cyberspace-terminal
+
 --------------------------------------------------------------------------
 fonts/ -- Terminus Font
 

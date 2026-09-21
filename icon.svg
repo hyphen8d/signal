@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The home-screen icon: index.html's favicon mark, full-bleed (the OS
+       rounds or masks the corners itself) and scaled into the central 70%
+       so a circular "maskable" crop cannot clip the arcs. Source for
+       icon-192.png, icon-512.png and apple-touch-icon.png; regenerate
+       those with the commands in index.html's manifest note. -->
+  <rect width="32" height="32" fill="#000"/>
+  <g transform="translate(16 16) scale(0.7) translate(-16 -16.3)">
+    <g fill="none" stroke="#2eff5c" stroke-width="2.4" stroke-linecap="round">
+      <path d="M9.5 18.25a7.5 7.5 0 0 1 13 0"/>
+      <path d="M4.74 15.5a13 13 0 0 1 22.52 0"/>
+    </g>
+    <circle cx="16" cy="22" r="2.6" fill="#2eff5c"/>
+  </g>
+</svg>
