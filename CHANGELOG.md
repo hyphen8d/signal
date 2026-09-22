@@ -2058,6 +2058,30 @@ while the *next* track started correctly silent.
   treat mute/un-mute as a flag and could not express the bug at all, so a
   test written against it would have passed whatever the app did.
 
+### The health watch stops crying wolf (2026-09-22)
+
+NEON STASIS's "Resonance" was recorded UNPLAYABLE on 2026-09-18 and notified
+every day for five days. Re-probed by hand it was fine, and its record showed
+`countries: null` -- the shape of a truncated answer, not a dead video. Two
+things were wrong, and a third turned up while looking.
+
+- **A flagged row waited its turn.** The sweep worked oldest-first, so a flag
+  was not re-tested for a full pass (~19 days at batch 40 over 747 tracks)
+  while the watch re-read it from the record daily. Flagged rows now go to
+  the front of the queue.
+- **One sighting now counts as provisional.** Records carry `strikes`;
+  `roster-watch` classifies a single flag as `unconfirmed` -- printed and
+  recorded, never notified -- and speaks only when a second probe agrees. An
+  UNVERIFIED probe holds the count rather than confirming or clearing it, so
+  a throttled run can neither invent a finding nor wipe one. The dashboard
+  marks such a row `unconfirmed` rather than showing it as settled.
+- **There was a genuinely dead track, and it was a different one.** Home's
+  "Half Moon" (`yRlBcUJZJHA`) had gone "Video unavailable" -- confirmed over
+  four spaced probes -- while oEmbed kept answering 200 with the title, which
+  is exactly why `verify-roster.js` could never have caught it. Re-pointed to
+  the same 261s master on the same Home - Topic channel; the dead id is
+  recorded in the station profile so no future pass re-adds it.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

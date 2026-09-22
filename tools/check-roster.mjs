@@ -29,7 +29,7 @@
 // The record IS the feature: it makes "which tracks have not been looked at
 // since they were added" a question with an answer.
 //
-//   node tools/check-roster.mjs                 # next batch, oldest-checked first
+//   node tools/check-roster.mjs                 # next batch: flagged rows, then oldest-checked
 //   node tools/check-roster.mjs --batch=80
 //   node tools/check-roster.mjs --station=cipher
 //   node tools/check-roster.mjs --report        # read the record, no network
@@ -54,6 +54,42 @@ const asJson = args.includes('--json')
 const reportOnly = args.includes('--report')
 const stationArg = flag('station')
 const batchSize = +flag('batch', 40)
+/** Probes in a row that must agree before a flag counts as confirmed. */
+export const CONFIRM_STRIKES = 2
+
+/** Does this record carry a problem with the TRACK? UNVERIFIED is a problem
+ *  with the probe, so it is neither a finding nor a clean bill. */
+export function realFlags(flags) {
+  return (flags ?? []).some((f) => !f.startsWith('UNVERIFIED'))
+}
+
+/** Consecutive probes that found a real problem. An UNVERIFIED probe holds
+ *  the count where it is -- it did not happen, so it can neither confirm a
+ *  flag nor clear one. */
+export function nextStrikes(prevStrikes, flags) {
+  const prev = prevStrikes ?? 0
+  if (realFlags(flags)) return prev + 1
+  if ((flags ?? []).some((f) => f.startsWith('UNVERIFIED'))) return prev
+  return 0
+}
+
+/** The order the roster is worked through: flagged rows first, then
+ *  never-checked, then least-recently-checked. Pure, and exported, because
+ *  the ordering is the whole behaviour -- a flag that waits its turn is a
+ *  flag that gets re-reported daily for the length of a full pass (~19 days
+ *  at batch 40 over 747 tracks). See the note at its call site. */
+export function nextBatch(tracks, records, batchSize) {
+  const rank = (r) => (realFlags(r?.flags) ? 0 : 1)
+  return [...tracks].sort((a, b) => {
+    const ra = records[a.youtubeId], rb = records[b.youtubeId]
+    const fa = rank(ra), fb = rank(rb)
+    if (fa !== fb) return fa - fb
+    if (!ra && !rb) return 0
+    if (!ra) return -1
+    if (!rb) return 1
+    return Date.parse(ra.at) - Date.parse(rb.at)
+  }).slice(0, Math.max(0, batchSize))
+}
 // Every human line goes to stderr so --json owns stdout, exactly as
 // audition.js does it -- one code path, so the dashboard and the terminal
 // cannot disagree about a flag.
@@ -116,6 +152,7 @@ function summarise(tracks, records) {
       ...t,
       checkedAt: r?.at ?? null,
       flags: r?.flags ?? [],
+      strikes: r?.strikes ?? 0,
       status: r?.status ?? null,
       countries: r?.countries ?? null,
       embeddable: r?.embeddable ?? null,
@@ -137,12 +174,18 @@ function summarise(tracks, records) {
     stale: stale.length,
     unverified: unver.length,
     flaggedCount: bad.length,
+    // Flagged by at least two probes in a row. A record written before
+    // strikes existed has none, so its first re-probe under this build
+    // counts as strike 1 and it confirms on the run after -- one quiet day,
+    // not a lost finding.
+    flaggedConfirmed: bad.filter((r) => (r.strikes ?? 0) >= CONFIRM_STRIKES).length,
     staleDays: STALE_DAYS,
     flagged: bad.map((r) => ({
       youtubeId: r.youtubeId, title: r.title, artist: r.artist,
       stationId: r.stationId, callsign: r.callsign,
       flags: r.flags, countries: r.countries, status: r.status,
       embeddable: r.embeddable, checkedAt: r.checkedAt,
+      strikes: r.strikes ?? 0, confirmed: (r.strikes ?? 0) >= CONFIRM_STRIKES,
     })),
     byStation: [...new Set(rows.map((r) => r.stationId))].map((id) => {
       const mine = rows.filter((r) => r.stationId === id)
@@ -221,17 +264,20 @@ async function main() {
   if (!reportOnly) {
     // Oldest first, never-checked before that: the queue orders itself, so
     // repeated runs walk the whole roster without anyone tracking position.
-    const queue = [...tracks].sort((a, b) => {
-      const ra = store.records[a.youtubeId], rb = store.records[b.youtubeId]
-      if (!ra && !rb) return 0
-      if (!ra) return -1
-      if (!rb) return 1
-      return Date.parse(ra.at) - Date.parse(rb.at)
-    }).slice(0, Math.max(0, batchSize))
+    // 2026-09-22 -- a FLAGGED row goes to the front, ahead of never-checked
+    // and oldest. Before this the queue was purely oldest-first, so a flag
+    // was not re-tested until its turn came round again: at batch 40 over
+    // 747 tracks that is ~19 days, and roster-watch re-reported the same
+    // row from the record every single day in between. That is how NEON
+    // STASIS's "Resonance" cried wolf five days running over a transient
+    // UNPLAYABLE that had already cleared. Re-probing a flag first is what
+    // makes it either confirm (worth acting on) or disappear, and it costs
+    // one row of the batch per flag.
+    const queue = nextBatch(tracks, store.records, batchSize)
 
     if (!queue.length) say('Nothing to check.')
     else {
-      say(`Checking ${queue.length} of ${tracks.length} track(s) -- least recently checked first.`)
+      say(`Checking ${queue.length} of ${tracks.length} track(s) -- flagged rows first, then least recently checked.`)
       let throttleHits = 0
       let stopped = false
       // Concurrency 6, matching verify-roster.js -- polite to the endpoint.
@@ -244,9 +290,16 @@ async function main() {
           return // deliberately NOT recorded: this says nothing about the track
         }
         const flags = decayFlags(e, p)
+        // Consecutive probes that found a real problem with this track.
+        // UNVERIFIED says the probe did not happen, so it neither counts nor
+        // clears. One strike is a report YouTube gave once; two is the same
+        // answer twice from probes at least a run apart, which is what
+        // roster-watch waits for before it wakes anyone (see shouldNotify).
+        const strikes = nextStrikes(store.records[t.youtubeId]?.strikes, flags)
         store.records[t.youtubeId] = {
           at: new Date().toISOString(),
           flags,
+          strikes,
           status: p.status ?? null,
           countries: p.countries ?? null,
           embeddable: p.embeddable ?? null,

@@ -142,6 +142,10 @@
   .health-flag .cs { min-width: 150px; color: var(--ink-dim); font-size: 11.5px; }
   .health-flag .what { flex: 1; min-width: 260px; color: var(--ink); }
   .health-flag .yid { font-size: 11px; color: var(--ink-faint); }
+  /* Deliberately not red: a flag seen once is provisional, and colouring it
+     like a confirmed finding is what made the panel read as five days of
+     dead track when there was none. */
+  .health-flag .health-unconfirmed { font-size: 11px; color: var(--ink-faint); border: 1px dashed #3a4147; border-radius: 2px; padding: 0 6px; white-space: nowrap; }
   .fl { font-size: 11px; border: 1px solid #5a2e2e; color: var(--red); border-radius: 2px; padding: 0 6px; white-space: nowrap; }
   .fl.soft2 { border-color: #5a4a2e; color: var(--amber); }
   .health-note { color: var(--ink-dim); font-size: 11.5px; margin: 6px 0 0; }
@@ -1391,6 +1395,14 @@ function renderHealth() {
         el('span', { class: 'cs' }, f.callsign),
         el('span', { class: 'what' }, `${f.artist} — ${f.title}`),
         ...f.flags.map(healthFlagEl),
+        // 2026-09-22 -- a flag seen once is not yet a finding: check-roster
+        // re-probes flagged rows first, and roster-watch stays quiet until a
+        // second probe agrees. Saying so here stops the panel presenting a
+        // single transient answer as settled fact, which is what had NEON
+        // STASIS looking dead for five days while it played fine.
+        f.confirmed === false
+          ? el('span', { class: 'health-unconfirmed', title: 'Seen once. The next sweep re-probes this row first; it is not reported until a second probe agrees.' }, 'unconfirmed')
+          : null,
         el('span', { class: 'yid' }, f.youtubeId),
         el('button', {
           class: 'small',

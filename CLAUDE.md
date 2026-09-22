@@ -893,6 +893,14 @@ flowchart LR
   it works in batches, keeps its record in `tools/roster-health.json`, and
   **stops early when throttled rather than recording UNVERIFIED rows that say
   nothing** — a throttled run must never read as a clean one.
+  **Flagged rows are re-probed first** (2026-09-22), ahead of never-checked
+  and oldest, and each record carries `strikes`: consecutive probes that
+  found a real problem, held (neither advanced nor cleared) by an UNVERIFIED
+  one. Under the old pure oldest-first order a flag waited a full pass — ~19
+  days at batch 40 — to be re-tested, while `roster-watch` re-read it from
+  the record and notified every day in between. That is how one transient
+  `UNPLAYABLE` on NEON STASIS cried wolf for five days over a track that had
+  already come back.
 - **`tools/roster-watch.mjs` is what remembers to run it** (2026-08-30). The
   NIN three-country track was found only because someone happened to run the
   deep probe by hand the evening before; `check-roster.mjs` already knew how
@@ -901,6 +909,13 @@ flowchart LR
   always, a stalled sweep after 3 throttles, a broken checker after 2. Clean
   runs say nothing, because a notification that fires every day is wallpaper
   inside a week, and wallpaper is how the original bug survived.
+
+  **A finding must be seen twice** (2026-09-22): one sighting classifies as
+  `unconfirmed`, which is recorded and printed but never notified, and the
+  next run re-probes that row first, so it either confirms (notified, at most
+  a day late) or clears itself having woken nobody. A summary carrying no
+  `flaggedConfirmed` — one written by an older `check-roster` — falls back to
+  notifying, since too loud beats dropping a real finding.
 
   The rule it exists for: **`check-roster` exits 0 when throttled**, since it
   found nothing wrong — it merely never looked. So the obvious scheduler
