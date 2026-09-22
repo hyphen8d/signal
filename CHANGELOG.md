@@ -2039,6 +2039,25 @@ are the ideas around it that fit a radio.
   Screen" gives a fullscreen radio with no browser chrome. No service
   worker, on purpose: an offline radio is a dead one.
 
+### Turning it down actually turns it down (2026-09-22)
+
+Issue #67: sliding the volume to 0 left the playing track at full volume,
+while the *next* track started correctly silent.
+
+- **The cause was an un-mute landing after the level.** `adjustVolume()` set
+  the player's volume and then called `unMute()`, and the real IFrame player
+  refuses to leave a level at zero: captured mid-playback, `setVolume(0)`
+  reads as muted, but `unMute()` restores the last non-zero level (or a floor
+  of 5). So every press that reached 0 silenced the track and re-opened it in
+  the same breath. A track loading later went through a path with no
+  `unMute()` after it, which is why only the next track obeyed.
+- **`applyVolume()` now owns the un-muting** and no caller adds its own. The
+  three autoplay paths already called `unMute()` *before* it, which is the
+  safe order, and are unchanged.
+- **The test harness's fake player was rebuilt from the capture.** It used to
+  treat mute/un-mute as a flag and could not express the bug at all, so a
+  test written against it would have passed whatever the app did.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
