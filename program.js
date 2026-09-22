@@ -30,6 +30,7 @@ const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
 const { GREEN_ROOM_STATION, NIN_STATION, SECRET_STATIONS, STATIONS, presetOrderFor } = await import(`./stations.js?v=${V}`)
 const { BANDS, DEFAULT_BAND, LOCK_THRESHOLD, NEAR_THRESHOLD, RESUME_CUTOFF_MS, SCAN_STEP, SEEK_STEP, VISUALIZER_IDLE_MS, WARMUP_MS, bandFor, clampFreq, freqToCol, nearestLockable, nearestSignal, nearestStation, shuffledIndices, stationColsFor } = await import(`./tuning.js?v=${V}`)
 const { VISUALS } = await import(`./visuals/index.js?v=${V}`)
+const { announce } = await import(`./a11y.js?v=${V}`)
 const { default: desktopUi } = await import(`./ui/desktop.js?v=${V}`)
 const { default: mobileUi } = await import(`./ui/mobile.js?v=${V}`)
 const { default: guide } = await import(`./ui/guide.js?v=${V}`)
@@ -877,6 +878,7 @@ export default {
   },
   powerDown(s) {
     if (!this.poweredOn) return
+    announce('Receiver off.', 'power') // see a11y.js
     // 2026-08-27 -- a sleep timer belongs to the session that armed it. This
     // covers both ways the set goes off: its own expiry (which cleared it
     // already -- clearSleepTimer is idempotent) and someone reaching for [P]
@@ -1032,6 +1034,7 @@ export default {
   },
 
   powerUp(s) {
+    announce('Receiver on.', 'power') // see a11y.js; the station follows once it locks
     // 50th pass -- `|| this._powerAnimating`, not just poweredOn. poweredOn
     // doesn't go true until the REVEAL_DELAY beat ~5s in, and key() lets P
     // through while the set is off, so pressing P a second time during the
@@ -1876,6 +1879,7 @@ export default {
   },
   toggleMute(s) {
     this.muted = !this.muted
+    announce(this.muted ? 'Muted.' : 'Sound on.', 'mute')
     if (this.ready && this.player) {
       if (this.muted) this.player.mute()
       else { this.player.unMute(); this.applyVolume() }

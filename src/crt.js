@@ -133,7 +133,7 @@ uniform sampler2D uBloom;
 uniform vec2 uRes;
 uniform float uTime;
 uniform vec3 uPhosphor;
-uniform float uFill, uCurve, uBloomAmt, uMaskAmt, uMaskPitch, uVignette;
+uniform float uFill, uCurve, uBloomAmt, uMaskAmt, uMaskPitch, uVignette, uAspect;
 uniform float uNoise, uFlicker, uRoll, uRollPhase, uChroma, uBrightness, uAmbient, uBg, uGlass;
 uniform float uAmbientFalloff;
 uniform float uNoiseStreak, uSnow;
@@ -169,12 +169,12 @@ float roundedBox(vec2 p, vec2 b, float r) {
 }
 
 void main() {
-  // Normalised so the 4:3 faceplate fits the narrow axis. At or above 4:3 this
-  // is the height; below it the width binds, which stops a narrow canvas
-  // cropping the ends off every line.
-  float s = min(uRes.x / (4.0 / 3.0), uRes.y);
+  // Normalised so the faceplate fits the narrow axis. At or above uAspect
+  // (width/height, 4:3 for a television) the height binds; below it the width
+  // does, which stops a narrow canvas cropping the ends off every line.
+  float s = min(uRes.x / uAspect, uRes.y);
   vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / s * 2.0;
-  vec2 halfSz = vec2(uFill * 4.0 / 3.0, uFill);
+  vec2 halfSz = vec2(uFill * uAspect, uFill);
 
   vec2 q = p / halfSz;
   vec2 uv = warp(q, uCurve);
@@ -641,6 +641,9 @@ export class CRT {
     gl.uniform1f(u.uTime, wrapClock(time))
     gl.uniform3fv(u.uPhosphor, this.phosphor)
     gl.uniform1f(u.uFill, P.fill)
+    // 4/3 for a television. Portrait values exist for a phone, where a 4:3
+    // face letterboxes into a strip: see MOBILE_CRT_OVERRIDE in crt-hooks.js.
+    gl.uniform1f(u.uAspect, P.aspect || 4 / 3)
     gl.uniform1f(u.uCurve, P.curve)
     gl.uniform1f(u.uBloomAmt, P.bloomAmt)
     gl.uniform1f(u.uMaskAmt, P.maskAmt)

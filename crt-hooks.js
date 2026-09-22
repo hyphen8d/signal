@@ -60,12 +60,17 @@ export const MOBILE_CRT_OVERRIDE = {
   flicker: 0.03,
   maskAmt: 0.35,
   // 2026-08-22 -- the black above and below the tube needed a
-  // different color or texture. The tube is hard-locked to 4:3, so a
-  // portrait phone letterboxes above/below it in shader-computed black
-  // (crt.js's `uPhosphor * uAmbient * exp(-uAmbientFalloff * length(p))`).
-  // Rather than a fake CSS overlay, just let the real phosphor glow reach
-  // further into that space -- lower falloff, same tint, same physics.
+  // different color or texture, so the real phosphor glow reaches further
+  // into that space (crt.js's
+  // `uPhosphor * uAmbient * exp(-uAmbientFalloff * length(p))`) rather than
+  // a fake CSS overlay -- lower falloff, same tint, same physics. Kept: the
+  // face is bigger since 2026-09-22 but a phone is taller than any sane
+  // face, so there is still surround to light.
   ambientFalloff: 0.6,
+  // The face's own shape is NOT here: it is config.js's FACE_ASPECT, chosen
+  // beside GRID, because these overrides only reach the tube via
+  // setCrtCharacter() and STANDBY would draw at the wrong shape until the
+  // first power-on. See the note there.
 }
 export let crtBase = { ...SCREEN }
 export function setCrtCharacter(s, station) {

@@ -456,6 +456,14 @@ program):
 
 ### Things that only make sense across files
 
+- **The faceplate's shape is `FACE_ASPECT`** (`config.js`, beside `GRID`,
+  2026-09-22), and the grid is stretched onto it. 4:3 for a television, 3:4
+  for the lite layout — that one was hard-locked in the shader until then,
+  which drew the whole radio into a 390x292 strip on a 390x844 phone (35% of
+  the screen, to 62% after). It lives in config rather than
+  `MOBILE_CRT_OVERRIDE` because those reach the tube only via
+  `setCrtCharacter()`, so STANDBY would have drawn at 4:3 and popped into
+  shape at the first power-on.
 - **Layout is absolute cell coordinates** (`layout.js`); no layout engine.
   `MOBILE_LITE` is decided once at `config.js` import from `matchMedia`, so the
   grid is fixed for the page's life and mobile has parallel `mobile*` draw paths.
@@ -590,6 +598,30 @@ control the screen advertises — footer hints, the Guide's grid, the
 visualizer legend — has to answer even where it can't act (`NO SIGNAL`,
 `NO HISTORY`, `NO LINE IN`). Its header documents the seeding, the `[F]`
 exception and the `F13` canary that catches a desynchronised run.
+
+### What a screen reader gets
+
+`a11y.js` plus two blocks in `index.html`. The set is one `<canvas>` of beam
+intensities, so assistive technology sees an empty page — worse here than in
+most apps, since the text IS the interface. The split is deliberate:
+
+- **Static, in `index.html`** (`#about`, `.sr-only`): what SIGNAL is and what
+  every key does. A control list is only useful *before* you press anything,
+  and a live region that read it aloud every visit would be furniture.
+  Off-screen clipping, never `display:none` or `visibility:hidden` — those
+  remove it from the accessibility tree as well as from the picture.
+- **Live, in `a11y.js`** (`#announce`, `role=status aria-live=polite`): the
+  four things that change and cannot be seen — power, the locked station, the
+  track, mute. `announce(text, kind)` dedups **per kind**, which is the whole
+  design: comparing against the previous message alone is not enough, because
+  closing an overlay repaints station and track together so the two alternate
+  and each looks new. Hooked into `showStation`/`showTrack` (ahead of the
+  overlay guard and the mobile branch, so one call site serves both layouts),
+  `powerUp`/`powerDown` and `toggleMute`. Nothing fires on a redraw.
+
+The harness's `document.getElementById` answers `#announce` and nothing else,
+and `h.announced` is every line in order. Verified once against Chrome's real
+accessibility tree, which is the only proof the tree is what you think.
 
 ### Weather ([W])
 

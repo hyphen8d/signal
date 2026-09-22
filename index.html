@@ -89,6 +89,13 @@
      display:none/visibility:hidden) rather than fully hidden, since some
      browsers pause or throttle iframed video once it's completely hidden
      rather than just moved out of the viewport. */
+  /* Off-screen rather than display:none or visibility:hidden: those remove
+     the element from the accessibility tree as well as from the picture,
+     which would defeat the point. */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
   #ytDock {
     position: fixed;
     left: -9999px;
@@ -99,7 +106,28 @@
 </style>
 </head>
 <body>
-  <canvas id="tube"></canvas>
+  <!-- 2026-09-22 -- the set is one canvas of beam intensities, so assistive
+       technology sees an empty page. These two blocks are what it gets
+       instead: this one is static (what SIGNAL is, and the keys), because a
+       control list is only useful BEFORE you press anything; #announce below
+       carries the four things that actually change. See a11y.js. -->
+  <div id="about" class="sr-only">
+    <h1>SIGNAL &mdash; a CRT radio receiver, rendered as text</h1>
+    <p>
+      A tuning dial across two bands of curated music stations, played through
+      YouTube. The display is drawn as a grid of characters on a simulated
+      cathode-ray tube, so the screen itself cannot be read aloud; the station,
+      the track and the power state are announced as they change.
+    </p>
+    <p>Keys: P powers the set on and off. Left and right arrows tune the
+      dial, and 1 to 9 jump straight to a station. B changes band. S scans.
+      Up and down arrows set the volume, M mutes. N skips to the next track.
+      G opens the guide, which lists every station. V opens the visualiser, L
+      its lyrics view, C changes the phosphor colour, W the weather, T a sleep
+      timer, K copies a link to what is playing, and F goes fullscreen.</p>
+  </div>
+  <div id="announce" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+  <canvas id="tube" role="img" aria-label="The receiver's screen. Its contents are announced as they change."></canvas>
   <div id="ytDock"></div>
   <pre id="fault"></pre>
   <script>

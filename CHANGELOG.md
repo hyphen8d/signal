@@ -2082,6 +2082,24 @@ things were wrong, and a third turned up while looking.
   the same 261s master on the same Home - Topic channel; the dead id is
   recorded in the station profile so no future pass re-adds it.
 
+### The phone gets the whole screen, and a screen reader gets the set (2026-09-22)
+
+- **The tube fills a phone now.** The faceplate was hard-locked to 4:3 in the
+  shader, so on a 390x844 phone the entire radio drew into a 390x292 strip
+  with black above and below it -- about a third of the screen, text small
+  with it. The shape is a parameter (`FACE_ASPECT`), and the lite layout asks
+  for 3:4: the same television stood upright. Measured: 35% of the screen
+  height to 62%. It sits beside `GRID` in config rather than with the other
+  mobile CRT overrides, so STANDBY is the right shape before the set is even
+  switched on.
+- **A screen reader gets something to work with.** The display is a canvas, so
+  it was an empty page. `index.html` now carries a hidden description and the
+  full key list, and a polite live region announces the four things that
+  change: power, station, track, mute. It is deliberately quiet -- the dedup
+  is per kind of message, because repainting after an overlay closes would
+  otherwise re-announce the station and track every time. Checked against
+  Chrome's own accessibility tree, not just the test harness.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

@@ -13,6 +13,8 @@ const { crtBase, crtDegradeForDist, flashCrtGlitch, rampCrtParams } = await impo
 const { BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, FREQ_Y, HINT_Y1, HINT_Y2, MBOX_X0, MBOX_X1, METERS_BOT_Y, METERS_DIVIDER_X, METERS_TOP_Y, NOWPLAYING_BOT_Y, NOWPLAYING_TOP_Y, PLAYBACK_Y, SCALE_Y, SIG_Y, STANDBY_LOGO_FONT, STANDBY_LOGO_GAP, STANDBY_LOGO_LETTER_H, STANDBY_LOGO_LETTER_W, STANDBY_LOGO_WORD, STATION_BOT_Y, STATION_TOP_Y, STATION_Y, STATUS_REVEAL_MS, STATUS_TEXT_WIDTH, STATUS_Y, TAGLINE_Y, TRACK_Y, TUNER_BOT_Y, TUNER_TOP_Y, VOL_SIG_DIVIDER_Y, VOL_Y, VU_DIVIDER_Y, VU_Y, centerX, centerXRange, drawBoxBottom, drawBoxSide, drawBoxTop, drawGrille, fmtTime, formatClock, standbyLayout, truncate } = await import(`../layout.js?v=${V}`)
 const { NEAR_THRESHOLD, bandFor, freqToCol, nearestSignal, nearestStation } = await import(`../tuning.js?v=${V}`)
 
+const { announce, stationLine, trackLine } = await import(`../a11y.js?v=${V}`)
+
 export default {
 
   // Static chrome -- title bar, brand-plate, panel frames, grille, corner
@@ -916,6 +918,11 @@ export default {
   },
 
   showStation(s, station, opts = {}) {
+    // Announced before the overlay guard and before the mobile branch: this
+    // is the one call every layout makes when the station changes, and a
+    // listener on a screen reader needs it whether or not a card is up.
+    // announce() dedups, so the repaints this function takes do not repeat it.
+    announce(stationLine(station), 'station')
     if (this.overlayUp()) return // see clearStation (H3)
     if (this.mobile) { this.mobileShowStation(s, station, opts); return }
     const { term } = s
@@ -981,6 +988,7 @@ export default {
   // shorter one -- a track change within a station you are already locked
   // onto is a smaller event than finding the station was.
   showTrack(s, track, opts = {}) {
+    announce(trackLine(track), 'track') // see showStation
     if (this.overlayUp()) { this.updateTabTitle(track); return } // see clearStation (H3)
     if (this.mobile) { this.mobileShowTrack(s, track, opts); return }
     const { term } = s
