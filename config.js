@@ -2,6 +2,40 @@
 // hard limits.
 
 /**
+ * Mobile lite detection (45th pass) -- a different, more legible mobile
+ * layout for a portrait touch experience. Off-
+ * detection only, no manual toggle -- a narrow, portrait, touch-primary
+ * viewport gets the lite grid below; everything else gets the normal one.
+ * Checked once at module load, not live on rotation -- the grid is fixed for
+ * the life of the Term/CRT instances mount() builds from it (see screen.js),
+ * so re-flowing on an in-session rotation would need a real re-mount, which
+ * is out of scope for this pass.
+ */
+export const MOBILE_LITE =
+  typeof matchMedia === 'function' &&
+  matchMedia('(pointer: coarse)').matches &&
+  matchMedia('(max-width: 600px) and (orientation: portrait)').matches
+
+/**
+ * Faceplate shape, width / height, chosen with the grid because both answer
+ * the same question: what shape is the thing in front of the listener.
+ *
+ * 2026-09-22 -- this was hard-locked to 4:3 in the shader. On a 390x844
+ * phone that drew the entire radio into a 390x292 strip, about a third of
+ * the screen, with black above and below and the text small with it. 3:4 is
+ * that television stood upright rather than an arbitrary number, and it
+ * takes the face to 390x520 (35% of the height to 62%, measured).
+ *
+ * It belongs HERE rather than in MOBILE_CRT_OVERRIDE, which is where it was
+ * first written: those overrides are applied by setCrtCharacter(), which
+ * runs on power-on and on every tune, so the STANDBY screen a cold visitor
+ * meets would have drawn at 4:3 and then popped into shape when they
+ * switched the set on. The face is a property of the device, not of what the
+ * set is doing.
+ */
+export const FACE_ASPECT = MOBILE_LITE ? 3 / 4 : 4 / 3
+
+/**
  * CRT parameters. The `sharp` preset: tight spot with peaking, fine grille, gun
  * drive above nominal, short persistence tail.
  */
@@ -29,6 +63,10 @@ export const SCREEN = {
   // --- tube ---
   /** Screen size within the canvas. Range 0.4..1. */
   fill: 0.89,
+  /** Faceplate shape, width / height. 4:3 is a television; the lite layout
+   *  gets 3:4, the same tube upright. See FACE_ASPECT, which is where the
+   *  choice is made and why. Range 0.5..2. */
+  aspect: FACE_ASPECT,
   /** Barrel distortion. Range 0..0.15. */
   curve: 0.017,
   /** How far the glass sits outside the raster, in uv units. Range 0..0.15. */
@@ -133,30 +171,18 @@ export const PHOSPHORS = {
 export const PHOSPHOR = 'matrix'
 
 /**
- * Mobile lite detection (45th pass) -- a different, more legible mobile
- * layout for a portrait touch experience. Off-
- * detection only, no manual toggle -- a narrow, portrait, touch-primary
- * viewport gets the lite grid below; everything else gets the normal one.
- * Checked once at module load, not live on rotation -- the grid is fixed for
- * the life of the Term/CRT instances mount() builds from it (see screen.js),
- * so re-flowing on an in-session rotation would need a real re-mount, which
- * is out of scope for this pass.
- */
-export const MOBILE_LITE =
-  typeof matchMedia === 'function' &&
-  matchMedia('(pointer: coarse)').matches &&
-  matchMedia('(max-width: 600px) and (orientation: portrait)').matches
-
-/**
  * Grid size in cells, and the unlit margin around it in framebuffer pixels.
  *
- * The faceplate is 4:3 whatever is set here; the framebuffer is stretched onto
- * it. 80x25 in an 8x16 face is a 26% horizontal squash, as VGA text mode was on
- * a 4:3 monitor. That stretch-to-fit means cols/rows are free to be any shape
- * -- the mobile grid below is deliberately much narrower than 80 (see
- * MOBILE_LITE), so each column gets far more of the phone's actual width per
- * character, instead of 80 columns of the desktop layout all being crammed
- * into a screen a fraction of a desktop monitor's width.
+ * The framebuffer is stretched onto the faceplate whatever is set here (see
+ * FACE_ASPECT). 80x25 in an 8x16 face is a 26% horizontal squash on a 4:3
+ * face, as VGA text mode was on a 4:3 monitor. That stretch-to-fit means
+ * cols/rows are free to be any shape -- the mobile grid below is deliberately
+ * much narrower than 80 (see MOBILE_LITE), so each column gets far more of
+ * the phone's actual width per character, instead of 80 columns of the
+ * desktop layout all being crammed into a screen a fraction of a desktop
+ * monitor's width. Its 42x22 is near-square in pixels (336x352), which is
+ * why the lite face is 3:4 rather than 4:3: the stretch is then ~1.3
+ * vertical instead of a squash.
  */
 export const GRID = MOBILE_LITE
   ? { cols: 42, rows: 22, padX: 6, padY: 5 }

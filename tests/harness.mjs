@@ -67,9 +67,20 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
   // requestFullscreen resolves here; in a real browser it REJECTS when the
   // browser declines, which is why the caller catches (see toggleFullscreen).
   const fsCalls = []
+  // 2026-09-22 -- getElementById answers the screen-reader live region
+  // (a11y.js) and nothing else, so a test can read back what was announced.
+  // Anything else asked for is null, which is what a page without it gives
+  // and what every caller here already handles.
+  const announced = []
+  const liveRegion = {
+    id: 'announce',
+    set textContent(v) { this._t = v; if (v) announced.push(v) },
+    get textContent() { return this._t ?? '' },
+  }
   const doc = {
     hidden: false, visibilityState: 'visible', title: '', activeElement: null,
     addEventListener() {}, removeEventListener() {},
+    getElementById: (id) => (id === 'announce' ? liveRegion : null),
     fullscreenElement: null,
     exitFullscreen() { fsCalls.push('exit'); doc.fullscreenElement = null; return Promise.resolve() },
   }
@@ -640,6 +651,8 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
      *  weather option's note. Both empty without `weather`. */
     geoCalls,
     wxCalls,
+    /** Everything spoken to a screen reader, in order. See a11y.js. */
+    announced,
     /** location.replace() calls, in order -- `build` boots only. */
     reloads,
     /** Change the stamp build.json answers with (`build` boots only). */
