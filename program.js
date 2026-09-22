@@ -1760,6 +1760,33 @@ export default {
     // level, so nothing can set a volume that silently skips the sleep fade
     // or leaves the music ducked.
     const eff = Math.round(Math.min(100, Math.max(0, this.sleepScaledVolume() * this._duck)))
+    // 2026-09-22 (issue #67) -- setVolume(0) alone does NOT silence a track
+    // that is already playing, and the reason is unMute(). Captured from the
+    // real IFrame player while a track played (the harness fake now models
+    // this): setVolume(0) reads as muted, but unMute() REFUSES to leave the
+    // level at zero -- it restores the last non-zero volume, or a floor of 5.
+    // adjustVolume() called applyVolume() and then unMute(), so every press
+    // that reached 0 set the level to nothing and immediately re-opened it at
+    // 5, while the NEXT track -- loaded through a path with no unMute() after
+    // it -- started correctly silent. That asymmetry is exactly what the
+    // issue describes.
+    //
+    // The fix is therefore that this function owns the un-muting and no
+    // caller adds its own: removing adjustVolume()'s trailing unMute() is
+    // what silences the playing track, since setVolume(0) already reads as
+    // muted on the real player.
+    // Two things below are belt-and-braces, not the fix, and were checked by
+    // mutation: neither the mute() at zero nor the unMute()-before-setVolume
+    // order fails the suite on its own. mute() is kept for a player where 0
+    // is not silence (the 2026-08-25 note at powerUp reports exactly that on
+    // mobile Chrome), and the order because unMute() restores a remembered
+    // level whenever the current one is zero.
+    if (eff <= 0) {
+      this.player.setVolume(0)
+      this.player.mute()
+      return
+    }
+    if (!this.muted) this.player.unMute()
     this.player.setVolume(eff)
   },
   /** Pull the music down under a voice clip, then let it back up.
@@ -1830,10 +1857,10 @@ export default {
     // far down the slider was. Note it runs BEFORE the playDetent() below,
     // which is exactly why the detent had to come off the bus.
     setSpeakerLevel(this.muted, this.sleepScaledVolume())
-    if (this.ready && this.player) {
-      this.applyVolume()
-      if (!this.muted) this.player.unMute()
-    }
+    // applyVolume() does the un-muting itself now, in the order the player
+    // requires -- see its note. An unMute() here landed AFTER the level and
+    // was issue #67.
+    if (this.ready && this.player) this.applyVolume()
     // Round 9 -- same as toggleMute(): if this just un-muted a locked set,
     // the persistent status this row rests on needs to drop back to LOCKED
     // too, not just this VOL flash.

@@ -495,9 +495,35 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
                 : this.videoId ? YT.PlayerState.CUED
                   : YT.PlayerState.UNSTARTED
         )
-        this.mute = () => { this.muted = true }
-        this.unMute = () => { this.muted = false }
-        this.setVolume = (v) => { this.volume = v; playerCalls.push(`volume:${v}`) }
+        // Volume, modelled from a capture off the REAL IFrame player
+        // (2026-09-22, issue #67, against the deployed site while a track
+        // was playing). The naive flag-flipping fake this replaces could not
+        // express the bug at all, so a test written against it would have
+        // passed whatever the app did. What the real player does:
+        //   setVolume(50)            -> volume 50, isMuted false
+        //   setVolume(0)             -> volume 0,  isMuted TRUE  (0 is muted)
+        //   unMute()                 -> volume 5,  isMuted false (!)
+        //   setVolume(0); mute()     -> volume 0,  isMuted true
+        //   unMute()                 -> volume 70, isMuted false (pre-mute level)
+        // The load-bearing part is that unMute() REFUSES to leave the level
+        // at zero: it restores the last non-zero volume, or a small floor if
+        // there is none. So unMute() after setVolume(0) is audible sound, and
+        // any caller that wants a level must unMute FIRST and set after.
+        let remembered = 100 // last non-zero level, for unMute() to restore
+        const UNMUTE_FLOOR = 5
+        this.mute = () => { if (this.volume > 0) remembered = this.volume; this.muted = true }
+        this.unMute = () => {
+          this.muted = false
+          if (this.volume === 0) this.volume = remembered > 0 ? remembered : UNMUTE_FLOOR
+        }
+        this.setVolume = (v) => {
+          this.volume = v
+          if (v > 0) remembered = v
+          playerCalls.push(`volume:${v}`)
+        }
+        this.isMuted = () => this.muted || this.volume === 0
+        /** What a listener actually hears. The assertion issue #67 wants. */
+        this.audible = () => !this.isMuted() && this.volume > 0
         // The track running out. Real playback reaches this on its own; the
         // fake clock would have to be advanced through a whole song to, so
         // tests ask for it. `ended` guards a double-fire, same as the real
