@@ -80,7 +80,16 @@ function loadState() {
  *  is worth acting on whether or not the rest of the batch got through. */
 export function classify({ exitCode, summary, crashed }) {
   if (crashed || !summary) return 'error'
-  if (summary.flaggedCount > 0 || exitCode === 1) return 'findings'
+  // 2026-09-22 -- a flag has to be seen TWICE before it wakes anyone.
+  // check-roster now re-probes flagged rows first, so the second look is the
+  // next run rather than ~19 days later, and a transient answer clears
+  // itself before it is ever reported. The failure this fixes was real: one
+  // UNPLAYABLE on a NEON STASIS track notified daily for five days while the
+  // track itself had already come back, which is exactly the wallpaper this
+  // tool exists to avoid. `unconfirmed` is recorded and printed; it is not
+  // notified. See shouldNotify.
+  if ((summary.flaggedConfirmed ?? summary.flaggedCount) > 0) return 'findings'
+  if (summary.flaggedCount > 0 || exitCode === 1) return 'unconfirmed'
   if (summary.throttled) return 'incomplete'
   return 'clean'
 }
@@ -88,6 +97,9 @@ export function classify({ exitCode, summary, crashed }) {
 /** Does a person need to hear about this? Silence is the default. */
 export function shouldNotify(outcome, streak) {
   if (outcome === 'findings') return true
+  // Deliberately silent: the next run re-probes it first and will either
+  // confirm it (findings, notified) or clear it.
+  if (outcome === 'unconfirmed') return false
   if (outcome === 'incomplete') return (streak.incomplete ?? 0) >= THROTTLE_STREAK
   if (outcome === 'error') return (streak.error ?? 0) >= ERROR_STREAK
   return false
@@ -148,6 +160,11 @@ export function describe(outcome, summary, streak) {
       body: names.join('\n') + (more > 0 ? `\n+${more} more` : '') + `\n(${cov})`,
       urgency: 'critical',
     }
+  }
+  if (outcome === 'unconfirmed') return {
+    title: `SIGNAL roster: ${summary.flaggedCount} track(s) flagged once, re-checking next run`,
+    body: summary.flagged.slice(0, 3).map((f) => `${f.callsign}: ${f.flags.join(',')}`).join('\n') + `\n(${cov})`,
+    urgency: 'low',
   }
   if (outcome === 'incomplete') return {
     title: 'SIGNAL roster: the sweep is stuck',
@@ -227,17 +244,20 @@ async function main() {
   if (dryRun) {
     // Deliberately no network and no writes: this exercises the wiring and
     // the message, which is the half that is awkward to check any other way.
-    for (const outcome of ['clean', 'findings', 'incomplete', 'error']) {
+    for (const outcome of ['clean', 'findings', 'unconfirmed', 'incomplete', 'error']) {
       const fake = {
         // Deliberately round SYNTHETIC numbers -- this fixture used to
         // carry a real roster size (477) that went stale within a week of
         // being written, and a dry run that prints a plausible-but-old
         // count reads as a tool that is wrong rather than one rehearsing.
         total: 1000, checked: 900, throttled: outcome === 'incomplete',
-        flaggedCount: outcome === 'findings' ? 2 : 0,
+        flaggedCount: outcome === 'findings' ? 2 : outcome === 'unconfirmed' ? 1 : 0,
+        flaggedConfirmed: outcome === 'findings' ? 2 : 0,
         flagged: outcome === 'findings'
           ? [{ callsign: 'NINE INCH NAILS', flags: ['NARROW-LICENCE:3'] }, { callsign: 'CIPHER', flags: ['LOGIN_REQUIRED'] }]
-          : [],
+          : outcome === 'unconfirmed'
+            ? [{ callsign: 'NEON STASIS', flags: ['UNPLAYABLE'] }]
+            : [],
       }
       const streak = { incomplete: 3, error: 2 }
       const d = describe(outcome, fake, streak)

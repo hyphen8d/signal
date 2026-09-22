@@ -480,7 +480,14 @@ export const STATIONS = [
       realTrack('aBhrEv5Z7uc', 'Resonance', 'Home'),
       realTrack('D__gB1DzHIc', 'Before the Night', 'Home'),
       realTrack('mbMoY1dxbEY', 'We\'re Finally Landing', 'Home'),
-      realTrack('yRlBcUJZJHA', 'Half Moon', 'Home'),
+      // 2026-09-22 -- re-pointed from yRlBcUJZJHA, the same track on the same
+      // Topic channel, after that upload went "Video unavailable"
+      // (playabilityStatus UNPLAYABLE, confirmed over four probes). oEmbed
+      // still answered 200 with the title throughout, which is why
+      // verify-roster.js could never have caught it and check-roster.mjs did.
+      // The new upload is the same 261s master, 123 countries, embeddable --
+      // the takedown exposure the station note above predicts, landing.
+      realTrack('BpXVjRQFhLU', 'Half Moon', 'Home'),
       realTrack('X6PnNgYSa5s', 'Venus Aire', 'Windows 96'),
       realTrack('4GhvYoo4088', 'Hypnosis', 'Windows 96'),
       realTrack('7P4fatlUbvg', 'Transient Feeling', 'Windows 96'),

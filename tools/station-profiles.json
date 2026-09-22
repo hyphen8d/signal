@@ -228,6 +228,13 @@
      "reason": "Groceries Store's hangul-titled tracks (e.g. 지하철Morning Commute); Hantasi's Kingdom Mall (15-17 minute tracks under long scripture titles); MindSpring Memories (titles in Arabic and emoticons).",
      "youtubeId": null,
      "rejectedAt": "2026-09-13"
+    },
+    {
+     "artist": "Home",
+     "track": "Half Moon",
+     "reason": "DEAD UPLOAD, not a curation call: this id went playabilityStatus UNPLAYABLE (\"Video unavailable\") and stayed there across four spaced probes, while oEmbed kept answering 200 with the title -- so it read as healthy to verify-roster.js and would have played as dead air. Re-pointed to BpXVjRQFhLU, the same 261s master on the same Home - Topic channel (status OK, 123 countries, US, embeddable). Do not re-add this id; the track itself is still wanted.",
+     "youtubeId": "yRlBcUJZJHA",
+     "rejectedAt": "2026-09-22"
     }
    ]
   },
