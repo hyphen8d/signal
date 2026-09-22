@@ -2016,7 +2016,10 @@ are the ideas around it that fit a radio.
 - **The set degausses when it switches on.** The low, warbling "thunk" of a
   CRT's degauss coil now sits under the power-on sound. Like a real set's,
   it needs its thermistor to cool: switch off and straight back on within
-  30 seconds and it does not fire again. It is chassis, not speaker, so
+  30 seconds and it does not fire again. The cold-open flourish at page load
+  does not consume that window: audio is still locked there, so the coil is
+  scheduled when the first keypress unlocks it (the first browser check heard
+  nothing at all, and this was why). It is chassis, not speaker, so
   `[M]` does not silence it (same as the hum). Upstream's falling flyback
   whine at power-off was left out on purpose -- a falling power-down sweep
   was built and removed in the 68th pass for reading as a dying tube.

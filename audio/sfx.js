@@ -628,17 +628,42 @@ export function playPowerOnSound() {
 // One thing upstream doesn't model: the thermistor has to COOL before the
 // coil fires again, so a real set switched off and straight back on does
 // not degauss a second time. DEGAUSS_REARM_S is that, and it is also what
-// keeps rapid [P] presses from turning the thunk into wallpaper. Keyed on
-// the AudioContext clock, which does not run while the context is
-// suspended -- a set left in STANDBY in a background tab can come back
-// without the thunk, which is fine.
+// keeps rapid [P] presses from turning the thunk into wallpaper. See
+// degaussDue() for the rule, and for why a suspended context must not arm
+// it.
 export const DEGAUSS_REARM_S = 30
 let lastDegaussAt = -Infinity
+/** The re-arm rule, pure so it can be tested without an AudioContext.
+ *  `state` is AudioContext.state. A context that is not running cannot be
+ *  heard, and must not arm the lock-out: the cold-open flourish calls
+ *  playPowerOnSound() at page load, before any gesture has unlocked audio,
+ *  and counting that inaudible pass left the listener's OWN first [P] --
+ *  seconds later, inside the 30s window -- with no degauss at all. Found by
+ *  counting the oscillators a real power-on schedules (2026-09-22); the
+ *  first browser check heard nothing, and this was why. Same rule as
+ *  Cyberspace TERMINAL's audio.ts, which drops one-shots while suspended. */
+export function degaussDue(state, t, lastAt) {
+  if (state !== 'running') return false
+  return !(t - lastAt < DEGAUSS_REARM_S)
+}
 export function playDegauss(t0) {
   try {
     const ctx = audioCtx()
-    const t = t0 ?? ctx.currentTime
-    if (t - lastDegaussAt < DEGAUSS_REARM_S) return
+    if (ctx.state === 'running') return scheduleDegauss(ctx, t0 ?? ctx.currentTime)
+    // Not running yet. resume() settles ASYNCHRONOUSLY, so on the very
+    // keypress that unlocks audio the state is still 'suspended' here and a
+    // plain state check drops the one degauss the listener was waiting for
+    // (measured: the 78Hz coil was absent from the oscillators a real [P]
+    // scheduled). Schedule it when the resume lands instead. With no gesture
+    // behind it -- the cold-open flourish at page load -- Chromium never
+    // settles this promise, so nothing plays and nothing is armed, which is
+    // the behaviour that was wanted there anyway.
+    ctx.resume?.().then(() => scheduleDegauss(ctx, ctx.currentTime)).catch(() => {})
+  } catch (e) {}
+}
+function scheduleDegauss(ctx, t) {
+  try {
+    if (!degaussDue(ctx.state, t, lastDegaussAt)) return
     lastDegaussAt = t
     const o = ctx.createOscillator()
     o.type = 'sine'
