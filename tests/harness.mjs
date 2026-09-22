@@ -55,7 +55,7 @@ function codeFor(key) {
   return key
 }
 
-export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null, game = false, anyBand = true } = {}) {
+export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null, game = false, anyBand = true, build = false } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
   const store = new Map()
@@ -198,6 +198,19 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
       .filter(Boolean).join('&')
     globalThis.location = { search: `?${q}`, origin: 'https://example.test', pathname: '/signal/' }
   } else delete globalThis.location
+  // 2026-09-21 -- `build` serves build.json for tickBuild()'s deploy check,
+  // answering this boot's own stamp until h.deploy(stamp) changes it -- the
+  // shape of a deploy landing under a running tab. It also gives `location`
+  // a replace() that records instead of navigating, into h.reloads.
+  let servedBuild = tag
+  const reloads = []
+  if (build) {
+    globalThis.location = {
+      search: '', origin: 'https://example.test', pathname: '/signal/',
+      ...(globalThis.location || {}),
+      replace: (u) => { reloads.push(String(u)) },
+    }
+  }
   // 2026-08-27 -- `lyrics` answers the ONE request this app makes that a
   // test might want to succeed: the LRCLIB lookup behind the visualizer's
   // [L] view. Pass true for the canned track below, a raw LRC string for
@@ -242,6 +255,9 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
   const miss = () => Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve(null) })
   globalThis.fetch = (url) => {
     const u = String(url)
+    if (build && u.includes('build.json')) {
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ build: servedBuild }) })
+    }
     if (lyrics && u.includes('lrclib.net')) {
       const lrc = lrcFor(u)
       const isSearch = u.includes('/api/search')
@@ -598,6 +614,10 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
      *  weather option's note. Both empty without `weather`. */
     geoCalls,
     wxCalls,
+    /** location.replace() calls, in order -- `build` boots only. */
+    reloads,
+    /** Change the stamp build.json answers with (`build` boots only). */
+    deploy(stamp) { servedBuild = String(stamp) },
     /** Fullscreen API calls the program has made, in order. See the doc stub. */
     fsCalls,
     /** loadVideoById/cueVideoById/setVolume calls, in order (player boots only). */

@@ -2005,6 +2005,40 @@ seconds off its own length, and `[L]` would have drawn words over a piano.
   of the match rate, and `--check-instrumental` looks them up anyway to
   catch a sung track marked wrongly.
 
+### Borrowed from Cyberspace TERMINAL (2026-09-21)
+
+[Cyberspace TERMINAL](https://github.com/unremarkablegarden/cyberspace-terminal)
+is the virtual computer the vendored `src/` engine grew up into, by the same
+author and under the same MIT licence. A read of it (at `751dfd4`) found its
+renderer unchanged from ours, so nothing below touches the tube itself: these
+are the ideas around it that fit a radio.
+
+- **The set degausses when it switches on.** The low, warbling "thunk" of a
+  CRT's degauss coil now sits under the power-on sound. Like a real set's,
+  it needs its thermistor to cool: switch off and straight back on within
+  30 seconds and it does not fire again. The cold-open flourish at page load
+  does not consume that window: audio is still locked there, so the coil is
+  scheduled when the first keypress unlocks it (the first browser check heard
+  nothing at all, and this was why). It is chassis, not speaker, so
+  `[M]` does not silence it (same as the hum). Upstream's falling flyback
+  whine at power-off was left out on purpose -- a falling power-down sweep
+  was built and removed in the 68th pass for reading as a dying tube.
+- **FLAME is drawn in pixels.** Every cell carries its own 8x16 bitmap
+  (`putGlyph`), dithered, so the fire has ~336 pixel rows to taper over
+  instead of 21 character rows, and throws sparks on hits. The bass still
+  sets how tall it burns -- measured, loud now clearly out-burns quiet.
+- **Effects can ask for afterglow.** A visualizer effect may set a minimum
+  phosphor `decay`; FLOW FIELD is the first, trailing its streaks. It never
+  lowers a station's own persistence and is dropped on leaving the
+  visualizer.
+- **A tab left playing picks up a deploy at the next power-off.** The page
+  checks `build.json` every 30 minutes and, when a new build has landed,
+  reloads once the set is switched off -- into STANDBY, where it already
+  was. Never under a listener, never over the open guide.
+- **Installable.** A web manifest and home-screen icons: "Add to Home
+  Screen" gives a fullscreen radio with no browser chrome. No service
+  worker, on purpose: an offline radio is a dead one.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

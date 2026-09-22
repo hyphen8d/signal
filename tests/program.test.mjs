@@ -204,7 +204,12 @@ test('visualizer: every effect draws without throwing and exits back to the main
       if (seen.length && key === seen[0]) break
       seen.push(key)
       const canvas = h.rows().slice(1, 22).join('')
-      assert.ok(canvas.trim().length > 0, `${key}: effect canvas is not blank`)
+      // 2026-09-21 -- a putGlyph() cell holds a space in the character plane
+      // (FLAME draws in pixels now), so the text alone reads a lit canvas as
+      // blank. A cell carrying a bitmap counts as drawn.
+      const cols = h.term.cols
+      const pixels = h.term.gfx.slice(cols, 22 * cols).some(Boolean)
+      assert.ok(canvas.trim().length > 0 || pixels, `${key}: effect canvas is not blank`)
       assert.ok(h.row(22).includes(h.program.lockedStation.callsign), `${key}: footer names the station`)
       h.key('v') // cycle to the next effect
     }

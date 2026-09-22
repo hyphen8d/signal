@@ -38,6 +38,8 @@ export function audioCtx() {
 //                          hard-mute switch still clunks, and without it
 //                          un-muting would give no feedback at all.
 //   playPowerOn/DownSound() -- the power switch mechanism, same logic.
+//   playDegauss()       -- the degauss coil, part of the chassis like the
+//                          hum (2026-09-21).
 //   playDetent()        -- the volume knob's own notch (2026-08-27, with
 //                          issue #18). Same argument as the relay clunk,
 //                          and the fix below forces the question: once the
@@ -610,6 +612,83 @@ export function playPowerOnSound() {
     osc.connect(gain).connect(ctx.destination)
     osc.start(t + 0.03)
     osc.stop(t + 0.47)
+    playDegauss(t + 0.05)
+  } catch (e) {}
+}
+
+// Degauss (2026-09-21, adapted from Cyberspace TERMINAL's packages/crt
+// audio.ts, same author as src/, MIT). A real set fires its degauss coil at
+// switch-on: mains current through a coil around the tube, decaying as a
+// PTC thermistor heats up -- the low warbling "thunk" every CRT owner
+// knows. Modelled as upstream does: a sine gliding 78->50Hz whose GAIN is
+// modulated by a second sine gliding 38->19Hz, which is the beating that
+// makes it read as a coil rather than a bass note. Mixed a little under
+// upstream's 0.26 because it sits on top of our power-on sweep, not alone.
+//
+// One thing upstream doesn't model: the thermistor has to COOL before the
+// coil fires again, so a real set switched off and straight back on does
+// not degauss a second time. DEGAUSS_REARM_S is that, and it is also what
+// keeps rapid [P] presses from turning the thunk into wallpaper. See
+// degaussDue() for the rule, and for why a suspended context must not arm
+// it.
+export const DEGAUSS_REARM_S = 30
+let lastDegaussAt = -Infinity
+/** The re-arm rule, pure so it can be tested without an AudioContext.
+ *  `state` is AudioContext.state. A context that is not running cannot be
+ *  heard, and must not arm the lock-out: the cold-open flourish calls
+ *  playPowerOnSound() at page load, before any gesture has unlocked audio,
+ *  and counting that inaudible pass left the listener's OWN first [P] --
+ *  seconds later, inside the 30s window -- with no degauss at all. Found by
+ *  counting the oscillators a real power-on schedules (2026-09-22); the
+ *  first browser check heard nothing, and this was why. Same rule as
+ *  Cyberspace TERMINAL's audio.ts, which drops one-shots while suspended. */
+export function degaussDue(state, t, lastAt) {
+  if (state !== 'running') return false
+  return !(t - lastAt < DEGAUSS_REARM_S)
+}
+export function playDegauss(t0) {
+  try {
+    const ctx = audioCtx()
+    if (ctx.state === 'running') return scheduleDegauss(ctx, t0 ?? ctx.currentTime)
+    // Not running yet. resume() settles ASYNCHRONOUSLY, so on the very
+    // keypress that unlocks audio the state is still 'suspended' here and a
+    // plain state check drops the one degauss the listener was waiting for
+    // (measured: the 78Hz coil was absent from the oscillators a real [P]
+    // scheduled). Schedule it when the resume lands instead. With no gesture
+    // behind it -- the cold-open flourish at page load -- Chromium never
+    // settles this promise, so nothing plays and nothing is armed, which is
+    // the behaviour that was wanted there anyway.
+    ctx.resume?.().then(() => scheduleDegauss(ctx, ctx.currentTime)).catch(() => {})
+  } catch (e) {}
+}
+function scheduleDegauss(ctx, t) {
+  try {
+    if (!degaussDue(ctx.state, t, lastDegaussAt)) return
+    lastDegaussAt = t
+    const o = ctx.createOscillator()
+    o.type = 'sine'
+    o.frequency.setValueAtTime(78, t)
+    o.frequency.exponentialRampToValueAtTime(50, t + 1.0)
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(0.2, t + 0.03)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1)
+    const beat = ctx.createOscillator()
+    beat.type = 'sine'
+    beat.frequency.setValueAtTime(38, t)
+    beat.frequency.exponentialRampToValueAtTime(19, t + 1.0)
+    // The beat modulates its own tremolo stage AHEAD of the envelope, not
+    // the envelope's gain directly as upstream does: summed onto g.gain it
+    // keeps a +/-0.14 tone alive after the envelope has decayed to nothing,
+    // cut off with a click at stop(). Here the envelope scales it to zero.
+    const trem = ctx.createGain()
+    trem.gain.value = 1
+    const beatG = ctx.createGain()
+    beatG.gain.value = 0.7
+    beat.connect(beatG).connect(trem.gain)
+    o.connect(trem).connect(g).connect(ctx.destination)
+    o.start(t); beat.start(t)
+    o.stop(t + 1.15); beat.stop(t + 1.15)
   } catch (e) {}
 }
 

@@ -541,3 +541,17 @@ test('an answer found with no duration is refined once the real one is known', a
     assert.equal(calls, settledCalls, 'a refined answer was fetched twice')
   } finally { globalThis.fetch = realFetch }
 })
+
+// The degauss re-arm rule (2026-09-22). The bug this exists for was not the
+// 30s window but the state check: the cold-open flourish calls
+// playPowerOnSound() at page load with the AudioContext still suspended, and
+// counting that pass left the listener's own first [P] silent. Verified in a
+// real browser by counting scheduled oscillators -- the 78Hz coil was absent
+// before this, present after.
+test('degaussDue: a suspended context neither plays nor arms the re-arm window', () => {
+  const { degaussDue, DEGAUSS_REARM_S } = sfx
+  assert.equal(degaussDue('suspended', 0.05, -Infinity), false, 'nothing plays before the first gesture')
+  assert.equal(degaussDue('running', 4, -Infinity), true, 'the first audible power-on degausses')
+  assert.equal(degaussDue('running', 4 + DEGAUSS_REARM_S - 0.1, 4), false, 'off and straight back on: the thermistor is still warm')
+  assert.equal(degaussDue('running', 4 + DEGAUSS_REARM_S + 0.1, 4), true, 'cooled, so it fires again')
+})

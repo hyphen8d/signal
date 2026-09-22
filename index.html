@@ -33,6 +33,26 @@
      nine elements, it scales, and it keeps the phosphor green the tube boots
      in (config.js PHOSPHORS.matrix). No .ico fallback -- every browser that
      can run WebGL2 can read this. -->
+<!-- 2026-09-21 -- installable: "Add to Home Screen" gives a fullscreen radio
+     with no browser chrome, which is what a set left playing on a phone or a
+     spare tablet wants to be. Adapted from Cyberspace TERMINAL, which ships as
+     a PWA; unlike it there is NO service worker and no offline mode on
+     purpose -- the music is YouTube's iframe, so an offline radio is a dead
+     one, and a worker caching app files would fight main.js's build-stamp
+     cache-busting. manifest.json rather than .webmanifest because both static
+     allowlists (tools/admin-server.mjs servable(), tools/dev-server.py) already
+     serve top-level .json and .png, so this adds no rule to either.
+     The icons are raster because iOS takes nothing else; regenerate from
+     icon.svg with:
+       rsvg-convert -w 192 -h 192 icon.svg -o icon-192.png
+       rsvg-convert -w 512 -h 512 icon.svg -o icon-512.png
+       rsvg-convert -w 180 -h 180 icon.svg -o apple-touch-icon.png -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="SIGNAL">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23000'/%3E%3Cg fill='none' stroke='%232eff5c' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M9.5 18.25a7.5 7.5 0 0 1 13 0'/%3E%3Cpath d='M4.74 15.5a13 13 0 0 1 22.52 0'/%3E%3C/g%3E%3Ccircle cx='16' cy='22' r='2.6' fill='%232eff5c'/%3E%3C/svg%3E">
 <style>
   html, body {
