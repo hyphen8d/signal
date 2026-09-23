@@ -25,3 +25,7 @@ audio/.pad-*.mp3
 # repo -- this is per-machine timer state, and committing it would mean every
 # machine fighting over the file for no one's benefit.
 tools/roster-watch-state.json
+
+# tools/itch-zip.mjs output: the itch.io package and its cover art.
+# Rebuilt from the tree on demand, so it is never committed.
+dist/
