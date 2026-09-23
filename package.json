@@ -8,6 +8,7 @@
     "audition": "node tools/audition.js",
     "deadfeedback": "node tools/dead-feedback.mjs",
     "health": "node tools/check-roster.mjs",
+    "itch": "node tools/itch-zip.mjs",
     "lint": "node tools/lint-roster.js",
     "lyrics": "node tools/lyrics-audit.mjs",
     "record": "node tools/record-demo.mjs",

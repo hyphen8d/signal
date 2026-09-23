@@ -44,6 +44,7 @@ node tools/audition.js --station=<id> # npm run audition — vet candidate track
 node tools/voice-render.mjs         # npm run voice — render a voice clip (network, costs credits)
 node tools/shoot.mjs                # npm run shoot — regenerate screenshots/ (headless Chrome + ImageMagick)
 node tools/record-demo.mjs          # npm run record — re-record screenshots/demo.{mp4,gif} (headless Chrome + ffmpeg)
+node tools/itch-zip.mjs             # npm run itch — package dist/signal-itch.zip for itch.io
 node tools/dead-feedback.mjs        # npm run deadfeedback — input-feedback sweep (headless, ~1min)
 ```
 
@@ -1040,6 +1041,17 @@ flowchart LR
   — the image most people see first, and the only one nobody looks at
   locally — still showing the old header. A shot no tool owns is a shot
   that rots.
+- **`tools/itch-zip.mjs` packages the app for itch.io** (2026-09-22).
+  itch serves an uploaded zip from its own origin and cannot point a Play
+  button at a site hosted elsewhere, so **the itch listing is a COPY that
+  does not follow a deploy** — re-run `npm run itch` and re-upload after one,
+  or it silently becomes an old build. The tool fails loudly on a root `.js`
+  it does not package (a 404 that would only ever show up on someone else's
+  site) and strips the analytics beacon, which measures the Pages site and
+  has no business firing from itch. Verified once by unzipping, serving it
+  bare and loading it inside a sandboxed iframe with itch's own attributes:
+  it mounts, stores state, powers on and reaches PLAYING through the nested
+  YouTube iframe.
 - **The demo recording is `tools/record-demo.mjs`** (2026-09-22), the moving
   counterpart to `shoot.mjs`. Headless renders this app at 5-8fps (measured),
   so it slows the PAGE's clock — `Date.now`, `performance.now`, the rAF
