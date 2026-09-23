@@ -12,6 +12,13 @@ the WebGL2 CRT text-grid engine open-sourced from [cyberspace.online](https://cy
 hosted by Cyberspace.** It just uses their engine (MIT licensed) to render a
 different program on top of it.
 
+![SIGNAL: the dial locked on a station, then the visualizer and two phosphor
+tints](./screenshots/demo.gif)
+
+*Eight seconds of it running. [The full 28-second recording](./screenshots/demo.mp4)
+takes in the boot, a preset sweep, the guide and the visualizer — silent, since
+it is captured headlessly (`npm run record`).*
+
 ![SIGNAL, locked onto COLD WAVE](./screenshots/hero.jpg)
 
 ## Try it

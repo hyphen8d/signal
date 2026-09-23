@@ -2100,6 +2100,20 @@ things were wrong, and a third turned up while looking.
   otherwise re-announce the station and track every time. Checked against
   Chrome's own accessibility tree, not just the test harness.
 
+### There is a demo recording now (2026-09-22)
+
+Every asset was a still, and stills undersell a thing whose appeal is the
+dial sweeping, the lock, the phosphor trailing and an effect breathing with
+the music. `npm run record` (`tools/record-demo.mjs`) makes
+`screenshots/demo.mp4` and the README's `demo.gif`.
+
+Headless renders this app at 5-8fps -- measured, and there is no GPU path --
+so recording in real time would film a 60fps toy at 6fps. Instead the tool
+slows the page's own clock (`Date.now`, `performance.now`, the rAF timestamp,
+every timer delay) and collects frames over `Page.startScreencast`, which
+gives ~35 frames per second of app time to assemble at 35fps. It cannot
+capture audio, the live tap or an honest progress bar; its header says so.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

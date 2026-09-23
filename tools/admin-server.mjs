@@ -284,6 +284,10 @@ const MIME = {
   '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png',
   '.jpg': 'image/jpeg', '.ico': 'image/x-icon', '.bdf': 'text/plain; charset=utf-8',
+  // 2026-09-22 -- the demo recording (tools/record-demo.mjs). Without these
+  // the allowlist serves them as application/octet-stream and a browser
+  // downloads the file instead of playing it.
+  '.gif': 'image/gif', '.mp4': 'video/mp4', '.webm': 'video/webm',
   '.md': 'text/markdown; charset=utf-8', '.woff2': 'font/woff2',
   // The app fetches its liner/ident clips as ArrayBuffers, so these decoded
   // fine as application/octet-stream -- but serving audio without an audio

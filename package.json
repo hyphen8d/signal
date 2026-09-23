@@ -4,18 +4,19 @@
   "type": "module",
   "description": "No dependencies and no build step -- this file only exists so Node treats the repo's .js files (stations.js, tools/, tests/) as ES modules.",
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
     "admin": "node tools/admin-server.mjs",
+    "audition": "node tools/audition.js",
     "deadfeedback": "node tools/dead-feedback.mjs",
+    "health": "node tools/check-roster.mjs",
+    "lint": "node tools/lint-roster.js",
+    "lyrics": "node tools/lyrics-audit.mjs",
+    "record": "node tools/record-demo.mjs",
+    "shoot": "node tools/shoot.mjs",
     "stamp": "node tools/stamp.js",
     "stations": "node tools/stations-to-md.js",
-    "lint": "node tools/lint-roster.js",
+    "test": "node --test tests/*.test.mjs",
     "verify": "node tools/verify-roster.js",
-    "health": "node tools/check-roster.mjs",
-    "lyrics": "node tools/lyrics-audit.mjs",
-    "watch": "node tools/roster-watch.mjs",
-    "audition": "node tools/audition.js",
     "voice": "node tools/voice-render.mjs",
-    "shoot": "node tools/shoot.mjs"
+    "watch": "node tools/roster-watch.mjs"
   }
 }
