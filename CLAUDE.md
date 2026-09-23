@@ -43,6 +43,7 @@ node tools/stamp.js                 # npm run stamp — bump build.json; RUN BEF
 node tools/audition.js --station=<id> # npm run audition — vet candidate tracks (network)
 node tools/voice-render.mjs         # npm run voice — render a voice clip (network, costs credits)
 node tools/shoot.mjs                # npm run shoot — regenerate screenshots/ (headless Chrome + ImageMagick)
+node tools/record-demo.mjs          # npm run record — re-record screenshots/demo.{mp4,gif} (headless Chrome + ffmpeg)
 node tools/dead-feedback.mjs        # npm run deadfeedback — input-feedback sweep (headless, ~1min)
 ```
 
@@ -1039,6 +1040,17 @@ flowchart LR
   — the image most people see first, and the only one nobody looks at
   locally — still showing the old header. A shot no tool owns is a shot
   that rots.
+- **The demo recording is `tools/record-demo.mjs`** (2026-09-22), the moving
+  counterpart to `shoot.mjs`. Headless renders this app at 5-8fps (measured),
+  so it slows the PAGE's clock — `Date.now`, `performance.now`, the rAF
+  timestamp, every timer delay — and collects frames over
+  `Page.startScreencast`, giving ~35 frames per second of app time to
+  assemble at 35fps. Two traps it already hit: `captureScreenshot` in a loop
+  manages 4.4 frames per app-second whatever the clock does, and a
+  choreography built on fixed sleeps recorded a set that never locked (the
+  dial wandered, `[V]` was refused for want of a lock). Every step waits on
+  the app's own state instead. It cannot capture audio, the live tap or an
+  honest progress bar — see its header.
 - Verify feel changes in a browser against the dev server as well as in the
   suite — timing, sound and texture are most of what matters here.
 - **Check the frame rate before believing a live browser check.** A Chrome
