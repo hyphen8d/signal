@@ -724,7 +724,7 @@ Two caveats that keep the per-station numbers honest. First, **11 of the 81
 matches were never duration-gated**: the tracks added 2026-09-13 have no length
 in `tools/roster-health.json` until the health sweep reaches them, so
 MIRRORBALL's 8/8, two of RISE UP's and AFTER HOURS' one were accepted against
-nothing. Read MIRRORBALL as an upper bound until those ids are probed. Second,
+nothing. (Probed since; MIRRORBALL held -- see the 2026-09-27 re-measure.) Second,
 **that AFTER HOURS match is a false positive the gate cannot catch.** Bill
 Evans' solo-piano "Young and Foolish" (`UOfwwwQUHjg`, 356s) resolves via
 `/api/search` to a synced entry credited to Bill Evans (album "Lucky Young Jazz
@@ -734,6 +734,23 @@ the right *length*, not that anyone sings on it, and a jazz standard's sung
 lyric filed against an instrumentalist is exactly the case where those differ.
 Nothing in `voice.js` is wrong; the fix, if one is wanted, is an explicit
 instrumental opt-out per track or per station, not a tighter gate.
+
+**Re-measured 2026-09-27, with every match duration-gated: 79/96 = 82%.**
+The denominator changed, so do not line this up against 83% above by eye:
+the tool now leaves the 48 sampled tracks the roster marks instrumental out
+of the rate (the opt-out below), where 2026-09-14 excluded whole stations by
+hand. The health sweep has since given all 747 tracks a length, and
+MIRRORBALL **held at 8/8** against real durations (5 of the 8 via the search
+fallback), so the upper-bound caveat is retired. Two things this run taught.
+First, **run it against a current `roster-health.json`**: the first attempt
+read a copy 130 records short, reported "8 track(s) had no known duration",
+and scored 74-76 -- a stale health file quietly turns the gate off for
+whatever it is missing. Second, two runs on identical inputs differed by two
+matches (74 vs 76), so LRCLIB answers vary a little between runs; treat a
+move of a couple of tracks as noise. Four matches were refused by the gate
+(COLD WAVE's *Take On Me*, CITY LIGHTS' *Stay With Me* and *Kimi wa Tennen
+Shoku*, CIRCUIT CRUSH's *Never Sleep Again*), the last 147s off -- a
+different recording, not padding.
 
 **That opt-out was built 2026-09-14.** A station can say `instrumental: true`,
 with `vocalTracks: [ids]` for the sung exceptions; a vocal station can list
