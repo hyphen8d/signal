@@ -1351,8 +1351,9 @@ export default {
             if (!this._bootToGame || this.mode !== 'locked' || !this.lockedStation) return
             this._bootToGame = false
             // Straight to enterVisualizer(), around the LINE INPUT consent
-            // card the [V] key raises. Same exemption frame()'s idle
-            // auto-entry already takes, and for a stronger reason: that card
+            // card the [V] key raises. The same exemption frame()'s idle
+            // auto-entry took until it was retired 2026-08-30, and for a
+            // stronger reason: that card
             // asks to share audio so the EFFECTS can follow the music, and
             // the game does not read the tap at all. Asking here would put a
             // microphone prompt in front of someone who came for a shooter.
@@ -3497,8 +3498,11 @@ export default {
           // way. This is the moment the ask finally makes sense: they just
           // asked for the visualizer, so "this is what makes it follow the
           // real music" answers a question they're already holding.
-          // Note the idle auto-entry in frame() deliberately does NOT come
-          // through here -- no gesture behind it, so no card and no prompt.
+          // Note the ?game=1 arming path deliberately does NOT come through
+          // here -- it calls enterVisualizer() directly, since the game never
+          // reads the tap, so there is no card and no prompt. (The idle
+          // auto-entry in frame() skipped it on the same grounds until it
+          // was retired 2026-08-30.)
           if (!this.tapConsent) {
             if (this.openTapConsent(s, () => this.enterVisualizer(s))) break
           } else if (this.tapConsent === 'yes' && !this._tapAutoAsked) {

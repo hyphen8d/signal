@@ -464,7 +464,7 @@
       "stationId": "distortion-field"
     },
     "aGSKrC7dGcY": {
-      "at": "2026-08-31T07:24:58.643Z",
+      "at": "2026-09-19T07:34:57.001Z",
       "flags": [],
       "status": "OK",
       "countries": 244,
@@ -475,7 +475,7 @@
       "stationId": "cold-wave"
     },
     "9GMjH1nR0ds": {
-      "at": "2026-08-31T07:24:58.493Z",
+      "at": "2026-09-19T07:34:56.936Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -486,7 +486,7 @@
       "stationId": "cold-wave"
     },
     "aGCdLKXNF3w": {
-      "at": "2026-08-31T07:24:59.391Z",
+      "at": "2026-09-19T07:34:57.787Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -497,7 +497,7 @@
       "stationId": "cold-wave"
     },
     "1ASpBpT8bRQ": {
-      "at": "2026-08-31T07:24:59.040Z",
+      "at": "2026-09-19T07:34:57.263Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -508,7 +508,7 @@
       "stationId": "cold-wave"
     },
     "uPudE8nDog0": {
-      "at": "2026-08-31T07:24:59.234Z",
+      "at": "2026-09-19T07:34:57.660Z",
       "flags": [],
       "status": "OK",
       "countries": 229,
@@ -519,7 +519,7 @@
       "stationId": "cold-wave"
     },
     "M1oqX84UKOE": {
-      "at": "2026-08-31T07:24:59.698Z",
+      "at": "2026-09-19T07:34:58.018Z",
       "flags": [],
       "status": "OK",
       "countries": 121,
@@ -530,7 +530,7 @@
       "stationId": "cold-wave"
     },
     "sj1ajOdKgKo": {
-      "at": "2026-08-31T07:24:59.469Z",
+      "at": "2026-09-19T07:34:57.916Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -541,8 +541,9 @@
       "stationId": "cold-wave"
     },
     "6KR52lEWLEM": {
-      "at": "2026-09-04T07:55:58.491Z",
+      "at": "2026-09-23T08:13:18.063Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -552,8 +553,9 @@
       "stationId": "cold-wave"
     },
     "XZVpR3Pk-r8": {
-      "at": "2026-09-04T07:55:58.158Z",
+      "at": "2026-09-23T08:13:17.468Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 246,
       "embeddable": true,
@@ -563,8 +565,9 @@
       "stationId": "cold-wave"
     },
     "iIpfWORQWhU": {
-      "at": "2026-09-04T07:55:58.412Z",
+      "at": "2026-09-23T08:13:17.627Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 248,
       "embeddable": true,
@@ -574,8 +577,9 @@
       "stationId": "cold-wave"
     },
     "p3j2NYZ8FKs": {
-      "at": "2026-09-04T07:55:58.396Z",
+      "at": "2026-09-23T08:13:17.354Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -585,8 +589,9 @@
       "stationId": "cold-wave"
     },
     "djV11Xbc914": {
-      "at": "2026-09-04T07:55:58.807Z",
+      "at": "2026-09-23T08:13:18.037Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -596,8 +601,9 @@
       "stationId": "cold-wave"
     },
     "tkOr12AQpnU": {
-      "at": "2026-09-04T07:55:58.893Z",
+      "at": "2026-09-23T08:13:18.242Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -607,8 +613,9 @@
       "stationId": "cold-wave"
     },
     "nTizYn3-QN0": {
-      "at": "2026-09-04T07:55:59.141Z",
+      "at": "2026-09-23T08:13:18.362Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -618,8 +625,9 @@
       "stationId": "cold-wave"
     },
     "6Uxc9eFcZyM": {
-      "at": "2026-09-04T07:55:59.464Z",
+      "at": "2026-09-23T08:13:19.049Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -629,8 +637,9 @@
       "stationId": "cold-wave"
     },
     "Ye7FKc1JQe4": {
-      "at": "2026-09-04T07:55:59.234Z",
+      "at": "2026-09-23T08:13:18.457Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -640,8 +649,9 @@
       "stationId": "cold-wave"
     },
     "EPmTGFg06zA": {
-      "at": "2026-09-04T07:55:59.144Z",
+      "at": "2026-09-23T08:13:18.233Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 229,
       "embeddable": true,
@@ -651,8 +661,9 @@
       "stationId": "cold-wave"
     },
     "PAqk72wm4As": {
-      "at": "2026-09-04T07:55:59.695Z",
+      "at": "2026-09-23T08:13:18.875Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -662,8 +673,9 @@
       "stationId": "cold-wave"
     },
     "LGD9i718kBU": {
-      "at": "2026-09-04T07:55:59.772Z",
+      "at": "2026-09-23T08:13:19.111Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -673,8 +685,9 @@
       "stationId": "cold-wave"
     },
     "tl6u2NASUzU": {
-      "at": "2026-09-04T07:56:00.154Z",
+      "at": "2026-09-23T08:13:19.334Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -684,8 +697,9 @@
       "stationId": "cold-wave"
     },
     "LWz0JC7afNQ": {
-      "at": "2026-09-04T07:55:59.866Z",
+      "at": "2026-09-23T08:13:19.040Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -695,8 +709,9 @@
       "stationId": "cold-wave"
     },
     "cFH5JgyZK1I": {
-      "at": "2026-09-04T07:56:00.525Z",
+      "at": "2026-09-23T08:13:19.969Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -706,8 +721,9 @@
       "stationId": "cold-wave"
     },
     "wO0A0XcWy88": {
-      "at": "2026-09-04T07:56:00.051Z",
+      "at": "2026-09-23T08:13:19.137Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -717,8 +733,9 @@
       "stationId": "cold-wave"
     },
     "_6FBfAQ-NDE": {
-      "at": "2026-09-04T07:56:00.216Z",
+      "at": "2026-09-23T08:13:19.712Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 248,
       "embeddable": true,
@@ -728,8 +745,9 @@
       "stationId": "cold-wave"
     },
     "-OO9LloDSJo": {
-      "at": "2026-09-04T07:56:00.828Z",
+      "at": "2026-09-23T08:13:19.942Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 247,
       "embeddable": true,
@@ -739,8 +757,9 @@
       "stationId": "cold-wave"
     },
     "Zi86ZiOlIVo": {
-      "at": "2026-09-05T08:11:54.147Z",
+      "at": "2026-09-23T08:13:20.024Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -750,8 +769,9 @@
       "stationId": "cold-wave"
     },
     "LuN6gs0AJls": {
-      "at": "2026-09-04T07:56:00.498Z",
+      "at": "2026-09-23T08:13:19.859Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -761,8 +781,9 @@
       "stationId": "cold-wave"
     },
     "xJeWySiuq1I": {
-      "at": "2026-09-04T07:56:01.026Z",
+      "at": "2026-09-23T08:13:19.916Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -772,8 +793,9 @@
       "stationId": "cold-wave"
     },
     "80TfG7C9azA": {
-      "at": "2026-09-05T08:11:54.380Z",
+      "at": "2026-09-23T08:13:20.775Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 247,
       "embeddable": true,
@@ -783,8 +805,9 @@
       "stationId": "cold-wave"
     },
     "9wyzRycjNH4": {
-      "at": "2026-09-05T08:11:54.266Z",
+      "at": "2026-09-23T08:13:20.680Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -794,8 +817,9 @@
       "stationId": "cold-wave"
     },
     "V83JR2IoI8k": {
-      "at": "2026-09-05T08:11:54.256Z",
+      "at": "2026-09-23T08:13:20.982Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -805,8 +829,9 @@
       "stationId": "cold-wave"
     },
     "lVrELhxOFnM": {
-      "at": "2026-09-05T08:11:54.190Z",
+      "at": "2026-09-23T08:13:20.590Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -816,8 +841,9 @@
       "stationId": "cold-wave"
     },
     "mScWSckEzew": {
-      "at": "2026-09-05T08:11:54.237Z",
+      "at": "2026-09-23T08:13:20.572Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -827,8 +853,9 @@
       "stationId": "cold-wave"
     },
     "QW_m8lhZbQQ": {
-      "at": "2026-09-05T08:11:55.209Z",
+      "at": "2026-09-23T08:13:21.483Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -838,8 +865,9 @@
       "stationId": "cold-wave"
     },
     "8o2XHjvaEWE": {
-      "at": "2026-09-05T08:11:55.175Z",
+      "at": "2026-09-23T08:13:21.542Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -849,8 +877,9 @@
       "stationId": "cold-wave"
     },
     "IasCZL072fQ": {
-      "at": "2026-09-05T08:11:55.095Z",
+      "at": "2026-09-23T08:13:20.728Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 229,
       "embeddable": true,
@@ -860,8 +889,9 @@
       "stationId": "cold-wave"
     },
     "rVp454wjqls": {
-      "at": "2026-09-09T08:09:07.565Z",
+      "at": "2026-09-27T08:14:57.452Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -871,8 +901,9 @@
       "stationId": "midnight-neon"
     },
     "0CKkRtkzw4g": {
-      "at": "2026-09-09T08:09:08.234Z",
+      "at": "2026-09-27T08:14:57.621Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -882,8 +913,9 @@
       "stationId": "midnight-neon"
     },
     "FhbxFnNm-S8": {
-      "at": "2026-09-09T08:09:07.633Z",
+      "at": "2026-09-27T08:14:57.504Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 121,
       "embeddable": true,
@@ -893,8 +925,9 @@
       "stationId": "midnight-neon"
     },
     "OvW5y3lZ7rc": {
-      "at": "2026-09-09T08:09:08.384Z",
+      "at": "2026-09-27T08:14:58.356Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 248,
       "embeddable": true,
@@ -904,8 +937,9 @@
       "stationId": "midnight-neon"
     },
     "JalJnTs3mzk": {
-      "at": "2026-09-09T08:09:08.345Z",
+      "at": "2026-09-27T08:14:58.189Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -937,8 +971,9 @@
       "stationId": "midnight-neon"
     },
     "SYTqNepDhl8": {
-      "at": "2026-09-09T08:09:08.355Z",
+      "at": "2026-09-27T08:14:58.110Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -948,8 +983,9 @@
       "stationId": "midnight-neon"
     },
     "i3eo3ndoCMI": {
-      "at": "2026-09-09T08:09:08.471Z",
+      "at": "2026-09-27T08:14:58.611Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1179,8 +1215,9 @@
       "stationId": "midnight-neon"
     },
     "5zTkTlj2h9E": {
-      "at": "2026-09-06T07:03:58.963Z",
+      "at": "2026-09-25T08:12:17.978Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1190,8 +1227,9 @@
       "stationId": "city-lights"
     },
     "8ageCZxJ-WQ": {
-      "at": "2026-09-06T07:03:58.934Z",
+      "at": "2026-09-25T08:12:18.206Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1201,14 +1239,15 @@
       "stationId": "city-lights"
     },
     "tWqZASIxlqs": {
-      "at": "2026-09-06T07:03:58.764Z",
+      "at": "2026-09-25T08:12:17.415Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
       "seconds": 254,
       "title": "Sparkle - Tatsuro yamashita ",
-      "channel": "TIPO",
+      "channel": "TIPO -山下達郎-",
       "stationId": "city-lights"
     },
     "p2KlbcmhYuM": {
@@ -1223,8 +1262,9 @@
       "stationId": "midnight-neon"
     },
     "4X7ZvpwBiKA": {
-      "at": "2026-09-06T07:03:59.596Z",
+      "at": "2026-09-25T08:12:18.196Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1234,8 +1274,9 @@
       "stationId": "city-lights"
     },
     "vUQjdwRno5g": {
-      "at": "2026-09-06T07:03:59.477Z",
+      "at": "2026-09-25T08:12:18.056Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 248,
       "embeddable": true,
@@ -1245,8 +1286,9 @@
       "stationId": "city-lights"
     },
     "k-BrT2SQ7SI": {
-      "at": "2026-09-06T07:03:59.797Z",
+      "at": "2026-09-25T08:12:18.736Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 44,
       "embeddable": true,
@@ -1256,8 +1298,9 @@
       "stationId": "city-lights"
     },
     "XE45nsroFTE": {
-      "at": "2026-09-06T07:03:59.892Z",
+      "at": "2026-09-25T08:12:18.749Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1267,8 +1310,9 @@
       "stationId": "city-lights"
     },
     "k7VkzjSe5Ng": {
-      "at": "2026-09-06T07:03:59.630Z",
+      "at": "2026-09-25T08:12:18.187Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 248,
       "embeddable": true,
@@ -1278,8 +1322,9 @@
       "stationId": "city-lights"
     },
     "XJWqHmY-g9U": {
-      "at": "2026-09-06T07:03:59.730Z",
+      "at": "2026-09-25T08:12:18.227Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1289,8 +1334,9 @@
       "stationId": "city-lights"
     },
     "T_lC2O1oIew": {
-      "at": "2026-09-06T07:04:00.431Z",
+      "at": "2026-09-25T08:12:19.297Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1300,8 +1346,9 @@
       "stationId": "city-lights"
     },
     "B6O09Jx4ONM": {
-      "at": "2026-09-06T07:04:00.345Z",
+      "at": "2026-09-25T08:12:18.808Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1311,8 +1358,9 @@
       "stationId": "city-lights"
     },
     "1KP9dLRaKWg": {
-      "at": "2026-09-06T07:04:00.567Z",
+      "at": "2026-09-25T08:12:19.093Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1322,8 +1370,9 @@
       "stationId": "city-lights"
     },
     "4wVN8r14mT0": {
-      "at": "2026-09-07T08:00:54.867Z",
+      "at": "2026-09-25T08:12:19.802Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1333,8 +1382,9 @@
       "stationId": "city-lights"
     },
     "WCaOX3PuKKo": {
-      "at": "2026-09-07T08:00:54.808Z",
+      "at": "2026-09-25T08:12:19.450Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1344,8 +1394,9 @@
       "stationId": "city-lights"
     },
     "ZhmiKjBEtbg": {
-      "at": "2026-09-07T08:00:54.643Z",
+      "at": "2026-09-25T08:12:18.881Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1355,8 +1406,9 @@
       "stationId": "city-lights"
     },
     "MH-P4mXvDPE": {
-      "at": "2026-09-07T08:00:54.832Z",
+      "at": "2026-09-25T08:12:19.756Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1366,8 +1418,9 @@
       "stationId": "city-lights"
     },
     "-YSwJh-4j1s": {
-      "at": "2026-09-07T08:00:54.818Z",
+      "at": "2026-09-25T08:12:19.563Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1377,8 +1430,9 @@
       "stationId": "city-lights"
     },
     "Z056hRt23Fo": {
-      "at": "2026-09-07T08:00:55.665Z",
+      "at": "2026-09-25T08:12:20.215Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1388,8 +1442,9 @@
       "stationId": "city-lights"
     },
     "NxfiM2SzqYo": {
-      "at": "2026-09-07T08:00:54.801Z",
+      "at": "2026-09-25T08:12:19.558Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1399,8 +1454,9 @@
       "stationId": "city-lights"
     },
     "QLvQFLtQyf0": {
-      "at": "2026-09-07T08:00:55.718Z",
+      "at": "2026-09-25T08:12:20.476Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1410,8 +1466,9 @@
       "stationId": "city-lights"
     },
     "pTV0dOFOtHg": {
-      "at": "2026-09-07T08:00:55.648Z",
+      "at": "2026-09-25T08:12:20.038Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 248,
       "embeddable": true,
@@ -1421,8 +1478,9 @@
       "stationId": "city-lights"
     },
     "8O8m36Jr1Uk": {
-      "at": "2026-09-07T08:00:55.674Z",
+      "at": "2026-09-25T08:12:20.271Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1432,8 +1490,9 @@
       "stationId": "city-lights"
     },
     "CyFTrxwviTc": {
-      "at": "2026-09-07T08:00:55.990Z",
+      "at": "2026-09-26T08:16:33.859Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1443,8 +1502,9 @@
       "stationId": "city-lights"
     },
     "C58nGJ6pn8Q": {
-      "at": "2026-09-07T08:00:55.790Z",
+      "at": "2026-09-25T08:12:20.631Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1454,8 +1514,9 @@
       "stationId": "city-lights"
     },
     "1x57WiR-uVo": {
-      "at": "2026-09-07T08:00:56.648Z",
+      "at": "2026-09-26T08:16:33.774Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1465,8 +1526,9 @@
       "stationId": "city-lights"
     },
     "jaS5yjYSAS0": {
-      "at": "2026-09-07T08:00:56.595Z",
+      "at": "2026-09-26T08:16:33.797Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1476,8 +1538,9 @@
       "stationId": "city-lights"
     },
     "6LBoP3CLzBg": {
-      "at": "2026-09-07T08:00:56.623Z",
+      "at": "2026-09-26T08:16:33.754Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 118,
       "embeddable": true,
@@ -1487,8 +1550,9 @@
       "stationId": "city-lights"
     },
     "uWqnsVMc8CQ": {
-      "at": "2026-09-07T08:00:56.806Z",
+      "at": "2026-09-26T08:16:34.689Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1498,8 +1562,9 @@
       "stationId": "city-lights"
     },
     "MqaEQtunNX0": {
-      "at": "2026-09-07T08:00:56.669Z",
+      "at": "2026-09-26T08:16:33.784Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -1509,8 +1574,9 @@
       "stationId": "city-lights"
     },
     "5a8BD7qNMZM": {
-      "at": "2026-09-07T08:00:56.697Z",
+      "at": "2026-09-26T08:16:33.764Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1520,8 +1586,9 @@
       "stationId": "city-lights"
     },
     "8BNRHW8kwbY": {
-      "at": "2026-09-07T08:00:57.361Z",
+      "at": "2026-09-26T08:16:34.735Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 121,
       "embeddable": true,
@@ -1531,8 +1598,9 @@
       "stationId": "city-lights"
     },
     "htXinB1eZYA": {
-      "at": "2026-09-07T08:00:57.655Z",
+      "at": "2026-09-26T08:16:34.680Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1542,8 +1610,9 @@
       "stationId": "city-lights"
     },
     "WQ-fuYZnVCE": {
-      "at": "2026-09-07T08:00:57.413Z",
+      "at": "2026-09-26T08:16:34.702Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -1553,8 +1622,9 @@
       "stationId": "city-lights"
     },
     "E3HBwtJNplQ": {
-      "at": "2026-09-07T08:00:57.842Z",
+      "at": "2026-09-26T08:16:35.742Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -1564,8 +1634,9 @@
       "stationId": "city-lights"
     },
     "_-TMxqEZE5s": {
-      "at": "2026-09-07T08:00:57.708Z",
+      "at": "2026-09-26T08:16:34.696Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1575,8 +1646,9 @@
       "stationId": "city-lights"
     },
     "gIAHxr8RwVA": {
-      "at": "2026-09-07T08:00:57.587Z",
+      "at": "2026-09-26T08:16:34.528Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1586,8 +1658,9 @@
       "stationId": "city-lights"
     },
     "L-hyY-1luHs": {
-      "at": "2026-09-07T08:00:58.326Z",
+      "at": "2026-09-26T08:16:35.507Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1597,8 +1670,9 @@
       "stationId": "city-lights"
     },
     "2tiLgAG02QM": {
-      "at": "2026-09-07T08:00:58.421Z",
+      "at": "2026-09-26T08:16:35.524Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1608,8 +1682,9 @@
       "stationId": "city-lights"
     },
     "ZYeVfKtIH4c": {
-      "at": "2026-09-07T08:00:58.525Z",
+      "at": "2026-09-26T08:16:35.548Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -1619,8 +1694,9 @@
       "stationId": "city-lights"
     },
     "ZVS6Q_lbKQ0": {
-      "at": "2026-09-08T08:33:07.835Z",
+      "at": "2026-09-26T08:16:38.131Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1630,8 +1706,9 @@
       "stationId": "circuit-crush"
     },
     "r63lZvPsj5U": {
-      "at": "2026-09-07T08:00:58.653Z",
+      "at": "2026-09-26T08:16:35.534Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1641,8 +1718,9 @@
       "stationId": "city-lights"
     },
     "URma_gu1aNE": {
-      "at": "2026-09-08T08:33:08.925Z",
+      "at": "2026-09-27T08:14:53.432Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1652,8 +1730,9 @@
       "stationId": "circuit-crush"
     },
     "AD3sEAGRGv4": {
-      "at": "2026-09-07T08:00:58.604Z",
+      "at": "2026-09-26T08:16:35.771Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1663,8 +1742,9 @@
       "stationId": "city-lights"
     },
     "-nC5TBv3sfU": {
-      "at": "2026-09-08T08:33:08.639Z",
+      "at": "2026-09-26T08:16:38.961Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1674,8 +1754,9 @@
       "stationId": "circuit-crush"
     },
     "er416Ad3R1g": {
-      "at": "2026-09-08T08:33:08.667Z",
+      "at": "2026-09-26T08:16:39.112Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1685,8 +1766,9 @@
       "stationId": "circuit-crush"
     },
     "TvZskcqdYcE": {
-      "at": "2026-09-08T08:33:08.691Z",
+      "at": "2026-09-26T08:16:38.927Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1696,8 +1778,9 @@
       "stationId": "circuit-crush"
     },
     "RY66fdMt4vc": {
-      "at": "2026-09-08T08:33:08.901Z",
+      "at": "2026-09-26T08:16:39.143Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1707,8 +1790,9 @@
       "stationId": "circuit-crush"
     },
     "aPjVZgoaAtE": {
-      "at": "2026-09-08T08:33:09.494Z",
+      "at": "2026-09-27T08:14:53.353Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 247,
       "embeddable": true,
@@ -1718,8 +1802,9 @@
       "stationId": "circuit-crush"
     },
     "gDpfybAvEag": {
-      "at": "2026-09-08T08:33:09.810Z",
+      "at": "2026-09-27T08:14:54.079Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1729,8 +1814,9 @@
       "stationId": "circuit-crush"
     },
     "eEELYwi-ABg": {
-      "at": "2026-09-08T08:33:09.454Z",
+      "at": "2026-09-27T08:14:53.307Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1740,8 +1826,9 @@
       "stationId": "circuit-crush"
     },
     "qKauZYXABrM": {
-      "at": "2026-09-08T08:33:09.441Z",
+      "at": "2026-09-27T08:14:53.400Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1751,8 +1838,9 @@
       "stationId": "circuit-crush"
     },
     "-PKV79lug54": {
-      "at": "2026-09-08T08:33:09.420Z",
+      "at": "2026-09-27T08:14:53.300Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1762,8 +1850,9 @@
       "stationId": "circuit-crush"
     },
     "0x1tidUctv4": {
-      "at": "2026-09-08T08:33:09.530Z",
+      "at": "2026-09-27T08:14:53.289Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1773,8 +1862,9 @@
       "stationId": "circuit-crush"
     },
     "Y8DekFFCE5c": {
-      "at": "2026-09-08T08:33:10.183Z",
+      "at": "2026-09-27T08:14:54.265Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1784,8 +1874,9 @@
       "stationId": "circuit-crush"
     },
     "VUQxsBTqh1s": {
-      "at": "2026-09-08T08:33:10.077Z",
+      "at": "2026-09-27T08:14:53.903Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 244,
       "embeddable": true,
@@ -1795,8 +1886,9 @@
       "stationId": "circuit-crush"
     },
     "Io6TL3RQ5zw": {
-      "at": "2026-09-08T08:33:10.287Z",
+      "at": "2026-09-27T08:14:54.253Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1806,8 +1898,9 @@
       "stationId": "circuit-crush"
     },
     "2KU9i_sx4zM": {
-      "at": "2026-09-08T08:33:10.276Z",
+      "at": "2026-09-27T08:14:54.228Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1817,8 +1910,9 @@
       "stationId": "circuit-crush"
     },
     "ntTRv7XUxM8": {
-      "at": "2026-09-08T08:33:10.284Z",
+      "at": "2026-09-27T08:14:54.135Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1828,8 +1922,9 @@
       "stationId": "circuit-crush"
     },
     "Jv1ZN8c4_Gs": {
-      "at": "2026-09-08T08:33:10.633Z",
+      "at": "2026-09-27T08:14:54.809Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1839,8 +1934,9 @@
       "stationId": "circuit-crush"
     },
     "G02wKufX3nw": {
-      "at": "2026-09-08T08:33:10.754Z",
+      "at": "2026-09-27T08:14:54.781Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1850,8 +1946,9 @@
       "stationId": "circuit-crush"
     },
     "IDd5JgAcLhI": {
-      "at": "2026-09-08T08:33:10.959Z",
+      "at": "2026-09-27T08:14:54.916Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1861,8 +1958,9 @@
       "stationId": "circuit-crush"
     },
     "O0LB9cIobXY": {
-      "at": "2026-09-08T08:33:11.033Z",
+      "at": "2026-09-27T08:14:55.003Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1872,8 +1970,9 @@
       "stationId": "circuit-crush"
     },
     "gzRbL_Jwtzw": {
-      "at": "2026-09-08T08:33:11.014Z",
+      "at": "2026-09-27T08:14:54.938Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1883,8 +1982,9 @@
       "stationId": "circuit-crush"
     },
     "zYfs-bZS5Zw": {
-      "at": "2026-09-08T08:33:11.347Z",
+      "at": "2026-09-27T08:14:55.620Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1894,8 +1994,9 @@
       "stationId": "circuit-crush"
     },
     "LxIyc5qJGzQ": {
-      "at": "2026-09-08T08:33:11.064Z",
+      "at": "2026-09-27T08:14:55.096Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1905,8 +2006,9 @@
       "stationId": "circuit-crush"
     },
     "VE3QIvywZnU": {
-      "at": "2026-09-08T08:33:11.578Z",
+      "at": "2026-09-27T08:14:55.624Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1916,8 +2018,9 @@
       "stationId": "circuit-crush"
     },
     "UiSB2Fbw9gs": {
-      "at": "2026-09-08T08:33:11.948Z",
+      "at": "2026-09-27T08:14:55.784Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1927,8 +2030,9 @@
       "stationId": "circuit-crush"
     },
     "7fDvxlK2FMc": {
-      "at": "2026-09-08T08:33:11.998Z",
+      "at": "2026-09-27T08:14:55.819Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1938,8 +2042,9 @@
       "stationId": "circuit-crush"
     },
     "X3wVDrc8000": {
-      "at": "2026-09-08T08:33:11.851Z",
+      "at": "2026-09-27T08:14:55.719Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1949,8 +2054,9 @@
       "stationId": "circuit-crush"
     },
     "jsE7RFs7bHk": {
-      "at": "2026-09-08T08:33:11.988Z",
+      "at": "2026-09-27T08:14:55.974Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1960,8 +2066,9 @@
       "stationId": "circuit-crush"
     },
     "ssdA6IiP3r4": {
-      "at": "2026-09-08T08:33:12.565Z",
+      "at": "2026-09-27T08:14:56.556Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1971,8 +2078,9 @@
       "stationId": "circuit-crush"
     },
     "hd9xGlXGNh0": {
-      "at": "2026-09-08T08:33:12.145Z",
+      "at": "2026-09-27T08:14:56.544Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1982,8 +2090,9 @@
       "stationId": "circuit-crush"
     },
     "HJti6_oiR1A": {
-      "at": "2026-09-08T08:33:12.660Z",
+      "at": "2026-09-27T08:14:56.569Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -1993,8 +2102,9 @@
       "stationId": "circuit-crush"
     },
     "9EJJlr7Dopk": {
-      "at": "2026-09-08T08:33:12.688Z",
+      "at": "2026-09-27T08:14:56.465Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 241,
       "embeddable": true,
@@ -2565,7 +2675,7 @@
       "stationId": "cipher"
     },
     "d0PCD7YMfeY": {
-      "at": "2026-08-30T20:09:08.715Z",
+      "at": "2026-09-17T07:02:43.740Z",
       "flags": [],
       "status": "OK",
       "countries": 26,
@@ -2576,7 +2686,7 @@
       "stationId": "cipher"
     },
     "Wuwfe3DRJzE": {
-      "at": "2026-08-30T20:09:08.577Z",
+      "at": "2026-09-17T07:02:43.433Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2587,7 +2697,7 @@
       "stationId": "cipher"
     },
     "Ihr0y7ayGV0": {
-      "at": "2026-08-30T20:09:08.786Z",
+      "at": "2026-09-17T07:02:43.950Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2598,7 +2708,7 @@
       "stationId": "cipher"
     },
     "MwZmPJFNVbw": {
-      "at": "2026-08-30T20:09:08.973Z",
+      "at": "2026-09-17T07:02:44.093Z",
       "flags": [],
       "status": "OK",
       "countries": 248,
@@ -2609,7 +2719,7 @@
       "stationId": "cipher"
     },
     "7qZW9P7W-nc": {
-      "at": "2026-08-30T20:09:08.883Z",
+      "at": "2026-09-17T07:02:44.139Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2620,7 +2730,7 @@
       "stationId": "cipher"
     },
     "sGcdcVblZ-8": {
-      "at": "2026-08-30T20:09:09.164Z",
+      "at": "2026-09-17T07:02:44.075Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2631,7 +2741,7 @@
       "stationId": "cipher"
     },
     "kQ_sSs8pr1g": {
-      "at": "2026-08-30T20:09:09.611Z",
+      "at": "2026-09-17T07:02:44.794Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2642,7 +2752,7 @@
       "stationId": "cipher"
     },
     "Jd_UCgMaHYQ": {
-      "at": "2026-08-30T20:09:09.590Z",
+      "at": "2026-09-17T07:02:44.593Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2653,7 +2763,7 @@
       "stationId": "cipher"
     },
     "DAQISes7iXU": {
-      "at": "2026-08-30T20:09:09.563Z",
+      "at": "2026-09-17T07:02:44.206Z",
       "flags": [],
       "status": "OK",
       "countries": 231,
@@ -2664,7 +2774,7 @@
       "stationId": "cipher"
     },
     "lGqzRmDcC14": {
-      "at": "2026-08-30T20:09:09.619Z",
+      "at": "2026-09-17T07:02:44.904Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2675,7 +2785,7 @@
       "stationId": "cipher"
     },
     "YV78vobCyIo": {
-      "at": "2026-08-30T20:09:09.883Z",
+      "at": "2026-09-17T07:02:44.867Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2686,7 +2796,7 @@
       "stationId": "cipher"
     },
     "VHqc2Yqwwu4": {
-      "at": "2026-08-30T20:09:10.147Z",
+      "at": "2026-09-17T07:02:44.881Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2697,7 +2807,7 @@
       "stationId": "cipher"
     },
     "mloHngTITZ8": {
-      "at": "2026-08-30T20:09:10.454Z",
+      "at": "2026-09-17T07:02:45.558Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2708,7 +2818,7 @@
       "stationId": "cipher"
     },
     "81bG15gsl70": {
-      "at": "2026-08-30T20:09:10.401Z",
+      "at": "2026-09-17T07:02:44.932Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2719,7 +2829,7 @@
       "stationId": "cipher"
     },
     "0u3qQtvU5SQ": {
-      "at": "2026-08-30T20:09:10.432Z",
+      "at": "2026-09-17T07:02:45.519Z",
       "flags": [],
       "status": "OK",
       "countries": 113,
@@ -2730,7 +2840,7 @@
       "stationId": "cipher"
     },
     "OTvB4XMsg1U": {
-      "at": "2026-08-30T20:09:10.489Z",
+      "at": "2026-09-17T07:02:45.798Z",
       "flags": [],
       "status": "OK",
       "countries": 247,
@@ -2741,7 +2851,7 @@
       "stationId": "cipher"
     },
     "tpKCqp9CALQ": {
-      "at": "2026-08-30T20:09:10.746Z",
+      "at": "2026-09-17T07:02:45.654Z",
       "flags": [],
       "status": "OK",
       "countries": 229,
@@ -2752,7 +2862,7 @@
       "stationId": "cipher"
     },
     "Wo7XxlXU3XQ": {
-      "at": "2026-08-30T20:09:11.138Z",
+      "at": "2026-09-17T07:02:45.681Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2763,7 +2873,7 @@
       "stationId": "cipher"
     },
     "A12-KN5UijA": {
-      "at": "2026-08-31T07:24:55.055Z",
+      "at": "2026-09-18T08:43:32.426Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2774,7 +2884,7 @@
       "stationId": "cipher"
     },
     "BEqHME6XUi8": {
-      "at": "2026-08-31T07:24:55.423Z",
+      "at": "2026-09-18T08:43:33.157Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2785,7 +2895,7 @@
       "stationId": "cipher"
     },
     "tP8tpAs9qhI": {
-      "at": "2026-08-31T07:24:55.879Z",
+      "at": "2026-09-19T07:34:54.371Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2796,7 +2906,7 @@
       "stationId": "cipher"
     },
     "qEYeT-f1Fdo": {
-      "at": "2026-08-31T07:24:55.950Z",
+      "at": "2026-09-19T07:34:54.358Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2807,7 +2917,7 @@
       "stationId": "cipher"
     },
     "GjlklxY-fWI": {
-      "at": "2026-08-31T07:24:55.837Z",
+      "at": "2026-09-19T07:34:54.291Z",
       "flags": [],
       "status": "OK",
       "countries": 122,
@@ -2818,7 +2928,7 @@
       "stationId": "cipher"
     },
     "cFffoHmn8XA": {
-      "at": "2026-08-31T07:24:55.961Z",
+      "at": "2026-09-19T07:34:54.366Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2829,7 +2939,7 @@
       "stationId": "cipher"
     },
     "Qe9vdnNQAhc": {
-      "at": "2026-08-31T07:24:56.073Z",
+      "at": "2026-09-19T07:34:54.332Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2840,7 +2950,7 @@
       "stationId": "cipher"
     },
     "B99nd2iKGOw": {
-      "at": "2026-08-31T07:24:56.272Z",
+      "at": "2026-09-19T07:34:54.349Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2851,7 +2961,7 @@
       "stationId": "cipher"
     },
     "MSv3Oez4O-4": {
-      "at": "2026-08-31T07:24:56.710Z",
+      "at": "2026-09-19T07:34:55.313Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2862,7 +2972,7 @@
       "stationId": "cipher"
     },
     "zWo8joPm5hY": {
-      "at": "2026-08-31T07:24:56.665Z",
+      "at": "2026-09-19T07:34:55.238Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2873,7 +2983,7 @@
       "stationId": "cold-wave"
     },
     "OeuCBosUWp8": {
-      "at": "2026-08-31T07:24:56.646Z",
+      "at": "2026-09-19T07:34:55.186Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2884,7 +2994,7 @@
       "stationId": "cold-wave"
     },
     "xik-y0xlpZ0": {
-      "at": "2026-08-31T07:24:57.129Z",
+      "at": "2026-09-19T07:34:55.336Z",
       "flags": [],
       "status": "OK",
       "countries": 243,
@@ -2895,7 +3005,7 @@
       "stationId": "cold-wave"
     },
     "oJL-lCzEXgI": {
-      "at": "2026-08-31T07:24:56.983Z",
+      "at": "2026-09-19T07:34:55.460Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2906,7 +3016,7 @@
       "stationId": "cold-wave"
     },
     "xxDv_RTdLQo": {
-      "at": "2026-08-31T07:24:57.078Z",
+      "at": "2026-09-19T07:34:55.219Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2917,7 +3027,7 @@
       "stationId": "cold-wave"
     },
     "u1ZvPSpLxCg": {
-      "at": "2026-08-31T07:24:57.572Z",
+      "at": "2026-09-19T07:34:56.237Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2928,7 +3038,7 @@
       "stationId": "cold-wave"
     },
     "CkfdXrEBzDw": {
-      "at": "2026-08-31T07:24:57.636Z",
+      "at": "2026-09-19T07:34:56.043Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -2939,7 +3049,7 @@
       "stationId": "cold-wave"
     },
     "JcROTsR-2l4": {
-      "at": "2026-08-31T07:24:57.580Z",
+      "at": "2026-09-19T07:34:56.147Z",
       "flags": [],
       "status": "OK",
       "countries": 120,
@@ -2950,7 +3060,7 @@
       "stationId": "cold-wave"
     },
     "V-xpJRwIA-Q": {
-      "at": "2026-08-31T07:24:57.776Z",
+      "at": "2026-09-19T07:34:56.261Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -2961,7 +3071,7 @@
       "stationId": "cold-wave"
     },
     "FJZ8NH0HT_o": {
-      "at": "2026-08-31T07:24:57.942Z",
+      "at": "2026-09-19T07:34:56.133Z",
       "flags": [],
       "status": "OK",
       "countries": 121,
@@ -2972,7 +3082,7 @@
       "stationId": "cold-wave"
     },
     "Ya1ySdk9Oao": {
-      "at": "2026-08-31T07:24:58.129Z",
+      "at": "2026-09-19T07:34:56.248Z",
       "flags": [],
       "status": "OK",
       "countries": 113,
@@ -2983,7 +3093,7 @@
       "stationId": "cold-wave"
     },
     "3bXEHGUvVrA": {
-      "at": "2026-08-31T07:24:58.318Z",
+      "at": "2026-09-19T07:34:56.871Z",
       "flags": [],
       "status": "OK",
       "countries": 71,
@@ -2994,7 +3104,7 @@
       "stationId": "cold-wave"
     },
     "qMpBobAonKs": {
-      "at": "2026-08-31T07:24:58.654Z",
+      "at": "2026-09-19T07:34:57.092Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -3005,7 +3115,7 @@
       "stationId": "cold-wave"
     },
     "rc6vowZjWOs": {
-      "at": "2026-08-31T07:24:58.834Z",
+      "at": "2026-09-19T07:34:57.077Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -3016,8 +3126,9 @@
       "stationId": "cold-wave"
     },
     "WX6G6sODMrQ": {
-      "at": "2026-09-05T08:11:55.117Z",
+      "at": "2026-09-23T08:13:21.320Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3027,8 +3138,9 @@
       "stationId": "hackback"
     },
     "D-uV8TGjaGU": {
-      "at": "2026-09-05T08:11:55.184Z",
+      "at": "2026-09-23T08:13:21.733Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3038,8 +3150,9 @@
       "stationId": "hackback"
     },
     "P800UWoE9xs": {
-      "at": "2026-09-05T08:11:55.601Z",
+      "at": "2026-09-24T08:38:34.638Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 245,
       "embeddable": true,
@@ -3049,8 +3162,9 @@
       "stationId": "hackback"
     },
     "jdtKT5q-CW8": {
-      "at": "2026-09-05T08:11:55.926Z",
+      "at": "2026-09-24T08:38:34.647Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3060,8 +3174,9 @@
       "stationId": "hackback"
     },
     "EUVo8epKwv0": {
-      "at": "2026-09-05T08:11:56.156Z",
+      "at": "2026-09-24T08:38:34.628Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3071,8 +3186,9 @@
       "stationId": "hackback"
     },
     "qrOKZeCdaRM": {
-      "at": "2026-09-05T08:11:55.982Z",
+      "at": "2026-09-24T08:38:34.698Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3082,8 +3198,9 @@
       "stationId": "hackback"
     },
     "LMeluRz2wv4": {
-      "at": "2026-09-05T08:11:56.116Z",
+      "at": "2026-09-24T08:38:34.666Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3093,8 +3210,9 @@
       "stationId": "hackback"
     },
     "4yNQ7_7I5aE": {
-      "at": "2026-09-05T08:11:56.146Z",
+      "at": "2026-09-24T08:38:34.833Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 248,
       "embeddable": true,
@@ -3104,8 +3222,9 @@
       "stationId": "hackback"
     },
     "lZXtabqDY-c": {
-      "at": "2026-09-05T08:11:56.526Z",
+      "at": "2026-09-24T08:38:35.689Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3115,8 +3234,9 @@
       "stationId": "hackback"
     },
     "mEgTtsHUnrQ": {
-      "at": "2026-09-05T08:11:56.781Z",
+      "at": "2026-09-24T08:38:35.368Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -3126,8 +3246,9 @@
       "stationId": "hackback"
     },
     "cM4kqL13jGM": {
-      "at": "2026-09-05T08:11:56.841Z",
+      "at": "2026-09-24T08:38:35.511Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 246,
       "embeddable": true,
@@ -3137,8 +3258,9 @@
       "stationId": "hackback"
     },
     "R0IUR4gkPIE": {
-      "at": "2026-09-05T08:11:57.145Z",
+      "at": "2026-09-24T08:38:35.481Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 248,
       "embeddable": true,
@@ -3148,8 +3270,9 @@
       "stationId": "hackback"
     },
     "i4B5VcoaS9s": {
-      "at": "2026-09-05T08:11:57.009Z",
+      "at": "2026-09-24T08:38:35.376Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 121,
       "embeddable": true,
@@ -3159,8 +3282,9 @@
       "stationId": "hackback"
     },
     "LcF2KUJVdLE": {
-      "at": "2026-09-05T08:11:57.230Z",
+      "at": "2026-09-24T08:38:35.612Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 109,
       "embeddable": true,
@@ -3170,8 +3294,9 @@
       "stationId": "hackback"
     },
     "KKA9rMWbygw": {
-      "at": "2026-09-05T08:11:57.393Z",
+      "at": "2026-09-24T08:38:36.110Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3181,8 +3306,9 @@
       "stationId": "hackback"
     },
     "0xZHe8Q8Mlk": {
-      "at": "2026-09-05T08:11:57.781Z",
+      "at": "2026-09-24T08:38:36.207Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 118,
       "embeddable": true,
@@ -3192,8 +3318,9 @@
       "stationId": "hackback"
     },
     "1plPyJdXKIY": {
-      "at": "2026-09-05T08:11:57.848Z",
+      "at": "2026-09-24T08:38:36.253Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 246,
       "embeddable": true,
@@ -3203,8 +3330,9 @@
       "stationId": "hackback"
     },
     "a-mAK3uB2_0": {
-      "at": "2026-09-05T08:11:58.016Z",
+      "at": "2026-09-24T08:38:36.356Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3214,8 +3342,9 @@
       "stationId": "hackback"
     },
     "ru2IrTY2UG0": {
-      "at": "2026-09-05T08:11:57.966Z",
+      "at": "2026-09-24T08:38:36.283Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3225,8 +3354,9 @@
       "stationId": "hackback"
     },
     "TgelVkHEKdw": {
-      "at": "2026-09-05T08:11:58.137Z",
+      "at": "2026-09-24T08:38:36.604Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 246,
       "embeddable": true,
@@ -3236,8 +3366,9 @@
       "stationId": "hackback"
     },
     "hI8A14Qcv68": {
-      "at": "2026-09-05T08:11:58.196Z",
+      "at": "2026-09-24T08:38:36.968Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3247,8 +3378,9 @@
       "stationId": "hackback"
     },
     "fXJc2NYwHjw": {
-      "at": "2026-09-05T08:11:58.636Z",
+      "at": "2026-09-24T08:38:37.012Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3258,8 +3390,9 @@
       "stationId": "hackback"
     },
     "RijB8wnJCN0": {
-      "at": "2026-09-05T08:11:58.762Z",
+      "at": "2026-09-24T08:38:36.980Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3269,8 +3402,9 @@
       "stationId": "hackback"
     },
     "EuJaStSL0xM": {
-      "at": "2026-09-05T08:11:58.775Z",
+      "at": "2026-09-24T08:38:37.097Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3280,8 +3414,9 @@
       "stationId": "hackback"
     },
     "J7_bMdYfSws": {
-      "at": "2026-09-05T08:11:58.895Z",
+      "at": "2026-09-24T08:38:37.107Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -3291,8 +3426,9 @@
       "stationId": "hackback"
     },
     "E7t8eoA_1jQ": {
-      "at": "2026-09-05T08:11:59.055Z",
+      "at": "2026-09-24T08:38:37.812Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3302,8 +3438,9 @@
       "stationId": "hackback"
     },
     "O0uoB45_Uns": {
-      "at": "2026-09-05T08:11:58.913Z",
+      "at": "2026-09-24T08:38:37.328Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3313,8 +3450,9 @@
       "stationId": "hackback"
     },
     "z5rRZdiu1UE": {
-      "at": "2026-09-05T08:11:59.677Z",
+      "at": "2026-09-24T08:38:38.005Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 229,
       "embeddable": true,
@@ -3324,8 +3462,9 @@
       "stationId": "hackback"
     },
     "cKu3_3mp1U8": {
-      "at": "2026-09-05T08:11:59.590Z",
+      "at": "2026-09-24T08:38:37.901Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 247,
       "embeddable": true,
@@ -3335,8 +3474,9 @@
       "stationId": "hackback"
     },
     "7Y8VPQcPHhY": {
-      "at": "2026-09-05T08:11:59.789Z",
+      "at": "2026-09-24T08:38:37.897Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -3346,8 +3486,9 @@
       "stationId": "hackback"
     },
     "mmo3HFa2vjg": {
-      "at": "2026-09-05T08:11:59.719Z",
+      "at": "2026-09-24T08:38:37.886Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 246,
       "embeddable": true,
@@ -3357,8 +3498,9 @@
       "stationId": "hackback"
     },
     "nqPlF5Mn32M": {
-      "at": "2026-09-06T07:03:55.017Z",
+      "at": "2026-09-24T08:38:38.803Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 118,
       "embeddable": true,
@@ -3368,8 +3510,9 @@
       "stationId": "hackback"
     },
     "f8cHxydDb7o": {
-      "at": "2026-09-06T07:03:54.995Z",
+      "at": "2026-09-24T08:38:38.728Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3379,8 +3522,9 @@
       "stationId": "hackback"
     },
     "TrUERC2Zk64": {
-      "at": "2026-09-06T07:03:55.048Z",
+      "at": "2026-09-24T08:38:38.877Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3390,8 +3534,9 @@
       "stationId": "hackback"
     },
     "_qzacv8dtb4": {
-      "at": "2026-09-06T07:03:55.193Z",
+      "at": "2026-09-24T08:38:38.909Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3401,8 +3546,9 @@
       "stationId": "hackback"
     },
     "7vHA5lqrMMI": {
-      "at": "2026-09-06T07:03:54.932Z",
+      "at": "2026-09-24T08:38:38.708Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -3412,8 +3558,9 @@
       "stationId": "hackback"
     },
     "PBsjggc5jHM": {
-      "at": "2026-09-06T07:03:54.899Z",
+      "at": "2026-09-24T08:38:38.223Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3423,8 +3570,9 @@
       "stationId": "hackback"
     },
     "5aCYQ1fRQc8": {
-      "at": "2026-09-06T07:03:55.722Z",
+      "at": "2026-09-24T08:38:38.941Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 244,
       "embeddable": true,
@@ -3434,8 +3582,9 @@
       "stationId": "hackback"
     },
     "Yid-UtHPpeI": {
-      "at": "2026-09-06T07:03:56.131Z",
+      "at": "2026-09-25T08:12:15.786Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3445,8 +3594,9 @@
       "stationId": "hackback"
     },
     "gNoDgHnB1Hk": {
-      "at": "2026-09-06T07:03:55.766Z",
+      "at": "2026-09-24T08:38:39.428Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3456,8 +3606,9 @@
       "stationId": "hackback"
     },
     "OGy4bmG5SJw": {
-      "at": "2026-09-06T07:03:55.964Z",
+      "at": "2026-09-24T08:38:39.537Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3467,8 +3618,9 @@
       "stationId": "hackback"
     },
     "TMZi25Pq3T8": {
-      "at": "2026-09-06T07:03:56.063Z",
+      "at": "2026-09-24T08:38:39.638Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3478,8 +3630,9 @@
       "stationId": "hackback"
     },
     "MnP1XmxyqxA": {
-      "at": "2026-09-06T07:03:56.046Z",
+      "at": "2026-09-24T08:38:39.684Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3489,8 +3642,9 @@
       "stationId": "hackback"
     },
     "4vaN01VLYSQ": {
-      "at": "2026-09-06T07:03:56.496Z",
+      "at": "2026-09-25T08:12:15.949Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3500,8 +3654,9 @@
       "stationId": "hackback"
     },
     "VMttICy5MSg": {
-      "at": "2026-09-06T07:03:56.678Z",
+      "at": "2026-09-25T08:12:15.957Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3511,8 +3666,9 @@
       "stationId": "hackback"
     },
     "yqxrr6CQyus": {
-      "at": "2026-09-06T07:03:56.913Z",
+      "at": "2026-09-25T08:12:15.873Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 122,
       "embeddable": true,
@@ -3522,8 +3678,9 @@
       "stationId": "hackback"
     },
     "BQrdjT3GHwE": {
-      "at": "2026-09-06T07:03:56.932Z",
+      "at": "2026-09-25T08:12:15.702Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 118,
       "embeddable": true,
@@ -3533,8 +3690,9 @@
       "stationId": "hackback"
     },
     "PWOa_eeKzO0": {
-      "at": "2026-09-06T07:03:57.045Z",
+      "at": "2026-09-25T08:12:15.739Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -3544,8 +3702,9 @@
       "stationId": "hackback"
     },
     "0Cjj3YMrkEM": {
-      "at": "2026-09-06T07:03:57.297Z",
+      "at": "2026-09-25T08:12:16.444Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 122,
       "embeddable": true,
@@ -3555,8 +3714,9 @@
       "stationId": "hackback"
     },
     "cGwUE0V9Gqw": {
-      "at": "2026-09-06T07:03:57.484Z",
+      "at": "2026-09-25T08:12:16.604Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 121,
       "embeddable": true,
@@ -3566,8 +3726,9 @@
       "stationId": "hackback"
     },
     "h8uDIS6-g9w": {
-      "at": "2026-09-06T07:03:57.582Z",
+      "at": "2026-09-25T08:12:16.484Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 122,
       "embeddable": true,
@@ -3577,8 +3738,9 @@
       "stationId": "city-lights"
     },
     "HuslecphkVw": {
-      "at": "2026-09-06T07:03:57.821Z",
+      "at": "2026-09-25T08:12:16.623Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -3588,8 +3750,9 @@
       "stationId": "city-lights"
     },
     "AADQuhYHbf4": {
-      "at": "2026-09-06T07:03:57.767Z",
+      "at": "2026-09-25T08:12:16.716Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3599,8 +3762,9 @@
       "stationId": "city-lights"
     },
     "9TT_oIzTT74": {
-      "at": "2026-09-06T07:03:57.896Z",
+      "at": "2026-09-25T08:12:16.639Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 195,
       "embeddable": true,
@@ -3610,8 +3774,9 @@
       "stationId": "city-lights"
     },
     "mCHy6H2QDEY": {
-      "at": "2026-09-06T07:03:58.194Z",
+      "at": "2026-09-25T08:12:17.324Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 121,
       "embeddable": true,
@@ -3621,8 +3786,9 @@
       "stationId": "city-lights"
     },
     "n79SqFZFQcQ": {
-      "at": "2026-09-06T07:03:58.214Z",
+      "at": "2026-09-25T08:12:17.282Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 121,
       "embeddable": true,
@@ -3632,8 +3798,9 @@
       "stationId": "city-lights"
     },
     "SIGr6dc_2Sc": {
-      "at": "2026-09-06T07:03:58.444Z",
+      "at": "2026-09-25T08:12:17.297Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3643,8 +3810,9 @@
       "stationId": "city-lights"
     },
     "AeH1xq2PpjQ": {
-      "at": "2026-09-06T07:03:58.647Z",
+      "at": "2026-09-25T08:12:17.398Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3654,8 +3822,9 @@
       "stationId": "city-lights"
     },
     "pSbzx-0wbs0": {
-      "at": "2026-09-06T07:03:58.832Z",
+      "at": "2026-09-25T08:12:17.418Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3665,8 +3834,9 @@
       "stationId": "city-lights"
     },
     "lD69ScxsHCM": {
-      "at": "2026-09-07T08:00:58.695Z",
+      "at": "2026-09-26T08:16:36.586Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 244,
       "embeddable": true,
@@ -3676,8 +3846,9 @@
       "stationId": "circuit-crush"
     },
     "jyO-MyJ4R1g": {
-      "at": "2026-09-07T08:00:59.220Z",
+      "at": "2026-09-26T08:16:36.229Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3687,8 +3858,9 @@
       "stationId": "circuit-crush"
     },
     "cq05Ierbz44": {
-      "at": "2026-09-07T08:00:59.287Z",
+      "at": "2026-09-26T08:16:36.339Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3698,8 +3870,9 @@
       "stationId": "circuit-crush"
     },
     "Z1kAGzKaLOQ": {
-      "at": "2026-09-07T08:00:59.475Z",
+      "at": "2026-09-26T08:16:36.627Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3709,8 +3882,9 @@
       "stationId": "circuit-crush"
     },
     "YrVFhHHpLJ0": {
-      "at": "2026-09-07T08:00:59.353Z",
+      "at": "2026-09-26T08:16:36.387Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 244,
       "embeddable": true,
@@ -3720,8 +3894,9 @@
       "stationId": "circuit-crush"
     },
     "gkjk30imnXI": {
-      "at": "2026-09-07T08:00:59.591Z",
+      "at": "2026-09-26T08:16:36.901Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3731,8 +3906,9 @@
       "stationId": "circuit-crush"
     },
     "MUAJFyr5qzA": {
-      "at": "2026-09-07T08:00:59.391Z",
+      "at": "2026-09-26T08:16:36.438Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -3742,8 +3918,9 @@
       "stationId": "circuit-crush"
     },
     "S0A9dNsLRjc": {
-      "at": "2026-09-07T08:01:00.019Z",
+      "at": "2026-09-26T08:16:37.261Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3753,8 +3930,9 @@
       "stationId": "circuit-crush"
     },
     "qT0iQRjHbW4": {
-      "at": "2026-09-07T08:01:00.506Z",
+      "at": "2026-09-26T08:16:37.369Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3764,8 +3942,9 @@
       "stationId": "circuit-crush"
     },
     "ArDVDnWTqvw": {
-      "at": "2026-09-07T08:01:00.338Z",
+      "at": "2026-09-26T08:16:37.115Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3775,8 +3954,9 @@
       "stationId": "circuit-crush"
     },
     "qFfybn_W8Ak": {
-      "at": "2026-09-07T08:01:02.787Z",
+      "at": "2026-09-26T08:16:37.380Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3786,8 +3966,9 @@
       "stationId": "circuit-crush"
     },
     "Q9tzrYi3Fdk": {
-      "at": "2026-09-08T08:33:07.655Z",
+      "at": "2026-09-26T08:16:37.423Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 227,
       "embeddable": true,
@@ -3797,8 +3978,9 @@
       "stationId": "circuit-crush"
     },
     "5dNP-a-XXx0": {
-      "at": "2026-09-08T08:33:07.895Z",
+      "at": "2026-09-26T08:16:38.398Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3808,8 +3990,9 @@
       "stationId": "circuit-crush"
     },
     "JE1jylkS_7w": {
-      "at": "2026-09-08T08:33:07.818Z",
+      "at": "2026-09-26T08:16:37.944Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3819,8 +4002,9 @@
       "stationId": "circuit-crush"
     },
     "dTkGNEl55Ug": {
-      "at": "2026-09-08T08:33:07.809Z",
+      "at": "2026-09-26T08:16:37.966Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 243,
       "embeddable": true,
@@ -3830,8 +4014,9 @@
       "stationId": "circuit-crush"
     },
     "hugowO0sSrM": {
-      "at": "2026-09-08T08:33:07.843Z",
+      "at": "2026-09-26T08:16:38.147Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3841,8 +4026,9 @@
       "stationId": "circuit-crush"
     },
     "LITFNKqEz_U": {
-      "at": "2026-09-08T08:33:08.593Z",
+      "at": "2026-09-26T08:16:38.121Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 123,
       "embeddable": true,
@@ -3852,8 +4038,9 @@
       "stationId": "circuit-crush"
     },
     "nUn0PC7098E": {
-      "at": "2026-09-08T08:33:12.778Z",
+      "at": "2026-09-27T08:14:56.500Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3863,8 +4050,9 @@
       "stationId": "midnight-neon"
     },
     "VL-TIXPivpQ": {
-      "at": "2026-09-09T08:09:07.382Z",
+      "at": "2026-09-27T08:14:56.649Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3874,8 +4062,9 @@
       "stationId": "midnight-neon"
     },
     "u31thuMehjM": {
-      "at": "2026-09-09T08:09:07.518Z",
+      "at": "2026-09-27T08:14:57.436Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3885,8 +4074,9 @@
       "stationId": "midnight-neon"
     },
     "qke-jOUqSXU": {
-      "at": "2026-09-09T08:09:07.560Z",
+      "at": "2026-09-27T08:14:57.331Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -3896,8 +4086,9 @@
       "stationId": "midnight-neon"
     },
     "VFQ87_g41ZA": {
-      "at": "2026-09-09T08:09:07.426Z",
+      "at": "2026-09-27T08:14:57.490Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -4688,7 +4879,7 @@
       "stationId": "nin"
     },
     "oVnx6cxbIwQ": {
-      "at": "2026-08-31T02:45:06.812Z",
+      "at": "2026-09-22T23:17:16.013Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4699,7 +4890,7 @@
       "stationId": "neon-stasis"
     },
     "pgZCxhhUBMs": {
-      "at": "2026-08-31T02:45:06.893Z",
+      "at": "2026-09-22T23:17:16.077Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4710,7 +4901,7 @@
       "stationId": "neon-stasis"
     },
     "Q-hG1GSVb-8": {
-      "at": "2026-08-31T02:45:06.919Z",
+      "at": "2026-09-22T23:17:16.587Z",
       "flags": [],
       "status": "OK",
       "countries": 247,
@@ -4721,7 +4912,7 @@
       "stationId": "neon-stasis"
     },
     "xe610x1aIjM": {
-      "at": "2026-08-31T02:45:07.072Z",
+      "at": "2026-09-22T23:17:16.568Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4732,7 +4923,7 @@
       "stationId": "neon-stasis"
     },
     "boofE5_HtkI": {
-      "at": "2026-08-31T02:45:07.082Z",
+      "at": "2026-09-22T23:17:16.763Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4743,7 +4934,7 @@
       "stationId": "neon-stasis"
     },
     "xAh-nngGZ6I": {
-      "at": "2026-08-31T02:45:07.099Z",
+      "at": "2026-09-22T23:17:16.731Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4754,7 +4945,7 @@
       "stationId": "neon-stasis"
     },
     "aQkPcPqTq4M": {
-      "at": "2026-08-31T02:45:07.731Z",
+      "at": "2026-09-22T23:17:16.938Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4765,7 +4956,7 @@
       "stationId": "neon-stasis"
     },
     "9tBj5zv4S1A": {
-      "at": "2026-08-31T02:45:07.861Z",
+      "at": "2026-09-22T23:17:17.476Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4776,7 +4967,7 @@
       "stationId": "neon-stasis"
     },
     "dN0czUMRMU8": {
-      "at": "2026-08-31T02:45:07.899Z",
+      "at": "2026-09-22T23:17:16.885Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4787,7 +4978,7 @@
       "stationId": "neon-stasis"
     },
     "0T17gsA67og": {
-      "at": "2026-08-31T02:45:07.915Z",
+      "at": "2026-09-22T23:17:17.447Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4798,7 +4989,7 @@
       "stationId": "neon-stasis"
     },
     "l7nsljmRX_s": {
-      "at": "2026-08-31T02:45:07.983Z",
+      "at": "2026-09-22T23:17:17.509Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4809,7 +5000,7 @@
       "stationId": "neon-stasis"
     },
     "-RFunvF0mDw": {
-      "at": "2026-08-31T02:45:08.175Z",
+      "at": "2026-09-22T23:17:17.494Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4820,7 +5011,7 @@
       "stationId": "neon-stasis"
     },
     "_hI0qMtdfng": {
-      "at": "2026-08-31T02:45:08.744Z",
+      "at": "2026-09-22T23:17:18.198Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4831,7 +5022,7 @@
       "stationId": "neon-stasis"
     },
     "RQxDM2K-hd0": {
-      "at": "2026-08-31T02:45:08.814Z",
+      "at": "2026-09-22T23:17:18.469Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4842,7 +5033,7 @@
       "stationId": "neon-stasis"
     },
     "osKY4JMmmt0": {
-      "at": "2026-08-31T02:45:08.830Z",
+      "at": "2026-09-22T23:17:18.192Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4853,7 +5044,7 @@
       "stationId": "neon-stasis"
     },
     "OrR1TGQY20Y": {
-      "at": "2026-08-31T02:45:08.918Z",
+      "at": "2026-09-22T23:17:18.290Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4864,7 +5055,7 @@
       "stationId": "neon-stasis"
     },
     "tCcamt8KZNQ": {
-      "at": "2026-08-31T02:45:08.943Z",
+      "at": "2026-09-22T23:17:17.686Z",
       "flags": [],
       "status": "OK",
       "countries": 188,
@@ -4875,7 +5066,7 @@
       "stationId": "neon-stasis"
     },
     "aBhrEv5Z7uc": {
-      "at": "2026-08-31T02:45:09.384Z",
+      "at": "2026-09-22T23:17:17.900Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -4886,7 +5077,7 @@
       "stationId": "neon-stasis"
     },
     "X6PnNgYSa5s": {
-      "at": "2026-08-31T02:45:09.965Z",
+      "at": "2026-09-22T23:17:19.023Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4897,7 +5088,7 @@
       "stationId": "neon-stasis"
     },
     "mbMoY1dxbEY": {
-      "at": "2026-08-31T02:45:09.991Z",
+      "at": "2026-09-22T23:17:18.796Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -4907,19 +5098,8 @@
       "channel": "Home - Topic",
       "stationId": "neon-stasis"
     },
-    "yRlBcUJZJHA": {
-      "at": "2026-08-31T02:45:10.010Z",
-      "flags": [],
-      "status": "OK",
-      "countries": 248,
-      "embeddable": true,
-      "seconds": 261,
-      "title": "Half Moon",
-      "channel": "Home - Topic",
-      "stationId": "neon-stasis"
-    },
     "D__gB1DzHIc": {
-      "at": "2026-08-31T02:45:10.081Z",
+      "at": "2026-09-22T23:17:18.925Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -4930,7 +5110,7 @@
       "stationId": "neon-stasis"
     },
     "4GhvYoo4088": {
-      "at": "2026-08-31T02:45:10.289Z",
+      "at": "2026-09-22T23:17:19.080Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4941,7 +5121,7 @@
       "stationId": "neon-stasis"
     },
     "7P4fatlUbvg": {
-      "at": "2026-08-31T02:45:10.368Z",
+      "at": "2026-09-22T23:17:19.207Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4952,7 +5132,7 @@
       "stationId": "neon-stasis"
     },
     "bxCU_P0Y1CE": {
-      "at": "2026-08-31T02:45:10.811Z",
+      "at": "2026-09-22T23:17:19.220Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4963,7 +5143,7 @@
       "stationId": "neon-stasis"
     },
     "U6Xz8foh7XQ": {
-      "at": "2026-08-31T02:45:10.967Z",
+      "at": "2026-09-18T08:43:29.806Z",
       "flags": [],
       "status": "OK",
       "countries": 227,
@@ -4974,7 +5154,7 @@
       "stationId": "midnight-neon"
     },
     "v8bIYKwUyPM": {
-      "at": "2026-08-31T02:45:11.124Z",
+      "at": "2026-09-18T08:43:29.903Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -4985,7 +5165,7 @@
       "stationId": "midnight-neon"
     },
     "Jckql0mdf_c": {
-      "at": "2026-08-31T02:45:11.390Z",
+      "at": "2026-09-18T08:43:30.039Z",
       "flags": [],
       "status": "OK",
       "countries": 247,
@@ -4996,7 +5176,7 @@
       "stationId": "midnight-neon"
     },
     "fqvuxA5vuv4": {
-      "at": "2026-08-31T02:45:11.608Z",
+      "at": "2026-09-18T08:43:30.026Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5007,7 +5187,7 @@
       "stationId": "midnight-neon"
     },
     "JOXzs2UhkHI": {
-      "at": "2026-08-31T02:45:11.896Z",
+      "at": "2026-09-18T08:43:30.133Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5018,7 +5198,7 @@
       "stationId": "midnight-neon"
     },
     "rwBA75RmDkc": {
-      "at": "2026-08-31T02:45:11.936Z",
+      "at": "2026-09-18T08:43:30.573Z",
       "flags": [],
       "status": "OK",
       "countries": 121,
@@ -5029,7 +5209,7 @@
       "stationId": "midnight-neon"
     },
     "E_wxPpRSgho": {
-      "at": "2026-08-31T02:45:12.110Z",
+      "at": "2026-09-18T08:43:30.619Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5040,7 +5220,7 @@
       "stationId": "midnight-neon"
     },
     "_kFKqY9oCUc": {
-      "at": "2026-08-31T02:45:12.182Z",
+      "at": "2026-09-18T08:43:30.731Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5051,7 +5231,7 @@
       "stationId": "midnight-neon"
     },
     "RgyrmIEA-1g": {
-      "at": "2026-08-31T02:45:12.214Z",
+      "at": "2026-09-18T08:43:30.856Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5062,7 +5242,7 @@
       "stationId": "midnight-neon"
     },
     "eOlLPCVTLfE": {
-      "at": "2026-08-31T02:45:12.522Z",
+      "at": "2026-09-18T08:43:30.816Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5073,7 +5253,7 @@
       "stationId": "midnight-neon"
     },
     "fneCWdB8d04": {
-      "at": "2026-08-31T02:45:13.041Z",
+      "at": "2026-09-18T08:43:30.952Z",
       "flags": [],
       "status": "OK",
       "countries": 247,
@@ -5084,7 +5264,7 @@
       "stationId": "midnight-neon"
     },
     "tG7NLC9dIXY": {
-      "at": "2026-08-31T02:45:13.054Z",
+      "at": "2026-09-18T08:43:31.285Z",
       "flags": [],
       "status": "OK",
       "countries": 244,
@@ -5095,7 +5275,7 @@
       "stationId": "midnight-neon"
     },
     "Fc0tcD9F4GU": {
-      "at": "2026-08-31T02:45:13.138Z",
+      "at": "2026-09-18T08:43:31.309Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5106,18 +5286,18 @@
       "stationId": "midnight-neon"
     },
     "gJYjbDnyx-o": {
-      "at": "2026-08-31T02:45:13.361Z",
+      "at": "2026-09-18T08:43:31.670Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
       "embeddable": true,
       "seconds": 202,
-      "title": "Prospa & Cloonee - Free Your Mind",
+      "title": "Prospa, Cloonee, & Sybil - Free Your Mind",
       "channel": "CircoLoco Records",
       "stationId": "midnight-neon"
     },
     "6dx013HIzCU": {
-      "at": "2026-08-31T02:45:13.378Z",
+      "at": "2026-09-18T08:43:31.522Z",
       "flags": [],
       "status": "OK",
       "countries": 121,
@@ -5128,7 +5308,7 @@
       "stationId": "midnight-neon"
     },
     "M-3esa1G50U": {
-      "at": "2026-08-31T07:24:54.211Z",
+      "at": "2026-09-22T23:17:19.491Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5139,7 +5319,7 @@
       "stationId": "neon-stasis"
     },
     "fsLPj_BG3fg": {
-      "at": "2026-08-31T07:24:54.222Z",
+      "at": "2026-09-18T08:43:31.678Z",
       "flags": [],
       "status": "OK",
       "countries": 243,
@@ -5150,7 +5330,7 @@
       "stationId": "atomic"
     },
     "k6xkSvMIvwk": {
-      "at": "2026-08-31T07:24:54.280Z",
+      "at": "2026-09-22T23:17:19.648Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5161,7 +5341,7 @@
       "stationId": "neon-stasis"
     },
     "Qg7vgIdDDno": {
-      "at": "2026-08-31T07:24:54.294Z",
+      "at": "2026-09-22T23:17:19.811Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5172,7 +5352,7 @@
       "stationId": "neon-stasis"
     },
     "f0PSLV_b5g0": {
-      "at": "2026-08-31T07:24:54.325Z",
+      "at": "2026-09-22T23:17:20.014Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5183,7 +5363,7 @@
       "stationId": "neon-stasis"
     },
     "7EuuRDGUMMA": {
-      "at": "2026-08-31T07:24:54.416Z",
+      "at": "2026-09-22T23:17:19.945Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5194,7 +5374,7 @@
       "stationId": "neon-stasis"
     },
     "B2DkxG6-Pko": {
-      "at": "2026-08-31T07:24:55.024Z",
+      "at": "2026-09-18T08:43:32.458Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5205,7 +5385,7 @@
       "stationId": "atomic"
     },
     "BsTP6NUZVvQ": {
-      "at": "2026-08-31T07:24:55.066Z",
+      "at": "2026-09-18T08:43:32.827Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5216,7 +5396,7 @@
       "stationId": "atomic"
     },
     "hOEAGZZoq7w": {
-      "at": "2026-08-31T07:24:55.105Z",
+      "at": "2026-09-18T08:43:32.752Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5227,7 +5407,7 @@
       "stationId": "atomic"
     },
     "a2FeSEiXaR0": {
-      "at": "2026-08-31T07:24:55.235Z",
+      "at": "2026-09-18T08:43:33.263Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5238,7 +5418,7 @@
       "stationId": "atomic"
     },
     "883e7wydHo0": {
-      "at": "2026-09-01T08:12:55.778Z",
+      "at": "2026-09-19T07:34:57.937Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5249,7 +5429,7 @@
       "stationId": "the-crypt"
     },
     "YKe_zJEGcWQ": {
-      "at": "2026-09-01T08:12:55.782Z",
+      "at": "2026-09-19T07:34:58.208Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5260,7 +5440,7 @@
       "stationId": "the-crypt"
     },
     "j1BFgzDEl9s": {
-      "at": "2026-09-01T08:12:55.860Z",
+      "at": "2026-09-19T07:34:58.459Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5271,7 +5451,7 @@
       "stationId": "the-crypt"
     },
     "APZIre8Tm60": {
-      "at": "2026-09-01T08:12:55.888Z",
+      "at": "2026-09-19T07:34:58.845Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5282,7 +5462,7 @@
       "stationId": "the-crypt"
     },
     "JhrsLP5kK4c": {
-      "at": "2026-09-01T08:12:55.986Z",
+      "at": "2026-09-19T07:34:58.826Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5293,7 +5473,7 @@
       "stationId": "the-crypt"
     },
     "yHRtZ5mXnGA": {
-      "at": "2026-09-01T08:12:56.026Z",
+      "at": "2026-09-19T07:34:58.790Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5304,7 +5484,7 @@
       "stationId": "the-crypt"
     },
     "D8FOL8mjwJU": {
-      "at": "2026-09-01T08:12:56.562Z",
+      "at": "2026-09-19T07:34:58.834Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5315,7 +5495,7 @@
       "stationId": "the-crypt"
     },
     "gQtLEuuZNNg": {
-      "at": "2026-09-01T08:12:56.586Z",
+      "at": "2026-09-19T07:34:58.900Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5326,7 +5506,7 @@
       "stationId": "the-crypt"
     },
     "KAfpsjEbGM8": {
-      "at": "2026-09-01T08:12:56.616Z",
+      "at": "2026-09-19T07:34:59.183Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5337,7 +5517,7 @@
       "stationId": "the-crypt"
     },
     "XlbCqHSs_xk": {
-      "at": "2026-09-01T08:12:56.667Z",
+      "at": "2026-09-19T07:34:59.551Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5348,7 +5528,7 @@
       "stationId": "the-crypt"
     },
     "HTWiLqSA514": {
-      "at": "2026-09-01T08:12:56.787Z",
+      "at": "2026-09-19T07:34:59.708Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5359,7 +5539,7 @@
       "stationId": "the-crypt"
     },
     "1cYGRwKwgS8": {
-      "at": "2026-09-01T08:12:56.860Z",
+      "at": "2026-09-19T07:34:59.569Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5370,7 +5550,7 @@
       "stationId": "the-crypt"
     },
     "ObrgQaKlldc": {
-      "at": "2026-09-01T08:12:57.367Z",
+      "at": "2026-09-20T08:30:00.380Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5381,7 +5561,7 @@
       "stationId": "the-crypt"
     },
     "vJ_rSbiKGTI": {
-      "at": "2026-09-01T08:12:57.370Z",
+      "at": "2026-09-20T08:30:00.358Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5392,7 +5572,7 @@
       "stationId": "the-crypt"
     },
     "oVtO2dAXunU": {
-      "at": "2026-09-01T08:12:57.468Z",
+      "at": "2026-09-20T08:30:00.346Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5403,7 +5583,7 @@
       "stationId": "the-crypt"
     },
     "S-l36AZCOQs": {
-      "at": "2026-09-01T08:12:57.521Z",
+      "at": "2026-09-20T08:30:00.367Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5414,7 +5594,7 @@
       "stationId": "the-crypt"
     },
     "VijbUkATmLc": {
-      "at": "2026-09-01T08:12:57.725Z",
+      "at": "2026-09-20T08:30:00.371Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5425,7 +5605,7 @@
       "stationId": "the-crypt"
     },
     "kFB9A2WAfpM": {
-      "at": "2026-09-01T08:12:57.741Z",
+      "at": "2026-09-20T08:30:00.375Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5436,7 +5616,7 @@
       "stationId": "the-crypt"
     },
     "c6My3t7Cw7Q": {
-      "at": "2026-09-01T08:12:58.079Z",
+      "at": "2026-09-20T08:30:01.069Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5447,7 +5627,7 @@
       "stationId": "the-crypt"
     },
     "WUyXqGpvs4Y": {
-      "at": "2026-09-01T08:12:58.181Z",
+      "at": "2026-09-20T08:30:00.985Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5458,7 +5638,7 @@
       "stationId": "the-crypt"
     },
     "U5QjKTtXCJI": {
-      "at": "2026-09-01T08:12:58.237Z",
+      "at": "2026-09-20T08:30:01.109Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5469,7 +5649,7 @@
       "stationId": "the-crypt"
     },
     "vdmg4X8PdCM": {
-      "at": "2026-09-01T08:12:58.303Z",
+      "at": "2026-09-20T08:30:01.049Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5480,7 +5660,7 @@
       "stationId": "the-crypt"
     },
     "EqwRXoAxn7I": {
-      "at": "2026-09-01T08:12:58.541Z",
+      "at": "2026-09-20T08:30:01.133Z",
       "flags": [],
       "status": "OK",
       "countries": 244,
@@ -5491,7 +5671,7 @@
       "stationId": "slow-orbit"
     },
     "aIB70PVSCnY": {
-      "at": "2026-09-01T08:12:58.614Z",
+      "at": "2026-09-20T08:30:01.083Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5502,7 +5682,7 @@
       "stationId": "slow-orbit"
     },
     "h9gVHqe9dj8": {
-      "at": "2026-09-01T08:12:58.752Z",
+      "at": "2026-09-20T08:30:01.619Z",
       "flags": [],
       "status": "OK",
       "countries": 244,
@@ -5513,7 +5693,7 @@
       "stationId": "slow-orbit"
     },
     "8fpFTNmHE4c": {
-      "at": "2026-09-01T08:12:58.991Z",
+      "at": "2026-09-20T08:30:01.760Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5524,7 +5704,7 @@
       "stationId": "slow-orbit"
     },
     "0nUdJeDoDY0": {
-      "at": "2026-09-01T08:12:59.038Z",
+      "at": "2026-09-20T08:30:01.896Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5535,7 +5715,7 @@
       "stationId": "slow-orbit"
     },
     "tGBqcd2-_xM": {
-      "at": "2026-09-01T08:12:59.049Z",
+      "at": "2026-09-20T08:30:01.817Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5546,7 +5726,7 @@
       "stationId": "slow-orbit"
     },
     "O5xuh4KxyKE": {
-      "at": "2026-09-01T08:12:59.268Z",
+      "at": "2026-09-20T08:30:01.721Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5557,7 +5737,7 @@
       "stationId": "slow-orbit"
     },
     "z8ajEiw6iYk": {
-      "at": "2026-09-01T08:12:59.430Z",
+      "at": "2026-09-20T08:30:01.811Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5568,7 +5748,7 @@
       "stationId": "slow-orbit"
     },
     "bYqOS-os55U": {
-      "at": "2026-09-01T08:12:59.550Z",
+      "at": "2026-09-20T08:30:02.434Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5579,7 +5759,7 @@
       "stationId": "slow-orbit"
     },
     "ywlQ2N60JCQ": {
-      "at": "2026-09-01T08:12:59.822Z",
+      "at": "2026-09-20T08:30:02.588Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5590,7 +5770,7 @@
       "stationId": "slow-orbit"
     },
     "eTTBbkvNBkE": {
-      "at": "2026-09-01T08:12:59.932Z",
+      "at": "2026-09-20T08:30:02.601Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5601,7 +5781,7 @@
       "stationId": "slow-orbit"
     },
     "gGnWBumLD9A": {
-      "at": "2026-09-01T08:12:59.980Z",
+      "at": "2026-09-20T08:30:02.574Z",
       "flags": [],
       "status": "OK",
       "countries": 244,
@@ -5612,7 +5792,7 @@
       "stationId": "slow-orbit"
     },
     "fBo1xD_fjc8": {
-      "at": "2026-09-01T08:13:00.155Z",
+      "at": "2026-09-20T08:30:02.491Z",
       "flags": [],
       "status": "OK",
       "countries": 244,
@@ -5623,7 +5803,7 @@
       "stationId": "slow-orbit"
     },
     "xHHTLyvt7ZQ": {
-      "at": "2026-09-01T08:13:00.369Z",
+      "at": "2026-09-20T08:30:02.715Z",
       "flags": [],
       "status": "OK",
       "countries": 244,
@@ -5634,7 +5814,7 @@
       "stationId": "slow-orbit"
     },
     "f73_IoHwFsc": {
-      "at": "2026-09-01T08:13:00.379Z",
+      "at": "2026-09-20T08:30:05.114Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5645,7 +5825,7 @@
       "stationId": "slow-orbit"
     },
     "AOlnOPECslM": {
-      "at": "2026-09-01T08:13:00.646Z",
+      "at": "2026-09-20T08:30:03.110Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5656,7 +5836,7 @@
       "stationId": "slow-orbit"
     },
     "QwS1DC9_N-c": {
-      "at": "2026-09-01T08:13:00.714Z",
+      "at": "2026-09-20T08:30:03.236Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5667,7 +5847,7 @@
       "stationId": "slow-orbit"
     },
     "0MhS4g_LTKk": {
-      "at": "2026-09-01T08:13:00.818Z",
+      "at": "2026-09-20T08:30:03.308Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5678,7 +5858,7 @@
       "stationId": "slow-orbit"
     },
     "7QO2QuXEZS4": {
-      "at": "2026-09-02T07:56:16.089Z",
+      "at": "2026-09-20T08:30:03.328Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5689,7 +5869,7 @@
       "stationId": "tradewinds"
     },
     "fxNAnJYXq5U": {
-      "at": "2026-09-02T07:56:16.253Z",
+      "at": "2026-09-20T08:30:03.435Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5700,7 +5880,7 @@
       "stationId": "slow-orbit"
     },
     "GjJ1KTONcK8": {
-      "at": "2026-09-02T07:56:16.268Z",
+      "at": "2026-09-20T08:30:03.838Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5711,7 +5891,7 @@
       "stationId": "slow-orbit"
     },
     "mitt1Qnkmgo": {
-      "at": "2026-09-02T07:56:16.275Z",
+      "at": "2026-09-20T08:30:03.951Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5722,7 +5902,7 @@
       "stationId": "tradewinds"
     },
     "6w9MBlTHR7c": {
-      "at": "2026-09-02T07:56:16.286Z",
+      "at": "2026-09-20T08:30:04.089Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5733,7 +5913,7 @@
       "stationId": "slow-orbit"
     },
     "MTs1E4P_FCE": {
-      "at": "2026-09-02T07:56:16.298Z",
+      "at": "2026-09-20T08:30:04.041Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5744,7 +5924,7 @@
       "stationId": "slow-orbit"
     },
     "8-7gJDnjUko": {
-      "at": "2026-09-02T07:56:16.886Z",
+      "at": "2026-09-20T08:30:04.189Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5755,7 +5935,7 @@
       "stationId": "tradewinds"
     },
     "yV5JiG1DV7E": {
-      "at": "2026-09-02T07:56:16.984Z",
+      "at": "2026-09-20T08:30:04.505Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5766,7 +5946,7 @@
       "stationId": "tradewinds"
     },
     "4VkjMrkNv88": {
-      "at": "2026-09-02T07:56:17.026Z",
+      "at": "2026-09-20T08:30:04.718Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5777,7 +5957,7 @@
       "stationId": "tradewinds"
     },
     "oktapcjB7WA": {
-      "at": "2026-09-02T07:56:17.042Z",
+      "at": "2026-09-20T08:30:04.841Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5788,7 +5968,7 @@
       "stationId": "tradewinds"
     },
     "o1j-KlYvPCs": {
-      "at": "2026-09-02T07:56:17.060Z",
+      "at": "2026-09-20T08:30:04.800Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5799,7 +5979,7 @@
       "stationId": "tradewinds"
     },
     "coCnRrrbBjE": {
-      "at": "2026-09-02T07:56:17.164Z",
+      "at": "2026-09-20T08:30:04.891Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5810,7 +5990,7 @@
       "stationId": "tradewinds"
     },
     "ChGIY1MAUOo": {
-      "at": "2026-09-02T07:56:17.764Z",
+      "at": "2026-09-21T07:08:54.283Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5821,7 +6001,7 @@
       "stationId": "tradewinds"
     },
     "T1hEe7a2tWg": {
-      "at": "2026-09-02T07:56:17.780Z",
+      "at": "2026-09-21T07:08:54.277Z",
       "flags": [],
       "status": "OK",
       "countries": 228,
@@ -5832,7 +6012,7 @@
       "stationId": "tradewinds"
     },
     "yc7rAiO2ta4": {
-      "at": "2026-09-02T07:56:17.818Z",
+      "at": "2026-09-21T07:08:54.254Z",
       "flags": [],
       "status": "OK",
       "countries": 227,
@@ -5843,7 +6023,7 @@
       "stationId": "tradewinds"
     },
     "z25ZrH2Z6oI": {
-      "at": "2026-09-02T07:56:17.905Z",
+      "at": "2026-09-21T07:08:54.266Z",
       "flags": [],
       "status": "OK",
       "countries": 227,
@@ -5854,7 +6034,7 @@
       "stationId": "tradewinds"
     },
     "mnROAXLBy2M": {
-      "at": "2026-09-02T07:56:17.937Z",
+      "at": "2026-09-21T07:08:54.388Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5865,7 +6045,7 @@
       "stationId": "tradewinds"
     },
     "WQuShe7hJcI": {
-      "at": "2026-09-02T07:56:17.946Z",
+      "at": "2026-09-21T07:08:54.289Z",
       "flags": [],
       "status": "OK",
       "countries": 228,
@@ -5876,7 +6056,7 @@
       "stationId": "tradewinds"
     },
     "IPaBrlloEJw": {
-      "at": "2026-09-02T07:56:18.470Z",
+      "at": "2026-09-21T07:08:54.946Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5887,7 +6067,7 @@
       "stationId": "tradewinds"
     },
     "iffnJSLHiZY": {
-      "at": "2026-09-02T07:56:18.559Z",
+      "at": "2026-09-21T07:08:55.046Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5898,7 +6078,7 @@
       "stationId": "tradewinds"
     },
     "Ab93DcAb_JA": {
-      "at": "2026-09-02T07:56:18.645Z",
+      "at": "2026-09-21T07:08:55.170Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -5909,7 +6089,7 @@
       "stationId": "tradewinds"
     },
     "U7SID3xCeng": {
-      "at": "2026-09-02T07:56:18.695Z",
+      "at": "2026-09-21T07:08:55.004Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5920,7 +6100,7 @@
       "stationId": "tradewinds"
     },
     "YxlbkVWaO_k": {
-      "at": "2026-09-02T07:56:18.726Z",
+      "at": "2026-09-21T07:08:54.985Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5931,7 +6111,7 @@
       "stationId": "tradewinds"
     },
     "Os2uDKAUcDs": {
-      "at": "2026-09-02T07:56:18.732Z",
+      "at": "2026-09-21T07:08:55.092Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5942,7 +6122,7 @@
       "stationId": "tradewinds"
     },
     "ihjVwYS-Hco": {
-      "at": "2026-09-02T07:56:19.334Z",
+      "at": "2026-09-21T07:08:55.682Z",
       "flags": [],
       "status": "OK",
       "countries": 228,
@@ -5953,7 +6133,7 @@
       "stationId": "tradewinds"
     },
     "B9LJFrwwlvM": {
-      "at": "2026-09-02T07:56:19.433Z",
+      "at": "2026-09-21T07:08:55.725Z",
       "flags": [],
       "status": "OK",
       "countries": 228,
@@ -5964,7 +6144,7 @@
       "stationId": "tradewinds"
     },
     "8L64BcCRDAE": {
-      "at": "2026-09-02T07:56:19.535Z",
+      "at": "2026-09-21T07:08:56.079Z",
       "flags": [],
       "status": "OK",
       "countries": 246,
@@ -5975,7 +6155,7 @@
       "stationId": "drift-mode"
     },
     "0kYc55bXJFI": {
-      "at": "2026-09-02T07:56:19.542Z",
+      "at": "2026-09-21T07:08:55.859Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5986,7 +6166,7 @@
       "stationId": "drift-mode"
     },
     "YC6pJOH7bF0": {
-      "at": "2026-09-02T07:56:19.566Z",
+      "at": "2026-09-21T07:08:55.800Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -5997,7 +6177,7 @@
       "stationId": "drift-mode"
     },
     "UfcAVejslrU": {
-      "at": "2026-09-02T07:56:19.652Z",
+      "at": "2026-09-21T07:08:55.883Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6008,7 +6188,7 @@
       "stationId": "drift-mode"
     },
     "wLxbD0CkS30": {
-      "at": "2026-09-02T07:56:20.199Z",
+      "at": "2026-09-21T07:08:56.449Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6019,7 +6199,7 @@
       "stationId": "drift-mode"
     },
     "BD3D5mCjt7I": {
-      "at": "2026-09-02T07:56:20.290Z",
+      "at": "2026-09-21T07:08:56.506Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6030,7 +6210,7 @@
       "stationId": "drift-mode"
     },
     "jl_z5JvrKlc": {
-      "at": "2026-09-02T07:56:20.344Z",
+      "at": "2026-09-21T07:08:56.626Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6041,7 +6221,7 @@
       "stationId": "drift-mode"
     },
     "QJ-polFpeX0": {
-      "at": "2026-09-02T07:56:20.429Z",
+      "at": "2026-09-21T07:08:56.685Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6052,7 +6232,7 @@
       "stationId": "drift-mode"
     },
     "sfBlBs25Ewk": {
-      "at": "2026-09-02T07:56:20.445Z",
+      "at": "2026-09-21T07:08:56.672Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6063,7 +6243,7 @@
       "stationId": "drift-mode"
     },
     "dIwwjy4slI8": {
-      "at": "2026-09-02T07:56:20.472Z",
+      "at": "2026-09-21T07:08:56.760Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6074,7 +6254,7 @@
       "stationId": "drift-mode"
     },
     "vTaBX_FoGWk": {
-      "at": "2026-09-02T07:56:21.017Z",
+      "at": "2026-09-21T07:08:57.163Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6085,7 +6265,7 @@
       "stationId": "drift-mode"
     },
     "ShW8YyueC1s": {
-      "at": "2026-09-02T07:56:21.049Z",
+      "at": "2026-09-21T07:08:57.306Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6096,7 +6276,7 @@
       "stationId": "drift-mode"
     },
     "-bc37fU36Vk": {
-      "at": "2026-09-02T07:56:21.058Z",
+      "at": "2026-09-21T07:08:57.426Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6107,7 +6287,7 @@
       "stationId": "drift-mode"
     },
     "SwmRJQAx8eA": {
-      "at": "2026-09-02T07:56:21.368Z",
+      "at": "2026-09-21T07:08:57.376Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6118,7 +6298,7 @@
       "stationId": "drift-mode"
     },
     "bWXazVhlyxQ": {
-      "at": "2026-09-03T07:44:54.331Z",
+      "at": "2026-09-21T07:08:57.506Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6129,7 +6309,7 @@
       "stationId": "rise-up"
     },
     "ga6v91ZGL1U": {
-      "at": "2026-09-03T07:44:54.392Z",
+      "at": "2026-09-21T07:08:57.555Z",
       "flags": [],
       "status": "OK",
       "countries": 122,
@@ -6140,7 +6320,7 @@
       "stationId": "rise-up"
     },
     "3L4YrGaR8E4": {
-      "at": "2026-09-03T07:44:54.400Z",
+      "at": "2026-09-21T07:08:57.935Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6151,7 +6331,7 @@
       "stationId": "rise-up"
     },
     "m4L20t8Dvlg": {
-      "at": "2026-09-03T07:44:54.415Z",
+      "at": "2026-09-21T07:08:58.139Z",
       "flags": [],
       "status": "OK",
       "countries": 248,
@@ -6162,7 +6342,7 @@
       "stationId": "rise-up"
     },
     "n6cBRx2Ie6A": {
-      "at": "2026-09-03T07:44:54.445Z",
+      "at": "2026-09-21T07:08:58.241Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6173,7 +6353,7 @@
       "stationId": "rise-up"
     },
     "wDUYCyajDcs": {
-      "at": "2026-09-03T07:44:54.512Z",
+      "at": "2026-09-21T07:08:58.083Z",
       "flags": [],
       "status": "OK",
       "countries": 122,
@@ -6184,7 +6364,7 @@
       "stationId": "rise-up"
     },
     "R-rDQs5NOP4": {
-      "at": "2026-09-03T07:44:55.070Z",
+      "at": "2026-09-21T07:08:58.285Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6195,7 +6375,7 @@
       "stationId": "rise-up"
     },
     "zUzd9KyIDrM": {
-      "at": "2026-09-03T07:44:55.093Z",
+      "at": "2026-09-21T07:08:58.386Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6206,7 +6386,7 @@
       "stationId": "rise-up"
     },
     "Qs2aG09y5FM": {
-      "at": "2026-09-03T07:44:55.149Z",
+      "at": "2026-09-21T07:08:58.646Z",
       "flags": [],
       "status": "OK",
       "countries": 248,
@@ -6217,7 +6397,7 @@
       "stationId": "rise-up"
     },
     "v0Uc6ZWDF3c": {
-      "at": "2026-09-03T07:44:55.274Z",
+      "at": "2026-09-21T07:08:58.908Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6228,7 +6408,7 @@
       "stationId": "rise-up"
     },
     "np3FXa4ORbY": {
-      "at": "2026-09-03T07:44:55.407Z",
+      "at": "2026-09-21T07:08:58.874Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6239,18 +6419,18 @@
       "stationId": "rise-up"
     },
     "cVlddw6e8vI": {
-      "at": "2026-09-03T07:44:55.504Z",
+      "at": "2026-09-21T07:08:58.989Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
       "embeddable": true,
       "seconds": 261,
       "title": "Beat the Bastards",
-      "channel": "The Exploited - Topic",
+      "channel": "Exploited - Topic",
       "stationId": "rise-up"
     },
     "9-SQGOYOjxs": {
-      "at": "2026-09-03T07:44:55.894Z",
+      "at": "2026-09-22T08:16:24.468Z",
       "flags": [],
       "status": "OK",
       "countries": 246,
@@ -6261,7 +6441,7 @@
       "stationId": "rise-up"
     },
     "r7Hb4bxF12E": {
-      "at": "2026-09-03T07:44:55.951Z",
+      "at": "2026-09-22T08:16:24.480Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6272,7 +6452,7 @@
       "stationId": "rise-up"
     },
     "12kcpP-8jfM": {
-      "at": "2026-09-03T07:44:56.011Z",
+      "at": "2026-09-22T08:16:24.503Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6283,7 +6463,7 @@
       "stationId": "rise-up"
     },
     "_RYBDTnS7dg": {
-      "at": "2026-09-03T07:44:56.135Z",
+      "at": "2026-09-22T08:16:24.443Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6294,7 +6474,7 @@
       "stationId": "rise-up"
     },
     "c7RUeMCZL3Q": {
-      "at": "2026-09-03T07:44:56.208Z",
+      "at": "2026-09-22T08:16:24.473Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6305,7 +6485,7 @@
       "stationId": "rise-up"
     },
     "1EKCAE1vDzY": {
-      "at": "2026-09-03T07:44:56.607Z",
+      "at": "2026-09-22T08:16:24.497Z",
       "flags": [],
       "status": "OK",
       "countries": 248,
@@ -6316,7 +6496,7 @@
       "stationId": "rise-up"
     },
     "t6cF3ayJgM4": {
-      "at": "2026-09-03T07:44:56.712Z",
+      "at": "2026-09-22T08:16:25.270Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6327,7 +6507,7 @@
       "stationId": "rise-up"
     },
     "NkAe30aEG5c": {
-      "at": "2026-09-03T07:44:56.824Z",
+      "at": "2026-09-22T08:16:25.339Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6338,7 +6518,7 @@
       "stationId": "rise-up"
     },
     "y4GwwuGnmAs": {
-      "at": "2026-09-03T07:44:56.862Z",
+      "at": "2026-09-22T08:16:25.145Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6349,7 +6529,7 @@
       "stationId": "rise-up"
     },
     "gt_Xb-ZfRXU": {
-      "at": "2026-09-03T07:44:56.902Z",
+      "at": "2026-09-22T08:16:25.198Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6360,7 +6540,7 @@
       "stationId": "rise-up"
     },
     "-dDjjWw5v_k": {
-      "at": "2026-09-03T07:44:56.914Z",
+      "at": "2026-09-22T08:16:25.327Z",
       "flags": [],
       "status": "OK",
       "countries": 242,
@@ -6371,7 +6551,7 @@
       "stationId": "rise-up"
     },
     "PlGmYetiCjA": {
-      "at": "2026-09-03T07:44:57.397Z",
+      "at": "2026-09-22T08:16:25.191Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6382,7 +6562,7 @@
       "stationId": "rise-up"
     },
     "ngUnLL4CAck": {
-      "at": "2026-09-03T07:44:57.543Z",
+      "at": "2026-09-22T08:16:25.920Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6393,7 +6573,7 @@
       "stationId": "drift-mode"
     },
     "ONQt97F9KKI": {
-      "at": "2026-09-03T07:44:57.646Z",
+      "at": "2026-09-22T08:16:25.953Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6404,7 +6584,7 @@
       "stationId": "drift-mode"
     },
     "mwJTwG5r5Ks": {
-      "at": "2026-09-03T07:44:57.690Z",
+      "at": "2026-09-22T08:16:25.908Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6415,7 +6595,7 @@
       "stationId": "drift-mode"
     },
     "2CN1qXJJODI": {
-      "at": "2026-09-03T07:44:57.712Z",
+      "at": "2026-09-22T08:16:25.971Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6426,7 +6606,7 @@
       "stationId": "drift-mode"
     },
     "nvtV4fvNJpY": {
-      "at": "2026-09-03T07:44:57.730Z",
+      "at": "2026-09-22T08:16:26.024Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6437,7 +6617,7 @@
       "stationId": "drift-mode"
     },
     "SDru80vHKxU": {
-      "at": "2026-09-03T07:44:58.284Z",
+      "at": "2026-09-22T08:16:26.019Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6448,7 +6628,7 @@
       "stationId": "drift-mode"
     },
     "l81XVNzdZts": {
-      "at": "2026-09-03T07:44:58.365Z",
+      "at": "2026-09-22T08:16:26.748Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6459,7 +6639,7 @@
       "stationId": "drift-mode"
     },
     "5nCRNIKkKSs": {
-      "at": "2026-09-03T07:44:58.400Z",
+      "at": "2026-09-22T08:16:26.689Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6470,7 +6650,7 @@
       "stationId": "drift-mode"
     },
     "pygwK0sBUdM": {
-      "at": "2026-09-03T07:44:58.422Z",
+      "at": "2026-09-22T08:16:26.776Z",
       "flags": [],
       "status": "OK",
       "countries": 248,
@@ -6481,7 +6661,7 @@
       "stationId": "drift-mode"
     },
     "CQ8zglIXZi8": {
-      "at": "2026-09-03T07:44:58.603Z",
+      "at": "2026-09-22T08:16:26.723Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6492,7 +6672,7 @@
       "stationId": "drift-mode"
     },
     "TvGXQXN5CQ4": {
-      "at": "2026-09-03T07:44:58.630Z",
+      "at": "2026-09-22T08:16:26.770Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6503,7 +6683,7 @@
       "stationId": "drift-mode"
     },
     "bWw6hMgRILQ": {
-      "at": "2026-09-03T07:44:59.116Z",
+      "at": "2026-09-22T08:16:26.667Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6514,7 +6694,7 @@
       "stationId": "drift-mode"
     },
     "MYtX2zYlfdA": {
-      "at": "2026-09-03T07:44:59.136Z",
+      "at": "2026-09-22T08:16:27.380Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6525,7 +6705,7 @@
       "stationId": "drift-mode"
     },
     "csnryqUpO-g": {
-      "at": "2026-09-03T07:44:59.281Z",
+      "at": "2026-09-22T08:16:27.384Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6536,7 +6716,7 @@
       "stationId": "drift-mode"
     },
     "75O11W5EZAU": {
-      "at": "2026-09-03T07:44:59.490Z",
+      "at": "2026-09-22T08:16:27.503Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6547,7 +6727,7 @@
       "stationId": "drift-mode"
     },
     "g7Jgc1bVWbo": {
-      "at": "2026-09-03T07:44:59.536Z",
+      "at": "2026-09-22T08:16:27.490Z",
       "flags": [],
       "status": "OK",
       "countries": 245,
@@ -6558,7 +6738,7 @@
       "stationId": "drift-mode"
     },
     "VmqZTrthXbA": {
-      "at": "2026-09-04T07:55:55.683Z",
+      "at": "2026-09-22T08:16:27.447Z",
       "flags": [],
       "status": "OK",
       "countries": 122,
@@ -6569,7 +6749,7 @@
       "stationId": "drift-mode"
     },
     "osA0Wl_-EHU": {
-      "at": "2026-09-04T07:55:55.736Z",
+      "at": "2026-09-22T08:16:27.553Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6580,7 +6760,7 @@
       "stationId": "drift-mode"
     },
     "bFNbOvzvvYI": {
-      "at": "2026-09-04T07:55:55.747Z",
+      "at": "2026-09-22T08:16:28.180Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6591,7 +6771,7 @@
       "stationId": "drift-mode"
     },
     "25zpPS_OdhQ": {
-      "at": "2026-09-04T07:55:55.757Z",
+      "at": "2026-09-22T08:16:28.079Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6602,7 +6782,7 @@
       "stationId": "drift-mode"
     },
     "Vi3bSG3jL_M": {
-      "at": "2026-09-04T07:55:55.824Z",
+      "at": "2026-09-22T08:16:28.337Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6613,7 +6793,7 @@
       "stationId": "drift-mode"
     },
     "4qrEH65DeCE": {
-      "at": "2026-09-04T07:55:55.906Z",
+      "at": "2026-09-22T08:16:28.201Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6624,7 +6804,7 @@
       "stationId": "drift-mode"
     },
     "OtJQGz9mg0I": {
-      "at": "2026-09-04T07:55:56.490Z",
+      "at": "2026-09-22T08:16:28.108Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6635,7 +6815,7 @@
       "stationId": "drift-mode"
     },
     "t1UkSZGoCjs": {
-      "at": "2026-09-04T07:55:56.506Z",
+      "at": "2026-09-22T08:16:28.290Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6646,7 +6826,7 @@
       "stationId": "drift-mode"
     },
     "Wu-7ZpcyKdA": {
-      "at": "2026-09-04T07:55:56.576Z",
+      "at": "2026-09-22T08:16:28.759Z",
       "flags": [],
       "status": "OK",
       "countries": 123,
@@ -6657,7 +6837,7 @@
       "stationId": "drift-mode"
     },
     "_482aKbIfdc": {
-      "at": "2026-09-04T07:55:56.589Z",
+      "at": "2026-09-22T08:16:28.841Z",
       "flags": [],
       "status": "OK",
       "countries": 249,
@@ -6668,7 +6848,7 @@
       "stationId": "drift-mode"
     },
     "-x3sbeokO3A": {
-      "at": "2026-09-04T07:55:56.813Z",
+      "at": "2026-09-22T08:16:29.138Z",
       "flags": [],
       "status": "OK",
       "countries": 243,
@@ -6679,7 +6859,7 @@
       "stationId": "drift-mode"
     },
     "eu6rBUu5-SA": {
-      "at": "2026-09-04T07:55:56.835Z",
+      "at": "2026-09-22T08:16:28.974Z",
       "flags": [],
       "status": "OK",
       "countries": 248,
@@ -6690,8 +6870,9 @@
       "stationId": "drift-mode"
     },
     "khBhiVhPD_Y": {
-      "at": "2026-09-04T07:55:57.143Z",
+      "at": "2026-09-23T08:13:16.538Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -6701,8 +6882,9 @@
       "stationId": "drift-mode"
     },
     "2Tqy6be0Juc": {
-      "at": "2026-09-04T07:55:57.317Z",
+      "at": "2026-09-23T08:13:16.611Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 120,
       "embeddable": true,
@@ -6712,8 +6894,9 @@
       "stationId": "drift-mode"
     },
     "ga0UH5znGmw": {
-      "at": "2026-09-04T07:55:57.402Z",
+      "at": "2026-09-23T08:13:16.552Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -6723,8 +6906,9 @@
       "stationId": "drift-mode"
     },
     "hctJTb01NNI": {
-      "at": "2026-09-04T07:55:57.547Z",
+      "at": "2026-09-23T08:13:16.509Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -6734,8 +6918,9 @@
       "stationId": "drift-mode"
     },
     "00Ipvqnk5is": {
-      "at": "2026-09-04T07:55:57.576Z",
+      "at": "2026-09-23T08:13:16.547Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -6745,8 +6930,9 @@
       "stationId": "drift-mode"
     },
     "IxGj-uXJtMY": {
-      "at": "2026-09-04T07:55:57.645Z",
+      "at": "2026-09-23T08:13:17.303Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 122,
       "embeddable": true,
@@ -6756,8 +6942,9 @@
       "stationId": "drift-mode"
     },
     "ljypVwBF_e8": {
-      "at": "2026-09-04T07:55:57.965Z",
+      "at": "2026-09-23T08:13:17.272Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -6767,8 +6954,9 @@
       "stationId": "drift-mode"
     },
     "nZyYcmK7a0I": {
-      "at": "2026-09-04T07:55:58.030Z",
+      "at": "2026-09-23T08:13:17.334Z",
       "flags": [],
+      "strikes": 0,
       "status": "OK",
       "countries": 249,
       "embeddable": true,
@@ -6787,6 +6975,1448 @@
       "title": "Marijuanaut's Theme",
       "channel": "Sleep - Topic",
       "stationId": "green-room"
+    },
+    "eI2Pn2Rgh_w": {
+      "at": "2026-09-22T23:17:15.202Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 147,
+      "title": "Forever Peruse",
+      "channel": "식료품groceries - Topic",
+      "stationId": "neon-stasis"
+    },
+    "-iaqgJiDYv8": {
+      "at": "2026-09-22T23:17:15.051Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 137,
+      "title": "Manufacturer's Suggested Retail Price",
+      "channel": "식료품groceries - Topic",
+      "stationId": "neon-stasis"
+    },
+    "XpXX_M58df0": {
+      "at": "2026-09-22T23:17:15.367Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 171,
+      "title": "Rubbermaid",
+      "channel": "PowerPCME - Topic",
+      "stationId": "neon-stasis"
+    },
+    "sB1u18vHSco": {
+      "at": "2026-09-22T23:17:15.137Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 247,
+      "title": "Hantasi - Food Court",
+      "channel": "music from the internet",
+      "stationId": "neon-stasis"
+    },
+    "xGmAzTXyOYc": {
+      "at": "2026-09-22T23:17:15.246Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 178,
+      "title": "An Evening Spent Alone in the Vast Parking Lot",
+      "channel": "식료품groceries - Topic",
+      "stationId": "neon-stasis"
+    },
+    "fmWJMYL09po": {
+      "at": "2026-09-22T23:17:15.099Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 296,
+      "title": "Hantasi - Escalator",
+      "channel": "music from the internet",
+      "stationId": "neon-stasis"
+    },
+    "Z7JGPByPr8s": {
+      "at": "2026-09-22T23:17:15.783Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 189,
+      "title": "Parkway",
+      "channel": "Luxury Elite - Topic",
+      "stationId": "neon-stasis"
+    },
+    "f_uE5ORwPfw": {
+      "at": "2026-09-22T23:17:15.857Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 128,
+      "title": "Attention shoppers!",
+      "channel": "PowerPCME - Topic",
+      "stationId": "neon-stasis"
+    },
+    "z8KIa6tWoAE": {
+      "at": "2026-09-22T23:17:15.886Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 118,
+      "title": "Upscale",
+      "channel": "Luxury Elite - Topic",
+      "stationId": "neon-stasis"
+    },
+    "on6DxBgfsDY": {
+      "at": "2026-09-14T07:40:09.129Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 156,
+      "title": "Suspect Device",
+      "channel": "Stiff Little Fingers - Topic",
+      "stationId": "rise-up"
+    },
+    "IL0nhn88aVA": {
+      "at": "2026-09-14T07:40:09.189Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 122,
+      "embeddable": true,
+      "seconds": 220,
+      "title": "Die for the Government",
+      "channel": "Anti-Flag - Topic",
+      "stationId": "rise-up"
+    },
+    "xJLcvKeVcFI": {
+      "at": "2026-09-22T23:17:16.053Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 128,
+      "title": "Crystal",
+      "channel": "Luxury Elite - Topic",
+      "stationId": "neon-stasis"
+    },
+    "gnWKhq8l_5c": {
+      "at": "2026-09-14T07:40:09.733Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 129,
+      "title": "Bad Brains - Banned in D.C.",
+      "channel": "ROIRvideos",
+      "stationId": "rise-up"
+    },
+    "RY9TbZMlTaI": {
+      "at": "2026-09-14T07:40:09.865Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 214,
+      "title": "Against Me! - White People For Peace (Video)",
+      "channel": "Warner Records Vault",
+      "stationId": "rise-up"
+    },
+    "-rJ7DR0X9kw": {
+      "at": "2026-09-14T07:40:09.896Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 249,
+      "title": "Refused - \"Liberation Frequency\" (Full Album Stream)",
+      "channel": "Epitaph Records",
+      "stationId": "rise-up"
+    },
+    "lycEQJW6GFw": {
+      "at": "2026-09-14T07:40:09.908Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 242,
+      "embeddable": true,
+      "seconds": 159,
+      "title": "Today's Empires, Tomorrow's Ashes",
+      "channel": "Propagandhi - Topic",
+      "stationId": "rise-up"
+    },
+    "_lt4O-EHNnw": {
+      "at": "2026-09-14T07:40:10.006Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 231,
+      "title": "The Clash - Clampdown (Official Audio)",
+      "channel": "theclashVEVO",
+      "stationId": "rise-up"
+    },
+    "4MGsEaDT8zE": {
+      "at": "2026-09-14T07:40:10.108Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 122,
+      "embeddable": true,
+      "seconds": 93,
+      "title": "Police Story",
+      "channel": "Black Flag - Topic",
+      "stationId": "rise-up"
+    },
+    "9ivNaKshsYE": {
+      "at": "2026-09-14T07:40:10.489Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 196,
+      "title": "Pennywise - F**ck Authority",
+      "channel": "HeavyStonerDoomBlues",
+      "stationId": "rise-up"
+    },
+    "KATcnegE8Mk": {
+      "at": "2026-09-14T07:40:10.643Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 147,
+      "title": "Fires of Freya",
+      "channel": "Swordlender - Topic",
+      "stationId": "the-crypt"
+    },
+    "joCWy97_T1o": {
+      "at": "2026-09-14T07:40:10.672Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 399,
+      "title": "Aftonvärldar",
+      "channel": "Trollslottet - Topic",
+      "stationId": "the-crypt"
+    },
+    "pK7DBCfzO40": {
+      "at": "2026-09-14T07:40:10.735Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 174,
+      "title": "Northbound",
+      "channel": "Swordlender - Topic",
+      "stationId": "the-crypt"
+    },
+    "cHvXwGaR428": {
+      "at": "2026-09-14T07:40:10.808Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 492,
+      "title": "Maskträdet",
+      "channel": "Trollslottet - Topic",
+      "stationId": "the-crypt"
+    },
+    "sUli-Y0gZOs": {
+      "at": "2026-09-14T07:40:10.843Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 147,
+      "title": "Bad Religion - \"Punk Rock Song\"",
+      "channel": "Bad Religion",
+      "stationId": "rise-up"
+    },
+    "uB0EDMs2Irc": {
+      "at": "2026-09-14T07:40:11.162Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 279,
+      "title": "Trolldom",
+      "channel": "Trollslottet - Topic",
+      "stationId": "the-crypt"
+    },
+    "-sJQqJxC8G0": {
+      "at": "2026-09-14T07:40:11.331Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 123,
+      "title": "A Once Majestic Castle in Ruins",
+      "channel": "Vikorra Doom - Topic",
+      "stationId": "the-crypt"
+    },
+    "1fMEfDmxle0": {
+      "at": "2026-09-14T07:40:11.348Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 211,
+      "title": "Dreams of My Former Throne",
+      "channel": "Vikorra Doom - Topic",
+      "stationId": "the-crypt"
+    },
+    "KLDjf0kuHF8": {
+      "at": "2026-09-14T07:40:11.426Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 313,
+      "title": "Moss Shod Battlements",
+      "channel": "Fief - Topic",
+      "stationId": "the-crypt"
+    },
+    "O-fowRk_8Hw": {
+      "at": "2026-09-14T07:40:11.526Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 337,
+      "title": "The Knight of the Elves Blows His Horn",
+      "channel": "Fief - Topic",
+      "stationId": "the-crypt"
+    },
+    "fgcAelgqRR8": {
+      "at": "2026-09-14T07:40:11.783Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 185,
+      "title": "Thorngrove",
+      "channel": "Old Tower - Topic",
+      "stationId": "the-crypt"
+    },
+    "yYGybV_5FcM": {
+      "at": "2026-09-14T07:40:11.877Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 122,
+      "embeddable": true,
+      "seconds": 364,
+      "title": "Fade Away",
+      "channel": "Groovecatcher - Topic",
+      "stationId": "slow-orbit"
+    },
+    "HfiXDIciI8o": {
+      "at": "2026-09-14T07:40:12.197Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 325,
+      "title": "Groovecatcher - Moonstruck",
+      "channel": "basicLUX Records",
+      "stationId": "slow-orbit"
+    },
+    "3sDO3p8AYfE": {
+      "at": "2026-09-14T07:40:12.208Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 348,
+      "title": "Moodlander",
+      "channel": "Smooth Genestar - Topic",
+      "stationId": "slow-orbit"
+    },
+    "DOhyAYeAga4": {
+      "at": "2026-09-14T07:40:12.277Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 300,
+      "title": "Groovecatcher - Groove Diving",
+      "channel": "basicLUX Records",
+      "stationId": "slow-orbit"
+    },
+    "hFMZViP06uQ": {
+      "at": "2026-09-14T07:40:12.327Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 405,
+      "title": "Tokyo Codes",
+      "channel": "Smooth Genestar - Topic",
+      "stationId": "slow-orbit"
+    },
+    "UkwiKJ9rKiA": {
+      "at": "2026-09-14T07:40:12.565Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 342,
+      "title": "Sleepless in Reykjavik",
+      "channel": "Smooth Genestar - Topic",
+      "stationId": "slow-orbit"
+    },
+    "4TSNYZIZQz4": {
+      "at": "2026-09-14T07:40:12.649Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 307,
+      "title": "The William Caslon Experience – Alaska",
+      "channel": "mber",
+      "stationId": "slow-orbit"
+    },
+    "a9pqTHlPMXI": {
+      "at": "2026-09-14T07:40:12.866Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 360,
+      "title": "Beautiful Day",
+      "channel": "Fascinating Earthbound Objects - Topic",
+      "stationId": "slow-orbit"
+    },
+    "Ily1plRBESw": {
+      "at": "2026-09-14T07:40:12.983Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 235,
+      "title": "Venice Beach",
+      "channel": "Celeste Lear - Topic",
+      "stationId": "slow-orbit"
+    },
+    "zur8YJXlCQ4": {
+      "at": "2026-09-14T07:40:13.017Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 300,
+      "title": "Digitalis",
+      "channel": "Celeste Lear - Topic",
+      "stationId": "slow-orbit"
+    },
+    "mK6ZtG1l7rk": {
+      "at": "2026-09-15T07:13:35.179Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 118,
+      "title": "Martin Denny - Similau",
+      "channel": "Way Gone Music",
+      "stationId": "tradewinds"
+    },
+    "8VoGolxjRsA": {
+      "at": "2026-09-15T07:13:35.354Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 176,
+      "title": "Akaka Falls",
+      "channel": "Arthur Lyman - Topic",
+      "stationId": "tradewinds"
+    },
+    "erL4qnIIeVg": {
+      "at": "2026-09-15T07:13:35.360Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 187,
+      "title": "Martin Denny - Stone God",
+      "channel": "Way Gone Music",
+      "stationId": "tradewinds"
+    },
+    "eZ1BWvwz-1Y": {
+      "at": "2026-09-15T07:13:35.364Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 173,
+      "title": "Busy Port (Original Mono Version)",
+      "channel": "Martin Denny - Topic",
+      "stationId": "tradewinds"
+    },
+    "UP0ocIaey4I": {
+      "at": "2026-09-15T07:13:35.385Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 165,
+      "title": "Yellow Bird",
+      "channel": "Arthur Lyman - Topic",
+      "stationId": "tradewinds"
+    },
+    "7xRuJiHijlU": {
+      "at": "2026-09-15T07:13:35.414Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 180,
+      "title": "Tiki (Remastered)",
+      "channel": "The Gene Rains Group - Topic",
+      "stationId": "tradewinds"
+    },
+    "0fxAl-e6QNw": {
+      "at": "2026-09-15T07:13:35.996Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 188,
+      "title": "Jungle River Boat",
+      "channel": "Les Baxter - Topic",
+      "stationId": "tradewinds"
+    },
+    "yjyzRv67oBE": {
+      "at": "2026-09-15T07:13:36.134Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 181,
+      "title": "Shangri-La (Remastered)",
+      "channel": "The Gene Rains Group - Topic",
+      "stationId": "tradewinds"
+    },
+    "c7UlDiP66GI": {
+      "at": "2026-09-15T07:13:36.150Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 190,
+      "title": "Sweet Pikake Serenade",
+      "channel": "The WAITIKI 7 - Topic",
+      "stationId": "tradewinds"
+    },
+    "AkofGzKRFj4": {
+      "at": "2026-09-15T07:13:36.223Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 323,
+      "title": "I Guess I'll Hang My Tears Out To Dry",
+      "channel": "Dexter Gordon - Topic",
+      "stationId": "after-hours"
+    },
+    "dpjM7wwSTxI": {
+      "at": "2026-09-15T07:13:36.373Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 366,
+      "title": "Don't Explain (Remastered)",
+      "channel": "Dexter Gordon - Topic",
+      "stationId": "after-hours"
+    },
+    "QAPpsWcozao": {
+      "at": "2026-09-15T07:13:36.408Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 165,
+      "title": "Ruby",
+      "channel": "The WAITIKI 7 - Topic",
+      "stationId": "tradewinds"
+    },
+    "6lJeothOwCU": {
+      "at": "2026-09-15T07:13:36.862Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 369,
+      "title": "Along Came Betty",
+      "channel": "Art Blakey - Topic",
+      "stationId": "after-hours"
+    },
+    "-LbQbmd-Oyc": {
+      "at": "2026-09-15T07:13:36.893Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 327,
+      "title": "I See Your Face Before Me",
+      "channel": "Hank Mobley - Topic",
+      "stationId": "after-hours"
+    },
+    "UfUIzb4IFgA": {
+      "at": "2026-09-15T07:13:36.994Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 547,
+      "title": "Soul Station (Remastered 1999/Rudy Van Gelder Edition)",
+      "channel": "Hank Mobley - Topic",
+      "stationId": "after-hours"
+    },
+    "uRjshy_n_yE": {
+      "at": "2026-09-15T07:13:37.110Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 383,
+      "title": "Ceora",
+      "channel": "Lee Morgan - Topic",
+      "stationId": "after-hours"
+    },
+    "wB4xWjgbGwY": {
+      "at": "2026-09-15T07:13:37.214Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 121,
+      "embeddable": true,
+      "seconds": 429,
+      "title": "I Remember Clifford (Rudy Van Gelder Edition / Remastered 2007)",
+      "channel": "Lee Morgan - Topic",
+      "stationId": "after-hours"
+    },
+    "ieaAHwvqljg": {
+      "at": "2026-09-15T07:13:37.383Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 362,
+      "title": "Peace",
+      "channel": "Horace Silver - Topic",
+      "stationId": "after-hours"
+    },
+    "fJyq_F0g3KE": {
+      "at": "2026-09-15T07:13:37.484Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 423,
+      "title": "Lonely Woman (Remastered 1999/Rudy Van Gelder Edition)",
+      "channel": "Horace Silver - Topic",
+      "stationId": "after-hours"
+    },
+    "CYg_3pQN-LU": {
+      "at": "2026-09-15T07:13:37.585Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 121,
+      "embeddable": true,
+      "seconds": 414,
+      "title": "Infant Eyes (Remastered1998/Rudy Van Gelder Edition)",
+      "channel": "Wayne Shorter - Topic",
+      "stationId": "after-hours"
+    },
+    "mZNEEKtA8hU": {
+      "at": "2026-09-15T07:13:37.835Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 448,
+      "title": "God Bless the Child",
+      "channel": "Sonny Rollins - Topic",
+      "stationId": "after-hours"
+    },
+    "YnKImTAt7kE": {
+      "at": "2026-09-15T07:13:37.939Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 389,
+      "title": "You Don't Know What Love Is (Rudy Van Gelder Rudy Van Gelder Remastered 2006 / Shared ISRC)",
+      "channel": "Sonny Rollins - Topic",
+      "stationId": "after-hours"
+    },
+    "LgaIUqH0w6c": {
+      "at": "2026-09-15T07:13:37.967Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 100,
+      "embeddable": true,
+      "seconds": 450,
+      "title": "Footprints (Remastered)",
+      "channel": "Wayne Shorter - Topic",
+      "stationId": "after-hours"
+    },
+    "F5xhrGqTeos": {
+      "at": "2026-09-15T07:13:38.218Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 242,
+      "title": "Midnight Blue (Remastered 1999/Rudy Van Gelder Edition)",
+      "channel": "Kenny Burrell - Topic",
+      "stationId": "after-hours"
+    },
+    "vgB9BxK70I4": {
+      "at": "2026-09-15T07:13:38.301Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 220,
+      "title": "We'll Be Together Again",
+      "channel": "McCoy Tyner Trio - Topic",
+      "stationId": "after-hours"
+    },
+    "Ys9wiGNDCvA": {
+      "at": "2026-09-15T07:13:38.616Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 356,
+      "title": "Miles Davis - 'Round Midnight (Audio) (Official Audio)",
+      "channel": "MilesDavisVEVO",
+      "stationId": "after-hours"
+    },
+    "TLDflhhdPCg": {
+      "at": "2026-09-15T07:13:38.651Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 339,
+      "title": "Miles Davis - Blue In Green (Official Audio)",
+      "channel": "MilesDavisVEVO",
+      "stationId": "after-hours"
+    },
+    "oRh0hxV1_SU": {
+      "at": "2026-09-15T07:13:38.671Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 256,
+      "title": "Say It (Over And Over Again)",
+      "channel": "John Coltrane - Topic",
+      "stationId": "after-hours"
+    },
+    "bPAC6zt_1ZM": {
+      "at": "2026-09-15T07:13:38.755Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 265,
+      "title": "John Coltrane - Naima (2020 Remaster) [Official Audio]",
+      "channel": "John Coltrane",
+      "stationId": "after-hours"
+    },
+    "UOfwwwQUHjg": {
+      "at": "2026-09-15T07:13:39.038Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 247,
+      "embeddable": true,
+      "seconds": 356,
+      "title": "Bill Evans Trio - Young And Foolish (Remastered 2024 - Official Audio)",
+      "channel": "Bill Evans",
+      "stationId": "after-hours"
+    },
+    "EpVXH3Vm2wg": {
+      "at": "2026-09-15T07:13:39.208Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 295,
+      "title": "Bill Evans Trio - My Foolish Heart (Official Visualizer)",
+      "channel": "Bill Evans",
+      "stationId": "after-hours"
+    },
+    "6haQ1gJa644": {
+      "at": "2026-09-15T07:13:39.318Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 247,
+      "embeddable": true,
+      "seconds": 326,
+      "title": "Ruby My Dear by Thelonious Monk from 'Monk's Music'",
+      "channel": "Thelonious Monk",
+      "stationId": "after-hours"
+    },
+    "s569_FEcwAQ": {
+      "at": "2026-09-15T07:13:39.444Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 120,
+      "embeddable": true,
+      "seconds": 533,
+      "title": "Pannonica",
+      "channel": "Thelonious Monk - Topic",
+      "stationId": "after-hours"
+    },
+    "ENFGUo_Nfso": {
+      "at": "2026-09-15T07:13:39.540Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 141,
+      "title": "My Funny Valentine",
+      "channel": "Chet Baker - Topic",
+      "stationId": "after-hours"
+    },
+    "EssmF0evMlk": {
+      "at": "2026-09-15T07:13:39.607Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 247,
+      "embeddable": true,
+      "seconds": 412,
+      "title": "Chet Baker - Alone Together (Mono/Remastered 2023) (Official Audio)",
+      "channel": "Chet Baker",
+      "stationId": "after-hours"
+    },
+    "CWWO_VcdnHY": {
+      "at": "2026-09-15T07:13:39.872Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 288,
+      "title": "Goodbye Pork Pie Hat",
+      "channel": "Charles Mingus - Topic",
+      "stationId": "after-hours"
+    },
+    "XJ5FMEjWr5Q": {
+      "at": "2026-09-15T07:13:39.986Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 442,
+      "title": "Strange Meadow Lark",
+      "channel": "Dave Brubeck Quartet - Topic",
+      "stationId": "after-hours"
+    },
+    "CpB7-8SGlJ0": {
+      "at": "2026-09-15T07:13:40.212Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 660,
+      "title": "Autumn Leaves",
+      "channel": "Cannonball Adderley - Topic",
+      "stationId": "after-hours"
+    },
+    "GlUA8EHDPZA": {
+      "at": "2026-09-15T07:13:40.248Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 254,
+      "title": "You're Blase",
+      "channel": "Stan Getz - Topic",
+      "stationId": "after-hours"
+    },
+    "Z0e2G32f3IU": {
+      "at": "2026-09-15T07:13:40.404Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 489,
+      "title": "Poinciana (Live At The Pershing, Chicago, 1958)",
+      "channel": "Ahmad Jamal - Topic",
+      "stationId": "after-hours"
+    },
+    "1HnT3H8gOT4": {
+      "at": "2026-09-16T08:54:22.314Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 480,
+      "title": "Soulville",
+      "channel": "Ben Webster - Topic",
+      "stationId": "after-hours"
+    },
+    "546Xr62-kjE": {
+      "at": "2026-09-16T08:54:22.324Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 344,
+      "title": "Glad to Be Unhappy",
+      "channel": "Paul Desmond - Topic",
+      "stationId": "after-hours"
+    },
+    "Jmn7Ai-habM": {
+      "at": "2026-09-16T08:54:22.369Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 564,
+      "title": "Cool Struttin'",
+      "channel": "Sonny Clark - Topic",
+      "stationId": "after-hours"
+    },
+    "nlGQmhph8UQ": {
+      "at": "2026-09-16T08:54:22.415Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 247,
+      "embeddable": true,
+      "seconds": 579,
+      "title": "Red Garland Trio - Willow Weep For Me (Official Audio)",
+      "channel": "Red Garland",
+      "stationId": "after-hours"
+    },
+    "g5zq14_58PA": {
+      "at": "2026-09-16T08:54:22.426Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 62,
+      "embeddable": true,
+      "seconds": 358,
+      "title": "Moonglow",
+      "channel": "Coleman Hawkins - Topic",
+      "stationId": "after-hours"
+    },
+    "ebIKl1Ath08": {
+      "at": "2026-09-16T08:54:22.490Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 74,
+      "embeddable": true,
+      "seconds": 304,
+      "title": "My Ideal",
+      "channel": "Kenny Dorham - Topic",
+      "stationId": "after-hours"
+    },
+    "Ns4p9lVGYjc": {
+      "at": "2026-09-16T08:54:23.027Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 549,
+      "title": "La Mesha",
+      "channel": "Joe Henderson - Topic",
+      "stationId": "after-hours"
+    },
+    "7mOQxBen6wk": {
+      "at": "2026-09-16T08:54:23.047Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 239,
+      "title": "Darn That Dream (Remastered)",
+      "channel": "Art Farmer - Topic",
+      "stationId": "after-hours"
+    },
+    "f7Mv6TW-xP8": {
+      "at": "2026-09-16T08:54:23.111Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 282,
+      "title": "Wes Montgomery - Polka Dots And Moonbeams (Official Audio)",
+      "channel": "Wes Montgomery",
+      "stationId": "after-hours"
+    },
+    "7PC-AcrHEKU": {
+      "at": "2026-09-16T08:54:23.164Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 329,
+      "title": "Le Freak (2006 Remaster)",
+      "channel": "Chic - Topic",
+      "stationId": "mirrorball"
+    },
+    "xEvrZcBZbds": {
+      "at": "2026-09-16T08:54:23.282Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 121,
+      "embeddable": true,
+      "seconds": 403,
+      "title": "It Never Entered My Mind",
+      "channel": "Keith Jarrett - Topic",
+      "stationId": "after-hours"
+    },
+    "PP_JBPGkd-Y": {
+      "at": "2026-09-16T08:54:23.423Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 495,
+      "title": "Chic - Good Times (Original 12\" Mix) (Official Vinyl Video)",
+      "channel": "RHINO",
+      "stationId": "mirrorball"
+    },
+    "2A8iAGiCWX0": {
+      "at": "2026-09-16T08:54:23.756Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 118,
+      "embeddable": true,
+      "seconds": 371,
+      "title": "He's the Greatest Dancer (2018 Remaster)",
+      "channel": "Sister Sledge - Topic",
+      "stationId": "mirrorball"
+    },
+    "6dYWe1c3OyU": {
+      "at": "2026-09-16T08:54:23.898Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 244,
+      "embeddable": true,
+      "seconds": 194,
+      "title": "Gloria Gaynor - I Will Survive",
+      "channel": "GloriaGaynorVEVO",
+      "stationId": "mirrorball"
+    },
+    "c3vtOEiO6TY": {
+      "at": "2026-09-16T08:54:23.910Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 247,
+      "embeddable": true,
+      "seconds": 400,
+      "title": "Sylvester - You Make Me Feel (Mighty Real) (Official Audio)",
+      "channel": "Sylvester",
+      "stationId": "mirrorball"
+    },
+    "pG8TyIEAqps": {
+      "at": "2026-09-16T08:54:23.997Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 118,
+      "embeddable": true,
+      "seconds": 216,
+      "title": "Disco Inferno (Edit)",
+      "channel": "The Trammps - Topic",
+      "stationId": "mirrorball"
+    },
+    "_93PWvC2_vU": {
+      "at": "2026-09-16T08:54:24.130Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 289,
+      "title": "Earth, Wind & Fire, The Emotions - Boogie Wonderland (Audio)",
+      "channel": "EarthWindandFireVEVO",
+      "stationId": "mirrorball"
+    },
+    "8D4hcrkI2xU": {
+      "at": "2026-09-16T08:54:24.324Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 340,
+      "title": "Earth, Wind & Fire - Let's Groove (Official Audio)",
+      "channel": "EarthWindandFireVEVO",
+      "stationId": "mirrorball"
+    },
+    "1sqE6P3XyiQ": {
+      "at": "2026-09-16T08:54:24.605Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 256,
+      "title": "You Should Be Dancing",
+      "channel": "Bee Gees - Topic",
+      "stationId": "mirrorball"
+    },
+    "i2FW1WJc0lg": {
+      "at": "2026-09-16T08:54:24.687Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 422,
+      "title": "McFadden & Whitehead - Ain't No Stoppin' Us Now (Official Audio)",
+      "channel": "MFaddenWheadVEVO",
+      "stationId": "mirrorball"
+    },
+    "PhD58dP9kq8": {
+      "at": "2026-09-16T08:54:24.850Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 338,
+      "title": "Boogie Oogie Oogie (Single Version 2 / Remastered 1999)",
+      "channel": "A Taste Of Honey - Topic",
+      "stationId": "mirrorball"
+    },
+    "fI569nw0YUQ": {
+      "at": "2026-09-16T08:54:24.889Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 310,
+      "title": "Cheryl Lynn - Got To Be Real (Official Audio)",
+      "channel": "CherylLynnVEVO",
+      "stationId": "mirrorball"
+    },
+    "rUdw7V-FC_Q": {
+      "at": "2026-09-16T08:54:25.050Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 342,
+      "title": "Don't Leave Me This Way",
+      "channel": "Thelma Houston - Topic",
+      "stationId": "mirrorball"
+    },
+    "dKgLx6WiYKg": {
+      "at": "2026-09-16T08:54:25.155Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 245,
+      "title": "Forget Me Nots",
+      "channel": "Patrice Rushen - Topic",
+      "stationId": "mirrorball"
+    },
+    "A4-wvmX5Tbk": {
+      "at": "2026-09-16T08:54:25.401Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 246,
+      "title": "Diana Ross - Upside Down",
+      "channel": "koollatter",
+      "stationId": "mirrorball"
+    },
+    "QGKiC2suCHQ": {
+      "at": "2026-09-16T08:54:25.504Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 187,
+      "title": "Jungle Boogie",
+      "channel": "Kool & The Gang - Topic",
+      "stationId": "mirrorball"
+    },
+    "81wKSt0tkNs": {
+      "at": "2026-09-16T08:54:25.789Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 213,
+      "title": "Get Down On It (Single Version)",
+      "channel": "Kool & The Gang - Topic",
+      "stationId": "mirrorball"
+    },
+    "I3vFw6mkBIg": {
+      "at": "2026-09-16T08:54:25.852Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 122,
+      "embeddable": true,
+      "seconds": 393,
+      "title": "Shame",
+      "channel": "Evelyn \"Champagne\" King - Topic",
+      "stationId": "mirrorball"
+    },
+    "CbFiRZM8hhI": {
+      "at": "2026-09-16T08:54:25.958Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 122,
+      "embeddable": true,
+      "seconds": 365,
+      "title": "Love Come Down",
+      "channel": "Evelyn \"Champagne\" King - Topic",
+      "stationId": "mirrorball"
+    },
+    "_5oGtAKebps": {
+      "at": "2026-09-16T08:54:26.109Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 172,
+      "title": "Love Rollercoaster",
+      "channel": "Ohio Players - Topic",
+      "stationId": "mirrorball"
+    },
+    "gQw7b489DlE": {
+      "at": "2026-09-16T08:54:26.217Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 121,
+      "embeddable": true,
+      "seconds": 454,
+      "title": "One Nation Under a Groove",
+      "channel": "Funkadelic - Topic",
+      "stationId": "mirrorball"
+    },
+    "DTrMYauvX8M": {
+      "at": "2026-09-16T08:54:26.410Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 384,
+      "title": "Shake Your Pants",
+      "channel": "Cameo - Topic",
+      "stationId": "mirrorball"
+    },
+    "HBi3HQaCTgY": {
+      "at": "2026-09-16T08:54:26.633Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 382,
+      "title": "Call Me",
+      "channel": "Skyy - Topic",
+      "stationId": "mirrorball"
+    },
+    "tPBDMihPRJA": {
+      "at": "2026-09-16T08:54:26.851Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 242,
+      "title": "The Brothers Johnson - Stomp!",
+      "channel": "BrothersJohnsonVEVO",
+      "stationId": "mirrorball"
+    },
+    "X1ijvN7ADt4": {
+      "at": "2026-09-16T08:54:26.903Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 571,
+      "title": "Zapp - More Bounce To The Ounce (Official Audio)",
+      "channel": "RHINO",
+      "stationId": "mirrorball"
+    },
+    "ZdJmXeod0RE": {
+      "at": "2026-09-16T08:54:26.942Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 244,
+      "embeddable": true,
+      "seconds": 212,
+      "title": "Commodores - Brick House (Audio)",
+      "channel": "CommodoresVEVO",
+      "stationId": "mirrorball"
+    },
+    "z9FZ0l_P1NE": {
+      "at": "2026-09-16T08:54:27.069Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 119,
+      "embeddable": true,
+      "seconds": 252,
+      "title": "Burn Rubber On Me (Why You Wanna Hurt Me)",
+      "channel": "The Gap Band - Topic",
+      "stationId": "mirrorball"
+    },
+    "gBWH3OWfT2Y": {
+      "at": "2026-09-16T08:54:27.115Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 346,
+      "title": "Parliament - Give Up The Funk (Tear The Roof Off The Sucker)",
+      "channel": "BrownPrider Funk",
+      "stationId": "mirrorball"
+    },
+    "Qwvf2ilsogo": {
+      "at": "2026-09-16T08:54:27.478Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 304,
+      "title": "Shalamar - \"A Night To Remember\" (Official Video)",
+      "channel": "Solar Records",
+      "stationId": "mirrorball"
+    },
+    "eZ9B8CjIsjU": {
+      "at": "2026-09-16T08:54:27.738Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 247,
+      "embeddable": true,
+      "seconds": 247,
+      "title": "Chaka Khan - I'm Every Woman",
+      "channel": "Oh my gosh itz Mico",
+      "stationId": "mirrorball"
+    },
+    "-qBqHnevIn4": {
+      "at": "2026-09-17T07:02:42.361Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 482,
+      "title": "The Jacksons - Shake Your Body (Down to the Ground) (Official Audio)",
+      "channel": "TheJacksonsVEVO",
+      "stationId": "mirrorball"
+    },
+    "bJ0Rk3piR44": {
+      "at": "2026-09-17T07:02:42.415Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 304,
+      "title": "Boogie Nights",
+      "channel": "Heatwave - Topic",
+      "stationId": "mirrorball"
+    },
+    "vz9pZW5OvM4": {
+      "at": "2026-09-17T07:02:42.538Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 335,
+      "title": "Vicki Sue Robinson - Turn the Beat Around (Audio)",
+      "channel": "LegacyRecordingsVEVO",
+      "stationId": "mirrorball"
+    },
+    "tGmsFg-oQ6k": {
+      "at": "2026-09-17T07:02:42.553Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 415,
+      "title": "The O'Jays - I Love Music (Official Audio)",
+      "channel": "TheOJaysVEVO",
+      "stationId": "mirrorball"
+    },
+    "FRAA-EIM4d0": {
+      "at": "2026-09-17T07:02:42.639Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 247,
+      "embeddable": true,
+      "seconds": 230,
+      "title": "CandiStaton - Young Hearts Run Free (Official Music Video) [HD]",
+      "channel": "The Real Candi Staton",
+      "stationId": "mirrorball"
+    },
+    "Z6dqIYKIBSU": {
+      "at": "2026-09-17T07:02:42.798Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 469,
+      "title": "Lipps Inc. - Funkytown (Official Audio)",
+      "channel": "Lipps Inc.",
+      "stationId": "mirrorball"
+    },
+    "1xqMY8UAGgg": {
+      "at": "2026-09-17T07:02:43.288Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 277,
+      "title": "Ohio Players  -  Fire",
+      "channel": "AuntieSoul34",
+      "stationId": "mirrorball"
+    },
+    "9C7rHWKc8x0": {
+      "at": "2026-09-17T07:02:43.333Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 500,
+      "title": "Instant Replay (12\" Single)",
+      "channel": "Dan Hartman - Topic",
+      "stationId": "mirrorball"
+    },
+    "eB0aROCl530": {
+      "at": "2026-09-17T07:02:43.355Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 197,
+      "title": "Rose Royce - Car Wash (1976)",
+      "channel": "patel",
+      "stationId": "mirrorball"
+    },
+    "T_3FY2kEdOI": {
+      "at": "2026-09-17T07:02:43.389Z",
+      "flags": [],
+      "status": "OK",
+      "countries": 247,
+      "embeddable": true,
+      "seconds": 281,
+      "title": "Chaka Khan and Rufus - Ain't Nobody (lyrics)",
+      "channel": "Lyrixa",
+      "stationId": "mirrorball"
+    },
+    "BpXVjRQFhLU": {
+      "at": "2026-09-23T08:13:16.711Z",
+      "flags": [],
+      "strikes": 0,
+      "status": "OK",
+      "countries": 123,
+      "embeddable": true,
+      "seconds": 261,
+      "title": "Half Moon",
+      "channel": "Home - Topic",
+      "stationId": "neon-stasis"
     }
   }
 }

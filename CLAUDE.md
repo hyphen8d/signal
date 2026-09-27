@@ -440,8 +440,9 @@ program):
   run; and the 700ms waits out `playBootFlicker()`'s ~540ms of box-border
   beats, which do **not** check `visualizerActive` and would otherwise draw
   four box frames across the playfield. It goes straight to
-  `enterVisualizer()`, around the LINE INPUT consent card, on the same
-  grounds the idle auto-entry does — the game never reads the audio tap. It
+  `enterVisualizer()`, around the LINE INPUT consent card — the game never
+  reads the audio tap (the retired idle auto-entry skipped the card on the
+  same grounds). It
   is one-shot, and it is not armed at all on the lite layout (refusing at
   the arming end, not at `startGame()`, is what keeps a phone from landing
   parked in the visualizer).
