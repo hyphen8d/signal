@@ -32,7 +32,7 @@ to name these scripts:
 ```bash
 node tools/admin-server.mjs         # npm run admin — the admin backend + the app, port 8080
 python3 tools/dev-server.py 8000    # dev server (no-store headers); open http://localhost:8000
-node --test tests/*.test.mjs        # npm test — headless suite, ~37s, no network
+node --test tests/*.test.mjs        # npm test — headless suite, ~40s, no network
 node tools/lint-roster.js           # npm run lint — offline roster rules
 node tools/verify-roster.js         # npm run verify — lint + oEmbed check of every track (network)
 node tools/check-roster.mjs         # npm run health — deep-probe roster tracks in batches (network)
@@ -459,8 +459,8 @@ program):
 
 ### Things that only make sense across files
 
-- **The faceplate's shape is `FACE_ASPECT`** (`config.js`, beside `GRID`,
-  2026-09-22), and the grid is stretched onto it. 4:3 for a television, 3:4
+- **The faceplate's shape is `FACE_ASPECT`** (`config.js`, just below
+  `MOBILE_LITE`, 2026-09-22), and the grid is stretched onto it. 4:3 for a television, 3:4
   for the lite layout — that one was hard-locked in the shader until then,
   which drew the whole radio into a 390x292 strip on a 390x844 phone (35% of
   the screen, to 62% after). It lives in config rather than
@@ -690,15 +690,19 @@ The lesson for the next re-measure: **the headline rate is a property of the
 roster's mix, not of the lookup.** Compare it against the ceiling a roster of
 that composition can reach, or a curation pass toward instrumental music will
 read as a code regression and send someone hunting a bug that is not there.
-The practical consequence is that `[L]` on those four stations is `NO LYRICS
-AVAILABLE` essentially always — which is honest, and is what the duration gate
-below exists to keep true.
+The practical consequence, until 2026-09-14, was that `[L]` on those four
+stations read `NO LYRICS AVAILABLE` essentially always — honest, and what the
+duration gate below exists to keep true. Since the instrumental opt-out (below)
+all four are marked `instrumental: true` and `[L]` flashes INSTRUMENTAL
+without asking LRCLIB (DRIFT MODE's six sung `vocalTracks` excepted).
 
 **AFTER HOURS (2026-09-13) moves the ceiling again, before anyone re-measures.**
 Its 40 tracks are late-night small-group jazz with exactly one vocal — Chet
 Baker's *My Funny Valentine* — so at best 1/40 of the station can ever match,
-and `[L]` there is `NO LYRICS AVAILABLE` on 39 tracks in 40 (the ten the
-30→40 growth pass added are all instrumentals). The next audit
+and `[L]` there was `NO LYRICS AVAILABLE` on 39 tracks in 40 (the ten the
+30→40 growth pass added are all instrumentals) — since 2026-09-14 the station
+is `instrumental: true` with that one track as its `vocalTracks`, so the 39
+flash INSTRUMENTAL instead. The next audit
 will land lower than 53% for that reason alone. Exclude it with the four
 ambient stations above when comparing against earlier runs.
 MIRRORBALL (same day) pushes the other way: disco, boogie and funk are sung
@@ -729,11 +733,13 @@ nothing. (Probed since; MIRRORBALL held -- see the 2026-09-27 re-measure.) Secon
 Evans' solo-piano "Young and Foolish" (`UOfwwwQUHjg`, 356s) resolves via
 `/api/search` to a synced entry credited to Bill Evans (album "Lucky Young Jazz
 Piano", 354s) — two seconds apart, well inside `LYRIC_DURATION_TOLERANCE`, so
-`[L]` will draw words over an instrumental. The gate proves the recording is
+`[L]` drew words over an instrumental (until 2026-09-14: AFTER HOURS is now
+marked instrumental, so this track flashes INSTRUMENTAL and never reaches
+LRCLIB). The gate proves the recording is
 the right *length*, not that anyone sings on it, and a jazz standard's sung
 lyric filed against an instrumentalist is exactly the case where those differ.
-Nothing in `voice.js` is wrong; the fix, if one is wanted, is an explicit
-instrumental opt-out per track or per station, not a tighter gate.
+Nothing in `voice.js` is wrong; the fix was an explicit instrumental opt-out
+per track or per station, not a tighter gate — built the same day, below.
 
 **Re-measured 2026-09-27, with every match duration-gated: 79/96 = 82%.**
 The denominator changed, so do not line this up against 83% above by eye:

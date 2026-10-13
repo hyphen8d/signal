@@ -1,10 +1,10 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 16 stations, 690 tracks total.
+Generated from stations.js. 16 stations, 688 tracks total.
 
 # YM band
 
-8 stations, 364 tracks. Its own dial, its own `1`-`9` presets.
+8 stations, 362 tracks. Its own dial, its own `1`-`9` presets.
 
 ## CIPHER -- 133.7
 
@@ -189,7 +189,7 @@ Tracks (50):
 
 Ident tones (Hz): 523.3, 440, 349.2, 523.3
 
-Tracks (40):
+Tracks (38):
 
 1. **Sembikiya Restaurant** -- Cat System Corp  ([youtu.be/xAh-nngGZ6I](https://youtu.be/xAh-nngGZ6I))
 2. **Roadtrips in Spring** -- Waterfront Dining  ([youtu.be/boofE5_HtkI](https://youtu.be/boofE5_HtkI))
@@ -209,28 +209,26 @@ Tracks (40):
 16. **Enjoy Yourself** -- Saint Pepsi  ([youtu.be/_hI0qMtdfng](https://youtu.be/_hI0qMtdfng))
 17. **Fiona Coyne** -- Skylar Spence  ([youtu.be/tCcamt8KZNQ](https://youtu.be/tCcamt8KZNQ))
 18. **Resonance** -- Home  ([youtu.be/aBhrEv5Z7uc](https://youtu.be/aBhrEv5Z7uc))
-19. **Before the Night** -- Home  ([youtu.be/D__gB1DzHIc](https://youtu.be/D__gB1DzHIc))
-20. **We're Finally Landing** -- Home  ([youtu.be/mbMoY1dxbEY](https://youtu.be/mbMoY1dxbEY))
-21. **Half Moon** -- Home  ([youtu.be/BpXVjRQFhLU](https://youtu.be/BpXVjRQFhLU))
-22. **Venus Aire** -- Windows 96  ([youtu.be/X6PnNgYSa5s](https://youtu.be/X6PnNgYSa5s))
-23. **Hypnosis** -- Windows 96  ([youtu.be/4GhvYoo4088](https://youtu.be/4GhvYoo4088))
-24. **Transient Feeling** -- Windows 96  ([youtu.be/7P4fatlUbvg](https://youtu.be/7P4fatlUbvg))
-25. **Glass Prism** -- Windows 96  ([youtu.be/bxCU_P0Y1CE](https://youtu.be/bxCU_P0Y1CE))
-26. **Lunar Food Court** -- Disconscious  ([youtu.be/M-3esa1G50U](https://youtu.be/M-3esa1G50U))
-27. **Elevator Up** -- Disconscious  ([youtu.be/7EuuRDGUMMA](https://youtu.be/7EuuRDGUMMA))
-28. **Fountain Plaza** -- Disconscious  ([youtu.be/f0PSLV_b5g0](https://youtu.be/f0PSLV_b5g0))
-29. **Second Floor** -- Cat System Corp  ([youtu.be/k6xkSvMIvwk](https://youtu.be/k6xkSvMIvwk))
-30. **Veni, Vidi, Emi** -- Cat System Corp  ([youtu.be/Qg7vgIdDDno](https://youtu.be/Qg7vgIdDDno))
-31. **Forever Peruse** -- Groceries Store  ([youtu.be/eI2Pn2Rgh_w](https://youtu.be/eI2Pn2Rgh_w))
-32. **An Evening Spent Alone in the Vast Parking Lot** -- Groceries Store  ([youtu.be/xGmAzTXyOYc](https://youtu.be/xGmAzTXyOYc))
-33. **Manufacturer's Suggested Retail Price** -- Groceries Store  ([youtu.be/-iaqgJiDYv8](https://youtu.be/-iaqgJiDYv8))
-34. **Food Court** -- Hantasi  ([youtu.be/sB1u18vHSco](https://youtu.be/sB1u18vHSco))
-35. **Escalator** -- Hantasi  ([youtu.be/fmWJMYL09po](https://youtu.be/fmWJMYL09po))
-36. **Rubbermaid** -- PowerPCME  ([youtu.be/XpXX_M58df0](https://youtu.be/XpXX_M58df0))
-37. **Attention shoppers!** -- PowerPCME  ([youtu.be/f_uE5ORwPfw](https://youtu.be/f_uE5ORwPfw))
-38. **Parkway** -- Luxury Elite  ([youtu.be/Z7JGPByPr8s](https://youtu.be/Z7JGPByPr8s))
-39. **Upscale** -- Luxury Elite  ([youtu.be/z8KIa6tWoAE](https://youtu.be/z8KIa6tWoAE))
-40. **Crystal** -- Luxury Elite  ([youtu.be/xJLcvKeVcFI](https://youtu.be/xJLcvKeVcFI))
+19. **Half Moon** -- Home  ([youtu.be/BpXVjRQFhLU](https://youtu.be/BpXVjRQFhLU))
+20. **Venus Aire** -- Windows 96  ([youtu.be/X6PnNgYSa5s](https://youtu.be/X6PnNgYSa5s))
+21. **Hypnosis** -- Windows 96  ([youtu.be/4GhvYoo4088](https://youtu.be/4GhvYoo4088))
+22. **Transient Feeling** -- Windows 96  ([youtu.be/7P4fatlUbvg](https://youtu.be/7P4fatlUbvg))
+23. **Glass Prism** -- Windows 96  ([youtu.be/bxCU_P0Y1CE](https://youtu.be/bxCU_P0Y1CE))
+24. **Lunar Food Court** -- Disconscious  ([youtu.be/M-3esa1G50U](https://youtu.be/M-3esa1G50U))
+25. **Elevator Up** -- Disconscious  ([youtu.be/7EuuRDGUMMA](https://youtu.be/7EuuRDGUMMA))
+26. **Fountain Plaza** -- Disconscious  ([youtu.be/f0PSLV_b5g0](https://youtu.be/f0PSLV_b5g0))
+27. **Second Floor** -- Cat System Corp  ([youtu.be/k6xkSvMIvwk](https://youtu.be/k6xkSvMIvwk))
+28. **Veni, Vidi, Emi** -- Cat System Corp  ([youtu.be/Qg7vgIdDDno](https://youtu.be/Qg7vgIdDDno))
+29. **Forever Peruse** -- Groceries Store  ([youtu.be/eI2Pn2Rgh_w](https://youtu.be/eI2Pn2Rgh_w))
+30. **An Evening Spent Alone in the Vast Parking Lot** -- Groceries Store  ([youtu.be/xGmAzTXyOYc](https://youtu.be/xGmAzTXyOYc))
+31. **Manufacturer's Suggested Retail Price** -- Groceries Store  ([youtu.be/-iaqgJiDYv8](https://youtu.be/-iaqgJiDYv8))
+32. **Food Court** -- Hantasi  ([youtu.be/sB1u18vHSco](https://youtu.be/sB1u18vHSco))
+33. **Escalator** -- Hantasi  ([youtu.be/fmWJMYL09po](https://youtu.be/fmWJMYL09po))
+34. **Rubbermaid** -- PowerPCME  ([youtu.be/XpXX_M58df0](https://youtu.be/XpXX_M58df0))
+35. **Attention shoppers!** -- PowerPCME  ([youtu.be/f_uE5ORwPfw](https://youtu.be/f_uE5ORwPfw))
+36. **Parkway** -- Luxury Elite  ([youtu.be/Z7JGPByPr8s](https://youtu.be/Z7JGPByPr8s))
+37. **Upscale** -- Luxury Elite  ([youtu.be/z8KIa6tWoAE](https://youtu.be/z8KIa6tWoAE))
+38. **Crystal** -- Luxury Elite  ([youtu.be/xJLcvKeVcFI](https://youtu.be/xJLcvKeVcFI))
 
 ## RISE UP -- 440.0
 

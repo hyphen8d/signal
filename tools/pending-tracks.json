@@ -372,6 +372,28 @@
       "rationale": "Not a proposal: the roster upload itself. Flagged UNPLAYABLE (\"Video unavailable\") by the daily health sweep on 2026-09-11 and again 2026-09-12 while oEmbed still returned 200. Recorded here so the id is never re-proposed; the track stays on GREEN ROOM under v-d_M-5DEJY (Sleep - Topic, 400s, 248 countries).",
       "rejectedAt": "2026-09-12",
       "rejectedReason": "upload went unavailable; swapped for the other Topic upload of the same master, song not in question"
+    },
+    {
+      "stationId": "neon-stasis",
+      "youtubeId": "D__gB1DzHIc",
+      "title": "Before the Night",
+      "artist": "Home",
+      "proposedBy": "roster-watch",
+      "proposedAt": "2026-10-11",
+      "rationale": "Not a proposal: the roster upload itself. Flagged UNPLAYABLE (\"Video unavailable\") by the daily health sweep on 2026-10-11, confirmed 2026-10-12 and by a hand probe the same day, while oEmbed still returned 200. Recorded here so the id is never re-proposed; the track was dropped from NEON STASIS with no replacement upload.",
+      "rejectedAt": "2026-10-12",
+      "rejectedReason": "upload went unavailable; removed from the roster, song not in question"
+    },
+    {
+      "stationId": "neon-stasis",
+      "youtubeId": "mbMoY1dxbEY",
+      "title": "We're Finally Landing",
+      "artist": "Home",
+      "proposedBy": "roster-watch",
+      "proposedAt": "2026-10-11",
+      "rationale": "Not a proposal: the roster upload itself. Flagged UNPLAYABLE (\"Video unavailable\") by the daily health sweep on 2026-10-11, confirmed 2026-10-12 and by a hand probe the same day, while oEmbed still returned 200. Recorded here so the id is never re-proposed; the track was dropped from NEON STASIS with no replacement upload.",
+      "rejectedAt": "2026-10-12",
+      "rejectedReason": "upload went unavailable; removed from the roster, song not in question"
     }
   ]
 }
