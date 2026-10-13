@@ -6,6 +6,12 @@
 // This is cheap to get wrong in a way nothing else would catch: the value
 // lives in the CRT params, the shader reads it every frame, and a phone is
 // the one place it matters, so a desktop test run would never show it.
+//
+// What this file can NOT see (2026-10-12): the harness's CRT is a stub -- a
+// live `params` object and no WebGL -- so everything below proves the PARAM
+// carries the right shape, not that the shader draws it. src/crt.js turning
+// the uniform back into a constant 4/3 stayed green here. The upload itself
+// is held by a source-level check in tests/engine.test.mjs.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { boot } from './harness.mjs'

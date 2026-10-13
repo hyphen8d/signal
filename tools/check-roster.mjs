@@ -56,6 +56,33 @@ const stationArg = flag('station')
 const batchSize = +flag('batch', 40)
 /** Probes in a row that must agree before a flag counts as confirmed. */
 export const CONFIRM_STRIKES = 2
+/** How far apart two strikes must be for the second to count.
+ *
+ *  2026-10-12 (audit, M4) -- "seen twice" meant two PROBES, and nothing said
+ *  how far apart. The daily timer spaces them a day apart, but the
+ *  dashboard's RUN BATCH re-probes flagged rows first too, so a click a few
+ *  minutes after an `unconfirmed` run asked YouTube the same question while
+ *  it was still giving the same transient answer -- and confirmed it. The
+ *  confirmation exists to outwait a blip, so it is measured in time, not in
+ *  probes. 12h rather than 24h because the timer carries
+ *  RandomizedDelaySec=2h and a Persistent catch-up at boot, so two genuine
+ *  scheduled runs can land well under a day apart; 12h still puts any two
+ *  counted strikes in different scheduled runs. */
+export const CONFIRM_SPACING_MS = 12 * 3600 * 1000
+/** The share of a batch flagged rows may take.
+ *
+ *  2026-10-12 (audit, M4) -- flagged-first had no ceiling, so a flagged row
+ *  took a slot every run for as long as it stayed flagged, and forty of them
+ *  (one channel's licence change across a station would do it) would take
+ *  the whole batch at 40: the sweep would stop advancing while every run
+ *  still looked busy. A quarter keeps re-probing prompt for any ordinary
+ *  number of flags -- ten slots at batch 40 -- and the rest of the batch
+ *  still walks the roster. Flagged rows past the cap are not dropped; they
+ *  queue by age with everything else and rotate through the capped slots
+ *  oldest-first. sweepMargin() in roster-watch.mjs counts these slots as
+ *  NOT advancing the sweep. */
+export const FLAGGED_SHARE = 0.25
+export const flaggedCap = (batch) => (batch > 0 ? Math.max(1, Math.floor(batch * FLAGGED_SHARE)) : 0)
 
 /** Does this record carry a problem with the TRACK? UNVERIFIED is a problem
  *  with the probe, so it is neither a finding nor a clean bill. */
@@ -65,30 +92,111 @@ export function realFlags(flags) {
 
 /** Consecutive probes that found a real problem. An UNVERIFIED probe holds
  *  the count where it is -- it did not happen, so it can neither confirm a
- *  flag nor clear one. */
-export function nextStrikes(prevStrikes, flags) {
+ *  flag nor clear one.
+ *
+ *  2026-10-12 (audit, M4) -- given `prevStrikeAt` and `now`, a real finding
+ *  less than CONFIRM_SPACING_MS after the last counted strike HOLDS the count
+ *  too: it is the same look again, not a second one. Callers without timing
+ *  (the old two-argument form) keep the old behaviour.
+ *
+ *  Strikes add ACROSS flag types, deliberately: UNPLAYABLE one day and
+ *  LOGIN_REQUIRED the next confirms. The question confirmation answers is
+ *  "is this track broken for listeners", and the spacing above is what
+ *  guards against transients, not flag identity. Requiring the same flag
+ *  twice would let a genuinely dead video whose reported status wobbles
+ *  (ERROR / UNPLAYABLE, DEAD 404 / DEAD 410, NARROW-LICENCE:3 / :5) never
+ *  confirm at all -- a silent miss, which is the worse failure here: too
+ *  loud beats dropping a real finding. */
+export function nextStrikes(prevStrikes, flags, { prevStrikeAt, now } = {}) {
   const prev = prevStrikes ?? 0
-  if (realFlags(flags)) return prev + 1
+  if (realFlags(flags)) {
+    const last = prevStrikeAt ? Date.parse(prevStrikeAt) : NaN
+    if (prev > 0 && now != null && Number.isFinite(last) && now - last < CONFIRM_SPACING_MS) return prev
+    return prev + 1
+  }
   if ((flags ?? []).some((f) => f.startsWith('UNVERIFIED'))) return prev
   return 0
 }
 
-/** The order the roster is worked through: flagged rows first, then
- *  never-checked, then least-recently-checked. Pure, and exported, because
- *  the ordering is the whole behaviour -- a flag that waits its turn is a
- *  flag that gets re-reported daily for the length of a full pass (~19 days
- *  at batch 40 over 747 tracks). See the note at its call site. */
+/** The real problems a record stands for, even when its latest probe did not
+ *  happen.
+ *
+ *  2026-10-12 (audit, M4) -- strikes were held across an UNVERIFIED probe,
+ *  but `flags` was overwritten with the UNVERIFIED reason, and both the queue
+ *  (rank) and summarise() read `flags`. So one truncated, non-throttle probe
+ *  of a flagged row moved it to the back of the queue and off the findings
+ *  list -- out of sight for a full pass (~19 days) with the track still
+ *  dead. The record now keeps `lastRealFlags` through UNVERIFIED probes, and
+ *  this is the one reading of it. Returns [] for a clean or never-flagged
+ *  record. */
+export function heldFlags(record) {
+  if (!record) return []
+  const flags = record.flags ?? []
+  if (realFlags(flags)) return flags.filter((f) => !f.startsWith('UNVERIFIED'))
+  if (flags.some((f) => f.startsWith('UNVERIFIED')) && record.lastRealFlags?.length) return record.lastRealFlags
+  return []
+}
+
+/** The record a probe writes, given the record it replaces. Pure and
+ *  exported (2026-10-12, audit M5) so the bookkeeping -- strikes, their
+ *  spacing, the held flags -- is tested as main() actually writes it rather
+ *  than only through the helpers it calls. */
+export function recordProbe(prev, { flags, e = {}, p = {}, track = {}, now = Date.now() }) {
+  const strikes = nextStrikes(prev?.strikes, flags, {
+    // A record from before strikeAt existed: its `at` was the last probe,
+    // and if it carries strikes that probe was one.
+    prevStrikeAt: prev?.strikeAt ?? (prev?.strikes ? prev.at : undefined),
+    now,
+  })
+  const at = new Date(now).toISOString()
+  const real = realFlags(flags)
+  // The time of the last COUNTED strike: moved only when the count moved,
+  // so a held re-probe cannot keep pushing the spacing window forward.
+  const strikeAt = strikes === 0 ? undefined
+    : strikes !== (prev?.strikes ?? 0) ? at
+      : (prev?.strikeAt ?? prev?.at)
+  // Carried only through a probe that did not happen: a real finding is its
+  // own record, and a clean probe clears everything.
+  const unverified = !real && (flags ?? []).some((f) => f.startsWith('UNVERIFIED'))
+  const lastRealFlags = unverified ? heldFlags(prev) : undefined
+  const rec = {
+    at,
+    flags,
+    strikes,
+    status: p.status ?? null,
+    countries: p.countries ?? null,
+    embeddable: p.embeddable ?? null,
+    seconds: p.seconds ?? null,
+    title: e.title ?? track.title,
+    channel: e.channel ?? null,
+    stationId: track.stationId,
+  }
+  if (strikeAt) rec.strikeAt = strikeAt
+  if (lastRealFlags?.length) rec.lastRealFlags = lastRealFlags
+  return rec
+}
+
+/** The order the roster is worked through: flagged rows first (up to
+ *  flaggedCap of the batch), then never-checked, then least-recently-checked.
+ *  Pure, and exported, because the ordering is the whole behaviour -- a flag
+ *  that waits its turn is a flag that gets re-reported daily for the length
+ *  of a full pass (~19 days at batch 40 over 747 tracks). See the note at
+ *  its call site. A row whose last probe was UNVERIFIED still counts as
+ *  flagged if it was before (heldFlags). */
 export function nextBatch(tracks, records, batchSize) {
-  const rank = (r) => (realFlags(r?.flags) ? 0 : 1)
-  return [...tracks].sort((a, b) => {
+  const size = Math.max(0, batchSize)
+  const byAge = (a, b) => {
     const ra = records[a.youtubeId], rb = records[b.youtubeId]
-    const fa = rank(ra), fb = rank(rb)
-    if (fa !== fb) return fa - fb
     if (!ra && !rb) return 0
     if (!ra) return -1
     if (!rb) return 1
     return Date.parse(ra.at) - Date.parse(rb.at)
-  }).slice(0, Math.max(0, batchSize))
+  }
+  const flagged = tracks.filter((t) => heldFlags(records[t.youtubeId]).length).sort(byAge)
+  const first = flagged.slice(0, flaggedCap(size))
+  const taken = new Set(first.map((t) => t.youtubeId))
+  const rest = tracks.filter((t) => !taken.has(t.youtubeId)).sort(byAge)
+  return [...first, ...rest].slice(0, size)
 }
 // Every human line goes to stderr so --json owns stdout, exactly as
 // audition.js does it -- one code path, so the dashboard and the terminal
@@ -144,14 +252,20 @@ async function rosterTracks() {
     })))
 }
 
-/** The summary the dashboard renders and the terminal prints -- one shape. */
-function summarise(tracks, records) {
+/** The summary the dashboard renders and the terminal prints -- one shape.
+ *  Exported (2026-10-12, audit M5) so the confirmed/unconfirmed split is
+ *  tested where it is computed, not on hand-written summaries. */
+export function summarise(tracks, records) {
   const rows = tracks.map((t) => {
     const r = records[t.youtubeId]
+    const held = heldFlags(r)
     return {
       ...t,
       checkedAt: r?.at ?? null,
       flags: r?.flags ?? [],
+      held,
+      // The latest probe did not happen; `held` is the finding before it.
+      heldOver: !!r && held.length > 0 && !realFlags(r.flags),
       strikes: r?.strikes ?? 0,
       status: r?.status ?? null,
       countries: r?.countries ?? null,
@@ -166,7 +280,9 @@ function summarise(tracks, records) {
   // did not happen, so it is counted apart from real problems rather than
   // inflating them.
   const unver = rows.filter((r) => r.flags.some((f) => f.startsWith('UNVERIFIED')))
-  const bad = rows.filter((r) => r.flags.length && !r.flags.some((f) => f.startsWith('UNVERIFIED')))
+  // 2026-10-12 (audit, M4) -- by held flags, so an UNVERIFIED re-probe of a
+  // flagged row keeps it on this list instead of hiding it for a full pass.
+  const bad = rows.filter((r) => r.held.length)
   return {
     total: rows.length,
     checked: rows.length - never.length,
@@ -183,7 +299,8 @@ function summarise(tracks, records) {
     flagged: bad.map((r) => ({
       youtubeId: r.youtubeId, title: r.title, artist: r.artist,
       stationId: r.stationId, callsign: r.callsign,
-      flags: r.flags, countries: r.countries, status: r.status,
+      flags: r.held, heldOver: r.heldOver, lastProbe: r.heldOver ? r.flags : undefined,
+      countries: r.countries, status: r.status,
       embeddable: r.embeddable, checkedAt: r.checkedAt,
       strikes: r.strikes ?? 0, confirmed: (r.strikes ?? 0) >= CONFIRM_STRIKES,
     })),
@@ -194,7 +311,7 @@ function summarise(tracks, records) {
         callsign: mine[0].callsign,
         total: mine.length,
         checked: mine.filter((r) => r.checkedAt).length,
-        flagged: mine.filter((r) => r.flags.length && !r.flags.some((f) => f.startsWith('UNVERIFIED'))).length,
+        flagged: mine.filter((r) => r.held.length).length,
       }
     }),
   }
@@ -273,6 +390,8 @@ async function main() {
     // UNPLAYABLE that had already cleared. Re-probing a flag first is what
     // makes it either confirm (worth acting on) or disappear, and it costs
     // one row of the batch per flag.
+    // 2026-10-12 (audit, M4) -- up to a quarter of the batch; see
+    // FLAGGED_SHARE for why flagged-first needed a ceiling.
     const queue = nextBatch(tracks, store.records, batchSize)
 
     if (!queue.length) say('Nothing to check.')
@@ -292,22 +411,12 @@ async function main() {
         const flags = decayFlags(e, p)
         // Consecutive probes that found a real problem with this track.
         // UNVERIFIED says the probe did not happen, so it neither counts nor
-        // clears. One strike is a report YouTube gave once; two is the same
-        // answer twice from probes at least a run apart, which is what
-        // roster-watch waits for before it wakes anyone (see shouldNotify).
-        const strikes = nextStrikes(store.records[t.youtubeId]?.strikes, flags)
-        store.records[t.youtubeId] = {
-          at: new Date().toISOString(),
-          flags,
-          strikes,
-          status: p.status ?? null,
-          countries: p.countries ?? null,
-          embeddable: p.embeddable ?? null,
-          seconds: p.seconds ?? null,
-          title: e.title ?? t.title,
-          channel: e.channel ?? null,
-          stationId: t.stationId,
-        }
+        // clears. One strike is a report YouTube gave once; two is a problem
+        // reported by probes at least CONFIRM_SPACING_MS apart, which is
+        // what roster-watch waits for before it wakes anyone (see
+        // shouldNotify). recordProbe() owns all of it -- strikes, their
+        // spacing, and the real flags an UNVERIFIED probe must not erase.
+        store.records[t.youtubeId] = recordProbe(store.records[t.youtubeId], { flags, e, p, track: t, now: Date.now() })
         if (flags.length) say(`  ${t.youtubeId}  ${t.callsign.padEnd(17)} ${flags.join(' ')}  ${e.title ?? t.title}`)
       })
       saveStore(store)
@@ -330,7 +439,7 @@ async function main() {
   say(`Roster health: ${summary.checked}/${summary.total} checked, ${summary.never} never, ` +
       `${summary.stale} stale (>${STALE_DAYS}d), ${summary.flaggedCount} flagged.`)
   for (const f of summary.flagged) {
-    say(`  ${f.callsign.padEnd(17)} ${f.flags.join(' ').padEnd(28)} ${f.artist} -- ${f.title}`)
+    say(`  ${f.callsign.padEnd(17)} ${f.flags.join(' ').padEnd(28)} ${f.artist} -- ${f.title}${f.confirmed ? '' : '  (seen once)'}${f.heldOver ? '  (last probe unverified; held)' : ''}`)
   }
   // Nonzero exit on real findings so this can gate something later; an
   // incomplete record is not a failure, just unfinished work.

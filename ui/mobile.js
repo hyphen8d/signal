@@ -487,7 +487,9 @@ export default {
     this._suppressTapMuteToggle = false
     if (this._pendingUnmute && !this.muted && this.ready && this.player) {
       this._pendingUnmute = false
-      this.player.unMute()
+      // 2026-10-12 (audit, M7) -- applyVolume() alone: it un-mutes, and only
+      // above zero. A bare unMute() first restored the player's remembered
+      // level for an instant at VOL 0 (see program.js's reveal beat).
       this.applyVolume()
       this._suppressTapMuteToggle = true
     }

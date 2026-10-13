@@ -32,7 +32,7 @@ to name these scripts:
 ```bash
 node tools/admin-server.mjs         # npm run admin — the admin backend + the app, port 8080
 python3 tools/dev-server.py 8000    # dev server (no-store headers); open http://localhost:8000
-node --test tests/*.test.mjs        # npm test — headless suite, ~37s, no network
+node --test tests/*.test.mjs        # npm test — headless suite, ~40s, no network
 node tools/lint-roster.js           # npm run lint — offline roster rules
 node tools/verify-roster.js         # npm run verify — lint + oEmbed check of every track (network)
 node tools/check-roster.mjs         # npm run health — deep-probe roster tracks in batches (network)
@@ -344,6 +344,11 @@ program):
   box helpers. `tuning.js` — the band, thresholds, `freqToCol`, the three
   nearest-station questions, shuffle bag. `crt-hooks.js` — `crtBase`, distance
   degrade, ramps, glitch/bloom/focus-snap. `constants.js`, `state.js`.
+  **`crtBase` is one object refilled in place, never reassigned**
+  (2026-10-12). Every module destructures it from a dynamic import, and a
+  destructured `export let` is a copy taken at load, so reassigning it froze
+  the boot-time default in three modules and silently cost four stations
+  their phosphor decay. `tests/crt-base.test.mjs` holds it.
 - `game.js` — VECTOR SCAN (2026-08-29), a Gradius, reached by entering the
   Konami code inside the visualizer. It is a THIRD VIEW on the visualizer's
   canvas, beside the effect and the `[L]` lyrics view — not a fourth
@@ -459,8 +464,8 @@ program):
 
 ### Things that only make sense across files
 
-- **The faceplate's shape is `FACE_ASPECT`** (`config.js`, beside `GRID`,
-  2026-09-22), and the grid is stretched onto it. 4:3 for a television, 3:4
+- **The faceplate's shape is `FACE_ASPECT`** (`config.js`, just below
+  `MOBILE_LITE`, 2026-09-22), and the grid is stretched onto it. 4:3 for a television, 3:4
   for the lite layout — that one was hard-locked in the shader until then,
   which drew the whole radio into a 390x292 strip on a 390x844 phone (35% of
   the screen, to 62% after). It lives in config rather than
@@ -690,15 +695,19 @@ The lesson for the next re-measure: **the headline rate is a property of the
 roster's mix, not of the lookup.** Compare it against the ceiling a roster of
 that composition can reach, or a curation pass toward instrumental music will
 read as a code regression and send someone hunting a bug that is not there.
-The practical consequence is that `[L]` on those four stations is `NO LYRICS
-AVAILABLE` essentially always — which is honest, and is what the duration gate
-below exists to keep true.
+The practical consequence, until 2026-09-14, was that `[L]` on those four
+stations read `NO LYRICS AVAILABLE` essentially always — honest, and what the
+duration gate below exists to keep true. Since the instrumental opt-out (below)
+all four are marked `instrumental: true` and `[L]` flashes INSTRUMENTAL
+without asking LRCLIB (DRIFT MODE's six sung `vocalTracks` excepted).
 
 **AFTER HOURS (2026-09-13) moves the ceiling again, before anyone re-measures.**
 Its 40 tracks are late-night small-group jazz with exactly one vocal — Chet
 Baker's *My Funny Valentine* — so at best 1/40 of the station can ever match,
-and `[L]` there is `NO LYRICS AVAILABLE` on 39 tracks in 40 (the ten the
-30→40 growth pass added are all instrumentals). The next audit
+and `[L]` there was `NO LYRICS AVAILABLE` on 39 tracks in 40 (the ten the
+30→40 growth pass added are all instrumentals) — since 2026-09-14 the station
+is `instrumental: true` with that one track as its `vocalTracks`, so the 39
+flash INSTRUMENTAL instead. The next audit
 will land lower than 53% for that reason alone. Exclude it with the four
 ambient stations above when comparing against earlier runs.
 MIRRORBALL (same day) pushes the other way: disco, boogie and funk are sung
@@ -729,11 +738,13 @@ nothing. (Probed since; MIRRORBALL held -- see the 2026-09-27 re-measure.) Secon
 Evans' solo-piano "Young and Foolish" (`UOfwwwQUHjg`, 356s) resolves via
 `/api/search` to a synced entry credited to Bill Evans (album "Lucky Young Jazz
 Piano", 354s) — two seconds apart, well inside `LYRIC_DURATION_TOLERANCE`, so
-`[L]` will draw words over an instrumental. The gate proves the recording is
+`[L]` drew words over an instrumental (until 2026-09-14: AFTER HOURS is now
+marked instrumental, so this track flashes INSTRUMENTAL and never reaches
+LRCLIB). The gate proves the recording is
 the right *length*, not that anyone sings on it, and a jazz standard's sung
 lyric filed against an instrumentalist is exactly the case where those differ.
-Nothing in `voice.js` is wrong; the fix, if one is wanted, is an explicit
-instrumental opt-out per track or per station, not a tighter gate.
+Nothing in `voice.js` is wrong; the fix was an explicit instrumental opt-out
+per track or per station, not a tighter gate — built the same day, below.
 
 **Re-measured 2026-09-27, with every match duration-gated: 79/96 = 82%.**
 The denominator changed, so do not line this up against 83% above by eye:
@@ -953,6 +964,19 @@ flowchart LR
   the record and notified every day in between. That is how one transient
   `UNPLAYABLE` on NEON STASIS cried wolf for five days over a track that had
   already come back.
+  **Three limits on that, 2026-10-12 (audit M4):** flagged rows take at most
+  a quarter of a batch (`FLAGGED_SHARE`; the excess rotates in oldest-first),
+  because forty flags would otherwise take every slot and stop the sweep
+  while each run still looked busy — and `sweepMargin()` counts those slots
+  as not advancing it. A second strike counts only from a probe at least
+  `CONFIRM_SPACING_MS` (12h) after the last counted one, so a dashboard RUN
+  BATCH minutes after an `unconfirmed` run cannot confirm the same transient;
+  strikes still add across flag types, deliberately (see `nextStrikes`). And
+  an UNVERIFIED re-probe of a flagged row keeps its `lastRealFlags`, so it
+  stays first in the queue and on the findings list (`heldFlags()`, marked
+  `held` on the dashboard) instead of vanishing for a full pass.
+  `recordProbe()` writes every record and `tests/health-wiring.test.mjs`
+  drives the real `main()` of both tools through `tests/fake-youtube.mjs`.
 - **`tools/roster-watch.mjs` is what remembers to run it** (2026-08-30). The
   NIN three-country track was found only because someone happened to run the
   deep probe by hand the evening before; `check-roster.mjs` already knew how
@@ -968,6 +992,19 @@ flowchart LR
   a day late) or clears itself having woken nobody. A summary carrying no
   `flaggedConfirmed` — one written by an older `check-roster` — falls back to
   notifying, since too loud beats dropping a real finding.
+
+  **A finding is news once** (2026-10-12): a confirmed finding notifies on
+  the run that first confirms it, and again only if the set gains an id —
+  not daily, which made a deliberately kept track (an accepted narrow
+  licence) a critical notification forever. The state file keeps the
+  confirmed list, `--status` prints it and the dashboard panel renders it, so
+  quiet is not hidden. No per-track acknowledge was built; notify-on-change
+  already silences a kept track after one notice. The notification counts and
+  names confirmed rows only. **A flag no longer hides a stall** (same day,
+  audit M3): the label still prefers findings, but the `incomplete` streak
+  counts every throttled run whatever it was labelled, and the stall notice
+  fires on the streak alone — with one flag on the record, six throttled
+  days in a row used to notify nothing.
 
   The rule it exists for: **`check-roster` exits 0 when throttled**, since it
   found nothing wrong — it merely never looked. So the obvious scheduler
@@ -1063,9 +1100,14 @@ flowchart LR
   itch serves an uploaded zip from its own origin and cannot point a Play
   button at a site hosted elsewhere, so **the itch listing is a COPY that
   does not follow a deploy** — re-run `npm run itch` and re-upload after one,
-  or it silently becomes an old build. The tool fails loudly on a root `.js`
-  it does not package (a 404 that would only ever show up on someone else's
-  site) and strips the analytics beacon, which measures the Pages site and
+  or it silently becomes an old build. It packages what **git tracks**, not
+  what is on disk (2026-10-12: the zip had carried a gitignored scratch
+  clip), plus `LICENSE` and `NOTICE` — the vendored engine's MIT notice lives
+  only in NOTICE and must travel with any copy. It fails loudly on a tracked
+  root file or directory it does not package, or an uncommitted file inside
+  one it does (a 404 that would only ever show up on someone else's site),
+  removes only its own zip and staging dir from `dist/` (cover art lives
+  there), and strips the analytics beacon, which measures the Pages site and
   has no business firing from itch. Verified once by unzipping, serving it
   bare and loading it inside a sandboxed iframe with itch's own attributes:
   it mounts, stores state, powers on and reaches PLAYING through the nested
@@ -1079,8 +1121,12 @@ flowchart LR
   manages 4.4 frames per app-second whatever the clock does, and a
   choreography built on fixed sleeps recorded a set that never locked (the
   dial wandered, `[V]` was refused for want of a lock). Every step waits on
-  the app's own state instead. It cannot capture audio, the live tap or an
-  honest progress bar — see its header.
+  the app's own state instead, and a step that never lands aborts the run
+  with the committed `demo.{mp4,gif}` untouched (2026-10-12; it used to log
+  and overwrite them anyway). The preset it presses is derived from the
+  roster, farthest on the dial from `--station` — the hardcoded pair had
+  become RISE UP pressing its own preset. It cannot capture audio, the live
+  tap or an honest progress bar — see its header.
 - Verify feel changes in a browser against the dev server as well as in the
   suite — timing, sound and texture are most of what matters here.
 - **Check the frame rate before believing a live browser check.** A Chrome

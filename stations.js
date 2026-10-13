@@ -478,8 +478,15 @@ export const STATIONS = [
       realTrack('_hI0qMtdfng', 'Enjoy Yourself', 'Saint Pepsi'),
       realTrack('tCcamt8KZNQ', 'Fiona Coyne', 'Skylar Spence'),
       realTrack('aBhrEv5Z7uc', 'Resonance', 'Home'),
-      realTrack('D__gB1DzHIc', 'Before the Night', 'Home'),
-      realTrack('mbMoY1dxbEY', 'We\'re Finally Landing', 'Home'),
+      // 2026-10-12 -- two Home tracks dropped here, not re-pointed: "Before
+      // the Night" (D__gB1DzHIc) and "We're Finally Landing" (mbMoY1dxbEY),
+      // both Home - Topic, went playabilityStatus UNPLAYABLE ("Video
+      // unavailable") -- flagged by the health watch 2026-10-11, confirmed
+      // 2026-10-12 and by a hand probe -- while oEmbed kept answering 200.
+      // The same Topic channel's takedown exposure as Half Moon below, a
+      // second time; the other two Home tracks probed OK 2026-10-11. Both ids
+      // are recorded as rejections in station-profiles.json and
+      // pending-tracks.json so neither is re-proposed.
       // 2026-09-22 -- re-pointed from yRlBcUJZJHA, the same track on the same
       // Topic channel, after that upload went "Video unavailable"
       // (playabilityStatus UNPLAYABLE, confirmed over four probes). oEmbed

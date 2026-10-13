@@ -235,6 +235,20 @@
      "reason": "DEAD UPLOAD, not a curation call: this id went playabilityStatus UNPLAYABLE (\"Video unavailable\") and stayed there across four spaced probes, while oEmbed kept answering 200 with the title -- so it read as healthy to verify-roster.js and would have played as dead air. Re-pointed to BpXVjRQFhLU, the same 261s master on the same Home - Topic channel (status OK, 123 countries, US, embeddable). Do not re-add this id; the track itself is still wanted.",
      "youtubeId": "yRlBcUJZJHA",
      "rejectedAt": "2026-09-22"
+    },
+    {
+     "artist": "Home",
+     "track": "Before the Night",
+     "reason": "DEAD UPLOAD, not a curation call: this id went playabilityStatus UNPLAYABLE (\"Video unavailable\") -- flagged by the daily health watch 2026-10-11, confirmed by its re-probe 2026-10-12, and re-probed by hand the same day with the same answer -- while oEmbed kept answering 200 with the title, so verify-roster.js would have read it as healthy and it would have played as dead air. Removed from NEON STASIS rather than re-pointed: no replacement upload of \"Before the Night\" was probed. The other two Home - Topic tracks (aBhrEv5Z7uc, BpXVjRQFhLU) probed OK 2026-10-11 and stay. Do not re-add this id; a working upload of the track itself would still be welcome.",
+     "rejectedAt": "2026-10-12",
+     "youtubeId": "D__gB1DzHIc"
+    },
+    {
+     "artist": "Home",
+     "track": "We're Finally Landing",
+     "reason": "DEAD UPLOAD, not a curation call: this id went playabilityStatus UNPLAYABLE (\"Video unavailable\") -- flagged by the daily health watch 2026-10-11, confirmed by its re-probe 2026-10-12, and re-probed by hand the same day with the same answer -- while oEmbed kept answering 200 with the title, so verify-roster.js would have read it as healthy and it would have played as dead air. Removed from NEON STASIS rather than re-pointed: no replacement upload of \"We're Finally Landing\" was probed. The other two Home - Topic tracks (aBhrEv5Z7uc, BpXVjRQFhLU) probed OK 2026-10-11 and stay. Do not re-add this id; a working upload of the track itself would still be welcome.",
+     "rejectedAt": "2026-10-12",
+     "youtubeId": "mbMoY1dxbEY"
     }
    ]
   },

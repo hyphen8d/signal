@@ -9,7 +9,7 @@ No signup, nothing to install — it runs in your browser.
 
 [![version](https://img.shields.io/github/v/tag/hyphen8d/signal?label=version&style=flat-square&labelColor=000&color=2eff5c)](./CHANGELOG.md)
 [![license](https://img.shields.io/github/license/hyphen8d/signal?style=flat-square&labelColor=000&color=2eff5c)](./LICENSE)
-[![stations: 16, tracks: 690](https://img.shields.io/badge/stations-16_%C2%B7_690_tracks-2eff5c?style=flat-square&labelColor=000)](./stations.md)
+[![stations: 16, tracks: 688](https://img.shields.io/badge/stations-16_%C2%B7_688_tracks-2eff5c?style=flat-square&labelColor=000)](./stations.md)
 
 ### [▶ Tune in](https://hyphen8d.github.io/signal/)
 
@@ -264,7 +264,7 @@ Known gaps, not oversights.
 
 ## Stations
 
-16 stations across two bands, 690 tracks total (32-50 per station -- counts are uneven by design, curation over symmetry -- plus two secret stations carrying 57 more between them). Full roster with taglines and track lists:
+16 stations across two bands, 688 tracks total (32-50 per station -- counts are uneven by design, curation over symmetry -- plus two secret stations carrying 57 more between them). Full roster with taglines and track lists:
 [`stations.md`](./stations.md) — generated straight from the live
 `STATIONS` array in `stations.js` (`tools/stations-to-md.js`), so it can't
 drift from the actual source of truth. Re-run it after editing the station

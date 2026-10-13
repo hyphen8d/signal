@@ -1232,11 +1232,16 @@ test('[L] stays shut, and silent, for a track with no synced lyrics', async () =
   const h = await inVisualizer({ lyrics: 'none' })
   try {
     assert.ok(!h.program.isMappedKey({ key: 'l' }), '[L] must not click when it cannot act')
+    // Characters AND pixel cells (2026-10-12): FLAME draws through putGlyph()
+    // bitmaps, which a character read sees as spaces, so on DISTORTION FIELD
+    // the text alone never changed and this failed ~1 run in 8.
     const before = h.rows()
+    const beforeGfx = h.term.gfx.slice()
     h.key('l')
     h.advance(300)
     assert.equal(h.program.lyricsViewOpen, false)
-    assert.notEqual(h.rows().join(), before.join(), 'the effect canvas is still animating')
+    const moved = h.rows().join() !== before.join() || h.term.gfx.some((b, i) => b !== beforeGfx[i])
+    assert.ok(moved, 'the effect canvas is still animating')
   } finally { h.shutdown() }
 })
 

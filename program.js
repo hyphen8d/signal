@@ -30,7 +30,7 @@ const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
 const { GREEN_ROOM_STATION, NIN_STATION, SECRET_STATIONS, STATIONS, presetOrderFor } = await import(`./stations.js?v=${V}`)
 const { BANDS, DEFAULT_BAND, LOCK_THRESHOLD, NEAR_THRESHOLD, RESUME_CUTOFF_MS, SCAN_STEP, SEEK_STEP, VISUALIZER_IDLE_MS, WARMUP_MS, bandFor, clampFreq, freqToCol, nearestLockable, nearestSignal, nearestStation, shuffledIndices, stationColsFor } = await import(`./tuning.js?v=${V}`)
 const { VISUALS } = await import(`./visuals/index.js?v=${V}`)
-const { announce } = await import(`./a11y.js?v=${V}`)
+const { announce, forget } = await import(`./a11y.js?v=${V}`)
 const { default: desktopUi } = await import(`./ui/desktop.js?v=${V}`)
 const { default: mobileUi } = await import(`./ui/mobile.js?v=${V}`)
 const { default: guide } = await import(`./ui/guide.js?v=${V}`)
@@ -716,7 +716,12 @@ export default {
     // time, same as any other sound attempted before the first click/key.
     // Every later power-on (a real gesture, powerUp()'s own sound) is
     // unaffected either way.
-    playPowerOnSound()
+    // 2026-10-12 (audit M8) -- the predicate is for the degauss this call
+    // leaves pending on a suspended context: it lands at the visitor's FIRST
+    // gesture, whatever that is, and must only thunk if a power transition
+    // is still running then (this flourish, or a [P] boot) -- not over a [G]
+    // in STANDBY. See playDegauss().
+    playPowerOnSound(() => this._powerAnimating)
     this._powerAnimating = true // false again in COLD_OPEN_MS, below
     const COLD_OPEN_MS = 500
     rampCrtParams(
@@ -873,12 +878,35 @@ export default {
   },
   reloadForBuild() {
     this._buildPending = null
+    // 2026-10-12 (audit, LOW) -- location.replace() is not instant: the page
+    // goes on running until the navigation commits, ~1s on a slow link. A [P]
+    // in that window used to power the set on -- spending the keypress that
+    // is the page's autoplay gesture -- and then the page went out from under
+    // it, landing in STANDBY asking to be switched on again. From here on
+    // key() takes nothing (no click either -- isMappedKey says no) and
+    // powerUp() refuses, which also covers a tap on the lite layout: the
+    // page is already leaving.
+    this._reloading = true
     saveSignalState(this)
     try { globalThis.location.replace(globalThis.location.pathname) } catch (e) {}
   },
   powerDown(s) {
     if (!this.poweredOn) return
     announce('Receiver off.', 'power') // see a11y.js
+    // 2026-10-12 (audit, M2) -- what was locked and playing ends here, so the
+    // announcer forgets it: powering back on to the same station has to say
+    // so, and before this the per-kind dedup swallowed both lines and the
+    // listener heard only "Receiver on."
+    forget('station')
+    forget('track')
+    // 2026-10-12 (audit, M7) -- the player stops FIRST. It used to pause near
+    // the end of this function, after clearSleepTimer() had put the fade back
+    // to 1 and clearDuck() had called applyVolume() at that restored level,
+    // so an expiring sleep timer -- a set faded to a whisper -- sent
+    // setVolume(2) -> unMute -> setVolume(70) -> pauseVideo: a possible
+    // full-level blip at the one moment meant to be quietest. Paused, the
+    // level those two restore is only where the NEXT power-on starts from.
+    if (this.ready && this.player) this.player.pauseVideo()
     // 2026-08-27 -- a sleep timer belongs to the session that armed it. This
     // covers both ways the set goes off: its own expiry (which cleared it
     // already -- clearSleepTimer is idempotent) and someone reaching for [P]
@@ -952,7 +980,7 @@ export default {
     // liner that had already started kept talking over STANDBY; see
     // stopLiveVoice() for why nothing else here could reach it.
     stopLiveVoice()
-    if (this.ready && this.player) this.player.pauseVideo()
+    // (the pauseVideo() that stood here moved to the top -- see M7 there)
     this.setPlayState(s)
     // 68th pass -- was playPowerDownSound(), a ~0.6s falling 660Hz->40Hz
     // sweep built for the old "dying tube" collapse. Stepping back to an
@@ -1034,7 +1062,6 @@ export default {
   },
 
   powerUp(s) {
-    announce('Receiver on.', 'power') // see a11y.js; the station follows once it locks
     // 50th pass -- `|| this._powerAnimating`, not just poweredOn. poweredOn
     // doesn't go true until the REVEAL_DELAY beat ~5s in, and key() lets P
     // through while the set is off, so pressing P a second time during the
@@ -1055,6 +1082,13 @@ export default {
     // but a double-boot could put beats in flight AFTER poweredOn went
     // true, which is exactly when G starts working.
     if (this.poweredOn || this._powerAnimating) return
+    // 2026-10-12 (audit, M2) -- below the guard, not above it. Above, a [P]
+    // inside the cold-open flourish or the power-off collapse said "Receiver
+    // on." to a set that stayed off, and the real power-on after it was then
+    // deduped into silence. (Also refused while a reload for a new build is
+    // pending -- see reloadForBuild.)
+    if (this._reloading) return
+    announce('Receiver on.', 'power') // see a11y.js; the station follows once it locks (powerDown forgot it)
     this._powerAnimating = true // cleared once REVEAL_DELAY lands below
     // 2026-08-22, round 4 (bug held up through every repro tried --
     // power on, then every station swipe after, always silent until an
@@ -1315,8 +1349,13 @@ export default {
           // unmuted (or didn't, per the muted-fresh-visit default) back in
           // the tap itself, and re-unmuting here would be redundant at
           // best.
+          // 2026-10-12 (audit, M7) -- applyVolume() alone. A bare unMute()
+          // ran first here, and unMute() restores a remembered level, so a
+          // session saved at VOL 0 sent unMute -> setVolume(0) -> mute: the
+          // reveal opened the track at the player's old level for the length
+          // of two postMessages before taking it back. applyVolume() owns the
+          // un-muting (#67) and does it only when the level is above zero.
           if (this._bootAudioPrimed && !this.mobile && !this.muted && this.ready && this.player) {
-            this.player.unMute()
             this.applyVolume()
             this._forcedMuteForAutoplay = false
           }
@@ -1517,6 +1556,7 @@ export default {
               self._errorSkips = 0
               self._primedTrack = null
               self.enterSeeking(s)
+              announce('Off air.', 'station') // 2026-10-12 (M2) -- the one outcome nothing else would say
               // After enterSeeking, whose own SEEKING status this replaces
               // -- same ordering cycleBand() uses, and for the same reason:
               // this is the one thing the screen cannot otherwise say.
@@ -1684,8 +1724,7 @@ export default {
     // desktop now can.
     if (needsAutoplayMute && !this.muted && !opts.suppressAutoplayUnmute) {
       if (!this.mobile || this._inUserGesture) {
-        this.player.unMute()
-        this.applyVolume()
+        this.applyVolume() // 2026-10-12 (M7) -- no bare unMute() first; see the reveal beat
         this._forcedMuteForAutoplay = false
         this._pendingUnmute = false
       } else {
@@ -1869,6 +1908,11 @@ export default {
     // the persistent status this row rests on needs to drop back to LOCKED
     // too, not just this VOL flash.
     if (wasMuted && !this.muted && this.mode === 'locked') this.statusPersistent = { text: 'LOCKED', active: true }
+    // 2026-10-12 (audit, M2) -- touching the volume un-mutes, and now says
+    // so. It used to do it silently, so the mute kind still remembered
+    // "Muted." and M -> volume up -> M announced the first mute and swallowed
+    // the second. Only on the transition: every ordinary notch says nothing.
+    if (wasMuted && !this.muted) announce('Sound on.', 'mute')
     this.drawVolume(s)
     // 38th pass: a detent per notch, and the level itself in the status
     // row for a beat. The VOL bar was the only feedback before, and it is
@@ -1883,7 +1927,7 @@ export default {
     announce(this.muted ? 'Muted.' : 'Sound on.', 'mute')
     if (this.ready && this.player) {
       if (this.muted) this.player.mute()
-      else { this.player.unMute(); this.applyVolume() }
+      else this.applyVolume() // 2026-10-12 (M7) -- it un-mutes, and only above zero
     }
     // 50th pass: hard mute -- the whole WebAudio speaker path dies with
     // the switch (static bed, idents, clicks, all of it), not just the
@@ -2300,6 +2344,15 @@ export default {
     // job -- tuning away from the secret NIN station has to drop the forced
     // red tint back to whatever the user's normal display mode is.
     this.applyPhosphor(s)
+    // 2026-10-12 (audit, M2) -- the lock is over, so the announcer forgets
+    // it: re-locking the same station (one arrow step off and back, a scan
+    // that comes round) is news, and the per-kind dedup used to swallow it.
+    // Here and not in clearStation()/clearTrack(), which every repaint runs.
+    // Silent on its own -- presets, scans and [B] pass through here on the
+    // way to a station that announces itself; the one detune that leaves the
+    // listener nowhere says so at its own call site (seekStep's "Signal lost.").
+    forget('station')
+    forget('track')
     this.clearStation(s)
     this.clearTrack(s)
     this.setStatus(s, 'SEEKING', false)
@@ -2353,8 +2406,15 @@ export default {
       this.tryLock(s)
       return
     }
-    if (wasLocked) this.enterSeeking(s)
-    else this.setStatus(s, 'SEEKING', false)
+    if (wasLocked) {
+      this.enterSeeking(s)
+      // 2026-10-12 (audit, M2) -- losing a lock was never announced, so a
+      // screen-reader listener who nudged the dial heard the music stop and
+      // nothing else. On the STATION kind, so it is said once per lock lost:
+      // further steps through empty band are already 'seeking' and never
+      // reach this branch, and a repeat would dedup anyway.
+      announce('Signal lost.', 'station')
+    } else this.setStatus(s, 'SEEKING', false)
     // Covers the "already seeking, one more arrow tap" case -- enterSeeking()
     // above only fires on a locked->seeking transition, but the continuous
     // bed needs to be there (or stay there) on every non-locking step, not
@@ -2987,6 +3047,7 @@ export default {
   // matches "does this key click" precisely, without executing any of
   // key()'s actual side effects to find out.
   isMappedKey(e) {
+    if (this._reloading) return false // see reloadForBuild
     // 67th pass -- checked ahead of the poweredOn branch now: [I] on
     // STANDBY (see key() below) can open the guide while still powered
     // off, so guideOpen no longer implies poweredOn the way it used to.
@@ -3064,6 +3125,7 @@ export default {
     this._heldKeys?.delete(e.code || e.key)
   },
   key(s, e) {
+    if (this._reloading) return // see reloadForBuild -- the page is already leaving
     // 2026-08-22, round 4 -- same reasoning as onTouchStart's: true for
     // this function's synchronous body (and whatever it calls directly),
     // so loadTrack() knows a fresh mute-for-autoplay it triggers can be
@@ -3079,8 +3141,7 @@ export default {
     // flush it here too, on the desktop keyboard path.
     if (this._pendingUnmute && !this.muted && this.ready && this.player) {
       this._pendingUnmute = false
-      this.player.unMute()
-      this.applyVolume()
+      this.applyVolume() // 2026-10-12 (M7) -- no bare unMute() first; see the reveal beat
     }
     // 2026-08-23 (live audio tap) -- same flush-in-a-real-gesture pattern as
     // _pendingUnmute just above: a browser that gesture-gates getUserMedia
