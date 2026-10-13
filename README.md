@@ -19,9 +19,9 @@ tints](./screenshots/demo.gif)
 takes in the boot, a preset sweep, the guide and the visualizer — silent, since
 it is captured headlessly (`npm run record`).*
 
-[![The SIGNAL trailer: 45 seconds, with sound](./screenshots/trailer-poster.jpg)](./screenshots/trailer.mp4)
+[![The SIGNAL trailer: 45 seconds, with sound](./screenshots/trailer-poster.jpg)](https://hyphen8d.github.io/signal/screenshots/trailer.mp4)
 
-*[The 45-second trailer](./screenshots/trailer.mp4), with sound: both bands,
+*[The 45-second trailer](https://hyphen8d.github.io/signal/screenshots/trailer.mp4), with sound: both bands,
 all sixteen visualizers, and a hint of what isn't on the dial. Unlike the
 recording above it is a stylized recreation rendered offline, not a capture of
 the running set, with its own original soundtrack.*
