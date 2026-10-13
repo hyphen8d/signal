@@ -9,7 +9,7 @@ No signup, nothing to install — it runs in your browser.
 
 [![version](https://img.shields.io/github/v/tag/hyphen8d/signal?label=version&style=flat-square&labelColor=000&color=2eff5c)](./CHANGELOG.md)
 [![license](https://img.shields.io/github/license/hyphen8d/signal?style=flat-square&labelColor=000&color=2eff5c)](./LICENSE)
-[![stations: 16, tracks: 690](https://img.shields.io/badge/stations-16_%C2%B7_690_tracks-2eff5c?style=flat-square&labelColor=000)](./stations.md)
+[![stations: 16, tracks: 688](https://img.shields.io/badge/stations-16_%C2%B7_688_tracks-2eff5c?style=flat-square&labelColor=000)](./stations.md)
 
 ### [▶ Tune in](https://hyphen8d.github.io/signal/)
 
