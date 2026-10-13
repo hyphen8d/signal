@@ -1,4 +1,21 @@
-# SIGNAL v0.9
+<div align="center">
+
+<img src="./icon.svg" width="72" alt="">
+
+# SIGNAL
+
+**A tuning-dial internet radio on a CRT terminal.**<br>
+No signup, nothing to install — it runs in your browser.
+
+[![version](https://img.shields.io/github/v/tag/hyphen8d/signal?label=version&style=flat-square&labelColor=000&color=2eff5c)](./CHANGELOG.md)
+[![license](https://img.shields.io/github/license/hyphen8d/signal?style=flat-square&labelColor=000&color=2eff5c)](./LICENSE)
+[![stations: 16, tracks: 690](https://img.shields.io/badge/stations-16_%C2%B7_690_tracks-2eff5c?style=flat-square&labelColor=000)](./stations.md)
+
+### [▶ Tune in](https://hyphen8d.github.io/signal/)
+
+[Stations](./stations.md) · [How it works](#how-its-built) · [Changelog](./CHANGELOG.md)
+
+</div>
 
 A community-facing, unofficial internet-radio-style web toy: a terminal/CRT
 tuning-dial receiver with 16 curated stations across two bands, real songs,
