@@ -344,6 +344,11 @@ program):
   box helpers. `tuning.js` — the band, thresholds, `freqToCol`, the three
   nearest-station questions, shuffle bag. `crt-hooks.js` — `crtBase`, distance
   degrade, ramps, glitch/bloom/focus-snap. `constants.js`, `state.js`.
+  **`crtBase` is one object refilled in place, never reassigned**
+  (2026-10-12). Every module destructures it from a dynamic import, and a
+  destructured `export let` is a copy taken at load, so reassigning it froze
+  the boot-time default in three modules and silently cost four stations
+  their phosphor decay. `tests/crt-base.test.mjs` holds it.
 - `game.js` — VECTOR SCAN (2026-08-29), a Gradius, reached by entering the
   Konami code inside the visualizer. It is a THIRD VIEW on the visualizer's
   canvas, beside the effect and the `[L]` lyrics view — not a fourth

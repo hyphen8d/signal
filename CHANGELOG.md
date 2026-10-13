@@ -2114,6 +2114,57 @@ every timer delay) and collects frames over `Page.startScreencast`, which
 gives ~35 frames per second of app time to assemble at 35fps. It cannot
 capture audio, the live tap or an honest progress bar; its header says so.
 
+### Every finding from the 2026-10-12 audit, fixed (2026-10-12)
+
+`AUDIT-2026-10-12.md` covers everything merged since the last audit (PRs
+#75-#84). Every finding is fixed here, each guard mutation-checked: break the
+feature, watch its test go red, restore.
+
+- **NEON STASIS lost two dead tracks.** "Before the Night" and "We're Finally
+  Landing" (Home - Topic) went "Video unavailable" while oEmbed kept answering
+  200. The health watch caught them seen-twice, and both are rejected with the
+  reason in both rejection files. 745 tracks.
+- **Stations keep their afterglow.** `crtBase` was an `export let` that
+  `setCrtCharacter()` reassigned, and every module that destructured it held
+  the boot-time default forever. So DRIFT MODE, NEON STASIS, GREEN ROOM and
+  ATOMIC lost their phosphor decay at every power-up and inside the
+  visualizer. It is now one object refilled in place.
+- **The screen reader is told the truth.**
+  - A refused [P] no longer says "Receiver on."
+  - A power cycle or a re-lock re-announces the station and track.
+  - Losing a lock says "Signal lost."
+  - A volume key that un-mutes says "Sound on."
+- **No full-level blips.**
+  - `applyVolume()` is now the only place that un-mutes. Five callers had
+    their own `unMute()` first, which passed through an audible level at
+    VOL 0.
+  - Power-off now pauses before the sleep fade and the duck reset, so an
+    expiring sleep timer can no longer jump to full volume on its way out.
+- **The degauss waits for [P].** The cold-open's deferred coil thunk could
+  play on the first [G] in STANDBY and then use up [P]'s.
+- **The reload at power-off ignores keys** once it has started.
+- **The health watch:**
+  - A flag no longer hides a stalled sweep.
+  - A confirmed finding notifies once, not daily.
+  - Flagged rows take at most a quarter of a batch.
+  - An UNVERIFIED re-probe holds a flag rather than dropping it.
+  - Strikes must be 12h apart.
+  - The dashboard strip knows `unconfirmed`.
+  - The record/summary wiring has end-to-end tests (`tests/health-wiring.test.mjs`).
+- **The itch.io zip** ships `LICENSE` and `NOTICE` (MIT requires it), packages
+  only tracked files, and leaves the rest of `dist/` alone.
+- **`record-demo`** sweeps to a different preset (it used to press the one it
+  was on) and refuses to overwrite the committed demo when a step never
+  lands. **`lyrics-audit`** no longer prints `NaN%`.
+- **Tests that could not fail now can:**
+  - FLAME's NORMAL=0 trap, fire cap, tone cap and re-entry.
+  - The `uAspect` shader upload.
+  - The 30-minute build poll.
+  - The afterglow guard.
+  - The degauss re-arm (new `tests/fake-audio.mjs`).
+  - The fake player, which now matches its own capture.
+  - A 1-in-8 flake, where a character read couldn't see FLAME's pixel cells.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
