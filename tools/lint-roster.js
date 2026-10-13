@@ -229,18 +229,21 @@ export async function lintRoster({ readmeText, shootText, issueFormText } = {}) 
       if (got[k] !== expect[k]) problems.push(`README roster sentence: ${k} says ${got[k]}, roster has ${expect[k]}`)
     }
   }
-  // 2026-10-12 -- the header's "stations | 16 · 690 tracks" badge is the
-  // same claim again, in the first thing a visitor reads. It is a static
-  // shields badge (shields cannot read stations.js), so it gets the same
-  // check and the same loud miss as the sentence above. The version and
-  // license badges beside it are live (git tag, LICENSE) and need none.
-  const badge = /img\.shields\.io\/badge\/stations-(\d+)_%C2%B7_(\d+)_tracks-/.exec(readme)
-  if (!badge) {
-    problems.push('README: could not find the "stations-N_%C2%B7_N_tracks" shields badge in the header -- if it was reworded, update the regex in lint-roster.js so this keeps checking')
-  } else {
-    const total = STATIONS.reduce((n, s) => n + s.tracks.length, 0)
-    if (+badge[1] !== STATIONS.length) problems.push(`README stations badge: says ${badge[1]} stations, roster has ${STATIONS.length}`)
-    if (+badge[2] !== total) problems.push(`README stations badge: says ${badge[2]} tracks, roster has ${total}`)
+  // 2026-10-12 -- the header's "stations" and "tracks" badges are the same
+  // claim again, in the first thing a visitor reads. They are static shields
+  // badges (shields cannot read stations.js), so they get the same check and
+  // the same loud miss as the sentence above, each on its own -- they were
+  // one combined badge until the same day, and split so each reads as a
+  // single number. The version and license badges beside them are live (git
+  // tag, LICENSE) and need none.
+  const badgeExpect = {
+    stations: STATIONS.length,
+    tracks: STATIONS.reduce((n, s) => n + s.tracks.length, 0),
+  }
+  for (const [label, want] of Object.entries(badgeExpect)) {
+    const badge = new RegExp(`img\\.shields\\.io/badge/${label}-(\\d+)-`).exec(readme)
+    if (!badge) problems.push(`README: could not find the "${label}-N" shields badge in the header -- if it was reworded, update the regex in lint-roster.js so this keeps checking`)
+    else if (+badge[1] !== want) problems.push(`README ${label} badge: says ${badge[1]}, roster has ${want}`)
   }
   // 2026-09-02 (audit, D1) -- index.html's meta/OG/twitter descriptions are
   // the same roster claim one layer further out, and the layer social
