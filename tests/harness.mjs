@@ -472,7 +472,10 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         // ends, and endAd() is the resume path. This used to fire PLAYING
         // through the hold, an event the real player never sends there.
         this.playVideo = () => { if (adHolding) return; if (!playing) { startedAt = now; playing = true; firePlaying() } }
-        this.pauseVideo = () => { if (playing) { base = pos(); playing = false; fire(YT.PlayerState.PAUSED) } }
+        this.pauseVideo = () => {
+          playerCalls.push('pause'); this.levels?.push({ call: 'pause', heard: 0, at: now })
+          if (playing) { base = pos(); playing = false; fire(YT.PlayerState.PAUSED) }
+        }
         this.seekTo = (t) => { base = Math.max(0, t); startedAt = now }
         this.getCurrentTime = () => pos()
         this.getDuration = () => (this.videoId && durationKnown ? FAKE_DURATION : 0)
@@ -517,20 +520,49 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         //   setVolume(0); mute()     -> volume 0,  isMuted true
         //   unMute()                 -> volume 70, isMuted false (pre-mute level)
         // The load-bearing part is that unMute() REFUSES to leave the level
-        // at zero: it restores the last non-zero volume, or a small floor if
-        // there is none. So unMute() after setVolume(0) is audible sound, and
-        // any caller that wants a level must unMute FIRST and set after.
-        let remembered = 100 // last non-zero level, for unMute() to restore
+        // at zero. So unMute() after setVolume(0) is audible sound, and any
+        // caller that wants a level must unMute FIRST and set after.
+        //
+        // 2026-10-12 (audit, LOW) -- WHAT it restores, read carefully. This
+        // fake used to restore "the last non-zero volume" in both cases, which
+        // gives 50 for row 3 where the capture says 5: the fake disagreed
+        // with the capture it claims to be rebuilt from. Row 3 is the
+        // unambiguous one -- a level of 50 set two calls earlier and NOT
+        // restored -- so after a bare setVolume(0) unMute() gives the floor.
+        // Row 5 restores 70 after an explicit mute(), and 70 is not a level
+        // any row above sets: the rows are separate probes, not one sequence,
+        // and the 70 was the level already playing before the probe began
+        // (the deployed set's own default). So the capture pins: no mute()
+        // since the zero -> the floor; an explicit mute() -> SOME earlier
+        // level. Which earlier level is not pinned. The fake takes the last
+        // non-zero setVolume (or the player's starting 100), which is the
+        // simplest reading consistent with both rows -- an inference, not a
+        // capture, and the first thing to re-check if a test ever turns on it.
+        let remembered = 100 // last non-zero level, for unMute() after mute()
+        let explicitMute = false // mute() called since the last unMute()
         const UNMUTE_FLOOR = 5
-        this.mute = () => { if (this.volume > 0) remembered = this.volume; this.muted = true }
+        // Every call that moves what a listener hears is logged, with the
+        // level heard straight after it (0 when silent), so a test can
+        // assert on the ORDER rather than the end state -- a blip is an
+        // intermediate state by definition, and the end state hides it.
+        const heard = () => (this.isMuted() ? 0 : this.volume)
+        const logLevel = (call) => { this.levels.push({ call, heard: heard(), at: now }) }
+        this.levels = []
+        this.mute = () => {
+          if (this.volume > 0) remembered = this.volume
+          this.muted = true; explicitMute = true
+          playerCalls.push('mute'); logLevel('mute')
+        }
         this.unMute = () => {
           this.muted = false
-          if (this.volume === 0) this.volume = remembered > 0 ? remembered : UNMUTE_FLOOR
+          if (this.volume === 0) this.volume = explicitMute && remembered > 0 ? remembered : UNMUTE_FLOOR
+          explicitMute = false
+          playerCalls.push('unMute'); logLevel('unMute')
         }
         this.setVolume = (v) => {
           this.volume = v
           if (v > 0) remembered = v
-          playerCalls.push(`volume:${v}`)
+          playerCalls.push(`volume:${v}`); logLevel(`volume:${v}`)
         }
         this.isMuted = () => this.muted || this.volume === 0
         /** What a listener actually hears. The assertion issue #67 wants. */

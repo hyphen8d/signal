@@ -27,8 +27,11 @@ let last = ''
 // new. Keyed, a repaint of unchanged state says nothing at all.
 const said = new Map()
 
-/** The live region, looked up once. Absent in the test harness and in any
- *  page that does not carry it, where every call below is a no-op. */
+/** The live region, looked up once. Absent in any page that does not carry
+ *  it, where every call below is a no-op. (The test harness DOES answer
+ *  `#announce` -- that is what h.announced reads -- so a test exercises the
+ *  same writes a browser gets; 2026-10-12, the old "absent in the test
+ *  harness" here had been false since the harness grew it.) */
 function region() {
   if (node !== undefined) return node
   try { node = document.getElementById('announce') ?? null } catch (e) { node = null }
@@ -50,6 +53,23 @@ export function announce(text, kind = 'other') {
   // (a station's own ident, say) often enough to matter.
   el.textContent = ''
   el.textContent = say
+}
+
+/** Forget what was last said for one kind, so the next line of that kind is
+ *  spoken even if it is the same words (2026-10-12, audit M2). The per-kind
+ *  memory above was never cleared, so it could not tell "the same station,
+ *  repainted" from "the same station, found again": power off and on to the
+ *  station you were on, or detune one step and come back, and the listener
+ *  heard nothing about where the set had landed. Called where the state
+ *  really ENDS -- the lock lost, the set switched off -- and never from the
+ *  painters: showStation() clears its own rows on every repaint, so a forget
+ *  in clearStation() would have undone the very dedup this file exists for. */
+export function forget(kind) {
+  const was = said.get(kind)
+  said.delete(kind)
+  // The cross-kind `last` check would otherwise still swallow it when the
+  // forgotten line happens to be the most recent thing said.
+  if (was !== undefined && last === was) last = ''
 }
 
 /** Exported for the tests, and for anything that needs to know what the last
