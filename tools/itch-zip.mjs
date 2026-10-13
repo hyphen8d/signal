@@ -26,7 +26,7 @@
 // at load, finds the same stamp it was packaged with, and everything imports
 // under it: the reload-on-deploy check (tickBuild) therefore never fires on
 // itch, which is correct -- there is nothing to reload to.
-import { readdirSync, statSync, existsSync, mkdirSync, rmSync, cpSync, readFileSync, writeFileSync } from 'node:fs'
+import { statSync, existsSync, mkdirSync, rmSync, cpSync, readFileSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -44,78 +44,127 @@ const ROOT_FILES = [
   'game.js', 'a11y.js',
   'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
 ]
-/** Directories taken whole. */
+/** Not fetched by the page, but required to travel with any copy.
+ *
+ *  2026-10-12 (audit, M6) -- the zip shipped without either. src/ is
+ *  cyberspace-crt, vendored under MIT, whose one condition is that "the above
+ *  copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software". The src/*.js files carry
+ *  no header of their own, so NOTICE is the only place that notice exists,
+ *  and an itch upload IS a copy. LICENSE goes too, for SIGNAL's own terms.
+ *  (fonts/ always carried the font's OFL.txt, because it travels whole.) */
+const LEGAL_FILES = ['LICENSE', 'NOTICE']
+/** Directories taken whole -- every TRACKED file in them. */
 const DIRS = ['src', 'ui', 'visuals', 'audio', 'fonts']
+/** Tracked things at the root that are deliberately not packaged. Anything
+ *  tracked at the root that is in none of these lists stops the build -- see
+ *  the stray check. Markdown is never fetched and is let through by rule. */
+const NOT_SHIPPED_DIRS = ['tools', 'tests', 'screenshots', '.github']
+const NOT_SHIPPED_FILES = ['package.json', '.gitignore']
 
-function walk(dir) {
-  const out = []
-  for (const name of readdirSync(dir)) {
-    const p = path.join(dir, name)
-    if (statSync(p).isDirectory()) out.push(...walk(p))
-    else out.push(p)
+function git(...a) {
+  const r = spawnSync('git', a, { cwd: ROOT, encoding: 'utf8' })
+  if (r.status !== 0) {
+    console.error(`git ${a.join(' ')} failed -- this tool packages what git tracks, so it needs a checkout:\n${r.stderr}`)
+    process.exit(1)
   }
-  return out
+  return r.stdout.split('\0').filter(Boolean)
 }
 
-const files = [
-  ...ROOT_FILES.map((f) => path.join(ROOT, f)),
-  ...DIRS.flatMap((d) => walk(path.join(ROOT, d))),
-]
+// 2026-10-12 (audit, M6) -- what goes in is what GIT TRACKS, not what is on
+// disk. This used to walk() each directory, and the working tree is not the
+// project: the built zip carried audio/dm-test.mp3, a gitignored scratch
+// render from voice-render.mjs, and would have carried anything else lying
+// there -- a dotfile, an editor swap file, a key dropped in the wrong
+// folder. Same argument as the admin server's static allowlist: naming what
+// belongs means the next stray thing is excluded without anyone having had
+// to anticipate it. Tracked files are still read from the working tree, so
+// an uncommitted EDIT to one is packaged, as before.
+const tracked = git('ls-files', '-z')
+const trackedSet = new Set(tracked)
+const inDirs = (rel) => DIRS.some((d) => rel.startsWith(d + '/'))
+const fileRels = [...ROOT_FILES, ...LEGAL_FILES, ...tracked.filter(inDirs)]
+const files = fileRels.map((rel) => path.join(ROOT, rel))
 
-const missing = files.filter((f) => !existsSync(f))
+const missing = fileRels.filter((rel) => !existsSync(path.join(ROOT, rel)) || !trackedSet.has(rel))
 if (missing.length) {
-  console.error('missing, so the package would be broken:')
-  for (const m of missing) console.error('  ' + path.relative(ROOT, m))
+  console.error('missing or untracked, so the package would be broken:')
+  for (const m of missing) console.error('  ' + m)
   process.exit(1)
 }
 
-// A root .js the app imports but nobody listed is the failure this catches:
-// it would 404 on itch only, at run time, on someone else's machine.
-const listed = new Set(files.map((f) => path.relative(ROOT, f)))
-const strays = readdirSync(ROOT)
-  .filter((f) => f.endsWith('.js') && !listed.has(f) && f !== 'package.json')
-if (strays.length) {
-  console.error(`root .js files exist that this tool does not package: ${strays.join(', ')}`)
-  console.error('Add them to ROOT_FILES if the page fetches them, or ignore this if it does not.')
+// The stray check: something the app may fetch that this tool would leave
+// out. It would 404 on itch only, at run time, on someone else's machine --
+// the one place nobody looks.
+//
+// 2026-10-12 (audit, M6) -- this was "a root .js nobody listed". It now
+// covers three shapes, one of them opened by packaging from git:
+//   1. a tracked root FILE in no list (a new module, stylesheet, image)
+//   2. a tracked root DIRECTORY in no list (a new lib/ the page imports)
+//   3. an untracked-but-not-ignored file inside a packaged directory -- a
+//      new clip or module not committed yet, which git ls-files would drop
+//      silently. Committing it is the fix, so the message says so.
+const listed = new Set([...ROOT_FILES, ...LEGAL_FILES, ...NOT_SHIPPED_FILES])
+const strayFiles = tracked.filter((rel) => !rel.includes('/') && !listed.has(rel) && !/\.md$/i.test(rel))
+const strayDirs = [...new Set(tracked.filter((rel) => rel.includes('/')).map((rel) => rel.split('/')[0]))]
+  .filter((d) => !DIRS.includes(d) && !NOT_SHIPPED_DIRS.includes(d))
+const uncommitted = git('ls-files', '-z', '--others', '--exclude-standard', '--', ...DIRS)
+if (strayFiles.length || strayDirs.length || uncommitted.length) {
+  if (strayFiles.length) console.error(`tracked root files this tool does not package: ${strayFiles.join(', ')}`)
+  if (strayDirs.length) console.error(`tracked root directories this tool does not package: ${strayDirs.join(', ')}`)
+  if (uncommitted.length) console.error(`untracked files in packaged directories -- commit or gitignore them: ${uncommitted.join(', ')}`)
+  console.error('Add each to ROOT_FILES/DIRS if the page fetches it, or to NOT_SHIPPED_* if it does not.')
   process.exit(1)
 }
 
 if (process.argv.includes('--list')) {
-  for (const f of files) console.log(path.relative(ROOT, f))
+  for (const rel of fileRels) console.log(rel)
   console.log(`\n${files.length} files`)
   process.exit(0)
 }
 
-rmSync(OUT, { recursive: true, force: true })
-const stage = path.join(OUT, 'signal')
-mkdirSync(stage, { recursive: true })
-for (const f of files) {
-  const rel = path.relative(ROOT, f)
-  const dest = path.join(stage, rel)
-  mkdirSync(path.dirname(dest), { recursive: true })
-  cpSync(f, dest)
-}
-
-// The analytics beacon does not travel. It measures the Pages site; a copy
-// running on itch's origin would either report plays as traffic to a site
-// they did not visit, or fail outright (it does: ERR_FAILED from the itch
-// sandbox). Either way it is the wrong measurement in the wrong place, so the
-// packaged index.html goes without it. itch keeps its own play counts.
-const indexPath = path.join(stage, 'index.html')
-const html = readFileSync(indexPath, 'utf8')
-const BEACON = /\n?\s*<!-- Cloudflare Web Analytics[\s\S]*?<script[^>]*cloudflareinsights[^>]*><\/script>/
-if (!BEACON.test(html)) {
-  console.error('index.html no longer matches the analytics block this tool strips.')
-  console.error('Check what changed before shipping a copy that beacons from itch.')
-  process.exit(1)
-}
-writeFileSync(indexPath, html.replace(BEACON, ''))
-// -r from inside the stage dir: itch needs index.html at the ZIP ROOT, not
-// nested in a folder, or the Play button serves a directory listing.
-const r = spawnSync('zip', ['-q', '-r', '-9', ZIP, '.'], { cwd: stage, stdio: 'inherit' })
-if (r.status !== 0) { console.error('zip failed'); process.exit(1) }
+// 2026-10-12 (audit, M6) -- this used to rmSync the whole of dist/, which
+// .gitignore names as where the itch COVER ART lives too, so every rebuild
+// deleted it. Only what this tool owns is removed now: the zip (which must
+// go first -- `zip -r` APPENDS to an existing archive, keeping files since
+// deleted from the tree) and its own staging directory.
+mkdirSync(OUT, { recursive: true })
+rmSync(ZIP, { force: true })
+const stage = path.join(OUT, `.itch-stage-${process.pid}`)
 rmSync(stage, { recursive: true, force: true })
+mkdirSync(stage, { recursive: true })
+try {
+  for (const rel of fileRels) {
+    const dest = path.join(stage, rel)
+    mkdirSync(path.dirname(dest), { recursive: true })
+    cpSync(path.join(ROOT, rel), dest)
+  }
 
-const mb = (statSync(ZIP).size / 1e6).toFixed(1)
-console.log(`${path.relative(ROOT, ZIP)}  ${files.length} files, ${mb} MB`)
-console.log('Upload to itch as an HTML project; tick "This file will be played in the browser".')
+  // The analytics beacon does not travel. It measures the Pages site; a copy
+  // running on itch's origin would either report plays as traffic to a site
+  // they did not visit, or fail outright (it does: ERR_FAILED from the itch
+  // sandbox). Either way it is the wrong measurement in the wrong place, so
+  // the packaged index.html goes without it. itch keeps its own play counts.
+  const indexPath = path.join(stage, 'index.html')
+  const html = readFileSync(indexPath, 'utf8')
+  const BEACON = /\n?\s*<!-- Cloudflare Web Analytics[\s\S]*?<script[^>]*cloudflareinsights[^>]*><\/script>/
+  if (!BEACON.test(html)) {
+    console.error('index.html no longer matches the analytics block this tool strips.')
+    console.error('Check what changed before shipping a copy that beacons from itch.')
+    process.exitCode = 1
+  } else {
+    writeFileSync(indexPath, html.replace(BEACON, ''))
+    // -r from inside the stage dir: itch needs index.html at the ZIP ROOT,
+    // not nested in a folder, or the Play button serves a directory listing.
+    const r = spawnSync('zip', ['-q', '-r', '-9', ZIP, '.'], { cwd: stage, stdio: 'inherit' })
+    if (r.status !== 0) { console.error('zip failed'); rmSync(ZIP, { force: true }); process.exitCode = 1 }
+  }
+} finally {
+  rmSync(stage, { recursive: true, force: true })
+}
+
+if (!process.exitCode) {
+  const mb = (statSync(ZIP).size / 1e6).toFixed(1)
+  console.log(`${path.relative(ROOT, ZIP)}  ${files.length} files, ${mb} MB`)
+  console.log('Upload to itch as an HTML project; tick "This file will be played in the browser".')
+}

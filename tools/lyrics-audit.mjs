@@ -118,7 +118,12 @@ for (const t of sample) {
     // Matched something real, but for a recording of the wrong length --
     // the case the gate refuses. Worth seeing: it is a track that WOULD
     // have shown drifting lyrics before 2026-08-30.
-    else if (synced(hit) || synced(alt)) {
+    //
+    // 2026-10-12 (audit, LOW) -- not for a track marked instrumental, which
+    // only reaches here under --check-instrumental. A wrong-length lyric on
+    // a wordless track is the expected answer (a sung version of the same
+    // standard, say), not a gate refusal worth listing among the vocal ones.
+    else if (!t.instrumental && (synced(hit) || synced(alt))) {
       const m = synced(alt) ? alt : hit
       suspect.push(`${t.st.padEnd(17)} ${String(t.title).slice(0, 32).padEnd(32)} playing ${want}s vs lyric ${Math.round(m.duration || 0)}s`)
     }
@@ -126,7 +131,11 @@ for (const t of sample) {
   if (t.instrumental) {
     // Checked only under --check-instrumental, and never counted in the rate.
     tally.instrumental++
-    if (via) markedButMatched.push(`${t.st.padEnd(17)} ${t.youtubeId} ${t.artist} - ${t.title}`)
+    // 2026-10-12 (audit, LOW) -- "of the right length" is only a claim when
+    // there WAS a length: with no duration on record (want = 0) the gate
+    // passes anything, so such a match is listed as ungated rather than as
+    // evidence the verdict is wrong.
+    if (via) markedButMatched.push(`${t.st.padEnd(17)} ${t.youtubeId} ${t.artist} - ${t.title}${want ? '' : '  (length unknown -- NOT gated)'}`)
     continue
   }
   if (via === 'exact') tally.exact++
@@ -138,12 +147,14 @@ for (const t of sample) {
 const n = sample.length - tally.instrumental
 if (tally.instrumental) console.log(`  (${tally.instrumental} sampled track(s) are marked instrumental in the roster and ${CHECK_INSTRUMENTAL ? 'were checked but ' : ''}are not counted below)\n`)
 if (markedButMatched.length) {
-  console.log(`Marked instrumental, but LRCLIB has a synced lyric of the right length (${markedButMatched.length}) -- listen, and fix the roster if one is sung:`)
+  console.log(`Marked instrumental, but LRCLIB has a synced lyric that passed the duration gate (${markedButMatched.length}) -- listen, and fix the roster if one is sung:`)
   for (const r of markedButMatched) console.log('  ' + r)
   console.log('')
 }
 const ok = tally.exact + tally.search
-const pct = (v) => `${((v / n) * 100).toFixed(0)}%`
+// 2026-10-12 (audit, LOW) -- n is 0 when every sampled track is marked
+// instrumental (--station on an instrumental station), which printed NaN%.
+const pct = (v) => n ? `${((v / n) * 100).toFixed(0)}%` : 'n/a'
 console.log(`  /api/get   (exact title+artist) : ${String(tally.exact).padStart(3)}/${n}  ${pct(tally.exact)}`)
 console.log(`  /api/search fallback            : ${String(tally.search).padStart(3)}     +${pct(tally.search)}`)
 console.log(`  no synced lyrics found          : ${String(tally.none).padStart(3)}`)

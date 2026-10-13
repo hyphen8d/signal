@@ -26,9 +26,10 @@
 // Quiet on purpose. A notification that fires after every run is wallpaper
 // inside a week, and wallpaper is how the original bug survived. Clean runs
 // say nothing at all; a single throttled run says nothing either, because
-// that is ordinary and self-correcting. It speaks when there are findings,
-// or when the SWEEP ITSELF has been stuck long enough that coverage is
-// quietly rotting again.
+// that is ordinary and self-correcting. It speaks when there are NEW
+// confirmed findings, or when the SWEEP ITSELF has been stuck long enough
+// that coverage is quietly rotting again -- and the second is judged on its
+// own, whatever else the run found (2026-10-12; see bumpStreak).
 //
 //   node tools/roster-watch.mjs              # one batch, notify if warranted
 //   node tools/roster-watch.mjs --batch=60
@@ -43,10 +44,17 @@ import { spawn } from 'node:child_process'
 import { readFileSync, writeFileSync, existsSync, renameSync, realpathSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { flaggedCap } from './check-roster.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(here, '..')
-const STATE = path.join(here, 'roster-watch-state.json')
+// SIGNAL_WATCH_STATE and SIGNAL_WATCH_NOTIFY_LOG are for the suite only
+// (2026-10-12, audit M5), the same shape as check-roster's
+// SIGNAL_HEALTH_STORE: they let tests/health-wiring.test.mjs run this script
+// end to end against a scratch state file, and read what it WOULD have
+// notified from a file instead of putting it on the desktop.
+const STATE = process.env.SIGNAL_WATCH_STATE || path.join(here, 'roster-watch-state.json')
+const NOTIFY_LOG = process.env.SIGNAL_WATCH_NOTIFY_LOG || null
 
 const args = process.argv.slice(2)
 const flag = (n, d) => { const h = args.find((a) => a.startsWith(`--${n}=`)); return h ? h.slice(n.length + 3) : d }
@@ -65,7 +73,7 @@ const THROTTLE_STREAK = 3
 const ERROR_STREAK = 2
 const HISTORY = 20
 
-const emptyState = () => ({ version: 1, lastRun: null, lastOutcome: null, streak: {}, history: [] })
+const emptyState = () => ({ version: 1, lastRun: null, lastOutcome: null, streak: {}, history: [], findings: null })
 function loadState() {
   if (!existsSync(STATE)) return emptyState()
   try {
@@ -77,7 +85,17 @@ function loadState() {
 /** What did this run actually amount to?
  *
  *  Order matters: findings outrank an unfinished sweep, because a real flag
- *  is worth acting on whether or not the rest of the batch got through. */
+ *  is worth acting on whether or not the rest of the batch got through.
+ *
+ *  2026-10-12 (audit, M3) -- but the ORDER only picks the label. It used to
+ *  pick the streak too: bumpStreak zeroed `incomplete` for any outcome but
+ *  'incomplete', so with one flag on the record every throttled run was
+ *  labelled findings/unconfirmed and the stall counter never left zero --
+ *  six throttled days in a row, simulated, notified nothing. A flag that
+ *  never clears (the live state that day) hid a stalled sweep forever,
+ *  which is the exact "unfinished run reads as fine" failure this file
+ *  exists to prevent. The stall is now counted from summary.throttled
+ *  directly; see bumpStreak and notifications. */
 export function classify({ exitCode, summary, crashed }) {
   if (crashed || !summary) return 'error'
   // 2026-09-22 -- a flag has to be seen TWICE before it wakes anyone.
@@ -94,9 +112,40 @@ export function classify({ exitCode, summary, crashed }) {
   return 'clean'
 }
 
-/** Does a person need to hear about this? Silence is the default. */
-export function shouldNotify(outcome, streak) {
-  if (outcome === 'findings') return true
+/** The flagged rows that count as findings: confirmed by two spaced probes.
+ *  A row without `confirmed` comes from a check-roster older than strikes and
+ *  counts, for the same too-loud-beats-silent reason as classify's fallback. */
+export const confirmedRows = (summary) => (summary?.flagged ?? []).filter((f) => f.confirmed !== false)
+export const unconfirmedRows = (summary) => (summary?.flagged ?? []).filter((f) => f.confirmed === false)
+
+/** Confirmed findings that were not confirmed at the last run.
+ *
+ *  2026-10-12 (audit, M4) -- a confirmed finding used to notify at
+ *  `critical` EVERY day until it was fixed, and a track kept on purpose (an
+ *  accepted narrow licence, say) would have notified forever: the wallpaper
+ *  the header warns about, at the loudest urgency there is. Now a finding is
+ *  news once -- the run that first confirms it -- and again only if it
+ *  clears and comes back. It stays visible where a person goes to look:
+ *  `--status` lists it and the dashboard's findings panel renders it from
+ *  the record. `prevIds` null (no record of the last run's findings: a fresh
+ *  state file or one written before this field existed) means everything is
+ *  new, so an upgrade re-announces rather than swallows what is there.
+ *
+ *  An explicit per-track "acknowledged" mark was the alternative and was not
+ *  built: notify-on-change already silences an accepted track after one
+ *  notification, and an ack is a second list someone has to keep in step
+ *  with the roster. If a kept track ever needs to vanish from the panel too,
+ *  that is where to add it. */
+export function newFindings(summary, prevIds) {
+  const prev = new Set(prevIds ?? [])
+  return confirmedRows(summary).map((f) => f.youtubeId).filter((id) => prevIds == null || !prev.has(id))
+}
+
+/** Does a person need to hear about this? Silence is the default.
+ *  `ctx.newConfirmed` is how many confirmed findings are new this run; a
+ *  caller that does not say (the pre-2026-10-12 form) gets the old answer. */
+export function shouldNotify(outcome, streak, ctx = {}) {
+  if (outcome === 'findings') return ctx.newConfirmed == null ? true : ctx.newConfirmed > 0
   // Deliberately silent: the next run re-probes it first and will either
   // confirm it (findings, notified) or clear it.
   if (outcome === 'unconfirmed') return false
@@ -105,11 +154,36 @@ export function shouldNotify(outcome, streak) {
   return false
 }
 
-/** Streaks count CONSECUTIVE outcomes, so anything else resets them. */
-export function bumpStreak(streak, outcome) {
-  const next = {}
-  for (const k of ['incomplete', 'error']) next[k] = k === outcome ? (streak[k] ?? 0) + 1 : 0
-  return next
+/** Streaks count CONSECUTIVE outcomes, so anything else resets them.
+ *
+ *  2026-10-12 (audit, M3) -- `incomplete` counts THROTTLED RUNS, read from
+ *  the summary, not runs labelled 'incomplete': a run that is labelled
+ *  findings because a flag is on the record still did not finish its batch,
+ *  and must still move the stall counter. Only a run that got through
+ *  (or a crash, which has its own streak) resets it. */
+export function bumpStreak(streak, outcome, summary) {
+  const throttled = outcome === 'incomplete' || (outcome !== 'error' && summary?.throttled === true)
+  return {
+    incomplete: throttled ? (streak.incomplete ?? 0) + 1 : 0,
+    error: outcome === 'error' ? (streak.error ?? 0) + 1 : 0,
+  }
+}
+
+/** Every notification this run warrants, in order. Usually none.
+ *
+ *  2026-10-12 (audit, M3/M4) -- a list, because a run can warrant two: new
+ *  findings AND a stalled sweep are separate news, and the second used to be
+ *  impossible to reach whenever the first label won. The stall notice fires
+ *  on the streak alone, whatever this run was labelled. */
+export function notifications(outcome, summary, streak, prevIds) {
+  const out = []
+  const fresh = outcome === 'findings' ? newFindings(summary, prevIds) : []
+  if (outcome === 'findings' && shouldNotify(outcome, streak, { newConfirmed: fresh.length })) {
+    out.push(describe(outcome, summary, streak, { newIds: fresh }))
+  }
+  if (outcome === 'error' && shouldNotify(outcome, streak)) out.push(describe(outcome, summary, streak))
+  if ((streak.incomplete ?? 0) >= THROTTLE_STREAK) out.push(describe('incomplete', summary, streak))
+  return out
 }
 
 // How long the record may go without a run before the SCHEDULE itself is
@@ -143,21 +217,39 @@ export function scheduleHealth(state, nowMs = Date.now()) {
  *  'tight' at 70% of the horizon: loud while there is still time to raise
  *  the batch or accept a longer horizon, not after coverage already fell
  *  behind. */
-export function sweepMargin(total, batch, horizonDays = 30) {
+//
+// 2026-10-12 (audit, M4) -- `flagged` rows go to the front of every batch
+// (up to check-roster's flaggedCap) and re-probing them does not advance
+// the sweep, so the pass is total / (batch - flagged slots). Leaving them out
+// overstated the margin by exactly the amount a bad week makes it matter.
+export function sweepMargin(total, batch, horizonDays = 30, flagged = 0) {
   if (!total || !batch || !horizonDays) return null
-  const passDays = total / batch
-  return { passDays, horizonDays, batch, status: passDays > horizonDays * 0.7 ? 'tight' : 'ok' }
+  const flaggedSlots = Math.min(flagged ?? 0, flaggedCap(batch))
+  const sweeping = batch - flaggedSlots
+  const passDays = sweeping > 0 ? total / sweeping : Infinity
+  return { passDays, horizonDays, batch, flaggedSlots, status: passDays > horizonDays * 0.7 ? 'tight' : 'ok' }
 }
 
-export function describe(outcome, summary, streak) {
+export function describe(outcome, summary, streak, { newIds } = {}) {
   const cov = summary ? `${summary.checked}/${summary.total} checked` : 'no summary'
   if (outcome === 'findings') {
-    const names = summary.flagged.slice(0, 3)
-      .map((f) => `${f.callsign}: ${f.flags.join(',')}`)
-    const more = summary.flagged.length - names.length
+    // 2026-10-12 (audit, M4) -- counts and names CONFIRMED rows only. It
+    // used to say "N track(s) flagged" off flaggedCount and list the first
+    // three of every flag, so a seen-once row could be one of the three
+    // names in a critical notification about confirmed problems. New ones
+    // first, since they are why this notification exists; the seen-once
+    // rows get one line of their own.
+    const fresh = new Set(newIds ?? [])
+    const rows = confirmedRows(summary)
+    const ordered = [...rows.filter((f) => fresh.has(f.youtubeId)), ...rows.filter((f) => !fresh.has(f.youtubeId))]
+    const names = ordered.slice(0, 3)
+      .map((f) => `${fresh.has(f.youtubeId) ? 'NEW ' : ''}${f.callsign}: ${f.flags.join(',')}`)
+    const more = ordered.length - names.length
+    const once = unconfirmedRows(summary).length
     return {
-      title: `SIGNAL roster: ${summary.flaggedCount} track(s) flagged`,
-      body: names.join('\n') + (more > 0 ? `\n+${more} more` : '') + `\n(${cov})`,
+      title: `SIGNAL roster: ${rows.length} track(s) flagged` + (fresh.size && fresh.size < rows.length ? ` (${fresh.size} new)` : ''),
+      body: names.join('\n') + (more > 0 ? `\n+${more} more` : '') +
+        (once ? `\n(${once} more seen once, re-checking)` : '') + `\n(${cov})`,
       urgency: 'critical',
     }
   }
@@ -199,6 +291,10 @@ function runCheck() {
 }
 
 function notify({ title, body, urgency }) {
+  if (NOTIFY_LOG) {
+    writeFileSync(NOTIFY_LOG, JSON.stringify({ title, body, urgency }) + '\n', { flag: 'a' })
+    return Promise.resolve(true)
+  }
   return new Promise((resolve) => {
     const child = spawn('notify-send', ['-a', 'SIGNAL', '-u', urgency, title, body], { stdio: 'ignore' })
     child.on('error', () => resolve(false))   // no desktop session: not an error
@@ -220,7 +316,10 @@ async function main() {
       streak: state.streak, history: state.history,
       schedule: sched.status, daysSinceRun: sched.days,
       graceDays: SCHEDULE_GRACE_DAYS,
-      margin: last ? sweepMargin(last.total, BATCH, last.staleDays) : null,
+      // Confirmed findings as of the last run -- notified once, listed here
+      // for as long as they last (2026-10-12).
+      findings: state.findings ?? [],
+      margin: last ? sweepMargin(last.total, BATCH, last.staleDays, last.flagged) : null,
     }))
     return
   }
@@ -231,9 +330,14 @@ async function main() {
     console.log(`last run : ${state.lastRun ?? 'never'}`)
     console.log(`outcome  : ${state.lastOutcome ?? '-'}`)
     console.log(`streaks  : ${JSON.stringify(state.streak)}`)
+    // The one place a confirmed finding stays loud after its one
+    // notification (2026-10-12) -- that, and the dashboard's panel.
+    const findings = state.findings ?? []
+    console.log(`findings : ${findings.length ? `${findings.length} confirmed` : 'none confirmed'}`)
+    for (const f of findings) console.log(`  ${String(f.callsign).padEnd(17)} ${f.youtubeId}  ${(f.flags ?? []).join(' ')}`)
     const lastEntry = state.history[state.history.length - 1]
-    const margin = lastEntry ? sweepMargin(lastEntry.total, BATCH, lastEntry.staleDays) : null
-    if (margin) console.log(`margin   : full pass ~${margin.passDays.toFixed(0)}d at batch ${margin.batch}, horizon ${margin.horizonDays}d -- ${margin.status === 'tight' ? 'TIGHT, raise the batch or the horizon' : 'ok'}`)
+    const margin = lastEntry ? sweepMargin(lastEntry.total, BATCH, lastEntry.staleDays, lastEntry.flagged) : null
+    if (margin) console.log(`margin   : full pass ~${margin.passDays.toFixed(0)}d at batch ${margin.batch}${margin.flaggedSlots ? ` (${margin.flaggedSlots} slot(s) re-probing flags)` : ''}, horizon ${margin.horizonDays}d -- ${margin.status === 'tight' ? 'TIGHT, raise the batch or the horizon' : 'ok'}`)
     console.log('history  :')
     for (const h of state.history.slice(-10)) {
       console.log(`  ${h.at}  ${String(h.outcome).padEnd(10)} ${h.checked}/${h.total} checked, ${h.flagged} flagged`)
@@ -254,14 +358,17 @@ async function main() {
         flaggedCount: outcome === 'findings' ? 2 : outcome === 'unconfirmed' ? 1 : 0,
         flaggedConfirmed: outcome === 'findings' ? 2 : 0,
         flagged: outcome === 'findings'
-          ? [{ callsign: 'NINE INCH NAILS', flags: ['NARROW-LICENCE:3'] }, { callsign: 'CIPHER', flags: ['LOGIN_REQUIRED'] }]
+          ? [{ youtubeId: 'aaaaaaaaaaa', callsign: 'NINE INCH NAILS', flags: ['NARROW-LICENCE:3'], confirmed: true },
+            { youtubeId: 'bbbbbbbbbbb', callsign: 'CIPHER', flags: ['LOGIN_REQUIRED'], confirmed: true }]
           : outcome === 'unconfirmed'
-            ? [{ callsign: 'NEON STASIS', flags: ['UNPLAYABLE'] }]
+            ? [{ youtubeId: 'ccccccccccc', callsign: 'NEON STASIS', flags: ['UNPLAYABLE'], confirmed: false }]
             : [],
       }
-      const streak = { incomplete: 3, error: 2 }
-      const d = describe(outcome, fake, streak)
-      console.log(`--- ${outcome}  (would notify: ${shouldNotify(outcome, streak)})`)
+      const streak = { incomplete: outcome === 'incomplete' ? 3 : 0, error: outcome === 'error' ? 2 : 0 }
+      // Rehearsed as the run that first confirms them: one is new.
+      const notes = notifications(outcome, fake, streak, ['bbbbbbbbbbb'])
+      const d = notes[0] ?? describe(outcome, fake, streak)
+      console.log(`--- ${outcome}  (would notify: ${notes.length > 0})`)
       console.log(`    ${d.title}`)
       for (const line of d.body.split('\n')) console.log(`    ${line}`)
     }
@@ -270,13 +377,25 @@ async function main() {
 
   const res = await runCheck()
   const outcome = classify(res)
-  const streak = bumpStreak(state.streak, outcome)
+  const streak = bumpStreak(state.streak, outcome, res.summary)
+  // What the previous run had confirmed; null when this state file has
+  // never recorded it, which newFindings() reads as "all of it is new".
+  const prevIds = Array.isArray(state.findings) ? state.findings.map((f) => f.youtubeId) : null
+  const notes = notifications(outcome, res.summary, streak, prevIds)
+  // A crashed run learned nothing about the roster, so it keeps the last
+  // known findings rather than forgetting them (which would re-announce
+  // every one of them the run after).
+  const findings = res.summary
+    ? confirmedRows(res.summary).map((f) => ({ youtubeId: f.youtubeId, callsign: f.callsign, flags: f.flags }))
+    : state.findings
   const entry = {
     at: new Date().toISOString(),
     outcome,
     checked: res.summary?.checked ?? 0,
     total: res.summary?.total ?? 0,
     flagged: res.summary?.flaggedCount ?? 0,
+    confirmed: res.summary ? confirmedRows(res.summary).length : undefined,
+    throttled: res.summary?.throttled === true,
     // The horizon the run itself was measured against, for sweepMargin() --
     // check-roster's summary carries its own STALE_DAYS, so the margin math
     // here can never disagree with the tool that owns the number. Old
@@ -294,21 +413,25 @@ async function main() {
     lastRun: entry.at,
     lastOutcome: outcome,
     streak,
+    findings: findings ?? null,
     history: [...state.history, entry].slice(-HISTORY),
   }, null, 2) + '\n')
   renameSync(tmp, STATE)
 
-  const d = describe(outcome, res.summary, streak)
+  const d = notes[0] ?? describe(outcome, res.summary, streak)
   console.error(`${outcome.toUpperCase()}: ${d.title}`)
+  if (outcome === 'findings' && !notes.some((n) => n.urgency === 'critical')) {
+    console.error('  (no new confirmed findings since the last run -- not notified; see --status)')
+  }
   if (res.stderr.trim()) console.error(res.stderr.trim())
   // A journal line, not a notification: the margin tightens over weeks of
   // curation, not overnight, and --status shows it on demand -- the rule
   // this tool exists for is that daily noise becomes wallpaper.
-  const margin = sweepMargin(entry.total, BATCH, entry.staleDays)
+  const margin = sweepMargin(entry.total, BATCH, entry.staleDays, entry.flagged)
   if (margin && margin.status === 'tight') {
     console.error(`MARGIN: a full pass now takes ~${margin.passDays.toFixed(0)}d at batch ${BATCH}, against a ${margin.horizonDays}d staleness horizon -- raise the batch or the horizon before coverage falls behind.`)
   }
-  if (shouldNotify(outcome, streak)) await notify(d)
+  for (const n of notes) await notify(n)
 
   // systemd records this. 'incomplete' is NOT a failure -- the sweep will
   // pick up where it left off -- but it is not success either, so it does
