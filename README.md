@@ -7,9 +7,10 @@
 **A tuning-dial internet radio on a CRT terminal.**<br>
 No signup, nothing to install — it runs in your browser.
 
-[![version](https://img.shields.io/github/v/tag/hyphen8d/signal?label=version&style=flat-square&labelColor=000&color=2eff5c)](./CHANGELOG.md)
-[![license](https://img.shields.io/github/license/hyphen8d/signal?style=flat-square&labelColor=000&color=2eff5c)](./LICENSE)
-[![stations: 16, tracks: 688](https://img.shields.io/badge/stations-16_%C2%B7_688_tracks-2eff5c?style=flat-square&labelColor=000)](./stations.md)
+[![version](https://img.shields.io/github/v/tag/hyphen8d/signal?label=version&style=flat-square&labelColor=000&color=1f7a3a)](./CHANGELOG.md)
+[![license](https://img.shields.io/github/license/hyphen8d/signal?style=flat-square&labelColor=000&color=1f7a3a)](./LICENSE)
+[![stations: 16](https://img.shields.io/badge/stations-16-1f7a3a?style=flat-square&labelColor=000)](./stations.md)
+[![tracks: 688](https://img.shields.io/badge/tracks-688-1f7a3a?style=flat-square&labelColor=000)](./stations.md)
 
 ### [▶ Tune in](https://hyphen8d.github.io/signal/)
 
