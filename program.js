@@ -716,7 +716,12 @@ export default {
     // time, same as any other sound attempted before the first click/key.
     // Every later power-on (a real gesture, powerUp()'s own sound) is
     // unaffected either way.
-    playPowerOnSound()
+    // 2026-10-12 (audit M8) -- the predicate is for the degauss this call
+    // leaves pending on a suspended context: it lands at the visitor's FIRST
+    // gesture, whatever that is, and must only thunk if a power transition
+    // is still running then (this flourish, or a [P] boot) -- not over a [G]
+    // in STANDBY. See playDegauss().
+    playPowerOnSound(() => this._powerAnimating)
     this._powerAnimating = true // false again in COLD_OPEN_MS, below
     const COLD_OPEN_MS = 500
     rampCrtParams(

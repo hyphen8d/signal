@@ -596,7 +596,10 @@ export function playClick(t0) {
     src.start(t)
   } catch (e) {}
 }
-export function playPowerOnSound() {
+/** `stillWanted` (2026-10-12) is passed through to playDegauss(): asked when
+ *  a deferred degauss finally lands, so one requested by a call that was
+ *  never a gesture can tell whether the set is still coming on. See there. */
+export function playPowerOnSound(stillWanted) {
   try {
     const ctx = audioCtx()
     const t = ctx.currentTime
@@ -612,7 +615,7 @@ export function playPowerOnSound() {
     osc.connect(gain).connect(ctx.destination)
     osc.start(t + 0.03)
     osc.stop(t + 0.47)
-    playDegauss(t + 0.05)
+    playDegauss(t + 0.05, stillWanted)
   } catch (e) {}
 }
 
@@ -646,7 +649,7 @@ export function degaussDue(state, t, lastAt) {
   if (state !== 'running') return false
   return !(t - lastAt < DEGAUSS_REARM_S)
 }
-export function playDegauss(t0) {
+export function playDegauss(t0, stillWanted) {
   try {
     const ctx = audioCtx()
     if (ctx.state === 'running') return scheduleDegauss(ctx, t0 ?? ctx.currentTime)
@@ -654,11 +657,24 @@ export function playDegauss(t0) {
     // keypress that unlocks audio the state is still 'suspended' here and a
     // plain state check drops the one degauss the listener was waiting for
     // (measured: the 78Hz coil was absent from the oscillators a real [P]
-    // scheduled). Schedule it when the resume lands instead. With no gesture
-    // behind it -- the cold-open flourish at page load -- Chromium never
-    // settles this promise, so nothing plays and nothing is armed, which is
-    // the behaviour that was wanted there anyway.
-    ctx.resume?.().then(() => scheduleDegauss(ctx, ctx.currentTime)).catch(() => {})
+    // scheduled). Schedule it when the resume lands instead.
+    // 2026-10-12 (audit M8) -- this used to go on to say that with no
+    // gesture behind it (the cold-open flourish at page load) Chromium never
+    // settles the promise. It does: per spec a pending resume() resolves at
+    // the first gesture that unlocks audio, WHATEVER that gesture is. A
+    // visitor whose first key is [G] in STANDBY got the coil thunk with the
+    // set off, and the 30s re-arm then swallowed the degauss of the [P]
+    // that followed. So a caller that is not itself the power gesture
+    // passes `stillWanted`, asked when the resume lands: the cold-open's
+    // answers "only while a power transition is still running", which keeps
+    // the thunk for an autoplay-allowed load that unlocks during the
+    // flourish and for a first gesture that IS [P] (deduped against [P]'s
+    // own request by the re-arm), and drops it for anything else. powerUp()
+    // passes nothing: its own keypress is the gesture.
+    ctx.resume?.().then(() => {
+      if (stillWanted && !stillWanted()) return
+      scheduleDegauss(ctx, ctx.currentTime)
+    }).catch(() => {})
   } catch (e) {}
 }
 function scheduleDegauss(ctx, t) {

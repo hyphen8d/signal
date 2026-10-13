@@ -642,7 +642,11 @@ export class CRT {
     gl.uniform3fv(u.uPhosphor, this.phosphor)
     gl.uniform1f(u.uFill, P.fill)
     // 4/3 for a television. Portrait values exist for a phone, where a 4:3
-    // face letterboxes into a strip: see MOBILE_CRT_OVERRIDE in crt-hooks.js.
+    // face letterboxes into a strip: the app passes them in as
+    // `params.aspect` (SIGNAL's config.js FACE_ASPECT -- not its
+    // MOBILE_CRT_OVERRIDE, which is where this comment pointed until
+    // 2026-10-12; see the note on FACE_ASPECT for why it moved).
+    // tests/engine.test.mjs asserts this line reads the param.
     gl.uniform1f(u.uAspect, P.aspect || 4 / 3)
     gl.uniform1f(u.uCurve, P.curve)
     gl.uniform1f(u.uBloomAmt, P.bloomAmt)

@@ -77,6 +77,13 @@ export default {
     this._cancelAllResolves()
     this.stopScan()
     stopStaticNoise()
+    // 2026-10-12 (audit, LOW) -- opened with [A] from inside the visualizer,
+    // the card inherited the effect's own afterglow: frame() bails while the
+    // card is up, so drawVisualizerFrame()'s per-frame decay write never ran
+    // and FLOW FIELD's 0.88 smeared the card in for half a second. The card
+    // is static text and gets the station's persistence; the visualizer puts
+    // the effect's back on its first frame after the card closes.
+    if (this.visualizerActive) this.restoreTubeDecay(s)
     this.drawTapConsent(s)
     return true
   },
