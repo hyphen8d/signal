@@ -72,9 +72,24 @@ export const MOBILE_CRT_OVERRIDE = {
   // setCrtCharacter() and STANDBY would draw at the wrong shape until the
   // first power-on. See the note there.
 }
-export let crtBase = { ...SCREEN }
+// 2026-10-12 -- crtBase is ONE object for the page's life, rebuilt IN PLACE.
+// It was an `export let` that setCrtCharacter() reassigned, which is only
+// live for a static `import { crtBase }`. Every reader in the app takes it
+// as `const { crtBase } = await import(...)` -- destructuring copies the
+// binding's value at that moment, so program.js, visualizer.js and
+// ui/desktop.js all held the boot-time `{ ...SCREEN }` forever. The visible
+// cost was decay: power-up and the visualizer's per-frame floor wrote
+// SCREEN's 0.75 over DRIFT MODE / NEON STASIS / GREEN ROOM's 0.88 and
+// ATOMIC's 0.7, and restoreTubeDecay() put 0.75 back after [E]. Mutating
+// one object makes the destructured reference correct by construction, so
+// no call site has to remember a getter (and a new module written the
+// house way cannot reintroduce it). Cleared before refilling so a key one
+// station's `crt` adds beyond SCREEN cannot leak into the next station.
+// tests/crt-base.test.mjs holds it on a 0.88 station.
+export const crtBase = { ...SCREEN }
 export function setCrtCharacter(s, station) {
-  crtBase = { ...SCREEN, ...((station && station.crt) || {}), ...(MOBILE_LITE ? MOBILE_CRT_OVERRIDE : {}) }
+  for (const k of Object.keys(crtBase)) delete crtBase[k]
+  Object.assign(crtBase, SCREEN, (station && station.crt) || {}, MOBILE_LITE ? MOBILE_CRT_OVERRIDE : {})
   if (!s?.crt?.params) return
   Object.assign(s.crt.params, crtBase)
 }

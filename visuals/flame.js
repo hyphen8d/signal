@@ -91,6 +91,10 @@ const FIRE_MAX = 52 // heat levels the dither resolves; mean cooling is 1/3 leve
 // heat over the cooling rate. Capped at FIRE_MAX the loudest track stood two
 // rows over silence (measured 10 vs 12, tests/visual-flame.test.mjs) -- the
 // 57th pass's "loud ones blow it out taller" was gone. Uint8 heat, so < 256.
+// 2026-10-12 -- that measurement was taken 4s in, while the fire was still
+// climbing (~5.6s to the top at 30Hz), and the test built on it passed with
+// this cap undone. Settled, mid bass stands 9 rows and the loudest 19 with
+// the cap, 14-15 without; the test now reads it that way.
 const FIRE_CAP = FIRE_MAX * 2
 const FIRE_HZ = 30
 const FIRE_SPARKS = 32

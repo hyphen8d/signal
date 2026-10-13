@@ -7,6 +7,7 @@
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 
 const { Screen } = await import('../src/screen.js?v=engine')
 const { CLOCK_WRAP_S, wrapClock, advanceRollPhase } = await import('../src/crt.js?v=engine')
@@ -125,4 +126,20 @@ test('a dot just off the top or left edge is dropped, not snapped to 0 (L12)', (
   dc.clear()
   dc.plot(dc.w - 0.5, dc.h - 0.5)
   assert.notEqual(dc.cells[dc.cells.length - 1], 0, 'and the far corner still lands in the last cell')
+})
+
+// 2026-10-12 (audit) -- the faceplate's shape reaches the GPU through one
+// line, and nothing in Node can run it: the harness CRT is a stub, so
+// face-aspect.test.mjs proves the PARAM is right and nothing more. Replacing
+// `P.aspect || 4 / 3` with a constant 4/3 -- the shape this was before
+// 2026-09-22 -- left the whole suite green and every phone letterboxed. A
+// source-level check is the honest reach here: the upload reads the param,
+// and the shader's geometry uses the uniform.
+test('the shader takes the face aspect from params, not a constant', () => {
+  const src = readFileSync(new URL('../src/crt.js', import.meta.url), 'utf8')
+  const uploads = src.match(/gl\.uniform1f\(u\.uAspect,[^)]*\)/g) || []
+  assert.equal(uploads.length, 1, 'exactly one uAspect upload')
+  assert.match(uploads[0], /\bP\.aspect\b/, `uAspect is uploaded as ${uploads[0]}, not from params`)
+  assert.match(src, /min\(uRes\.x \/ uAspect, uRes\.y\)/, 'the fit uses uAspect')
+  assert.match(src, /vec2\(uFill \* uAspect, uFill\)/, 'the face size uses uAspect')
 })
