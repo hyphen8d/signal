@@ -953,6 +953,19 @@ flowchart LR
   the record and notified every day in between. That is how one transient
   `UNPLAYABLE` on NEON STASIS cried wolf for five days over a track that had
   already come back.
+  **Three limits on that, 2026-10-12 (audit M4):** flagged rows take at most
+  a quarter of a batch (`FLAGGED_SHARE`; the excess rotates in oldest-first),
+  because forty flags would otherwise take every slot and stop the sweep
+  while each run still looked busy — and `sweepMargin()` counts those slots
+  as not advancing it. A second strike counts only from a probe at least
+  `CONFIRM_SPACING_MS` (12h) after the last counted one, so a dashboard RUN
+  BATCH minutes after an `unconfirmed` run cannot confirm the same transient;
+  strikes still add across flag types, deliberately (see `nextStrikes`). And
+  an UNVERIFIED re-probe of a flagged row keeps its `lastRealFlags`, so it
+  stays first in the queue and on the findings list (`heldFlags()`, marked
+  `held` on the dashboard) instead of vanishing for a full pass.
+  `recordProbe()` writes every record and `tests/health-wiring.test.mjs`
+  drives the real `main()` of both tools through `tests/fake-youtube.mjs`.
 - **`tools/roster-watch.mjs` is what remembers to run it** (2026-08-30). The
   NIN three-country track was found only because someone happened to run the
   deep probe by hand the evening before; `check-roster.mjs` already knew how
@@ -968,6 +981,19 @@ flowchart LR
   a day late) or clears itself having woken nobody. A summary carrying no
   `flaggedConfirmed` — one written by an older `check-roster` — falls back to
   notifying, since too loud beats dropping a real finding.
+
+  **A finding is news once** (2026-10-12): a confirmed finding notifies on
+  the run that first confirms it, and again only if the set gains an id —
+  not daily, which made a deliberately kept track (an accepted narrow
+  licence) a critical notification forever. The state file keeps the
+  confirmed list, `--status` prints it and the dashboard panel renders it, so
+  quiet is not hidden. No per-track acknowledge was built; notify-on-change
+  already silences a kept track after one notice. The notification counts and
+  names confirmed rows only. **A flag no longer hides a stall** (same day,
+  audit M3): the label still prefers findings, but the `incomplete` streak
+  counts every throttled run whatever it was labelled, and the stall notice
+  fires on the streak alone — with one flag on the record, six throttled
+  days in a row used to notify nothing.
 
   The rule it exists for: **`check-roster` exits 0 when throttled**, since it
   found nothing wrong — it merely never looked. So the obvious scheduler
@@ -1063,9 +1089,14 @@ flowchart LR
   itch serves an uploaded zip from its own origin and cannot point a Play
   button at a site hosted elsewhere, so **the itch listing is a COPY that
   does not follow a deploy** — re-run `npm run itch` and re-upload after one,
-  or it silently becomes an old build. The tool fails loudly on a root `.js`
-  it does not package (a 404 that would only ever show up on someone else's
-  site) and strips the analytics beacon, which measures the Pages site and
+  or it silently becomes an old build. It packages what **git tracks**, not
+  what is on disk (2026-10-12: the zip had carried a gitignored scratch
+  clip), plus `LICENSE` and `NOTICE` — the vendored engine's MIT notice lives
+  only in NOTICE and must travel with any copy. It fails loudly on a tracked
+  root file or directory it does not package, or an uncommitted file inside
+  one it does (a 404 that would only ever show up on someone else's site),
+  removes only its own zip and staging dir from `dist/` (cover art lives
+  there), and strips the analytics beacon, which measures the Pages site and
   has no business firing from itch. Verified once by unzipping, serving it
   bare and loading it inside a sandboxed iframe with itch's own attributes:
   it mounts, stores state, powers on and reaches PLAYING through the nested
@@ -1079,8 +1110,12 @@ flowchart LR
   manages 4.4 frames per app-second whatever the clock does, and a
   choreography built on fixed sleeps recorded a set that never locked (the
   dial wandered, `[V]` was refused for want of a lock). Every step waits on
-  the app's own state instead. It cannot capture audio, the live tap or an
-  honest progress bar — see its header.
+  the app's own state instead, and a step that never lands aborts the run
+  with the committed `demo.{mp4,gif}` untouched (2026-10-12; it used to log
+  and overwrite them anyway). The preset it presses is derived from the
+  roster, farthest on the dial from `--station` — the hardcoded pair had
+  become RISE UP pressing its own preset. It cannot capture audio, the live
+  tap or an honest progress bar — see its header.
 - Verify feel changes in a browser against the dev server as well as in the
   suite — timing, sound and texture are most of what matters here.
 - **Check the frame rate before believing a live browser check.** A Chrome

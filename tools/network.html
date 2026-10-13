@@ -164,6 +164,10 @@
   .watch .run.clean { background: var(--green); opacity: .55; }
   .watch .run.incomplete { background: var(--amber); }
   .watch .run.findings, .watch .run.error { background: var(--red); }
+  /* 2026-10-12 (audit, M4) -- seen once: provisional, so an amber OUTLINE,
+     not the red of a confirmed finding nor the grey of an unknown outcome
+     (it rendered grey, the fallback pip, before there was a case for it). */
+  .watch .run.unconfirmed { background: transparent; box-shadow: inset 0 0 0 1px var(--amber); }
 
   /* ---- voice & drops ---- */
   .clip-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid #11181c; flex-wrap: wrap; }
@@ -1306,7 +1310,10 @@ function healthWatchEl(w) {
   const errStreak = (w.streak && w.streak.error) || 0
   const incStreak = (w.streak && w.streak.incomplete) || 0
   const bad = w.lastOutcome === 'error' || errStreak > 0
-  const warn = w.schedule !== 'ok' || incStreak > 0 || w.lastOutcome === 'findings'
+  // 2026-10-12 (audit, M4) -- 'unconfirmed' warns too. It had no case here
+  // and painted a GREEN dot: a row flagged once is not news for a
+  // notification, but it is not "all clear" on the one page you open to look.
+  const warn = w.schedule !== 'ok' || incStreak > 0 || w.lastOutcome === 'findings' || w.lastOutcome === 'unconfirmed'
   const cls = bad ? 'bad' : warn ? 'warn' : 'ok'
 
   let lead, when
@@ -1322,14 +1329,21 @@ function healthWatchEl(w) {
     when = w.lastOutcome === 'clean' ? 'clean'
       : w.lastOutcome === 'incomplete' ? `throttled${incStreak > 1 ? ` ${incStreak} runs running` : ''} — the sweep is not advancing`
       : w.lastOutcome === 'findings' ? 'found something — see below'
+      : w.lastOutcome === 'unconfirmed' ? 'flagged something once — the next run re-probes it before anyone is told'
       : w.lastOutcome === 'error' ? `the checker itself failed${errStreak > 1 ? ` ${errStreak} runs running` : ''}` : String(w.lastOutcome || '')
+    // 2026-10-12 (audit, M3) -- a run with a flag on the record is labelled
+    // by the flag, but it can still have been throttled; the stall streak
+    // counts it either way, so say so rather than letting the label hide it.
+    if (incStreak > 0 && w.lastOutcome !== 'incomplete') {
+      when += ` · and throttled${incStreak > 1 ? ` ${incStreak} runs running` : ''} — the sweep is not advancing`
+    }
   }
 
   const runs = el('span', { class: 'runs', title: 'the last runs, oldest left' })
   for (const h of (w.history || []).slice(-14)) {
     runs.appendChild(el('span', {
       class: `run ${h.outcome}`,
-      title: `${h.at} — ${h.outcome}, ${h.checked}/${h.total} checked, ${h.flagged} flagged`,
+      title: `${h.at} — ${h.outcome}${h.throttled && h.outcome !== 'incomplete' ? ' (throttled)' : ''}, ${h.checked}/${h.total} checked, ${h.flagged} flagged${h.confirmed != null ? ` (${h.confirmed} confirmed)` : ''}`,
     }))
   }
   return el('div', { class: `watch ${cls}` },
@@ -1401,7 +1415,13 @@ function renderHealth() {
         // single transient answer as settled fact, which is what had NEON
         // STASIS looking dead for five days while it played fine.
         f.confirmed === false
-          ? el('span', { class: 'health-unconfirmed', title: 'Seen once. The next sweep re-probes this row first; it is not reported until a second probe agrees.' }, 'unconfirmed')
+          ? el('span', { class: 'health-unconfirmed', title: 'Seen once. The next sweep re-probes this row first; it is not reported until a second probe, at least 12 hours later, agrees.' }, 'unconfirmed')
+          : null,
+        // 2026-10-12 (audit, M4) -- the latest probe did not happen, so these
+        // are the flags from the last one that did. Kept on the list rather
+        // than dropped for a full pass, which is what UNVERIFIED used to do.
+        f.heldOver
+          ? el('span', { class: 'health-unconfirmed', title: `The last probe could not check this row (${(f.lastProbe || []).join(' ')}); these are the flags from the probe before it, held until a real answer replaces them.` }, 'held')
           : null,
         el('span', { class: 'yid' }, f.youtubeId),
         el('button', {

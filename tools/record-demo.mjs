@@ -2,6 +2,7 @@
 //
 //   node tools/record-demo.mjs                      # against the dev server
 //   node tools/record-demo.mjs --url=https://hyphen8d.github.io/signal/
+//   node tools/record-demo.mjs --station=rise-up     # the station it boots on
 //   node tools/record-demo.mjs --slow=8 --width=1120 --height=700
 //   node tools/record-demo.mjs --keep                # leave the frames behind
 //
@@ -48,14 +49,40 @@ const ROOT = path.join(here, '..')
 const SLOW = +flag('slow', 6)
 const W = +flag('width', 960), H = +flag('height', 600)
 const FPS = +flag('fps', 35)            // frames per app-second; see the header
-const URL_ = flag('url', 'http://127.0.0.1:8000/?station=rise-up')
 const SHOTS = path.join(ROOT, 'screenshots')
 const OUT = path.join(tmpdir(), 'signal-demo-frames')
-rmSync(OUT, { recursive: true, force: true }); mkdirSync(OUT, { recursive: true })
+
+// 2026-10-12 (audit, LOW) -- the boot station and the preset pressed are
+// derived from the roster, not hardcoded. The first cut booted
+// ?station=rise-up and pressed '5' for "the sweep and the lock" -- and
+// RISE UP *is* YM preset 5, so that segment recorded a PRESET 5 no-op flash
+// on a set that never moved. A hardcoded pair goes stale the moment a
+// station is added below it on the dial, so the preset is picked here: the
+// one on the same band FARTHEST from the start in frequency, which is the
+// longest needle travel the sweep can show. The station is put into the URL
+// whatever --url says, so a bare --url cannot leave the pick meaningless by
+// booting a random station.
+const { STATIONS, presetOrderFor } = await import(new URL('../stations.js', import.meta.url).href)
+const START = flag('station', 'rise-up')
+const startSt = STATIONS.find((s) => s.id === START)
+if (!startSt) { console.error(`no public station "${START}"`); process.exit(1) }
+const order = presetOrderFor(startSt.band)
+const target = order.reduce((best, s) => Math.abs(s.freq - startSt.freq) > Math.abs(best.freq - startSt.freq) ? s : best)
+const PRESET = String(order.indexOf(target) + 1)
+if (target.id === START || order.indexOf(target) > 8) { console.error(`no preset on ${startSt.band} sweeps away from ${START}`); process.exit(1) }
+const pageUrl = new URL(flag('url', 'http://127.0.0.1:8000/'))
+pageUrl.searchParams.set('station', START)
+const URL_ = pageUrl.href
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
-const CHROME = ['/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chrome']
+// 2026-10-12 (audit, LOW) -- fail clearly up front rather than spawning
+// `undefined` (an opaque ERR_INVALID_ARG_TYPE) or recording a minute of
+// frames only to find ffmpeg missing at the end.
+const CHROME = ['/usr/bin/google-chrome-stable', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/chrome']
   .find((p) => spawnSync('test', ['-x', p]).status === 0)
+if (!CHROME) { console.error('No Chrome/Chromium found (looked in /usr/bin). Install one, or add its path to CHROME in this file.'); process.exit(1) }
+if (spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status !== 0) { console.error('ffmpeg not found on PATH; it assembles the frames.'); process.exit(1) }
+rmSync(OUT, { recursive: true, force: true }); mkdirSync(OUT, { recursive: true })
 const profile = mkdtempSync(path.join(tmpdir(), 'signal-rec-'))
 const chrome = spawn(CHROME, [
   '--headless=new', '--remote-debugging-port=0', `--window-size=${W},${H}`,
@@ -102,7 +129,7 @@ const ev = async (e) => {
 const CODES = { p: 'KeyP', v: 'KeyV', g: 'KeyG', c: 'KeyC', n: 'KeyN', s: 'KeyS', b: 'KeyB', l: 'KeyL', e: 'KeyE', w: 'KeyW', Escape: 'Escape', ArrowRight: 'ArrowRight', ArrowLeft: 'ArrowLeft' }
 const VK = { Escape: 27, ArrowRight: 39, ArrowLeft: 37 }
 const key = async (k) => {
-  const code = CODES[k] ?? ('Key' + k.toUpperCase())
+  const code = CODES[k] ?? (/^\d$/.test(k) ? 'Digit' + k : 'Key' + k.toUpperCase())
   const vk = VK[k] ?? k.toUpperCase().charCodeAt(0)
   for (const type of ['keyDown', 'keyUp']) {
     await send('Input.dispatchKeyEvent', {
@@ -142,6 +169,12 @@ const roll = async (appMs, label) => {
   console.log(`  ${label.padEnd(26)} ${frame - before} frames`)
 }
 
+// 2026-10-12 (audit, LOW) -- a step that never happens ABORTS the run. It
+// used to log "never became true" and carry on, and the assembly below then
+// overwrote the committed screenshots/demo.{mp4,gif} with a tape of whatever
+// did happen -- a broken recording replacing a good one, silently. Now the
+// committed files are only touched when every step was seen to land.
+let failed = null
 try {
   await send('Page.enable'); await send('Runtime.enable')
   await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false })
@@ -160,8 +193,7 @@ try {
       if (await ev(expr)) return true
       await sleep(250)
     }
-    console.log(`  !! never became true: ${label}`)
-    return false
+    throw new Error(`never became true: ${label}`)
   }
   await roll(1400, 'standby')
   await key('p')
@@ -169,8 +201,9 @@ try {
   await until('window.screen0.program.playState === "playing"', 'playing')
   await roll(3500, 'boot, lock, first track')
   // A preset jump: the sweep and the lock, which is the set at its best.
-  await key('5')
-  await roll(4000, 'preset 5: sweep and lock')
+  await key(PRESET)
+  await until(`window.screen0.program.mode === "locked" && window.screen0.program.lockedStation?.id === ${JSON.stringify(target.id)}`, `preset ${PRESET} reached ${target.id}`)
+  await roll(4000, `preset ${PRESET}: sweep and lock`)
   await key('g'); await roll(3000, 'guide')
   await key('Escape'); await roll(1200, 'back to the dial')
   await key('v')
@@ -184,7 +217,22 @@ try {
   await key('e'); await roll(1800, 'back out to the dial')
   await send('Page.stopScreencast').catch(() => {})
   console.log(`\n${frame} frames`)
-} finally { ws.close(); chrome.kill() }
+} catch (err) {
+  failed = err
+} finally {
+  ws.close(); chrome.kill()
+  // The profile is a fresh mkdtemp per run and was never removed: one
+  // Chrome profile left in /tmp per recording. Wait for Chrome to let go of
+  // it first, or the delete races the process still writing to it.
+  await new Promise((r) => { if (chrome.exitCode !== null) r(); else { chrome.once('exit', r); setTimeout(r, 3000) } })
+  rmSync(profile, { recursive: true, force: true })
+}
+if (failed) {
+  rmSync(OUT, { recursive: true, force: true })
+  console.error(`\nABORTED: ${failed.message}`)
+  console.error('screenshots/demo.{mp4,gif} were left as they were.')
+  process.exit(1)
+}
 
 // --- assemble ---------------------------------------------------------------
 // The mp4 is the shareable one; the gif is for the README, cut from the
