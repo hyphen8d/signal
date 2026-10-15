@@ -503,12 +503,48 @@ buildWordmark(document.getElementById('wordmark'))
 // a process that can `git push`.
 const HDR = { 'Content-Type': 'application/json', 'X-Signal-Admin': '1' }
 
+// 2026-10-15 (admin audit, C-M2) -- every save carries the hash of the file
+// it was built from, and the server refuses it (409, stale) if the file has
+// changed on disk since. Done HERE, not at each call site, so no save can
+// forget it: save-tracks sends a station's whole track list and the queue
+// save the whole queue, and both used to silently revert edits made on disk
+// after this page loaded -- including candidates Claude appends to
+// pending-tracks.json while you approve others, which is the documented
+// workflow. Which file a route writes is this table.
+// Re-read the queue from disk, apply `change` to THAT, and save it with the
+// hash it came with. Approve and queue used to mutate the copy this page
+// loaded, possibly an hour ago, and write the whole thing back.
+async function mutatePending(change) {
+  const fresh = await fetch('/api/pending', { headers: { 'X-Signal-Admin': '1' } }).then(r => r.json())
+  if (fresh.error) throw new Error(fresh.error)
+  hashes.pending = fresh.hash
+  const data = fresh.data
+  data.pending = data.pending || []
+  data.rejected = data.rejected || []
+  change(data)
+  await api('pending', data)
+  pendingData = data
+}
+const HASHED = { 'save-tracks': 'stations', 'save-identity': 'stations', pending: 'pending', reject: 'pending' }
+let hashes = {}
 async function api(path, body) {
+  const which = HASHED[path]
+  // reject is hashed only on the way BACK: it re-reads and merges on the
+  // server, so it never needs to prove what it loaded.
+  if (body !== undefined && which && path !== 'reject') body = { ...body, baseHash: hashes[which] }
   const res = await fetch('/api/' + path, body === undefined
     ? { headers: { 'X-Signal-Admin': '1' } }
     : { method: 'POST', headers: HDR, body: JSON.stringify(body) })
   const json = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
-  if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+  if (!res.ok) {
+    if (json.stale) {
+      const g = document.getElementById('global-msg')
+      if (g) { g.textContent = `${json.error} Press "reload from disk" to pick up the current file.`; g.style.color = 'var(--red)' }
+    }
+    throw new Error(json.error || `HTTP ${res.status}`)
+  }
+  if (which && json.hash) hashes[which] = json.hash
+  if (path === 'state' && json.hashes) hashes = { ...json.hashes }
   return json
 }
 
@@ -556,7 +592,14 @@ const el = (tag, attrs, ...kids) => {
     else if (k === 'oninput') e.addEventListener('input', v)
     else if (k === 'onchange') e.addEventListener('change', v)
     else if (k === 'onkeydown') e.addEventListener('keydown', v)
-    else if (k === 'html') e.innerHTML = v
+    // 2026-10-15 (admin audit, S-M2) -- there is no `html` attribute any
+    // more. It was innerHTML, and its callers fed it the git branch name and
+    // the last commit subject: a branch called <img src=x onerror=...> (a
+    // legal ref name) or a merged PR's title ran script on this origin,
+    // which can send X-Signal-Admin and so SHIP, push and write stations.js.
+    // Reproduced headlessly. Bold runs are built as elements now; a stray
+    // `html:` left anywhere throws instead of quietly rendering markup.
+    else if (k === 'html') throw new Error('el(): html attributes are not allowed -- build child elements')
     else if (v != null) e.setAttribute(k, v)
   }
   for (const c of kids) {
@@ -610,7 +653,11 @@ document.getElementById('btn-help').addEventListener('click', () => {
 })
 applyHelp()
 
-const help = (html) => el('p', { class: 'help', html })
+// Help copy is authored markup (a <b> here and there) and is the ONE
+// innerHTML left on this page by design: every caller passes a literal
+// string. Never pass it anything read from a file, the server or git --
+// that is exactly the hole el()'s retired `html` attribute was (2026-10-15).
+const help = (markup) => { const p = el('p', { class: 'help' }); p.innerHTML = markup; return p }
 
 // What each Node tool actually does, how long it takes, and whether it
 // writes anything. The button labels come from the server (they are the
@@ -653,7 +700,8 @@ async function connect() {
     boot = await api('state')
   } catch (e) {
     why.textContent = 'Could not reach the admin server on this origin.'
-    err.innerHTML = 'Start it from the repo root:<pre>node tools/admin-server.mjs</pre>' + String(e.message ?? e)
+    err.innerHTML = 'Start it from the repo root:<pre>node tools/admin-server.mjs</pre>'
+    err.appendChild(document.createTextNode(String(e.message ?? e)))
     return
   }
   roster = boot.roster
@@ -758,8 +806,8 @@ function renderConnStatus() {
   // broadcasting also the most redundant. The build stamp and branch stay:
   // those are the two things you actually cannot see from anywhere else on
   // the page.
-  box.appendChild(el('span', { html: `build <b>${boot.build?.stamp ?? boot.build?.build ?? '—'}</b>` }))
-  box.appendChild(el('span', { html: `branch <b>${g.branch}</b>` }))
+  box.appendChild(el('span', {}, 'build ', el('b', {}, String(boot.build?.stamp ?? boot.build?.build ?? '—'))))
+  box.appendChild(el('span', {}, 'branch ', el('b', {}, String(g.branch))))
   if (g.dirty.length) box.appendChild(el('span', { class: 'warn' }, `${g.dirty.length} uncommitted file(s)`))
 }
 
@@ -901,10 +949,10 @@ function renderDeploy() {
     `${g.branch}${g.dirty.length ? ` · ${g.dirty.length} uncommitted` : ' · clean'}${g.ahead ? ` · ${g.ahead} ahead` : ''}`
 
   const line = el('div', { class: 'git-line' })
-  line.appendChild(el('span', { html: `branch <b class="${g.branch === 'main' ? 'on-main' : ''}">${g.branch}</b>` }))
-  line.appendChild(el('span', { html: `upstream <b>${g.upstream || '(none)'}</b>` }))
-  if (g.ahead != null) line.appendChild(el('span', { html: `<b>${g.ahead}</b> unpushed commit(s)` }))
-  line.appendChild(el('span', { html: `last <b>${g.lastCommit}</b>` }))
+  line.appendChild(el('span', {}, 'branch ', el('b', { class: g.branch === 'main' ? 'on-main' : '' }, String(g.branch))))
+  line.appendChild(el('span', {}, 'upstream ', el('b', {}, String(g.upstream || '(none)'))))
+  if (g.ahead != null) line.appendChild(el('span', {}, el('b', {}, String(g.ahead)), ' unpushed commit(s)'))
+  line.appendChild(el('span', {}, 'last ', el('b', {}, String(g.lastCommit))))
   body.appendChild(line)
 
   if (g.branch === 'main') {
@@ -1109,12 +1157,16 @@ function renderAuditionResult(out, stationId) {
       const acts = el('div', { class: 'pc-actions' })
       const add = el('button', { class: 'small primary' }, 'queue → pending')
       add.addEventListener('click', async () => {
-        pendingData.pending.push({
+        const candidate = {
           stationId, youtubeId: r.id, title: r.title, artist: r.channel?.replace(/ - Topic$/, '') || '',
           proposedBy: 'dashboard', proposedAt: new Date().toISOString().slice(0, 10),
           rationale: `Auditioned in the dashboard. ${r.flags?.length ? 'Flags: ' + r.flags.join(', ') : 'No flags.'} ${mmss}, ${r.countries ?? '?'} countries, channel "${r.channel}".`,
-        })
-        await api('pending', pendingData)
+        }
+        try {
+          await mutatePending(d => {
+            if (!d.pending.some(e => e.stationId === stationId && e.youtubeId === r.id)) d.pending.push(candidate)
+          })
+        } catch (e) { add.textContent = 'queue failed'; add.title = String(e.message ?? e); return }
         renderPending()
         document.getElementById('panel-pending').classList.add('open')
         add.textContent = 'queued'; add.disabled = true
@@ -1255,9 +1307,12 @@ async function approvePending(entry) {
   const st = stationById(entry.stationId)
   const g = document.getElementById('global-msg')
   if (!st) { g.textContent = `approve failed: no station "${entry.stationId}"`; g.style.color = 'var(--red)'; return }
+  // Matched by station + id, not by object identity: the entry is removed
+  // from a FRESH read of the queue, whose objects are not this page's.
+  try {
+    await mutatePending(d => { d.pending = d.pending.filter(e => !(e.stationId === entry.stationId && e.youtubeId === entry.youtubeId)) })
+  } catch (e) { g.textContent = `approve failed: ${e.message ?? e}`; g.style.color = 'var(--red)'; return }
   addTrack(st, { youtubeId: entry.youtubeId, title: entry.title, artist: entry.artist })
-  pendingData.pending = pendingData.pending.filter(e => e !== entry)
-  await api('pending', pendingData)
   renderPending()
   document.getElementById('panel-' + st.id).classList.add('open')
   g.textContent = `approved "${entry.title}" onto ${st.callsign} — unsaved. Use "save tracks" to commit it to stations.js.`
@@ -1369,6 +1424,12 @@ function healthFlagHelp(f) {
   return 'playabilityStatus reported by YouTube.'
 }
 
+// 2026-10-15 (admin audit, dashboard LOW) -- the batch's streamed lines live
+// here rather than only in the log element, because renderHealth() rebuilds
+// the whole panel when the batch ends: the log -- including the "THROTTLED"
+// warning, the one line that says this run was not a clean one -- was wiped
+// the moment it finished. Replayed into the fresh log on every render.
+let healthLog = []
 function renderHealth() {
   const body = document.getElementById('health-body')
   const summary = document.getElementById('health-summary')
@@ -1462,15 +1523,24 @@ function renderHealth() {
   for (const n of [40, 80, 120]) sizeSel.appendChild(el('option', { value: String(n) }, `${n} tracks`))
   const go = el('button', { class: 'go' }, '▶ check next batch')
   const log = el('div', { class: 'console' })
+  const logLine = (ev) => log.appendChild(el('div', { class: 'l-' + (ev.type === 'cmd' ? 'cmd' : 'out') }, ev.text))
+  for (const ev of healthLog) logLine(ev)
   go.addEventListener('click', async () => {
     go.disabled = true; sizeSel.disabled = true
     log.innerHTML = ''
+    healthLog = []
     try {
       await streamApi('health', { batch: +sizeSel.value }, (ev) => {
-        if (ev.type === 'result' && ev.result) health = ev.result
-        if (ev.text) log.appendChild(el('div', { class: 'l-' + (ev.type === 'cmd' ? 'cmd' : ev.type === 'err' ? 'out' : 'out') }, ev.text))
+        // The server attaches `watch` now; keeping the old one if it ever
+        // does not is what stops the liveness strip reading "could not be
+        // read" after a batch (2026-10-15, admin audit).
+        if (ev.type === 'result' && ev.result) health = { ...ev.result, watch: ev.result.watch ?? health?.watch }
+        if (ev.text) { healthLog.push(ev); logLine(ev) }
         log.scrollTop = log.scrollHeight
       })
+    } catch (e) {
+      const ev = { type: 'err', text: String(e.message ?? e) }
+      healthLog.push(ev)
     } finally {
       go.disabled = false; sizeSel.disabled = false
       renderHealth()
@@ -2444,8 +2514,11 @@ async function saveIdentity(st) {
     if (warn.length) {
       // A rename only reaches stations.js. Everything else that carries the
       // old callsign is named here, with what it will actually cost.
-      g.innerHTML = `saved ${res.changed} field(s) on <b>${st.callsign}</b> — but a rename does not reach these:<br>`
-        + warn.map(w => `&nbsp;&nbsp;• <b>${w.file}</b> ${w.detail}`).join('<br>')
+      // Built as elements (2026-10-15, admin audit): `detail` carries the
+      // profile's callsign from station-profiles.json, and this was innerHTML.
+      g.textContent = ''
+      g.append(`saved ${res.changed} field(s) on `, el('b', {}, String(st.callsign)), ' — but a rename does not reach these:')
+      for (const w of warn) g.append(el('br'), '\u00a0\u00a0• ', el('b', {}, String(w.file)), ' ' + String(w.detail))
       g.style.color = 'var(--amber)'
     } else {
       g.textContent = res.unchanged

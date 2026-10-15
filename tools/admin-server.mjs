@@ -32,6 +32,7 @@ import os from 'node:os'
 import { spawn } from 'node:child_process'
 import { readFileSync, writeFileSync, existsSync, readdirSync, renameSync, statSync } from 'node:fs'
 import path from 'node:path'
+import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import {
   loadRosterFromText, buildRosterPayload, buildStationsMd,
@@ -151,6 +152,56 @@ export const tmpPathFor = (p) => path.join(path.dirname(p), `.${path.basename(p)
 function readJson(rel, fallback) {
   try { return JSON.parse(readRepoFile(rel)) } catch (e) { return fallback }
 }
+// 2026-10-15 (admin audit, C-H2) -- the WRITE paths must not use readJson's
+// fallback. It answered a parse error exactly like a missing file, so a
+// pending-tracks.json with a merge-conflict marker in it read as empty, and
+// the next rejection wrote "empty + one record" over it: 38 rejections and
+// 26KB of curation record became 222 bytes, the route said ok, and the
+// result was valid JSON, so lint, the suite and SHIP all waved it through.
+// Absent is still a fresh start; unparseable is a refusal that names the file.
+function readJsonForWrite(rel, fallback) {
+  let text
+  try { text = readRepoFile(rel) } catch (e) {
+    if (e?.code === 'ENOENT') return fallback
+    throw e
+  }
+  try { return JSON.parse(text) } catch (e) {
+    throw new Error(`${rel} is not valid JSON (${e.message}) -- refusing to overwrite it. Fix the file by hand first.`)
+  }
+}
+// 2026-10-15 (admin audit, C-M1) -- written in the file's OWN indent.
+// station-profiles.json has been 1-space since 2026-09-02 and this wrote it
+// back 2-space, so one rejection was a 3,100-line diff around a 7-line
+// change: buried in SHIP's commit and fatal to git blame on the curation
+// record. Inferred from the existing text, not hardcoded per file, so a
+// reformat by hand is followed rather than fought.
+function writeJsonKeepingIndent(rel, obj) {
+  let indent = 2
+  try {
+    const m = /\n( +)\S/.exec(readRepoFile(rel))
+    if (m) indent = m[1].length
+  } catch (e) {}
+  writeRepoFile(rel, JSON.stringify(obj, null, indent) + '\n')
+}
+// A content hash the dashboard carries from load to save (see C-M2 below).
+const hashOf = (text) => createHash('sha1').update(text).digest('hex')
+const fileHash = (rel) => { try { return hashOf(readRepoFile(rel)) } catch (e) { return null } }
+// 2026-10-15 (admin audit, C-M2) -- a save from a page that loaded an older
+// copy of the file is refused, not applied. save-tracks sends a station's
+// WHOLE track list as the page saw it, so a hand edit made after the page
+// loaded (a re-pointed id, the kind 9ff7a9d made) was silently reverted by
+// the next unrelated title edit; the queue save had the same shape. The page
+// sends the hash it loaded and gets a 409 with `stale: true` on a mismatch.
+function staleCheck(rel, baseHash, required) {
+  const stale = (msg) => Object.assign(new Error(msg), { stale: true })
+  if (!baseHash) {
+    if (required) throw stale(`this page did not say which version of ${rel} it loaded -- reload the dashboard`)
+    return
+  }
+  if (fileHash(rel) !== baseHash) {
+    throw stale(`${rel} changed on disk since this page loaded -- reload, then redo the edit (nothing was written)`)
+  }
+}
 
 // ---------------------------------------------------------------------
 // Child processes
@@ -189,7 +240,18 @@ function run(cmd, args, emit, opts = {}) {
     emit({ type: 'cmd', text: `$ ${cmd} ${args.join(' ')}` })
     let child
     try {
-      child = spawn(cmd, args, { cwd: ROOT, env: { ...process.env, ...opts.env } })
+      // 2026-10-15 (admin audit, C-L2, C-M4) -- stdin is closed (an open
+      // pipe nobody writes to hangs any child that waits for EOF), every
+      // child has a ceiling (a stalled `git push` used to hang the stream
+      // forever), and `signal` lets a route kill the child when the browser
+      // that asked for it goes away. Callers pass no signal for the git
+      // steps of SHIP, which must never be killed half-way.
+      child = spawn(cmd, args, {
+        cwd: ROOT, env: { ...process.env, ...opts.env },
+        stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: opts.timeoutMs ?? 20 * 60_000,
+        ...(opts.signal ? { signal: opts.signal } : {}),
+      })
     } catch (err) {
       emit({ type: 'err', text: String(err?.message ?? err) })
       resolve(1)
@@ -208,8 +270,16 @@ function run(cmd, args, emit, opts = {}) {
     }
     pump(child.stdout, 'out')
     pump(child.stderr, 'err')
-    child.on('error', (err) => { emit({ type: 'err', text: String(err?.message ?? err) }); resolve(1) })
-    child.on('close', (code) => resolve(code ?? 0))
+    // `settled` because an aborted or timed-out child fires BOTH 'error'
+    // and 'close'. A killed child reports code null -- that is a failure,
+    // not the success `code ?? 0` used to make of it.
+    let settled = false
+    const done = (code) => { if (!settled) { settled = true; resolve(code) } }
+    child.on('error', (err) => { emit({ type: 'err', text: String(err?.message ?? err) }); done(1) })
+    child.on('close', (code, signal) => {
+      if (code === null) emit({ type: 'err', text: `killed (${signal || 'signal'})` })
+      done(code ?? 1)
+    })
   })
 }
 
@@ -228,8 +298,13 @@ function capture(cmd, args, opts = {}) {
 
 function git(args) {
   return new Promise((resolve) => {
-    const child = spawn('git', args, { cwd: ROOT })
+    const child = spawn('git', args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'], timeout: 120_000 })
     let out = '', err = ''
+    // 2026-10-15 (admin audit, C-H1) -- decoded as a stream, not chunk by
+    // chunk, or a commit subject with a multibyte character split across
+    // two chunks shows up mangled.
+    child.stdout.setEncoding('utf8')
+    child.stderr.setEncoding('utf8')
     child.stdout.on('data', d => { out += d })
     child.stderr.on('data', d => { err += d })
     child.on('error', () => resolve({ code: 1, out: '', err: 'git not found' }))
@@ -313,6 +388,14 @@ function sendJson(res, code, body) {
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let buf = ''
+    // 2026-10-15 (admin audit, C-H1) -- `buf += d` on raw Buffer chunks
+    // decoded each chunk on its own, so a multibyte character split across
+    // two TCP segments became U+FFFD -- and was WRITTEN to stations.js:
+    // 'Sigur R\uFFFD\uFFFDs' went through save-tracks with a 200, and lint
+    // passed it. Loopback tends to deliver a body in one chunk, which is why
+    // it never showed; over the tailnet, where the unit binds, it does not.
+    // setEncoding makes the stream decoder carry partial characters over.
+    req.setEncoding('utf8')
     req.on('data', d => {
       buf += d
       if (buf.length > 8e6) { reject(new Error('request body too large')); req.destroy() }
@@ -347,7 +430,9 @@ function openStream(res) {
 function saveTracks(stationId, tracks) {
   const src = readRepoFile('stations.js')
   const { text, keptComments, droppedComments } = patchStationTracksDetailed(src, stationId, tracks)
-  verifyPatch(text, stationId, tracks.length)
+  // The full check (2026-10-15): which tracks, in order, and that every other
+  // station came through untouched -- not just the count.
+  verifyPatch(text, stationId, tracks, { before: src })
   writeRepoFile('stations.js', text)
   const { STATIONS } = loadRosterFromText(text)
   writeRepoFile('stations.md', buildStationsMd(STATIONS))
@@ -364,7 +449,7 @@ async function saveIdentity(stationId, fields) {
   for (const [fieldPath, value] of Object.entries(fields)) {
     next = patchStationField(next, stationId, fieldPath, value)
   }
-  verifyPatch(next, stationId, fields)
+  verifyPatch(next, stationId, fields, { before: src })
   if (next === src) return { changed: 0, unchanged: true }
   const renamed = Object.prototype.hasOwnProperty.call(fields, 'callsign')
   writeRepoFile('stations.js', next)
@@ -401,19 +486,24 @@ function rejectTrack({ stationId, youtubeId, title, artist, reason, entry }) {
   const clean = String(reason).trim()
   const opts = { today, reason: clean }
 
-  const profiles = readJson('tools/station-profiles.json', null)
+  // 2026-10-15 (admin audit, S-L2, C-L3) -- hasOwn, not a bare index:
+  // stationId "__proto__" reached Object.prototype and set `rejections` on
+  // every object in the process ("hasOwnProperty" reported 'added' too).
+  // And readJsonForWrite, so a malformed profiles file is reported as
+  // malformed instead of as "no profile entry for this station".
+  const profiles = readJsonForWrite('tools/station-profiles.json', null)
   let profile = 'no-profile'
-  if (profiles?.stations?.[stationId]) {
+  if (profiles?.stations && Object.hasOwn(profiles.stations, stationId)) {
     const p = profiles.stations[stationId]
     const merged = mergeRejection(p.rejections, { artist, track: title, reason: clean, rejectedAt: today, youtubeId }, opts)
     profile = merged.outcome
     if (merged.outcome !== 'skipped') {
       p.rejections = merged.list
-      writeRepoFile('tools/station-profiles.json', JSON.stringify(profiles, null, 2) + '\n')
+      writeJsonKeepingIndent('tools/station-profiles.json', profiles)
     }
   }
 
-  const pending = readJson('tools/pending-tracks.json', { pending: [], rejected: [] })
+  const pending = readJsonForWrite('tools/pending-tracks.json', { pending: [], rejected: [] })
   const before = (pending.pending || []).length
   pending.pending = (pending.pending || []).filter(e => !(e.stationId === stationId && e.youtubeId === youtubeId))
   const drained = before !== pending.pending.length
@@ -423,7 +513,7 @@ function rejectTrack({ stationId, youtubeId, title, artist, reason, entry }) {
   }, opts)
   if (merged.outcome !== 'skipped' || drained) {
     pending.rejected = merged.list
-    writeRepoFile('tools/pending-tracks.json', JSON.stringify(pending, null, 2) + '\n')
+    writeJsonKeepingIndent('tools/pending-tracks.json', pending)
   }
 
   return {
@@ -527,6 +617,9 @@ async function bootState() {
   const font = bdf.parseBDF(readRepoFile('fonts/ter-u16n.bdf'))
   return {
     roster,
+    // 2026-10-15 (admin audit, C-M2) -- the content hashes a save must carry
+    // back. See staleCheck().
+    hashes: { stations: hashOf(readRepoFile('stations.js')), pending: fileHash('tools/pending-tracks.json') },
     pending: readJson('tools/pending-tracks.json', { pending: [], rejected: [] }),
     profiles: readJson('tools/station-profiles.json', { stations: {} }),
     visuals: Object.keys(VISUALS),
@@ -549,6 +642,56 @@ async function bootState() {
     build: readJson('build.json', null),
     git: await gitState(),
   }
+}
+
+// ---------------------------------------------------------------------
+// One writer at a time (2026-10-15, admin audit S-L1 / C-M4)
+//
+// SHIP is minutes of stamp -> lint -> suite -> add -A -> commit -> push, and
+// nothing used to stop a save from landing in the middle of it: `add -A`
+// then staged a stations.js that lint and the suite had never seen, so the
+// tree that shipped was not the tree that was tested. Two SHIPs interleaved
+// their stamps and commits. AUDIT-2026-09-12 noted the missing lock (L21);
+// this is it. In-process is enough -- this server is the only writer that
+// goes through these routes -- and a refusal is a 409 that says who holds
+// it, never a queue, because a save silently waiting behind a SHIP would
+// land after the commit and look like it shipped.
+// ---------------------------------------------------------------------
+let busy = null
+async function withLock(res, what, fn) {
+  if (busy) return sendJson(res, 409, { error: `busy: ${busy} is running -- try again when it finishes`, busy })
+  busy = what
+  try { return await fn() } finally { busy = null }
+}
+// Fired when the browser that asked for a streaming task goes away -- a
+// closed tab or a dropped SSH tunnel. Before this, closing the tab LOOKED
+// like a cancel and was not: a disconnected SHIP went on to commit two
+// minutes later, and re-pressing it stamped and committed a second time.
+function abortOnDisconnect(res) {
+  const ac = new AbortController()
+  res.on('close', () => { if (!res.writableFinished) ac.abort() })
+  return ac
+}
+// A GET that spawns two processes, coalesced: concurrent requests (several
+// tabs, or a page in another tab firing no-cors GETs at a tailnet address)
+// share one in-flight run instead of each spawning their own (S-L3).
+let healthInFlight = null
+async function healthReport() {
+  if (healthInFlight) return healthInFlight
+  healthInFlight = (async () => {
+    const out = await capture('node', ['tools/check-roster.mjs', '--report', '--json'])
+    let parsed = null
+    try { parsed = JSON.parse(out.stdout) } catch (e) {}
+    if (!parsed) return { error: out.stderr.trim() || 'check-roster --report produced no JSON' }
+    return { ...parsed, watch: await watchStatus() }
+  })()
+  try { return await healthInFlight } finally { healthInFlight = null }
+}
+async function watchStatus() {
+  try {
+    const w = await capture('node', ['tools/roster-watch.mjs', '--status', '--json'])
+    return JSON.parse(w.stdout)
+  } catch (e) { return null }
 }
 
 // ---------------------------------------------------------------------
@@ -575,7 +718,8 @@ async function handleApi(req, res, url) {
   // that the field patcher touches nothing else -- and it is only possible
   // because both sides import tools/lib/roster.mjs.
   if (route === 'source' && req.method === 'GET') {
-    return sendJson(res, 200, { text: readRepoFile('stations.js') })
+    const text = readRepoFile('stations.js')
+    return sendJson(res, 200, { text, hash: hashOf(text) })
   }
 
   if (route === 'roster' && req.method === 'GET') {
@@ -583,44 +727,81 @@ async function handleApi(req, res, url) {
   }
 
   if (route === 'save-tracks' && req.method === 'POST') {
-    const { stationId, tracks } = await readBody(req)
+    const { stationId, tracks, baseHash } = await readBody(req)
     if (!stationId || !Array.isArray(tracks)) return sendJson(res, 400, { error: 'stationId and tracks[] required' })
-    try { return sendJson(res, 200, { ok: true, ...saveTracks(stationId, tracks) }) }
-    catch (err) { return sendJson(res, 409, { error: String(err?.message ?? err) }) }
+    return withLock(res, 'a track save', () => {
+      try {
+        staleCheck('stations.js', baseHash, true)
+        return sendJson(res, 200, { ok: true, ...saveTracks(stationId, tracks), hash: hashOf(readRepoFile('stations.js')) })
+      } catch (err) { return sendJson(res, 409, { error: String(err?.message ?? err), stale: !!err?.stale }) }
+    })
   }
 
   if (route === 'save-identity' && req.method === 'POST') {
-    const { stationId, fields } = await readBody(req)
+    const { stationId, fields, baseHash } = await readBody(req)
     if (!stationId || !fields || typeof fields !== 'object') return sendJson(res, 400, { error: 'stationId and fields{} required' })
-    try { return sendJson(res, 200, { ok: true, ...(await saveIdentity(stationId, fields)) }) }
-    catch (err) { return sendJson(res, 409, { error: String(err?.message ?? err) }) }
+    return withLock(res, 'an identity save', async () => {
+      try {
+        // Optional here: identity saves patch one field at a time from the
+        // CURRENT file, so a stale page cannot revert someone else's edit to
+        // a different field. Checked when sent, so the page can still say so.
+        staleCheck('stations.js', baseHash, false)
+        return sendJson(res, 200, { ok: true, ...(await saveIdentity(stationId, fields)), hash: hashOf(readRepoFile('stations.js')) })
+      } catch (err) { return sendJson(res, 409, { error: String(err?.message ?? err), stale: !!err?.stale }) }
+    })
+  }
+
+  // The queue as it is on disk NOW, with its hash -- what approve and
+  // queue re-read immediately before changing it (2026-10-15, admin audit).
+  if (route === 'pending' && req.method === 'GET') {
+    return sendJson(res, 200, {
+      data: readJsonForWrite('tools/pending-tracks.json', { pending: [], rejected: [] }),
+      hash: fileHash('tools/pending-tracks.json'),
+    })
   }
 
   if (route === 'pending' && req.method === 'POST') {
     const body = await readBody(req)
-    try {
-      writeRepoFile('tools/pending-tracks.json', JSON.stringify({
-        pending: body.pending || [], rejected: body.rejected || [],
-      }, null, 2) + '\n')
-      return sendJson(res, 200, { ok: true })
-    } catch (err) { return sendJson(res, 409, { error: String(err?.message ?? err) }) }
+    return withLock(res, 'a queue save', () => {
+      try {
+        // 2026-10-15 (admin audit, C-M2 / dashboard MED) -- this route
+        // writes the page's WHOLE in-memory queue, so a page loaded before
+        // a candidate was appended to the file (CLAUDE.md's own workflow:
+        // Claude writes candidates in, the operator approves) erased that
+        // candidate on the next approve. The hash makes it a 409 instead,
+        // and the page reloads the queue. readJsonForWrite also refuses to
+        // overwrite a file that does not parse (C-H2).
+        staleCheck('tools/pending-tracks.json', body.baseHash, true)
+        readJsonForWrite('tools/pending-tracks.json', null)
+        writeJsonKeepingIndent('tools/pending-tracks.json', { pending: body.pending || [], rejected: body.rejected || [] })
+        return sendJson(res, 200, { ok: true, hash: fileHash('tools/pending-tracks.json') })
+      } catch (err) { return sendJson(res, 409, { error: String(err?.message ?? err), stale: !!err?.stale }) }
+    })
   }
 
   if (route === 'reject' && req.method === 'POST') {
     const body = await readBody(req)
-    try { return sendJson(res, 200, { ok: true, ...rejectTrack(body) }) }
-    catch (err) { return sendJson(res, 400, { error: String(err?.message ?? err) }) }
+    return withLock(res, 'a rejection', () => {
+      try { return sendJson(res, 200, { ok: true, ...rejectTrack(body), hash: fileHash('tools/pending-tracks.json') }) }
+      catch (err) { return sendJson(res, 400, { error: String(err?.message ?? err) }) }
+    })
   }
 
   if (route === 'run' && req.method === 'POST') {
     const { task } = await readBody(req)
     const spec = TASKS[task]
     if (!spec) return sendJson(res, 400, { error: `unknown task "${task}"` })
-    const s = openStream(res)
-    const [cmd, args] = spec.cmd()
-    const code = await run(cmd, args, s.emit)
-    s.emit({ type: 'exit', code, task })
-    return s.end()
+    // Every task here either writes into the tree (stamp, stations, shoot,
+    // health) or reads the tree SHIP is about to commit, so all of them
+    // take the lock.
+    return withLock(res, `task "${task}"`, async () => {
+      const ac = abortOnDisconnect(res)
+      const s = openStream(res)
+      const [cmd, args] = spec.cmd()
+      const code = await run(cmd, args, s.emit, { signal: ac.signal })
+      s.emit({ type: 'exit', code, task })
+      return s.end()
+    })
   }
 
   if (route === 'preflight' && req.method === 'POST') {
@@ -630,11 +811,12 @@ async function handleApi(req, res, url) {
     // roster errors, the suite is ~2s, and verify goes to the network. No
     // point spending 90s on oEmbed for a roster that fails lint.
     const steps = ['lint', 'test', ...(includeNetwork ? ['verify'] : [])]
+    const ac = abortOnDisconnect(res)
     let failed = null
     for (const task of steps) {
       s.emit({ type: 'step', task, label: TASKS[task].label })
       const [cmd, args] = TASKS[task].cmd()
-      const code = await run(cmd, args, s.emit)
+      const code = await run(cmd, args, s.emit, { signal: ac.signal })
       s.emit({ type: 'step-done', task, code })
       if (code !== 0) { failed = task; break }
     }
@@ -646,67 +828,131 @@ async function handleApi(req, res, url) {
     const { message, confirm, includeNetwork } = await readBody(req)
     if (confirm !== true) return sendJson(res, 400, { error: 'ship requires confirm:true' })
     if (!message || !String(message).trim()) return sendJson(res, 400, { error: 'a commit message is required' })
-    const s = openStream(res)
-    const before = await gitState()
-    s.emit({ type: 'info', text: `branch ${before.branch}${before.upstream ? ` -> ${before.upstream}` : ' (no upstream)'}` })
+    return withLock(res, 'SHIP', () => ship(req, res, String(message).trim(), includeNetwork))
+  }
+  return handleApiRest(req, res, url, route)
+}
 
-    // stamp FIRST. main.js fetches build.json and imports every module as
-    // ?v=<stamp>; without a bump, GitHub Pages' 10-minute cache can leave a
-    // visitor on the previous build. It is the step most easily forgotten
-    // by hand, which is the whole argument for this button existing.
-    const pipeline = [
-      ['stamp', 'bumping build stamp'],
-      ['stations', 'regenerating stations.md'],
-      ['lint', 'linting roster'],
-      ['test', 'running the suite'],
-      ...(includeNetwork ? [['verify', 'verifying every track (network)']] : []),
-    ]
-    for (const [task, label] of pipeline) {
-      s.emit({ type: 'step', task, label })
-      const [cmd, args] = TASKS[task].cmd()
-      const code = await run(cmd, args, s.emit)
-      s.emit({ type: 'step-done', task, code })
-      if (code !== 0) {
-        s.emit({ type: 'err', text: `${label} failed -- nothing committed, nothing pushed.` })
-        s.emit({ type: 'exit', code: 1, failed: task })
-        return s.end()
-      }
+// 2026-10-15 (admin audit, C-M3) -- refuse BEFORE stamping, on any repo
+// state where "stamp, test, add -A, commit, push" does something other than
+// deploy what is on screen:
+//   - not on main: Pages serves main, so SHIP from a branch is not a deploy;
+//   - no upstream: the commit lands and the push fails;
+//   - a merge, rebase, cherry-pick or revert in progress, or unmerged paths:
+//     `add -A` marks conflicted files RESOLVED with the markers still in
+//     them, and lint and the suite do not read README or CLAUDE.md;
+//   - behind the remote after a fetch: main moves under you (it did twice
+//     this week), and the push would be refused AFTER the commit, leaving a
+//     local stamp commit that conflicts on build.json with the remote's;
+//   - nothing to ship: a stamp-only deploy changes nothing anyone can see.
+async function shipBlockers() {
+  const st = await gitState()
+  const out = []
+  if (st.branch !== 'main') out.push(`on branch "${st.branch}", not main -- Pages deploys main`)
+  if (!st.upstream) out.push('main has no upstream to push to')
+  const gitDir = (await git(['rev-parse', '--git-dir'])).out || '.git'
+  for (const f of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) {
+    if (existsSync(path.resolve(ROOT, gitDir, f))) out.push(`a git ${f.replace(/_HEAD|-.*$/, '').toLowerCase()} is in progress -- finish or abort it first`)
+  }
+  const unmerged = st.dirty.filter((d) => /U|AA|DD/.test(d.code))
+  if (unmerged.length) out.push(`unmerged files: ${unmerged.map((d) => d.file).join(', ')}`)
+  if (!st.dirty.length) out.push('nothing to ship -- the working tree is clean')
+  if (st.upstream && !out.length) {
+    const f = await git(['fetch', '--quiet'])
+    if (f.code !== 0) out.push(`could not fetch from the remote: ${f.err || 'git fetch failed'}`)
+    else {
+      const behind = await git(['rev-list', '--count', `HEAD..${st.upstream}`])
+      if (behind.code === 0 && +behind.out > 0) out.push(`${st.upstream} is ${behind.out} commit(s) ahead of you -- pull first (git merge --ff-only)`)
     }
-    // `add -A` stages the WHOLE working tree, not the dashboard's own edits:
-    // anything untracked and not gitignored rides along with the deploy.
-    // That has happened (an audit doc, 2026-09-02), and it is why every
-    // scratch file the tools write is either gitignored or dot-prefixed --
-    // see tmpPathFor() above. Kept as -A on purpose: SHIP is "ship what is
-    // here", and a partial add would leave a tree that lint and the suite
-    // just passed differing from the one that goes out.
-    for (const [label, args] of [
-      ['staging', ['add', '-A']],
-      ['committing', ['commit', '-m', String(message).trim()]],
-      ['pushing', ['push']],
-    ]) {
-      s.emit({ type: 'step', task: label, label })
-      const code = await run('git', args, s.emit)
-      s.emit({ type: 'step-done', task: label, code })
-      if (code !== 0) {
-        s.emit({ type: 'err', text: `${label} failed -- stopping here.` })
-        s.emit({ type: 'exit', code: 1, failed: label })
-        return s.end()
-      }
-    }
-    s.emit({ type: 'git', state: await gitState() })
-    s.emit({ type: 'exit', code: 0 })
+  }
+  return { state: st, blockers: out }
+}
+
+async function ship(req, res, message, includeNetwork) {
+  const s = openStream(res)
+  const ac = abortOnDisconnect(res)
+  const { state: before, blockers } = await shipBlockers()
+  s.emit({ type: 'info', text: `branch ${before.branch}${before.upstream ? ` -> ${before.upstream}` : ' (no upstream)'}` })
+  if (blockers.length) {
+    for (const b of blockers) s.emit({ type: 'err', text: `cannot ship: ${b}` })
+    s.emit({ type: 'exit', code: 1, failed: 'preflight' })
     return s.end()
   }
+  // Restored if anything fails before the commit, so a failed SHIP does
+  // not leave the stamp bumped (and three failed SHIPs three stamps up).
+  const buildBefore = readRepoFile('build.json')
+  const restoreStamp = () => { try { writeRepoFile('build.json', buildBefore) } catch (e) {} }
+
+  // stamp FIRST. main.js fetches build.json and imports every module as
+  // ?v=<stamp>; without a bump, GitHub Pages' 10-minute cache can leave a
+  // visitor on the previous build. It is the step most easily forgotten
+  // by hand, which is the whole argument for this button existing.
+  const pipeline = [
+    ['stamp', 'bumping build stamp'],
+    ['stations', 'regenerating stations.md'],
+    ['lint', 'linting roster'],
+    ['test', 'running the suite'],
+    ...(includeNetwork ? [['verify', 'verifying every track (network)']] : []),
+  ]
+  for (const [task, label] of pipeline) {
+    s.emit({ type: 'step', task, label })
+    const [cmd, args] = TASKS[task].cmd()
+    const code = await run(cmd, args, s.emit, { signal: ac.signal })
+    s.emit({ type: 'step-done', task, code })
+    if (code !== 0) {
+      restoreStamp()
+      s.emit({ type: 'err', text: `${label} failed -- nothing committed, nothing pushed; build stamp restored.` })
+      s.emit({ type: 'exit', code: 1, failed: task })
+      return s.end()
+    }
+  }
+  // The last point a closed tab can still cancel. The git steps below run
+  // to completion once started -- killing `git commit` or `git push`
+  // half-way is worse than finishing them.
+  if (ac.signal.aborted) {
+    restoreStamp()
+    console.error('admin-server: SHIP cancelled -- the dashboard disconnected before the commit')
+    return s.end()
+  }
+  // `add -A` stages the WHOLE working tree, not the dashboard's own edits:
+  // anything untracked and not gitignored rides along with the deploy.
+  // That has happened (an audit doc, 2026-09-02), and it is why every
+  // scratch file the tools write is either gitignored or dot-prefixed --
+  // see tmpPathFor() above. Kept as -A on purpose: SHIP is "ship what is
+  // here", and a partial add would leave a tree that lint and the suite
+  // just passed differing from the one that goes out.
+  for (const [label, args] of [
+    ['staging', ['add', '-A']],
+    ['committing', ['commit', '-m', String(message).trim()]],
+    ['pushing', ['push']],
+  ]) {
+    s.emit({ type: 'step', task: label, label })
+    const code = await run('git', args, s.emit, { timeoutMs: 180_000 })
+    s.emit({ type: 'step-done', task: label, code })
+    if (code !== 0) {
+      if (label === 'staging') restoreStamp()
+      s.emit({ type: 'err', text: `${label} failed -- stopping here.` })
+      // The panel's git state used to go stale on a failed step, still
+      // showing the pre-SHIP tree after a commit had landed (C-M3).
+      s.emit({ type: 'git', state: await gitState() })
+      s.emit({ type: 'exit', code: 1, failed: label })
+      return s.end()
+    }
+  }
+  s.emit({ type: 'git', state: await gitState() })
+  s.emit({ type: 'exit', code: 0 })
+  return s.end()
+}
+
+async function handleApiRest(req, res, url, route) {
 
   // Roster health. Two routes because the two things cost wildly different
   // amounts: reading the record is a file read, running a batch is minutes of
   // network. The panel renders from GET on every open and only spends the
   // network when asked.
   if (route === 'health' && req.method === 'GET') {
-    const out = await capture('node', ['tools/check-roster.mjs', '--report', '--json'])
-    let parsed = null
-    try { parsed = JSON.parse(out.stdout) } catch (e) {}
-    if (!parsed) return sendJson(res, 500, { error: out.stderr.trim() || 'check-roster --report produced no JSON' })
+    const report = await healthReport()
+    if (report.error) return sendJson(res, 500, { error: report.error })
     // The record says what the roster looks like. It cannot say whether
     // anything is still LOOKING -- a stopped timer and a quiet one are the
     // same file. So the scheduled watcher's own state rides along on the
@@ -714,41 +960,49 @@ async function handleApi(req, res, url) {
     // coverage without also being able to say when it was last advanced.
     // Attached rather than fatal if it fails: this route's job is the
     // roster, and losing the liveness strip must not cost the findings.
-    let watch = null
-    try {
-      const w = await capture('node', ['tools/roster-watch.mjs', '--status', '--json'])
-      watch = JSON.parse(w.stdout)
-    } catch (e) {}
-    return sendJson(res, 200, { ...parsed, watch })
+    return sendJson(res, 200, report)
   }
   if (route === 'health' && req.method === 'POST') {
     const { batch, stationId } = await readBody(req)
     const args = ['tools/check-roster.mjs', '--json']
     if (batch) args.push(`--batch=${Math.max(1, Math.min(200, +batch || 40))}`)
     if (stationId) args.push(`--station=${stationId}`)
-    const s2 = openStream(res)
-    let json = ''
-    const code = await run('node', args, (ev) => {
-      // Same split as the audition route: --json owns stdout, every human
-      // line is on stderr, so progress streams while the result is collected.
-      if (ev.type === 'out') { json += ev.text + '\n'; return }
-      s2.emit(ev)
+    // A batch writes roster-health.json, which SHIP stages -- so it takes
+    // the lock like any other writer.
+    return withLock(res, 'a health batch', async () => {
+      const ac = abortOnDisconnect(res)
+      const s2 = openStream(res)
+      let json = ''
+      const code = await run('node', args, (ev) => {
+        // Same split as the audition route: --json owns stdout, every human
+        // line is on stderr, so progress streams while the result is collected.
+        if (ev.type === 'out') { json += ev.text + '\n'; return }
+        s2.emit(ev)
+      }, { signal: ac.signal })
+      let parsed = null
+      try { parsed = JSON.parse(json) } catch (e) {}
+      // 2026-10-15 (admin audit, dashboard MED) -- `watch` rides along here
+      // too. The page replaces its whole health object with this result, and
+      // without it the liveness strip read "roster-watch could not be read"
+      // after every batch -- the one strip whose job is telling a stopped
+      // timer from a quiet one, crying broken every time it was used.
+      s2.emit({ type: 'result', result: parsed ? { ...parsed, watch: await watchStatus() } : null, raw: parsed ? undefined : json })
+      s2.emit({ type: 'exit', code })
+      return s2.end()
     })
-    let parsed = null
-    try { parsed = JSON.parse(json) } catch (e) {}
-    s2.emit({ type: 'result', result: parsed, raw: parsed ? undefined : json })
-    s2.emit({ type: 'exit', code })
-    return s2.end()
   }
 
   if (route === 'audition' && req.method === 'POST') {
     const { stationId, ids = [], searches = [], limit } = await readBody(req)
     if (!stationId) return sendJson(res, 400, { error: 'stationId required' })
     const args = ['tools/audition.js', `--station=${stationId}`, '--json']
-    if (limit) args.push(`--limit=${+limit}`)
+    // 2026-10-15 (admin audit, C-L3) -- a non-numeric limit used to pass
+    // through as --limit=NaN.
+    if (Number.isFinite(+limit) && +limit > 0) args.push(`--limit=${Math.floor(+limit)}`)
     for (const q of searches) if (String(q).trim()) args.push(`--search=${q}`)
     for (const id of ids) if (/^[\w-]{11}$/.test(String(id).trim())) args.push(String(id).trim())
     const s = openStream(res)
+    const ac = abortOnDisconnect(res)
     let json = ''
     const code = await run('node', args, (ev) => {
       // audition --json puts its payload on stdout between markers and
@@ -756,7 +1010,7 @@ async function handleApi(req, res, url) {
       // structured result is collected.
       if (ev.type === 'out') { json += ev.text + '\n'; return }
       s.emit(ev)
-    })
+    }, { signal: ac.signal })
     let parsed = null
     try { parsed = JSON.parse(json) } catch (e) { /* left null; the UI falls back to the log */ }
     s.emit({ type: 'result', result: parsed, raw: parsed ? undefined : json })
@@ -849,7 +1103,6 @@ function readdirSafeIsFile(p) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`)
 
   // Defence in depth against DNS rebinding: a name that resolves to
   // 127.0.0.1 would otherwise let a remote page talk to a server that only
@@ -868,6 +1121,15 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
+    // 2026-10-15 (admin audit, S-M1) -- parsed HERE, after the Host check
+    // and inside the try, against a fixed base. It used to be the first line
+    // of the handler, built from the raw Host header: `Host: 127.0.0.1:x`
+    // (or `[`, or a port past 65535) threw ERR_INVALID_URL outside any try,
+    // the async handler's rejection went unhandled, and Node exited --
+    // taking any in-flight SHIP with it, possibly between commit and push.
+    // Any tailnet peer could do it, header or no header. Only the path and
+    // query are ever read from `url`, so the base host is irrelevant.
+    const url = new URL(req.url, 'http://admin.invalid')
     if (url.pathname.startsWith('/api/')) return await handleApi(req, res, url)
     return serveStatic(req, res, url)
   } catch (err) {

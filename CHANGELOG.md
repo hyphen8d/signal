@@ -2196,6 +2196,32 @@ the canvas, where it can be neither clicked nor copied.
   and reports any lookup that never got an answer instead of counting it.
   The real match rate is 84% (81/97); the throttled first run read 41%.
 
+### Admin backend audit (2026-10-15)
+
+The network-ops dashboard and its server, audited by four reviewers and
+fixed in full. No change to the radio itself.
+
+- **Closed a code-execution hole.** A crafted field name in an identity
+  save ran code on the dev box before the save was refused. Keys are now
+  validated before anything is written or checked.
+- **Closed a script-injection hole.** A git branch name or commit subject
+  containing HTML ran as script in the dashboard, which can commit and push.
+  All of that text is now rendered as plain text.
+- **No more lost or corrupted data.** Non-ASCII titles could be garbled
+  in transit; a damaged queue file was silently replaced, losing its
+  rejection history; a page loaded earlier could revert newer edits on disk;
+  certain comment shapes in stations.js were deleted on save; a rejection
+  rewrote station-profiles.json in a different indentation.
+- **SHIP is safer.** One thing writes at a time; SHIP checks the repo
+  (on main, up to date with GitHub, no merge in progress, something to ship)
+  before it starts, a closed tab cancels it before the commit, and a failed
+  run puts the build stamp back.
+- **Smaller fixes:** a malformed request header no longer crashes the
+  server; two health batches no longer overwrite each other; the health
+  panel no longer claims the schedule "could not be read" after a batch, and
+  keeps the batch's log; the systemd unit's start-rate setting now actually
+  applies.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

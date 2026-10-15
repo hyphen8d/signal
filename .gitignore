@@ -29,3 +29,6 @@ tools/roster-watch-state.json
 # tools/itch-zip.mjs output: the itch.io package and its cover art.
 # Rebuilt from the tree on demand, so it is never committed.
 dist/
+
+# check-roster.mjs batch lock (2026-10-15): per-machine, never committed.
+.roster-health.json.lock

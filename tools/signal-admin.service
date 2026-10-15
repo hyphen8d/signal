@@ -19,6 +19,12 @@ Documentation=file:///home/hyphen8d/Work/signal/CLAUDE.md
 # it, so this is a hint rather than a guarantee -- the real handling of "the
 # tailnet is not up yet" is Restart=, below.
 After=network-online.target
+# The start-rate limit is a [Unit] key. It sat under [Service] until
+# 2026-10-15, where systemd logged "Unknown key ... ignoring" on every start
+# and the default cap (5 starts in 10s) stayed in force. It only held
+# because RestartSec=3 keeps the boot retries under that cap; this makes the
+# "no start-rate limit" that the Restart= note below promises actually true.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -38,7 +44,6 @@ ExecStart=/home/hyphen8d/.local/share/mise/shims/node tools/admin-server.mjs --h
 # up after 5 tries in 10s and leave the service dead for the whole session.
 Restart=always
 RestartSec=3
-StartLimitIntervalSec=0
 
 # It runs `git push`, node, and the test suite; it does not need more than
 # the user it already runs as.

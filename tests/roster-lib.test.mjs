@@ -392,3 +392,286 @@ test('MUTATION: dropping style inference fails the trailing-.0 check', () => {
   assert.notEqual(naive(1.0), '1.0',
     'if these were equal the identTempo: 1.0 regression would be untestable')
 })
+
+// ---------------------------------------------------------------------
+// 2026-10-15 admin audit. Synthetic fixtures, one per finding, each written
+// to fail against the code as it was before that day's fix (checked by
+// reverting each fix and watching the test go red -- see the report on the
+// audit branch). stations.js itself holds none of these shapes today, which
+// is exactly why the real-roster sweeps above never saw them.
+// ---------------------------------------------------------------------
+
+const A = 'aaaaaaaaaaa', B = 'bbbbbbbbbbb', C = 'ccccccccccc', D = 'ddddddddddd'
+const tr = (youtubeId, title, artist = 'Artist') => ({ youtubeId, title, artist })
+const tracksOf = (src, id) => {
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(src)
+  return [...STATIONS, ...SECRET_STATIONS].find(s => s.id === id).tracks
+}
+
+// Every comment shape a tracks block can hold, on one station.
+const FOUR_SHAPES = `const STATIONS = [
+  { id: 'x', freq: 100.0, tracks: [ // OPEN-NOTE on the bracket line
+      // LEAD-NOTE above A
+      realTrack('${A}', 'Alpha', 'Artist'), // SAME-LINE-NOTE beside A
+      /* INLINE-NOTE before B */ realTrack('${B}', 'Bravo', 'Artist'),
+      realTrack('${C}', 'Charlie', 'Artist'),
+      // TAIL-NOTE after the last track
+    ] },
+  { id: 'y', freq: 200.0, tracks: [
+      realTrack('${D}', 'Delta', 'Artist'),
+    ] },
+]
+`
+const NOTES = ['OPEN-NOTE', 'LEAD-NOTE', 'SAME-LINE-NOTE', 'INLINE-NOTE', 'TAIL-NOTE']
+
+test('MED-1: a no-op tracks save keeps all four comment shapes', () => {
+  const out = patchStationTracks(FOUR_SHAPES, 'x', tracksOf(FOUR_SHAPES, 'x'))
+  assert.equal(out, FOUR_SHAPES)
+})
+
+test('MED-1: a reorder carries same-line and inline comments with their track; open and tail stay put', () => {
+  const r = patchStationTracksDetailed(FOUR_SHAPES, 'x', [...tracksOf(FOUR_SHAPES, 'x')].reverse())
+  for (const n of NOTES) assert.ok(r.text.includes(n), `${n} was lost`)
+  assert.equal(r.droppedComments.length, 0)
+  const lines = r.text.split('\n')
+  assert.match(lines.find(l => l.includes('Alpha')), /SAME-LINE-NOTE/, 'the same-line note left its track')
+  assert.match(lines.find(l => l.includes('Bravo')), /INLINE-NOTE/, 'the inline note left its track')
+  assert.match(lines.find(l => l.includes('tracks: [')), /OPEN-NOTE/, 'the bracket-line note moved')
+  const tailAt = lines.findIndex(l => l.includes('TAIL-NOTE'))
+  assert.match(lines[tailAt + 1], /^\s*\] \},$/, 'the tail note is no longer just above the bracket')
+  // and the reverse of the reverse is the original, byte for byte
+  assert.equal(patchStationTracks(r.text, 'x', tracksOf(FOUR_SHAPES, 'x')), FOUR_SHAPES)
+})
+
+test('MED-1: removing a track with a same-line or inline comment reports it; no comment ever leaves silently', () => {
+  const [a, b, c] = tracksOf(FOUR_SHAPES, 'x')
+  const r = patchStationTracksDetailed(FOUR_SHAPES, 'x', [c])
+  const reported = r.droppedComments.flatMap(d => d.comments).join(' ')
+  for (const n of ['LEAD-NOTE', 'SAME-LINE-NOTE', 'INLINE-NOTE']) {
+    assert.ok(!r.text.includes(n), `${n} stayed in the file after its track was removed`)
+    assert.ok(reported.includes(n), `${n} went without being reported`)
+  }
+  assert.ok(r.text.includes('OPEN-NOTE') && r.text.includes('TAIL-NOTE'), 'block-level notes went with a track')
+  assert.deepEqual(tracksOf(r.text, 'x').map(t => t.youtubeId), [C])
+  void a; void b
+})
+
+test('MED-1: reverse-then-restore is byte-identical for every real station (the rebuild path, not the no-op shortcut)', () => {
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(SRC)
+  for (const st of [...STATIONS, ...SECRET_STATIONS]) {
+    const reversed = patchStationTracks(SRC, st.id, [...st.tracks].reverse())
+    assert.equal(patchStationTracks(reversed, st.id, st.tracks), SRC, `${st.id} did not survive a reverse and back`)
+  }
+})
+
+const DUPES = `const STATIONS = [
+  { id: 'x', freq: 100.0, tracks: [
+      // FIRST-COPY-NOTE
+      realTrack('${A}', 'Alpha', 'Artist'),
+      realTrack('${B}', 'Bravo', 'Artist'),
+      // SECOND-COPY-NOTE
+      realTrack('${A}', 'Alpha', 'Artist'),
+    ] },
+]
+`
+
+test('MED-2: removing one copy of a duplicated id keeps one note and REPORTS the other', () => {
+  const r = patchStationTracksDetailed(DUPES, 'x', [tr(A, 'Alpha'), tr(B, 'Bravo')])
+  const kept = ['FIRST-COPY-NOTE', 'SECOND-COPY-NOTE'].filter(n => r.text.includes(n))
+  assert.equal(kept.length, 1, `expected exactly one copy's note to survive, got ${kept}`)
+  assert.equal(r.droppedComments.length, 1, 'the removed copy\'s note went unreported')
+  assert.equal(r.droppedComments[0].youtubeId, A)
+  assert.ok(!r.droppedComments[0].comments.join(' ').includes(kept[0]), 'reported the note that was kept')
+})
+
+test('MED-2: each copy of a duplicate keeps its own note through a reorder', () => {
+  const r = patchStationTracksDetailed(DUPES, 'x', [tr(B, 'Bravo'), tr(A, 'Alpha'), tr(A, 'Alpha')])
+  assert.equal(r.text.split('FIRST-COPY-NOTE').length - 1, 1)
+  assert.equal(r.text.split('SECOND-COPY-NOTE').length - 1, 1)
+  assert.equal(r.droppedComments.length, 0)
+})
+
+test('MED-2: a commented track sent twice does not print its note twice', () => {
+  const src = FOUR_SHAPES
+  const [a, b, c] = tracksOf(src, 'x')
+  const out = patchStationTracks(src, 'x', [a, b, c, a])
+  assert.equal(out.split('LEAD-NOTE').length - 1, 1, 'the note was duplicated with its track')
+  assert.equal(out.split('SAME-LINE-NOTE').length - 1, 1)
+})
+
+test('MED-3: verifyPatch checks WHICH tracks, not how many', () => {
+  const want = tracksOf(FOUR_SHAPES, 'x')
+  const swapped = FOUR_SHAPES.replace("'Charlie'", "'Charlie (Live)'")
+  assert.throws(() => verifyPatch(swapped, 'x', want), /track #3/)
+  // the legacy count check is what let this through
+  assert.doesNotThrow(() => verifyPatch(swapped, 'x', want.length))
+})
+
+test('MED-3: verifyPatch with `before` refuses a patch that also moved another station or field', () => {
+  const touchedOther = FOUR_SHAPES.replace("'Delta'", "'Echo'")
+  assert.throws(() => verifyPatch(touchedOther, 'x', tracksOf(FOUR_SHAPES, 'x'), { before: FOUR_SHAPES }), /station "y" changed/)
+  const touchedField = FOUR_SHAPES.replace("id: 'x', freq: 100.0", "id: 'x', freq: 101.0")
+  assert.throws(() => verifyPatch(touchedField, 'x', tracksOf(FOUR_SHAPES, 'x'), { before: FOUR_SHAPES }), /also changed in freq/)
+  // field mode: the asked-for field may move, nothing else
+  const both = FOUR_SHAPES.replace("id: 'x', freq: 100.0", "id: 'x', freq: 101.0, glyph: 'Z'")
+  assert.throws(() => verifyPatch(both, 'x', { freq: 101 }, { before: FOUR_SHAPES }), /also changed in glyph/)
+  assert.doesNotThrow(() => verifyPatch(both, 'x', { freq: 101, glyph: 'Z' }, { before: FOUR_SHAPES }))
+})
+
+test('MED-3: a malformed track is refused, never written as undefined/null', () => {
+  const ok = tracksOf(FOUR_SHAPES, 'x')
+  assert.throws(() => patchStationTracks(FOUR_SHAPES, 'x', [...ok, { youtubeId: 'short', title: 'T', artist: 'A' }]), /11-character/)
+  assert.throws(() => patchStationTracks(FOUR_SHAPES, 'x', [...ok, { youtubeId: D, artist: 'A' }]), /title must be a non-empty string/)
+  assert.throws(() => patchStationTracks(FOUR_SHAPES, 'x', [...ok, { youtubeId: D, title: 'T', artist: null }]), /artist must be/)
+  assert.throws(() => patchStationTracks(FOUR_SHAPES, 'x', [...ok, { youtubeId: D, title: '  ', artist: 'A' }]), /title must be/)
+})
+
+const TRAILING = `const STATIONS = [
+  { id: 'x', freq: 100.0,
+    crt: { noise: 0.2, brightness: 1.22 /* was 1.4 */ },
+    grind: {
+      minS: 12,
+      maxS: 31 /* was 2.5 */
+    },
+    idleEvent: {
+      every: 40,
+      swing: 0.9 // NOTE on the last key
+    },
+    tracks: [
+      realTrack('${A}', 'Alpha', 'Artist'),
+    ] },
+]
+`
+
+test('MED-4: a comment after the last key of a holder is neither deleted nor read for style', () => {
+  const a = patchStationField(TRAILING, 'x', 'grind.maxS', 40)
+  assert.match(a, /maxS: 40 \/\* was 2\.5 \*\//, 'number style came from the comment, or the comment went')
+  const b = patchStationField(TRAILING, 'x', 'idleEvent.swing', 0.8)
+  assert.match(b, /swing: 0\.8 \/\/ NOTE on the last key/)
+  const c = patchStationField(TRAILING, 'x', 'crt.brightness', 1.3)
+  assert.match(c, /brightness: 1\.3 \/\* was 1\.4 \*\/ \}/)
+  // and every leaf rewrites with its own value byte-for-byte
+  for (const p of ['crt.noise', 'crt.brightness', 'grind.minS', 'grind.maxS', 'idleEvent.every', 'idleEvent.swing']) {
+    const [h, k] = p.split('.')
+    const { STATIONS } = loadRosterFromText(TRAILING)
+    assert.equal(patchStationField(TRAILING, 'x', p, STATIONS[0][h][k]), TRAILING, `${p} restyled`)
+  }
+})
+
+test('MED-4: inserting after a comma-less, commented last key adds the comma and keeps the note', () => {
+  const out = patchStationField(TRAILING, 'x', 'idleEvent.decay', 3)
+  assert.ok(out.includes('// NOTE on the last key'))
+  const { STATIONS } = loadRosterFromText(out)
+  assert.deepEqual(STATIONS[0].idleEvent, { every: 40, swing: 0.9, decay: 3 })
+})
+
+test('LOW-1: removing the last key removes the holder, so insert-then-remove round-trips', () => {
+  const { STATIONS } = loadRosterFromText(SRC)
+  const st = STATIONS.find((s) => !s.grind)
+  assert.ok(st, 'setup: no station without a grind block left to test with')
+  const added = patchStationField(SRC, st.id, 'grind.minS', 30)
+  assert.equal(patchStationField(added, st.id, 'grind.minS', null), SRC)
+  // and on a holder with more than one key, only when the last one goes.
+  // (Uncommented copy: with its `/* was 2.5 */` note grind would still hold
+  // a comment after maxS went, which is the refusal tested below.)
+  const plain = TRAILING.replace(' /* was 2.5 */', '')
+  const one = patchStationField(plain, 'x', 'grind.minS', null)
+  assert.match(one, /grind: \{/)
+  const none = patchStationField(one, 'x', 'grind.maxS', null)
+  assert.equal(loadRosterFromText(none).STATIONS[0].grind, undefined, 'an empty grind {} was left behind')
+  assert.doesNotMatch(none, /grind/)
+})
+
+test('LOW-1: a holder left holding only a comment is refused, not emptied', () => {
+  const src = TRAILING.replace("maxS: 31 /* was 2.5 */\n", "maxS: 31\n      // keep this reasoning\n")
+  const one = patchStationField(src, 'x', 'grind.minS', null)
+  assert.throws(() => patchStationField(one, 'x', 'grind.maxS', null), /holding only a comment/)
+})
+
+test('LOW-3: a track title containing `id: \'<station>\'` does not make that station ambiguous', () => {
+  const src = `const STATIONS = [
+  { id: 'x', freq: 100.0, tracks: [
+      realTrack('${A}', "id: 'y'", 'Artist'),
+    ] },
+  { freq: 200.0, id: 'y', tracks: [
+      realTrack('${B}', 'Bravo', 'Artist'),
+    ] },
+]
+// a comment mentioning id: 'y' as well
+`
+  const out = patchStationField(src, 'y', 'freq', 250)
+  const { STATIONS } = loadRosterFromText(out)
+  assert.equal(STATIONS[1].freq, 250, 'patched the wrong object (id is not the first key here)')
+  assert.equal(STATIONS[0].freq, 100)
+  assert.throws(() => findStationObjectRange(src.replace("id: 'x'", "id: 'y'"), 'y'), /more than one/)
+})
+
+test('LOW-4: a declaration quoted in a comment is not a declaration', () => {
+  const src = `// was: const NIN_STATION = {}
+// and once: const STATIONS = []
+const STATIONS = [
+  { id: 'x', freq: 100.0, tracks: [ realTrack('${A}', 'Alpha', 'Artist') ] },
+]
+const NIN_STATION = { id: 'nin', secret: true, tracks: [ realTrack('${B}', 'Bravo', 'Artist') ] }
+`
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(src)
+  assert.equal(STATIONS.length, 1)
+  assert.deepEqual(SECRET_STATIONS.map(s => s.id), ['nin'])
+  assert.doesNotThrow(() => buildRosterPayload(src))
+  // a commented-out declaration alone is ABSENT, and absent is still skipped
+  const absent = src.replace(/^const NIN_STATION[^\n]*\n/m, '')
+  assert.equal(loadRosterFromText(absent).SECRET_STATIONS.length, 0)
+})
+
+test('LOW-4: a secret station that is present but will not read is an error naming it', () => {
+  const src = `const STATIONS = [
+  { id: 'x', freq: 100.0, tracks: [ realTrack('${A}', 'Alpha', 'Artist') ] },
+]
+const NIN_STATION = { id: 'nin', freq: notDefinedAnywhere, tracks: [] }
+`
+  assert.throws(() => loadRosterFromText(src), /NIN_STATION is declared .*could not be read/)
+})
+
+test('LOW-5: appending after a last track with no trailing comma stays valid', () => {
+  const src = `const STATIONS = [
+  { id: 'x', freq: 100.0, tracks: [
+      realTrack('${A}', 'Alpha', 'Artist'),
+      realTrack('${B}', 'Bravo', 'Artist')
+    ] },
+]
+`
+  const want = [...tracksOf(src, 'x'), tr(C, 'Charlie')]
+  const out = patchStationTracks(src, 'x', want)
+  assert.deepEqual(tracksOf(out, 'x').map(t => t.youtubeId), [A, B, C])
+  const moved = patchStationTracks(src, 'x', [...tracksOf(src, 'x')].reverse())
+  assert.deepEqual(tracksOf(moved, 'x').map(t => t.youtubeId), [B, A])
+})
+
+test('LOW-6: a hand-written entry is carried verbatim, and changing it is refused', () => {
+  const src = `const STATIONS = [
+  { id: 'x', freq: 100.0, tracks: [
+      realTrack('${A}', 'Alpha', 'Artist'),
+      // HAND-WRITTEN-NOTE
+      { id: 'custom-id', youtubeId: '${B}', title: 'Bravo', artist: 'Artist' },
+    ] },
+]
+`
+  const out = patchStationTracks(src, 'x', [...tracksOf(src, 'x'), tr(C, 'Charlie')])
+  assert.ok(out.includes("{ id: 'custom-id', youtubeId: '" + B + "'"), 'the entry was regenerated')
+  assert.ok(out.includes('HAND-WRITTEN-NOTE'))
+  assert.equal(tracksOf(out, 'x')[1].id, 'custom-id')
+  assert.throws(() => patchStationTracks(src, 'x', [tracksOf(src, 'x')[0], tr(B, 'Bravo (edit)')]), /not written as realTrack/)
+})
+
+test('LOW-7: -0 keeps its sign, and an inserted leaf takes its style from the same field elsewhere', () => {
+  assert.equal(formatValue(-0), '-0')
+  assert.equal(formatValue(-0, { oneDecimal: true }), '-0.0')
+  const src = `const STATIONS = [
+  { id: 'x', freq: 100.0, crt: { bloomAmt: 1.75 }, tracks: [ realTrack('${A}', 'Alpha', 'Artist') ] },
+  { id: 'y', freq: 200.0, tracks: [ realTrack('${B}', 'Bravo', 'Artist') ] },
+  { id: 'z', freq: 300.0, crt: { noise: 0.2 }, tracks: [ realTrack('${C}', 'Charlie', 'Artist') ] },
+]
+`
+  assert.match(patchStationField(src, 'y', 'crt.bloomAmt', 2), /crt: \{ bloomAmt: 2\.0 \}/, 'missing holder')
+  assert.match(patchStationField(src, 'z', 'crt.bloomAmt', 2), /noise: 0\.2, bloomAmt: 2\.0 \}/, 'missing leaf')
+})

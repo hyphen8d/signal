@@ -247,3 +247,53 @@ test('roster-watch main(): a finding notifies once, and a stall behind it still 
     assert.deepEqual(JSON.parse(s.stdout).findings.map((f) => f.youtubeId), [A])
   } finally { rmSync(dir, { recursive: true, force: true }) }
 })
+
+// --- 2026-10-15 admin audit, C-L1: one batch at a time --------------------
+
+test('check-roster takes over a lock whose owner is gone, and leaves none behind', () => {
+  const dir = scratch()
+  try {
+    const store = path.join(dir, 'roster-health.json')
+    const lock = path.join(dir, '.roster-health.json.lock')
+    writeFileSync(lock, '999999999')   // a crashed run's leftover: no such pid
+    const r = runNode('check-roster.mjs', ['--json', '--station=cipher', '--batch=3'], {
+      SIGNAL_HEALTH_STORE: store, SIGNAL_FAKE_YT: JSON.stringify({ default: 'ok' }),
+    })
+    assert.equal(r.status, 0, r.stderr)
+    assert.equal(JSON.parse(r.stdout).checked, 3, 'the stale lock blocked the run')
+    assert.equal(existsSync(lock), false, 'the run left its lock behind')
+  } finally { rmSync(dir, { recursive: true, force: true }) }
+})
+
+test('a second batch WAITS for a live one, and runs once it is released', async () => {
+  const { spawn } = await import('node:child_process')
+  const dir = scratch()
+  // A live process stands in for the first batch: its pid holds the lock.
+  const holder = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'])
+  try {
+    const store = path.join(dir, 'roster-health.json')
+    const lock = path.join(dir, '.roster-health.json.lock')
+    writeFileSync(lock, String(holder.pid))
+    const started = Date.now()
+    const child = spawn(process.execPath, [path.join(TOOLS, 'check-roster.mjs'), '--json', '--station=cipher', '--batch=3'], {
+      env: { ...process.env, NODE_OPTIONS: `--import=${FAKE}`, SIGNAL_HEALTH_STORE: store, SIGNAL_FAKE_YT: JSON.stringify({ default: 'ok' }) },
+    })
+    let out = '', err = ''
+    child.stdout.on('data', (d) => { out += d })
+    child.stderr.on('data', (d) => { err += d })
+    // The "first batch" finishes after 3s. (What it wrote is not asserted:
+    // the record is loaded after the lock by construction, see acquireLock.)
+    setTimeout(() => {
+      writeFileSync(store, JSON.stringify({ version: 1, records: { FIRSTBATCH1: { at: new Date().toISOString(), flags: [] } } }))
+      rmSync(lock, { force: true })
+    }, 3000)
+    const code = await new Promise((r) => child.on('close', r))
+    assert.equal(code, 0, err)
+    assert.ok(Date.now() - started >= 2900, 'it did not wait for the lock')
+    assert.match(err, /Waiting for another health batch/)
+    assert.ok(JSON.parse(out).checked >= 3)
+  } finally {
+    holder.kill()
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
