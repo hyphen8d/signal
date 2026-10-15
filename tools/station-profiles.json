@@ -481,7 +481,22 @@
     "Check region-locking, not just oEmbed -- unique to this station. Japanese label uploads are commonly geo-fenced and an oEmbed 200 says nothing about it; confirm the video is US-available and embeddable before proposing. Watch for Night Tempo \"Showa Groove\" mixes (modern remixes), live cuts, and \"Original Basic Track\" uploads that are backing-track outtakes.",
     "The mis-credit warning above earned itself three times in one pass (2026-08-29), all of them Topic uploads that look correct in a result list: 'AIRPORT LADY' on Ai Furihata - Topic is a cover, not Kadomatsu; 'Bomber' on Hirotaka Mori - Topic is not Yamashita; a Nanako Sato search returns 'Nanaco', a different artist. Read the CHANNEL, not the title. Related: Casiopea's Asayake has no clean upload of the 1979 original -- the available ones are 'Casiopea 3rd', the later lineup re-recording it."
    ],
-   "rejections": []
+   "rejections": [
+    {
+     "artist": "Tatsuro Yamashita",
+     "track": "Ride On Time",
+     "reason": "DEAD UPLOAD, not a curation call: this id 404s on oEmbed -- flagged DEAD 404 by the health watch's probes 2026-10-14 (08:01 and 19:24) and confirmed by verify-roster.js 2026-10-15. Both CITY LIGHTS tracks on the fan channel \"Commander\" died together, so it reads as a channel takedown. Re-pointed to FCoOyPa6k-U (TIPO) the same day; the track itself stays. Do not re-add this id.",
+     "rejectedAt": "2026-10-15",
+     "youtubeId": "XE45nsroFTE"
+    },
+    {
+     "artist": "Tatsuro Yamashita",
+     "track": "Bomber",
+     "reason": "DEAD UPLOAD, not a curation call: this id 404s on oEmbed -- flagged DEAD 404 by the health watch's probes 2026-10-14 (08:01 and 19:24) and confirmed by verify-roster.js 2026-10-15. Both CITY LIGHTS tracks on the fan channel \"Commander\" died together, so it reads as a channel takedown. Re-pointed to S_9LEfENEMw (TIPO) the same day; the track itself stays. Do not re-add this id.",
+     "rejectedAt": "2026-10-15",
+     "youtubeId": "SIGr6dc_2Sc"
+    }
+   ]
   },
   "circuit-crush": {
    "callsign": "CIRCUIT CRUSH",
@@ -641,6 +656,13 @@
      "artist": "Snoop Dogg (as Snoop Doggy Dogg)",
      "track": "Gin and Juice",
      "reason": "Removed in the 2026-08-23 curation pass. No stated reason was captured -- worth confirming whether this reflects a real boundary (e.g. steering away from more mainstream/radio-famous tracks in favor of deeper cuts) or was a one-off taste call, before treating it as a pattern."
+    },
+    {
+     "artist": "Del the Funky Homosapien",
+     "track": "Mistadobalina",
+     "reason": "DEAD UPLOAD, not a curation call: the Del The Funky Homosapien - Topic upload went playabilityStatus UNPLAYABLE and lost the US (NOT-US), confirmed by two health-watch strikes (2026-10-14). Re-pointed to e29ZR1MNOUA (Cerlov) the same day; the track itself stays. Do not re-add this id.",
+     "rejectedAt": "2026-10-15",
+     "youtubeId": "BQrdjT3GHwE"
     }
    ]
   },

@@ -2897,3 +2897,24 @@ test('the guide says where to write, on both layouts (2026-10-14)', async () => 
     assert.equal(m.find('[Q]'), -1, 'and no key a phone cannot press')
   } finally { m.shutdown() }
 })
+
+test('a throttled LRCLIB answer is retryable, not a verdict (2026-10-15 audit)', async () => {
+  // A 429 is a RESOLVED fetch, so the 'fail' path (a rejection) never
+  // covered it: both endpoints read it as "no match" and the track was
+  // 'unavailable' for the session. Throttled once, then answered -- the
+  // second ask must get the lyrics.
+  let throttled = true
+  const h = await boot({ player: true, lyrics: (u) => (u.includes('throttled-once') ? (throttled ? 'throttle' : true) : true) })
+  try {
+    h.powerOn()
+    const voice = await import(`../audio/voice.js?v=${h.tag}`)
+    const t = { youtubeId: 'zz429', title: 'throttled-once', artist: 'nobody' }
+    voice.ensureLyricsFetched(t, 0)
+    await h.flush()
+    assert.equal(voice.lyricsStateFor(t), 'unavailable', 'test setup: reads as unavailable to the UI while throttled')
+    throttled = false
+    voice.ensureLyricsFetched(t, 0)
+    await h.flush()
+    assert.equal(voice.lyricsStateFor(t), 'available', 'a 429 was cached as a permanent miss')
+  } finally { h.shutdown() }
+})

@@ -337,7 +337,7 @@ Tracks (50):
 5. **Cat's Eye** -- Anri  ([youtu.be/k-BrT2SQ7SI](https://youtu.be/k-BrT2SQ7SI))
 6. **Say Goodbye** -- Hiroshi Sato  ([youtu.be/vUQjdwRno5g](https://youtu.be/vUQjdwRno5g))
 7. **Moment Of Twilight** -- Minako Yoshida  ([youtu.be/k7VkzjSe5Ng](https://youtu.be/k7VkzjSe5Ng))
-8. **Ride On Time** -- Tatsuro Yamashita  ([youtu.be/XE45nsroFTE](https://youtu.be/XE45nsroFTE))
+8. **Ride On Time** -- Tatsuro Yamashita  ([youtu.be/FCoOyPa6k-U](https://youtu.be/FCoOyPa6k-U))
 9. **Plastic Love** -- Mariya Takeuchi  ([youtu.be/T_lC2O1oIew](https://youtu.be/T_lC2O1oIew))
 10. **Telephone Number** -- Junko Ohashi  ([youtu.be/XJWqHmY-g9U](https://youtu.be/XJWqHmY-g9U))
 11. **Love Step** -- Miharu Koshi  ([youtu.be/B6O09Jx4ONM](https://youtu.be/B6O09Jx4ONM))
@@ -378,7 +378,7 @@ Tracks (50):
 46. **Summer Breeze** -- Piper  ([youtu.be/9TT_oIzTT74](https://youtu.be/9TT_oIzTT74))
 47. **Town** -- Minako Yoshida  ([youtu.be/mCHy6H2QDEY](https://youtu.be/mCHy6H2QDEY))
 48. **Tuxedo Connection** -- Hitomi Tohyama  ([youtu.be/AeH1xq2PpjQ](https://youtu.be/AeH1xq2PpjQ))
-49. **Bomber** -- Tatsuro Yamashita  ([youtu.be/SIGr6dc_2Sc](https://youtu.be/SIGr6dc_2Sc))
+49. **Bomber** -- Tatsuro Yamashita  ([youtu.be/S_9LEfENEMw](https://youtu.be/S_9LEfENEMw))
 50. **Two Call** -- Kaoru Akimoto  ([youtu.be/pSbzx-0wbs0](https://youtu.be/pSbzx-0wbs0))
 
 ## HACKBACK -- 808.0
@@ -437,7 +437,7 @@ Tracks (50):
 46. **Ready or Not** -- Fugees  ([youtu.be/PWOa_eeKzO0](https://youtu.be/PWOa_eeKzO0))
 47. **Tonite** -- DJ Quik  ([youtu.be/yqxrr6CQyus](https://youtu.be/yqxrr6CQyus))
 48. **The Ghetto** -- Too $hort  ([youtu.be/0Cjj3YMrkEM](https://youtu.be/0Cjj3YMrkEM))
-49. **Mistadobalina** -- Del the Funky Homosapien  ([youtu.be/BQrdjT3GHwE](https://youtu.be/BQrdjT3GHwE))
+49. **Mistadobalina** -- Del the Funky Homosapien  ([youtu.be/e29ZR1MNOUA](https://youtu.be/e29ZR1MNOUA))
 50. **I Seen a Man Die** -- Scarface  ([youtu.be/cGwUE0V9Gqw](https://youtu.be/cGwUE0V9Gqw))
 
 # ZM band

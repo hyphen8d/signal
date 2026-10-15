@@ -931,7 +931,12 @@ export const STATIONS = [
       realTrack('k-BrT2SQ7SI', "Cat's Eye", 'Anri'),
       realTrack('vUQjdwRno5g', 'Say Goodbye', 'Hiroshi Sato'),
       realTrack('k7VkzjSe5Ng', 'Moment Of Twilight', 'Minako Yoshida'),
-      realTrack('XE45nsroFTE', 'Ride On Time', 'Tatsuro Yamashita'),
+      // 2026-10-15 -- re-pointed, same recording: XE45nsroFTE (and Bomber's
+      // SIGr6dc_2Sc below) both sat on the fan channel "Commander", and both
+      // went 404 the same day -- a channel takedown, the standing risk of the
+      // fan-archive sourcing this station accepts. TIPO's upload is 5:51
+      // against the old 6:00, no flags, and the channel is already used here.
+      realTrack('FCoOyPa6k-U', 'Ride On Time', 'Tatsuro Yamashita'),
       realTrack('T_lC2O1oIew', 'Plastic Love', 'Mariya Takeuchi'),
       realTrack('XJWqHmY-g9U', 'Telephone Number', 'Junko Ohashi'),
       realTrack('B6O09Jx4ONM', 'Love Step', 'Miharu Koshi'),
@@ -1021,7 +1026,11 @@ export const STATIONS = [
       realTrack('9TT_oIzTT74', 'Summer Breeze', 'Piper'),
       realTrack('mCHy6H2QDEY', 'Town', 'Minako Yoshida'),
       realTrack('AeH1xq2PpjQ', 'Tuxedo Connection', 'Hitomi Tohyama'),
-      realTrack('SIGr6dc_2Sc', 'Bomber', 'Tatsuro Yamashita'),
+      // 2026-10-15 -- re-pointed after the "Commander" takedown (see Ride On
+      // Time above). TIPO again, 5:58 against the old 5:57; TIPO's 5:12
+      // upload of the same title was passed over as a likely edit. NOT
+      // Hirotaka Mori - Topic's "Bomber", which is a different artist.
+      realTrack('S_9LEfENEMw', 'Bomber', 'Tatsuro Yamashita'),
       realTrack('pSbzx-0wbs0', 'Two Call', 'Kaoru Akimoto'),
     ] },
   // 22nd pass -- outlaw channel dropped completely, 9 channels being the
@@ -1623,7 +1632,13 @@ export const STATIONS = [
       realTrack('PWOa_eeKzO0', 'Ready or Not', 'Fugees'),
       realTrack('yqxrr6CQyus', 'Tonite', 'DJ Quik'),
       realTrack('0Cjj3YMrkEM', 'The Ghetto', 'Too $hort'),
-      realTrack('BQrdjT3GHwE', 'Mistadobalina', 'Del the Funky Homosapien'),
+      // 2026-10-15 -- re-pointed: the Del The Funky Homosapien - Topic upload
+      // (BQrdjT3GHwE) went UNPLAYABLE and dropped the US, confirmed by two
+      // health-watch strikes. The artist's own channel (dFieSQHmQT0) is
+      // licensed in 11 countries, so it is a fan upload: Cerlov's runs 4:18
+      // against the Topic's 4:20 (the album cut, not the 3:59 video edit),
+      // 247 countries, no flags.
+      realTrack('e29ZR1MNOUA', 'Mistadobalina', 'Del the Funky Homosapien'),
       realTrack('cGwUE0V9Gqw', 'I Seen a Man Die', 'Scarface'),
     ] },
   // 52nd pass -- stations 1, 6, and 9 needed similar short descriptions to

@@ -763,6 +763,18 @@ move of a couple of tracks as noise. Four matches were refused by the gate
 Shoku*, CIRCUIT CRUSH's *Never Sleep Again*), the last 147s off -- a
 different recording, not padding.
 
+**Re-measured 2026-10-15: 81/97 = 84%, and the first attempt read 41%.**
+LRCLIB was answering 429 (three direct probes that minute: 429, 429, 200),
+and the tool folded every non-OK answer into "no synced lyrics", so a
+throttled run looked like half the roster had lost its lyrics. The tool now
+retries 429/5xx with backoff and lists anything still unanswered apart from
+the rate, exiting 2 -- **a run that prints `!! ... could not be looked up`
+is partial; wait and re-run.** The app had the milder form of the same bug
+(a throttled `/api/search` cached the track `'unavailable'` for the
+session); only a 404 is an answer there now, and the harness's `'throttle'`
+lyric answer covers it. The four gate refusals were the same four as
+2026-09-27.
+
 **That opt-out was built 2026-09-14.** A station can say `instrumental: true`,
 with `vocalTracks: [ids]` for the sung exceptions; a vocal station can list
 `instrumentalTracks: [ids]`. `trackIsInstrumental()` in `stations.js` is the
