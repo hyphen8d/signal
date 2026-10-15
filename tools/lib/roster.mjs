@@ -441,6 +441,9 @@ export function assertTrackShape(t, where = 'track') {
   if (typeof t.youtubeId !== 'string' || !YOUTUBE_ID_RE.test(t.youtubeId)) {
     throw new Error(`Refusing to write ${where}: youtubeId ${JSON.stringify(t.youtubeId)} is not an 11-character YouTube id`)
   }
+  if (t.replaces !== undefined && (typeof t.replaces !== 'string' || !YOUTUBE_ID_RE.test(t.replaces))) {
+    throw new Error(`Refusing to write ${where} (${t.youtubeId}): replaces ${JSON.stringify(t.replaces)} is not an 11-character YouTube id`)
+  }
   for (const k of ['title', 'artist']) {
     if (typeof t[k] !== 'string' || !t[k].trim()) {
       throw new Error(`Refusing to write ${where} (${t.youtubeId}): ${k} must be a non-empty string, got ${JSON.stringify(t[k])}`)
@@ -617,6 +620,12 @@ export function formatTracksBlock(tracks, previous = null) {
   const claim = (t) => {
     let k = entries.findIndex((e, j) => !claimed.has(j) && sameTrack(e.track, t))
     if (k === -1) k = entries.findIndex((e, j) => !claimed.has(j) && e.youtubeId === t.youtubeId)
+    // 2026-10-15 (dashboard repoint) -- a track may say which id it REPLACES.
+    // Re-pointing a dead upload to a working one changes the id, so neither
+    // match above finds the old entry and its comment block -- typically the
+    // note explaining why that recording was chosen -- came back as dropped.
+    // `replaces` lets the new id inherit the old entry's comments in place.
+    if (k === -1 && t.replaces) k = entries.findIndex((e, j) => !claimed.has(j) && e.youtubeId === t.replaces)
     if (k === -1) return null
     claimed.add(k)
     return entries[k]

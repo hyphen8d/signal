@@ -2222,6 +2222,20 @@ fixed in full. No change to the radio itself.
   keeps the batch's log; the systemd unit's start-rate setting now actually
   applies.
 
+### Dashboard: health where you work, one-click repoint (2026-10-15)
+
+- **Dead tracks show up where you edit.** Roster health loads with the
+  page; a flagged track is marked in its station's list (with its problem
+  and its length), on the station's header and in the jump bar.
+- **Repoint.** One click on a flagged track opens Audition already searching
+  for that song on that station; "use as replacement" swaps in the new
+  upload and keeps the track's notes. Recording the old id as rejected is
+  one more click.
+- **Deploy says whether SHIP will go** before you press it, and why not.
+- **Smaller:** save and discard sit beside the unsaved-changes pill; the
+  remove buttons only light up on the row you point at; stations are
+  grouped by band; Audition remembers the last station.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

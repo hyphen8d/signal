@@ -216,3 +216,31 @@ test('SHIP refuses, before stamping, on a clean tree, off main, and behind the r
     git('checkout', '-q', 'main'); spawnSync('git', ['branch', '-qD', 'side'], { cwd: root }); restore()
   }
 })
+
+test('a repoint save (`replaces`) keeps the old entry\'s comment block on the new id (dashboard UI)', async () => {
+  try {
+    const state = (await request({ path: '/api/state', headers: ADMIN })).json
+    const st = state.roster.stations.find((s) => s.id === 'city-lights')
+    const tracks = st.tracks.map(({ youtubeId, title, artist }) => ({ youtubeId, title, artist }))
+    const i = tracks.findIndex((t) => t.youtubeId === 'FCoOyPa6k-U')
+    tracks[i] = { ...tracks[i], youtubeId: 'ZZZZZZZZZZZ', replaces: 'FCoOyPa6k-U' }
+    const before = read('stations.js')
+    const r = await post('/api/save-tracks', { stationId: 'city-lights', tracks, baseHash: state.hashes.stations })
+    assert.equal(r.status, 200, r.text)
+    assert.deepEqual(r.json.droppedComments, [])
+    assert.equal(read('stations.js'), before.replace("realTrack('FCoOyPa6k-U',", "realTrack('ZZZZZZZZZZZ',"))
+  } finally { restore() }
+})
+
+test('GET /api/ship-check answers with the same blockers SHIP would refuse on (dashboard UI)', async () => {
+  // The SHIP test above leaves the remote a commit ahead; catch up first.
+  git('fetch', '-q'); git('merge', '-q', '--ff-only', 'origin/main')
+  const clean = (await request({ path: '/api/ship-check', headers: ADMIN })).json
+  assert.ok(clean.blockers.some((b) => /nothing to ship/.test(b)), JSON.stringify(clean))
+  try {
+    writeFileSync(path.join(root, 'README.md'), read('README.md') + '\nedit\n')
+    const ready = (await request({ path: '/api/ship-check', headers: ADMIN })).json
+    assert.deepEqual(ready.blockers, [], JSON.stringify(ready))
+    assert.equal(ready.behind, 0)
+  } finally { restore() }
+})

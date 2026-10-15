@@ -675,3 +675,21 @@ test('LOW-7: -0 keeps its sign, and an inserted leaf takes its style from the sa
   assert.match(patchStationField(src, 'y', 'crt.bloomAmt', 2), /crt: \{ bloomAmt: 2\.0 \}/, 'missing holder')
   assert.match(patchStationField(src, 'z', 'crt.bloomAmt', 2), /noise: 0\.2, bloomAmt: 2\.0 \}/, 'missing leaf')
 })
+
+test('repoint: a track that `replaces` an id inherits that entry\'s comment block in place', async () => {
+  const { readFileSync } = await import('node:fs')
+  const src = readFileSync(new URL('../stations.js', import.meta.url), 'utf8')
+  const lib = await import('../tools/lib/roster.mjs')
+  const st = lib.loadRosterFromText(src).STATIONS.find((s) => s.id === 'city-lights')
+  const tracks = st.tracks.map(({ youtubeId, title, artist }) => ({ youtubeId, title, artist }))
+  const i = tracks.findIndex((t) => t.youtubeId === 'FCoOyPa6k-U')
+  assert.ok(i >= 0, 'test setup: the commented Ride On Time entry exists')
+  // Without the hint the old entry's notes are reported dropped...
+  const bare = lib.patchStationTracksDetailed(src, 'city-lights', tracks.map((t, k) => k === i ? { ...t, youtubeId: 'ZZZZZZZZZZZ' } : t))
+  assert.equal(bare.droppedComments.length, 1)
+  // ...with it, they stay above the new id and nothing else in the file moves.
+  const hinted = lib.patchStationTracksDetailed(src, 'city-lights', tracks.map((t, k) => k === i ? { ...t, youtubeId: 'ZZZZZZZZZZZ', replaces: 'FCoOyPa6k-U' } : t))
+  assert.deepEqual(hinted.droppedComments, [])
+  assert.equal(hinted.text, src.replace("realTrack('FCoOyPa6k-U',", "realTrack('ZZZZZZZZZZZ',"), 'exactly one id changed, comments kept')
+  assert.throws(() => lib.patchStationTracksDetailed(src, 'city-lights', [{ ...tracks[0], replaces: 'nope' }]), /replaces/)
+})

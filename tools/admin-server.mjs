@@ -683,7 +683,11 @@ async function healthReport() {
     let parsed = null
     try { parsed = JSON.parse(out.stdout) } catch (e) {}
     if (!parsed) return { error: out.stderr.trim() || 'check-roster --report produced no JSON' }
-    return { ...parsed, watch: await watchStatus() }
+    // Track lengths for the station track lists (2026-10-15, dashboard UI).
+    // Read from the record directly -- the summary carries only flagged rows.
+    const records = readJson('tools/roster-health.json', { records: {} }).records || {}
+    const lengths = Object.fromEntries(Object.entries(records).filter(([, r]) => r.seconds).map(([id, r]) => [id, r.seconds]))
+    return { ...parsed, lengths, watch: await watchStatus() }
   })()
   try { return await healthInFlight } finally { healthInFlight = null }
 }
@@ -711,6 +715,11 @@ async function handleApi(req, res, url) {
 
   if (route === 'state' && req.method === 'GET') return sendJson(res, 200, await bootState())
   if (route === 'git' && req.method === 'GET') return sendJson(res, 200, await gitState())
+  // Would SHIP go through right now? The SAME checks SHIP runs before it
+  // stamps (shipBlockers), so the Deploy panel can say so before the button
+  // is pressed rather than after (2026-10-15, dashboard UI). Includes a
+  // `git fetch`, so it is coalesced like the health GET.
+  if (route === 'ship-check' && req.method === 'GET') return sendJson(res, 200, await shipCheck())
 
   // The dashboard fetches the raw source so it can run the SAME patchers
   // this server runs, client-side, and show you the exact lines a save will
@@ -866,6 +875,15 @@ async function shipBlockers() {
     }
   }
   return { state: st, blockers: out }
+}
+
+let shipCheckInFlight = null
+async function shipCheck() {
+  if (busy) return { blockers: [`${busy} is running`], busy }
+  if (!shipCheckInFlight) shipCheckInFlight = shipBlockers().finally(() => { shipCheckInFlight = null })
+  const { state, blockers } = await shipCheckInFlight
+  const behind = state.upstream ? await git(['rev-list', '--count', `HEAD..${state.upstream}`]) : null
+  return { blockers, git: state, behind: behind?.code === 0 ? +behind.out : null }
 }
 
 async function ship(req, res, message, includeNetwork) {
