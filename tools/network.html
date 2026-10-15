@@ -88,6 +88,26 @@
   .badge.ok { color: var(--green); border-color: #2e5a2e; }
   .badge.warn { color: var(--red); border-color: #5a2e2e; }
   .badge.edit { color: var(--amber); border-color: #5a4a2e; }
+  /* 2026-10-15 (dashboard UI) */
+  .band-head { margin: 22px 0 8px; color: var(--ink-dim); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  .chip.flagged { border-color: var(--red); color: var(--red); }
+  .panel.alarm > .panel-head .tagline { color: var(--red); font-style: normal; }
+  table.tracks tr.flagged td { background: rgba(255, 80, 80, .07); }
+  table.tracks tr.unconfirmed td { background: rgba(255, 190, 60, .05); }
+  .row-flag { display: inline-block; margin-right: 6px; font-size: 10px; padding: 1px 5px; border: 1px solid var(--red); color: var(--red); border-radius: 2px; vertical-align: 1px; }
+  tr.unconfirmed .row-flag { border-color: var(--amber); color: var(--amber); }
+  td.t-len { color: var(--ink-dim); font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 12px; }
+  /* Fifty bright red buttons a station said "danger" fifty times; it is lit
+     only on the row you are pointing at (or focusing) now. */
+  table.tracks .row-actions button.danger { border-color: var(--line); color: var(--ink-dim); }
+  table.tracks tr:hover .row-actions button.danger,
+  table.tracks .row-actions button.danger:focus-visible { border-color: var(--red); color: var(--red); }
+  .ship-ready { margin: 10px 0 6px; font-size: 12px; }
+  .ship-ready.ok { color: var(--green); }
+  .ship-ready.blocked { color: var(--red); }
+  .ship-ready.checking { color: var(--ink-dim); }
+  .repoint-banner { border: 1px solid var(--amber); color: var(--amber); padding: 6px 10px; margin-bottom: 10px; font-size: 12px; }
+  #unsaved-slot { display: flex; gap: 6px; align-items: center; }
   .chevron { color: var(--ink-faint); width: 1em; }
   .panel-body { display: none; border-top: 1px solid var(--line); padding: 12px 14px; }
   .panel.open .panel-body { display: block; }
@@ -293,9 +313,13 @@
   .track-tools { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
   .track-tools .count { color: var(--ink-faint); font-size: 11px; }
   table.tracks { table-layout: fixed; }
-  table.tracks td.t-title { width: 34%; }
-  table.tracks td.t-artist { width: 22%; }
-  table.tracks td.t-id { width: 13%; }
+  /* 2026-10-15 -- the actions column is sized for its widest case (repoint,
+     preview, up, down, remove) and the title takes what is left; with the
+     length column added, percentage widths squeezed "remove" to an ellipsis. */
+  table.tracks td.t-artist { width: 20%; }
+  table.tracks td.t-len { width: 52px; }
+  table.tracks td.t-id { width: 11%; }
+  table.tracks td.row-actions { width: 300px; }
   table.tracks td.idx { width: 34px; }
   table.tracks td.dot { width: 20px; }
   table.tracks td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -710,7 +734,29 @@ async function connect() {
   document.getElementById('connect-screen').style.display = 'none'
   document.getElementById('app').style.display = 'block'
   render()
+  loadHealth()
 }
+
+// 2026-10-15 (dashboard UI) -- the health record loads by itself. It used to
+// wait behind a "read the record" button in a collapsed panel, so the page
+// that edits the roster had no idea which of its tracks were dead: three
+// were, that day, and every one of them looked like every other row. Reading
+// it costs nothing (check-roster --report), so there is no reason to ask.
+// Once loaded it feeds the station badges, the jump chips and the track rows.
+let healthError = null
+async function loadHealth() {
+  healthError = null
+  try { health = await api('health') }
+  catch (e) { healthError = String(e.message ?? e) }
+  renderHealth(); renderStations(); renderJump()
+}
+// youtubeId -> the flagged-row summary for it, or nothing.
+const healthFor = (id) => health?.flagged?.find(f => f.youtubeId === id)
+const stationHealth = (id) => {
+  const mine = (health?.flagged || []).filter(f => f.stationId === id)
+  return { confirmed: mine.filter(f => f.confirmed !== false).length, unconfirmed: mine.filter(f => f.confirmed === false).length }
+}
+const mmss = (sec) => sec ? `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}` : ''
 
 function render() {
   const t = roster.totals
@@ -755,15 +801,17 @@ function renderJump() {
       onclick: () => { const p = document.getElementById(id); p.classList.add('open'); p.scrollIntoView({ block: 'start' }) },
     }, label))
   }
-  bar.appendChild(el('span', { class: 'lbl', style: 'margin-left:8px' }, 'stations'))
-  const all = [...roster.stations].sort((a, b) => a.freq - b.freq).concat(roster.secretStations)
-  for (const st of all) {
-    const dirty = isDirty(st) || identDirty(st)
-    bar.appendChild(el('button', {
-      class: 'chip' + (dirty ? ' dirty' : '') + (st.secret ? ' secret' : ''),
-      title: `${st.callsign}${st.secret ? ' (secret)' : ` — ${st.freq.toFixed(1)}`}${dirty ? ' — UNSAVED changes' : ''}`,
-      onclick: () => openStation(st.id),
-    }, st.callsign.split(' ').map(w => w[0]).join('') + (dirty ? ' •' : '')))
+  for (const g of stationGroups()) {
+    bar.appendChild(el('span', { class: 'lbl', style: 'margin-left:8px' }, g.label))
+    for (const st of g.stations) {
+      const dirty = isDirty(st) || identDirty(st)
+      const flagged = stationHealth(st.id).confirmed
+      bar.appendChild(el('button', {
+        class: 'chip' + (dirty ? ' dirty' : '') + (st.secret ? ' secret' : '') + (flagged ? ' flagged' : ''),
+        title: `${st.callsign}${st.secret ? ' (secret)' : ` — ${st.freq.toFixed(1)}`}${dirty ? ' — UNSAVED changes' : ''}${flagged ? ` — ${flagged} flagged track(s)` : ''}`,
+        onclick: () => openStation(st.id),
+      }, st.callsign.split(' ').map(w => w[0]).join('') + (dirty ? ' •' : '') + (flagged ? ' !' : '')))
+    }
   }
 }
 
@@ -789,11 +837,16 @@ function renderUnsaved() {
     saveAll.disabled = !d.length
   }
   if (!d.length) return
+  // 2026-10-15 (dashboard UI) -- save and discard sit next to the pill. The
+  // topbar is sticky, so this is the one place an edit's way out is always
+  // on screen; "save tracks" itself sits under up to 71 rows.
   slot.appendChild(el('button', {
     class: 'unsaved-pill',
     title: 'Jump to the first station with unsaved changes:\n' + d.map(s => s.callsign).join('\n'),
     onclick: () => openStation(d[0].id),
-  }, `${d.length} station${d.length === 1 ? '' : 's'} unsaved — jump ↓`))
+  }, `${d.map(s => s.callsign).join(', ')} unsaved — jump ↓`))
+  slot.appendChild(el('button', { class: 'small primary', onclick: () => document.getElementById('btn-save-all').click() }, 'save all'))
+  slot.appendChild(el('button', { class: 'small', onclick: () => document.getElementById('btn-refresh').click() }, 'discard'))
 }
 
 function renderConnStatus() {
@@ -1021,6 +1074,23 @@ function renderDeploy() {
   const row = el('div', { class: 'ship-row' }, msg, shipBtn,
     el('label', { class: 'save-msg', title: 'Adds the full oEmbed sweep before committing. Minutes.' },
       netBox, ' also verify every track (slow)'))
+  // 2026-10-15 (dashboard UI) -- whether SHIP would go through, BEFORE it is
+  // pressed. GET /api/ship-check runs the same gate SHIP runs before it
+  // stamps (on main, upstream, no merge in progress, not behind after a
+  // fetch, something to ship), so this line and the refusal cannot disagree.
+  const ready = el('div', { class: 'ship-ready checking' }, 'checking whether SHIP can go…')
+  body.appendChild(ready)
+  api('ship-check').then((c) => {
+    ready.className = 'ship-ready ' + (c.blockers.length ? 'blocked' : 'ok')
+    ready.textContent = ''
+    if (!c.blockers.length) {
+      ready.append('ready to ship', c.behind === 0 ? ' — up to date with ' + (c.git.upstream || 'the remote') : '')
+    } else {
+      ready.append('SHIP would refuse:')
+      for (const b of c.blockers) ready.append(el('div', {}, '· ' + b))
+    }
+    shipBtn.title = c.blockers.length ? 'SHIP would refuse right now:\n' + c.blockers.join('\n') : shipBtn.title
+  }).catch((e) => { ready.className = 'ship-ready blocked'; ready.textContent = 'could not check: ' + (e.message ?? e) })
   body.appendChild(row)
   body.appendChild(stepsRow)
   body.appendChild(consoleBar)
@@ -1042,6 +1112,11 @@ function renderAudition() {
 
   const sel = el('select', {})
   for (const st of allStations()) sel.appendChild(el('option', { value: st.id }, `${st.callsign} (${st.tracks.length})`))
+  // 2026-10-15 (dashboard UI) -- the last station auditioned for comes back
+  // (it always opened on DISTORTION FIELD). Browser storage only, and only a
+  // convenience: wrapped, because a private window can refuse it outright.
+  try { const last = localStorage.getItem('signal-admin.auditionStation'); if (last && stationById(last)) sel.value = last } catch (e) {}
+  sel.addEventListener('change', () => { try { localStorage.setItem('signal-admin.auditionStation', sel.value) } catch (e) {} })
   const searchInput = el('input', { type: 'text', placeholder: 'search terms — "Artist Track Title"', title: 'Ranks candidates from a YouTube video search.' })
   const idsInput = el('input', { type: 'text', placeholder: 'or paste youtube ids, space separated', title: '11-character video ids. Anything that is not one is ignored.' })
   const { box: console_, bar: consoleBar } = consoleBox('audition log')
@@ -1067,6 +1142,13 @@ function renderAudition() {
     go.disabled = false
   })
 
+  audUI = { sel, searchInput, idsInput, go }
+  if (repointTarget) {
+    body.appendChild(el('div', { class: 'repoint-banner' },
+      `Repointing ${callsignFor(repointTarget.stationId)}: "${repointTarget.title}" — ${repointTarget.artist} (${repointTarget.youtubeId}). ` +
+      'Pick a card below with "use as replacement". ',
+      el('button', { class: 'small', onclick: () => { repointTarget = null; renderAudition() } }, 'cancel repoint')))
+  }
   body.appendChild(el('div', { class: 'aud-form' }, sel, searchInput, idsInput, go))
   body.appendChild(help(
     'Pick the station first — every check is scored <i>against that station</i> ' +
@@ -1155,6 +1237,13 @@ function renderAuditionResult(out, stationId) {
         allow: 'accelerometer; encrypted-media; picture-in-picture', allowfullscreen: 'true',
       }))
       const acts = el('div', { class: 'pc-actions' })
+      if (repointTarget && repointTarget.stationId === stationId && r.id !== repointTarget.youtubeId) {
+        acts.appendChild(el('button', {
+          class: 'small primary',
+          title: `Swap ${repointTarget.youtubeId} for ${r.id} in the station editor. Nothing is written until you save the station.`,
+          onclick: () => finishRepoint(r.id),
+        }, `use as replacement for "${repointTarget.title}"`))
+      }
       const add = el('button', { class: 'small primary' }, 'queue → pending')
       add.addEventListener('click', async () => {
         const candidate = {
@@ -1190,6 +1279,51 @@ function renderAuditionResult(out, stationId) {
 // prints back at you next time, so it is the one that actually stops a
 // re-proposal; pending-tracks.json's is the queue's own record. A reason is
 // mandatory because a rejection without one teaches nothing.
+// 2026-10-15 (dashboard UI) -- REPOINT: replace a dead or region-locked
+// upload with another upload of the same song, keeping the row's place and
+// its comment block. By hand this was a dozen steps (find the row, audition,
+// compare lengths, edit the id, keep the notes, record the rejection); here
+// it is: repoint on the flagged row -> Audition opens on that station with
+// the song already searched -> "use as replacement" on the card you trust ->
+// preview and save the station as usual. The swap carries `replaces`, which
+// the tracks patcher uses to give the new id the old entry's comments.
+let repointTarget = null
+let audUI = null
+function startRepoint(stationId, youtubeId) {
+  const st = stationById(stationId)
+  const t = st && tracksFor(st).find(x => x.youtubeId === youtubeId)
+  if (!t) return
+  repointTarget = { stationId, youtubeId, title: t.title, artist: t.artist }
+  renderAudition()
+  const panel = document.getElementById('panel-audition')
+  panel.classList.add('open')
+  audUI.sel.value = stationId
+  audUI.searchInput.value = `${t.artist} ${t.title}`
+  panel.scrollIntoView({ block: 'start' })
+  audUI.go.click()
+}
+function finishRepoint(newId) {
+  const target = repointTarget
+  const st = stationById(target.stationId)
+  const arr = ensureEditable(st)
+  const i = arr.findIndex(x => x.youtubeId === target.youtubeId)
+  const g = document.getElementById('global-msg')
+  if (i === -1) { g.textContent = `repoint: ${target.youtubeId} is no longer on ${st.callsign}`; g.style.color = 'var(--red)'; return }
+  // `replaces` keeps naming the id that is in stations.js, even if this row
+  // is repointed twice before a save.
+  arr[i] = { ...arr[i], youtubeId: newId, replaces: arr[i].replaces || target.youtubeId }
+  repointTarget = null
+  renderAudition()
+  rerenderStation(st)
+  openStation(st.id)
+  g.textContent = ''
+  g.append(`${st.callsign}: "${target.title}" now points at ${newId} in the editor — preview the change, then save tracks. `,
+    el('button', { class: 'small', title: 'Record the dead id as rejected, so a later audition does not propose it again.',
+      onclick: () => doReject({ stationId: st.id, youtubeId: target.youtubeId, title: target.title, artist: target.artist }) },
+      `record ${target.youtubeId} as rejected`))
+  g.style.color = 'var(--amber)'
+}
+
 async function doReject({ stationId, youtubeId, title, artist, entry }, onDone) {
   const reason = prompt(
     `Reject "${title}" — ${artist} for ${callsignFor(stationId)}?\n\n` +
@@ -1436,26 +1570,24 @@ function renderHealth() {
   body.innerHTML = ''
 
   if (!health) {
-    summary.textContent = 'age-gating, embed blocks and narrowed licences, on tracks already on the roster'
-    body.appendChild(el('div', { class: 'save-msg' },
-      'AUDITION vets tracks on the way in; this re-asks the same questions of tracks already on the roster — the checks that catch a track going bad after it was added. Reading the record costs nothing.'))
-    const load = el('button', { class: 'primary' }, 'read the record')
-    load.addEventListener('click', async () => {
-      load.disabled = true; load.textContent = 'reading…'
-      try { health = await api('health'); renderHealth() }
-      catch (e) {
-        load.disabled = false; load.textContent = 'read the record'
-        body.appendChild(el('div', { class: 'fatal' }, String(e.message || e)))
-      }
-    })
-    body.appendChild(load)
+    summary.textContent = healthError ? 'could not read the record' : 'reading the record…'
+    if (healthError) {
+      body.appendChild(el('div', { class: 'fatal' }, healthError))
+      body.appendChild(el('button', { class: 'primary', onclick: loadHealth }, 'try again'))
+    }
     return
   }
 
   const h = health
   const pct = h.total ? Math.round((h.checked / h.total) * 100) : 0
-  summary.textContent = `${h.checked}/${h.total} checked · ${h.flaggedCount} flagged` +
-    (h.never ? ` · ${h.never} never looked at` : '') + (h.stale ? ` · ${h.stale} stale` : '')
+  // The header says what needs a person first, then coverage.
+  const conf = (h.flagged || []).filter(f => f.confirmed !== false).length
+  const unconf = h.flaggedCount - conf
+  const ran = h.watch?.lastRun ? ` · last run ${healthAgo(h.watch.lastRun)}` : ''
+  summary.textContent = (h.flaggedCount
+    ? `${conf} finding${conf === 1 ? '' : 's'}${unconf ? ` + ${unconf} unconfirmed` : ''}`
+    : 'nothing flagged') + ` · ${h.checked}/${h.total} checked${ran}`
+  document.getElementById('panel-health').classList.toggle('alarm', conf > 0)
 
   body.appendChild(healthWatchEl(h.watch))
 
@@ -1489,7 +1621,8 @@ function renderHealth() {
           class: 'small',
           title: 'Open the video on YouTube to see it for yourself.',
           onclick: () => window.open(`https://www.youtube.com/watch?v=${f.youtubeId}`, '_blank'),
-        }, 'watch ↗')))
+        }, 'watch ↗'),
+        el('button', { class: 'small primary', title: 'Find another upload of the same song and swap it in.', onclick: () => startRepoint(f.stationId, f.youtubeId) }, 'repoint')))
     }
     body.appendChild(el('div', { class: 'health-note' },
       'A flag is evidence, not a verdict — the fix is usually a different upload of the same song, which is an AUDITION job. Rejecting one through this dashboard records the reason in both files.'))
@@ -1817,19 +1950,38 @@ function renderOverlaps() {
 // =====================================================================
 // STATIONS
 // =====================================================================
+// 2026-10-15 (dashboard UI) -- grouped the way the set is: one heading per
+// band (each band is its own dial with its own 1-9 presets), then the secret
+// stations. It was one flat list of 18, sorted by frequency across both.
+function stationGroups() {
+  const bands = [...new Set(roster.stations.map(s => s.band || 'ym'))].sort()
+  const groups = bands.map(b => ({
+    label: `${b.toUpperCase()} band`,
+    stations: roster.stations.filter(s => (s.band || 'ym') === b).sort((x, y) => x.freq - y.freq),
+  }))
+  if (roster.secretStations?.length) groups.push({ label: 'secret', stations: roster.secretStations })
+  return groups
+}
 function renderStations() {
   const container = document.getElementById('stations')
   container.innerHTML = ''
-  const all = [...roster.stations].sort((a, b) => a.freq - b.freq).concat(roster.secretStations)
-  for (const st of all) container.appendChild(renderStationPanel(st))
+  for (const g of stationGroups()) {
+    container.appendChild(el('div', { class: 'band-head' }, `${g.label} · ${g.stations.length} station${g.stations.length === 1 ? '' : 's'}`))
+    for (const st of g.stations) container.appendChild(renderStationPanel(st))
+  }
 }
 
 function badgeFor(st) {
   const s = st.stats
   const b = [el('span', { class: 'badge' }, `${tracksFor(st).length} trk`), el('span', { class: 'badge' }, `${s.artistCount} art`)]
+  // 2026-10-15 (dashboard UI) -- health first, and "tagline ok" only when it
+  // is NOT: lint already guarantees it, so a green badge on all 18 stations
+  // said nothing while a dead track on the station said nothing either.
+  const sh = stationHealth(st.id)
+  if (sh.confirmed) b.unshift(el('span', { class: 'badge warn', title: 'Confirmed by two health probes. Open the station: the rows are marked.' }, `${sh.confirmed} flagged`))
+  if (sh.unconfirmed) b.unshift(el('span', { class: 'badge edit', title: 'Seen once by the health sweep; the next run re-probes it first.' }, `${sh.unconfirmed} unconfirmed`))
   const tl = String(fieldValue(st, 'tagline') || '')
-  const tlOk = tl.length <= boot.limits.TAGLINE_MAX
-  b.push(el('span', { class: `badge ${tlOk ? 'ok' : 'warn'}` }, tlOk ? 'tagline ok' : `tagline ${tl.length}/${boot.limits.TAGLINE_MAX}`))
+  if (tl.length > boot.limits.TAGLINE_MAX) b.push(el('span', { class: 'badge warn' }, `tagline ${tl.length}/${boot.limits.TAGLINE_MAX}`))
   if (!s.hasFreqNote) b.push(el('span', { class: 'badge warn' }, 'no freqNote'))
   if (!s.hasGlyph && !st.secret) b.push(el('span', { class: 'badge warn' }, 'no glyph'))
   if (isDirty(st)) b.push(el('span', { class: 'badge edit' }, 'tracks edited'))
@@ -1916,7 +2068,7 @@ function renderTracksTab(st) {
 
   const table = el('table', { class: 'tracks' })
   if (!shown.length) {
-    table.appendChild(el('tr', {}, el('td', { colspan: '6', class: 'empty' },
+    table.appendChild(el('tr', {}, el('td', { colspan: '7', class: 'empty' },
       q ? `nothing matches "${q}"` : 'no tracks on this station')))
   }
   // Index is the position in the REAL list, not the filtered view -- move and
@@ -1932,12 +2084,20 @@ function renderTrackRow(st, t, i, filtered) {
   const tr = el('tr', {})
   tr.appendChild(el('td', { class: 'idx' }, String(i + 1)))
   tr.appendChild(el('td', { class: 'dot' }, statusDotFor(t.youtubeId)))
-  tr.appendChild(el('td', { class: 't-title', title: t.title }, t.title))
+  const hf = healthFor(t.youtubeId)
+  if (hf) tr.classList.add(hf.confirmed === false ? 'unconfirmed' : 'flagged')
+  // Flags lead the title: the title cell ellipsises, and a flag after a long
+  // title is the first thing it would cut.
+  tr.appendChild(el('td', { class: 't-title', title: t.title },
+    ...(hf ? hf.flags.map(f => el('span', { class: 'row-flag', title: flagHelp(f) + (hf.confirmed === false ? ' (seen once, unconfirmed)' : '') }, f)) : []),
+    t.title))
   tr.appendChild(el('td', { class: 't-artist', title: t.artist }, t.artist))
+  tr.appendChild(el('td', { class: 't-len', title: 'length, from the health record' }, mmss(health?.lengths?.[t.youtubeId])))
   tr.appendChild(el('td', { class: 't-id', title: 'youtube id — click to open on YouTube' },
     el('a', { href: `https://www.youtube.com/watch?v=${t.youtubeId}`, target: '_blank',
       rel: 'noreferrer', style: 'color:inherit' }, t.youtubeId)))
   const actions = el('td', { class: 'row-actions' },
+    hf ? el('button', { class: 'small primary', title: 'Find another upload of the same song and swap it in, keeping this row\'s notes.', onclick: () => startRepoint(st.id, t.youtubeId) }, 'repoint') : null,
     el('button', { class: 'small', title: 'Play it inline, through the same embed path the app uses', onclick: () => togglePreview(st.id, i) }, 'preview'),
     // Reordering by index is meaningless against a filtered view -- the row
     // above you on screen is not the row above in the array.
@@ -1955,7 +2115,7 @@ function togglePreview(stationId, i) {
   const existing = row.nextElementSibling
   if (existing && existing.classList.contains('preview-row')) { existing.remove(); return }
   const track = tracksFor(stationById(stationId))[i]
-  row.after(el('tr', { class: 'preview-row' }, el('td', { colspan: '6' },
+  row.after(el('tr', { class: 'preview-row' }, el('td', { colspan: '7' },
     el('iframe', {
       src: `https://www.youtube-nocookie.com/embed/${track.youtubeId}`,
       allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
@@ -2540,6 +2700,10 @@ async function refreshAll() {
   pendingData = boot.pending
   programText = (await api('source').catch(() => null))?.text || programText
   render()
+  // A save can retire a flagged id (a repoint does exactly that), so the
+  // record is re-read with everything else rather than left describing the
+  // roster as it was.
+  loadHealth()
 }
 
 document.getElementById('btn-refresh').addEventListener('click', async () => {

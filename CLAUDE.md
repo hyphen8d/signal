@@ -203,6 +203,14 @@ What the served version does that the file could not:
   one most easily forgotten by hand, which is the whole argument for it.
 - **Audition in the browser**, wrapping `tools/audition.js --json`.
 - **A live receiver** in an iframe beside the sliders, via `?station=<id>`.
+- **Health on the rows** (2026-10-15): the record loads with the page, and a
+  flagged track is marked in its station's list, on the station's header and
+  in the jump bar. **REPOINT** on a flagged row opens Audition on that
+  station with the song searched; "use as replacement" swaps the id in the
+  editor carrying `replaces: <old id>`, which `patchStationTracks` uses to
+  hand the new id the old entry's comment block (without it the notes come
+  back as dropped). **Deploy says whether SHIP would go** before you press
+  it (`GET /api/ship-check`, the same `shipBlockers()` SHIP runs).
 
 **The 2026-10-15 audit changed what the server will do, in six ways worth
 knowing before you touch it** (the code carries the reasoning; `tests/
