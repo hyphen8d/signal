@@ -653,8 +653,18 @@ export function ensureLyricsFetched(track, wantSeconds = 0) {
     const e = lyricsCache[id]
     return (e && e.state === 'pending' && e.want) || wantSeconds
   }
+  // 2026-10-15 (audit) -- only a 404 is an answer. A 429 or a 5xx used to
+  // read as null like one, so a throttled /api/search resolved the track
+  // 'unavailable' for the session -- the permanent-verdict-from-a-flaky-
+  // request bug the 'error' state above exists to prevent, reached through
+  // a RESOLVED fetch rather than a rejected one. Now it throws into fail().
+  const answer = (r) => {
+    if (r.ok) return r.json()
+    if (r.status === 404) return null
+    throw new Error(`lrclib: HTTP ${r.status}`)
+  }
   fetch(`https://lrclib.net/api/get?${new URLSearchParams(q)}`)
-    .then((r) => (r.ok ? r.json() : null))
+    .then(answer)
     .then((data) => {
       const w = wantNow()
       if (hasSynced(data) && lyricDurationOk(data.duration, w)) {
@@ -664,7 +674,7 @@ export function ensureLyricsFetched(track, wantSeconds = 0) {
       // The exact lookup missed, or matched the wrong length. Search is
       // where the 17 points came from; see the audit note above.
       return fetch(`https://lrclib.net/api/search?${new URLSearchParams(q)}`)
-        .then((r) => (r.ok ? r.json() : null))
+        .then(answer)
         .then((rows) => { const w2 = wantNow(); resolve(id, pickLyricMatch(rows, w2), w2, w2) })
     })
     .catch(fail)

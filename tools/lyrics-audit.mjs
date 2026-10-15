@@ -74,18 +74,40 @@ const norm = (t) => t.replace(DECOR, ' ').replace(/\s*-\s*(?:live|remaster(?:ed)
 const synced = (d) => !!(d && typeof d.syncedLyrics === 'string' && d.syncedLyrics.includes('['))
 const q = (title, artist) => new URLSearchParams({ track_name: title, artist_name: artist })
 
+// 2026-10-15 (audit) -- a failed request is an ERROR, not a miss. Both
+// helpers used to fold every non-OK answer into null, so an LRCLIB 429 read
+// exactly like "no synced lyrics": the 2026-10-15 run scored 41% against
+// 82% two weeks earlier, and a direct probe the same minute got 429, 429,
+// 200. That is check-roster's throttled-is-not-clean rule, missing here.
+// Now 429 / 5xx / network failures are retried with backoff (Retry-After
+// when sent), and whatever still fails is counted apart from the rate and
+// makes the run exit nonzero. A 404 from /api/get is LRCLIB's real "no such
+// track" and stays a miss.
+const RETRIES = 4
+async function lrclib(url) {
+  for (let attempt = 0; ; attempt++) {
+    let status = 0
+    try {
+      const r = await fetch(url, { headers: UA })
+      status = r.status
+      if (r.ok) return { body: await r.json() }
+      if (status === 404) return { body: null }
+      if (status !== 429 && status < 500) return { err: `HTTP ${status}` }
+      if (attempt >= RETRIES) return { err: `HTTP ${status}` }
+      const ra = Number(r.headers.get('retry-after'))
+      await sleep(ra > 0 ? Math.min(ra, 60) * 1000 : 1000 * 2 ** attempt)
+    } catch (e) {
+      if (attempt >= RETRIES) return { err: `network: ${e.message || e}` }
+      await sleep(1000 * 2 ** attempt)
+    }
+  }
+}
 async function apiGet(title, artist) {
-  try {
-    const r = await fetch(`https://lrclib.net/api/get?${q(title, artist)}`, { headers: UA })
-    return r.ok ? await r.json() : null
-  } catch { return null }
+  return lrclib(`https://lrclib.net/api/get?${q(title, artist)}`)
 }
 async function apiSearch(title, artist, want) {
-  try {
-    const r = await fetch(`https://lrclib.net/api/search?${q(title, artist)}`, { headers: UA })
-    if (!r.ok) return null
-    return pickLyricMatch(await r.json(), want)
-  } catch { return null }
+  const r = await lrclib(`https://lrclib.net/api/search?${q(title, artist)}`)
+  return r.err ? r : { body: Array.isArray(r.body) ? pickLyricMatch(r.body, want) : null }
 }
 
 const stations = [...(s.STATIONS || []), ...(s.SECRET_STATIONS || [])]
@@ -102,17 +124,21 @@ for (const st of stations) {
 }
 console.log(`Sampling ${sample.length} track(s) across ${stations.length} station(s). Durations from roster-health.json.\n`)
 
-const tally = { exact: 0, search: 0, none: 0, instrumental: 0 }
-const recovered = [], suspect = [], ungated = [], markedButMatched = []
+const tally = { exact: 0, search: 0, none: 0, instrumental: 0, error: 0 }
+const recovered = [], suspect = [], ungated = [], markedButMatched = [], failed = []
 for (const t of sample) {
   if (t.instrumental && !CHECK_INSTRUMENTAL) { tally.instrumental++; continue }
   const want = health[t.youtubeId]?.seconds || 0
-  const hit = await apiGet(t.title, t.artist)
+  const got = await apiGet(t.title, t.artist)
+  const hit = got.body
+  let lookupErr = got.err || null
   await sleep(120)
   let via = null, match = null
   if (synced(hit) && lyricDurationOk(hit.duration, want)) { via = 'exact'; match = hit }
   else {
-    const alt = await apiSearch(t.title, t.artist, want)
+    const found = await apiSearch(t.title, t.artist, want)
+    const alt = found.body
+    lookupErr = lookupErr || found.err || null
     await sleep(150)
     if (synced(alt) && lyricDurationOk(alt.duration, want)) { via = 'search'; match = alt }
     // Matched something real, but for a recording of the wrong length --
@@ -140,11 +166,13 @@ for (const t of sample) {
   }
   if (via === 'exact') tally.exact++
   else if (via === 'search') { tally.search++; recovered.push(`${t.st.padEnd(17)} ${t.artist} - ${t.title}`) }
+  // No match AND a request that never got an answer: unknown, not a miss.
+  else if (lookupErr) { tally.error++; failed.push(`${t.st.padEnd(17)} ${t.artist} - ${t.title}  (${lookupErr})`) }
   else tally.none++
   if (match && !want) ungated.push(t.youtubeId)
 }
 
-const n = sample.length - tally.instrumental
+const n = sample.length - tally.instrumental - tally.error
 if (tally.instrumental) console.log(`  (${tally.instrumental} sampled track(s) are marked instrumental in the roster and ${CHECK_INSTRUMENTAL ? 'were checked but ' : ''}are not counted below)\n`)
 if (markedButMatched.length) {
   console.log(`Marked instrumental, but LRCLIB has a synced lyric that passed the duration gate (${markedButMatched.length}) -- listen, and fix the roster if one is sung:`)
@@ -173,4 +201,11 @@ if (suspect.length) {
 if (ungated.length) {
   console.log(`\n${ungated.length} track(s) had no known duration, so nothing could be gated against.`)
   console.log('Run `npm run health` to fill tools/roster-health.json first.')
+}
+if (failed.length) {
+  console.log(`\n!! ${failed.length} track(s) could not be looked up -- LRCLIB never answered, after ${RETRIES} retries.`)
+  console.log('!! They are left OUT of the rate above, which is therefore partial. Not misses:')
+  for (const r of failed) console.log('  ' + r)
+  console.log('!! Waiting is the fix (a 429 clears on its own); re-run later before trusting the number.')
+  process.exitCode = 2
 }

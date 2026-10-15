@@ -276,6 +276,11 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
       // way a dropped connection does -- the retryable-'error' path, which
       // no other return value can reach (2026-09-02 audit, B4).
       if (lrc === 'fail') return Promise.reject(new Error('lrclib down (harness)'))
+      // 'throttle' answers HTTP 429, which lrclib.net really does: three
+      // direct requests on 2026-10-15 got 429, 429, 200. Unlike 'fail' this
+      // RESOLVES -- a fetch() of a 429 is a response, not a rejection --
+      // which is what let it slip past a lookup that only caught rejections.
+      if (lrc === 'throttle') return Promise.resolve({ ok: false, status: 429, json: () => Promise.resolve({ message: 'Too Many Requests' }) })
       // 'search' makes the exact lookup miss so the fallback is the only
       // way through -- the path that carried 17 of the audit's points and
       // that the old single-shape fake could not reach at all.

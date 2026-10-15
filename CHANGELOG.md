@@ -2181,6 +2181,21 @@ the canvas, where it can be neither clicked nor copied.
   the contact line along with the credits, so the layout most shared links
   open on never gave an address.
 
+### Audit: three dead tracks, and a throttled lyrics lookup (2026-10-15)
+
+- **Three tracks re-pointed to working uploads of the same recordings.**
+  CITY LIGHTS' *Ride On Time* and *Bomber* (Tatsuro Yamashita) both sat on
+  one fan channel and went 404 together; HACKBACK's *Mistadobalina* lost its
+  US licence and stopped playing. Each replacement was probed clean and
+  matched to the old one's length, and the dead ids are recorded as
+  rejections so they are not re-added.
+- **A throttled lyrics lookup no longer costs a track its lyrics.** When
+  LRCLIB answered "too many requests", `[L]` treated it as "no lyrics" for
+  the rest of the session. It is now retried like a dropped connection.
+- **`npm run lyrics` no longer mistakes throttling for misses.** It retries,
+  and reports any lookup that never got an answer instead of counting it.
+  The real match rate is 84% (81/97); the throttled first run read 41%.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer
