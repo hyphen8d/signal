@@ -35,7 +35,7 @@
 //   node tools/check-roster.mjs --report        # read the record, no network
 //   node tools/check-roster.mjs --json          # for tools/admin-server.mjs
 
-import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, renameSync, unlinkSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { oembed, playability, decayFlags, mapLimit, isThrottleSignature } from './lib/probe.mjs'
@@ -358,7 +358,43 @@ async function pruneOrphans(store) {
   return { dropped: gone.length, skipped: false }
 }
 
+// 2026-10-15 (admin audit, C-L1) -- one batch at a time. The store is
+// loaded once and the in-memory copy saved after every probe, so two runs at
+// once (the dashboard's RUN BATCH overlapping the daily timer) were last-
+// writer-wins: one batch's records vanished, and both re-probed the same
+// flagged rows first. A second run now WAITS for the first and then loads
+// what it wrote -- waiting rather than failing, because a failure here is an
+// "error" outcome to roster-watch, and two of those notify. A lock whose
+// owner is gone (a crash, a process.exit) is stale and taken over. Lives
+// beside the store, dot-prefixed and gitignored, so SHIP never commits one.
+// --report takes no lock: it only reads.
+const LOCK = path.join(path.dirname(STORE), `.${path.basename(STORE)}.lock`)
+const LOCK_WAIT_MS = 20 * 60_000
+const alive = (pid) => { try { process.kill(pid, 0); return true } catch (e) { return e.code === 'EPERM' } }
+async function acquireLock() {
+  const deadline = Date.now() + LOCK_WAIT_MS
+  let said = false
+  for (;;) {
+    try { writeFileSync(LOCK, String(process.pid), { flag: 'wx' }); return }
+    catch (e) { if (e.code !== 'EEXIST') throw e }
+    const owner = Number(readFileSync(LOCK, 'utf8')) || 0
+    if (!owner || !alive(owner)) { try { unlinkSync(LOCK) } catch (e) {} ; continue }
+    if (Date.now() > deadline) throw new Error(`another health batch (pid ${owner}) has held ${path.basename(LOCK)} for over ${LOCK_WAIT_MS / 60_000} minutes`)
+    if (!said) { say(`Waiting for another health batch (pid ${owner}) to finish...`); said = true }
+    await new Promise((r) => setTimeout(r, 2000))
+  }
+}
+const releaseLock = () => {
+  try { if (Number(readFileSync(LOCK, 'utf8')) === process.pid) unlinkSync(LOCK) } catch (e) {}
+}
+
 async function main() {
+  if (reportOnly) return runMain()
+  await acquireLock()
+  try { return await runMain() } finally { releaseLock() }
+}
+
+async function runMain() {
   const tracks = await rosterTracks()
   const store = loadStore()
   // 2026-09-12 (audit, L4) -- `--report` is READ-ONLY, prune included. The

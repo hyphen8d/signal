@@ -204,6 +204,33 @@ What the served version does that the file could not:
 - **Audition in the browser**, wrapping `tools/audition.js --json`.
 - **A live receiver** in an iframe beside the sliders, via `?station=<id>`.
 
+**The 2026-10-15 audit changed what the server will do, in six ways worth
+knowing before you touch it** (the code carries the reasoning; `tests/
+admin-writes.test.mjs` runs each against a throwaway copy of the repo with a
+local bare remote, mutation-checked):
+
+- **One writer at a time.** SHIP, every save, the queue, rejections, health
+  batches and `/api/run` tasks share one in-process lock; a second gets a 409
+  naming the holder. Before it, a save landing mid-SHIP was swept in by
+  `add -A` untested.
+- **A save carries the hash of the file it was built from** (`baseHash`,
+  attached centrally by the page's `api()`), and a stale one is a 409 with
+  `stale: true`. Approve and queue re-read the queue first (`GET
+  /api/pending`). Before it, a page loaded an hour ago reverted hand edits
+  and erased candidates Claude had appended.
+- **SHIP refuses before stamping** when not on main, without an upstream,
+  mid-merge/rebase, with unmerged paths, behind the remote after a fetch, or
+  with nothing to ship; a failure before the commit restores `build.json`.
+  Closing the tab cancels it up to the commit and never after.
+- **The JSON stores are written in their own indent** (station-profiles.json
+  is 1-space) and **never replaced when they do not parse**.
+- **Every key the patchers write must be an identifier** (`assertIdentifier`
+  in roster.mjs): the server `eval`s patched text to verify it, so a crafted
+  field name ran code in the server before the check refused it.
+- **The page has no `html` attribute on `el()`** -- git branch names and
+  commit subjects went through it as innerHTML. `help()` is the one
+  deliberate innerHTML left, for authored literals only.
+
 `tools/lib/roster.mjs` is the stations.js parse/patch layer, imported by BOTH
 the server and the page — which is why it has no `node:` imports at all. Add
 one and the dashboard stops loading. Two patchers:
@@ -989,6 +1016,11 @@ flowchart LR
   `held` on the dashboard) instead of vanishing for a full pass.
   `recordProbe()` writes every record and `tests/health-wiring.test.mjs`
   drives the real `main()` of both tools through `tests/fake-youtube.mjs`.
+  **One batch at a time** (2026-10-15): a run takes a lock beside the store
+  (`.roster-health.json.lock`, gitignored) and a second one WAITS for it,
+  then loads what the first wrote -- the dashboard's RUN BATCH overlapping
+  the daily timer used to be last-writer-wins on the whole record.
+  `--report` takes no lock.
 - **`tools/roster-watch.mjs` is what remembers to run it** (2026-08-30). The
   NIN three-country track was found only because someone happened to run the
   deep probe by hand the evening before; `check-roster.mjs` already knew how
