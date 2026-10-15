@@ -7,7 +7,7 @@
 import { BOLD, BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
 const { playPanelSound, stopStaticNoise } = await import(`../audio/sfx.js?v=${V}`)
-const { VERSION_TAG } = await import(`../constants.js?v=${V}`)
+const { LISTENER_MAIL, VERSION_TAG } = await import(`../constants.js?v=${V}`)
 const { centerX, clearGrid, sampleTracks, truncate, wordWrap } = await import(`../layout.js?v=${V}`)
 const { STATIONS } = await import(`../stations.js?v=${V}`)
 
@@ -272,6 +272,15 @@ export default {
       // asks for the microphone") -- so this was a phone being told about
       // a control that tier does not have and cannot get. The rows it frees
       // are what let the seven gesture rows above breathe.
+      // 2026-10-14 -- the contact line, which the narrow page had dropped
+      // with the credits: a phone was the one way to use SIGNAL that never
+      // said where to write. Rows 16-18 sit between the gesture rows (7-13)
+      // and the footer; both strings are measured against 42 cols. A phone
+      // cannot press [Q] and TAP closes this page, so it is the address and
+      // nothing else.
+      const ask = 'Ideas, requests, something broken?'
+      term.text(centerX(term.cols, ask), 16, ask, MUTED)
+      term.text(centerX(term.cols, LISTENER_MAIL), 18, LISTENER_MAIL, BRIGHT)
       const foot = 'SWIPE STATIONS   TAP CLOSE'
       term.text(centerX(term.cols, foot), term.rows - 1, foot, FAINT)
       return
@@ -281,7 +290,12 @@ export default {
     put(16, 'Optional and never automatic. Decline and the meters stay synthetic.', MUTED)
     put(18, 'Made by Hyphen8d -- inspired by my own music taste, built for anyone', MUTED)
     put(19, 'who wants a weird little radio to leave on.  Live audio sync by End Dream.', MUTED)
-    put(20, 'Got an idea, a station request, or found something broken? -- matt@gial.co', BRIGHT)
+    // 2026-10-14 -- names [Q] QSL, which opens a mail to this address and
+    // copies it. The address alone, drawn into a canvas, could be neither
+    // clicked nor copied. drawGuideKeyLine rather than put() so [Q] lifts
+    // like every other bracketed control on the page.
+    const ask = `Ideas, station requests, bugs?  [Q] WRITE IN -- ${LISTENER_MAIL}`
+    this.drawGuideKeyLine(s, 20, ask, BRIGHT)
     // 20th pass -- addresses viewers without YouTube Premium hearing ads.
     // Decided against anything that tries to detect/suppress the ad itself
     // (that's ad-blocking circumvention against YouTube's ToS, not something

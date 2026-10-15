@@ -1,5 +1,10 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Just say hi
+    url: https://github.com/hyphen8d/signal/discussions
+    about: >
+      Not a bug, not a request -- which station you leave on, or where you
+      run it. Discussions, not an issue.
   - name: Controls reference
     url: https://github.com/hyphen8d/signal#controls
     about: Every key the set answers to, in the README.

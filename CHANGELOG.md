@@ -2165,6 +2165,22 @@ feature, watch its test go red, restore.
   - The fake player, which now matches its own capture.
   - A 1-in-8 flake, where a character read couldn't see FLAME's pixel cells.
 
+### Write to the station: [Q] QSL (2026-10-14)
+
+Kind messages were arriving, and the only address on the set was drawn into
+the canvas, where it can be neither clicked nor copied.
+
+- **`[Q]` opens a mail to the station**, named for the QSL card stations
+  sent listeners who wrote in. The draft comes pre-filled with what is on
+  air (station, frequency, track) and the build, so a thank-you says what it
+  is about and a bug report is reproducible. Because a `mailto:` does nothing
+  visible without a mail client, it also copies the address and holds it on
+  the status row for three seconds. Taught on the guide's About page, since
+  the footer is full.
+- **The phone guide says where to write.** The narrow About page had dropped
+  the contact line along with the credits, so the layout most shared links
+  open on never gave an address.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

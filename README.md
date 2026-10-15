@@ -94,6 +94,11 @@ you to know anything about the code:
   killed a play/pause button.
 - **[Ask something else](https://github.com/hyphen8d/signal/issues/new?template=question.yml)**
   — or just email <matt@gial.co> if an issue feels like too much ceremony.
+  Press `[Q]` on the set and the email opens with the station and track
+  already in it.
+- **[Just say hi](https://github.com/hyphen8d/signal/discussions)** — if
+  SIGNAL has become part of your day, tell me which station, or show where
+  you leave it running. None of this needs to be a bug.
 
 Nothing is too small. "This one track is quieter than the rest of the
 station" is exactly the kind of thing that's invisible from the inside.
@@ -225,6 +230,7 @@ every visualizer effect, and assert on what's on the grid.
 | `B` | Band -- switches the dial between **YM** (100.0-900.0) and **ZM** (1000.0-1800.0). Each band is its own dial with its own stations, its own `1`-`9` presets and its own guide pages; the tuner box and the scale row above it are named for whichever one is up. The set remembers which band you left it on |
 | `N` | Next track on the current station |
 | `K` | Tag -- copies a shareable line for whatever is playing: the station, the track, and a link that opens SIGNAL tuned to exactly that. Named for the TAG button HD Radio sets carried, which marked a song you liked so you could find it later. Works from the visualizer too. What lands on the clipboard is a readable line and then the link -- `TRADEWINDS on SIGNAL -- Ringo Oiwake by Arthur Lyman` -- because a bare link previews as the same generic card whatever station it points at, and so cannot say what you are listening to. **Needs a secure connection**, the same limit `[W]` has: browsers refuse the clipboard over plain `http`, so this works on the deployed site and on `localhost`, but not over a bare IP address |
+| `Q` | QSL -- write to the station, named for the cards stations sent listeners who wrote in. Opens an email to <matt@gial.co> with what is on air and the build already filled in, and copies the address too, since an email link does nothing on a machine with no mail app. The address stays on the status row long enough to read |
 | `Up` / `Down` | Volume |
 | `M` | Mute |
 | `T` | Sleep timer -- steps down 60 / 30 / 15 minutes and off again, the way a clock radio's SLEEP button always has. A `SLP mm:ss` countdown sits in the title bar; the last 30 seconds fade out (the VOL bar follows the fade down) and then the set switches itself off through the normal power-down. Works from the visualizer too, and the countdown stays readable in there. Never persisted -- no clock radio keeps its sleep setting across a power cut either |

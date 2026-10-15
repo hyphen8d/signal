@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { STATION_LINER_FILES, ensureLyricsFetched, isInstrumental, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId, stopLiveVoice } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
+const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, LISTENER_MAIL, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -2736,6 +2736,59 @@ export default {
     return 'COPIED'
   },
 
+  /** [Q] QSL (2026-10-14) -- the mail [Q] opens. Split out from writeIn()
+   *  for the same reason shareUrl() is split from tagTrack(): the URL is the
+   *  interesting part and Node has no mail client.
+   *
+   *  The body is pre-filled with what is on air and the build. The station
+   *  and track turn "I love this" into "I love this, on THAT", which is what
+   *  makes a listener report worth having; the build is what turns a bug
+   *  report from a description into something reproducible. Both are plain
+   *  lines the sender can delete -- nothing here is sent without them seeing
+   *  it, since a mailto only ever opens a draft. */
+  listenerMailUrl() {
+    const lines = []
+    const st = this.mode === 'locked' ? this.lockedStation : null
+    const tr = st ? this.currentTrack : null
+    if (st) {
+      lines.push(`Tuned to ${st.callsign} (${Number(st.freq).toFixed(1)})` +
+        (tr ? ` -- ${tr.title} by ${tr.artist}` : ''))
+    }
+    lines.push(`Build ${globalThis.SIGNAL_BUILD || 'unknown'}`, '', '')
+    const subject = encodeURIComponent('SIGNAL listener report')
+    const body = encodeURIComponent(lines.join('\n'))
+    return `mailto:${LISTENER_MAIL}?subject=${subject}&body=${body}`
+  },
+
+  /** [Q] QSL (2026-10-14) -- write to the station.
+   *
+   *  Named for the QSL card: stations asked listeners to write in, and sent a
+   *  card back confirming the reception. That is what gets it past "would a
+   *  real radio have this?" -- the impulse is a radio one, the envelope is
+   *  just email now. Built because kind messages were arriving and the only
+   *  address on the set was drawn INTO the canvas: it could not be clicked or
+   *  copied, so writing in meant retyping it, which is enough friction to
+   *  stop a two-line thank-you.
+   *
+   *  Does two things, because neither is certain. It opens a mail draft --
+   *  but a mailto does nothing visible on a machine with no mail client, and
+   *  may be refused inside itch.io's sandboxed iframe. So it also copies the
+   *  bare address and holds it on the status row long enough to read: the
+   *  one outcome that cannot fail silently is the address in front of you.
+   *
+   *  Main screen only. The visualizer's legend has no room for it, and the
+   *  guide's About page (where the address already lived) is where it is
+   *  taught -- the footer's line1 is 72 of 80 columns and line2 75. */
+  writeIn(s) {
+    const url = this.listenerMailUrl()
+    try { if (globalThis.location) globalThis.location.href = url } catch (e) {}
+    try {
+      const cb = globalThis.navigator?.clipboard
+      if (cb && typeof cb.writeText === 'function') Promise.resolve(cb.writeText(LISTENER_MAIL)).catch(() => {})
+    } catch (e) {}
+    this.flashStatus(s, `WRITE IN: ${LISTENER_MAIL.toUpperCase()}`, 3000)
+  },
+
   /** [B] BAND (2026-08-31). Steps to the next band and lands at its bottom
    *  edge, seeking.
    *
@@ -3503,6 +3556,8 @@ export default {
       // case, and it sidesteps the Caps-Lock subtlety Shift+C carries a note
       // about (e.key is 'T' for both Shift+t and Caps-Lock+t).
       case 'k': case 'K': e.preventDefault(); this.flashStatus(s, this.tagTrack(s)); break
+      // [Q] QSL (2026-10-14) -- write to the station. See writeIn().
+      case 'q': case 'Q': e.preventDefault(); this.writeIn(s); break
       case 'p': case 'P': e.preventDefault(); this.powerDown(s); break
       // [B] BAND (2026-08-31) -- was BACK, which walked a stack of recently
       // locked stations. That key is spent on the band switch instead, and
