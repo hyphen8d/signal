@@ -57,7 +57,14 @@ export const MAPPED_KEYS = new Set([
   // playKeyClick(), and a key that acts without clicking is exactly the
   // drift the dead-feedback sweep exists to catch.
   'k', 'K',
+  // 2026-10-14 -- [Q] QSL, write to the station. See writeIn() in program.js.
+  'q', 'Q',
 ])
+
+// [Q] QSL (2026-10-14) -- where listener mail goes. One copy, read by both
+// the key (program.js writeIn) and the guide's About page, so the address
+// on screen and the address the mail opens to cannot drift apart.
+export const LISTENER_MAIL = 'matt@gial.co'
 
 // Sleep timer (2026-08-27) -- the minute steps [T] cycles through, then off.
 // Descending, the way a clock radio's SLEEP button has always worked: the

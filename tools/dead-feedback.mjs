@@ -135,6 +135,9 @@ const KEYS = [
   // an off-band preset and the retired zero); the presets are one code path
   // and nine rows of it would be noise.
   'w', 'k',
+  // 2026-10-14 -- [Q] QSL (write to the station), added with the key itself
+  // rather than discovered missing later, for the reason the note above gives.
+  'q',
   '1', '5', '0',
   // 2026-09-12 (audit, L1/L16) -- plus the first digit PAST each band's
   // station count, derived from the roster rather than typed. isMappedKey

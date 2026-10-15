@@ -2829,3 +2829,71 @@ test('a dropped clip fetch is retried on the next ask rather than remembered as 
     } finally { globalThis.fetch = real }
   } finally { h.shutdown() }
 })
+
+test('[Q] QSL opens a pre-filled mail, copies the address and shows it (2026-10-14)', async () => {
+  // Through key(), not writeIn(): the [K] wiring gap (T1 above) is the
+  // reason a new key's test presses the key.
+  const h = await boot({ player: true })
+  const hadLocation = 'location' in globalThis
+  const savedLocation = globalThis.location
+  try {
+    h.powerOn()
+    h.key(await otherPreset(h)); h.advance(2500)
+    const st = h.program.lockedStation, tr = h.program.currentTrack
+    assert.ok(st && tr, 'test setup: something is on air')
+    globalThis.location = { ...(savedLocation || {}), href: '' }
+    let written = null
+    globalThis.navigator = { clipboard: { writeText: (t) => { written = t; return Promise.resolve() } } }
+    try {
+      h.key('q')
+      h.advance(1000)   // the status row types the flash out a letter at a time
+      const href = globalThis.location.href
+      assert.match(href, /^mailto:matt@gial\.co\?/, 'a mail to the listener address opened')
+      const body = decodeURIComponent(href.split('body=')[1])
+      assert.ok(body.includes(st.callsign) && body.includes(tr.title),
+        'the draft names what is on air, so a report says what it is about')
+      assert.match(body, /^Build /m, 'and the build, so a bug report is reproducible')
+      assert.equal(written, 'matt@gial.co', 'the bare address is on the clipboard for a set with no mail client')
+      assert.ok(h.find('WRITE IN: MATT@GIAL.CO') >= 0, 'and on screen')
+      h.advance(1500)
+      assert.ok(h.find('WRITE IN: MATT@GIAL.CO') >= 0, 'held long enough to read, not a 900ms blink')
+    } finally { delete globalThis.navigator }
+  } finally {
+    if (hadLocation) globalThis.location = savedLocation; else delete globalThis.location
+    h.shutdown()
+  }
+})
+
+test('[Q] still answers off-station, with no clipboard and no location (2026-10-14)', async () => {
+  // The dead-feedback rule: the guide advertises [Q], so it must say
+  // something everywhere it can be pressed. Off-station the draft just
+  // drops the on-air line; the address is the part that always lands.
+  const h = await boot({})
+  try {
+    h.powerOn(); h.advance(1200)
+    h.key('ArrowRight'); h.advance(400)
+    assert.notEqual(h.program.mode, 'locked', 'test setup: nothing is on air')
+    assert.doesNotMatch(decodeURIComponent(h.program.listenerMailUrl()), /Tuned to/)
+    delete globalThis.navigator
+    h.key('q'); h.advance(1000)
+    assert.ok(h.find('WRITE IN: MATT@GIAL.CO') >= 0)
+  } finally { h.shutdown() }
+})
+
+test('the guide says where to write, on both layouts (2026-10-14)', async () => {
+  // The phone page had dropped the contact line along with the credits, so
+  // the layout most links are opened on never said where to write.
+  const d = await boot({})
+  try {
+    d.powerOn(); d.key('g'); d.advance(300)
+    assert.ok(d.find('[Q] WRITE IN -- matt@gial.co') >= 0, 'desktop About page names [Q] and the address')
+  } finally { d.shutdown() }
+  const m = await boot({ mobile: true })
+  try {
+    m.powerOn()
+    twoFinger(m, 700)
+    assert.equal(m.program.guideOpen, true, 'test setup: guide is up')
+    assert.ok(m.find('matt@gial.co') >= 0, 'phone About page carries the address')
+    assert.equal(m.find('[Q]'), -1, 'and no key a phone cannot press')
+  } finally { m.shutdown() }
+})
