@@ -168,11 +168,13 @@ things easy to miss from a screenshot alone:
   you're listening or not. That test still governs what does and doesn't
   get added.
 - **Every station's visualizer is its own procedural effect, not a shared
-  template with a palette swap.** A neon wireframe grid whose nodes ignite
-  and decay for COLD WAVE, a field of drifting isotope sources for ATOMIC,
-  a synthwave sun-and-grid drive (with roadside palm trees and a distant
-  skyline) for CIRCUIT CRUSH, a boombox with sound rings, a VU bank and an
-  LED ladder for HACKBACK, a moonlit lagoon with tiki torches for
+  template with a palette swap.** A neon heart sign on a brick wall at
+  night for COLD WAVE, the 1950s atom emblem among atomic-age starbursts
+  for ATOMIC, a night skyline over the bay with its broadcast tower and a
+  rain-broken reflection for CITY LIGHTS, an empty mall atrium after
+  closing for NEON STASIS, a synthwave sun-and-grid drive (with roadside
+  palm trees and a distant skyline) for CIRCUIT CRUSH, a big front-on
+  boombox with tape reels and an EQ for HACKBACK, a moonlit lagoon with tiki torches for
   TRADEWINDS, a ruined keep in the mist for THE CRYPT, a planet with a
   station going round it for SLOW ORBIT, northern lights over a frozen lake
   for DRIFT MODE, a jazz trio under one spotlight in an emptying club for
@@ -182,9 +184,10 @@ things easy to miss from a screenshot alone:
 - **The meters and visualizers react to the actual music.** With the audio
   tap live (see "The live audio tap" below), the VU/EQ/FLD readouts and
   every visualizer follow the real signal: the flame flares on bass hits,
-  COLD WAVE's grid nodes ignite on the beat, RISE UP's crowd surges across
-  the room on the kick, OUTRUN's road drives at the track's intensity, and HACKBACK's boombox fires a ring on every real
-  onset. Each effect keeps its own identity — the music modulates the
+  COLD WAVE's neon tubing strikes on the kick, RISE UP's crowd surges
+  across the room, CITY LIGHTS' windows switch on in a wave from the
+  tower, OUTRUN's road drives at the track's intensity, and HACKBACK's
+  speaker cones pump on every kick. Each effect keeps its own identity — the music modulates the
   process, it never replaces it — and without the tap everything falls
   back to the synthetic motion it always had.
 

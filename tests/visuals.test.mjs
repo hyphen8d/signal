@@ -125,7 +125,7 @@ test('the 2026-09-13 effects draw correctly at a width other than the one they b
   const { Term } = await import('../src/term.js')
   const { parseBDF } = await import('../src/bdf.js')
   const font = parseBDF(readFileSync(new URL('../fonts/ter-u16n.bdf', import.meta.url), 'utf8'))
-  const NEW = ['lagoon', 'uprising', 'keep', 'orbit', 'aurora', 'backroom', 'dancefloor']
+  const NEW = ['lagoon', 'uprising', 'keep', 'orbit', 'aurora', 'backroom', 'dancefloor', 'frost', 'boombap', 'isotope', 'ripple', 'drift']
   const VIZ_BOT = 22
   const h = await boot({ station: 'tradewinds' })
   const rnd = Math.random
