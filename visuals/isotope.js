@@ -1,152 +1,428 @@
-// SIGNAL -- visualizer effect "ISOTOPE MAP". Split out of program.js in the
-// 2026-08-25 audit; `this` became `p` (the program object).
+// SIGNAL -- visualizer effect "ATOMIC AGE" (ATOMIC). Key `isotope`, kept
+// from the effect this replaces so stations.js and every saved session that
+// names it still land here. Rebuilt 2026-10-16.
 //
-// Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
-// never mix this module with a stale copy of another -- see main.js.
+// The 1950s atom emblem: a nucleus of packed protons and neutrons at the
+// centre, three elliptical orbits crossing at sixty degrees around it, an
+// electron riding each one, and the mid-century starburst ornaments of the
+// era scattered through the dark around it -- the atom on a diner sign, a
+// Formica tabletop, a record sleeve, a Googie motel. Retro-optimist, the
+// "Our Friend the Atom" picture, not a warning sign: nothing here is
+// trefoil-shaped and nothing glows a sickly green on purpose.
+//
+// Why it fits: ATOMIC is "atomic swing, radioactive nostalgia" -- '50s rock
+// and roll, doo-wop and atomic-age pop, the music of exactly the years that
+// put this emblem on everything. The picture is the period's own logo for
+// itself, so it reads as ATOMIC in the second it takes to recognise an atom.
+//
+// What it replaced. The old ISOTOPE MAP (52nd pass, promoted to ATOMIC in
+// the 65th) was five abstract heat blobs drifting on lissajous paths over a
+// per-cell flicker field, with half-life rings on hard onsets. It moved
+// plenty -- 48% of the canvas changed with the music when measured
+// 2026-10-16, beat legibility 4.9x -- but what it was a picture OF never
+// read: "a field of sources" is a concept, and on screen it was blobs. The
+// 2026-10-16 review put it in the weak tier with that exact complaint, and
+// set the rule this rebuild follows: a picture with a clear subject, and one
+// element that moves with the music.
+//
+// How it is drawn. The orbits and the kick's shockwave are smooth curves,
+// which a character grid cannot draw -- at 2:1 cells an ellipse of '-' '/'
+// '|' reads as a polygon. So they go through src/vector.js's DotCanvas, the
+// Braille 2x4 dot framebuffer VECTOR SCAN draws with: a thin dotted line,
+// which is also how the emblem was printed. The electrons are dots too, as
+// small filled discs. Everything else -- the nucleus (shade blocks), the
+// starbursts, the sparse sky -- is characters, so the centre stays heavy
+// against the fine linework. The dot layers are
+// merged per cell rather than blitted one over another (see composeDots):
+// blit() replaces a cell outright, so a cell where an orbit and the ring
+// cross would show only whichever layer went last.
+//
+// Audio, on amplitude and on the beat (never a `t *` frequency term -- a
+// rate that jumps with the music makes things jump, not speed up):
+//   - the KICK (a rising edge on A.pulse, the DANCEFLOOR rule) flares the
+//     nucleus BRIGHT, throws a shockwave ring a short way out across the
+//     orbits, and jolts the electrons forward -- an impulse that decays, so
+//     a swing beat reads as a bounce in their travel rather than a strobe;
+//   - LEVEL sets how fast the electrons ride their orbits, integrated into
+//     a phase so a change in level changes the speed and never the position;
+//   - ONSETS and TREBLE pop the starbursts: an onset picks one and throws its
+//     arms out long and bright for a moment; treble lifts the idle twinkle.
+// No tap: syntheticAudio's ~0.9s pulse keeps the kick coming and its random
+// onsets keep the stars going. Muted: SILENT_AUDIO -- the electrons slow to
+// their floor speed, the nucleus sits at rest and the stars only breathe.
 
+import { BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
+import { DotCanvas } from '../src/vector.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
-const { auMul } = await import(`../audio/tap.js?v=${V}`)
+const { SILENT_AUDIO, auMul, syntheticAudio } = await import(`../audio/tap.js?v=${V}`)
 const { VIZ_BOT } = await import(`../layout.js?v=${V}`)
-const { hash2, visualizerLevelAttr } = await import(`./shared.js?v=${V}`)
+const { hash2 } = await import(`./shared.js?v=${V}`)
 
-// ISOTOPE MAP (52nd pass, ATOMIC), extended same pass to fill the screen
-// better with 4 more scattered around -- 5 hot
-// sources total, each on its own lissajous path (own frequency pair +
-// phase offset so none of them move in lockstep or trace the same loop
-// twice). fx/fy are the drift frequencies, ph offsets where each one
-// starts along its own loop, and amp scales that source's roam radius
-// relative to the shared ampX/ampY in drawIsotopeEffect -- kept close to
-// 1 so every source stays a similar size, with enough spread that they
-// don't all reach full amplitude at once.
-export const ISOTOPE_SOURCES = [
-  { fx: 0.13, fy: 0.09, ph: 0.0, amp: 1.0 },
-  { fx: 0.10, fy: 0.15, ph: 1.7, amp: 0.85 },
-  { fx: 0.17, fy: 0.07, ph: 3.4, amp: 0.9 },
-  { fx: 0.08, fy: 0.12, ph: 5.0, amp: 0.95 },
-  { fx: 0.15, fy: 0.11, ph: 2.5, amp: 0.8 },
+// --- the beat ---------------------------------------------------------------
+// The DANCEFLOOR rule, same numbers for the same reasons: a kick is a rise in
+// `pulse` of at least BEAT_RISE since the last frame (0.2 survives a frame
+// the fallback ticker hands over 250ms late), and no two kicks closer than
+// KICK_GAP_S apart, so a hi-hat onset on a real tap cannot double it.
+export const BEAT_RISE = 0.2
+export const KICK_GAP_S = 0.22
+// The hit, in seconds. The nucleus stays flared for FLARE_S and the
+// shockwave ring shows for SHOCK_S -- the same, so they go out together --
+// reaching its full radius within SHOCK_SNAP_S of the kick. Short and
+// front-loaded on purpose (2026-10-16, tuned with the reactivity probe from
+// that day's visualizer review): a swing beat comes round every half second
+// or so, each flare should be over well before the next, and the change has
+// to land ON the kick to read as one. The first cut eased the ring out over
+// 0.5s, smearing its motion across the gap between beats -- it scored 0.74x
+// (more change between kicks than on them) where this scores ~5x.
+export const FLARE_S = 0.2
+export const SHOCK_S = FLARE_S
+export const SHOCK_SNAP_S = 0.03
+
+// --- the atom ---------------------------------------------------------------
+// Sizes in device pixels (dots are 4.5 x 4 px in the 8x16 face -- the
+// DotCanvas measures it), so the orbits are true ellipses on screen rather
+// than in cells. ORBIT_A x ORBIT_B is the classic emblem's long, narrow
+// orbit; three of them at 0, 60 and 120 degrees. 170px tilted 60 degrees
+// reaches ~150px above and below the nucleus -- inside the 21-row canvas
+// with a row to spare at each end.
+export const ORBIT_A = 170
+export const ORBIT_B = 54
+export const ORBIT_TILTS = [0, Math.PI / 3, -Math.PI / 3]
+// The atom is drawn a little wider than round: the canvas is a landscape
+// and the emblem was always set wide on a sign. Capped so the long orbit
+// keeps clear of the screen edge on a narrow grid (see atomGeometry).
+const STRETCH = 1.25
+// The shockwave runs from just outside the nucleus to SHOCK_REACH px -- out
+// past the nucleus and across the inner orbits, "a short way", not to the
+// edge of the screen.
+// Born already halfway out (2026-10-16): a ring starting at the nucleus spent
+// its first frames hidden under the cluster, so the hit landed a beat-sliver
+// late. From 60px it is visible on the kick's own frame.
+const SHOCK_FROM = 60
+const SHOCK_REACH = 120
+
+// Electron speed in radians a second along its orbit: a floor so the atom is
+// never stopped, plus a span that LEVEL fills. Each orbit runs at its own
+// multiple and phase so the three never line up.
+// 2026-10-16 -- the split between the two is tuned: with a wide level span
+// the electrons' steady travel was most of the motion on screen, between
+// beats as much as on them, and the kick stopped reading (probe: 3.9x).
+// A modest span and a strong, fast-decaying jolt make the same atom bounce
+// on the kick -- the swing -- while still running faster when it is loud.
+const SPEED_FLOOR = 0.45
+const SPEED_SPAN = 0.7
+const ORBIT_RATE = [1.0, 0.83, 1.17]
+const ORBIT_PHASE = [0.3, 2.4, 4.4]
+// The kick's jolt: extra radians/second added on the beat, decaying away.
+const JOLT = 4.5
+const JOLT_DECAY = 10
+// The tail an electron draws behind it along its orbit, in radians.
+const TRAIL_RAD = 0.75
+
+// The nucleus: protons ('▓', role p) and neutrons ('▒', role n) packed in a
+// checkerboard, its corners rounded off with quarter and half blocks (role
+// e), 7 x 3 cells -- about 63 x 48 px, round on the tube. Offsets from the
+// centre cell, which sits on NUCLEUS_Y in column floor(cols / 2).
+// 2026-10-16 -- shade blocks, not the '●' '○' of the first cut: Terminus
+// draws those at about a third of the cell, and in a real Chrome render the
+// nucleus -- the focal point of the whole picture -- read as a few specks
+// in the middle of the orbits. The blocks make it the heaviest thing there.
+export const NUCLEUS_Y = 11
+export const NUCLEUS = [
+  [-2, -1, '▗', 'e'], [-1, -1, '▓', 'p'], [0, -1, '▒', 'n'], [1, -1, '▓', 'p'], [2, -1, '▖', 'e'],
+  [-3, 0, '▐', 'e'], [-2, 0, '▓', 'p'], [-1, 0, '▒', 'n'], [0, 0, '▓', 'p'], [1, 0, '▒', 'n'], [2, 0, '▓', 'p'], [3, 0, '▌', 'e'],
+  [-2, 1, '▝', 'e'], [-1, 1, '▓', 'p'], [0, 1, '▒', 'n'], [1, 1, '▓', 'p'], [2, 1, '▘', 'e'],
 ]
-// 57th pass -- Half-Life Ring tuning (ATOMIC). Life is the ring's full
-// travel window; HALF_LIFE is how long its brightness takes to drop by
-// half, decaying continuously rather than fading linearly, so it dims fast
-// early (like a real isotope) and lingers faint near the end.
-export const ISOTOPE_RING_MAX = 3
-export const ISOTOPE_RING_LIFE = 1.6
-export const ISOTOPE_RING_HALF_LIFE = 0.4
-export const ISOTOPE_RING_SPEED = 7.5
+// Each electron is a small filled disc of Braille dots, ELECTRON_R px across
+// the radius -- a '●' character was a speck for the same reason as above.
+const ELECTRON_R = 9
+
+// --- the starbursts -----------------------------------------------------------
+// Terminus has none of the sparkle glyphs (no ✦ ✧ ✶ ★), so each burst is
+// built from a few cells: a centre '*' with arms of '─' '│' '/' '\'. Three
+// sizes, the way they were scattered on a '50s print -- a few big, more
+// small. `fx` is a fraction of the width (so the arrangement holds at any
+// grid width), `y` a canvas row, both chosen to sit in the dark around the
+// atom rather than on an orbit.
+//   size 2: the eight-point burst, arms 2 across and 1 down (+ diagonals)
+//   size 1: the four-point sparkle, arms 1 across and 1 down
+//   size 0: a lone glint
+// 2026-10-16 -- placed against an 80-column render: the atom's orbits fill
+// columns ~15..65, so the big bursts hold the four corners, the sparkles the
+// two flanks and the gaps above and below the long orbit, and the glints
+// the slivers of dark that are left. Nothing sits on an orbit line.
+export const STARBURSTS = [
+  { fx: 0.08, y: 4, size: 2 },
+  { fx: 0.9, y: 3, size: 2 },
+  { fx: 0.1, y: 17, size: 2 },
+  { fx: 0.89, y: 18, size: 2 },
+  { fx: 0.25, y: 2, size: 1 },
+  { fx: 0.04, y: 11, size: 1 },
+  { fx: 0.96, y: 11, size: 1 },
+  { fx: 0.85, y: 14, size: 1 },
+  { fx: 0.2, y: 13, size: 0 },
+  { fx: 0.27, y: 20, size: 0 },
+  { fx: 0.6, y: 1, size: 0 },
+  { fx: 0.42, y: 21, size: 0 },
+  { fx: 0.18, y: 7, size: 0 },
+  { fx: 0.84, y: 6, size: 0 },
+]
+// How long a popped burst holds its long arms, in seconds.
+export const POP_S = 0.35
+
+// One DotCanvas per layer per grid width, built on first use. Cached by
+// width rather than made in init(): the effect can be asked to draw on a
+// term of a different width from the one it booted with (the width test in
+// tests/visuals.test.mjs does exactly that), and a canvas sized at boot
+// would then draw the atom off-centre.
+const canvases = new Map()
+function layersFor(term) {
+  const key = `${term.cols}x${VIZ_BOT - 1}`
+  let L = canvases.get(key)
+  if (!L) {
+    const mk = () => new DotCanvas(term, term.cols, VIZ_BOT - 1)
+    L = { orbit: mk(), trail: mk(), shock: mk(), electron: mk() }
+    canvases.set(key, L)
+  }
+  return L
+}
+
+/** Centre in dots and the px-to-dot scale for this width. */
+function atomGeometry(term) {
+  const dotW = term.advance / 2
+  const dotH = term.font.cellH / 4
+  // Canvas row 0 is grid row 1; the atom sits on grid row NUCLEUS_Y, the
+  // middle of rows 1..21. In dots: 2 per cell across (so the middle of the
+  // nucleus cell is 2 * floor(cols / 2) + 1), 4 per cell down.
+  const cx = 2 * Math.floor(term.cols / 2) + 1
+  const cy = (NUCLEUS_Y - 1) * 4 + 2
+  // Keep the long orbit a few cells inside the edge on a narrow grid.
+  const halfPx = (term.cols / 2 - 3) * term.advance
+  const stretch = Math.min(STRETCH, halfPx / ORBIT_A)
+  return { cx, cy, dotW, dotH, stretch }
+}
+
+/** A point on orbit `i` at parameter `a`, in dots. */
+function orbitPoint(g, i, a, scale = 1) {
+  const tilt = ORBIT_TILTS[i]
+  const ex = ORBIT_A * scale * Math.cos(a), ey = ORBIT_B * scale * Math.sin(a)
+  const px = (ex * Math.cos(tilt) - ey * Math.sin(tilt)) * g.stretch
+  const py = ex * Math.sin(tilt) + ey * Math.cos(tilt)
+  return [g.cx + px / g.dotW, g.cy + py / g.dotH]
+}
+
+/** Writes the dot layers to the grid, one cell at a time: the bits of every
+ *  layer that has any in the cell are OR'd together, and the cell takes the
+ *  attribute of the highest-priority layer present (layers in priority
+ *  order, highest first). */
+function composeDots(term, layers) {
+  const { cols, rows } = layers[0].dc
+  for (let cy = 0; cy < rows; cy++) {
+    for (let cx = 0; cx < cols; cx++) {
+      const i = cy * cols + cx
+      let bits = 0, attr = -1
+      for (const { dc, attr: a } of layers) {
+        const b = dc.cells[i]
+        if (!b) continue
+        bits |= b
+        if (attr < 0) attr = a
+      }
+      if (bits) term.put(cx, cy + 1, String.fromCodePoint(0x2800 + bits), attr)
+    }
+  }
+}
+
+function drawStarburst(term, x, y, size, pop, idle) {
+  const cols = term.cols
+  const put = (dx, dy, ch, attr) => {
+    const X = x + dx, Y = y + dy
+    if (X < 0 || X >= cols || Y < 1 || Y >= VIZ_BOT) return
+    term.put(X, Y, ch, attr)
+  }
+  // A popped burst throws its arms out one cell further and lights BRIGHT at
+  // the heart; at rest the arms are dimmer than the heart, which is what
+  // makes it read as light rather than as a plus sign.
+  const heart = pop > 0.5 ? BRIGHT : idle > 0.6 ? NORMAL : MUTED
+  const arm = pop > 0 ? NORMAL : idle > 0.6 ? MUTED : DIM
+  const tip = pop > 0 ? MUTED : FAINT
+  if (size === 0) {
+    put(0, 0, pop > 0 ? '*' : idle > 0.55 ? '+' : '·', pop > 0 ? NORMAL : idle > 0.55 ? MUTED : DIM)
+    return
+  }
+  const reachX = size === 2 ? 2 : 1
+  const ext = pop > 0 ? 1 : 0
+  for (let k = 1; k <= reachX + ext; k++) {
+    const a = k > reachX ? tip : arm
+    put(-k, 0, '─', a)
+    put(k, 0, '─', a)
+  }
+  put(0, -1, '│', arm)
+  put(0, 1, '│', arm)
+  if (ext) { put(0, -2, '·', tip); put(0, 2, '·', tip) }
+  if (size === 2) {
+    put(-1, -1, '\\', tip)
+    put(1, -1, '/', tip)
+    put(-1, 1, '/', tip)
+    put(1, 1, '\\', tip)
+  }
+  put(0, 0, '*', heart)
+}
 
 export default {
   key: 'isotope',
-  label: 'ISOTOPE MAP',
+  label: 'ATOMIC AGE',
   /** Seeds this effect's state on the program object (once, at boot). */
-  init(p, term) {
-    // 57th pass -- Half-Life Ring, off the visualizer-lab mock's
-    // "half-life ring" concept for ATOMIC. A strong bass onset spawns a ring at
-    // one of the isotope sources' current position; it expands and its
-    // brightness decays on an actual half-life curve (see drawIsotopeEffect's
-    // tail end). Capped at ISOTOPE_RING_MAX concurrent so a busy passage
-    // doesn't clutter the field.
-    p._isotopeRings = []
+  init(p) {
+    // Electron phase per orbit: an accumulator, not a clock -- carried
+    // across visits like DANCEFLOOR's step count.
+    p._isoPhase = ORBIT_PHASE.slice()
+    p._isoJolt = 0
+    p._isoPops = new Array(STARBURSTS.length).fill(-Infinity)
+    p._isoLastT = null
+    p._isoPrevPulse = 0
+    p._isoKickAt = -Infinity
+    p._isoElectronAt = []
   },
   /** Re-arms clocks/accumulators on every visualizer entry. */
   reset(p) {
-    p._isotopeRings = []
+    // Everything here that holds an effect-clock time is cleared: the clock
+    // restarts at 0 on entry, so a kick or a pop stamped minutes into the
+    // last visit would sit in the future of this one -- the kick gate would
+    // refuse every beat and the flare would hold lit -- for as long as that
+    // visit lasted. _isoLastT going null is what stops the first frame
+    // integrating the gap between visits into the electrons' phase.
+    p._isoLastT = null
+    p._isoPrevPulse = 0
+    p._isoKickAt = -Infinity
+    p._isoJolt = 0
+    p._isoPops = new Array(STARBURSTS.length).fill(-Infinity)
   },
-  // ISOTOPE MAP (52nd pass, ATOMIC) -- shelved unassigned since the 57th
-  // pass, promoted back to ATOMIC's default in the 65th when GEIGER,
-  // CLOUDS, and the rest of the old roster got removed for good (see the
-  // 65th-pass note above VISUAL_METHODS). Every cell on the grid flickers
-  // on its own independent sine cycle (its own phase and frequency), and
-  // hotter regions drift across the field in lissajous paths, brightening
-  // whatever they currently sit over. No needle, no gauge, no scripted
-  // event -- "a field of sources" rather than a single detector, which
-  // suits an atomic-age station better than one instrument does. Started
-  // as a single source; same pass, expanded to fill the
-  // screen -- now ISOTOPE_SOURCES.length independent ones (see that
-  // constant), each cell taking the max heat across all of them so
-  // overlapping sources don't blow out to solid white noise.
-  // Fully stateless like OUTRUN's roadside texture: each cell's phase/freq
-  // come from hash2(x,y) recomputed every frame rather than a stored
-  // per-cell buffer, so there's no persistent state to reset on re-entry
-  // and nothing here can hit the FLAME-class re-entry-freeze bug (see
-  // Design Notes) -- the whole effect is a pure function of (x, y, t).
-  // 65th pass -- promotion to ATOMIC's default came with a note that it
-  // "looks cool, just needs more reactivity": the 52nd/57th-pass tuning
-  // barely moved with the music (glow radius swing was 0.7-1.3, the click
-  // bump was a flat +0.1, and rings needed a hard A.bass > 0.45 onset).
-  // Widened the same way CIPHER/COLD WAVE/CIRCUIT CRUSH were earlier this
-  // pass: a much wider glow-radius swing so sources visibly bloom and
-  // shrink with level, a stronger pulse click, a lower onset bar so rings
-  // fire more readily, and a second ring on a hard hit so a big onset
-  // reads as two sources going critical at once instead of one.
   draw(p, s, t) {
     const { term } = s
     const cols = term.cols
-    const cy = (1 + VIZ_BOT) / 2
-    // Each source roams a slow lissajous loop, kept clear of the edges by
-    // a margin so its glow never clips against the frame. dy is weighted
-    // 2.1x the same way DRIFT's radial term is, since a character cell
-    // reads roughly twice as tall as it is wide -- without that weighting
-    // the "hot region" would look like a flattened horizontal smear
-    // instead of a roughly round glow.
-    const ampX = Math.max(6, cols / 2 - 12)
-    const ampY = Math.max(3, (VIZ_BOT - 1) / 2 - 5)
-    // 2026-08-23 (live audio tap) -- the sources run hotter with the band
-    // (glow radius follows level) and a transient blinks the whole
-    // background flicker field up ~a tier for the pulse window: a click
-    // registering across the field. Note this stays exactly as re-entry-
-    // safe as before: nothing is stored -- the effect is now a pure
-    // function of (x, y, t, this-frame's bus reading), which preserves the
-    // property the statelessness note above actually cares about.
-    const A = p._au
-    const rMul = auMul(A, A ? A.level : 0, 0.5, 1.9)
-    const click = A ? A.pulse * 0.28 : 0
-    const sources = ISOTOPE_SOURCES.map((src) => ({
-      hx: cols / 2 + Math.sin(t * src.fx + src.ph) * ampX * src.amp,
-      hy: cy + Math.cos(t * src.fy + src.ph) * ampY * src.amp,
-    }))
-    // 57th pass -- Half-Life Ring. A strong bass onset spawns a ring at a
-    // random source's current position (reads as that source "going
-    // critical"); the ring then just carries its own fixed spawn position
-    // and time, independent of the sources' ongoing roam. 65th pass --
-    // threshold lowered so rings fire on more onsets, and a hard hit
-    // (bass > 0.7) spawns a second ring at a different source the same
-    // frame, same "growCount" idea BLAST FIELD uses for its own onsets.
-    if (A && A.onset && A.bass > 0.28) {
-      const ringCount = A.bass > 0.7 ? 2 : 1
-      for (let i = 0; i < ringCount; i++) {
-        const src = sources[Math.floor(Math.random() * sources.length)]
-        p._isotopeRings.push({ x: src.hx, y: src.hy, spawnT: t })
-        if (p._isotopeRings.length > ISOTOPE_RING_MAX) p._isotopeRings.shift()
-      }
+    const muted = !!p.muted
+    const A = muted ? SILENT_AUDIO : (p._au || syntheticAudio(t))
+
+    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) term.put(x, y, ' ', NORMAL)
+
+    // --- the beat -------------------------------------------------------------
+    const pulse = A.pulse || 0
+    if (!muted && pulse - p._isoPrevPulse >= BEAT_RISE && t - p._isoKickAt >= KICK_GAP_S) {
+      p._isoKickAt = t
+      p._isoJolt = JOLT
     }
-    p._isotopeRings = p._isotopeRings.filter((r) => t - r.spawnT < ISOTOPE_RING_LIFE)
+    p._isoPrevPulse = pulse
+    const sinceKick = t - p._isoKickAt
+    const flare = sinceKick >= 0 && sinceKick < FLARE_S ? 1 - sinceKick / FLARE_S : 0
+
+    // --- the electrons' travel -----------------------------------------------
+    const dt = p._isoLastT == null ? 0 : Math.max(0, Math.min(0.25, t - p._isoLastT))
+    p._isoLastT = t
+    const level = auMul(A, A.level, 0, 1)
+    const speed = SPEED_FLOOR + SPEED_SPAN * level
+    for (let i = 0; i < 3; i++) p._isoPhase[i] = (p._isoPhase[i] + (speed + p._isoJolt) * ORBIT_RATE[i] * dt) % (Math.PI * 2)
+    p._isoJolt *= Math.exp(-JOLT_DECAY * dt)
+
+    // --- the sky ----------------------------------------------------------------
+    // A sparse, still field of points, FAINT: enough that the dark reads as a
+    // night sky around the sign rather than as an empty screen.
     for (let y = 1; y < VIZ_BOT; y++) {
       for (let x = 0; x < cols; x++) {
-        let heat = 0
-        for (const src of sources) {
-          const dx = x - src.hx, dy = (y - src.hy) * 2.1
-          const d = Math.sqrt(dx * dx + dy * dy)
-          const sh = Math.max(0, 1 - d / (9 * rMul))
-          if (sh > heat) heat = sh
-        }
-        let ring = 0
-        for (const r of p._isotopeRings) {
-          const age = t - r.spawnT
-          const radius = age * ISOTOPE_RING_SPEED
-          const dx = x - r.x, dy = (y - r.y) * 2.1
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          const band = Math.max(0, 1 - Math.abs(dist - radius) / 1.4)
-          const decay = Math.pow(0.5, age / ISOTOPE_RING_HALF_LIFE)
-          if (band * decay > ring) ring = band * decay
-        }
-        const phase = hash2(x, y) * Math.PI * 2
-        const freq = 0.6 + hash2(y, x) * 2.2   // args swapped from phase's hash to decorrelate
-        const base = 0.5 + 0.5 * Math.sin(t * freq + phase)
-        const v = Math.max(base * (0.1 + click + heat * 0.95), ring * 0.95)
-        if (v < 0.1) { term.put(x, y, ' '); continue }
-        const ch = ring > 0.5 ? 'O' : v > 0.85 ? '▓' : v > 0.6 ? '▒' : v > 0.4 ? '+' : v > 0.22 ? ':' : '·'
-        term.put(x, y, ch, visualizerLevelAttr(v))
+        if (hash2(x, y * 7) < 0.018) term.put(x, y, '·', FAINT)
       }
+    }
+
+    // --- orbits, trails, shockwave (dots) --------------------------------------
+    const L = layersFor(term)
+    const g = atomGeometry(term)
+    L.orbit.clear(); L.trail.clear(); L.shock.clear(); L.electron.clear()
+    const STEPS = 720
+    for (let i = 0; i < 3; i++) {
+      for (let k = 0; k < STEPS; k++) {
+        const [x, y] = orbitPoint(g, i, (k / STEPS) * Math.PI * 2)
+        L.orbit.plot(x, y)
+      }
+      // The tail behind each electron: the same orbit, drawn again in a
+      // brighter layer over the last TRAIL_RAD of its travel.
+      const head = p._isoPhase[i]
+      for (let k = 0; k < 90; k++) {
+        const [x, y] = orbitPoint(g, i, head - (k / 90) * TRAIL_RAD)
+        L.trail.plot(x, y)
+      }
+    }
+    if (sinceKick >= 0 && sinceKick < SHOCK_S) {
+      // A snap, then a hold: the ring is out at full reach within
+      // SHOCK_SNAP_S of the kick and holds there until it goes out with the
+      // flare. A slow ring reads as a ripple, not a hit -- see FLARE_S.
+      const k = Math.min(1, sinceKick / SHOCK_SNAP_S)
+      const r = SHOCK_FROM + (SHOCK_REACH - SHOCK_FROM) * (1 - (1 - k) * (1 - k) * (1 - k))
+      for (let j = 0; j < 360; j++) {
+        const a = (j / 360) * Math.PI * 2
+        L.shock.plot(g.cx + (Math.cos(a) * r * g.stretch) / g.dotW, g.cy + (Math.sin(a) * r) / g.dotH)
+      }
+    }
+    // The electrons: a filled disc of dots at each one's place on its orbit.
+    // Their cells are kept on p._isoElectronAt for the tests to read back.
+    p._isoElectronAt = []
+    const erx = ELECTRON_R / g.dotW, ery = ELECTRON_R / g.dotH
+    for (let i = 0; i < 3; i++) {
+      const [ex, ey] = orbitPoint(g, i, p._isoPhase[i])
+      for (let dy = -Math.ceil(ery); dy <= Math.ceil(ery); dy++) {
+        for (let dx = -Math.ceil(erx); dx <= Math.ceil(erx); dx++) {
+          if ((dx / erx) ** 2 + (dy / ery) ** 2 <= 1) L.electron.plot(ex + dx, ey + dy)
+        }
+      }
+      p._isoElectronAt.push([Math.floor(ex / 2), Math.floor(ey / 4) + 1])
+    }
+    // Brightness is the hierarchy (2026-10-16, after a real Chrome render):
+    // the orbits are the quietest line on screen -- Braille glows brighter on
+    // the tube than its attribute suggests, and at DIM the three ellipses out-
+    // shone everything inside them -- so they sit at FAINT; each electron's
+    // tail is a tier up; the electrons and the ring are NORMAL. No attribute
+    // ladder on the ring: every step repaints the whole of it, and a
+    // NORMAL->MUTED->DIM fade spent three of those on the quiet half of the
+    // beat (profiled the same day). The ring holds and goes out with the
+    // flare, in the same frame; the tube's persistence does the fading.
+    composeDots(term, [
+      { dc: L.electron, attr: NORMAL },
+      { dc: L.shock, attr: NORMAL },
+      { dc: L.trail, attr: MUTED },
+      { dc: L.orbit, attr: FAINT },
+    ])
+
+    // --- the starbursts ----------------------------------------------------------
+    // An onset pops one burst, picked at random so they take turns; the rest
+    // breathe on their own slow cycles, a little livelier with treble.
+    if (!muted && A.onset) p._isoPops[Math.floor(Math.random() * STARBURSTS.length)] = t
+    const treble = auMul(A, A.treble, 0, 1)
+    STARBURSTS.forEach((b, i) => {
+      const x = Math.round(b.fx * (cols - 1))
+      const since = t - p._isoPops[i]
+      const pop = since >= 0 && since < POP_S ? 1 - since / POP_S : 0
+      const idle = 0.5 + 0.5 * Math.sin(t * (0.7 + 0.25 * (i % 4)) + i * 1.9) * (muted ? 0.6 : 0.75 + 0.25 * treble)
+      drawStarburst(term, x, b.y, b.size, pop, idle)
+    })
+
+    // --- the nucleus -----------------------------------------------------------------
+    // At rest the protons are NORMAL and the neutrons and rounded edges
+    // MUTED, so the cluster has texture; a kick lifts every cell a tier --
+    // protons BRIGHT, the rest NORMAL -- and rings it with a short-lived halo
+    // of '·', which is the "flare" a viewer sees on the beat. Only the seven
+    // protons go BRIGHT, on purpose: seventeen BRIGHT cells in a 7x3 block
+    // blooms into a white blot on the tube (the UPRISING/KEEP lesson), and
+    // seven reads as the same flash. Hot for the whole of FLARE_S, which is
+    // SHOCK_S: nucleus and ring go out together, one event on the quiet side
+    // of the beat rather than two.
+    const ncx = Math.floor(cols / 2), ncy = NUCLEUS_Y
+    const hot = flare > 0
+    if (hot) {
+      for (const [dx, dy] of [[-4, 0], [4, 0], [-3, -1], [3, -1], [-3, 1], [3, 1], [0, -2], [0, 2]]) {
+        term.put(ncx + dx, ncy + dy, '·', NORMAL)
+      }
+    }
+    for (const [dx, dy, ch, role] of NUCLEUS) {
+      const attr = role === 'p' ? (hot ? BRIGHT : NORMAL) : (hot ? NORMAL : MUTED)
+      term.put(ncx + dx, ncy + dy, ch, attr)
     }
   },
 }
