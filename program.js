@@ -36,6 +36,8 @@ const { default: mobileUi } = await import(`./ui/mobile.js?v=${V}`)
 const { default: guide } = await import(`./ui/guide.js?v=${V}`)
 const { default: tapConsentUi } = await import(`./ui/tap-consent.js?v=${V}`)
 const { default: weatherUi } = await import(`./ui/weather.js?v=${V}`)
+const { default: rearPanelUi } = await import(`./ui/rear-panel.js?v=${V}`)
+const { normalizePanel, prefersReducedMotion } = await import(`./settings.js?v=${V}`)
 const { default: visualizer } = await import(`./visualizer.js?v=${V}`)
 const { default: game } = await import(`./game.js?v=${V}`)
 
@@ -57,6 +59,7 @@ export default {
   ...guide,
   ...tapConsentUi,
   ...weatherUi,
+  ...rearPanelUi,
   ...visualizer,
   // VECTOR SCAN (2026-08-29) -- the hidden game. Last, so it composes over
   // the visualizer it lives inside rather than under it.
@@ -125,7 +128,7 @@ export default {
   },
   _tickFx(now) {
     this._runFx(this._fxAlways, now)
-    if (this.poweredOn && !this.guideOpen && !this.tapConsentOpen && !this.weatherOpen) this._runFx(this._fx, now)
+    if (this.poweredOn && !this.overlayUp()) this._runFx(this._fx, now) // 2026-10-15: overlayUp(), so the REAR PANEL is in it
   },
   _runFx(q, now) {
     // Snapshot what's due first: an entry's fn may add or cancel others.
@@ -566,6 +569,15 @@ export default {
     // the same reason -- a session saved at 10 shouldn't have its first
     // ident arrive at full level before anyone touches the keys.
     setSpeakerLevel(this.muted, this.volume)
+    // 2026-10-15 -- the REAR PANEL's settings, restored and APPLIED here for
+    // the same reason the speaker level is seeded just above: the trims are
+    // module-level, so the hum and the first static burst are born at the
+    // saved level, and a CALM screen is calm from the STANDBY screen on
+    // rather than flickering until the first power-on. Read outside the
+    // `if (saved)` block because the reduced-motion default has to apply to
+    // a first visit too -- that is the visit it matters most on.
+    this.panel = normalizePanel(saved?.panel, { reducedMotion: prefersReducedMotion() })
+    this.applyPanel(s)
     // ?station=<id> (2026-08-27, admin-backend pass) -- boots straight to a
     // named station, secret ones included. It exists for the identity
     // editor in tools/network.html, which runs the real receiver in an
@@ -743,6 +755,10 @@ export default {
     // one does NOT clear the grid (see ui/weather.js), so it relies on
     // this flag appearing in the same paint guards they use.
     this.weatherOpen = false
+    // 2026-10-15 -- the REAR PANEL card (ui/rear-panel.js). The weather
+    // card's contract exactly: drawn over the set, so it is in overlayUp().
+    this.panelOpen = false
+    this._panelRow = 0
 
     // Date/time module ticker (15th pass) -- one interval for the whole
     // page lifetime, since the clock needs to keep ticking on the STANDBY
@@ -780,7 +796,7 @@ export default {
       this.tickWeather(s)
       // 2026-09-21 -- and the new-build check (see tickBuild). Data again.
       this.tickBuild(s)
-      if (this.guideOpen || this.tapConsentOpen || this.weatherOpen || this._powerAnimating) return
+      if (this.overlayUp() || this._powerAnimating) return
       if (this.poweredOn) { this.drawClock(s); this.drawSleep(s) }
       else this.drawStandbyClock(s)
     }, 1000)
@@ -938,6 +954,9 @@ export default {
     // key()'s weather branch ate every press. A set that ignores the
     // keyboard, with nothing on screen to say why.
     this.weatherOpen = false
+    // 2026-10-15 -- the REAR PANEL card, for the identical reason: it is
+    // the weather card's sibling and would strand the set the same way.
+    this.panelOpen = false
     // VECTOR SCAN (2026-08-29) -- same reasoning as the line above, one
     // step further in: this path deliberately does NOT call
     // exitVisualizer(), so the game's own teardown there is not reached and
@@ -2196,7 +2215,7 @@ export default {
     // underneath them to repaint what this would punch through. The
     // visualizer is safe by construction (it repaints its whole canvas
     // every tick) -- see key()'s note on the same asymmetry.
-    if (!this.guideOpen && !this.tapConsentOpen && !this.weatherOpen) this.drawVolume(s)
+    if (!this.overlayUp()) this.drawVolume(s)
   },
 
   clearSleepTimer() {
@@ -2236,6 +2255,7 @@ export default {
     // missed. powerDown() now also clears the flag as a backstop, but the
     // card's own close path is the one that puts the covered rows back.
     if (this.weatherOpen) this.closeWeather(s)
+    if (this.panelOpen) this.closePanel(s) // 2026-10-15 -- same, for [R]
     this.powerDown(s)
   },
 
@@ -3120,6 +3140,13 @@ export default {
       if (e.key === 'w' || e.key === 'W' || e.key === 'Escape') return true
       return this.weatherConsent !== 'yes' && (e.key === 'y' || e.key === 'Y' || e.key === 'n' || e.key === 'N')
     }
+    // 2026-10-15 -- the REAR PANEL, same rule: [R]/[Escape] close, and an
+    // arrow clicks only when it would move something (panelKeyMoves, which
+    // key() also asks, so the two cannot drift).
+    if (this.panelOpen) {
+      if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') return true
+      return this.panelKeyMoves(e)
+    }
     // 67th pass, live QA fix -- poweredOn flips false the instant powerDown()
     // is called, but its collapse beats keep painting the screen for another
     // ~900ms (see powerDown()'s beats array), and powerUp() has its own
@@ -3261,6 +3288,15 @@ export default {
       if (e.key === 'w' || e.key === 'W' || e.key === 'Escape') this.closeWeather(s)
       else if (this.weatherConsent !== 'yes' && (e.key === 'y' || e.key === 'Y')) this.acceptWeather(s)
       else if (this.weatherConsent !== 'yes' && (e.key === 'n' || e.key === 'N')) this.declineWeather(s)
+      return
+    }
+    // 2026-10-15 -- the REAR PANEL owns its keys while it is up, the
+    // weather card's contract. The arrows are this card's controls rather
+    // than seek and volume -- a hand on the back of the set is not on the
+    // tuning knob -- and every other key is swallowed.
+    if (this.panelOpen) {
+      e.preventDefault()
+      this.panelKey(s, e)
       return
     }
     // Visualizer (43rd pass) -- standard visualizer manners: ANY key
@@ -3654,6 +3690,16 @@ export default {
         // does not depend on a station being locked.
         if (!this.openWeather(s)) this.flashStatus(s, 'NO WEATHER')
         break
+      // 2026-10-15 -- [R] REAR PANEL: hum, static, voice and screen (see
+      // settings.js for why it is the back of the set and not a menu). Not
+      // on the footer, which has no room (see drawHint); the Guide's
+      // RECEIVER group teaches it. The NO PANEL flash mirrors NO WEATHER:
+      // canOpenPanel() is only false here on the lite layout, which no
+      // keyboard reaches, but a key that clicks must answer.
+      case 'r': case 'R':
+        e.preventDefault()
+        if (!this.openPanel(s)) this.flashStatus(s, 'NO PANEL')
+        break
       // Consent pass (2026-08-25) -- [A] opens the LINE INPUT card on
       // demand: patch the tap in after saying no, or pull it back out
       // again. It exists because a permission ought to be revocable from
@@ -3755,7 +3801,10 @@ export default {
     // Consent pass (2026-08-25) -- the LINE INPUT card joins the guide on
     // this bail for the same reason: it's a full-screen takeover of the same
     // grid, and a per-frame redraw would punch holes straight through it.
-    if (!this.poweredOn || this.guideOpen || this.tapConsentOpen || this.weatherOpen) return
+    // 2026-10-15 -- overlayUp(), not the three flags restated: the REAR
+    // PANEL card is the fourth, and this list, the fx gate, the clock's and
+    // applySleepLevel's were each a hand copy that would have needed it.
+    if (!this.poweredOn || this.overlayUp()) return
 
     // 2026-08-23 (live audio tap) -- refill the signal bus once per rAF,
     // before anything below reads it. After the bail above on purpose: in

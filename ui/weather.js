@@ -54,10 +54,13 @@ export const WX_MIN_X = 53
 // The card. Rows 8-16 cover the STATION and NOW PLAYING boxes and stop
 // short of the meters, so the dial above and the levels below stay visible
 // and moving -- which is the entire point of it being a card.
-const CARD_Y0 = 8
-const CARD_Y1 = 16
-const CARD_X0 = 14
-const CARD_X1 = 65
+// Exported 2026-10-15: the REAR PANEL card (ui/rear-panel.js) sits on
+// exactly this footprint and puts it back through redrawWeatherRegion(), so
+// the two must agree -- one definition rather than two that could drift.
+export const CARD_Y0 = 8
+export const CARD_Y1 = 16
+export const CARD_X0 = 14
+export const CARD_X1 = 65
 
 export default {
 

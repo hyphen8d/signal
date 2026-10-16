@@ -173,7 +173,14 @@ export default {
     // BECAUSE the footer had no room for them, and [K] is on the footer's
     // line1 (see drawHint). The grid is for controls the footer cannot
     // teach, and this one it can.
-    { head: 'RECEIVER', rows: [['[UP/DN]', 'VOLUME'], ['[M]', 'MUTE'], ['[N]', 'NEXT TRACK'], ['[T]', 'SLEEP'], ['[P]', 'POWER']] },
+    //
+    // [R] REAR PANEL (2026-10-15) TOOK [P] POWER'S ROW rather than adding a
+    // sixth, for the reason above. [P] can spare it and [R] cannot: power is
+    // taught twice already -- this page's own START HERE line ("[P] power
+    // on") and the footer's line2 -- while [R] is on neither, and this grid
+    // is the one place a keyboard visitor will find it. 'REAR PANEL' is the
+    // same 10 columns as 'NEXT TRACK', so the column width holds.
+    { head: 'RECEIVER', rows: [['[UP/DN]', 'VOLUME'], ['[M]', 'MUTE'], ['[N]', 'NEXT TRACK'], ['[T]', 'SLEEP'], ['[R]', 'REAR PANEL']] },
     // [F] added 2026-08-26 (issue #8). 'FULLSCREEN' is the same 10 chars as
     // 'VISUALIZER', so the column keeps its width and the block its centring.
     // [W] added 2026-08-29. 'WEATHER' is shorter than 'FULLSCREEN' so the

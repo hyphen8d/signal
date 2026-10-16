@@ -9,7 +9,7 @@ import { BOLD, BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
 const { AUDIO_BUS, audioSignalLive } = await import(`../audio/tap.js?v=${V}`)
 const { SLEEP_FADE_MS, VERSION_TAG } = await import(`../constants.js?v=${V}`)
-const { crtBase, crtDegradeForDist, flashCrtGlitch, rampCrtParams } = await import(`../crt-hooks.js?v=${V}`)
+const { crtBase, crtDegradeForDist, flashCrtGlitch, isCalmScreen, rampCrtParams } = await import(`../crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, FREQ_Y, HINT_Y1, HINT_Y2, MBOX_X0, MBOX_X1, METERS_BOT_Y, METERS_DIVIDER_X, METERS_TOP_Y, NOWPLAYING_BOT_Y, NOWPLAYING_TOP_Y, PLAYBACK_Y, SCALE_Y, SIG_Y, STANDBY_LOGO_FONT, STANDBY_LOGO_GAP, STANDBY_LOGO_LETTER_H, STANDBY_LOGO_LETTER_W, STANDBY_LOGO_WORD, STATION_BOT_Y, STATION_TOP_Y, STATION_Y, STATUS_REVEAL_MS, STATUS_TEXT_WIDTH, STATUS_Y, TAGLINE_Y, TRACK_Y, TUNER_BOT_Y, TUNER_TOP_Y, VOL_SIG_DIVIDER_Y, VOL_Y, VU_DIVIDER_Y, VU_Y, centerX, centerXRange, drawBoxBottom, drawBoxSide, drawBoxTop, drawGrille, fmtTime, formatClock, standbyLayout, truncate } = await import(`../layout.js?v=${V}`)
 const { NEAR_THRESHOLD, bandFor, freqToCol, nearestSignal, nearestStation } = await import(`../tuning.js?v=${V}`)
 
@@ -653,6 +653,11 @@ export default {
    *  at its real frequency you cannot reliably catch one to check it. */
   crtIdleEvent(s, kind) {
     if (!s?.crt?.params) return
+    // REAR PANEL SCREEN: CALM (2026-10-15) -- a roll or a tear is the whole
+    // event, so calm skips it outright rather than softening it. Checked
+    // here rather than at frame()'s scheduler so the console hook above
+    // honours the setting too.
+    if (isCalmScreen()) return
     const { term } = s
     const { dist } = nearestSignal(this.freq, this.band)
     // Restore to what the CURRENT tuning distance calls for, not to
@@ -711,6 +716,7 @@ export default {
   // crtBase/SCREEN, so it composes with the degrade instead of erasing it.
   crtGrind(s) {
     if (!s?.crt?.params) return
+    if (isCalmScreen()) return // see crtIdleEvent -- every grind shape is a jolt
     if (!this.poweredOn || this.guideOpen) return
     const roll = Math.random()
     if (roll < 0.2) { flashCrtGlitch(s); return }
@@ -786,7 +792,14 @@ export default {
         for (let k = 0; k < tag.length; k++) term.put(tagX + k, METERS_TOP_Y, tag[k], attr)
       }
     }
-    const beats = [[FAINT, 30], [NORMAL, 110], [FAINT, 40], [DIM, 90], [BRIGHT, 70], [MUTED, 160]]
+    // REAR PANEL SCREEN: CALM (2026-10-15) -- one beat, the settle, at the
+    // same moment the full sequence would have landed it. Not skipped: the
+    // last beat and the NOW PLAYING restore after it are what leave the
+    // borders at their resting attributes, and the ~500ms total is a timing
+    // ?game=1 waits out (see its note in CLAUDE.md), so it stays the same.
+    const beats = isCalmScreen()
+      ? [[MUTED, 500]]
+      : [[FAINT, 30], [NORMAL, 110], [FAINT, 40], [DIM, 90], [BRIGHT, 70], [MUTED, 160]]
     let t = 0
     for (const [attr, delay] of beats) {
       t += delay
@@ -862,9 +875,12 @@ export default {
    *  question rather than its own version of it. The visualizer is not in
    *  here on purpose: it repaints its whole canvas every frame, so a stray
    *  write under it lasts one frame, where a write under one of these
-   *  three stays until the overlay closes. */
+   *  three stays until the overlay closes.
+   *  2026-10-15 -- four: the REAR PANEL card (ui/rear-panel.js) sits on the
+   *  same rows as the weather card, for the same reason, and so needs the
+   *  same guards. */
   overlayUp() {
-    return !!(this.guideOpen || this.tapConsentOpen || this.weatherOpen)
+    return !!(this.guideOpen || this.tapConsentOpen || this.weatherOpen || this.panelOpen)
   },
 
   // STATION (callsign + tagline) and NOW PLAYING (track) are separate

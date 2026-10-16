@@ -57,6 +57,8 @@ export const MAPPED_KEYS = new Set([
   // playKeyClick(), and a key that acts without clicking is exactly the
   // drift the dead-feedback sweep exists to catch.
   'k', 'K',
+  // 2026-10-15 -- [R] REAR PANEL. See ui/rear-panel.js and key()'s case.
+  'r', 'R',
   // 2026-10-14 -- [Q] QSL, write to the station. See writeIn() in program.js.
   'q', 'Q',
 ])

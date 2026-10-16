@@ -345,14 +345,25 @@ export function playProcessedVoiceClip(buffer, ctx, t, gainMult = 1) {
 // this same powerUp() call (playPowerOnSound() fires at its very top), so a
 // sound scheduled from this promise's callback several seconds later is no
 // different from startTubeHum() firing off the same REVEAL_DELAY beat.
+// 2026-10-15 -- the REAR PANEL's VOICE switch (see settings.js). One
+// predicate for all three kinds of spoken clip, read at BOTH ends of each
+// async gap the same way `muted` already is: switching VOICE off while a
+// liner is in its 2.5s delay must stop it landing, not just stop the next
+// one. Deliberately not folded into `muted` -- muting is the broadcast
+// switch and takes the music with it; this takes only the presenters.
+// The idents are NOT voice and are not reached: they are tones, the
+// station's call sign as music, and part of how a lock is felt.
+export function voiceSilenced(program) {
+  return !!(program.muted || program.panel?.voice === 'off')
+}
 export function playNetworkId(program) {
-  if (program.muted) return
+  if (voiceSilenced(program)) return
   loadWelcomeLineBuffer().then((buffer) => {
     // Re-check state on the far side of the async gap (gotcha: anything
     // that draws/plays outside a synchronous call needs its own guards) --
     // a fast power-off or a mute toggle in the ~5.5s window shouldn't play
     // this out from under a screen that's already gone dark or muted.
-    if (!buffer || !program.poweredOn || program.muted) return
+    if (!buffer || !program.poweredOn || voiceSilenced(program)) return
     try {
       const ctx = audioCtx()
       playProcessedVoiceClip(buffer, ctx, ctx.currentTime)
@@ -421,9 +432,9 @@ export function loadStationIdBuffer(stationId) {
 // Fired from tryLock() on first lock or any preset-driven lock -- see the
 // call site there for the "first lock or preset change" logic itself.
 export function playStationId(program, station) {
-  if (program.muted || !station) return
+  if (voiceSilenced(program) || !station) return
   loadStationIdBuffer(station.id).then((buffer) => {
-    if (!buffer || !program.poweredOn || program.muted) return
+    if (!buffer || !program.poweredOn || voiceSilenced(program)) return
     if (program.lockedStation !== station) return // re-tuned away during the async gap
     try {
       const ctx = audioCtx()
@@ -983,7 +994,7 @@ export function maybePlayLinerDrop(program, station, track) {
   // the secret stations stay silent, and it is load-bearing (see the note
   // above 'midnight-neon'). An EMPTY array means generals only.
   const own = STATION_LINER_FILES[station.id]
-  if (!own || program.muted) return
+  if (!own || voiceSilenced(program)) return
   // SIGNAL_FORCE_LINER makes the next drop certain, for testing a clip
   // without skipping through twenty tracks to hear it. Same shape as the
   // other forced-state hooks; never set in normal play.
@@ -1003,10 +1014,10 @@ export function maybePlayLinerDrop(program, station, track) {
     // async-scheduled sound here) -- a station change, track skip, mute, or
     // power-off in this window shouldn't drop a liner over whatever the set
     // is actually doing by the time it lands.
-    if (program.muted || !program.poweredOn) return
+    if (voiceSilenced(program) || !program.poweredOn) return
     if (program.lockedStation !== station || program.currentTrack !== track) return
     loadLinerBuffer(path).then((buffer) => {
-      if (!buffer || program.muted || !program.poweredOn) return
+      if (!buffer || voiceSilenced(program) || !program.poweredOn) return
       if (program.lockedStation !== station || program.currentTrack !== track) return
       program._lastLiner = path
       try {

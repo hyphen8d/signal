@@ -682,7 +682,7 @@ Two things about it are load-bearing and easy to undo by accident:
   "nothing else may paint" contract the full-screen overlays get, so
   `weatherOpen` has to appear in the same paint guards as `guideOpen` and
   `tapConsentOpen`. Miss one and the track title draws through the card.
-  Since 2026-09-12 the three are one predicate, `overlayUp()` in
+  Since 2026-09-12 the three (four, with the `[R]` rear panel) are one predicate, `overlayUp()` in
   `ui/desktop.js`, and the painters reached from outside `frame()` — the
   YouTube state callback, `showTrack`/`showStation` and their clears — ask
   it; `tests/overlays.test.mjs` ends a track under each overlay and asserts
@@ -701,6 +701,44 @@ Widths are asserted rather than trusted, because both failed once in a real
 render: card copy over 48 columns writes through the box's right border, and
 the row-0 readout is right-aligned to end at column 63 because starting it at
 52 rendered as `SIGNAL RECEIVER69F CLEAR`, flush against the brand plate.
+
+### Rear panel ([R])
+
+`settings.js` is the data half (rows, positions, defaults, the
+reduced-motion rule, per-key restore) and `ui/rear-panel.js` the card,
+the same split as weather. Four settings, each only ever turning the set
+DOWN from how it was built: HUM, STATIC, VOICE, SCREEN (2026-10-15). Framed
+as the back of the chassis because a settings menu fails the real-radio
+test and a hum-balance pot does not. Desktop card only; the settings
+themselves apply on every layout. What is load-bearing:
+
+- **It is the weather card's sibling**: same footprint (the geometry is
+  imported from `ui/weather.js`, not restated), drawn over the set, so
+  `panelOpen` is in `overlayUp()` and must be in anything that asks it.
+  `program.js`'s hand-written overlay lists became `overlayUp()` calls in the
+  same change, so a fifth card is one edit there.
+- **The level trims are persistent gain nodes** in `audio/sfx.js`
+  (`humOut`/`staticOut`), not multipliers threaded into each sound. The hum
+  goes trim → destination, still bypassing the speaker bus (mute leaves it
+  alone, as before); static goes trim → speaker bus, so volume and mute
+  still apply on top. A change reaches a sound that is already playing.
+- **CALM is a layer in `setCrtCharacter()`, merged last**, plus gates on
+  the one-shot events (`flashCrtGlitch`, `crtIdleEvent`, `crtGrind`, the
+  boot flicker) and a softer off-station degrade. Anything new that ramps
+  `roll`, `snow` or `flicker`, or flashes the face, has to ask
+  `isCalmScreen()`.
+- **VOICE is `voiceSilenced()` in `audio/voice.js`**, read on both sides of
+  every async gap the way `muted` is. It is not mute, and the idents are not
+  voice.
+- **Reduced motion is a default, not an override**: a saved SCREEN wins
+  either way. The harness's `matchMedia` stub is query-aware for this
+  (`boot({ reducedMotion })`); before that, it answered `mobile` to every
+  query.
+- An arrow against a setting's stop does not click (`panelKeyMoves`,
+  shared by `isMappedKey` and `key()`). The position shows only as inverse
+  video, so the dead-feedback sweep reads the inverse plane as well as the
+  characters, and is split into two children per band, since adding the
+  panel ran a single band out of heap.
 
 ### Synced lyrics ([L])
 
