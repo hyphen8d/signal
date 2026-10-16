@@ -1,10 +1,10 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 16 stations, 688 tracks total.
+Generated from stations.js. 16 stations, 686 tracks total.
 
 # YM band
 
-8 stations, 362 tracks. Its own dial, its own `1`-`9` presets.
+8 stations, 360 tracks. Its own dial, its own `1`-`9` presets.
 
 ## CIPHER -- 133.7
 
@@ -12,7 +12,7 @@ Generated from stations.js. 16 stations, 688 tracks total.
 
 Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
 
-Tracks (50):
+Tracks (48):
 
 1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
 2. **Omen** -- The Prodigy  ([youtu.be/xMVTKOoy1uk](https://youtu.be/xMVTKOoy1uk))
@@ -41,29 +41,27 @@ Tracks (50):
 25. **Supermoves** -- Overseer  ([youtu.be/MwZmPJFNVbw](https://youtu.be/MwZmPJFNVbw))
 26. **6 Underground** -- Sneaker Pimps  ([youtu.be/Wuwfe3DRJzE](https://youtu.be/Wuwfe3DRJzE))
 27. **Def Beat** -- Junkie XL  ([youtu.be/7qZW9P7W-nc](https://youtu.be/7qZW9P7W-nc))
-28. **Stem / Long Stem** -- DJ Shadow  ([youtu.be/Ihr0y7ayGV0](https://youtu.be/Ihr0y7ayGV0))
-29. **Dirt** -- Death in Vegas  ([youtu.be/Jd_UCgMaHYQ](https://youtu.be/Jd_UCgMaHYQ))
-30. **Genius** -- Pitchshifter  ([youtu.be/sGcdcVblZ-8](https://youtu.be/sGcdcVblZ-8))
-31. **Voodoo People** -- The Prodigy  ([youtu.be/YV78vobCyIo](https://youtu.be/YV78vobCyIo))
-32. **Absurd** -- Fluke  ([youtu.be/DAQISes7iXU](https://youtu.be/DAQISes7iXU))
-33. **Ruffneck** -- Freestylers  ([youtu.be/kQ_sSs8pr1g](https://youtu.be/kQ_sSs8pr1g))
-34. **Ultrasonic Sound** -- Hive  ([youtu.be/lGqzRmDcC14](https://youtu.be/lGqzRmDcC14))
-35. **Godzilla Dub** -- ZeroFG  ([youtu.be/mloHngTITZ8](https://youtu.be/mloHngTITZ8))
-36. **Born In '94** -- Unglued  ([youtu.be/VHqc2Yqwwu4](https://youtu.be/VHqc2Yqwwu4))
-37. **Take California** -- Propellerheads  ([youtu.be/81bG15gsl70](https://youtu.be/81bG15gsl70))
-38. **Y'all Ready For Dis** -- Y U QT  ([youtu.be/OTvB4XMsg1U](https://youtu.be/OTvB4XMsg1U))
-39. **Hey Boy Hey Girl** -- The Chemical Brothers  ([youtu.be/tpKCqp9CALQ](https://youtu.be/tpKCqp9CALQ))
-40. **Setting Sun** -- The Chemical Brothers  ([youtu.be/0u3qQtvU5SQ](https://youtu.be/0u3qQtvU5SQ))
-41. **Breathe** -- The Prodigy  ([youtu.be/Wo7XxlXU3XQ](https://youtu.be/Wo7XxlXU3XQ))
-42. **Name of the Game** -- The Crystal Method  ([youtu.be/A12-KN5UijA](https://youtu.be/A12-KN5UijA))
-43. **Cowgirl** -- Underworld  ([youtu.be/qEYeT-f1Fdo](https://youtu.be/qEYeT-f1Fdo))
-44. **Inertia Creeps** -- Massive Attack  ([youtu.be/GjlklxY-fWI](https://youtu.be/GjlklxY-fWI))
-45. **Six Days** -- DJ Shadow  ([youtu.be/BEqHME6XUi8](https://youtu.be/BEqHME6XUi8))
-46. **Satan** -- Orbital  ([youtu.be/tP8tpAs9qhI](https://youtu.be/tP8tpAs9qhI))
-47. **Zion** -- Fluke  ([youtu.be/cFffoHmn8XA](https://youtu.be/cFffoHmn8XA))
-48. **Back on a Mission** -- Cirrus  ([youtu.be/Qe9vdnNQAhc](https://youtu.be/Qe9vdnNQAhc))
-49. **Battleflag** -- Lo Fidelity Allstars  ([youtu.be/B99nd2iKGOw](https://youtu.be/B99nd2iKGOw))
-50. **Ready Steady Go** -- Paul Oakenfold  ([youtu.be/MSv3Oez4O-4](https://youtu.be/MSv3Oez4O-4))
+28. **Dirt** -- Death in Vegas  ([youtu.be/Jd_UCgMaHYQ](https://youtu.be/Jd_UCgMaHYQ))
+29. **Genius** -- Pitchshifter  ([youtu.be/sGcdcVblZ-8](https://youtu.be/sGcdcVblZ-8))
+30. **Voodoo People** -- The Prodigy  ([youtu.be/YV78vobCyIo](https://youtu.be/YV78vobCyIo))
+31. **Absurd** -- Fluke  ([youtu.be/DAQISes7iXU](https://youtu.be/DAQISes7iXU))
+32. **Ruffneck** -- Freestylers  ([youtu.be/kQ_sSs8pr1g](https://youtu.be/kQ_sSs8pr1g))
+33. **Ultrasonic Sound** -- Hive  ([youtu.be/lGqzRmDcC14](https://youtu.be/lGqzRmDcC14))
+34. **Godzilla Dub** -- ZeroFG  ([youtu.be/mloHngTITZ8](https://youtu.be/mloHngTITZ8))
+35. **Born In '94** -- Unglued  ([youtu.be/VHqc2Yqwwu4](https://youtu.be/VHqc2Yqwwu4))
+36. **Take California** -- Propellerheads  ([youtu.be/81bG15gsl70](https://youtu.be/81bG15gsl70))
+37. **Y'all Ready For Dis** -- Y U QT  ([youtu.be/OTvB4XMsg1U](https://youtu.be/OTvB4XMsg1U))
+38. **Hey Boy Hey Girl** -- The Chemical Brothers  ([youtu.be/tpKCqp9CALQ](https://youtu.be/tpKCqp9CALQ))
+39. **Setting Sun** -- The Chemical Brothers  ([youtu.be/0u3qQtvU5SQ](https://youtu.be/0u3qQtvU5SQ))
+40. **Breathe** -- The Prodigy  ([youtu.be/Wo7XxlXU3XQ](https://youtu.be/Wo7XxlXU3XQ))
+41. **Name of the Game** -- The Crystal Method  ([youtu.be/A12-KN5UijA](https://youtu.be/A12-KN5UijA))
+42. **Cowgirl** -- Underworld  ([youtu.be/qEYeT-f1Fdo](https://youtu.be/qEYeT-f1Fdo))
+43. **Inertia Creeps** -- Massive Attack  ([youtu.be/GjlklxY-fWI](https://youtu.be/GjlklxY-fWI))
+44. **Six Days** -- DJ Shadow  ([youtu.be/BEqHME6XUi8](https://youtu.be/BEqHME6XUi8))
+45. **Satan** -- Orbital  ([youtu.be/tP8tpAs9qhI](https://youtu.be/tP8tpAs9qhI))
+46. **Zion** -- Fluke  ([youtu.be/cFffoHmn8XA](https://youtu.be/cFffoHmn8XA))
+47. **Battleflag** -- Lo Fidelity Allstars  ([youtu.be/B99nd2iKGOw](https://youtu.be/B99nd2iKGOw))
+48. **Ready Steady Go** -- Paul Oakenfold  ([youtu.be/MSv3Oez4O-4](https://youtu.be/MSv3Oez4O-4))
 
 ## DISTORTION FIELD -- 199.7
 
