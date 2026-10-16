@@ -6,13 +6,14 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { boot } from './harness.mjs'
 
-// Power on and stop with every readout line landed, a beat before the reveal
-// clears it: 600ms text delay + 13 lines at 150ms, and the reveal at +500.
+// Power on and stop with every readout line landed, inside the hold before
+// the reveal clears it -- read off the real pacing, not a copy of it.
 async function readout(opts = {}) {
   const h = await boot(opts)
+  const { BOOT_REVEAL_MS, BOOT_HOLD_MS } = await import(`../constants.js?v=${h.tag}`)
   h.advance(600)
   h.key('p')
-  h.advance(600 + 13 * 150 + 100)
+  h.advance(BOOT_REVEAL_MS - BOOT_HOLD_MS + 100)
   assert.equal(h.program.poweredOn, false, 'test setup: still mid-readout')
   return h
 }
@@ -91,4 +92,38 @@ test('REAR PANEL collapses to a count on the lite grid rather than overrunning i
   try {
     assert.ok(line(m, 'REAR PANEL').endsWith(': 4 TURNED DOWN'), line(m, 'REAR PANEL'))
   } finally { m.shutdown() }
+})
+
+test('each [ OK ] is drawn BOLD over its DIM line (2026-10-16)', async () => {
+  // Read off the attribute plane: a character-reading test cannot see this
+  // change at all, since the letters are identical either way.
+  const h = await readout()
+  try {
+    const { BOLD, DIM } = await import('../src/cellgrid.js')
+    const rows = h.rows()
+    const oks = rows.map((r, y) => [r, y]).filter(([r]) => r.trimStart().startsWith('[ OK ]'))
+    assert.equal(oks.length, 5, 'five confirms')
+    const at = (x, y) => h.term.attrs[y * h.term.cols + x]
+    for (const [r, y] of oks) {
+      const x = r.indexOf('[ OK ]')
+      for (let i = 0; i < 6; i++) assert.equal(at(x + i, y), BOLD, `"${r.trim()}" col ${i} of [ OK ] is BOLD`)
+      assert.equal(at(x + 7, y), DIM, `"${r.trim()}" text after it stays DIM`)
+    }
+    const band = rows.findIndex((r) => r.trimStart().startsWith('BAND'))
+    assert.equal(at(rows[band].indexOf('BAND'), band), DIM, 'the probe lines stay DIM')
+  } finally { h.shutdown() }
+})
+
+test('the readout holds long enough to read: the reveal lands at BOOT_REVEAL_MS', async () => {
+  const h = await boot()
+  try {
+    const { BOOT_REVEAL_MS } = await import(`../constants.js?v=${h.tag}`)
+    assert.equal(BOOT_REVEAL_MS, 5000, 'five seconds, on purpose (2026-10-16) -- change this with the pacing')
+    h.advance(600)
+    h.key('p')
+    h.advance(BOOT_REVEAL_MS - 100)
+    assert.equal(h.program.poweredOn, false, 'still reading out just before')
+    h.advance(200)
+    assert.equal(h.program.poweredOn, true, 'up just after')
+  } finally { h.shutdown() }
 })

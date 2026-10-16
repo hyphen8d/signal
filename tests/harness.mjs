@@ -387,6 +387,7 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
     clearPersist() { this.clears++ },
   }
   const program = (await import(`../program.js?v=${tag}`)).default
+  const { BOOT_REVEAL_MS } = await import(`../constants.js?v=${tag}`)
 
   // 2026-08-27 -- an optional fake YouTube IFrame player. `player: true`.
   //
@@ -721,11 +722,17 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
     rows() { return Array.from({ length: term.rows }, (_, y) => h.row(y)) },
     /** Index of the first row containing `text`, or -1. */
     find(text) { return h.rows().findIndex((r) => r.includes(text)) },
+    /** ms from the power press to the reveal (poweredOn), read from
+     *  constants.js so a test waits for the boot it is actually running. */
+    bootMs: BOOT_REVEAL_MS,
     /** Power on from STANDBY and wait out the boot readout. */
     powerOn() {
       h.advance(600) // the cold-open flourish gates [P] for its first 500ms
       h.key('p')
-      h.advance(4000)
+      // The reveal plus the same 1.1s of settling this always allowed (it
+      // was a flat 4000 against a ~2.9s boot until 2026-10-16, when the
+      // boot went to BOOT_REVEAL_MS and became something to read, not guess).
+      h.advance(BOOT_REVEAL_MS + 1100)
       if (!program.poweredOn) throw new Error('powerOn(): set did not come up')
     },
     shutdown() {
