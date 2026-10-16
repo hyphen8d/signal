@@ -1355,21 +1355,24 @@ function statusDotFor(youtubeId) {
   return el('span', { class: `status-dot ${s.ok ? 'ok' : 'bad'}`, title: s.ok ? 'oEmbed OK' : `oEmbed ${s.status}` })
 }
 
-// Every preview on this page goes through here, so there is one embed path
-// to keep in step with the app's. Until 2026-10-15 the three previews used
-// youtube-nocookie.com/embed/<id> bare, and roster tracks the radio plays
-// fine (NIN's Head Like a Hole, GREEN ROOM's Sweet Leaf) answered that with
-// "This video is unavailable / Watch on YouTube" -- so a preview proved
-// nothing about whether the radio could play the track.
-// The app's #ytDock is the IFrame API on www.youtube.com, which passes
-// enablejsapi + origin, and tools/audition.js already embeds www.youtube.com
-// for exactly this reason; this matches both. referrerpolicy is explicit
-// because YouTube now refuses embeds that arrive with no Referer at all.
+// Every preview on this page goes through here, so there is one embed path.
+// Previews answered roster tracks the radio plays fine with "This video is
+// unavailable / Watch on YouTube". First pass (2026-10-15, PR #93) blamed the
+// youtube-nocookie.com host and moved to www.youtube.com + origin; that
+// changed nothing, because the host was never it. Second pass (2026-10-16),
+// measured in a real Chrome on Firestarter: EVERY embed variant -- nocookie,
+// youtube.com, with or without origin -- is refused when the embedding page
+// is this dashboard at http://<tailnet-ip>:8080, and every one plays on
+// https://hyphen8d.github.io. YouTube judges the embedder's origin, and this
+// page's origin is wherever the admin server was reached.
+// So the player is framed from tools/yt-preview.html ON PAGES, which makes
+// the embedder the origin the radio itself plays from. The cost is that a
+// preview needs the network and the deployed copy of that page; it is a
+// static file that changes ~never, so the deployed copy is the right one.
+const PREVIEW_PAGE = 'https://hyphen8d.github.io/signal/tools/yt-preview.html'
 function ytEmbed(youtubeId) {
-  const origin = encodeURIComponent(location.origin)
   return {
-    src: `https://www.youtube.com/embed/${encodeURIComponent(youtubeId)}?enablejsapi=1&rel=0&playsinline=1&origin=${origin}`,
-    referrerpolicy: 'strict-origin-when-cross-origin',
+    src: `${PREVIEW_PAGE}?v=${encodeURIComponent(youtubeId)}`,
     allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
     allowfullscreen: 'true',
   }

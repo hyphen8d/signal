@@ -1,0 +1,47 @@
+<!doctype html>
+<!--
+  The admin dashboard's preview player, served from GitHub Pages and framed
+  by tools/network.html (ytEmbed()). It exists only to change the ORIGIN the
+  YouTube embed sees.
+
+  2026-10-16: YouTube answers label-owned music -- most of the roster -- with
+  "This video is unavailable / Watch on YouTube" when the page embedding the
+  player is the dashboard at http://<tailnet-ip>:8080. Measured in a real
+  Chrome on Firestarter (wmin5WkOuPw): youtube.com/embed, youtube.com with
+  enablejsapi+origin, and youtube-nocookie.com all refused there, and all
+  three played on https://hyphen8d.github.io. So the embed URL was never the
+  problem (PR #93 changed it on that wrong theory); the embedding origin is.
+  Framing the player from this page makes the embedder hyphen8d.github.io,
+  the origin the radio itself plays from, whatever address the dashboard was
+  reached on.
+
+  Not part of the app: nothing in index.html reaches it, and itch-zip leaves
+  tools/ out of the package.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIGNAL preview</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  iframe { border: 0; width: 100%; height: 100%; display: block; }
+  p { color: #888; font: 12px monospace; padding: 8px; margin: 0; }
+</style>
+<body>
+<script>
+  // Only a YouTube id may come through: this page is public, and the id lands
+  // in a URL, so anything else is refused rather than escaped.
+  const id = new URLSearchParams(location.search).get('v') || ''
+  if (/^[A-Za-z0-9_-]{11}$/.test(id)) {
+    const f = document.createElement('iframe')
+    f.src = `https://www.youtube.com/embed/${id}?enablejsapi=1&rel=0&playsinline=1&origin=${encodeURIComponent(location.origin)}`
+    f.referrerPolicy = 'strict-origin-when-cross-origin'
+    f.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+    f.allowFullscreen = true
+    document.body.appendChild(f)
+  } else {
+    const p = document.createElement('p')
+    p.textContent = 'no valid YouTube id'
+    document.body.appendChild(p)
+  }
+</script>
+</body>
