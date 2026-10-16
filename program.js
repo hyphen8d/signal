@@ -37,7 +37,7 @@ const { default: guide } = await import(`./ui/guide.js?v=${V}`)
 const { default: tapConsentUi } = await import(`./ui/tap-consent.js?v=${V}`)
 const { default: weatherUi } = await import(`./ui/weather.js?v=${V}`)
 const { default: rearPanelUi } = await import(`./ui/rear-panel.js?v=${V}`)
-const { normalizePanel, prefersReducedMotion } = await import(`./settings.js?v=${V}`)
+const { OPTION_LABELS, PANEL_ROWS, normalizePanel, prefersReducedMotion } = await import(`./settings.js?v=${V}`)
 const { default: visualizer } = await import(`./visualizer.js?v=${V}`)
 const { default: game } = await import(`./game.js?v=${V}`)
 
@@ -1200,6 +1200,34 @@ export default {
     // line could. 2026-08-31: both are read PER BAND -- a set that booted
     // announcing the whole roster and one band's edges would be describing a
     // receiver that does not exist.
+    // 2026-10-16 -- THE COPY PASS. Four things were wrong, none of them
+    // errors. PRESETS read "8 STATIONS LOADED": true of the band, and read
+    // by everyone as the whole set, which has 16 across two. Two pairs of
+    // lines said one thing twice (PRESETS / PRESET TABLE LOADED, and
+    // OSCILLATOR CALIBRATING... / TUNER CALIBRATED), and SIGNAL LOCK ARMED
+    // named nothing that exists. And the readout ignored the two facts that
+    // change what the next few seconds sound like: which station it is
+    // coming back up on, and whether the rear panel has turned anything
+    // down -- a boot that says HUM OFF explains a quiet set before anyone
+    // wonders about it. Same number of probe lines, same pacing. Every
+    // value is still read off real state, per the note above.
+    const bandInfo = bandFor(this.band)
+    const bootStation = this.mode === 'locked' ? this.lockedStation : null
+    // A secret station is never named here: a ?station= link to one would
+    // otherwise spell out its callsign on the POST, a beat ahead of the
+    // reveal that is the whole point of finding it.
+    const stationValue = bootStation
+      ? `${bootStation.freq.toFixed(1)}  ${bootStation.secret ? 'UNLISTED' : bootStation.callsign}`
+      : `${this.freq.toFixed(1)}  NO CARRIER`
+    // Only what differs from the set as built (PANEL_ROWS' `def`), so a set
+    // nobody has touched says FACTORY rather than reading out four
+    // defaults. On the lite grid the list does not fit 42 columns, and
+    // collapses to a count rather than truncating mid-word.
+    const turnedDown = PANEL_ROWS.filter((r) => this.panel?.[r.key] && this.panel[r.key] !== r.def)
+    let panelValue = turnedDown.length
+      ? turnedDown.map((r) => `${r.label} ${OPTION_LABELS[this.panel[r.key]]}`).join('  ')
+      : 'FACTORY'
+    if ('REAR PANEL  : '.length + panelValue.length > term.cols - 2) panelValue = `${turnedDown.length} TURNED DOWN`
     const bootLines = [
       // 2026-08-28 -- "MODEL " dropped here for the same reason it was
       // dropped from the title bar's plate (drawChrome): the set is called
@@ -1210,27 +1238,31 @@ export default {
       // SYNAPSE pass got caught by.
       'SG-1  SIGNAL RECEIVER',
       '',
-      `BAND        : ${bandFor(this.band).label} ${bandFor(this.band).freqMin.toFixed(1)} - ${bandFor(this.band).freqMax.toFixed(1)} KHZ`,
-      `PRESETS     : ${this.bandPresets().length} STATIONS LOADED`,
-      'OSCILLATOR  : QUARTZ, CALIBRATING...',
-      'ANTENNA     : DIPOLE, CONTINUITY OK',
+      `BAND        : ${bandInfo.label}  ${bandInfo.freqMin.toFixed(1)} - ${bandInfo.freqMax.toFixed(1)} KHZ`,
+      `STATIONS    : ${this.bandPresets().length} ON ${bandInfo.label}, ${STATIONS.length} ACROSS ${BANDS.length} BANDS`,
+      `DIAL        : ${stationValue}`,
+      `REAR PANEL  : ${panelValue}`,
       '',
-      '[ OK ] TUBES WARMING',
-      '[ OK ] TUNER CALIBRATED',
-      '[ OK ] PRESET TABLE LOADED',
-      // 52nd pass -- the squelch line was removed, replaced with
-      // something related to what actually exists: the full-screen
-      // per-station visualizers, [V], not the phosphor/color cycle, [C].
-      // SQUELCH SET
-      // never meant anything in-app (no squelch feature exists); swapped
-      // for a count of the distinct visualizer effects actually assigned
-      // across the roster, via a Set over STATIONS[].visual rather than a
-      // hardcoded number, so this can't drift out of sync the way a
-      // literal "10" would the next time a station's effect changes.
-      `[ OK ] ${new Set(STATIONS.map((st) => st.visual)).size} VISUALIZER MODES READY`,
-      '[ OK ] SIGNAL LOCK ARMED',
+      '[ OK ] TUBES WARM',
+      '[ OK ] OSCILLATOR LOCKED, QUARTZ',
+      '[ OK ] ANTENNA CONTINUITY',
+      // 52nd pass -- a count of the distinct visualizer effects actually
+      // assigned across the roster, via a Set over STATIONS[].visual rather
+      // than a hardcoded number, so it cannot drift the next time a
+      // station's effect changes. (It replaced a SQUELCH SET line, for a
+      // squelch that never existed.) "EFFECTS" since 2026-10-16: the
+      // visualizer calls them effects everywhere else.
+      `[ OK ] ${new Set(STATIONS.map((st) => st.visual)).size} VISUALIZER EFFECTS`,
       '[ OK ] AUDIO PATH READY',
     ]
+    // 2026-10-16 -- one left edge for the whole readout under a centred
+    // banner, rather than every line centred on its own string: that made
+    // the colons and the [ OK ]s land in a different column on every row,
+    // the same wander the guide's control table was rebuilt to remove
+    // (2026-08-26). Measured with the widest thing the last line can turn
+    // into, so the block does not jump when the tap is live.
+    const bootBlockW = Math.max(...bootLines.slice(1).map((l) => l.length), '[ OK ] AUDIO TAP: LINE'.length)
+    const bootBlockX = centerX(term.cols, 'x'.repeat(bootBlockW))
     // Pacing -- 68th pass, rethought (was a ~5.5s cold-boot POST on every
     // single power-on, 15th/26th passes). STANDBY is now the receiver's
     // resting "on" state, not "off" -- the tube's already warm and lit the
@@ -1282,7 +1314,7 @@ export default {
             // nothing to report. Substituted at land time, not built into
             // bootLines, because the state isn't known when the array is.
             const shown = i === bootLines.length - 1 ? audioTapBootLine() : line
-            term.text(centerX(term.cols, shown), startY + i, shown, i === 0 ? BOLD : DIM)
+            term.text(i === 0 ? centerX(term.cols, shown) : bootBlockX, startY + i, shown, i === 0 ? BOLD : DIM)
             // 38th pass -- sounds added as the boot happens and each item
             // appears -- all 13 lines used to land in
             // total silence, which is most of why a ~5.5s boot felt like
