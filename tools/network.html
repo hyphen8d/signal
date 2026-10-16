@@ -1233,8 +1233,7 @@ function renderAuditionResult(out, stationId) {
     card.appendChild(flags)
     if (!r.dead) {
       card.appendChild(el('iframe', {
-        src: `https://www.youtube-nocookie.com/embed/${r.id}`, loading: 'lazy',
-        allow: 'accelerometer; encrypted-media; picture-in-picture', allowfullscreen: 'true',
+        ...ytEmbed(r.id), loading: 'lazy',
       }))
       const acts = el('div', { class: 'pc-actions' })
       if (repointTarget && repointTarget.stationId === stationId && r.id !== repointTarget.youtubeId) {
@@ -1356,6 +1355,26 @@ function statusDotFor(youtubeId) {
   return el('span', { class: `status-dot ${s.ok ? 'ok' : 'bad'}`, title: s.ok ? 'oEmbed OK' : `oEmbed ${s.status}` })
 }
 
+// Every preview on this page goes through here, so there is one embed path
+// to keep in step with the app's. Until 2026-10-15 the three previews used
+// youtube-nocookie.com/embed/<id> bare, and roster tracks the radio plays
+// fine (NIN's Head Like a Hole, GREEN ROOM's Sweet Leaf) answered that with
+// "This video is unavailable / Watch on YouTube" -- so a preview proved
+// nothing about whether the radio could play the track.
+// The app's #ytDock is the IFrame API on www.youtube.com, which passes
+// enablejsapi + origin, and tools/audition.js already embeds www.youtube.com
+// for exactly this reason; this matches both. referrerpolicy is explicit
+// because YouTube now refuses embeds that arrive with no Referer at all.
+function ytEmbed(youtubeId) {
+  const origin = encodeURIComponent(location.origin)
+  return {
+    src: `https://www.youtube.com/embed/${encodeURIComponent(youtubeId)}?enablejsapi=1&rel=0&playsinline=1&origin=${origin}`,
+    referrerpolicy: 'strict-origin-when-cross-origin',
+    allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
+    allowfullscreen: 'true',
+  }
+}
+
 async function checkOembed(youtubeId) {
   const url = `https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${youtubeId}`)}&format=json`
   try {
@@ -1409,10 +1428,8 @@ function renderPendingCard(entry) {
   previewBtn.addEventListener('click', () => {
     if (previewWrap.firstChild) { previewWrap.innerHTML = ''; previewBtn.textContent = 'preview'; return }
     previewWrap.appendChild(el('iframe', {
-      src: `https://www.youtube-nocookie.com/embed/${entry.youtubeId}`,
+      ...ytEmbed(entry.youtubeId),
       style: 'width:320px;height:180px;border:1px solid var(--line);margin:6px 0;display:block',
-      allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
-      allowfullscreen: 'true',
     }))
     previewBtn.textContent = 'hide preview'
   })
@@ -2116,11 +2133,7 @@ function togglePreview(stationId, i) {
   if (existing && existing.classList.contains('preview-row')) { existing.remove(); return }
   const track = tracksFor(stationById(stationId))[i]
   row.after(el('tr', { class: 'preview-row' }, el('td', { colspan: '7' },
-    el('iframe', {
-      src: `https://www.youtube-nocookie.com/embed/${track.youtubeId}`,
-      allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
-      allowfullscreen: 'true',
-    }))))
+    el('iframe', ytEmbed(track.youtubeId)))))
 }
 
 function ensureEditable(st) {
