@@ -87,18 +87,57 @@ export const MOBILE_CRT_OVERRIDE = {
 // station's `crt` adds beyond SCREEN cannot leak into the next station.
 // tests/crt-base.test.mjs holds it on a 0.88 station.
 export const crtBase = { ...SCREEN }
+
+// 2026-10-15 -- the REAR PANEL's SCREEN: CALM (see settings.js). A third
+// override layer, merged LAST so it beats both a station's own `crt` and
+// the mobile override -- the same "this wins over character" argument the
+// 45th pass made for legibility on a phone, made here for a listener who
+// cannot sit in front of a flickering tube. What it removes is what MOVES
+// or FLASHES, and nothing else:
+//   flicker  -- frame-to-frame brightness variation. The one effect that is
+//               literally a flicker, running every frame the set is on.
+//   roll     -- the rolling bar, and its drift. A band of brightness
+//               crossing the whole face, forever.
+//   snow / noise -- turned down, not off: grain is texture, and a dead-flat
+//               raster reads as a different object. Sparkle is what goes.
+// Phosphor, bloom, scanlines, mask, curvature and chroma -- the things that
+// make it a CRT rather than a terminal -- are untouched. It also gates the
+// one-shot events that only exist to startle (flashCrtGlitch below, and
+// crtIdleEvent / crtGrind / the boot flicker in ui/desktop.js), and it
+// softens the tuning-distance degrade rather than removing it: off-station
+// the picture still visibly loses the signal, by colour fringing, without
+// the bar rolling or the snow storming. Kept as module state for the same
+// reason crtBase is one object -- every reader takes it by import, and a
+// flag passed down through each hook would be one more argument to forget.
+export const CALM_CRT_OVERRIDE = {
+  flicker: 0,
+  roll: 0,
+  rollSpeed: 0,
+  snow: 0.001,
+  noise: 0.07,
+}
+let calmScreen = false
+export function setCalmScreen(on) { calmScreen = !!on }
+export function isCalmScreen() { return calmScreen }
+
 export function setCrtCharacter(s, station) {
   for (const k of Object.keys(crtBase)) delete crtBase[k]
-  Object.assign(crtBase, SCREEN, (station && station.crt) || {}, MOBILE_LITE ? MOBILE_CRT_OVERRIDE : {})
+  Object.assign(crtBase, SCREEN, (station && station.crt) || {}, MOBILE_LITE ? MOBILE_CRT_OVERRIDE : {}, calmScreen ? CALM_CRT_OVERRIDE : {})
   if (!s?.crt?.params) return
   Object.assign(s.crt.params, crtBase)
 }
 export function crtDegradeForDist(dist) {
   const pct = dist == null ? 1 : Math.min(1, dist / NEAR_THRESHOLD)
+  // CALM keeps the colour fringe -- it is a static change, and it is what
+  // still tells you the picture is off-station -- and drops the two that
+  // move: the snow ramps only a touch above its calm floor, and the roll
+  // target is the base itself, so pct has nothing to scale.
+  const snowTo = calmScreen ? 0.004 : 0.035
+  const rollTo = calmScreen ? crtBase.roll : 0.5
   return {
     chroma: crtBase.chroma + (0.9 - crtBase.chroma) * pct,
-    snow: crtBase.snow + (0.035 - crtBase.snow) * pct,
-    roll: crtBase.roll + (0.5 - crtBase.roll) * pct,
+    snow: crtBase.snow + (snowTo - crtBase.snow) * pct,
+    roll: crtBase.roll + (rollTo - crtBase.roll) * pct,
   }
 }
 export function setCrtDegradation(s, dist) {
@@ -137,6 +176,10 @@ export function rampCrtParams(s, from, to, durationMs, startDelay = 0, respectPo
  *  (though in practice onError only fires while locked, i.e. dist 0). */
 export function flashCrtGlitch(s) {
   if (!s?.crt?.params) return
+  // CALM (2026-10-15): a 150ms full-face colour spike is exactly the flash
+  // the setting exists to remove. The dead-video skip it accompanies still
+  // happens and still shows on the status row; only the picture's jolt goes.
+  if (calmScreen) return
   // 2026-09-12 (audit, H5) -- WITH the band. This was the last band-less
   // tuning call in the tree: without it nearestSignal() defaulted to YM, so
   // on any ZM frequency (>= 1000) the nearest YM carrier was ~100+ units

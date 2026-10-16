@@ -1,6 +1,6 @@
 // SIGNAL -- localStorage persistence: what survives a reload (station,
 // track, volume, mute, colour, per-station visual picks, the LINE INPUT
-// answer). Split out in the 2026-08-25 audit.
+// answer, the REAR PANEL's settings). Split out in the 2026-08-25 audit.
 //
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
@@ -54,6 +54,13 @@ export function saveSignalState(program) {
       // unavailable, and a second try/catch around a second key would be
       // that logic copied rather than reused.
       gameHiScore: program.gameHiScore || undefined,
+      // 2026-10-15 -- the REAR PANEL's four positions (settings.js). Saved
+      // whole, every time, rather than only where they differ from the
+      // defaults: a reduced-motion visitor who turns SCREEN back to FULL
+      // has to stay FULL, and a default-shaped payload could not say that.
+      // Read back per-key by normalizePanel(), so a retired value costs one
+      // row its position and nothing else.
+      panel: program.panel || undefined,
     }))
   } catch (e) {}
 }

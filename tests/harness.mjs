@@ -55,7 +55,7 @@ function codeFor(key) {
   return key
 }
 
-export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null, game = false, anyBand = true, build = false } = {}) {
+export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null, game = false, anyBand = true, build = false, reducedMotion = false } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
   const store = new Map()
@@ -94,7 +94,12 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
     removeItem: (k) => store.delete(k),
   }
   // config.js decides MOBILE_LITE once at import from matchMedia; force it.
-  globalThis.matchMedia = () => ({ matches: mobile })
+  // 2026-10-15 -- query-aware since the REAR PANEL: settings.js asks
+  // (prefers-reduced-motion: reduce) too, and a stub that answered `mobile`
+  // to everything would have booted every mobile scenario CALM. Anything
+  // that is not the motion query is still the layout question config.js
+  // asks, answered as before.
+  globalThis.matchMedia = (q) => ({ matches: String(q).includes('reduced-motion') ? reducedMotion : mobile })
   // 2026-08-25 (the consent pass) -- navigator is stubbed on EVERY boot, not
   // just the tap ones, so a capture-capable boot can't leak its stub into the
   // next test through the real Node global. Default is a browser with no

@@ -239,6 +239,7 @@ every visualizer effect, and assert on what's on the grid.
 | `C` | Cycle color (Green Phosphor, Classic Amber, Cyber Blue, Monochrome, Bubblegum Pink) |
 | `V` | Visualizer -- open a full-screen procedural display while a station is locked. Inside it, `C` cycles color, `Shift+C` or `V` cycles the effect itself, `L` opens the synced-lyrics view (`V` or `L` comes back out), `N` skips to the next track, `M` mutes, `Up`/`Down` set volume, `A` re-opens the LINE INPUT card, `F` toggles fullscreen, `T` arms the sleep timer, and a track position bar runs along the bottom; `E` or `Escape` exits -- other keys are no-ops |
 | `W` | Weather -- a card with today in three parts (morning / afternoon / evening), each with a high, a condition and a chance of rain, plus sunrise and sunset; the part you are currently in is picked out. Drawn over the middle of the set rather than taking the screen, so the dial above and the meters below keep running. A live reading also sits in the title bar opposite the sleep timer, refreshed every 15 minutes while the set is on. Asks for your location the first time through a consent card, the same way `[A]` does; saying no costs nothing and `[W]` re-opens it. **Needs a secure connection** -- browsers refuse geolocation over plain `http`, so this works on the deployed site and on `localhost`, but not over a bare IP address |
+| `R` | Rear panel -- the adjustments on the back of the set, for the parts of it you might not want all afternoon. **HUM** (off / low / normal) is the chassis hum, which mute deliberately leaves alone, so this is the only way to turn it down. **STATIC** (off / low / normal) is the hiss between stations and while seeking. **VOICE** (on / off) is the spoken station IDs, liners and sign-on line; the music and the idents are untouched. **SCREEN** (full / calm) takes out the flicker, the rolling bar, the sparkle and the glitches while keeping the tube's glow and colour, and it starts on calm if your system asks for reduced motion. `Up`/`Down` choose a row and `Left`/`Right` set it; each change takes effect at once and is remembered. Desktop only for now: on a phone the settings still apply (reduced motion included), but there is no gesture to open the panel yet |
 | `A` | LINE INPUT -- the audio-capture consent card. Patch a live feed into the meters, or pull it back out. Offered once on your first `[V]`; this key re-opens it on demand, from the main screen or from inside the visualizer |
 | `F` | Fullscreen -- toggles the browser's own fullscreen on the page, for running SIGNAL on a spare monitor without browser chrome. Works from the main screen and the visualizer. Note this cannot hide your browser's "sharing this tab" capture indicator if `[A]` is patched in -- that banner belongs to the browser, not the page |
 
@@ -264,7 +265,7 @@ you do. The guide speaks touch on this tier: it lists gestures rather than
 the keys a phone doesn't have, and it's where the full set lives now that
 the hint rows only have room for five of them.
 
-Scan, presets and back still have no touch equivalent. Neither does volume,
+Scan, presets, back and the `[R]` rear panel still have no touch equivalent. Neither does volume,
 and that one is deliberate rather than pending -- phones have hardware
 buttons for it, and a real set's knob is the thing your hand already knows.
 Known gaps, not oversights.
@@ -384,11 +385,12 @@ isn't just an internal annoyance anymore.
     shell and one module per effect (`{ key, label, init, reset, draw }`,
     registered in `visuals/index.js` in `[V]`-cycle order).
   - `audio/sfx.js` (synthesized control sounds, static bed, hum, the
-    hard-mute speaker bus), `audio/voice.js` (station IDs, liners, lyrics
+    hard-mute speaker bus and the rear panel's level trims), `audio/voice.js` (station IDs, liners, lyrics
     lookup), `audio/tap.js` (the live audio tap and `AUDIO_BUS`).
   - `stations.js` (the roster — pure data), `layout.js` (grid geometry and
     text helpers), `tuning.js` (the band and the nearest-station model),
-    `crt-hooks.js` (live `crt.params` drives), `constants.js`, `state.js`.
+    `crt-hooks.js` (live `crt.params` drives), `constants.js`, `state.js`,
+    `settings.js` + `ui/rear-panel.js` (the `[R]` rear panel).
   Every app module imports its siblings as `?v=<build stamp>` — see
   `main.js` — so a deploy can never mix a fresh module with a stale one.
 - **One tuning distance feeds everything.** How far the dial sits from the

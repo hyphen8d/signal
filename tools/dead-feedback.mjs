@@ -51,6 +51,18 @@
 // second. A child per band keeps each under the ceiling one band always
 // fit in, and parallel children keep the wall time near a single band's.
 //
+// 2026-10-15 -- and then one band stopped fitting. Adding the REAR PANEL
+// ([R], a new key column across every state, plus a rearPanel row) took a
+// single band's child past the 2GB default and it died of OOM straight
+// after the rearPanel row -- reported only as "exited null without a
+// total", with the OOM trace on stderr above the report. Each band is now
+// split into PARTS contiguous slices of its states, one child each, run
+// POOL at a time, and printed back in order so the report reads exactly as
+// it did. Raising the heap instead was the other option and the wrong one
+// on the box this runs on: 7GB total, two children in parallel at 4GB
+// each is swap on a 5400rpm disk. Contiguous rather than interleaved so
+// the rows stay in table order; if a slice ever OOMs again, raise PARTS.
+//
 // One standing exception in the output: [F] FULLSCREEN reports as clicking
 // without changing anything in every powered-on state. It changes the whole
 // browser window, which is real feedback the text grid cannot see.
@@ -69,20 +81,36 @@ import { fileURLToPath } from 'node:url'
 if (!process.argv.some((a) => a.startsWith('--band='))) {
   const { BANDS } = await import('../tuning.js?v=sweep')
   const passArgs = process.argv.slice(2)
-  const runs = BANDS.map((b) => new Promise((resolve) => {
-    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), `--band=${b.key}`, ...passArgs],
+  const PARTS = 2
+  const POOL = 2
+  const jobs = BANDS.flatMap((b) => Array.from({ length: PARTS }, (_, k) => ({ band: b.key, part: k })))
+  const run = (j) => new Promise((resolve) => {
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), `--band=${j.band}`, `--part=${j.part}/${PARTS}`, ...passArgs],
       { stdio: ['ignore', 'pipe', 'inherit'] })
     let out = ''
     child.stdout.on('data', (d) => { out += d })
-    child.on('close', (code) => resolve({ band: b.key, out, code }))
+    child.on('close', (code) => resolve({ ...j, out, code }))
+  })
+  const results = new Array(jobs.length)
+  let next = 0
+  await Promise.all(Array.from({ length: POOL }, async () => {
+    while (next < jobs.length) { const i = next++; results[i] = await run(jobs[i]) }
   }))
   let total = 0
   let failed = false
-  for (const r of await Promise.all(runs)) {
-    process.stdout.write(r.out)
-    const m = r.out.match(/^(\d+) key\(s\) click/m)
-    if (r.code !== 0 || !m) { failed = true; console.log(`\n[${r.band}] sweep exited ${r.code} without a total -- its rows above are incomplete`) } else total += Number(m[1])
-    console.log('')
+  let bandTotal = 0
+  const TOTAL_LINE = /^\n?(\d+) key\(s\) click.*\n?/m
+  for (const r of results) {
+    const m = r.out.match(TOTAL_LINE)
+    // Each part's own total line is folded into one per band, so the report
+    // reads as it did before the split.
+    process.stdout.write(r.out.replace(TOTAL_LINE, ''))
+    if (r.code !== 0 || !m) { failed = true; console.log(`\n[${r.band} part ${r.part + 1}/${PARTS}] sweep exited ${r.code} without a total -- its rows above are incomplete`) } else bandTotal += Number(m[1])
+    if (r.part === PARTS - 1) {
+      console.log(`\n${bandTotal} key(s) click without changing anything (${r.band} ${bandTotal}).\n`)
+      total += bandTotal
+      bandTotal = 0
+    }
   }
   console.log(`${total} key(s) click without changing anything across ${BANDS.length} bands.`)
   process.exit(failed ? 1 : 0)
@@ -138,6 +166,8 @@ const KEYS = [
   // 2026-10-14 -- [Q] QSL (write to the station), added with the key itself
   // rather than discovered missing later, for the reason the note above gives.
   'q',
+  // 2026-10-15 -- [R] REAR PANEL, added with the key, same reason.
+  'r',
   '1', '5', '0',
   // 2026-09-12 (audit, L1/L16) -- plus the first digit PAST each band's
   // station count, derived from the roster rather than typed. isMappedKey
@@ -239,6 +269,16 @@ const STATES = {
     h.advance(1200)                  // the fetch lands and the card repaints
     if (!h.program.weatherOpen) throw new Error('sweep setup: the weather card did not open')
   },
+  // 2026-10-15 -- the REAR PANEL, the weather card's sibling (same rows,
+  // same no-clear contract). Its arrows are the interesting half: an arrow
+  // against a setting's stop must neither click nor claim to have moved,
+  // and from the default positions [->] on the first row is exactly that.
+  rearPanel: (h) => {
+    h.powerOn(); h.key('3'); h.advance(2500)
+    h.key('r')
+    h.advance(300)
+    if (!h.program.panelOpen) throw new Error('sweep setup: the rear panel did not open')
+  },
   vectorScan: (h) => {
     h.powerOn(); h.key('3'); h.advance(3000); h.key('v'); h.advance(1600)
     for (const k of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
@@ -328,11 +368,19 @@ const trial = async (setup, act, bootOpts = {}, band = null) => {
   // would report where the dial ended up rather than where the key landed.
   const label = `${band ? band.key + ' ' : ''}${h.program.poweredOn ? 'on' : 'off'}/${h.program.mode}` +
     `${h.program.visualizerActive ? '/viz' : ''}${h.program.tapConsentOpen ? '/card' : ''}` +
-    `${h.program.weatherOpen ? '/wx' : ''}${h.program.guideOpen ? '/guide' : ''}`
+    `${h.program.weatherOpen ? '/wx' : ''}${h.program.panelOpen ? '/panel' : ''}${h.program.guideOpen ? '/guide' : ''}`
   const clicks = act ? act.clicks(h) : null
   if (act) act.press(h)
   const frames = []
-  for (let i = 0; i < FRAMES; i++) { h.advance(FRAME_MS); frames.push(h.rows().join('\n')) }
+  // Characters AND the inverse plane (2026-10-15). Inverse is how this
+  // screen shows a SELECTED state -- the REAR PANEL marks a switch's
+  // position with it and nothing else -- so a characters-only signature
+  // reported [<-] on the panel as clicking and changing nothing while the
+  // lit segment visibly moved. Attributes (brightness) are still not read:
+  // too many idle animations live there, and the seeding would be leaned on
+  // for every one of them. A change that is ONLY a brightness step stays
+  // invisible here, the meter wipe's case (see CLAUDE.md).
+  for (let i = 0; i < FRAMES; i++) { h.advance(FRAME_MS); frames.push(h.rows().join('\n') + '\n' + h.term.inverse.join('')) }
   const endScanning = !!h.program.scanning
   h.shutdown()
   return { frames, clicks, label, booted, endScanning }
@@ -352,7 +400,15 @@ const same = (a, b) => a.frames.every((f, i) => f === b.frames[i])
 // `--state=visualizer` re-checks one row on its own -- the first thing to
 // reach for when a result looks wrong rather than interesting.
 const only = (process.argv.find((a) => a.startsWith('--state=')) || '').slice(8)
-const wanted = (name) => !only || name === only
+// `--part=k/n` (set by the fan-out above, see the header's 2026-10-15
+// note): this child sweeps the k-th of n contiguous slices of the state
+// list, desktop states first, then mobile, in table order.
+const [partK, partN] = ((process.argv.find((a) => a.startsWith('--part=')) || '').slice(7) || '0/1').split('/').map(Number)
+const inPart = (name) => {
+  const all = [...Object.keys(STATES), ...Object.keys(MOBILE_STATES).map((n) => `mobile-${n}`)]
+  return Math.floor(all.indexOf(name) * partN / all.length) === partK
+}
+const wanted = (name) => (!only || name === only) && inPart(name)
 const onlyBand = (process.argv.find((a) => a.startsWith('--band=')) || '').slice(7)
 const bands = SWEEP_BANDS.filter((b) => !onlyBand || b.key === onlyBand)
 if (!bands.length) throw new Error(`--band=${onlyBand}: no such band (have ${SWEEP_BANDS.map((b) => b.key).join(', ')})`)
@@ -395,7 +451,7 @@ const sweepState = async (setup, bootOpts, canary = true, band = null) => {
 }
 
 const lies = Object.fromEntries(bands.map((b) => [b.key, 0]))
-console.log(`SIGNAL dead-feedback sweep [${bands.map((b) => `${b.key} on ${b.station}`).join(', ')}] -- \`!\` = clicked but changed nothing\n`)
+if (partK === 0) console.log(`SIGNAL dead-feedback sweep [${bands.map((b) => `${b.key} on ${b.station}`).join(', ')}] -- \`!\` = clicked but changed nothing\n`)
 for (const band of bands) {
   for (const [name, setup] of Object.entries(STATES).filter(([n]) => wanted(n))) {
     const bootOpts = BOOT_OPTS[name] ?? {}

@@ -114,6 +114,68 @@ export function setSpeakerLevel(muted, volume) {
     speakerBusNode.gain.linearRampToValueAtTime(speakerLevel, t + 0.015)
   } catch (e) {}
 }
+
+// 2026-10-15 -- the REAR PANEL's two level trims (see settings.js). Each is
+// one persistent gain node that every source of its kind connects through,
+// built the same lazy, module-level way as the speaker bus above and for
+// the same reasons: the trim is right whenever a node is first created,
+// however long after the saved setting was restored, and a change reaches
+// a sound that is ALREADY playing -- the hum runs for the whole session,
+// so a trim read only at startTubeHum() would not move until the next
+// power cycle, which is not what turning a pot does.
+//
+// Where they sit is the point, and they sit in different places:
+//   hum    -> humTrim -> destination      (still bypasses the speaker bus:
+//                                          the chassis carve-out above is
+//                                          unchanged, so [M] still does not
+//                                          touch it -- only this does)
+//   static -> staticTrim -> speaker bus   (the bed, the seek hiss and the
+//                                          boot burst: all speaker audio, so
+//                                          volume and mute still apply on
+//                                          top, multiplying, not replacing)
+// A multiplier threaded into each start function instead would have to be
+// re-applied to a running bed on every change, and the bed's gain is
+// already being ramped by setStaticIntensity() -- two writers on one
+// AudioParam is how a ramp gets cancelled out from under the other.
+export let humTrim = 1
+export let staticTrim = 1
+let humTrimNode = null
+let staticTrimNode = null
+function humOut(ctx) {
+  if (!humTrimNode) {
+    humTrimNode = ctx.createGain()
+    humTrimNode.gain.value = humTrim
+    humTrimNode.connect(ctx.destination)
+  }
+  return humTrimNode
+}
+function staticOut(ctx) {
+  if (!staticTrimNode) {
+    staticTrimNode = ctx.createGain()
+    staticTrimNode.gain.value = staticTrim
+    staticTrimNode.connect(speakerOut(ctx))
+  }
+  return staticTrimNode
+}
+function rampTrim(node, level) {
+  if (!node || !actx) return
+  try {
+    const t = actx.currentTime
+    node.gain.cancelScheduledValues(t)
+    node.gain.setValueAtTime(node.gain.value, t)
+    // Slower than the speaker bus's 15ms: this is a pot being turned while
+    // you listen, and a quarter second reads as that rather than a switch.
+    node.gain.linearRampToValueAtTime(level, t + 0.25)
+  } catch (e) {}
+}
+export function setHumTrim(level) {
+  humTrim = Number.isFinite(level) ? Math.max(0, level) : 1
+  rampTrim(humTrimNode, humTrim)
+}
+export function setStaticTrim(level) {
+  staticTrim = Number.isFinite(level) ? Math.max(0, level) : 1
+  rampTrim(staticTrimNode, staticTrim)
+}
 // Static burst for manual seeking (11th pass -- static was needed
 // as you seek manually) -- replaces the old per-step playTick(),
 // which was a short flat-noise click too subtle to read as static. This is
@@ -138,7 +200,7 @@ export function playSeekStatic(centreHz = 1400) {
     const gain = ctx.createGain()
     gain.gain.setValueAtTime(0.22, ctx.currentTime)
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09)
-    src.connect(filter).connect(gain).connect(speakerOut(ctx))
+    src.connect(filter).connect(gain).connect(staticOut(ctx)) // REAR PANEL trim, see staticOut
     src.start()
   } catch (e) {}
 }
@@ -241,7 +303,7 @@ export function startStaticNoise(dist, centreHz = STATIC_CENTRE_DEFAULT) {
     const gain = ctx.createGain()
     gain.gain.setValueAtTime(0, ctx.currentTime)
     gain.gain.linearRampToValueAtTime(staticGainForDist(dist), ctx.currentTime + 0.15)
-    src.connect(filter).connect(gain).connect(speakerOut(ctx))
+    src.connect(filter).connect(gain).connect(staticOut(ctx)) // REAR PANEL trim, see staticOut
     src.start()
     staticSrc = src
     staticGain = gain
@@ -289,6 +351,13 @@ export function stopStaticNoise() {
 // broadcast -- it's the set's own noise floor, on for as long as the set is
 // on, same as a real tube amp still hums after you've turned the volume
 // down. Only powerUp()/powerDown() start and stop it.
+// 2026-10-15 -- and the REAR PANEL's HUM row is the one control that turns
+// it down. That is not a reversal of the paragraph above: mute is still the
+// broadcast switch and still leaves the hum alone. But "the set's own noise
+// floor, on for as long as the set is on" also meant there was no way at
+// all to be rid of it, and a fixed 60Hz drone is exactly the kind of thing
+// some listeners cannot sit with for an afternoon. A real chassis has a hum
+// balance pot on the back for this; [R] is that pot. See humOut().
 export let humNodes = null
 // 2026-08-22: doubled from the original 0.012 starting guess, following
 // dev-server QA. Note this now sits slightly ABOVE
@@ -333,7 +402,10 @@ export function startTubeHum() {
     ng.gain.setValueAtTime(0.25, t)
     src.connect(lp).connect(ng).connect(gain)
     src.start(t)
-    gain.connect(ctx.destination)
+    // 2026-10-15 -- through the REAR PANEL's hum trim, which still lands
+    // on ctx.destination: the chassis carve-out from the speaker bus is
+    // unchanged (see humOut).
+    gain.connect(humOut(ctx))
     humNodes = { gain, oscs, src }
   } catch (e) {}
 }
@@ -794,7 +866,7 @@ export function playStaticBurst(duration, peakGain, freq) {
     gain.gain.setValueAtTime(0, t)
     gain.gain.linearRampToValueAtTime(peakGain ?? 0.14, t + duration * 0.3)
     gain.gain.linearRampToValueAtTime(0, t + duration)
-    src.connect(filter).connect(gain).connect(speakerOut(ctx))
+    src.connect(filter).connect(gain).connect(staticOut(ctx)) // REAR PANEL trim, see staticOut
     src.start(t)
     src.stop(t + duration + 0.02)
   } catch (e) {}
