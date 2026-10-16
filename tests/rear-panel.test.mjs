@@ -11,6 +11,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { boot } from './harness.mjs'
 import { installFakeAudio } from './fake-audio.mjs'
+import { SECRET_STATIONS, STATIONS } from '../stations.js'
 
 const S = await import('../settings.js')
 
@@ -253,8 +254,22 @@ test('SCREEN switches live, both ways, without stranding the station\'s own pict
   } finally { h.shutdown() }
 })
 
+// Pinned into the widest gap on YM (2026-10-16). Forty seeks right from a
+// random station failed about one run in four: the seek WRAPS at the band
+// edge, so where forty presses land depends on where you started, and
+// often it was within reach of another station (secret ones count -- they
+// are signals on the dial) and the fringe assertion failed. Now: start on
+// the station above the widest gap between adjacent signals and step left
+// to its middle. Derived from the roster rather than named, so a roster
+// change keeps it working, and the setup assertion below says so if a new
+// station ever closes the gap.
+const ymSignals = [...STATIONS, ...SECRET_STATIONS].filter((st) => st.band === 'ym').sort((a, b) => a.freq - b.freq)
+const widest = ymSignals.slice(1)
+  .map((b, i) => ({ a: ymSignals[i], b }))
+  .filter(({ b }) => !b.secret)
+  .sort((x, y) => (y.b.freq - y.a.freq) - (x.b.freq - x.a.freq))[0]
 test('CALM: no idle roll or tear, no glitch flash, and off-station the bar never rolls', async () => {
-  const h = await boot({ saved: { panel: { screen: 'calm' } } })
+  const h = await boot({ station: widest.b.id, saved: { panel: { screen: 'calm' } } })
   try {
     h.powerOn(); h.advance(2000)
     const p = h.crt.params
@@ -267,9 +282,13 @@ test('CALM: no idle roll or tear, no glitch flash, and off-station the bar never
     assert.equal(p.chroma, before.chroma, 'no glitch spike')
     // Seek well off any station: the fringe still says "no signal", the
     // bar does not roll and the snow stays near its floor.
-    for (let i = 0; i < 40; i++) h.key('ArrowRight')
+    const { NEAR_THRESHOLD, SEEK_STEP, nearestSignal } = await import(`../tuning.js?v=${h.tag}`)
+    const presses = Math.round((widest.b.freq - widest.a.freq) / 2 / SEEK_STEP)
+    for (let i = 0; i < presses; i++) h.key('ArrowLeft')
     h.advance(200)
     assert.equal(h.program.mode, 'seeking')
+    const near = nearestSignal(h.program.freq, h.program.band)
+    assert.ok(!near || near.dist > NEAR_THRESHOLD, `test setup: really off-station (${h.program.freq}, ${near?.dist})`)
     assert.equal(p.roll, 0)
     assert.ok(p.snow <= 0.004 + 1e-9, `snow stays low off-station: ${p.snow}`)
     assert.ok(p.chroma > before.chroma, 'the off-station fringe is kept')
