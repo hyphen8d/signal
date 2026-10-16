@@ -938,7 +938,7 @@
       "stationId": "cold-wave"
     },
     "rVp454wjqls": {
-      "at": "2026-09-27T08:14:57.452Z",
+      "at": "2026-10-15T08:48:53.648Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -950,7 +950,7 @@
       "stationId": "midnight-neon"
     },
     "0CKkRtkzw4g": {
-      "at": "2026-09-27T08:14:57.621Z",
+      "at": "2026-10-15T08:48:53.464Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -962,7 +962,7 @@
       "stationId": "midnight-neon"
     },
     "FhbxFnNm-S8": {
-      "at": "2026-09-27T08:14:57.504Z",
+      "at": "2026-10-15T08:48:53.880Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -974,7 +974,7 @@
       "stationId": "midnight-neon"
     },
     "OvW5y3lZ7rc": {
-      "at": "2026-09-27T08:14:58.356Z",
+      "at": "2026-10-15T08:48:55.064Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -986,7 +986,7 @@
       "stationId": "midnight-neon"
     },
     "JalJnTs3mzk": {
-      "at": "2026-09-27T08:14:58.189Z",
+      "at": "2026-10-15T08:48:54.179Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1022,7 +1022,7 @@
       "stationId": "midnight-neon"
     },
     "SYTqNepDhl8": {
-      "at": "2026-09-27T08:14:58.110Z",
+      "at": "2026-10-15T08:48:53.685Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1034,7 +1034,7 @@
       "stationId": "midnight-neon"
     },
     "i3eo3ndoCMI": {
-      "at": "2026-09-27T08:14:58.611Z",
+      "at": "2026-10-15T08:48:55.108Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1058,7 +1058,7 @@
       "stationId": "midnight-neon"
     },
     "t-8CYSBBbZE": {
-      "at": "2026-09-28T08:53:51.265Z",
+      "at": "2026-10-15T08:48:54.999Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1368,21 +1368,6 @@
       "title": "CAT'S EYE | \"Cat's Eye\" by Anri | Official Opening Theme",
       "channel": "Anime! on TMS Official Channel",
       "stationId": "city-lights"
-    },
-    "XE45nsroFTE": {
-      "at": "2026-10-14T19:24:20.538Z",
-      "flags": [
-        "DEAD 404"
-      ],
-      "strikes": 1,
-      "status": null,
-      "countries": null,
-      "embeddable": null,
-      "seconds": null,
-      "title": "Ride On Time",
-      "channel": null,
-      "stationId": "city-lights",
-      "strikeAt": "2026-10-14T08:01:57.598Z"
     },
     "k7VkzjSe5Ng": {
       "at": "2026-10-14T08:01:58.239Z",
@@ -1793,7 +1778,7 @@
       "stationId": "city-lights"
     },
     "URma_gu1aNE": {
-      "at": "2026-09-27T08:14:53.432Z",
+      "at": "2026-10-15T08:48:43.634Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1877,7 +1862,7 @@
       "stationId": "circuit-crush"
     },
     "gDpfybAvEag": {
-      "at": "2026-09-27T08:14:54.079Z",
+      "at": "2026-10-15T08:48:45.740Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1901,7 +1886,7 @@
       "stationId": "circuit-crush"
     },
     "qKauZYXABrM": {
-      "at": "2026-09-27T08:14:53.400Z",
+      "at": "2026-10-15T08:48:43.422Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1937,7 +1922,7 @@
       "stationId": "circuit-crush"
     },
     "Y8DekFFCE5c": {
-      "at": "2026-09-27T08:14:54.265Z",
+      "at": "2026-10-15T08:48:46.421Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1949,7 +1934,7 @@
       "stationId": "circuit-crush"
     },
     "VUQxsBTqh1s": {
-      "at": "2026-09-27T08:14:53.903Z",
+      "at": "2026-10-15T08:48:43.307Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1961,7 +1946,7 @@
       "stationId": "circuit-crush"
     },
     "Io6TL3RQ5zw": {
-      "at": "2026-09-27T08:14:54.253Z",
+      "at": "2026-10-15T08:48:46.360Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1973,7 +1958,7 @@
       "stationId": "circuit-crush"
     },
     "2KU9i_sx4zM": {
-      "at": "2026-09-27T08:14:54.228Z",
+      "at": "2026-10-15T08:48:45.478Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1985,7 +1970,7 @@
       "stationId": "circuit-crush"
     },
     "ntTRv7XUxM8": {
-      "at": "2026-09-27T08:14:54.135Z",
+      "at": "2026-10-15T08:48:45.918Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -1997,7 +1982,7 @@
       "stationId": "circuit-crush"
     },
     "Jv1ZN8c4_Gs": {
-      "at": "2026-09-27T08:14:54.809Z",
+      "at": "2026-10-15T08:48:47.810Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2009,7 +1994,7 @@
       "stationId": "circuit-crush"
     },
     "G02wKufX3nw": {
-      "at": "2026-09-27T08:14:54.781Z",
+      "at": "2026-10-15T08:48:46.684Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2021,7 +2006,7 @@
       "stationId": "circuit-crush"
     },
     "IDd5JgAcLhI": {
-      "at": "2026-09-27T08:14:54.916Z",
+      "at": "2026-10-15T08:48:48.937Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2033,7 +2018,7 @@
       "stationId": "circuit-crush"
     },
     "O0LB9cIobXY": {
-      "at": "2026-09-27T08:14:55.003Z",
+      "at": "2026-10-15T08:48:48.961Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2045,7 +2030,7 @@
       "stationId": "circuit-crush"
     },
     "gzRbL_Jwtzw": {
-      "at": "2026-09-27T08:14:54.938Z",
+      "at": "2026-10-15T08:48:48.763Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2057,7 +2042,7 @@
       "stationId": "circuit-crush"
     },
     "zYfs-bZS5Zw": {
-      "at": "2026-09-27T08:14:55.620Z",
+      "at": "2026-10-15T08:48:48.224Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2069,7 +2054,7 @@
       "stationId": "circuit-crush"
     },
     "LxIyc5qJGzQ": {
-      "at": "2026-09-27T08:14:55.096Z",
+      "at": "2026-10-15T08:48:48.612Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2081,7 +2066,7 @@
       "stationId": "circuit-crush"
     },
     "VE3QIvywZnU": {
-      "at": "2026-09-27T08:14:55.624Z",
+      "at": "2026-10-15T08:48:50.898Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2093,7 +2078,7 @@
       "stationId": "circuit-crush"
     },
     "UiSB2Fbw9gs": {
-      "at": "2026-09-27T08:14:55.784Z",
+      "at": "2026-10-15T08:48:51.151Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2105,7 +2090,7 @@
       "stationId": "circuit-crush"
     },
     "7fDvxlK2FMc": {
-      "at": "2026-09-27T08:14:55.819Z",
+      "at": "2026-10-15T08:48:50.442Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2117,7 +2102,7 @@
       "stationId": "circuit-crush"
     },
     "X3wVDrc8000": {
-      "at": "2026-09-27T08:14:55.719Z",
+      "at": "2026-10-15T08:48:50.239Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2129,7 +2114,7 @@
       "stationId": "circuit-crush"
     },
     "jsE7RFs7bHk": {
-      "at": "2026-09-27T08:14:55.974Z",
+      "at": "2026-10-15T08:48:51.334Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2141,7 +2126,7 @@
       "stationId": "circuit-crush"
     },
     "ssdA6IiP3r4": {
-      "at": "2026-09-27T08:14:56.556Z",
+      "at": "2026-10-15T08:48:52.493Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2153,7 +2138,7 @@
       "stationId": "circuit-crush"
     },
     "hd9xGlXGNh0": {
-      "at": "2026-09-27T08:14:56.544Z",
+      "at": "2026-10-15T08:48:52.500Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2165,7 +2150,7 @@
       "stationId": "circuit-crush"
     },
     "HJti6_oiR1A": {
-      "at": "2026-09-27T08:14:56.569Z",
+      "at": "2026-10-15T08:48:52.270Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -2177,7 +2162,7 @@
       "stationId": "circuit-crush"
     },
     "9EJJlr7Dopk": {
-      "at": "2026-09-27T08:14:56.465Z",
+      "at": "2026-10-15T08:48:51.090Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -3844,22 +3829,6 @@
       "channel": "DJ Quik - Topic",
       "stationId": "hackback"
     },
-    "BQrdjT3GHwE": {
-      "at": "2026-10-14T19:24:21.534Z",
-      "flags": [
-        "NOT-US",
-        "UNPLAYABLE"
-      ],
-      "strikes": 2,
-      "status": "UNPLAYABLE",
-      "countries": 117,
-      "embeddable": true,
-      "seconds": 260,
-      "title": "Mistadobalina",
-      "channel": "Del The Funky Homosapien - Topic",
-      "stationId": "hackback",
-      "strikeAt": "2026-10-14T08:01:56.652Z"
-    },
     "PWOa_eeKzO0": {
       "at": "2026-10-13T07:29:55.316Z",
       "flags": [],
@@ -3967,21 +3936,6 @@
       "title": "Mayonakano Joke",
       "channel": "Takako Mamiya - Topic",
       "stationId": "city-lights"
-    },
-    "SIGr6dc_2Sc": {
-      "at": "2026-10-14T19:24:20.535Z",
-      "flags": [
-        "DEAD 404"
-      ],
-      "strikes": 1,
-      "status": null,
-      "countries": null,
-      "embeddable": null,
-      "seconds": null,
-      "title": "Bomber",
-      "channel": null,
-      "stationId": "city-lights",
-      "strikeAt": "2026-10-14T08:01:56.709Z"
     },
     "AeH1xq2PpjQ": {
       "at": "2026-10-14T08:01:57.471Z",
@@ -4212,7 +4166,7 @@
       "stationId": "circuit-crush"
     },
     "nUn0PC7098E": {
-      "at": "2026-09-27T08:14:56.500Z",
+      "at": "2026-10-15T08:48:52.304Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -4224,7 +4178,7 @@
       "stationId": "midnight-neon"
     },
     "VL-TIXPivpQ": {
-      "at": "2026-09-27T08:14:56.649Z",
+      "at": "2026-10-15T08:48:52.246Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -4236,7 +4190,7 @@
       "stationId": "midnight-neon"
     },
     "u31thuMehjM": {
-      "at": "2026-09-27T08:14:57.436Z",
+      "at": "2026-10-15T08:48:53.895Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -4248,7 +4202,7 @@
       "stationId": "midnight-neon"
     },
     "qke-jOUqSXU": {
-      "at": "2026-09-27T08:14:57.331Z",
+      "at": "2026-10-15T08:48:52.620Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -4260,7 +4214,7 @@
       "stationId": "midnight-neon"
     },
     "VFQ87_g41ZA": {
-      "at": "2026-09-27T08:14:57.490Z",
+      "at": "2026-10-15T08:48:53.345Z",
       "flags": [],
       "strikes": 0,
       "status": "OK",
@@ -8950,6 +8904,42 @@
       "title": "Half Moon",
       "channel": "Home - Topic",
       "stationId": "neon-stasis"
+    },
+    "S_9LEfENEMw": {
+      "at": "2026-10-15T08:48:44.329Z",
+      "flags": [],
+      "strikes": 0,
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 358,
+      "title": "Bomber - Tatsuro yamashita ",
+      "channel": "TIPO ",
+      "stationId": "city-lights"
+    },
+    "e29ZR1MNOUA": {
+      "at": "2026-10-15T08:48:44.338Z",
+      "flags": [],
+      "strikes": 0,
+      "status": "OK",
+      "countries": 247,
+      "embeddable": true,
+      "seconds": 258,
+      "title": "Mistadobalina - Del The Funkee Homosapien",
+      "channel": "Cerlov",
+      "stationId": "hackback"
+    },
+    "FCoOyPa6k-U": {
+      "at": "2026-10-15T08:48:44.359Z",
+      "flags": [],
+      "strikes": 0,
+      "status": "OK",
+      "countries": 249,
+      "embeddable": true,
+      "seconds": 351,
+      "title": "Ride On Time - Tatsuro yamashita ",
+      "channel": "TIPO ",
+      "stationId": "city-lights"
     }
   }
 }
