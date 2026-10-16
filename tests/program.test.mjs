@@ -595,8 +595,8 @@ test('guide page 1: every control row shares its group\'s column origin', async 
     h.key('g')
     h.advance(300)
     const rows = h.rows()
-    const head = rows.findIndex((r) => r.includes('TUNING') && r.includes('RECEIVER') && r.includes('DISPLAY'))
-    assert.ok(head > 0, 'all three group heads share one row')
+    const head = rows.findIndex((r) => r.includes('TUNING') && r.includes('RECEIVER') && r.includes('DISPLAY') && r.includes('EXTRAS'))
+    assert.ok(head > 0, 'all four group heads share one row')
     // The page this replaced centred each of its four control rows on its own
     // string, so the left edges landed at columns 16, 13, 14 and 9 and the
     // second column at 36, 33, 34 and 24. Nothing lined up. Exact-equality on
@@ -616,21 +616,40 @@ test('guide page 1: every control row shares its group\'s column origin', async 
   } finally { h.shutdown() }
 })
 
-test('guide page 1: [A] is its own callout, not one cell of the control grid', async () => {
+// 2026-10-16 -- [A] is listed in the grid like every other key now, and
+// keeps its explanation below the rule. What this guards is the half that
+// still matters: it used to be explained at FAINT, the same register as the
+// ads disclaimer, despite being the only control that raises a browser
+// permission prompt.
+test('guide page 1: LINE IN keeps its explanation under the rule', async () => {
   const h = await boot()
   try {
     h.powerOn()
     h.key('g')
     h.advance(300)
     const rows = h.rows()
-    const y = rows.findIndex((r) => r.includes('[A] LINE IN'))
-    assert.ok(y > 0, '[A] has a row of its own')
-    // It used to sit third on a DIM grid row and be explained at FAINT -- the
-    // same register as the ads disclaimer -- despite being the only control
-    // that raises a browser permission prompt. Sharing its row with another
-    // bracketed key would mean it had been folded back into the table.
-    assert.equal((rows[y].match(/\[[^\]]+\]/g) || []).length, 1, 'no other control shares the [A] row')
+    const y = rows.findIndex((r) => r.includes('LINE IN feeds live audio into the meters.'))
+    assert.ok(y > 0, 'the LINE IN explanation is drawn')
+    assert.ok(rows[y - 1].includes('-'.repeat(64)), 'directly under the rule')
     assert.ok(rows[y + 1].includes('Optional'), 'the consent line sits directly under it')
+  } finally { h.shutdown() }
+})
+
+// 2026-10-16 -- the grid is the whole key list. Every letter command the
+// app answers on the main screen must be taught there, or the next key added
+// goes untaught the way [R], [A] and [Q] were each patched in somewhere
+// else. Driven off MAPPED_KEYS, not a copy of it, so adding a key to the
+// set without adding it to the grid is what fails.
+test('guide page 1: every command letter is listed in the grid', async () => {
+  const h = await boot()
+  try {
+    const { MAPPED_KEYS } = await import(`../constants.js?v=${h.tag}`)
+    const listed = new Set(h.program.GUIDE_CONTROL_GROUPS.flatMap((g) => g.rows.map(([k]) => k)))
+    const letters = [...MAPPED_KEYS].filter((k) => /^[a-z]$/.test(k))
+    assert.ok(letters.length >= 15, `test setup: read the key set (${letters.length})`)
+    for (const k of letters) assert.ok(listed.has(`[${k.toUpperCase()}]`), `[${k.toUpperCase()}] is in the guide grid`)
+    h.powerOn(); h.key('g'); h.advance(300)
+    for (const k of listed) assert.ok(h.find(k) >= 0, `${k} is actually drawn`)
   } finally { h.shutdown() }
 })
 
@@ -2886,7 +2905,7 @@ test('the guide says where to write, on both layouts (2026-10-14)', async () => 
   const d = await boot({})
   try {
     d.powerOn(); d.key('g'); d.advance(300)
-    assert.ok(d.find('[Q] WRITE IN -- matt@gial.co') >= 0, 'desktop About page names [Q] and the address')
+    assert.ok(d.find('Write in -- matt@gial.co') >= 0, 'desktop About page gives the address')
   } finally { d.shutdown() }
   const m = await boot({ mobile: true })
   try {

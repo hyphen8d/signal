@@ -1705,7 +1705,18 @@ export default {
     // -- this row lands at 77 of the 78 usable columns, one to spare. The
     // next control that wants the footer will not fit on either line, and
     // should go to the Guide the way [T] and [A] did.
-    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BAND   [K] TAG'
+    // 2026-10-16 -- THE FOOTER IS THE FACEPLATE, the Guide is the manual.
+    // Both rows were full (77 of 78 columns) and every new key since [T]
+    // had gone somewhere ad hoc, so the split is now by when you need a
+    // control rather than by what fits: these two rows carry what a
+    // first-time listener needs in the first minute -- tune, lock, scan,
+    // presets, band, volume, mute, power -- plus [V], kept on purpose as
+    // the set's best trick, and [G] last, where it reads as "and the rest
+    // is in here". [K] TAG, [N] NEXT and [C] COLOR moved to the Guide's
+    // grid, which now lists every key (see GUIDE_CONTROL_GROUPS). Gaps went
+    // back to 3sp now there is room, and a future key goes to the Guide
+    // unless it is one the first minute needs.
+    const line1 = '[<-/->] SEEK   [ENTER] LOCK   [S] SCAN   [1-9] PRESETS   [B] BAND'
     // 23rd pass: "[C] MODE" rather than the fuller "[C] DISPLAY" -- kept
     // short for the same reason now that GUIDE joined this line too (the
     // fixed hint row has broken before on an over-length string, see
@@ -1725,7 +1736,7 @@ export default {
     // vocabulary stays 'mode' (DISPLAY_MODES, cycleDisplayMode,
     // drawModeStrip) -- deliberate, renaming those buys nothing and this
     // is a label decision, not a model one.
-    const line2 = '[N] NEXT  [UP/DOWN] VOL  [M] MUTE  [P] POWER  [G] GUIDE  [C] COLOR  [V] VIZ'
+    const line2 = '[UP/DOWN] VOL   [M] MUTE   [P] POWER   [V] VIZ   [G] GUIDE'
     // 52nd pass -- the lower bar footer in main view mode was too
     // bright and hard to read, dialed down. First cut dropped the row
     // fill to DIM but kept the text calls at NORMAL -- in inverse mode the
