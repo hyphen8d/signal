@@ -2798,7 +2798,8 @@ export default {
    *
    *  Main screen only. The visualizer's legend has no room for it, and the
    *  guide's About page (where the address already lived) is where it is
-   *  taught -- the footer's line1 is 72 of 80 columns and line2 75. */
+   *  taught -- in its EXTRAS group since 2026-10-16, when the footer became
+   *  the first-minute controls only (see drawHint). */
   writeIn(s) {
     const url = this.listenerMailUrl()
     try { if (globalThis.location) globalThis.location.href = url } catch (e) {}
@@ -3692,8 +3693,8 @@ export default {
         break
       // 2026-10-15 -- [R] REAR PANEL: hum, static, voice and screen (see
       // settings.js for why it is the back of the set and not a menu). Not
-      // on the footer, which has no room (see drawHint); the Guide's
-      // RECEIVER group teaches it. The NO PANEL flash mirrors NO WEATHER:
+      // on the footer, which is the first-minute controls only (see
+      // drawHint); the Guide's EXTRAS group teaches it. The NO PANEL flash mirrors NO WEATHER:
       // canOpenPanel() is only false here on the lite layout, which no
       // keyboard reaches, but a key that clicks must answer.
       case 'r': case 'R':

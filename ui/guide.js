@@ -163,6 +163,8 @@ export default {
     // column keeps its width; the group goes to five rows, matching TUNING,
     // which pushes drawGuideControls' return down one -- still clear of the
     // About page's own rule at row 14.
+    // (The two notes below are superseded by the 2026-10-16 one after them,
+    // kept because the row-13 constraint they found still holds.)
     // [K] TAG (2026-09-01) IS DELIBERATELY NOT IN THIS GRID. It was added
     // here first, as a sixth RECEIVER row, and that ate row 13 -- which is
     // one of this page's blank gaps and is asserted as such. The three
@@ -180,13 +182,32 @@ export default {
     // on") and the footer's line2 -- while [R] is on neither, and this grid
     // is the one place a keyboard visitor will find it. 'REAR PANEL' is the
     // same 10 columns as 'NEXT TRACK', so the column width holds.
-    { head: 'RECEIVER', rows: [['[UP/DN]', 'VOLUME'], ['[M]', 'MUTE'], ['[N]', 'NEXT TRACK'], ['[T]', 'SLEEP'], ['[R]', 'REAR PANEL']] },
+    //
+    // 2026-10-16 -- THE GRID IS THE WHOLE KEY LIST NOW, and both exceptions
+    // above are undone. Every command had been taught somewhere, but no one
+    // place taught all of them: the footer carried 13, this grid 15, [A] and
+    // [Q] had a line each further down the page, and each new key went
+    // wherever there happened to be a slot ([R] by evicting [P]). The split
+    // is now the real-radio one -- the footer is the faceplate (what you
+    // need in the first minute, plus [V] and [G]; see drawHint) and this
+    // grid is the manual, with every key in it exactly once. So [P] is back,
+    // [K] is in, and [A]/[Q] moved up from their own lines into a fourth
+    // group, EXTRAS. Four groups of five fit the rows three did, which is
+    // what keeps row 13 blank; the width is paid for by the gutter, which
+    // drawGuideControls now sizes to fit rather than fixing at 7.
+    { head: 'RECEIVER', rows: [['[P]', 'POWER'], ['[UP/DN]', 'VOLUME'], ['[M]', 'MUTE'], ['[N]', 'NEXT TRACK'], ['[T]', 'SLEEP']] },
     // [F] added 2026-08-26 (issue #8). 'FULLSCREEN' is the same 10 chars as
     // 'VISUALIZER', so the column keeps its width and the block its centring.
     // [W] added 2026-08-29. 'WEATHER' is shorter than 'FULLSCREEN' so the
     // column keeps its width, and the group goes to five rows -- matching
     // TUNING and RECEIVER, so all three are now the same height.
     { head: 'DISPLAY', rows: [['[C]', 'COLOR'], ['[V]', 'VISUALIZER'], ['[F]', 'FULLSCREEN'], ['[W]', 'WEATHER'], ['[G]', 'GUIDE']] },
+    // The controls that are neither tuning, receiver nor display: the two
+    // that leave the set ([K] copies a link, [Q] opens a mail), the back of
+    // the chassis, and the one that asks the browser for audio. [A] keeps
+    // its explanation under the rule below -- it is still the only key that
+    // raises a permission prompt -- but is listed here like any other.
+    { head: 'EXTRAS', rows: [['[K]', 'TAG'], ['[R]', 'REAR PANEL'], ['[A]', 'LINE IN'], ['[Q]', 'WRITE IN']] },
   ],
   // Three groups across on the 80-col grid; stacked two-across on anything
   // narrower. The narrow path is not reachable today -- mobile has no touch
@@ -203,10 +224,15 @@ export default {
       l: Math.max(...g.rows.map(r => r[1].length)),
     }))
     const cell = (i) => Math.max(widths[i].k + 1 + widths[i].l, groups[i].head.length)
-    const GUTTER = 7
     const across = groups.length
-    const blockW = groups.reduce((n, _, i) => n + cell(i), 0) + GUTTER * (across - 1)
-    if (blockW + 4 <= term.cols) {
+    const cellsW = groups.reduce((n, _, i) => n + cell(i), 0)
+    // 7 while there were three groups; the fourth (2026-10-16) only fits at
+    // 5. Sized rather than hardcoded so the widest block that fits is the
+    // one drawn, and a group that would need a gutter under 2 falls through
+    // to the narrow branch instead of running the columns together.
+    const GUTTER = Math.min(7, Math.floor((term.cols - 4 - cellsW) / Math.max(1, across - 1)))
+    const blockW = cellsW + GUTTER * (across - 1)
+    if (GUTTER >= 2 && blockW + 4 <= term.cols) {
       let x = centerX(term.cols, 'x'.repeat(blockW))
       for (let gi = 0; gi < across; gi++) {
         term.text(x, y0, groups[gi].head, BOLD)
@@ -293,7 +319,11 @@ export default {
       return
     }
     put(14, '-'.repeat(64), FAINT)
-    this.drawGuideKeyLine(s, 15, '[A] LINE IN -- feed live audio into the meters', NORMAL)
+    // 2026-10-16 -- no [A] bracket here any more: the key is listed in the
+    // grid's EXTRAS group with every other one, and this stays as what it
+    // was promoted to be, the explanation of the one control that asks the
+    // browser for something.
+    put(15, 'LINE IN feeds live audio into the meters.', NORMAL)
     put(16, 'Optional and never automatic. Decline and the meters stay synthetic.', MUTED)
     put(18, 'Made by Hyphen8d -- inspired by my own music taste, built for anyone', MUTED)
     put(19, 'who wants a weird little radio to leave on.  Live audio sync by End Dream.', MUTED)
@@ -301,8 +331,10 @@ export default {
     // copies it. The address alone, drawn into a canvas, could be neither
     // clicked nor copied. drawGuideKeyLine rather than put() so [Q] lifts
     // like every other bracketed control on the page.
-    const ask = `Ideas, station requests, bugs?  [Q] WRITE IN -- ${LISTENER_MAIL}`
-    this.drawGuideKeyLine(s, 20, ask, BRIGHT)
+    // 2026-10-16 -- "Write in" rather than "[Q] WRITE IN": [Q] is in the
+    // grid now, and this line is the address, which is what it is for.
+    const ask = `Ideas, station requests, bugs?  Write in -- ${LISTENER_MAIL}`
+    put(20, ask, BRIGHT)
     // 20th pass -- addresses viewers without YouTube Premium hearing ads.
     // Decided against anything that tries to detect/suppress the ad itself
     // (that's ad-blocking circumvention against YouTube's ToS, not something

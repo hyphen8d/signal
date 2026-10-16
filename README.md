@@ -221,6 +221,9 @@ every visualizer effect, and assert on what's on the grid.
 
 ## Controls
 
+The two rows along the bottom of the set carry the controls you need in the
+first minute, plus `V` and `G`. The guide's first page (`G`) lists every key.
+
 | Key | Action |
 |---|---|
 | `<-` / `->` | Seek |
