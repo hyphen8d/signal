@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { STATION_LINER_FILES, ensureLyricsFetched, isInstrumental, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId, stopLiveVoice } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, LISTENER_MAIL, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
+const { BOOT_HOLD_MS, BOOT_LINE_STAGGER_MS, BOOT_REVEAL_MS, BOOT_TEXT_DELAY_MS, BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, LISTENER_MAIL, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -1068,8 +1068,10 @@ export default {
         // boot beats (which clearAll() this row anyway) never race this
         // stray erase.
         // 2026-08-25 audit: `|| this.poweredOn` added -- a re-power that had
-        // fully landed inside these 4s (boot is ~3.2s) would otherwise have
-        // this erase a row of the live STATION box.
+        // fully landed inside these 4s (boot was ~3.2s then) would otherwise
+        // have this erase a row of the live STATION box. The boot is 5s since
+        // 2026-10-16, so it can no longer land inside them -- but the
+        // _powerAnimating guard covers that window anyway; keep both.
         if (this.mobile || this._powerAnimating || this.poweredOn) return
         for (let x = 0; x < term.cols; x++) term.put(x, STATION_Y, ' ', NORMAL, 0)
       } },
@@ -1275,9 +1277,17 @@ export default {
     // under the original ~5.5s cold boot. The one genuinely cold "tube
     // coming to life" flourish now lives in init(), once, on first page
     // load only -- see there.
-    const LINE_STAGGER_MS = 150
-    const BOOT_TEXT_DELAY = 600
-    const REVEAL_DELAY = BOOT_TEXT_DELAY + bootLines.length * LINE_STAGGER_MS + 500
+    // 2026-10-16 -- 5.0s to the reveal, from ~2.9s, on Matthew's call: "for
+    // more of a vibe". The readout is the one moment the set performs being
+    // a machine, and at 150ms a line it went by faster than it could be
+    // read. Lines now land every 300ms (the blank spacers keep a slot each,
+    // so the block phrases as banner / probes / confirms), with a 700ms
+    // hold on the finished readout before the picture snaps in. The pacing
+    // lives in constants.js so the tests read it rather than guess it.
+    const LINE_STAGGER_MS = BOOT_LINE_STAGGER_MS
+    const BOOT_TEXT_DELAY = BOOT_TEXT_DELAY_MS
+    const REVEAL_DELAY = BOOT_TEXT_DELAY + bootLines.length * LINE_STAGGER_MS + BOOT_HOLD_MS
+    if (REVEAL_DELAY !== BOOT_REVEAL_MS) console.warn(`SIGNAL: boot pacing adds to ${REVEAL_DELAY}ms, not BOOT_REVEAL_MS ${BOOT_REVEAL_MS}`)
     const beats = [
       { delay: 0, fn: () => {
         // 68th pass -- no more dot/centerline reboot theatrics (that
@@ -1315,6 +1325,10 @@ export default {
             // bootLines, because the state isn't known when the array is.
             const shown = i === bootLines.length - 1 ? audioTapBootLine() : line
             term.text(i === 0 ? centerX(term.cols, shown) : bootBlockX, startY + i, shown, i === 0 ? BOLD : DIM)
+            // 2026-10-16 -- each [ OK ] lifts to BOLD over its DIM line, the
+            // same two-pass lift the guide gives a bracketed key: the
+            // confirms are what the eye should catch landing down the block.
+            if (shown.startsWith('[ OK ]')) term.text(bootBlockX, startY + i, '[ OK ]', BOLD)
             // 38th pass -- sounds added as the boot happens and each item
             // appears -- all 13 lines used to land in
             // total silence, which is most of why a ~5.5s boot felt like

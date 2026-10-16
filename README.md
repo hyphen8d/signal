@@ -120,10 +120,12 @@ Entirely optional, and the radio plays exactly the same either way.
 A tuning-dial radio lives or dies on texture, not just function. A few
 things easy to miss from a screenshot alone:
 
-- **The boot sequence** is a ~5.5s retro-BIOS-style POST readout —
-  tuner/antenna/preset-table diagnostics in the receiver's own voice, not
-  kernel-speak — with the picture visibly warming up in brightness across
-  the same window, like a tube actually coming up to temperature.
+- **The boot sequence** is a 5-second retro-BIOS-style POST readout in
+  the receiver's own voice, not kernel-speak: the band, how many stations
+  it carries, the station it is coming up on, and anything turned down on
+  the rear panel, then a column of `[ OK ]` confirms — with the picture
+  visibly warming up in brightness across the same window, like a tube
+  actually coming up to temperature.
   Power-down mirrors it in reverse: a signal-loss glitch, the picture
   collapsing to a centerline, then a single dot, then STANDBY.
 - **The music ducks under the voice.** When a station ID or a liner drop

@@ -185,7 +185,7 @@ test('the sleep timer running out takes the card down with the set', async () =>
     assert.equal(h.program.poweredOn, false)
     assert.equal(h.program.panelOpen, false, 'not stranded open through STANDBY')
     h.advance(1000)
-    h.key('p'); h.advance(4000)
+    h.key('p'); h.advance(h.bootMs + 1100)
     assert.equal(h.program.poweredOn, true, 'the set still answers [P] afterwards')
   } finally { h.shutdown() }
 })

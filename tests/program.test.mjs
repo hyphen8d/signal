@@ -36,7 +36,7 @@ test('[P] runs the POST readout on the always-queue and lands locked', async () 
     h.advance(1500)
     assert.equal(h.program.poweredOn, false, 'still booting mid-readout')
     assert.ok(h.find('SG-1  SIGNAL RECEIVER') >= 0, 'readout header visible')
-    h.advance(2500)
+    h.advance(h.bootMs + 1100 - 1500)
     assert.equal(h.program.poweredOn, true)
     assert.equal(h.program._powerAnimating, false)
     assert.equal(h.program.mode, 'locked')
@@ -55,7 +55,7 @@ test('guide opened during the boot-flicker tail is not punched through', async (
   try {
     h.advance(600)
     h.key('p')
-    h.advance(3100) // just past REVEAL_DELAY -- flicker beats are pending
+    h.advance(h.bootMs + 200) // just past the reveal -- flicker beats are pending
     assert.equal(h.program.poweredOn, true)
     h.key('g')
     assert.equal(h.program.guideOpen, true)
@@ -84,7 +84,7 @@ test('power-off during the boot-flicker tail leaves a clean STANDBY and an empty
   try {
     h.advance(600)
     h.key('p')
-    h.advance(3100)
+    h.advance(h.bootMs + 200)
     assert.equal(h.program.poweredOn, true)
     h.key('p')
     assert.equal(h.program.poweredOn, false)
@@ -236,7 +236,7 @@ test('mobile lite: 42x22 grid, tap powers on, swipe steps the station', async ()
     assert.ok(h.find('TAP TO POWER ON') >= 0)
     h.advance(600)
     h.tap()
-    h.advance(4000)
+    h.advance(h.bootMs + 1100)
     assert.equal(h.program.poweredOn, true)
     assert.ok(h.row(0).includes('SIGNAL v'), 'mobile title bar')
     assert.ok(h.find('STATION') >= 0 && h.find('NOW PLAYING') >= 0, 'mobile boxes')
@@ -269,7 +269,7 @@ test('mobile: a two-finger swipe switches band -- the touch [B] (2026-09-02 audi
   try {
     h.advance(600)
     h.tap()
-    h.advance(4000)
+    h.advance(h.bootMs + 1100)
     assert.equal(h.program.poweredOn, true)
     const before = h.program.band
     h.swipe2(1)
@@ -307,7 +307,7 @@ test('a tab that never gets a frame still completes the cold-open and a power-on
     assert.equal(h.program._powerAnimating, false, 'cold-open cleared by the fallback ticker')
     h.key('p')
     assert.equal(h.program._powerAnimating, true, 'power-on accepted')
-    h.idle(4500)
+    h.idle(h.bootMs + 1500)
     assert.equal(h.program.poweredOn, true, 'boot completed with rAF starved')
     h.advance(200) // first real frames after the window comes forward
     assert.ok(h.row(3).includes(h.program.bandBoxTitle()))
@@ -470,7 +470,7 @@ test('consent pass: mobile never asks for the microphone', async () => {
   try {
     h.advance(600)
     h.tap()
-    h.advance(4000)
+    h.advance(h.bootMs + 1100)
     assert.equal(h.program.poweredOn, true)
     // Mobile's only tap consumer is the shape of the VU trace, which is not
     // worth a microphone permission -- and mobile can't reach [V] to be
@@ -2159,7 +2159,7 @@ test('mobile: hold powers the set off, tap still only mutes', async () => {
     assert.equal(h.program.poweredOn, false, 'a held press powers off')
     assert.ok(h.find('STANDBY') >= 0, 'and lands on STANDBY')
     h.touch(100, 100, 100, 100, 700)  // held, from off
-    h.advance(4000)
+    h.advance(h.bootMs + 1100)
     assert.equal(h.program.poweredOn, true, 'a held press powers back on -- no way to get stuck off')
   } finally { h.shutdown() }
 })
@@ -2736,7 +2736,7 @@ test('the sleep timer expiring under the weather card does not leave the next se
     h.advance(3000)
     assert.equal(h.program.poweredOn, false, 'the timer took the set down')
     assert.equal(h.program.weatherOpen, false, 'and the card came down with it')
-    h.key('p'); h.advance(4500)
+    h.key('p'); h.advance(h.bootMs + 1600)
     assert.equal(h.program.poweredOn, true)
     const vol = h.program.volume
     h.key('ArrowUp'); h.advance(300)

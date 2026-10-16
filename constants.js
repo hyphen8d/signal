@@ -122,6 +122,16 @@ export const BREAK_HOLD_MS = 4000
 // before STATION BREAK wipes it, which is worse than either outcome alone.
 export const REVEAL_CEILING_MS = 12_000
 
+// The power-on POST readout's pacing (2026-10-16). Here rather than inline
+// in powerUp() so the harness and the tests can ask how long a boot takes
+// instead of each carrying its own guess of it. BOOT_REVEAL_MS is the moment
+// the full picture snaps in and poweredOn goes true; powerUp() asserts the
+// three parts below add up to it, so retuning one cannot silently move it.
+export const BOOT_TEXT_DELAY_MS = 700
+export const BOOT_LINE_STAGGER_MS = 300
+export const BOOT_HOLD_MS = 700
+export const BOOT_REVEAL_MS = 5000
+
 // 2026-08-27 (dead-feedback audit) -- the visualizer's own command set, the
 // counterpart to MAPPED_KEYS above. isMappedKey() returned true for EVERY key
 // while the visualizer was up, which was right when any key woke and exited it
