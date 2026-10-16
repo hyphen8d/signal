@@ -858,7 +858,7 @@ async function shipBlockers() {
   const st = await gitState()
   const out = []
   if (st.branch !== 'main') out.push(`on branch "${st.branch}", not main -- Pages deploys main`)
-  if (!st.upstream) out.push('main has no upstream to push to')
+  if (!st.upstream) out.push(`${st.branch || 'this branch'} has no upstream to push to`)
   const gitDir = (await git(['rev-parse', '--git-dir'])).out || '.git'
   for (const f of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) {
     if (existsSync(path.resolve(ROOT, gitDir, f))) out.push(`a git ${f.replace(/_HEAD|-.*$/, '').toLowerCase()} is in progress -- finish or abort it first`)
