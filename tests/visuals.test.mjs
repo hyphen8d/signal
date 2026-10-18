@@ -142,17 +142,22 @@ test('the 2026-09-13 effects draw correctly at a width other than the one they b
       p._au = signal
       fx.init(p, initTerm === 'self' ? term : h.term)
       fx.reset(p)
-      const put = term.put
+      // put() AND putGlyph(): a pixel-bitmap cell is painted too (2026-10-18,
+      // FROST became a pixel effect; counting put() alone read every lit
+      // cell of the heart as unpainted).
+      const put = term.put, putGlyph = term.putGlyph
       const outside = []
       let missed = 0
       for (let f = 0; f < 30; f++) {
         const hit = new Uint8Array(cols * VIZ_BOT)
-        term.put = function (x, y, ...rest) {
+        const spy = (orig) => function (x, y, ...rest) {
           if (y < 1 || y >= VIZ_BOT) outside.push(y)
           else if (x >= 0 && x < cols) hit[y * cols + x] = 1
-          return put.call(this, x, y, ...rest)
+          return orig.call(this, x, y, ...rest)
         }
-        try { fx.draw(p, { term }, 5 + f / 30) } finally { term.put = put }
+        term.put = spy(put)
+        term.putGlyph = spy(putGlyph)
+        try { fx.draw(p, { term }, 5 + f / 30) } finally { term.put = put; term.putGlyph = putGlyph }
         for (let i = cols; i < cols * VIZ_BOT; i++) if (!hit[i]) missed++
       }
       const rows = Array.from({ length: VIZ_BOT - 1 }, (_, i) => {
