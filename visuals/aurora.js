@@ -81,6 +81,43 @@
 //   one every WAVE_GAP seconds, rolling along the sky rather than flashing
 //   it, so a kick at 120 BPM and syntheticAudio()'s random onsets both read
 //   as light moving through the curtains, never as a pulse.
+//
+// 2026-10-16 (design pass) -- REDRAWN AS LIGHT. The rebuild above was judged
+// the same day off tools/viz-sheet.mjs captures of the real tube, and the
+// critique was that the aurora did not read as light: loud, the curtains
+// were hard-edged rectangles of `▓▒░` with flat tops and sides; quiet and
+// muted, columns of `¦` that read as barcode or rain. Every ray was a solid
+// column per cell, and a shade block rasters as a solid rectangle however
+// the ramp grades it. The pines were dark notches (each `▲` replaced a `▓`
+// that filled its cell, and lit only a triangle of it), the lake a scatter
+// of `░▒` blocks, and in the quiet states the `▓` ridge was the biggest,
+// brightest thing on the screen. What changed, composition kept:
+//
+// - THE HEM IS A LINE. Each curtain's lower edge is drawn continuously
+//   across every lit column on a half-row grid -- `─` through a cell's
+//   middle, `▁` along its floor -- so a hem that undulates by a row reads
+//   as a curve. Strength is thickness and attribute together: `━`/`▂` at
+//   BRIGHT, `━`/`▁` at NORMAL, `─`/`▁` at MUTED. It is the brightest part
+//   of a curtain, as the bottom edge of a real one is.
+// - THE RAYS ARE STROKES. `│` at the foot, then `¦`, then `:`, thinning
+//   upward and a step below the hem (RAY_GAIN); a ray rising out of a
+//   mid-cell hem joins it with `┴`/`┷`. Non-ray columns carry nothing at
+//   all -- the hem no longer needs a stub to stay continuous -- and the ray
+//   fractions came down (0.65-0.72 to 0.4-0.6) so the dark gaps read.
+//   There is no shade block anywhere in the sky; the test holds that in
+//   every state.
+// - THE LAND IS DARK MASS. The ridge is `░` at FAINT (snow a `▀` FAINT on
+//   the tall crests), and the pines stand ON it -- `▲` in the sky cell
+//   above the shore or a low slope -- instead of cut into its top row.
+//   The `▄` half caps went with the `▓`: on a dithered mass a solid half
+//   block outlined every step.
+// - THE LAKE IS STREAKS. Dark water with `─`/`~` at DIM (FAINT for the
+//   weakest) on the row each hem's reflection lands on, only under hems
+//   strong enough, broken by a slow shimmer; the ridge's mirror is left
+//   dark and the streaks stop at it.
+// - What did NOT change: no thump, the eased swell, the onset wave rolling
+//   along a curtain (it now thickens the hem to BRIGHT and lengthens the
+//   rays where it passes), and every speed.
 
 import { BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
@@ -123,13 +160,13 @@ const LAKE_GAIN = 0.55
 // station's tracks run twenty minutes.
 const CURTAINS = [
   { hem: 5.0, amp1: 1.0, k1: 0.061, w1: 0.041, amp2: 0.45, k2: 0.17, w2: -0.057, ph: 0.0,
-    len: 4, cx: 46, sway: 14, sw: 0.0071, wid: 36, kf: 0.13, wf: 0.071, I: 0.8, band: 1, rays: 0.5 },
+    len: 4, cx: 46, sway: 14, sw: 0.0071, wid: 36, kf: 0.13, wf: 0.071, I: 0.8, band: 1, rays: 0.4 },
   { hem: 8.2, amp1: 1.7, k1: 0.083, w1: 0.053, amp2: 0.6, k2: 0.21, w2: -0.037, ph: 1.9,
-    len: 7, cx: 20, sway: 13, sw: 0.0113, wid: 20, kf: 0.19, wf: 0.097, I: 1.3, band: 3, rays: 0.72 },
+    len: 7, cx: 20, sway: 13, sw: 0.0113, wid: 20, kf: 0.19, wf: 0.097, I: 1.3, band: 3, rays: 0.6 },
   { hem: 9.6, amp1: 1.4, k1: 0.071, w1: -0.047, amp2: 0.5, k2: 0.23, w2: 0.061, ph: 4.1,
-    len: 7, cx: 60, sway: 12, sw: 0.0089, wid: 19, kf: 0.17, wf: -0.083, I: 1.25, band: 5, rays: 0.72 },
+    len: 7, cx: 60, sway: 12, sw: 0.0089, wid: 19, kf: 0.17, wf: -0.083, I: 1.25, band: 5, rays: 0.6 },
   { hem: 11.4, amp1: 0.9, k1: 0.097, w1: 0.033, amp2: 0.4, k2: 0.27, w2: -0.049, ph: 2.7,
-    len: 5, cx: 40, sway: 22, sw: 0.0053, wid: 15, kf: 0.23, wf: 0.101, I: 1.05, band: 7, rays: 0.65 },
+    len: 5, cx: 40, sway: 22, sw: 0.0053, wid: 15, kf: 0.23, wf: 0.101, I: 1.05, band: 7, rays: 0.55 },
 ]
 const NC = CURTAINS.length
 // A column's ray pattern is re-dealt every RAY_EPOCH seconds, crossfaded
@@ -170,6 +207,19 @@ const WAVE_MAX = 4
 // faint `╷` that scattered dashes over the whole sky -- in both cases no
 // darkness left for the bright parts to read against.
 const LIT = 0.2
+// A ray's light at its foot, as a share of the hem's: the hem is the
+// brightest part of a curtain, the rays always a step below it.
+const RAY_GAIN = 1.1
+
+// The sky's glyphs (2026-10-16 design pass), by index so the per-cell
+// scratch is a byte and the draw passes string literals, never builds one.
+// Hem: `─`/`━` through a cell's middle, `▁`/`▂` along its floor, `┴`/`┷`
+// where a ray rises out of a mid-cell hem. Rays: `│`, then `¦`, then `:`.
+// No shade block anywhere in the sky -- the rubric's rule 4, and the whole
+// of what this pass was for.
+const C_LINE = 1, C_HEAVY = 2, C_LOW = 3, C_LOW2 = 4, C_JOIN = 5, C_JOINH = 6
+const C_VBAR = 7, C_BROKEN = 8, C_COLON = 9
+const GLYPH = [' ', '─', '━', '▁', '▂', '┴', '┷', '│', '¦', ':']
 
 const smooth = (u) => u * u * (3 - 2 * u)
 
@@ -181,9 +231,6 @@ function shapeFor(p, cols) {
   // The ridge: `_auroraEdge[x]` is the crest's height in rows above the
   // shore (0 = bare shore). Still -- only the sky lives -- so it is built
   // once here and needs nothing in reset().
-  // `_auroraHalf[x]` marks a column whose true crest sits at least half a
-  // cell above `edge`: it gets a `▄` on top, which is what turns a staircase
-  // of whole blocks into a slope.
   const edge = new Int8Array(cols)
   const crest = new Float32Array(cols)
   for (const [f, P, half] of PEAKS) {
@@ -193,21 +240,33 @@ function shapeFor(p, cols) {
       if (hf > crest[x]) crest[x] = hf
     }
   }
-  const halfTop = new Uint8Array(cols)
+  // `_auroraPine[x]` is the row a pine stands in (0 = none): the sky cell
+  // directly above the land, on the shore and the low slopes (edge <= 2),
+  // so every tree stands against the sky rather than in front of rock. (The `▄` half caps that lived here until the
+  // 2026-10-16 design pass went with the `▓` ridge: on a `░` mass a solid
+  // half block read as an outline round every step.)
+  const pine = new Uint8Array(cols)
   for (let x = 0; x < cols; x++) {
     edge[x] = Math.max(0, Math.floor(crest[x]))
-    halfTop[x] = crest[x] - edge[x] >= 0.5 && edge[x] < AURORA_RIDGE_MAX ? 1 : 0
+    // Pines stand in clusters: a slow sine of the column decides the
+    // stands (a hash alone gave a uniform fringe), a hash thins them.
+    const stand = Math.sin(x * 0.29 + 1.2) + 0.6 * Math.sin(x * 0.83)
+    pine[x] = edge[x] <= 2 && stand > 0.2 && hash2(x, 91) > 0.2 ? AURORA_HORIZON - Math.max(1, edge[x]) : 0
   }
   p._auroraEdge = edge
-  p._auroraHalf = halfTop
+  p._auroraPine = pine
   // Per-frame scratch, one row of floats per curtain: hem row, ray length,
-  // body light, ray strength. Plus the light field. Preallocated, so the
-  // draw allocates nothing.
+  // body light, ray strength. Plus the sky as cells (value, glyph index,
+  // attribute) and the lake's reflected hems. Preallocated, so the draw
+  // allocates nothing.
   p._auroraHem = new Float32Array(NC * cols)
   p._auroraLen = new Float32Array(NC * cols)
   p._auroraBody = new Float32Array(NC * cols)
   p._auroraRay = new Float32Array(NC * cols)
-  p._auroraField = new Float32Array(cols * VIZ_BOT)
+  p._auroraVal = new Float32Array(cols * VIZ_BOT)
+  p._auroraChi = new Uint8Array(cols * VIZ_BOT)
+  p._auroraAti = new Uint8Array(cols * VIZ_BOT)
+  p._auroraLake = new Float32Array(cols * (VIZ_BOT - AURORA_HORIZON))
   p._auroraGain = new Float32Array(NC)
   p._auroraFold = new Float64Array(NC)
   p._auroraWaves = []
@@ -245,7 +304,6 @@ export default {
     const H = AURORA_HORIZON
     const edge = p._auroraEdge
     const HEM = p._auroraHem, LEN = p._auroraLen, BODY = p._auroraBody, RAY = p._auroraRay
-    const F = p._auroraField
     const gain = p._auroraGain, fold = p._auroraFold
 
     // --- audio: level and bands9, eased; onset starts a wave --------------
@@ -307,8 +365,9 @@ export default {
         }
         BODY[o + x] = g * env * f
         // The ray deal for this column: a hash per epoch, crossfaded into
-        // the next epoch's. A column below the threshold still carries a
-        // short stub (0.25), so the hem stays continuous under the gaps.
+        // the next epoch's. Since the 2026-10-16 design pass the hem is
+        // drawn on its own, continuous, so a column below the threshold
+        // carries no ray at all (it had a 0.25 stub to hold the hem up).
         const off = hash2(x, c * 17 + 3) * RAY_EPOCH
         const e = (t + off) / RAY_EPOCH
         const n = Math.floor(e)
@@ -316,57 +375,86 @@ export default {
         const h0 = hash2(x + c * 101, n), h1 = hash2(x + c * 101, n + 1)
         const hv = h0 + (h1 - h0) * u
         const r = (hv - (1 - C.rays)) / C.rays
-        RAY[o + x] = r <= 0 ? 0.25 : Math.min(1, 0.25 + r * 1.4)
+        RAY[o + x] = r <= 0 ? 0 : Math.min(1, 0.35 + r * 1.3)
         const l0 = hash2(x + c * 57, n + 500), l1 = hash2(x + c * 57, n + 501)
         LEN[o + x] = C.len * (0.45 + 0.55 * (l0 + (l1 - l0) * u)) * RAY[o + x]
       }
     }
 
     // --- the light field ---------------------------------------------------
-    F.fill(0)
+    // 2026-10-16 (design pass): every curtain writes a CHARACTER and an
+    // attribute per cell, the strongest light winning the cell, instead of
+    // summing into a float field that a block ramp then shaded. See the
+    // header: the hem is a line, the rays are strokes, nothing is a block.
+    const VAL = p._auroraVal, CHI = p._auroraChi, ATI = p._auroraAti
+    VAL.fill(0)
+    CHI.fill(0)
+    const lake = p._auroraLake
+    lake.fill(0)
     for (let c = 0; c < NC; c++) {
       const o = c * cols
       for (let x = 0; x < cols; x++) {
         const B = BODY[o + x]
-        if (B < 0.04) continue
-        const hem = HEM[o + x]
-        const len = LEN[o + x] + 1
+        if (B < LIT) continue
+        // The hem on a half-row grid: an odd half-step is a line through
+        // the middle of a cell, an even one a line along its floor. Two
+        // positions per row is what lets a hem that undulates by a row or
+        // two read as a curve rather than as steps.
+        const hq = Math.round(HEM[o + x] * 2)
+        const mid = (hq & 1) === 1
+        const hr = mid ? (hq - 1) >> 1 : (hq >> 1) - 1
+        if (hr < 1 || hr >= H) continue
+        // Rays: a stroke climbing from the hem, thinning as it goes.
         const r = RAY[o + x]
-        const yTop = Math.max(1, Math.floor(hem - len))
-        const yBot = Math.min(H - 1, Math.ceil(hem + 1))
-        for (let y = yTop; y <= yBot; y++) {
-          const d = hem - y // rows above the hem
-          let v
-          if (d < -0.5) v = B * 0.35 * Math.max(0, 1 + (d + 0.5)) // soft underside
-          else if (d < 1) v = B * (0.85 + 0.15 * r) // the hem itself: continuous
-          else {
-            // Up the ray: brightest just above the hem, falling off with a
-            // power > 1 so the top of each ray is a thin tail.
-            const uu = 1 - (d - 1) / len
-            if (uu <= 0) continue
-            v = B * r * uu * Math.sqrt(uu)
+        const len = LEN[o + x]
+        let base = 0
+        if (r > 0 && len > 0) {
+          base = B * r * RAY_GAIN
+          for (let d = 1; d <= len + 1; d++) {
+            const y = hr - d
+            if (y < 1) break
+            const uu = 1 - (d - 1) / (len + 1)
+            const v = base * uu * Math.sqrt(uu)
+            if (v < LIT) break
+            const i = y * cols + x
+            if (v <= VAL[i]) continue
+            VAL[i] = v
+            if (v >= 0.62) { CHI[i] = C_VBAR; ATI[i] = NORMAL }
+            else if (v >= 0.42) { CHI[i] = C_VBAR; ATI[i] = MUTED }
+            else if (v >= 0.3) { CHI[i] = C_BROKEN; ATI[i] = MUTED }
+            else { CHI[i] = C_COLON; ATI[i] = DIM }
           }
-          F[y * cols + x] += v
         }
+        // The hem itself: continuous wherever the curtain is lit, thicker
+        // and brighter where the light is strongest. A ray rising from a
+        // mid-cell hem joins it with `┴`, so the stroke and the line are one
+        // shape instead of a dash floating over a bar. A hem outranks any
+        // ray it sits under (the +1): a curtain's edge is never broken by
+        // the rays of the sheet behind it.
+        const i = hr * cols + x
+        if (B + 1 <= VAL[i]) continue
+        VAL[i] = B + 1
+        const join = mid && base >= 0.3
+        if (B >= 0.95) { CHI[i] = join ? C_JOINH : (mid ? C_HEAVY : C_LOW2); ATI[i] = BRIGHT }
+        else if (B >= 0.6) { CHI[i] = join ? C_JOIN : (mid ? C_HEAVY : C_LOW); ATI[i] = NORMAL }
+        else if (B >= 0.32) { CHI[i] = join ? C_JOIN : (mid ? C_LINE : C_LOW); ATI[i] = MUTED }
+        else { CHI[i] = mid ? C_LINE : C_LOW; ATI[i] = DIM }
+        // What the lake will show of this column: the strongest hem, at the
+        // row its reflection lands on (the sky squashed by LAKE_SQUASH).
+        const k = Math.min(VIZ_BOT - H - 2, Math.max(0, Math.round((H - HEM[o + x]) / LAKE_SQUASH) - 1))
+        const li = k * cols + x
+        if (B > lake[li]) lake[li] = B
       }
     }
 
     // --- sky ---------------------------------------------------------------
+    const pine = p._auroraPine
     for (let y = 1; y < H; y++) {
       for (let x = 0; x < cols; x++) {
-        if (y > H - edge[x]) continue // the ridge; drawn below
+        // The ridge and the pines own their cells; drawn below.
+        if (y > H - edge[x] || y === pine[x]) continue
         const i = y * cols + x
-        const v = F[i]
-        if (v >= LIT) {
-          let ch, a
-          if (v >= 0.9) { ch = '█'; a = BRIGHT }
-          else if (v >= 0.66) { ch = '▓'; a = NORMAL }
-          else if (v >= 0.46) { ch = '▒'; a = MUTED }
-          else if (v >= 0.3) { ch = '░'; a = MUTED }
-          else { ch = '¦'; a = DIM }
-          term.put(x, y, ch, a)
-          continue
-        }
+        if (CHI[i]) { term.put(x, y, GLYPH[CHI[i]], ATI[i]); continue }
         // Stars: ~2.5% of the dark sky, fixed in place. A few twinkle
         // between FAINT and DIM on 10-30s periods -- the only change a star
         // ever makes, too slow to read as a blink.
@@ -381,69 +469,42 @@ export default {
     }
 
     // --- ridge, pines, shore ----------------------------------------------
-    // A solid mass (2026-10-16): one flat dark slab (`█` at FAINT), with a
-    // `▄` half-cell on the slopes so they read as slopes rather than steps,
-    // snow on the tall summits, and the shore row carrying the pines. The
-    // first cut lit every crest cell a shade brighter than the body, and
-    // in a capture that outlined each step: ziggurats, not mountains.
-    const half = p._auroraHalf
+    // 2026-10-16 (design pass): the ridge is `░` at FAINT -- a dark mass
+    // you can see is there, not a lit one. As `▓` it was the largest lit
+    // area on the screen in the quiet states and the eye went to it before
+    // the sky. The pines stand ON the land, in the sky cell above the shore
+    // or a low slope: drawn into the `▓` slab's own row, each
+    // `▲` lit only a triangle of a cell the block had filled, and read as a
+    // notch cut out of the mountain.
     for (let x = 0; x < cols; x++) {
       const e = edge[x]
-      // Pines stand in clusters: a slow sine of the column decides the
-      // stands (a hash alone gave a uniform fringe), a hash thins them.
-      const stand = Math.sin(x * 0.29 + 1.2) + 0.6 * Math.sin(x * 0.83)
-      const pine = stand > 0.4 && hash2(x, 91) > 0.25
-      // The half cap sits in the sky row just above the crest. Always FAINT:
-      // it is rock, and the sky is the bright half.
-      if (half[x] && H - e >= 1) term.put(x, H - e, '▄', FAINT)
-      // From the crest down, and always the shore row itself: a bare-shore
-      // column (e = 0) has no crest row, and starting at H - e + 1 skipped
-      // its shore cell entirely (30 unpainted cell-frames at 100 cols).
+      if (pine[x]) term.put(x, pine[x], '▲', DIM)
       for (let y = Math.min(H, H - e + 1); y <= H; y++) {
-        // `▓` not `█`: at FAINT a full block still carried as much light as
-        // the curtains' middle tones, and the sky has to be the bright half.
-        let ch = '▓', a = FAINT
-        const depth = y - (H - e + 1) // 0 on the crest row
-        if (y === H) {
-          if (pine) { ch = hash2(x, 57) > 0.5 ? '▲' : 'Λ'; a = DIM }
-          else if (e === 0) { ch = '▁' }
-        } else if (e >= 5 && depth === 0) {
-          // Snow on the tall summits: a THIN cap -- `▀`, half a cell, on the
-          // crest row only, at MUTED. The first cut put a `█` MUTED block on
-          // two rows plus a MUTED half cap, and under this station's bloom
-          // each big peak wore a solid glowing blob that drew the eye ahead
-          // of the curtains. Nothing in the landscape may outshine a hem;
-          // tests/visual-aurora.test.mjs holds that.
-          ch = '▀'; a = MUTED
-        }
-        term.put(x, y, ch, a)
+        // Snow on the tall summits: a half cell on the crest row, FAINT like
+        // the rock -- smooth where the rock is dithered, which is enough to
+        // read as snow, and never a lit blob ahead of the curtains.
+        const snow = e >= 5 && y === H - e + 1
+        term.put(x, y, snow ? '▀' : '░', FAINT)
       }
     }
 
     // --- lake --------------------------------------------------------------
+    // 2026-10-16 (design pass): dark water with a few horizontal streaks,
+    // each under a bright hem -- the one part of the sky bright and still
+    // enough to come back off a lake. A slow shimmer (0.13 cols/s) breaks
+    // each streak so it reads as water rather than a rule. Where the
+    // ridge's mirror would be the water stays dark: the streaks stop at it,
+    // and that is what draws the mountains' reflection.
     for (let y = H + 1; y < VIZ_BOT; y++) {
       const k = y - H - 1
       for (let x = 0; x < cols; x++) {
-        const e = edge[x]
-        if (k < e - 1) {
-          // The ridge's mirror: dark water with only the crest flipped, as a
-          // faint line. The first cut mirrored the whole filled mass at the
-          // ridge's own shade, and in a real capture every peak and its
-          // reflection read as one diamond.
-          term.put(x, y, k === e - 2 ? '░' : ' ', FAINT)
-          continue
-        }
-        const ys = Math.max(1, Math.round(H - 1 - (k + 1) * LAKE_SQUASH))
-        // A still lake, not a mirror: a near-stationary shimmer (0.13
-        // cols/s) breaks the reflection into streaks so it reads as water.
-        const sh = 0.65 + 0.35 * Math.sin(x * 0.67 + k * 1.9 + t * 0.09)
-        const v = F[ys * cols + x] * LAKE_GAIN * sh
-        let ch = ' ', a = FAINT
-        if (v >= 0.42) { ch = '▒'; a = DIM }
-        else if (v >= 0.26) { ch = '░'; a = DIM }
-        else if (v >= 0.14) { ch = '░'; a = FAINT }
-        else if (v >= 0.07) ch = '~'
-        term.put(x, y, ch, a)
+        if (k < edge[x] - 1) { term.put(x, y, ' '); continue }
+        const sh = 0.6 + 0.4 * Math.sin(x * 0.53 + k * 2.3 + t * 0.09)
+        const v = lake[k * cols + x] * LAKE_GAIN * sh
+        if (v >= 0.42) term.put(x, y, '─', DIM)
+        else if (v >= 0.27) term.put(x, y, '~', DIM)
+        else if (v >= 0.17) term.put(x, y, '~', FAINT)
+        else term.put(x, y, ' ')
       }
     }
   },
