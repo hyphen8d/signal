@@ -232,3 +232,49 @@ test('BOOM BAP: full blocks stay accents and BRIGHT stays rare (tube bloom)', as
     assert.ok(worstBright <= 20, `${worstBright} BRIGHT cells in one frame at full level on a kick`)
   } finally { h.shutdown() }
 })
+
+test('BOOM BAP: the speakers outrank the box -- MUTED cones at rest, BRIGHT only on the dust cap', async () => {
+  // 2026-10-16 (design pass): everything sat at one DIM tier and the
+  // brightest things on screen were the dial's digits and the EQ's LEDs.
+  // Mutation-checked: restoring the level-keyed rest tier (FAINT on a quiet
+  // passage) goes red on the ridge assertion; restoring the BRIGHT EQ peak
+  // goes red on the BRIGHT one.
+  const { h, fx, mod } = await bootBox()
+  try {
+    const MUTED = 32, FAINT = 64
+    const L = mod.boomLayout(h.term.cols)
+    // A quiet passage, settled: the cone's ridges are MUTED anyway.
+    const quiet = signal({ level: 0.1, bass: 0.1, bands9: new Array(9).fill(0.9) })
+    let t = settle(h, fx, 1, quiet)
+    let ridges = 0
+    for (let x = Math.ceil(L.lcx - L.rx + 1); x < Math.floor(L.lcx - 1); x++) {
+      if (h.row(mod.SPK_CY)[x] === '│') {
+        ridges++
+        assert.equal(h.term.attrs[mod.SPK_CY * h.term.cols + x], MUTED, `the cone ridge at ${x} is not MUTED at rest`)
+      }
+    }
+    assert.ok(ridges >= 2, `test setup: found ${ridges} ridge cells on the speaker's middle row`)
+    // Full EQ, kick: BRIGHT lands on the dust caps and nowhere else.
+    const hot = signal({ pulse: 1, bands9: new Array(9).fill(1), level: 1 })
+    t += 0.016; drawWith(h, fx, t, signal({ pulse: 0, bands9: new Array(9).fill(1), level: 1 }))
+    t += 0.016; drawWith(h, fx, t, hot)
+    let caps = 0
+    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < h.term.cols; x++) {
+      if (h.term.attrs[y * h.term.cols + x] & BRIGHT) { caps++; assert.equal(h.row(y)[x], '●', `BRIGHT '${h.row(y)[x]}' at ${x},${y}`) }
+    }
+    assert.ok(caps >= 2, `test setup: the kick lit ${caps} dust-cap cells`)
+    // The wall and the paving: FAINT dotted rules, never a solid line.
+    for (let y = 1; y < VIZ_BOT; y++) {
+      for (let x = 0; x < h.term.cols; x++) {
+        if (y >= mod.HANDLE_Y && y <= mod.FEET_Y && x >= L.x0 - 1 && x <= L.x1 + 1) continue
+        const c = h.row(y)[x]
+        if (c === ' ') continue
+        assert.ok('┈┊.'.includes(c), `a solid '${c}' in the background at ${x},${y}`)
+        assert.equal(h.term.attrs[y * h.term.cols + x], FAINT, `background '${c}' at ${x},${y} is not FAINT`)
+      }
+    }
+    // And the handle's arch is clear of the wall.
+    const hx0 = Math.round(L.mid - 15), hx1 = Math.round(L.mid + 15)
+    assert.equal(h.row(mod.HANDLE_Y + 1).slice(hx0 + 1, hx1).trim(), '', 'a wall joint under the handle')
+  } finally { h.shutdown() }
+})

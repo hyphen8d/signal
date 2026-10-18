@@ -8,6 +8,33 @@
 //
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
+//
+// THE RUBRIC (2026-10-16). What every effect here is judged against -- by a
+// person, and by the viz-critic agent (.claude/agents/viz-critic.md, local to
+// the dev box since .claude/ is gitignored; it reads this block rather than
+// keeping its own copy). Judge from tools/viz-sheet.mjs captures of the real
+// tube, never from the text grid: on the day this was written the harness
+// passed all 18 effects while the tube showed AURORA as hard rectangles.
+//
+//   1. ONE SUBJECT. A picture you can name in two seconds -- a boombox, a
+//      castle, a skyline -- not a texture. (Approved by Matt 2026-10-16.)
+//   2. ONE MUSICAL ELEMENT. One thing moves with the music, and the beat is
+//      visible: set the LOUD and KICK tiles side by side and the difference
+//      is obvious without hunting for it. Ambient stations' effects swell
+//      rather than thump (AURORA, DRIFT -- see the bloom exclusion in
+//      drawVisualizerFrame).
+//   3. A BRIGHTNESS ORDER. Subject brightest, scenery dimmer, background
+//      darkest; nothing in the scenery outshines the subject. MUTED, FAINT
+//      and DIM are near-invisible under some phosphors -- a part drawn only
+//      in them is a part that is not there.
+//   4. SHAPES, NOT CHARACTER SOUP. Shade blocks (`░▒▓█`) raster as solid
+//      rectangles on the tube: a field of them reads as blocks, not as light.
+//      Use them for mass (a ridge, a cabinet), not for anything meant to look
+//      soft or thin.
+//   5. FOUR STATES. NO TAP (most visitors), MUTED, quiet and loud each look
+//      deliberate: never dead, never blank, never strobing.
+//   6. THE REAL-RADIO TEST. Would a real set -- or the picture in a real
+//      set's window -- have this?
 
 // FLAME (46th pass, DISTORTION FIELD) -- replaces HOWL outright (which had
 // itself replaced the original FEEDBACK concept). Live QA: "fire 'flame'

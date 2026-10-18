@@ -9,6 +9,10 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { boot } from './harness.mjs'
 
+// Attribute bits, src/cellgrid.js.
+const BRIGHT = 1, DIM = 4, MUTED = 32, NORMAL = 0
+const attrAt = (h, x, y) => h.term.attrs[y * h.term.cols + x]
+
 const CANVAS_TOP = 1
 const VIZ_BOT = 22
 
@@ -123,7 +127,10 @@ test('ORBIT: the station shows in front of the disc and is hidden behind it', as
         if (got !== mod.ORBIT_GLYPH) bad.push(`front @${h.program._orbitClock.toFixed(1)}: ${JSON.stringify(got)}`)
       } else {
         behind++
-        if (text.includes('[]')) bad.push(`behind @${h.program._orbitClock.toFixed(1)}: glyph drawn through the planet`)
+        // 2026-10-16 (design pass) -- was '[]', the old glyph's core; with
+        // the new glyph that check could never fire. '■' is drawn by
+        // nothing but the station.
+        if (text.includes('■')) bad.push(`behind @${h.program._orbitClock.toFixed(1)}: glyph drawn through the planet`)
       }
     }
     assert.ok(front > 20, `should sample the near pass over the disc (saw ${front})`)
@@ -182,5 +189,80 @@ test('ORBIT: muted, the halo settles and the picture stays up', async () => {
     h.advance(4000)
     assert.ok(h.program._orbitBreath < 0.02, `breath should settle muted (was ${h.program._orbitBreath.toFixed(3)})`)
     assert.ok(nonSpace(h) > 500, 'muted frame should still show the planet')
+  } finally { h.shutdown() }
+})
+
+test('ORBIT: shapes, not character soup -- shaded disc, ( ) limb, BRIGHT station (design pass)', async () => {
+  // 2026-10-16 -- the lit side was runs of '# % = * + -' and read as text;
+  // the night side's ':' dots vanished on the tube; the station was no
+  // brighter than the planet. Now: the disc is only shade blocks and the
+  // limb, every disc row is closed by '(' ... ')', and the station glyph is
+  // BRIGHT wherever it shows.
+  const { h, mod } = await bootOrbit()
+  try {
+    for (let i = 0; i < 30; i++) {
+      h.advance(500)
+      const o = mod.orbitAt(h.program._orbitClock)
+      const g = mod.glyphCell(o)
+      for (let y = 1; y < VIZ_BOT; y++) {
+        const row = h.row(y)
+        let first = -1, last = -1
+        for (let x = 0; x < row.length; x++) {
+          if (!mod.inPlanet(x, y)) continue
+          if (first < 0) first = x
+          last = x
+          const onGlyph = y === g.y && x >= g.x && x < g.x + mod.ORBIT_GLYPH.length
+          if (onGlyph) continue
+          assert.ok('░▒▓()'.includes(row[x]), `disc cell ${x},${y} is '${row[x]}' -- character soup`)
+        }
+        if (first < 0) continue
+        const onGlyph = (x) => y === g.y && x >= g.x && x < g.x + mod.ORBIT_GLYPH.length
+        if (!onGlyph(first)) assert.equal(row[first], '(', `row ${y} limb should open with '('`)
+        if (!onGlyph(last)) assert.equal(row[last], ')', `row ${y} limb should close with ')'`)
+      }
+      // Lit side present: some ▓ on the disc.
+      assert.ok(canvasText(h).includes('▓'), 'no lit crescent on the disc')
+      for (let k = 0; k < mod.ORBIT_GLYPH.length; k++) {
+        const x = g.x + k
+        if (h.row(g.y)[x] === mod.ORBIT_GLYPH[k]) assert.equal(attrAt(h, x, g.y), BRIGHT, 'station glyph should be BRIGHT')
+      }
+    }
+  } finally { h.shutdown() }
+})
+
+test('ORBIT: the halo is one continuous ring that steps up a tier on the breath (design pass)', async () => {
+  // 2026-10-16 -- the old halo was a graded band thinner than a tier step,
+  // and its breathing never showed on the tube. Every cell touching the
+  // disc is now a '·', and the whole ring steps one tier (DIM->MUTED on the
+  // night half, MUTED->NORMAL sunward) when the breath passes the step.
+  // Mutation-checked: with the ring's attr pinned to DIM this goes red.
+  const { h, mod } = await bootOrbit()
+  try {
+    h.program.muted = true // breath settles to 0 and stays there
+    h.advance(4000)
+    const ring = []
+    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < 80; x++) if (mod.touchesPlanet(x, y)) ring.push([x, y])
+    assert.ok(ring.length > 80, `ring has only ${ring.length} cells`)
+    const glyphRow = mod.glyphCell(mod.orbitAt(h.program._orbitClock)).y
+    const read = () => ring.filter(([, y]) => y !== glyphRow && y !== glyphRow).map(([x, y]) => [h.row(y)[x], attrAt(h, x, y)])
+    const calm = read()
+    const notDot = calm.filter(([c]) => c !== '·' && c !== ' ').length
+    // A trail dot or the orbit track may land on a ring cell; the ring must
+    // otherwise be whole.
+    assert.ok(calm.filter(([c]) => c === '·').length / calm.length > 0.95, `ring is broken (${notDot} non-dot cells)`)
+    assert.ok(calm.every(([c, a]) => c !== '·' || a === DIM || a === MUTED), 'calm ring should sit at DIM/MUTED')
+    // Swell: hold the breath high and the ring steps up.
+    h.program.muted = false
+    const step = mod.ORBIT_BREATH_STEP
+    let up = 0
+    for (let i = 0; i < 5; i++) {
+      h.program._orbitBreath = 1
+      h.program.muted = true // target 0, but one frame cannot ease 1 below the step
+      h.advance(16)
+      const now = read()
+      for (let k = 0; k < now.length; k++) if (now[k][0] === '·' && calm[k][0] === '·' && now[k][1] !== calm[k][1]) up++
+    }
+    assert.ok(h.program._orbitBreath > step, 'breath fell through the step in one frame')
+    assert.ok(up > ring.length * 0.8 * 5, `only ${up} ring cells stepped up on the breath`)
   } finally { h.shutdown() }
 })

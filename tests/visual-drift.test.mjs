@@ -124,8 +124,9 @@ test('ATRIUM: the mall reads back -- far wall, two floors of signs, escalators, 
     let up = 0, down = 0
     for (let y = mod.SLAB_Y; y <= mod.FLOOR_Y; y++) { if (row(y).includes('/')) up++; if (row(y).includes('\\')) down++ }
     assert.ok(up >= 5 && down >= 5, `both escalators climb between the floors (${up}, ${down})`)
-    assert.ok(row(mod.RIM_Y).includes('‾‾‾‾‾'), 'the basin\'s back rim')
-    assert.match(row(mod.WATER_Y), /\(.*\)/, 'water held in the basin')
+    assert.match(row(mod.RIM_Y), /╭─{20,}╮/, 'the basin\'s back rim, one solid line')
+    assert.match(row(mod.WATER_Y), /│.*│/, 'water held in the basin')
+    assert.match(row(mod.FRONT_Y), /╰─{20,}╯/, 'the basin\'s front rim, one solid line')
     assert.equal(rows.filter(({ r }) => r.includes('[=====]')).length, 1, 'two potted palms on one row')
     assert.equal((h.row(rows.find(({ r }) => r.includes('[=====]')).y).match(/\[=====\]/g) || []).length, 2, 'one each side')
   } finally { h.shutdown() }
@@ -177,6 +178,9 @@ test('ATRIUM: the fountain never draws above the floor line, even on a kick at f
     const full = (pulse) => signal({ level: 1, bass: 1, mid: 1, treble: 1, bands9: new Array(9).fill(1), pulse })
     const frames = (kick) => {
       fx.reset(h.program)
+      // The windows' glow smoother is history, not clock: start both runs
+      // from the same place, or the calm run's warm-up shows as a diff.
+      h.program._driftGlow.fill(0)
       h.program._driftPrevPulse = kick ? 0 : 1
       const out = []
       for (const dt of [0, 0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.45]) {

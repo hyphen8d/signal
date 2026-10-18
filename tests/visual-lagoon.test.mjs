@@ -14,10 +14,12 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { boot } from './harness.mjs'
 import { parseBDF } from '../src/bdf.js'
+import { BRIGHT } from '../src/term.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const VIZ_BOT = 22
 const effectT = (h) => (Date.now() - h.program._vizEnterAt) / 1000
+const attrAt = (h, x, y) => h.term.attrs[y * h.term.cols + x]
 
 async function bootLagoon() {
   const h = await boot({ station: 'tradewinds' })
@@ -33,12 +35,17 @@ async function lagoonModule() {
   return VISUALS.lagoon
 }
 
-/** Moon cells: the disc's fill, maria and rim characters, in the sky rows. */
+/** Moon cells: the rim's half-blocks, in the sky above the island.
+ *  2026-10-16 (design pass) -- the moon is its rim now, not a block of
+ *  '@#O' letters; the island's crest also uses '▄', so the search stays in
+ *  the moon's own columns and above the island's tallest row. */
+const RIM = '▀▄▌▐'
+let moonCellOf = null
 function moonCells(h) {
   const cells = []
-  for (let y = 1; y < 13; y++) {
+  for (let y = 1; y < 11; y++) {
     const r = h.row(y)
-    for (let x = 0; x < r.length; x++) if ('@#O'.includes(r[x])) cells.push({ x, y })
+    for (let x = 40; x < 63; x++) if (RIM.includes(r[x])) cells.push({ x, y })
   }
   return cells
 }
@@ -119,7 +126,7 @@ test('LAGOON: re-entry after a long visit carries no flare from the previous vis
     const t = effectT(h)
     assert.ok(t < 5, `effect clock should have restarted (t=${t.toFixed(1)})`)
     assert.ok(!(h.program._lagoonFlareAt > t), `flare stamped at ${h.program._lagoonFlareAt}s on a clock at ${t.toFixed(1)}s`)
-    assert.ok(moonCells(h).length > 60, 'the moon should still be up after re-entry')
+    assert.ok(moonCells(h).length > 30, 'the moon should still be up after re-entry')
     let lit = 0
     for (let y = 1; y < VIZ_BOT; y++) lit += h.row(y).replace(/ /g, '').length
     assert.ok(lit > 300, `only ${lit} non-space cells after re-entry`)
@@ -128,19 +135,32 @@ test('LAGOON: re-entry after a long visit carries no flare from the previous vis
 
 test('LAGOON: a round moon above a horizon, with its reflection under it', async () => {
   const h = await bootLagoon()
+  const { moonCell } = await import(`../visuals/lagoon.js?v=${globalThis.SIGNAL_BUILD}`)
+  moonCellOf = moonCell
   try {
     for (let i = 0; i < 40; i++) {
       h.advance(150)
       // The moon: a disc roughly twice as wide as it is tall in cells, which
       // is what a circle is on ~2:1 cells.
       const moon = moonCells(h)
-      assert.ok(moon.length > 60, `moon has only ${moon.length} cells`)
+      assert.ok(moon.length > 30, `moon rim has only ${moon.length} cells`)
       const xs = moon.map((c) => c.x), ys = moon.map((c) => c.y)
       const w = Math.max(...xs) - Math.min(...xs) + 1
       const ht = Math.max(...ys) - Math.min(...ys) + 1
       assert.ok(w >= 13 && w <= 17 && ht >= 6 && ht <= 8, `moon is ${w}x${ht} cells`)
       assert.ok(w / ht > 1.7 && w / ht < 2.6, `moon aspect ${(w / ht).toFixed(2)} is not a circle on 2:1 cells`)
       const moonX = (Math.max(...xs) + Math.min(...xs)) / 2
+      // A rim, not a slab and not text: no letters in the disc, and its
+      // inside is mostly dark.
+      let inside = 0, dark = 0
+      for (let y = Math.min(...ys); y <= Math.max(...ys); y++) {
+        for (let x = Math.min(...xs); x <= Math.max(...xs); x++) {
+          const ch = h.row(y)[x]
+          assert.ok(!/[@#O0]/.test(ch), `moon face drawn in letters at ${x},${y}: '${ch}'`)
+          if (moonCellOf(x, y) === 'in') { inside++; if (ch === ' ' || ch === '░') dark++ }
+        }
+      }
+      assert.ok(inside > 40 && dark === inside, `moon interior: ${dark}/${inside} cells dark`)
       const moonBottom = Math.max(...ys)
 
       // The horizon: a row that is mostly the horizon rule, below the moon
@@ -166,18 +186,57 @@ test('LAGOON: a round moon above a horizon, with its reflection under it', async
 })
 
 test('LAGOON: torches stand on the beach and flare on an onset', async () => {
+  // 2026-10-16 (design pass) -- the flare used to be one '*' per torch, and
+  // the LOUD and KICK captures could not be told apart. It is now a column
+  // of BRIGHT flame standing on each cup for the whole flare: three rows
+  // fresh, two as it dies. Counted here as BRIGHT cells in the torches'
+  // own columns above the flame body, which is exactly what the tube shows.
+  // Mutation-checked: with the column loop emptied this goes red.
   const h = await bootLagoon()
+  const { TORCHES } = await import(`../visuals/lagoon.js?v=${globalThis.SIGNAL_BUILD}`)
   try {
     h.program.muted = true // no synthetic onsets: the flare below is the only one
     h.advance(1000)
     const cups = () => Array.from({ length: VIZ_BOT - 1 }, (_, i) => h.row(i + 1)).join('\n').split('\\#/').length - 1
-    const tongues = () => Array.from({ length: VIZ_BOT - 1 }, (_, i) => h.row(i + 1)).join('').split('*').length - 1
+    const flame = () => {
+      let n = 0
+      for (const { x, cupY } of TORCHES) {
+        for (let y = Math.max(1, cupY - 5); y <= cupY - 2; y++) {
+          for (let dx = -1; dx <= 1; dx++) if (h.row(y)[x + dx] !== ' ' && attrAt(h, x + dx, y) & BRIGHT) n++
+        }
+      }
+      return n
+    }
     assert.equal(cups(), 2, 'both torch cups should be on the grid')
-    const before = tongues()
+    const before = flame()
+    // Muted, the torches burn low: at most a tongue each.
+    assert.ok(before <= 2, `muted torches should burn low (${before} BRIGHT flame cells)`)
     h.program._lagoonFlareAt = effectT(h)
     h.advance(50)
-    assert.ok(tongues() >= before + 2, 'an onset should flare both flames')
+    assert.ok(flame() >= 6, `an onset should stand a 3-row BRIGHT column on both torches (saw ${flame()})`)
+    h.advance(400)
+    assert.ok(flame() >= 4, `the column should hold for the flare (saw ${flame()} at 0.45s)`)
     h.advance(1500)
-    assert.equal(tongues(), before, 'the flare should die back down within a moment')
+    assert.ok(flame() <= before, 'the flare should die back down within a moment')
+  } finally { h.shutdown() }
+})
+
+test('LAGOON: the palm is one trunk stroke and a few long fronds, no hut', async () => {
+  // 2026-10-16 (design pass) -- the trunk drew two characters a row and the
+  // fronds were near-flat with leaflets and 'o/o' coconuts: on the tube it
+  // read as a hut. Now: exactly one trunk character per row below the
+  // crown, and no coconuts.
+  const h = await bootLagoon()
+  try {
+    for (let i = 0; i < 10; i++) {
+      h.advance(300)
+      for (let y = 12; y < VIZ_BOT; y++) {
+        const left = h.row(y).slice(0, 12)
+        const trunk = left.replace(/[^(/]/g, '').length
+        assert.equal(trunk, 1, `row ${y} carries ${trunk} trunk strokes: ${JSON.stringify(left)}`)
+      }
+      const crown = Array.from({ length: 8 }, (_, i) => h.row(i + 1).slice(0, 36)).join('\n')
+      assert.ok(!/o.o/.test(crown), 'no coconuts on the crown')
+    }
   } finally { h.shutdown() }
 })

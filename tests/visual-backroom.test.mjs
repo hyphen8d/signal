@@ -180,12 +180,21 @@ test('BACKROOM: one spotlight cone -- lamp, widening edges, lit air inside, blac
       // Edge glyphs where no player stands in them, stepping outward as the
       // rows go down. Read at the positions the cone puts them, so a stray
       // '/' in a figure cannot pass for an edge.
+      // 2026-10-16 (design pass) -- and CONTINUOUS: each row carries the
+      // whole run the edge crosses ('_' runs ending in the slash at their
+      // upper end), where one slash a row on a 1.9-column slope read as a
+      // dotted line on the tube.
       let prev = 0, edgeRows = 0
       for (let y = BEAM_TOP + 1; y < STAGE_Y; y++) {
-        const hw = coneHalfWidth(y)
-        const l = Math.round(LAMP_X - hw), rt = Math.round(LAMP_X + hw)
-        if (ART_MASK[y * cols + l] || ART_MASK[y * cols + rt]) continue
+        const top = coneHalfWidth(y - 0.5), n = Math.max(1, Math.round(coneHalfWidth(y + 0.5) - top))
+        const l = Math.round(LAMP_X - top), rt = Math.round(LAMP_X + top)
+        let clear = true
+        for (let k = 0; k < n; k++) if (ART_MASK[y * cols + l - k] || ART_MASK[y * cols + rt + k]) clear = false
+        if (!clear) continue
         assert.equal(h.row(y)[l] + h.row(y)[rt], '/\\', `cone edges missing on row ${y}`)
+        const run = h.row(y).slice(l - n + 1, l + 1), runR = h.row(y).slice(rt, rt + n)
+        assert.equal(run, '_'.repeat(n - 1) + '/', `left edge broken on row ${y}: '${run}'`)
+        assert.equal(runR, '\\' + '_'.repeat(n - 1), `right edge broken on row ${y}: '${runR}'`)
         assert.ok(rt - l > prev, `cone does not widen at row ${y}`)
         prev = rt - l
         edgeRows++
@@ -277,5 +286,76 @@ test('BACKROOM: an onset is a soft half-second glint on the cymbal, then gone', 
     assert.equal(spot(), '+', 'the glint should peak halfway through')
     h.advance(GLINT_S * 1000 + 200)
     assert.equal(spot(), ' ', 'the glint should be gone within a moment')
+  } finally { h.shutdown() }
+})
+
+// 2026-10-16 (design pass). The critique, from the real tube: the densest
+// smoke ('░▒' past v 0.62) formed a solid slab in front of the tenor in LOUD
+// and KICK; the cone was two near-invisible edge lines; and the figures were
+// all one tier, a tangle of thin outlines.
+test('BACKROOM: smoke is wisps only -- no shade block in the beam, even loud', async () => {
+  const fx = await backroomModule()
+  const h = await bootBackroom()
+  try {
+    h.advance(500)
+    for (let f = 0; f < 120; f++) {
+      h.program.muted = false
+      h.program._au = { level: 1, bass: 1, mid: 1, treble: 1, bands9: new Array(9).fill(1), onset: f % 10 === 0, pulse: 1 }
+      fx.draw(h.program, { term: h.term }, 10 + f * 0.37)
+      const shade = canvasRows(h).join('\n').match(/[░▒▓]/g)
+      assert.equal(shade, null, `frame ${f}: ${shade && shade.length} shade blocks on the canvas`)
+    }
+  } finally { h.shutdown() }
+})
+
+test('BACKROOM: the cone is a shaft of light -- its clear air carries a stipple, outside is black', async () => {
+  const { LAMP_X, BEAM_TOP, STAGE_Y, coneHalfWidth, artMaskFor } = await backroomExports()
+  const h = await bootBackroom()
+  try {
+    // Muted: the beam at its floor and the smoke at its quietest -- the
+    // haze has to carry the cone on its own here.
+    h.program.muted = true
+    h.advance(800)
+    const mask = artMaskFor(h.term.cols)
+    let dots = 0, open = 0
+    for (let y = BEAM_TOP + 2; y < STAGE_Y; y++) {
+      const hw = coneHalfWidth(y)
+      for (let x = Math.ceil(LAMP_X - hw * 0.8); x <= LAMP_X + hw * 0.8; x++) {
+        if (mask[y * h.term.cols + x]) continue
+        open++
+        if ('·.\''.includes(h.row(y)[x])) dots++
+      }
+    }
+    assert.ok(open > 40, `only ${open} open cells in the cone`)
+    assert.ok(dots / open > 0.3, `only ${dots}/${open} of the cone's clear air is lit under mute`)
+  } finally { h.shutdown() }
+})
+
+test('BACKROOM: the bass is the lead silhouette at NORMAL; the other players hold at DIM', async () => {
+  const h = await bootBackroom()
+  const DIMMED = 4 | 32 | 64 // DIM | MUTED | FAINT
+  try {
+    for (let i = 0; i < 20; i++) {
+      h.advance(170)
+      const rows = canvasRows(h)
+      const at = (x, y) => h.term.attrs[y * h.term.cols + x]
+      const sy = rows.findIndex((r) => r.includes('@')) + 1
+      const sx = h.row(sy).indexOf('@')
+      const by = rows.findIndex((r, k) => k + 1 > sy && r[sx] === '╪') + 1
+      assert.ok(!(at(sx, sy) & DIMMED), `frame ${i}: the bass scroll is not NORMAL`)
+      assert.ok(!(at(sx, by) & DIMMED), `frame ${i}: the bass bridge is not NORMAL`)
+      assert.ok(!(at(sx - 4, by) & DIMMED), `frame ${i}: the bass's lower bout is not NORMAL`)
+      // The tenor's head (right of the lamp) and the pianist's, both DIM.
+      let heads = 0
+      for (let y = 1; y < 12; y++) {
+        let x = -1
+        while ((x = h.row(y).indexOf('╭─╮', x + 1)) >= 0) {
+          if (x < 40) continue
+          heads++
+          for (let k = 0; k < 3; k++) assert.ok(at(x + k, y) & 4, `frame ${i}: a player's head at ${x + k},${y} is not DIM`)
+        }
+      }
+      assert.equal(heads, 2, `frame ${i}: expected the tenor's and the pianist's heads`)
+    }
   } finally { h.shutdown() }
 })

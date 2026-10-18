@@ -292,6 +292,27 @@ export function advanceRollPhase(phase, dt, speed) {
   return next < 0 ? next + 1 : next
 }
 
+/** The beam pass's per-frame persistence for a frame `dt` seconds long.
+ *  `decay` is specified per 60Hz frame -- every value in the app was tuned
+ *  that way -- so it is rescaled to decay^(dt*60) and a trail lasts the same
+ *  wall-clock time at any frame rate.
+ *
+ *  2026-10-16: until this, the beam multiplied the previous frame by `decay`
+ *  once per RENDERED frame. On the Haswell dev box the live site runs ~14fps,
+ *  where a 0.88 decay keeps a trail for ~1.3s instead of the ~0.3s it was
+ *  tuned to -- FLOWFIELD, OUTRUN and AURORA smeared and FLAME went to haze,
+ *  and it read as "the visualizers are broken". The other direction was the
+ *  same bug: a 144Hz display cut every trail to under half its length.
+ *  No usable dt (the first frame, a backwards clock) is one nominal frame;
+ *  a long stall is capped at 0.25s so a hitch fades the tube rather than
+ *  wiping it, and a value at or above 1 (the "ramp to white" end of the
+ *  range) is left as it is -- raising it to a power would only exaggerate it. */
+export function decayForFrame(decay, dt) {
+  if (!(decay > 0) || decay >= 1) return decay
+  if (!(dt > 0)) return decay
+  return Math.pow(decay, Math.min(dt, 0.25) * 60)
+}
+
 export class CRT {
   /**
    * @param {HTMLCanvasElement} canvas
@@ -568,6 +589,10 @@ export class CRT {
     if (this.disposed) return
     const gl = this.gl
     const P = this.params
+    // This frame's length, shared by the persistence (decayForFrame) and the
+    // roll bar (advanceRollPhase) -- both are rates, not per-frame steps.
+    const dt = this._lastTime == null ? 0 : time - this._lastTime
+    this._lastTime = time
     gl.bindVertexArray(this.vao)
 
     // --- horizontal spot convolution, at source resolution ---
@@ -590,7 +615,7 @@ export class CRT {
     this.unit(this.progBeam, 'uPrev', prev.tex, 1)
     gl.uniform2f(this.progBeam.u.uSrcSize, this.srcW, this.srcH)
     gl.uniform2f(this.progBeam.u.uOutSize, next.w, next.h)
-    gl.uniform1f(this.progBeam.u.uDecay, P.decay)
+    gl.uniform1f(this.progBeam.u.uDecay, decayForFrame(P.decay, dt))
     gl.uniform1f(this.progBeam.u.uScanMin, P.scanMin)
     gl.uniform1f(this.progBeam.u.uScanMax, P.scanMax)
     this.draw()
@@ -635,8 +660,6 @@ export class CRT {
     // speed change -- the old `time * speed` form teleported the bar to an
     // unrelated phase whenever a glitch ramped rollSpeed, which the tween
     // in rampCrtParams was never asking for.
-    const dt = this._lastTime == null ? 0 : time - this._lastTime
-    this._lastTime = time
     this._rollPhase = advanceRollPhase(this._rollPhase || 0, dt, P.rollSpeed)
     gl.uniform1f(u.uTime, wrapClock(time))
     gl.uniform3fv(u.uPhosphor, this.phosphor)

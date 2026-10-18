@@ -3,10 +3,39 @@
 //
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
+//
+// 2026-10-16 (design pass) -- the critique, off the real tube: the sun did
+// not read as a sun ("a stepped temple or mound"); the horizon glow, drawn
+// full width AFTER the sun, erased the sun's bottom two rows -- exactly
+// where its slice-gaps were; the skyline was FAINT `█` slabs; the BRIGHT
+// `=` rungs outshone the sun; and a roadside scatter of `' , \ .` hid the
+// vanishing-point grid. What changed:
+//   - THE SUN is a disc at the tube's real cell aspect (SUN_ASPECT: a cell
+//     is ~2.3x as tall as it is wide on the 4:3 face, and the old disc used
+//     1:1, which is why it stood tall and narrow like a temple), drawn in
+//     half-blocks so it has twice the vertical resolution, solid and
+//     BRIGHT, with the genre's slices cut across its lower half and
+//     thickening toward the horizon. No `░▒▓` gradient -- those raster as
+//     stepped rectangles, which was the other half of "temple".
+//   - The glow rows skip the sun's span, and the skyline skips it too.
+//   - The skyline is `▓` in DIM (the brief's fix said `▓`; DIM rather than
+//     FAINT, since FAINT is not there at all under some tints).
+//   - The rungs are capped at NORMAL, the horizon line is NORMAL: the sun
+//     is the one BRIGHT thing on screen.
+//   - The roadside scatter is cut by ~70% (GRASS_SCALE).
+//   - THE BEAT. The rubric wants one, and the old notes refused an onset
+//     hook because a per-beat FLASH would strobe a slow drive. So the beat
+//     is not a flash: a kick SWELLS the sun (radius +SUN_SWELL rows,
+//     easing back over ~0.4s) and steps its slices down half a row -- the
+//     classic sunset's slow stripe crawl, advanced by the music. Bass leans
+//     the sun's size a little, as it used to lean its shading.
+//   - MUTED was never handled here (the effect read p._au alone, so muted
+//     looked exactly like NO TAP). Muted, the road coasts at its quiet
+//     floor and the sun drops to NORMAL: faint, still driving.
 
 import { BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
-const { auMul } = await import(`../audio/tap.js?v=${V}`)
+const { SILENT_AUDIO, auMul } = await import(`../audio/tap.js?v=${V}`)
 const { VIZ_BOT } = await import(`../layout.js?v=${V}`)
 const { hash2, visualizerLevelAttr } = await import(`./shared.js?v=${V}`)
 
@@ -15,6 +44,32 @@ const { hash2, visualizerLevelAttr } = await import(`./shared.js?v=${V}`)
 // below, at 3*depth*1.7) so trees read as roadside planting, not
 // obstacles standing in a lane.
 export const OUTRUN_PALM_RAILS = [-4.4, -3.7, 3.7, 4.4]
+
+// 2026-10-16 (design pass) -- the sun. Radius in ROWS; SUN_ASPECT turns a
+// row of radius into cells of half-width (8x16 cells stretched onto a 4:3
+// face come out ~2.3x taller than wide).
+export const HORIZON_Y = 8
+export const SUN_R = 6.2
+export const SUN_ASPECT = 2.3
+export const SUN_SWELL = 0.9
+const SWELL_TAU = 0.22
+// The roadside scatter, as a fraction of what it was.
+export const GRASS_SCALE = 0.3
+
+/** Is the sun lit at (sub-row centre `sy`, column `x`)? `sy` is in rows,
+ *  measured down from the top of the screen; half-row resolution. */
+export function sunLit(sy, x, cx, r, slicePhase) {
+  const dy = HORIZON_Y - sy
+  if (dy <= 0 || dy > r) return false
+  const halfW = SUN_ASPECT * Math.sqrt(r * r - dy * dy)
+  if (Math.abs(x + 0.5 - cx) > halfW) return false
+  // Slices across the lower ~55%: in half-row units, a period of 3 with a
+  // gap that grows from 1 to 2 half-rows toward the horizon.
+  if (dy > r * 0.55) return true
+  const u = Math.floor(dy * 2 + slicePhase)
+  const gap = dy < r * 0.28 ? 2 : 1
+  return ((u % 3) + 3) % 3 >= gap
+}
 
 export default {
   key: 'outrun',
@@ -52,6 +107,12 @@ export default {
     // did. Reset on every visualizer entry alongside the effect clock.
     p._outrunPhase = 0
     p._outrunPhaseT = 0
+    // 2026-10-16 (design pass) -- the kick: the sun's swell envelope, its
+    // slice phase (half-rows stepped), and the last onset/pulse state for
+    // the rising edge.
+    p._outrunSwell = 0
+    p._outrunSlice = 0
+    p._outrunPrevHit = false
   },
   /** Re-arms clocks/accumulators on every visualizer entry. */
   reset(p) {
@@ -59,6 +120,8 @@ export default {
     // with the effect clock.
     p._outrunPhase = 0
     p._outrunPhaseT = 0
+    p._outrunSwell = 0
+    p._outrunPrevHit = false
   },
   // OUTRUN effect (44th pass, fidelity pass in the 45th) -- for CIRCUIT
   // CRUSH, which already carries the heaviest bloom on the roster and a
@@ -100,13 +163,23 @@ export default {
     // widened below. Still no onset hook anywhere in this effect -- a
     // per-beat flash would strobe it, tempo stays expressed as road speed
     // and sun glow only.
-    const A = p._au
+    const muted = !!p.muted
+    const A = muted ? SILENT_AUDIO : p._au
     if (t < p._outrunPhaseT) p._outrunPhaseT = t
-    p._outrunPhase += Math.min(0.1, t - p._outrunPhaseT) * 0.6 * auMul(A, A ? A.level : 0, 0.3, 2.2)
+    const dt = Math.min(0.1, Math.max(0, t - p._outrunPhaseT))
+    p._outrunPhase += dt * 0.6 * auMul(A, A ? A.level : 0, 0.3, 2.2)
     p._outrunPhaseT = t
+    // 2026-10-16 (design pass) -- the kick: a rising edge of onset/pulse,
+    // never a level, so steady loud audio swells nothing.
+    const hit = !!A && !muted && (A.onset || A.pulse > 0.6)
+    if (hit && !p._outrunPrevHit) { p._outrunSwell = 1; p._outrunSlice = (p._outrunSlice + 1) % 3 }
+    p._outrunPrevHit = hit
+    p._outrunSwell *= Math.exp(-dt / SWELL_TAU)
     // 46th pass: sun radius 6.5 -> 7.5 (live QA: "closer... but I think
-    // need less unused space, make elements larger").
-    const sunR = 7.5
+    // need less unused space, make elements larger"). 2026-10-16: 6.2 rows,
+    // but at the cell aspect -- ~28 columns wide where it was 15.
+    const sunR = SUN_R + SUN_SWELL * p._outrunSwell + (A ? (A.bass - 0.5) * 0.5 : 0)
+    const sunHalfW = SUN_ASPECT * sunR
     // Sky: sparse near-static stars above the sun.
     for (let y = 1; y < horizonY - 1; y++) for (let x = 0; x < term.cols; x++) term.put(x, y, ' ')
     for (const star of p._outrunStars) {
@@ -123,37 +196,40 @@ export default {
       const flap = Math.sin(t * 6 + bird.flapPhase) > 0
       term.put(Math.round(bx), by, flap ? '^' : 'v', MUTED)
     }
-    // Sun: radial shading (dense core -> thin rim), slice-gaps widening
-    // toward the bottom.
-    // (tap) heavy bass leans the sun's core toward '█', quiet cools it --
-    // centered on mid-bass so the neutral pulse is exactly what it was.
-    const pulse = Math.min(1, 0.75 + 0.25 * Math.sin(t * 0.5) + (A ? (A.bass - 0.5) * 0.4 : 0))
-    for (let y = Math.ceil(horizonY - sunR); y < horizonY; y++) {
-      const dy = horizonY - y
-      if (dy > sunR) { for (let x = 0; x < term.cols; x++) term.put(x, y, ' '); continue }
-      const halfW = Math.sqrt(Math.max(0, sunR * sunR - dy * dy))
-      const fromBottom = sunR - dy
-      const gapPeriod = 2 + Math.floor(fromBottom / 1.6)
-      const sliceBand = fromBottom < sunR * 0.65 && Math.floor(fromBottom) % gapPeriod === 0
-      const lo = Math.round(cx - halfW), hi = Math.round(cx + halfW)
-      for (let x = 0; x < term.cols; x++) {
-        if (sliceBand || x < lo || x > hi) { term.put(x, y, ' '); continue }
-        const edgeFrac = halfW > 0 ? Math.abs(x - cx) / halfW : 0
-        const shade = Math.min(1, (1 - edgeFrac * 0.65) * pulse)
-        const ch = shade > 0.78 ? '█' : shade > 0.55 ? '▓' : shade > 0.32 ? '▒' : '░'
-        term.put(x, y, ch, visualizerLevelAttr(shade))
+    // Horizon: two dim glow rows bleeding above the line -- 46th pass,
+    // thickened for the same "make elements larger" note. 2026-10-16: the
+    // glow skips the sun's span (it used to run full width after the sun
+    // and erase its sliced bottom), and the line itself is NORMAL now --
+    // the sun is the one BRIGHT thing.
+    for (let x = 0; x < term.cols; x++) {
+      if (Math.abs(x + 0.5 - cx) > sunHalfW + 1) {
+        term.put(x, horizonY - 2, '‾', FAINT)
+        term.put(x, horizonY - 1, '‾', DIM)
+      } else {
+        term.put(x, horizonY - 2, ' ')
+        term.put(x, horizonY - 1, ' ')
+      }
+      term.put(x, horizonY, '=', muted ? DIM : NORMAL)
+    }
+    // Sun (2026-10-16 redraw): a solid disc in half-blocks, sliced across
+    // its lower half. Each cell asks the disc about its top and bottom
+    // halves and picks █ ▀ ▄ or leaves what the sky/glow put there.
+    const sunAttr = muted ? NORMAL : BRIGHT
+    const sunTop = Math.max(1, Math.floor(horizonY - sunR))
+    const sx0 = Math.max(0, Math.floor(cx - sunHalfW - 1)), sx1 = Math.min(term.cols - 1, Math.ceil(cx + sunHalfW + 1))
+    for (let y = sunTop; y < horizonY; y++) {
+      for (let x = sx0; x <= sx1; x++) {
+        const top = sunLit(y + 0.25, x, cx, sunR, p._outrunSlice)
+        const bot = sunLit(y + 0.75, x, cx, sunR, p._outrunSlice)
+        if (top && bot) term.put(x, y, '█', sunAttr)
+        else if (top) term.put(x, y, '▀', sunAttr)
+        else if (bot) term.put(x, y, '▄', sunAttr)
+        else if (y >= horizonY - 2) term.put(x, y, ' ')
       }
     }
     // 57th pass, 2nd rewrite -- Tachometer Sync moved off the sky (see the
     // end of this function) down onto the dash itself, and made always-on
     // -- always present, just at a different metered level.
-    // Horizon: two dim glow rows bleeding above a bright line -- 46th
-    // pass, thickened for the same "make elements larger" note.
-    for (let x = 0; x < term.cols; x++) {
-      term.put(x, horizonY - 2, '‾', FAINT)
-      term.put(x, horizonY - 1, '‾', DIM)
-      term.put(x, horizonY, '=', BRIGHT)
-    }
     // City skyline -- adds a city skyline alongside the palm trees below,
     // a dim,
     // deterministic silhouette sitting right against the horizon glow rows
@@ -181,11 +257,11 @@ export default {
       let litWx = -1, litWy = -1
       for (let dx = 0; dx < w; dx++) {
         const bx = x + dx
-        if (bx >= term.cols || Math.abs(bx - cx) < sunR + 1) continue
+        if (bx >= term.cols || Math.abs(bx + 0.5 - cx) <= sunHalfW + 1) continue
         for (let k = 0; k < h; k++) {
           const by = horizonY - 2 - k
           if (by < 1) break
-          term.put(bx, by, '█', FAINT)
+          term.put(bx, by, '▓', DIM)
         }
         if (litWx < 0 && hash2(bx, 515) > 0.5) { litWx = bx; litWy = horizonY - 2 - Math.floor(hash2(bx, 516) * h) }
       }
@@ -211,7 +287,8 @@ export default {
       const railAttr = visualizerLevelAttr(Math.max(0.2, 0.35 + proximity * 0.35))
       const rungPos = (depth + p._outrunPhase * 8) % 6
       const showRung = rungPos < 1
-      const rungAttr = visualizerLevelAttr(Math.max(0.15, 0.5 + proximity * 0.5))
+      // 2026-10-16: capped at NORMAL -- the sun is the brightest thing.
+      const rungAttr = visualizerLevelAttr(Math.min(0.84, Math.max(0.15, 0.5 + proximity * 0.5)))
       const rungCh = proximity > 0.6 ? '=' : '-'
       // Roadside terrain -- 47th pass, live QA: "build out the land/grass
       // on either side of the road ... less empty space." Scrolls toward
@@ -220,7 +297,7 @@ export default {
       // brightness both grow with proximity so the nearest ground is the
       // most filled-in, matching the grid itself.
       const scrollRow = Math.floor(y + p._outrunPhase * 8 * 0.5)
-      const grassDensity = 0.22 + proximity * 0.4
+      const grassDensity = (0.22 + proximity * 0.4) * GRASS_SCALE
       const grassAttr = visualizerLevelAttr(Math.max(0.15, 0.2 + proximity * 0.45))
       for (let x = 0; x < term.cols; x++) {
         if (showRung && x >= lo && x <= hi) { term.put(x, y, rungCh, rungAttr); continue }

@@ -19,10 +19,24 @@
 // genuinely occluded cell by cell, which is what makes it read as a planet
 // with depth rather than a circle with a sprite over it.
 //
+// 2026-10-16 (design pass) -- judged off the real tube (tools/viz-sheet.mjs),
+// the planet read only loosely, as a dotted globe: the lit side and the
+// continents were runs of '# % = * + -' (character soup, rubric 4), the
+// night side's FAINT ':' dots vanished on green, the halo's breathing was
+// thinner than a tier step and never showed, and '=[]=' was no brighter
+// than the disc. Changed: the day side is a crescent of ▓▒░ (a planet is a
+// solid body, the one place in this picture mass is the point), with land
+// one shade DARKER and cloud one beam tier up; the light moved round so the
+// crescent is a crescent; the night side is a FAINT ░ fill closed by a solid
+// '(' ')' limb at MUTED; the halo is one continuous ring of '·' that steps a
+// tier on the breath (DIM->MUTED, sunward MUTED->NORMAL) -- a swell, since
+// SLOW ORBIT is ambient; the station is '═╡■╞═', BRIGHT on both passes, with
+// a NORMAL->MUTED->DIM trail that no longer punches holes in the disc.
+//
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
 
-import { BRIGHT, FAINT, NORMAL } from '../src/term.js'
+import { BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
 const { SILENT_AUDIO, syntheticAudio } = await import(`../audio/tap.js?v=${V}`)
 const { VIZ_BOT } = await import(`../layout.js?v=${V}`)
@@ -60,19 +74,42 @@ export const ORBIT_LAP_S = 30
 // columns/s of surface drift -- visibly turning over a few seconds, calm
 // beside the station, which moves ~6 columns/s at its fastest.
 export const ORBIT_SPIN_S = 80
-export const ORBIT_GLYPH = '=[]='
+// Design pass: '=[]=' was four characters no brighter than the planet.
+// Panels either side of a module, five wide, always BRIGHT.
+export const ORBIT_GLYPH = '═╡■╞═'
 
 // Light from upper-left and a little in front. z = 0.6 (not larger) is
 // what puts the terminator inside the disc's right third: a light straight
 // from the viewer would light a full disc and there would be no night side.
-const LX = -0.73, LY = -0.33, LZ = 0.6
+// 2026-10-16 (design pass) -- z down to 0.36. With shade blocks for the day
+// side, z = 0.6 lit three quarters of the disc as one slab of ▓ that
+// outshone everything; this puts the terminator just right of centre, so
+// the day side reads as a crescent and the night side as a dark disc.
+const LX = -0.86, LY = -0.36, LZ = 0.36
 const TAU = Math.PI * 2
-const LIT_RAMP = ' .:-=+*#%@'
+// Lit-side shade steps (design pass): the day value at which a cell goes
+// to ░, ▒ and ▓. LO sits so the terminator is a column or two of ░.
+export const ORBIT_SHADE_LO = 0.12
+export const ORBIT_SHADE_MID = 0.36
+export const ORBIT_SHADE_HI = 0.62
+const SHADE = [' ', '░', '▒', '▓']
+// Breath above which the halo ring steps DIM -> MUTED.
+export const ORBIT_BREATH_STEP = 0.35
 
 /** Is cell (x, y) on the planet's disc? */
 export function inPlanet(x, y) {
   const dx = x - ORBIT_CX, dy = (y - ORBIT_CY) * ORBIT_ASPECT
   return dx * dx + dy * dy < ORBIT_R * ORBIT_R
+}
+
+/** Is cell (x, y) outside the disc but touching it (8-neighbour)? The
+ *  halo ring. */
+export function touchesPlanet(x, y) {
+  if (inPlanet(x, y)) return false
+  for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+    if ((i || j) && inPlanet(x + i, y + j)) return true
+  }
+  return false
 }
 
 /** The station's position at orbit-clock `clock` seconds: fractional
@@ -157,6 +194,16 @@ export default {
 
     for (let y = 1; y < VIZ_BOT; y++) {
       const dy = (y - ORBIT_CY) * ORBIT_ASPECT
+      // This row's first and last disc cell, for the limb line.
+      const half = R2 - dy * dy
+      let rowL = -1, rowR = -1
+      if (half > 0) {
+        const w = Math.sqrt(half)
+        rowL = Math.floor(ORBIT_CX - w)
+        rowR = Math.ceil(ORBIT_CX + w)
+        while (rowL <= rowR && !inPlanet(rowL, y)) rowL++
+        while (rowR >= rowL && !inPlanet(rowR, y)) rowR--
+      }
       for (let x = 0; x < cols; x++) {
         const dx = x - ORBIT_CX
         const rr2 = dx * dx + dy * dy
@@ -168,6 +215,14 @@ export default {
           const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny))
           const lam = nx * LX + ny * LY + nz * LZ
           const day = Math.min(1, Math.max(0, (lam + 0.1) / 1.1))
+          // The limb (design pass): the row's first and last disc cell are
+          // a solid ( ) line, so the disc closes on the night side too.
+          // Lit limb NORMAL, night limb MUTED -- never FAINT, which is the
+          // tier that made the night side vanish on the tube.
+          if (x === rowL || x === rowR) {
+            term.put(x, y, x === rowL ? '(' : ')', day > 0.15 ? NORMAL : MUTED)
+            continue
+          }
           // Surface in longitude/latitude, so features ride the curvature:
           // they crawl fast across the middle and foreshorten at the limb,
           // which is what makes the drift read as rotation, not a scroll.
@@ -176,27 +231,36 @@ export default {
           const land = Math.sin(lon * 2 + 1.1 * Math.sin(lat * 2.3 + 0.6)) +
             0.3 * Math.sin(lon * 3.3 - lat * 2.4 + 1.9) + 0.25 * Math.cos(lat * 4) > 0.7
           const cloud = Math.sin(lat * 6 + 1.2 * Math.sin(lon * 1.7 + lat)) > 0.9
-          const albedo = cloud ? 0.95 : land ? 0.8 : 0.4
-          const v = Math.pow(day, 0.8) * albedo * warm
-          if (v < 0.09) {
-            // Night side: never blank, so the disc stays a solid silhouette
-            // against the stars -- land a shade denser than sea, both FAINT.
-            term.put(x, y, land ? ':' : '.', FAINT)
+          // Shade blocks for the lit crescent: the planet is a solid body,
+          // the one place in this picture where mass is the point. Land is
+          // one step DARKER than sea (a patch, not punctuation); cloud keeps
+          // the shade and lifts one beam tier, so it reads as a sheen over
+          // the surface rather than more rock.
+          const v = Math.pow(day, 0.8) * warm
+          let k = v >= ORBIT_SHADE_HI ? 3 : v >= ORBIT_SHADE_MID ? 2 : v >= ORBIT_SHADE_LO ? 1 : 0
+          if (land && k > 0) k--
+          if (k === 0) {
+            // Night side: a FAINT stipple fill, so the disc stays a solid
+            // silhouette against the stars; the MUTED limb carries its edge.
+            term.put(x, y, '░', FAINT)
           } else {
-            const idx = Math.max(1, Math.min(LIT_RAMP.length - 1, Math.floor(v * LIT_RAMP.length)))
-            term.put(x, y, LIT_RAMP[idx], visualizerLevelAttr(Math.min(1, v)))
+            const tier = k === 3 ? (cloud ? NORMAL : MUTED) : k === 2 ? (cloud ? MUTED : DIM) : (cloud ? MUTED : DIM)
+            term.put(x, y, SHADE[k], tier)
           }
         } else if (rr2 < HR2) {
-          // Atmosphere: brightest at the limb, fading outward; brighter on
-          // the lit limb (scattering) but present all the way round, so the
-          // night side's edge still closes the circle. The breath lifts the
-          // whole ring one or two tiers at most -- a swell, not a strobe.
-          const rr = Math.sqrt(rr2)
-          const edge = 1 - (rr - R) / ORBIT_HALO
-          const facing = Math.max(0, -(dx * LX + dy * LY) / rr)
-          const v = edge * (0.2 + 0.35 * facing) + breath * 0.4 * edge
-          if (v < 0.07) { term.put(x, y, ' '); continue }
-          term.put(x, y, v > 0.45 ? ':' : '·', visualizerLevelAttr(Math.min(1, v)))
+          // Atmosphere (design pass): ONE continuous ring of dots -- every
+          // cell touching the disc -- that steps DIM -> MUTED as the breath
+          // rises. The old 2.4-unit band of graded ':'/'·' was thinner than
+          // a tier step everywhere, so its breathing never showed on the
+          // tube. Swells, never flashes: the breath is eased (see above).
+          // The sunward half sits one tier up (scattering), so the swell
+          // reads there as MUTED->NORMAL and the night half still
+          // closes the circle at DIM.
+          if (touchesPlanet(x, y)) {
+            const sun = dx * LX + dy * LY > 0
+            const up = breath > ORBIT_BREATH_STEP
+            term.put(x, y, '·', sun ? (up ? NORMAL : MUTED) : (up ? MUTED : DIM))
+          } else term.put(x, y, ' ')
         } else {
           // Stars: two stateless hash layers drifting at different rates, so
           // the one-column steps a text grid forces land at different
@@ -242,14 +306,19 @@ export default {
       const o = orbitAt(clock - k * step)
       const cx = Math.round(o.x), cy = Math.round(o.y)
       if (cy < 1 || cy >= VIZ_BOT || cx < 0 || cx >= cols) continue
-      if (!o.front && inPlanet(cx, cy)) continue
-      const v = 0.12 + 0.5 * (1 - k / n)
-      term.put(cx, cy, '·', visualizerLevelAttr(v))
+      // Design pass: in front of the disc too. A '·' put over a shade
+      // block punches a black hole in the planet the size of the trail.
+      if (inPlanet(cx, cy)) continue
+      // Newest third NORMAL, then MUTED, then DIM: the trail is the one
+      // thing beside the station brighter than the planet behind it.
+      const age = k / n
+      term.put(cx, cy, '·', age < 0.34 ? NORMAL : age < 0.67 ? MUTED : DIM)
     }
 
     // The station. Occluded per cell, so it slides behind the limb a
-    // character at a time. BRIGHT on the near half, NORMAL on the far half:
-    // a small depth cue that also keeps it from glaring on the lit disc.
+    // character at a time. BRIGHT on both halves (design pass): it used to
+    // drop to NORMAL on the far pass, the same tier as the lit disc, and the
+    // subject has to be the brightest thing on the screen.
     const o = orbitAt(clock)
     const g = glyphCell(o)
     if (g.y >= 1 && g.y < VIZ_BOT) {
@@ -257,7 +326,7 @@ export default {
         const gx = g.x + i
         if (gx < 0 || gx >= cols) continue
         if (!o.front && inPlanet(gx, g.y)) continue
-        term.put(gx, g.y, ORBIT_GLYPH[i], o.front ? BRIGHT : NORMAL)
+        term.put(gx, g.y, ORBIT_GLYPH[i], BRIGHT)
       }
     }
   },

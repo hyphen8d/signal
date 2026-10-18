@@ -61,7 +61,10 @@ function litTiles(h, mod) {
   for (let y = mod.FLOOR_TOP; y < VIZ_BOT; y++) {
     const row = h.row(y)
     for (let x = 0; x < h.term.cols; x++) {
-      const k = mod.floorTileAt(x, y)
+      // 2026-10-16 -- its fill cells, not its whole interior: every tile now
+      // keeps a dark inset beside its rails, and on the back rows that inset
+      // is most of the tile.
+      const k = mod.floorFillAt(x, y)
       if (k < 0) continue
       total.set(k, (total.get(k) || 0) + 1)
       if (row[x] === '░' || row[x] === '▒') shade.set(k, (shade.get(k) || 0) + 1)
@@ -78,7 +81,7 @@ function litTiles(h, mod) {
 function ballProblem(h, mod) {
   const { BALL_X0, BALL_Y0, BALL_W, BALL_H, BALL_CX } = mod
   if (h.row(1)[BALL_CX] !== '│') return 'no cord over the ball'
-  const OUTLINE = '.-‾´`/\\│_'
+  const OUTLINE = '.-‾´`()_'
   const widths = []
   for (let r = 0; r < BALL_H; r++) {
     const row = h.row(BALL_Y0 + r)
@@ -111,8 +114,8 @@ function ballInterior(h, mod) {
   for (let r = 1; r < BALL_H - 1; r++) {
     const row = h.row(BALL_Y0 + r)
     const seg = row.slice(BALL_X0, BALL_X0 + 15)
-    const l = seg.search(/[.´\/│\\`]/)
-    const rt = 14 - [...seg].reverse().join('').search(/[.´\/│\\`]/)
+    const l = seg.search(/[.´()`]/)
+    const rt = 14 - [...seg].reverse().join('').search(/[.´()`]/)
     for (let x = l + 1; x < rt; x++) cells.push(seg[x])
   }
   return cells
@@ -437,5 +440,70 @@ test('DANCEFLOOR: the dancers change pose on the beat', async () => {
     drawWith(h, fx, 20.32, signal({ onset: true, pulse: 1 }))
     const b = figures()
     assert.ok(b.every((f, i) => f !== a[i]), `not every dancer changed pose on the beat: ${a} -> ${b}`)
+  } finally { h.shutdown() }
+})
+
+// 2026-10-16 (design pass). The critique: lit tiles rendered as stair-step
+// blobs that ignored the perspective -- solid NORMAL '▒' slabs with no tap --
+// and the ball, a DIM dotted ring, lost to the floor it hangs over.
+test('DANCEFLOOR: a lit tile is a light-shade trapezoid inside its rails, never touching a line or another tile', async () => {
+  const { h, fx, mod } = await bootFloor()
+  try {
+    h.advance(500)
+    fx.reset(h.program)
+    let shaded = 0
+    for (let f = 0; f < 64; f++) {
+      const t = 50 + f * 0.5
+      drawWith(h, fx, t, signal({ level: 1, bass: 1, pulse: 0.05 }))
+      drawWith(h, fx, t + 0.02, signal({ level: 1, bass: 1, onset: true, pulse: 1 }))
+      for (let y = mod.FLOOR_TOP; y < VIZ_BOT; y++) {
+        const row = h.row(y)
+        for (let x = 0; x < h.term.cols; x++) {
+          if (!/[░▒▓█]/.test(row[x])) continue
+          shaded++
+          assert.equal(row[x], '░', `kick ${f}: '${row[x]}' on the floor at ${x},${y} -- tiles fill with '░' only`)
+          const k = mod.floorFillAt(x, y)
+          assert.ok(k >= 0, `kick ${f}: shade at ${x},${y} outside any tile's inset fill`)
+          // The dark inset: a horizontal neighbour that is shaded belongs to
+          // the same tile, so two tiles never fuse into one blob.
+          // And a lit cell never sits against a rail: read off the grid, not
+          // the tables, so a table that loses the inset cannot vouch for itself.
+          for (const dx of [-1, 1]) {
+            if (row[x + dx] === '░') assert.equal(mod.floorFillAt(x + dx, y), k, `kick ${f}: two tiles touch at ${x},${y}`)
+            assert.ok(!'/\\_│'.includes(row[x + dx]), `kick ${f}: lit cell at ${x},${y} touches the rail '${row[x + dx]}' -- no dark inset`)
+          }
+          // Never up to the ball's tier.
+          const a = attrAt(h, x, y)
+          assert.ok(a & (DIM | MUTED | FAINT), `kick ${f}: a lit tile at NORMAL at ${x},${y}`)
+        }
+      }
+    }
+    assert.ok(shaded > 100, `only ${shaded} lit cells over 64 kicks`)
+  } finally { h.shutdown() }
+})
+
+test('DANCEFLOOR: the ball is the brightest structure -- a MUTED ( ) ring with NORMAL facets', async () => {
+  const { h, mod } = await bootFloor()
+  try {
+    const { BALL_X0, BALL_Y0, BALL_H } = mod
+    for (let i = 0; i < 20; i++) {
+      h.advance(150)
+      for (const r of [2, 3, 4]) {
+        assert.equal(h.row(BALL_Y0 + r)[BALL_X0], '(', `ball row ${r} has no '(' side`)
+        assert.equal(h.row(BALL_Y0 + r)[BALL_X0 + 14], ')', `ball row ${r} has no ')' side`)
+      }
+      let normal = 0
+      for (let r = 0; r < BALL_H; r++) {
+        const row = h.row(BALL_Y0 + r)
+        for (let c = 0; c < 15; c++) {
+          const ch = row[BALL_X0 + c], a = attrAt(h, BALL_X0 + c, BALL_Y0 + r)
+          if ('()´`‾_-'.includes(ch)) {
+            assert.ok(!(a & (DIM | FAINT)), `frame ${i}: outline '${ch}' at row ${r} is dimmer than MUTED`)
+          }
+          if (ch === '■' && !(a & (DIM | MUTED | FAINT))) normal++
+        }
+      }
+      assert.ok(normal >= 2, `frame ${i}: only ${normal} NORMAL facets on the ball`)
+    }
   } finally { h.shutdown() }
 })

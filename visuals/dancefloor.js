@@ -39,6 +39,23 @@
 // spots for as long as the pulse lasts. Muted, SILENT_AUDIO leaves the ball
 // turning and a few dim spots still moving, and the floor dark.
 //
+// 2026-10-16 (design pass). The critique, judged off the real tube: the lit
+// tiles ignored the perspective -- irregular stair-step blobs like tetromino
+// pieces, and with no tap solid NORMAL '▒' slabs (syntheticAudio's pulse sits
+// over 0.55 for a good part of every beat) -- and the ball, a DIM dotted
+// outline, was dimmer than the floor it hangs over. Changed, as specified: a
+// lit tile fills with '░' only, DIM at rest and MUTED on the kick, and only
+// the cells a column clear of its rails on EVERY row (MARGIN), so each lit
+// tile is its own trapezoid inside its rails and rungs and two lit
+// neighbours can no longer fuse into one blob. (The inset is horizontal
+// only: the back rows are one and two rows deep, and a vertical inset would
+// leave them nothing to light. The two edge tiles of the back row are one
+// row of three cells and keep no fill at all -- they stay dark.) The ball's
+// sides are '( )' and its whole outline is one MUTED ring, and its lit
+// facets are NORMAL with the thresholds lowered so they show -- the
+// brightest structure in the frame apart from its glints and the spot.
+// tests/visual-dancefloor.test.mjs holds both.
+//
 // Stored state: the step counter, the level latched at the last step, the
 // previous frame's pulse and the effect-clock time of the last step (the
 // rate limit). Everything else is a pure function of (x, y, t, audio); the
@@ -86,9 +103,9 @@ export const BALL_CY = BALL_Y0 + 3   // 5
 const BALL_ART = [
   '   .-‾‾‾‾‾-.   ',
   ' .´         `. ',
-  '/             \\',
-  '│             │',
-  '\\             /',
+  '(             )',
+  '(             )',
+  '(             )',
   ' `.         .´ ',
   '   `-._____.-´ ',
 ]
@@ -139,8 +156,10 @@ const lineX = (o, y) => BALL_CX + o * spacingAt(y)
 // Compiled once per grid width: for every floor cell, which grid line (if
 // any) it carries and which tile interior (if any) it is. LINE_AT stores
 // o + TILES_X/2 + 1 (0 = no line); TILE_AT stores i + j * TILES_X + 1 (0 =
-// not a tile interior); MARGIN marks interior cells touching a line on a row
-// whose tiles are wide enough to afford a dark border inside a lit tile.
+// not a tile interior); MARGIN marks interior cells touching a line -- the
+// dark inset inside a lit tile, on every row since the 2026-10-16 design
+// pass (it was only rows whose tiles were 6+ columns wide, so the back rows
+// lit right up to their rails and adjacent tiles fused into blobs).
 // 2026-09-13 (audit L5) -- these were compiled at import for a fixed
 // COLS = 80 and read as `y * 80 + x`, so a term of any other width read the
 // next row's lines and tiles (stray fragments at columns 88-99 on a 100-column
@@ -189,7 +208,7 @@ function floorTables(COLS) {
     }
     for (let x = 0; x < COLS; x++) {
       const at = y * COLS + x
-      if (TILE_AT[at] && sp >= 6 && ((x > 0 && LINE_AT[at - 1]) || (x < COLS - 1 && LINE_AT[at + 1]))) MARGIN[at] = 1
+      if (TILE_AT[at] && ((x > 0 && LINE_AT[at - 1]) || (x < COLS - 1 && LINE_AT[at + 1]))) MARGIN[at] = 1
     }
   }
   tables = { LINE_AT, LINE_RUN, TILE_AT, MARGIN }
@@ -202,6 +221,14 @@ function floorTables(COLS) {
 export function floorTileAt(x, y, cols = 80) {
   if (x < 0 || x >= cols || y < 0 || y >= VIZ_BOT) return -1
   return floorTables(cols).TILE_AT[y * cols + x] - 1
+}
+
+/** Tile index whose LIGHTABLE cell (x, y) is -- its interior less the dark
+ *  inset beside its rails -- or -1. Exactly what a lit tile fills. */
+export function floorFillAt(x, y, cols = 80) {
+  if (x < 0 || x >= cols || y < 0 || y >= VIZ_BOT) return -1
+  const t = floorTables(cols)
+  return t.MARGIN[y * cols + x] ? -1 : t.TILE_AT[y * cols + x] - 1
 }
 
 /** Whether tile (i, j) is lit on step n with level lvl (0..1). The floor
@@ -351,10 +378,13 @@ export default {
         if (tile >= 0) {
           const i = tile % TILES_X, j = (tile - i) / TILES_X
           if (!muted && !MARGIN[at] && tileLit(i, j, n, p._dancefloorLvl)) {
-            // A lit tile: '░' at rest, '▒' only on the kick. Bass lifts the
-            // resting tier; nothing here goes past NORMAL.
+            // A lit tile: '░' only, DIM at rest and MUTED on the kick --
+            // never up to the ball's NORMAL facets. 2026-10-16 (design pass)
+            // -- it was '▒' NORMAL on the kick, which the tube rasters as a
+            // solid slab; syntheticAudio's pulse held it there long enough
+            // that the NO TAP capture was nothing but slabs.
             const hot = pulse > 0.55
-            term.put(x, y, hot ? '▒' : '░', hot ? NORMAL : bass > 0.5 ? MUTED : DIM)
+            term.put(x, y, '░', hot ? MUTED : DIM)
           } else term.put(x, y, ' ')
           continue
         }
@@ -431,9 +461,9 @@ export default {
     for (const cell of BALL_CELLS) {
       const x = BALL_X0 + cell.c, y = BALL_Y0 + cell.r
       if (!cell.facet) {
-        // The outline, lit from the upper left.
-        const lightSide = cell.c < 8 && cell.r < 4
-        term.put(x, y, cell.ch, lightSide ? MUTED : DIM)
+        // The outline: one continuous MUTED ring (2026-10-16 -- it was a
+        // DIM dotted ring lit MUTED on one quarter, and lost to the floor).
+        term.put(x, y, cell.ch, MUTED)
         continue
       }
       // Spherical facets: longitude from the column within this row's half
@@ -460,11 +490,11 @@ export default {
       const on = ((fid + cell.r) & 1) === 0
       let ch, a
       if (on) {
-        ch = b > 0.5 ? '■' : b > 0.28 ? ':' : '·'
-        a = b > 0.5 ? MUTED : b > 0.28 ? DIM : FAINT
+        ch = b > 0.36 ? '■' : b > 0.2 ? ':' : '·'
+        a = b > 0.36 ? NORMAL : b > 0.2 ? MUTED : DIM
       } else {
         ch = b > 0.45 ? '.' : ' '
-        a = FAINT
+        a = DIM
       }
       // Glints: a facet with a high second hash catches the light as it
       // turns through the lit quarter, twinkling a few times a second.

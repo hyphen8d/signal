@@ -12,10 +12,23 @@
 // matters is the crowd moving AS ONE -- a surge of arms going up that
 // ripples across the whole room from one side when the song hits.
 //
+// 2026-10-16 (design pass). The critique, judged off the real tube: the
+// placards outshone the crowd that is the subject; the crowd read as a
+// crenellated wall of mixed '▓▒' blocks; and on the kick, solid squares
+// floated beside the RISE UP sign. Those squares were the FLYERS -- half
+// blocks thrown from a column hashed over the whole width, so they rose out
+// of nobody and rastered as little slabs (see the flyers pass for the fix
+// at the source). The brightness order is now: arms and heads answering a
+// surge NORMAL; the front rank's head-and-shoulder edge and the placards'
+// words MUTED; boxes, sticks, beams and back-rank heads DIM; every body and
+// the floor FAINT. Nothing in the frame is BRIGHT. The front rank is a lit
+// '▄' shoulder line over a FAINT '▓' body, the back rank only '░' mass.
+// tests/visual-uprising.test.mjs holds all three.
+//
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
 
-import { BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
+import { DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
 const { SILENT_AUDIO, syntheticAudio } = await import(`../audio/tap.js?v=${V}`)
 const { VIZ_BOT } = await import(`../layout.js?v=${V}`)
@@ -83,6 +96,7 @@ export function surgeEnvelope(sg, x, cols, t) {
 // bodies below the shoulders merge into one mass, which is the silhouette.
 let crowdCols = 0
 let crowd = []
+let crowdFront = []   // the front rank alone: where a flyer can be thrown from
 function crowdFor(cols) {
   if (cols === crowdCols) return crowd
   crowdCols = cols
@@ -102,6 +116,7 @@ function crowdFor(cols) {
   // carries on beyond the frame, and a sway must not open a strip at the side.
   for (let x = 0; x <= cols; x += 3) mk(x + (hash2(x, 7.1) < 0.3 ? 1 : 0), BACK_HEAD + (hash2(x, 11.3) < 0.4 ? 1 : 0), 0)
   for (let x = 2; x <= cols + 1; x += 4) mk(x - (hash2(x, 19.7) < 0.35 ? 1 : 0), FRONT_HEAD + (hash2(x, 23.9) < 0.35 ? 1 : 0), 1)
+  crowdFront = crowd.filter((pp) => pp.rank === 1)
   return crowd
 }
 
@@ -185,7 +200,7 @@ export default {
         // wall of dots competing with their words.
         const v = (1 - o * o) * fall * glow
         const hsh = hash2(x * 1.7 + dustTick * 13, y * 3.3)
-        if (hsh < v * 0.42) term.put(x, y, v > 0.55 && hsh < 0.08 ? ':' : '·', v > 0.6 ? MUTED : v > 0.35 ? DIM : FAINT)
+        if (hsh < v * 0.42) term.put(x, y, v > 0.55 && hsh < 0.08 ? ':' : '·', v > 0.35 ? DIM : FAINT)
         else term.put(x, y, ' ')
       }
       // Edges: the cone's outline, one cell per side per row -- the part
@@ -193,7 +208,7 @@ export default {
       // follows the edge's own slope (half-width grows 0.42/row, the axis
       // moves tan*2/row); a fixed '/' on the left read as scratches the
       // moment a beam tilted past its own spread.
-      const edgeAttr = glow > 0.6 ? MUTED : glow > 0.4 ? DIM : FAINT
+      const edgeAttr = glow > 0.5 ? DIM : FAINT   // 2026-10-16: scenery, under the placards
       for (const [ax, tn] of [[a0, tan0], [a1, tan1]]) {
         for (const side of [-1, 1]) {
           const ex = Math.round(ax + side * half)
@@ -204,7 +219,9 @@ export default {
       }
     }
     // The fixtures themselves, where the cones leave the top edge.
-    const lampAttr = glow > 0.75 ? BRIGHT : glow > 0.5 ? NORMAL : MUTED
+    // 2026-10-16 -- capped at MUTED (was BRIGHT/NORMAL): two fixtures at the
+    // top edge are scenery, and must not outshine the room below them.
+    const lampAttr = glow > 0.5 ? MUTED : DIM
     for (const bx of [bx0 + tan0, bx1 + tan1]) {
       const lx = Math.round(bx)
       if (lx >= 0 && lx < cols) term.put(lx, 1, '●', lampAttr)
@@ -215,19 +232,31 @@ export default {
     // crowd on a ballistic arc. Stateless: position is a function of the
     // surge's own t0, so nothing to keep and nothing to reset beyond the
     // surge list. Drawn before the placards, so they pass BEHIND a sign.
+    // 2026-10-16 (design pass) -- THESE were the "stray floating blocks" the
+    // critique saw beside RISE UP in the KICK capture. Two faults, both here:
+    // a flyer was drawn as a half block ('▀'/'▄' flipping), which the tube
+    // rasters as a solid little square -- a shade-family glyph used for
+    // something meant to be thin and light, rubric 4; and its column was a
+    // hash over the whole width, so it left from no one, appearing in the
+    // dark sky out of nothing. Now a flyer is a sheet of paper seen edge on,
+    // flipping between '‾' and '_' (the same flip, as a stroke instead of a
+    // slab), thrown from a front-rank person's position, and it stays FAINT
+    // to DIM: it is a consequence of the surge, never brighter than the arms
+    // that threw it.
+    crowdFor(cols)
     for (let k = 0; k < surges.length; k++) {
       const sg = surges[k]
       if (sg.s < 0.85) continue
       const age = t - sg.t0
       if (age < 0 || age > 1.6) continue
       for (let f = 0; f < 6; f++) {
-        const fx = Math.floor(hash2(sg.t0 * 7.3, f) * cols)
+        const thrower = crowdFront[Math.floor(hash2(sg.t0 * 7.3, f) * crowdFront.length)]
         const vy = 11 + hash2(f, sg.t0 * 3.1) * 7
         const y = Math.round(STICK_BOT - vy * age + 9 * age * age)
         if (y < 2 || y > STICK_BOT) continue
-        const fxx = fx + Math.round(Math.sin(age * 6 + f) * 1.5)
+        const fxx = thrower.x + Math.round(Math.sin(age * 6 + f) * 1.5)
         if (fxx < 0 || fxx >= cols) continue
-        term.put(fxx, y, Math.floor(age * 8 + f) % 2 ? '▀' : '▄', age > 1.1 ? FAINT : DIM)
+        term.put(fxx, y, Math.floor(age * 8 + f) % 2 ? '‾' : '_', age > 1.1 ? FAINT : DIM)
       }
     }
 
@@ -264,7 +293,7 @@ export default {
     // Sticks go in before the crowd, so the people in front hold them.
     for (const sg of signs) {
       if (!sg.visible) continue
-      for (let y = sg.y + 2; y <= STICK_BOT; y++) term.put(sg.cx, y, '│', MUTED)
+      for (let y = sg.y + 2; y <= STICK_BOT; y++) term.put(sg.cx, y, '│', DIM)
     }
 
     // --- the crowd ---------------------------------------------------------
@@ -305,9 +334,19 @@ export default {
       const hop = raise >= 0.65 || (pulse > 0.55 && hash2(pp.bob, hopTick) < life * 0.35) ? 1 : 0
       const hy = pp.head - hop
       const surged = sv > 0.5
-      const headAttr = front ? (surged ? BRIGHT : NORMAL) : (surged ? NORMAL : DIM)
-      const bodyAttr = front ? DIM : FAINT
-      const armAttr = front ? (surged ? BRIGHT : NORMAL) : (surged ? NORMAL : MUTED)
+      // 2026-10-16 (design pass) -- the tiers, re-ordered so the crowd is
+      // the subject and the surge is the brightest motion in the frame. At
+      // rest the front rank is a MUTED lit edge (head and '▄' shoulders)
+      // over FAINT '▓' bodies, the back rank DIM heads over the '░' mass;
+      // arms going up on a surge are NORMAL in both ranks, and an ambient
+      // arm (no surge) is a tier under its rank's head, so a kick reads as
+      // the room lighting up rather than as more of the same. Nothing in
+      // the crowd is BRIGHT any more: the wave is many cells, and a wave of
+      // BRIGHT across the bottom third blooms into a band on the tube.
+      const headAttr = surged ? NORMAL : front ? MUTED : DIM
+      const shoulderAttr = front ? MUTED : FAINT
+      const bodyAttr = FAINT
+      const armAttr = surged ? NORMAL : front ? DIM : FAINT
       // Body: shoulders as lower half-blocks under the head, then solid down
       // to the floor. Neighbours overlap, so below the shoulders it is one
       // mass -- the silhouette that makes the heads read as a crowd.
@@ -315,11 +354,22 @@ export default {
       // reason as the floor above: a step denser than the floor's '▒', so a
       // body still reads against the mass, without lighting the whole cell.
       // 2026-09-13 (audit L6) -- '▒' now, over a '░' floor: see the floor.
+      // 2026-10-16 (design pass) -- the critique: the mass read as a wall, a
+      // band of mixed '▓▒' blocks with heads set in it, crenellated. Now the
+      // two ranks are drawn differently. The back rank is DIM heads on FAINT
+      // shoulders over the floor's own '░' -- the dim mass the room recedes
+      // into, with nothing denser than the floor. The front rank is a lit
+      // top edge ('▄' shoulders under the head, MUTED) with a FAINT '▓' body
+      // below: the shoulder line is what draws each person, and the '▓' is
+      // dark mass under it -- FAINT, so it is coverage without light (the
+      // audit-L6 lesson).
       for (let y = hy + 1; y < VIZ_BOT; y++) {
         const sh = y === hy + 1
-        put(cx - 1, y, sh ? '▄' : '▒', bodyAttr)
-        put(cx, y, '▒', bodyAttr)
-        put(cx + 1, y, sh ? '▄' : '▒', bodyAttr)
+        const ch = sh ? '▄' : front ? '▓' : '░'
+        const a = sh ? shoulderAttr : bodyAttr
+        put(cx - 1, y, ch, a)
+        put(cx, y, ch, a)
+        put(cx + 1, y, ch, a)
       }
       // Front rank heads stand in the back rank's bodies; clearing the cells
       // either side is the halo that keeps an `O` from vanishing into `███`.
@@ -341,6 +391,11 @@ export default {
     }
 
     // --- placard boxes, last, so nothing overdraws a word ---------------------
+    // 2026-10-16 (design pass) -- the critique: the placards outshone the
+    // crowd, which is the subject (BRIGHT words in NORMAL boxes, crisper than
+    // anything below them). Now a MUTED word in a DIM box: still read first
+    // as words, but a tier under a surging arm, so the wave is the brightest
+    // thing that moves.
     for (const sg of signs) {
       if (!sg.visible) continue
       const w = sg.word.length
@@ -350,10 +405,10 @@ export default {
         if (x < 0 || x >= cols) continue
         const corner = x === left || x === left + w + 3
         const lx = x === left
-        term.put(x, sg.y - 1, corner ? (lx ? '┌' : '┐') : '─', NORMAL)
-        term.put(x, edge, corner ? (lx ? '└' : '┘') : '─', NORMAL)
+        term.put(x, sg.y - 1, corner ? (lx ? '┌' : '┐') : '─', DIM)
+        term.put(x, edge, corner ? (lx ? '└' : '┘') : '─', DIM)
         const ix = x - sg.x
-        term.put(x, sg.y, corner ? '│' : ix >= 0 && ix < w ? sg.word[ix] : ' ', corner ? NORMAL : BRIGHT)
+        term.put(x, sg.y, corner ? '│' : ix >= 0 && ix < w ? sg.word[ix] : ' ', corner ? DIM : MUTED)
       }
     }
   },

@@ -10,7 +10,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 const { Screen } = await import('../src/screen.js?v=engine')
-const { CLOCK_WRAP_S, wrapClock, advanceRollPhase } = await import('../src/crt.js?v=engine')
+const { CLOCK_WRAP_S, wrapClock, advanceRollPhase, decayForFrame } = await import('../src/crt.js?v=engine')
 const { DotCanvas } = await import('../src/vector.js?v=engine')
 
 /** A Screen on stubs: a term nothing dirties, a crt that counts renders, a
@@ -142,4 +142,42 @@ test('the shader takes the face aspect from params, not a constant', () => {
   assert.match(uploads[0], /\bP\.aspect\b/, `uAspect is uploaded as ${uploads[0]}, not from params`)
   assert.match(src, /min\(uRes\.x \/ uAspect, uRes\.y\)/, 'the fit uses uAspect')
   assert.match(src, /vec2\(uFill \* uAspect, uFill\)/, 'the face size uses uAspect')
+})
+
+test('phosphor persistence fades by the clock, not by the frame count (2026-10-16)', () => {
+  // The bug: the beam pass multiplied by `decay` once per rendered frame, so
+  // a trail tuned at 60fps lasted ~4x longer at the dev box's 14fps and
+  // under half as long at 144Hz. Run one second of frames at each rate and
+  // read back how much of a lit pixel is left: it must agree, to rounding.
+  const left = (decay, fps) => {
+    let v = 1
+    for (let i = 0; i < fps; i++) v *= decayForFrame(decay, 1 / fps)
+    return v
+  }
+  for (const decay of [0.5, 0.75, 0.88, 0.95]) {
+    const ref = left(decay, 60)
+    assert.ok(Math.abs(ref - decay ** 60) < 1e-12, `60fps is the tuning rate, unchanged (decay ${decay})`)
+    for (const fps of [14, 30, 144]) {
+      const got = left(decay, fps)
+      assert.ok(Math.abs(Math.log(got) - Math.log(ref)) < 1e-6,
+        `decay ${decay} at ${fps}fps leaves ${got}, at 60fps ${ref}`)
+    }
+  }
+  // A frame with no usable length is one nominal frame; a stall is capped,
+  // so a hitch dims the tube rather than wiping it.
+  assert.equal(decayForFrame(0.88, 0), 0.88)
+  assert.equal(decayForFrame(0.88, -1), 0.88)
+  assert.equal(decayForFrame(0.88, NaN), 0.88)
+  assert.equal(decayForFrame(0.88, 3600), decayForFrame(0.88, 0.25))
+  // At or above 1 is the documented ramp-to-white end; not rescaled.
+  assert.equal(decayForFrame(1, 1 / 14), 1)
+  assert.equal(decayForFrame(1.02, 1 / 14), 1.02)
+})
+
+test('the beam pass is handed decayForFrame, not the raw per-frame decay', () => {
+  // The helper is only the fix if render() uses it. Read the source: a
+  // regression back to `uDecay, P.decay` would leave the test above green.
+  const src = readFileSync(new URL('../src/crt.js', import.meta.url), 'utf8')
+  assert.match(src, /uDecay,\s*decayForFrame\(P\.decay,\s*dt\)/)
+  assert.doesNotMatch(src, /uDecay,\s*P\.decay\)/)
 })

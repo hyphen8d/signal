@@ -17,11 +17,13 @@
 //   1. The CRT is WebGL2 and headless has no GPU, so ANGLE's software backend
 //      is forced below. Without it the context fails and you screenshot a
 //      blank page at exactly the right dimensions.
-//   2. Phosphor persistence is per-FRAME (crt.js: the beam pass is
-//      max(total, prev * decay)), and swiftshader renders far below 60fps.
-//      Settling on wall-clock caught the STANDBY wordmark ghosting straight
-//      through the guide's control table a full second after the keypress.
-//      settleFrames() counts rAF ticks instead.
+//   2. Settle on rendered FRAMES, not wall-clock. Phosphor persistence was
+//      per-frame until 2026-10-16 (it now fades by the clock -- decayForFrame
+//      in crt.js), and swiftshader renders far below 60fps: settling on
+//      wall-clock caught the STANDBY wordmark ghosting straight through the
+//      guide's control table a full second after the keypress. Still counted
+//      in rAF ticks, because a frame that has not rendered has not settled
+//      anything, whatever the persistence model.
 //   3. The set boots into STANDBY and [G] works from there (gated on
 //      !_powerAnimating, so the cold-open flourish has to finish first), which
 //      is why the guide shot never powers on and never starts playback.
@@ -32,7 +34,7 @@
 
 import { spawn, spawnSync } from 'node:child_process'
 import { writeFileSync, mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -50,14 +52,16 @@ if (!CHROME) { console.error('No Chrome/Chromium binary found.'); process.exit(2
 // Key codes for everything the shots press. e.key is what program.js switches
 // on, but CDP needs the physical code and virtual keycode too or the event
 // never reaches the page as a real keydown.
-const KEYS = {
+export const KEYS = {
   p: ['KeyP', 80], g: ['KeyG', 71], v: ['KeyV', 86], c: ['KeyC', 67], n: ['KeyN', 78], y: ['KeyY', 89],
   2: ['Digit2', 50], 3: ['Digit3', 51],
 }
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+export const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
-async function session(fn) {
+// Exported for tools/viz-sheet.mjs, which drives the same Chrome for the
+// visualizer contact sheets; importing this file runs nothing (see below).
+export async function session(fn) {
   const profile = mkdtempSync(path.join(tmpdir(), 'signal-shoot-'))
   const chrome = spawn(CHROME, [
     // Port 0 = let Chrome pick, then read it back out of the profile. A fixed
@@ -108,7 +112,7 @@ async function session(fn) {
 
   const api = {
     send,
-    ev: async (e) => (await send('Runtime.evaluate', { expression: e, returnByValue: true })).result?.value,
+    ev: async (e) => (await send('Runtime.evaluate', { expression: e, returnByValue: true, awaitPromise: true })).result?.value,
     async key(k) {
       const [code, vk] = KEYS[k]
       for (const type of ['keyDown', 'keyUp']) {
@@ -159,7 +163,7 @@ const magick = (args_) => {
 }
 
 /** Power on and lock a preset, then wait for real playback. */
-async function tuneTo(api, preset) {
+export async function tuneTo(api, preset) {
   await api.key('p')
   if (!await api.until('window.screen0.program.poweredOn === true', 40, 250)) throw new Error('never powered on')
   await sleep(1200)
@@ -264,6 +268,10 @@ const RECIPES = {
   },
 }
 
+// Run as a script only -- tools/viz-sheet.mjs imports session() from here.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main()
+
+async function main() {
 // `shoot.mjs og` names the file someone is actually looking for, and runs the
 // hero recipe -- og.jpg is derived from that capture and cannot be taken on
 // its own. Listed in the error message below for the same reason. `kofi` is
@@ -309,4 +317,5 @@ for (const name of names) {
     }
     console.log('')
   } finally { rmSync(tmp, { recursive: true, force: true }) }
+}
 }

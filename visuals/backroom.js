@@ -37,6 +37,20 @@
 // nod, no glints, the candle and the neon steady; only the smoke keeps
 // hanging and climbing, because a frozen frame reads as a hung tab.
 //
+// 2026-10-16 (design pass). The critique, judged off the real tube: the
+// figures were a tangle of thin outlines all at one tier; the densest smoke
+// ('░▒') formed a solid slab right in front of the tenor in LOUD and KICK --
+// the failure the first rule above exists to prevent; and the spotlight was
+// two near-invisible thin lines, so "the spotlight is the bright thing" did
+// not happen. Changed, as the critique specified: smoke is '.', '·' and "'"
+// wisps only, capped at MUTED; the cone's clear air carries a fixed '·'
+// stipple (DIM in the core, FAINT toward the edge) and its edges are
+// continuous '_/' runs at DIM; and the bass is the lead silhouette at NORMAL
+// whatever the light, with every other player held at DIM (only the strings'
+// shimmer and the tenor's bell glint move off their tiers). The beam no
+// longer lights the players, which it used to -- a lit tenor was the tangle.
+// tests/visual-backroom.test.mjs holds all three.
+//
 // Everything but the onset glint is a pure function of (x, y, t, audio); the
 // art is compiled to cell lists once at import.
 //
@@ -354,27 +368,44 @@ export default {
         const s2 = Math.sin(x * 0.07 - rise * 0.15 + t * 0.04 + 2)
         const s3 = Math.sin(x * 0.41 + (y + t * 0.5) * 0.8)
         const d = Math.max(0, 0.55 * s1 + 0.3 * s2 + 0.15 * s3)
+        // 2026-10-16 (design pass) -- wisps only: '.', '·' and "'". The
+        // densest smoke was '░'/'▒' past v 0.62, and in LOUD and KICK it
+        // formed a solid shaded slab in front of the tenor on the tube --
+        // the exact failure the header says this effect avoids. Smoke is
+        // scenery, so it tops out at MUTED and never outshines the players.
         const v = (0.03 + d * 1.1) * b * lvl
-        let ch = ' '
-        if (v > 0.85) ch = '▒'
-        else if (v > 0.62) ch = '░'
-        else if (v > 0.44) ch = ':'
-        else if (v > 0.28) ch = '·'
-        else if (v > 0.14) ch = '.'
+        let ch = ' ', a = FAINT
+        if (v > 0.62) { ch = "'"; a = v > 0.8 ? MUTED : DIM }
+        else if (v > 0.36) { ch = '·'; a = DIM }
+        else if (v > 0.16) { ch = '.'; a = DIM }
         // Dust motes: a fixed sparse scatter that only shows in the light,
         // so clear air in the cone still reads as the beam and not as the
         // room. Each holds its cell and fades on its own slow period.
         else if (hash2(x * 7 + 1, y * 13) > 0.9 && Math.sin(t * 0.6 + hash2(y, x) * 40) > -0.3) ch = '.'
-        term.put(x, y, ch, tierFor(v))
+        // The beam's own haze: a fixed '·' stipple through the clear air of
+        // the cone, DIM in its core and FAINT toward the edge, so the cone
+        // reads as a shaft of light and not as two lines (2026-10-16 -- it
+        // was the two edge lines alone, and the spotlight did not show).
+        else if ((x + 2 * y) % 3 === 0) { ch = '·'; a = b * lvl > 0.72 ? DIM : FAINT }
+        term.put(x, y, ch, a)
       }
     }
-    // The cone's own edge: a thin dotted boundary either side, wherever no
-    // figure is standing in it.
+    // The cone's own edge, either side, wherever no figure is standing in
+    // it. 2026-10-16 (design pass) -- one '/' a row on a 1.9-column slope
+    // left a gap every row, and the edge read as a dotted guess. Now each
+    // row draws the whole run the edge crosses, '_' with the slash at its
+    // upper end (the floor lines in DANCEFLOOR do the same), so it is one
+    // continuous DIM line.
     for (let y = BEAM_TOP + 1; y < STAGE_Y; y++) {
-      const hw = coneHalfWidth(y)
-      const l = Math.round(LAMP_X - hw), r = Math.round(LAMP_X + hw)
-      if (l >= 0 && l < cols && !mask[y * cols + l]) term.put(l, y, '/', DIM)
-      if (r >= 0 && r < cols && !mask[y * cols + r]) term.put(r, y, '\\', DIM)
+      const top = coneHalfWidth(y - 0.5), bot = coneHalfWidth(y + 0.5)
+      const n = Math.max(1, Math.round(bot - top))
+      for (let k = 0; k < n; k++) {
+        // Left edge: runs outward to the left as it falls; the slash sits
+        // at the run's right (upper) end. The right edge mirrors it.
+        const l = Math.round(LAMP_X - top) - k, r = Math.round(LAMP_X + top) + k
+        if (l >= 0 && l < cols && !mask[y * cols + l]) term.put(l, y, k === 0 ? '/' : '_', DIM)
+        if (r >= 0 && r < cols && !mask[y * cols + r]) term.put(r, y, k === 0 ? '\\' : '_', DIM)
+      }
     }
 
     // --- the lamp ------------------------------------------------------------
@@ -394,7 +425,13 @@ export default {
         const x = c.x + (piece.sway && c.row < piece.sway ? nod : 0), y = c.y
         if (x < 0 || x >= cols || y < 1 || y >= VIZ_BOT) continue
         if (c.ch === '%') { term.put(x, y, ' '); continue }
-        let lit = beamAt(x, y) * lvl * 0.9 + (c.rim ? 0.25 : 0) + 0.08
+        // 2026-10-16 (design pass) -- the figures were all one tier, lit by
+        // where the beam fell, and read as a tangle of thin outlines. Now
+        // the bass is the lead silhouette at NORMAL whatever the light, and
+        // everyone else holds at DIM behind it; only the strings' shimmer
+        // and the tenor's bell glint move off those tiers.
+        const lead = piece.name === 'bass'
+        let lit = lead ? 0.9 : 0.4
         let ch = c.ch
         if (ch === 'S') {
           // Strings: bass makes them shimmer -- the glyph re-rolls ~8x a
@@ -402,7 +439,6 @@ export default {
           // bass amount. Muted, a still '‖'.
           const n = hash2(y * 7 + 3, Math.floor(t * 8))
           ch = n < bass * 0.55 ? (n < bass * 0.25 ? '¦' : '|') : '‖'
-          lit += bass * 0.25 * n
         } else if (ch === 'G') {
           ch = 'o'
           lit += treble > 0.55 ? (treble - 0.55) * 1.6 : 0

@@ -7,6 +7,12 @@
 // thinks it drew -- the lesson tests/visuals.test.mjs's header records from
 // BREACH.
 //
+// 2026-10-16 (design pass) -- redrawn as light: thin hems and ray strokes,
+// a FAINT `░` ridge with pines standing on it, a lake of streaks. The
+// "subject reads", "outshines" and "muted" tests were rewritten for those
+// glyphs (the old ones counted shade blocks as the light, which is exactly
+// what the redraw removed), and "the sky is light, not blocks" is new.
+//
 // Run: node --test tests/visual-aurora.test.mjs
 
 import test from 'node:test'
@@ -49,6 +55,33 @@ function changedCols(a, b, cols) {
 
 const cell = (h, x, y) => String.fromCodePoint(h.term.chars[y * h.term.cols + x])
 const attr = (h, x, y) => h.term.attrs[y * h.term.cols + x]
+// The sky's glyphs since the 2026-10-16 design pass: hem lines and joins,
+// and ray strokes. Shade blocks are not among them anywhere.
+const HEM = '─━▁▂┴┷'
+const RAYS = '│¦:'
+const SHADE = '░▒▓█'
+
+/** The longest run of adjacent columns each holding a hem cell within one
+ *  row of the previous column's -- a curtain's edge, read as a line. */
+function longestHem(h, horizon) {
+  const cols = h.term.cols
+  let best = 0
+  for (let y0 = 1; y0 < horizon; y0++) {
+    for (let x0 = 0; x0 < cols; x0++) {
+      if (!HEM.includes(cell(h, x0, y0))) continue
+      let y = y0, n = 1
+      for (let x = x0 + 1; x < cols; x++) {
+        const ny = [y, y - 1, y + 1].find((yy) => yy >= 1 && yy < horizon && HEM.includes(cell(h, x, yy)))
+        if (ny === undefined) break
+        y = ny
+        n++
+      }
+      if (n > best) best = n
+    }
+  }
+  return best
+}
+
 const audio = (over) => ({
   level: 0.6, bass: 0.9, mid: 0.5, treble: 0.4,
   bands9: [0.2, 0.7, 0.4, 0.9, 0.3, 0.6, 0.5, 0.8, 0.1],
@@ -110,57 +143,108 @@ test('AURORA: the subject reads -- bright curtains in the sky, a solid ridge, pi
     aurora.draw(p, h.screen, 21.7)
     const cols = h.term.cols
     const edge = p._auroraEdge
-    // The sky above the tallest peak: curtain light in blocks.
-    let blocks = 0, strong = 0, runs = 0
-    for (let y = 1; y < HORIZON - 6; y++) {
+    const pineRow = p._auroraPine
+    // 2026-10-16 (design pass) -- the light is LINES now, not blocks: the
+    // block version passed every assertion this test then made while the
+    // real tube showed hard-edged rectangles. So: hem cells (a line through
+    // or along a cell) in the sky, a real share of them at NORMAL or
+    // BRIGHT, rays standing on them, and the hems CONTINUOUS -- long runs
+    // of adjacent columns, each a step of at most one row from the last.
+    let hems = 0, strong = 0, rays = 0
+    for (let y = 1; y < HORIZON - 2; y++) {
       for (let x = 0; x < cols; x++) {
+        if (y > HORIZON - edge[x]) continue
         const ch = cell(h, x, y)
-        if (!'░▒▓█'.includes(ch)) continue
-        blocks++
-        const a = attr(h, x, y)
-        if (a === NORMAL || a === BRIGHT) strong++
-        if ('░▒▓█¦'.includes(cell(h, x, y - 1))) runs++
+        if (HEM.includes(ch)) {
+          hems++
+          const a = attr(h, x, y)
+          if (a === NORMAL || a === BRIGHT) strong++
+        } else if (RAYS.includes(ch) && (HEM + RAYS).includes(cell(h, x, y + 1))) rays++
       }
     }
-    assert.ok(blocks >= 120, `only ${blocks} curtain block cells in the sky`)
-    assert.ok(strong >= 30, `only ${strong} curtain cells at NORMAL or BRIGHT -- the sky does not read`)
-    assert.ok(runs >= 60, `only ${runs} curtain cells continue upward -- no rays`)
-    // The ridge is SOLID: every cell from the crest down to the shore is a
-    // block, in every column with a peak.
-    let peakCols = 0
+    assert.ok(hems >= 60, `only ${hems} hem cells in the sky`)
+    assert.ok(strong >= 30, `only ${strong} hem cells at NORMAL or BRIGHT -- the sky does not read`)
+    assert.ok(rays >= 25, `only ${rays} ray cells standing on a hem or a ray -- no rays`)
+    assert.ok(longestHem(h, HORIZON) >= 25, `longest continuous hem is ${longestHem(h, HORIZON)} columns -- broken, not a curtain`)
+    // The ridge is a FAINT `░` mass from the crest down to the shore in
+    // every column with a peak, snow (`▀`) on the crest row only.
+    let peakCols = 0, snow = 0
     for (let x = 0; x < cols; x++) {
       const e = edge[x]
-      if (e < 1) continue
-      peakCols++
-      for (let y = HORIZON - e + 1; y < HORIZON; y++) {
-        const ok = '▓█'.includes(cell(h, x, y)) || (cell(h, x, y) === '▀' && y === HORIZON - e + 1)
-        assert.ok(ok, `ridge at ${x},${y} is '${cell(h, x, y)}', not solid`)
+      for (let y = HORIZON - e + 1; y <= HORIZON; y++) {
+        const ch = cell(h, x, y)
+        assert.ok(ch === '░' || (ch === '▀' && y === HORIZON - e + 1), `ridge at ${x},${y} is '${ch}'`)
+        assert.equal(attr(h, x, y), FAINT, `ridge at ${x},${y} lit above FAINT`)
+        if (ch === '▀') snow++
       }
+      if (e >= 1) peakCols++
     }
     assert.ok(peakCols >= cols * 0.6, `only ${peakCols} columns carry a peak`)
-    // Snow on the summits: a thin `▀` cap, on the crest row only.
-    let snow = 0
-    for (let y = HORIZON - 6; y < HORIZON; y++) for (let x = 0; x < cols; x++) {
-      if (cell(h, x, y) === '▀' && y > HORIZON - edge[x]) {
-        snow++
-        assert.equal(y, HORIZON - edge[x] + 1, `snow at ${x},${y} below the crest row -- a blob, not a cap`)
+    assert.ok(snow >= 3, `only ${snow} snow cells`)
+    // Pines stand ON the land -- each in the sky cell directly above the
+    // ridge or shore, never in a row the land itself fills.
+    let pines = 0
+    for (let x = 0; x < cols; x++) {
+      for (let y = 1; y <= HORIZON; y++) {
+        if (cell(h, x, y) !== '▲') continue
+        pines++
+        assert.equal(y, HORIZON - Math.max(1, edge[x]), `pine at ${x},${y} is not standing on the land (crest row ${HORIZON - edge[x] + 1})`)
+        assert.equal(pineRow[x], y, `pine at ${x},${y} the effect did not plant`)
       }
     }
-    assert.ok(snow >= 3, `only ${snow} snow cells`)
-    // Pines on the shore row, and nothing of the sky's light on it.
-    assert.ok((h.row(HORIZON).match(/[▲Λ]/g) || []).length >= 8, 'too few pines on the shore row')
-    assert.ok(/^[▓█▲Λ▁]+$/.test(h.row(HORIZON)), `shore row carries something else: ${h.row(HORIZON)}`)
-    // The lake: the sky's light comes back, and never above DIM.
+    assert.ok(pines >= 8, `only ${pines} pines`)
+    assert.ok(/^░+$/.test(h.row(HORIZON)), `shore row carries something else: ${h.row(HORIZON)}`)
+    // The lake: streaks of the hems' light, never a block, never above DIM.
     let reflected = 0
     for (let y = HORIZON + 1; y < VIZ_BOT; y++) {
       for (let x = 0; x < cols; x++) {
         const a = attr(h, x, y), ch = cell(h, x, y)
         if (ch === ' ') continue
+        assert.ok('─~'.includes(ch), `lake cell ${x},${y} is '${ch}', not a streak`)
         assert.ok(a === FAINT || a === DIM, `lake cell ${x},${y} lit at attr ${a}`)
-        if ('░▒'.includes(ch) && a === DIM) reflected++
+        if (a === DIM) reflected++
       }
     }
-    assert.ok(reflected >= 10, `only ${reflected} DIM reflection cells in the lake`)
+    assert.ok(reflected >= 8, `only ${reflected} DIM streak cells in the lake`)
+  } finally { h.shutdown() }
+})
+
+test('AURORA: the sky is light, not blocks -- no shade block above the land, and an unbroken hem, in every state', async () => {
+  // 2026-10-16 (design pass) -- the critique's finding, held as a rule: a
+  // shade block rasters as a solid rectangle on the tube, so a curtain drawn
+  // in them read as blocks (loud) or barcode (quiet). Loud, a kick in
+  // flight, quiet and muted: nothing from `░▒▓█` in the sky, and each state
+  // keeps a hem long enough to read as one curtain's edge.
+  const { h, aurora, HORIZON } = await bootAurora()
+  try {
+    h.advance(1000)
+    const p = h.program
+    const cols = h.term.cols
+    const states = [
+      ['loud', false, audio({ level: 1, bands9: new Array(9).fill(1) }), false],
+      ['kick', false, audio({ level: 0.95, bass: 1, onset: true }), true],
+      ['quiet', false, audio({ level: 0.1, bands9: new Array(9).fill(0.1) }), false],
+      ['muted', true, audio({ level: 0 }), false],
+    ]
+    for (const [name, muted, A, kick] of states) {
+      for (const t0 of [9.4, 61.2, 240.5]) {
+        p.muted = muted
+        aurora.reset(p)
+        p._au = A
+        aurora.draw(p, h.screen, t0)
+        if (kick) { // let the wave bloom: it rises over WAVE_RISE
+          p._au = { ...A, onset: false }
+          for (let f = 1; f <= 12; f++) aurora.draw(p, h.screen, t0 + f / 60)
+        }
+        const edge = p._auroraEdge
+        for (let y = 1; y < HORIZON; y++) for (let x = 0; x < cols; x++) {
+          if (y > HORIZON - edge[x]) continue
+          assert.ok(!SHADE.includes(cell(h, x, y)), `${name} t=${t0}: shade block '${cell(h, x, y)}' in the sky at ${x},${y}`)
+        }
+        const run = longestHem(h, HORIZON)
+        assert.ok(run >= 15, `${name} t=${t0}: longest hem is ${run} columns`)
+      }
+    }
   } finally { h.shutdown() }
 })
 
@@ -197,9 +281,12 @@ test('AURORA: nothing in the landscape outshines the curtains -- at any level, m
             const ch = cell(h, x, y)
             if (ch === ' ') continue
             const r = rank(attr(h, x, y))
-            const isLand = y === HORIZON || y > HORIZON - edge[x] || ch === '▄'
+            // 2026-10-16 (design pass): the pines are land too (they stand
+            // above the crest row now), and the sky's light is its hems and
+            // rays -- the `▄` half caps and the block curtains are gone.
+            const isLand = y === HORIZON || y > HORIZON - edge[x] || ch === '▲'
             if (isLand) { if (r > land) { land = r; where = `${x},${y} '${ch}'` } }
-            else if ('░▒▓█'.includes(ch) && r > sky) sky = r
+            else if ((HEM + RAYS).includes(ch) && r > sky) sky = r
           }
         }
         assert.ok(sky >= 0, `${name} t=${t}: no curtain light at all`)
@@ -334,10 +421,17 @@ test('AURORA: muted settles to faint light, never a blank frame', async () => {
         if (ch === ' ') continue
         const a = attr(h, x, y)
         assert.ok(a !== NORMAL && a !== BRIGHT, `muted sky cell ${x},${y} lit at ${a}`)
-        if ('░▒▓¦'.includes(ch)) lit++
+        if ((HEM + RAYS).includes(ch)) lit++
       }
     }
     assert.ok(lit >= 25, `muted aurora is nearly gone (${lit} cells)`)
+    // ...and not faint to the point of not being there: some of the hems are
+    // still at MUTED (DIM and FAINT alone vanish under some phosphors).
+    let seen = 0
+    for (let y = 1; y < HORIZON; y++) for (let x = 0; x < h.term.cols; x++) {
+      if (HEM.includes(cell(h, x, y)) && attr(h, x, y) === MUTED) seen++
+    }
+    assert.ok(seen >= 10, `only ${seen} muted hem cells at MUTED -- the muted sky is below what a tint shows`)
   } finally { h.shutdown() }
 })
 

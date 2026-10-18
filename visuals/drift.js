@@ -43,6 +43,29 @@
 // No '█' anywhere and BRIGHT on one cell only (the spurt's crown): the tube
 // blooms, which the text grid cannot see -- the UPRISING/KEEP lesson.
 //
+// 2026-10-16 (design pass). The viz-critic, judging the real tube, found the
+// kick's element the least legible thing in the frame -- a small DIM oval of
+// dashes, LOUD and KICK indistinguishable -- and nothing clearly brightest:
+// the escalators' big slashed X sat mid-frame at the same tier as everything
+// else, and the shop windows were shade-block slabs (`░`), which raster as
+// solid rectangles, the opposite of a lit window. What changed:
+//   - The fountain is the subject now, and drawn as one object: a basin of
+//     solid box rules (`╭─╮` / `╰─╯`) at NORMAL, the bowl and stem at
+//     NORMAL, the jet's column at NORMAL, the crown BRIGHT. The cap below
+//     JET_CEIL_Y is untouched.
+//   - The `~`/`-` noise in the basin is gone. The water is dark, with slow
+//     rings running out from the jet -- one ring when quiet, up to three
+//     loud -- so loudness still reads in the water, as a swell. The kick's
+//     foam is a band that opens from the jet and closes as the spurt dies.
+//   - The air around the jet is cleared of floor seams, so the spurt's spray
+//     has a dark ground to read against.
+//   - Escalators down to structure: rails DIM, treads FAINT.
+//   - Signs top out at MUTED (they were reaching NORMAL loud, level with the
+//     fountain), and a lit window is a sparse dot screen of light rather than
+//     a shade-block slab.
+// Still a swell, never a thump: the kick drives the fountain alone, and no
+// tier anywhere else in the frame moves on the beat.
+//
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
 
@@ -77,22 +100,29 @@ export const RIM_Y = 18        // the basin's back rim
 export const WATER_Y = 19      // the basin's water
 export const FRONT_Y = 20      // the basin's front rim
 const BASIN_HALF = 12          // half-width of the basin
+const JET_AIR = 7              // half-width of the dark air kept round the jet
 
 // --- the beat -----------------------------------------------------------------
 // Same edge and gap as DANCEFLOOR (see there for why 0.2 and 0.22s).
 export const BEAT_RISE = 0.2
 export const SPURT_GAP_S = 0.22
-// How fast a spurt dies away: e^-6t is ~0.05 after half a second, so even at
-// 120bpm the jet is back near rest before the next kick.
-const SPURT_DECAY = 6
+// How fast a spurt dies away. 2026-10-16 (design pass): 6 -> 3.5, so the
+// burst swells and settles over ~0.4s rather than snapping off in a frame or
+// two -- mallsoft swells, it does not thump. e^-1.75 is ~0.17 at half a
+// second, under every threshold below, so at 120bpm the fountain is still
+// back at rest before the next kick.
+const SPURT_DECAY = 3.5
 // Droplets in a spurt's spray.
 const SPRAY = 12
+// Seconds for a water ring to run from the jet to the basin's wall.
+const RING_S = 3.2
 
 const UP_NAMES = ['CINEMA', 'ARCADE', 'BOOKS', 'FOODS', 'VIDEO']
 const LO_NAMES = ['RECORDS', 'PHOTO', 'GIFTS', 'SHOES', 'CANDY', 'TOYS']
 
-// Light tiers by a 0..1 value, never past NORMAL.
-const tier = (v) => v > 0.72 ? NORMAL : v > 0.48 ? MUTED : v > 0.22 ? DIM : FAINT
+// Light tiers by a 0..1 value, never past MUTED: the far wall is scenery,
+// and NORMAL belongs to the fountain (2026-10-16 design pass).
+const tier = (v) => v > 0.55 ? MUTED : v > 0.25 ? DIM : FAINT
 const clamp01 = (v) => Math.max(0, Math.min(1, v))
 
 /** Lights out? A pure function of a store's id and the effect clock: each
@@ -106,6 +136,9 @@ export function storeDark(id, t) {
 
 // Everything that depends only on the width, compiled once per width.
 const layouts = new Map()
+// The compose buffers, reused frame to frame and rebuilt only when the
+// width changes (2026-10-16 design pass: they were allocated every frame).
+let bufW = 0, bufCh = null, bufAt = null
 function layoutFor(cols) {
   let L = layouts.get(cols)
   if (L) return L
@@ -189,8 +222,9 @@ export default {
 
     // --- compose into a buffer, then write every canvas cell once ----------
     const W = cols, H = VIZ_BOT
-    const ch = new Array(W * H).fill(' ')
-    const at = new Uint8Array(W * H).fill(NORMAL)
+    if (bufW !== W) { bufW = W; bufCh = new Array(W * H); bufAt = new Uint8Array(W * H) }
+    const ch = bufCh.fill(' ')
+    const at = bufAt.fill(NORMAL)
     const put = (x, y, c, a = NORMAL) => {
       x = Math.round(x); y = Math.round(y)
       if (x < 0 || x >= W || y < 1 || y >= H) return
@@ -212,9 +246,13 @@ export default {
       const f = (y - VP_Y) / (FLOOR_Y - VP_Y)
       for (let i = -12; i <= 12; i++) {
         if (i === 0) continue
-        put(mid + i * 4 * f, y, i < 0 ? '/' : '\\', FAINT)
+        const x = Math.round(mid + i * 4 * f)
+        // The fountain's air stays dark, so the spray reads against nothing.
+        if (y < RIM_Y && Math.abs(x - mid) <= JET_AIR) continue
+        put(x, y, i < 0 ? '/' : '\\', FAINT)
       }
     }
+    for (let y = JET_CEIL_Y; y < RIM_Y; y++) for (let x = mid - JET_AIR; x <= mid + JET_AIR; x++) put(x, y, ' ')
 
     // --- the side walls -----------------------------------------------------
     // Each wall column x is a slice of the wall at scale k -- 1 where it
@@ -275,12 +313,14 @@ export default {
       // Shopfront pillars, and the window between them.
       for (let y = signY; y <= w1; y++) { put(x0, y, '│', DIM); put(x1, y, '│', DIM) }
       // One shop a floor never got its shutter all the way up. A lit window
-      // is a soft block of light; a closed one is dark glass.
+      // is a dot screen of light -- every other cell, staggered by row -- a
+      // closed one is dark glass. (It was a `░` slab until the 2026-10-16
+      // design pass: on the tube that is a solid rectangle, not light.)
       const shutterRows = i === (floor ? 0 : n - 1) && n > 1 ? 2 : 0
       for (let y = w0; y <= w1; y++) {
         for (let x = x0 + 1; x < x1; x++) {
           if (y - w0 < shutterRows) put(x, y, '≡', DIM)
-          else if (!dark) put(x, y, '░', g > 0.62 ? DIM : FAINT)
+          else if (!dark && ((x + y) & 1) === 0) put(x, y, g > 0.62 ? ':' : '.', g > 0.62 ? DIM : FAINT)
         }
       }
     }
@@ -299,9 +339,11 @@ export default {
       for (let y = SLAB_Y; y <= FLOOR_Y; y++) {
         const u = (FLOOR_Y - y) / rise
         const xl = mid - dir * Math.round(run * 0.8) + dir * Math.round(u * run) - 2
-        for (let x = xl + 1; x < xl + 4; x++) put(x, y, ((y + tread * (dir > 0 ? 1 : -1)) & 1) === 0 ? '_' : ' ', DIM)
+        for (let x = xl + 1; x < xl + 4; x++) put(x, y, ((y + tread * (dir > 0 ? 1 : -1)) & 1) === 0 ? '_' : ' ', FAINT)
         const rail = dir > 0 ? '/' : '\\'
-        put(xl, y, rail, MUTED); put(xl + 4, y, rail, MUTED)
+        // Structure, not subject (2026-10-16 design pass): DIM, below the
+        // fountain, where MUTED had them level with everything else.
+        put(xl, y, rail, DIM); put(xl + 4, y, rail, DIM)
       }
     }
     escalator(-1)
@@ -322,31 +364,36 @@ export default {
     // --- the fountain ---------------------------------------------------------
     const bl = mid - BASIN_HALF, br = mid + BASIN_HALF
     for (let x = bl; x <= br; x++) for (let y = RIM_Y; y <= FRONT_Y; y++) put(x, y, ' ')
-    // Back rim.
-    put(bl + 1, RIM_Y, '.', DIM); put(bl + 2, RIM_Y, '-', DIM)
-    for (let x = bl + 3; x <= br - 3; x++) put(x, RIM_Y, '‾', DIM)
-    put(br - 2, RIM_Y, '-', DIM); put(br - 1, RIM_Y, '.', DIM)
-    // Water: a slow ripple, choppier the louder it is, and a flash of foam
-    // on the kick. The pattern only re-rolls every 1.1s, so loudness changes
-    // how much of the surface is broken, not how fast it twitches.
-    const foam = spurt > 0.45
-    const swell = Math.floor(t / 1.1)
-    put(bl, WATER_Y, '(', DIM); put(br, WATER_Y, ')', DIM)
-    for (let x = bl + 1; x < br; x++) {
-      if (foam) put(x, WATER_Y, '≈', NORMAL)
-      else if (hash2(x, swell) < 0.12 + level * 0.55) put(x, WATER_Y, '~', level > 0.5 ? DIM : FAINT)
-      else put(x, WATER_Y, '-', FAINT)
+    // The basin, one solid object (2026-10-16 design pass): box rules at
+    // NORMAL, the old '.-‾‾‾-.' oval having read as a few dim dashes.
+    put(bl, RIM_Y, '╭', NORMAL); put(br, RIM_Y, '╮', NORMAL)
+    for (let x = bl + 1; x < br; x++) put(x, RIM_Y, '─', NORMAL)
+    put(bl, FRONT_Y, '╰', NORMAL); put(br, FRONT_Y, '╯', NORMAL)
+    for (let x = bl + 1; x < br; x++) put(x, FRONT_Y, '─', NORMAL)
+    put(bl, WATER_Y, '│', NORMAL); put(br, WATER_Y, '│', NORMAL)
+    // Water: dark, with rings running slowly out from where the jet falls --
+    // one when quiet, up to three loud, so loudness swells in the water
+    // rather than speckling it. Each ring takes RING_S to cross the basin;
+    // the rings are evenly spaced in phase, so adding one never jumps the
+    // others. On the kick, foam opens from the jet and closes as the spurt
+    // dies -- the basin's half of the burst.
+    const rings = muted ? 1 : 1 + Math.round(level * 2)
+    for (let r = 0; r < rings; r++) {
+      const ph = ((t / RING_S) + r / 3) % 1
+      const dx = 2 + Math.round(ph * (BASIN_HALF - 4))
+      const a = ph < 0.6 ? DIM : FAINT
+      for (const d of [-1, 1]) { put(mid + d * dx, WATER_Y, '~', a); put(mid + d * (dx + 1), WATER_Y, '~', a) }
     }
-    // Front rim.
-    put(bl + 1, FRONT_Y, '`', DIM); put(bl + 2, FRONT_Y, '-', DIM); put(bl + 3, FRONT_Y, '.', DIM)
-    for (let x = bl + 4; x <= br - 4; x++) put(x, FRONT_Y, '_', DIM)
-    put(br - 3, FRONT_Y, '.', DIM); put(br - 2, FRONT_Y, '-', DIM); put(br - 1, FRONT_Y, '´', DIM)
+    if (spurt > 0.45) {
+      const fw = Math.round(BASIN_HALF * Math.min(1, (spurt - 0.3) * 1.6))
+      for (let x = mid - fw; x <= mid + fw; x++) if (x > bl && x < br) put(x, WATER_Y, '≈', NORMAL)
+    }
     // The stem and the upper bowl.
-    for (let y = BOWL_Y + 1; y < RIM_Y; y++) put(mid, y, '║', DIM)
+    for (let y = BOWL_Y + 1; y < RIM_Y; y++) put(mid, y, '║', NORMAL)
     // Everything from here up is clipped at JET_CEIL_Y, so no level and no
     // kick can lift the fountain into the escalators.
     const fput = (x, y, c, a) => { if (Math.round(y) >= JET_CEIL_Y) put(x, y, c, a) }
-    text(mid - 3, BOWL_Y, '\\_____/', MUTED)
+    text(mid - 3, BOWL_Y, '\\_____/', NORMAL)
     // Overflow arcs: from the bowl's lips down into the basin, reaching
     // further the louder it is.
     const reach = muted ? 2 : 2 + Math.round(level * 6)
@@ -354,7 +401,10 @@ export default {
       for (let k = 1; k <= reach; k++) {
         const x = mid + d * (3 + k)
         const y = BOWL_Y + Math.round(((k * k) / (reach * reach)) * (WATER_Y - 1 - BOWL_Y))
-        put(x, y, k === reach ? ',' : '.', k < reach / 2 ? DIM : FAINT)
+        // The arc runs on into the basin behind its rim: never written over
+        // the rim, which is one solid line (2026-10-16 design pass).
+        if (y >= RIM_Y) continue
+        put(x, y, k === reach ? ',' : '.', k < reach / 2 ? MUTED : DIM)
       }
     }
     // The centre jet: a trickle when muted, a column one or two rows tall by
@@ -372,12 +422,12 @@ export default {
         const vx = (hash2(k, Math.floor(p._driftSpurtAt * 10)) - 0.5) * 2
         const x = mid + vx * (3 + s1 * 9)
         const y = JET_CEIL_Y + s1 * s1 * 5 + (k & 1)
-        fput(x, y, k & 1 ? "'" : '.', k < 4 ? MUTED : DIM)
+        fput(x, y, k & 1 ? "'" : '.', k < 4 ? NORMAL : MUTED)
       }
     }
     for (let y = BOWL_Y - 1; y >= top; y--) {
-      fput(mid, y, y === top ? '¦' : '│', y > top ? MUTED : NORMAL)
-      if (jet >= 2 && y > top) { fput(mid - 1, y, ':', DIM); fput(mid + 1, y, ':', DIM) }
+      fput(mid, y, y === top ? '¦' : '│', NORMAL)
+      if (jet >= 2 && y > top) { fput(mid - 1, y, ':', MUTED); fput(mid + 1, y, ':', MUTED) }
     }
     if (spurt > 0.3) fput(mid, top - 1, '*', spurt > 0.6 ? BRIGHT : NORMAL)
 

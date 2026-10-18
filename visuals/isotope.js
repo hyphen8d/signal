@@ -383,9 +383,14 @@ export default {
     // NORMAL->MUTED->DIM fade spent three of those on the quiet half of the
     // beat (profiled the same day). The ring holds and goes out with the
     // flare, in the same frame; the tube's persistence does the fading.
+    // 2026-10-16 (design pass): the ring is MUTED, one tier under the
+    // electrons. The viz-critic rated ATOMIC AGE KEEP, with one note: in the
+    // NO TAP capture the ring, at full NORMAL and with the previous kick's
+    // ring still in the tube's persistence, briefly crowded the emblem. One
+    // tier down it still lands on the beat and no longer outranks the atom.
     composeDots(term, [
       { dc: L.electron, attr: NORMAL },
-      { dc: L.shock, attr: NORMAL },
+      { dc: L.shock, attr: MUTED },
       { dc: L.trail, attr: MUTED },
       { dc: L.orbit, attr: FAINT },
     ])

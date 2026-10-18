@@ -42,9 +42,29 @@
 // it last latched, at a calm floor -- lights stay on, rain keeps falling.
 //
 // Tube rules (the KEEP/DANCEFLOOR lesson): '█' blooms into a slab on the
-// real shader at any tier, so it appears only in the moon's few interior
-// cells; building bodies are '▒'/'░' at FAINT; nothing reaches BRIGHT but
+// real shader at any tier, so it appears nowhere (the moon's few interior
+// cells were the last of it, until 2026-10-16); building bodies are '▒'/'░' at FAINT; nothing reaches BRIGHT but
 // the beacon. CITY LIGHTS carries the heaviest bloomAmt on the roster.
+//
+// 2026-10-16 (design pass). The viz-critic, judging the real tube, found two
+// faults. The reflection was noise -- scattered `- = ~ . ¦` that did not read
+// as the city upside down -- and the moon outshone the beacon: its '█'/'▀'
+// crescent, a solid glyph mass, bloomed brighter than the one-cell beacon the
+// kick is about, even at DIM. What changed:
+//   - The reflection is built from the skyline's actual lit windows: under
+//     every column that holds a lit window, a vertical streak running down
+//     from the quay, `│` near and `¦` further out, one tier below the
+//     brightest window in that column, and a tier dimmer again in the deeper
+//     half. Its length follows how many windows in the column are lit, so a
+//     kick that switches lights on or off visibly lengthens or cuts the
+//     streaks under them. The random dashes and '~' are gone; the swell is a
+//     one-column sway per row and a few gaps that re-break on the kick.
+//   - The moon is a crescent drawn in strokes now, not glyph mass, held at
+//     DIM. The critique asked for it "down to NORMAL"; it was nominally DIM
+//     already, and what outshone the beacon was the solid '█' raster, so the
+//     fix is the glyphs. The beacon gets a flare on the kick -- '─•─' with
+//     NORMAL arms -- so the tip of the tower is the brightest, widest thing
+//     on screen for that beat.
 //
 // Everything about the city's layout is a pure function of the grid width,
 // built once per width in cityTables(), so a term of any width draws the
@@ -80,6 +100,16 @@ const TOWER_BASE_HW = 5
 // 2026-10-16 -- a full disc at this size rendered as a box of '█'; the
 // crescent reads as a moon at a glance and keeps the full blocks to a few.
 export const MOON = { fx: 0.16, cy: 3.5, r: 3.4, bx: 1.7, br: 3.0 }
+// The crescent as drawn since 2026-10-16 (see cityTables); MOON.fx still
+// places it, the disc parameters are kept for the record of what it was.
+export const MOON_TOP = 2
+export const MOON_ART = [
+  "  .-'",
+  ' //  ',
+  '||   ',
+  ' \\\\  ',
+  '  `-.',
+]
 
 // --- the beat ----------------------------------------------------------------
 // Same edge and rate limit DANCEFLOOR uses, for the same reasons (a late
@@ -157,17 +187,18 @@ export function cityTables(cols) {
     if (hash2(x, y * 3 + 1) < 0.014) { kind[at(x, y)] = K_STAR; ch[at(x, y)] = '·' }
   }
   const mx = Math.round(cols * MOON.fx)
-  for (let y = 1; y <= 7; y++) for (let x = mx - 4; x <= mx + 4; x++) {
-    if (x < 0 || x >= cols) continue
-    const inside = (yy) => {
-      const dx = x - mx, dy = (yy - MOON.cy) * 2, bx = dx - MOON.bx
-      return dx * dx + dy * dy < MOON.r * MOON.r && bx * bx + dy * dy >= MOON.br * MOON.br
+  // 2026-10-16 (design pass): a crescent drawn in strokes, not a sampled
+  // disc of '█'/'▀'/'▄' -- that slab bloomed past the beacon at any tier,
+  // and a stroke-sampled disc at this size came out as a jumble of corners.
+  // Hand-drawn, opening to the right, doubled through the middle for weight.
+  MOON_ART.forEach((row, r) => {
+    for (let k = 0; k < row.length; k++) {
+      const x = mx - 2 + k, y = MOON_TOP + r
+      if (row[k] === ' ' || x < 0 || x >= cols) continue
+      kind[at(x, y)] = K_MOON
+      ch[at(x, y)] = row[k]
     }
-    const top = inside(y - 0.25), bot = inside(y + 0.25)
-    if (!top && !bot) continue
-    kind[at(x, y)] = K_MOON
-    ch[at(x, y)] = top && bot ? '█' : top ? '▀' : '▄'
-  }
+  })
   const drawBuilding = (b) => {
     for (let x = Math.max(0, b.x0); x <= b.x1; x++) {
       for (let y = b.top; y <= SKY_BOT; y++) {
@@ -358,6 +389,12 @@ export default {
           if (lit) tr = Math.min(3, kt)
           else { c = bodyGlyph(T.layer[i], x, y); tr = 0 }
         }
+        // The beacon's flare (2026-10-16 design pass): arms either side of
+        // the tip while it is lit, so the kick's subject is the widest light
+        // in the sky as well as the brightest.
+        if (y === TOWER_TOP && beacon > 0.4 && x !== T.tx && Math.abs(x - T.tx) <= 2) {
+          c = Math.abs(x - T.tx) === 1 ? '─' : '·'; tr = Math.abs(x - T.tx) === 1 ? 3 : 2
+        }
         tier[i] = tr
         if (tr < 0) term.put(x, y, ' ')
         else term.put(x, y, c, tr === 4 ? BRIGHT : TIERS[tr])
@@ -368,16 +405,28 @@ export default {
     for (let x = 0; x < cols; x++) term.put(x, QUAY_Y, '▀', FAINT)
 
     // --- the bay: reflection, moon path, rain ---------------------------------------
+    // 2026-10-16 (design pass): the reflection is read off the lit windows,
+    // column by column -- see the header. colTier/colLit are reused per width.
+    if (!T.colTier) { T.colTier = new Int8Array(cols); T.colLit = new Uint8Array(cols) }
+    const colTier = T.colTier, colLit = T.colLit
+    for (let x = 0; x < cols; x++) {
+      let best = -1, n = 0
+      for (let y = 1; y <= SKY_BOT; y++) {
+        const i = at(x, y)
+        if (T.kind[i] === K_WIN && tier[i] >= 1) { n++; if (tier[i] > best) best = tier[i] }
+      }
+      colTier[x] = best; colLit[x] = n
+    }
+    const bayRows = VIZ_BOT - WATER_TOP
+    // The swell re-breaks the streaks on each kick, and drifts slowly between
+    // them so a long quiet passage is not frozen water.
+    const glit = step * 3 + Math.floor(t * 0.25)
     for (let w = WATER_TOP; w < VIZ_BOT; w++) {
-      const sy = mirrorRow(w)
       const depth = w - WATER_TOP
-      // The swell's sideways sway: it advances a notch on each kick, with a
-      // slow drift under that, so the water moves with the music rather than
-      // beside it.
-      const dx = Math.round(Math.sin(w * 1.9 + step * 0.35 + t * 0.06) * (0.4 + depth * 0.22))
-      // The swell re-breaks the reflection on each kick, and drifts slowly
-      // between them so a long quiet passage is not frozen water.
-      const glit = step * 3 + Math.floor(t * 0.25)
+      const deep = depth >= bayRows / 2
+      // The swell's sideways sway: one column at most, advancing a notch on
+      // each kick with a slow drift under that.
+      const dx = Math.round(Math.sin(w * 1.9 + step * 0.35 + t * 0.06) * Math.min(1, 0.3 + depth * 0.15))
       const pathHW = 1 + depth * 0.45
       for (let x = 0; x < cols; x++) {
         let c = ' ', a = FAINT
@@ -400,21 +449,19 @@ export default {
           continue
         }
         const sx = x + dx
-        const si = sx >= 0 && sx < cols ? at(sx, sy) : -1
-        const k = si >= 0 ? T.kind[si] : K_SKY
-        const tr = si >= 0 ? tier[si] : -1
-        if (k === K_WIN && tr >= 1) {
-          // A lit window's light, stretched into a streak and broken by the
-          // swell; one tier dimmer than the window itself.
-          if (hash2(x * 3 + w, glit + w * 7) >= 0.22) { c = '─'; a = TIERS[tr - 1] }
-        } else if (k === K_TOWER || k === K_SIGN) {
-          if (hash2(x + w * 5, glit) >= 0.3) { c = k === K_TOWER ? '¦' : '-'; a = FAINT }
-        } else if (Math.abs(x - T.mx) <= pathHW && hash2(x * 11 + w, glit) >= 0.35) {
-          // The moon's path on the water: a column of dashes widening
-          // toward the viewer.
-          c = Math.abs(x - T.mx) < pathHW * 0.5 ? '=' : '-'; a = DIM
-        } else if (hash2(x + Math.floor(t * 0.3 + depth), w * 7) < 0.03) {
-          c = '~'; a = FAINT
+        const ct = sx >= 0 && sx < cols ? colTier[sx] : -1
+        // A lit column's streak: two rows plus one per lit window, so the
+        // busier the column, the further its light reaches across the bay.
+        if (ct >= 1 && depth < 2 + colLit[sx] && hash2(sx * 3 + w, glit) >= 0.12) {
+          c = deep ? '¦' : '│'
+          a = TIERS[Math.max(0, ct - 1 - (deep ? 1 : 0))]
+        } else if (sx === T.tx && hash2(w * 5, glit) >= 0.3) {
+          // The tower's mast, faint on the water.
+          c = '¦'; a = FAINT
+        } else if (Math.abs(x - T.mx) <= pathHW && (x + w) % 2 === 0) {
+          // The moon's path: a column of glints widening toward the viewer,
+          // fixed rather than random, so it reads as the moon's and not noise.
+          c = '-'; a = FAINT
         }
         term.put(x, w, c, a)
       }
