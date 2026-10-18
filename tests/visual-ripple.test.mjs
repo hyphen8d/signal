@@ -111,19 +111,20 @@ test('RIPPLE: the skyline reads back -- tower, moon, lit windows, quay, and thei
     assert.equal(h.row(mod.TOWER_TOP + 1)[T.tx], '│', 'no mast under the beacon')
     const legRow = h.row(mod.SKY_BOT - 2)
     assert.ok(legRow.slice(T.tx - 6, T.tx).includes('/') && legRow.slice(T.tx + 1, T.tx + 7).includes('\\'), `tower legs missing: ${legRow}`)
-    // The moon: half-block cells around its column in the top rows.
+    // The moon: the crescent's strokes around its column in the top rows
+    // (since the 2026-10-16 design pass; it was half blocks before).
     let moon = 0
-    for (let y = 1; y <= 7; y++) for (let x = T.mx - 4; x <= T.mx + 4; x++) if ('▀▄█'.includes(h.row(y)[x])) moon++
-    assert.ok(moon >= 5, `only ${moon} moon cells`)
+    for (let y = 1; y <= 7; y++) for (let x = T.mx - 4; x <= T.mx + 4; x++) if ('/\\|.-\'`'.includes(h.row(y)[x])) moon++
+    assert.ok(moon >= 8, `only ${moon} moon cells`)
     // The quay is one unbroken line.
     assert.equal(h.row(mod.QUAY_Y).replace(/▀/g, ''), '', 'the quay is broken')
     // Lit windows: plenty of them, and every one inside the skyline.
     let lit = 0
     for (let y = 1; y <= mod.SKY_BOT; y++) lit += [...h.row(y)].filter((c) => c === '■').length
     assert.ok(lit >= 40, `only ${lit} lit windows -- the city is dark`)
-    // The bay holds their light as streaks.
+    // The bay holds their light as vertical streaks.
     let streaks = 0
-    for (let y = mod.WATER_TOP; y < VIZ_BOT; y++) streaks += [...h.row(y)].filter((c) => c === '─').length
+    for (let y = mod.WATER_TOP; y < VIZ_BOT; y++) streaks += [...h.row(y)].filter((c) => c === '│').length
     assert.ok(streaks >= 20, `only ${streaks} reflection streaks on the bay`)
   } finally { h.shutdown() }
 })
@@ -210,5 +211,62 @@ test('RIPPLE: full blocks stay accents and BRIGHT is the beacon alone (tube bloo
     const cells = h.term.cols * (VIZ_BOT - 1)
     assert.ok(worstFull <= cells * 0.01, `${worstFull} full blocks in one frame`)
     assert.ok(worstBright <= 1, `${worstBright} BRIGHT cells in one frame -- only the beacon may flare`)
+  } finally { h.shutdown() }
+})
+
+test('RIPPLE: the reflection is the skyline\'s lit columns, one tier down -- no random dashes', async () => {
+  // 2026-10-16 (design pass): the bay used to be scattered '- = ~ . ¦' that
+  // did not read as the city upside down. Every streak cell must now sit
+  // under a column holding a lit window (within the swell's one-column sway)
+  // and be dimmer than that column's brightest window. Mutation-checked:
+  // drawing the streaks at the window's own tier goes red on the tier half;
+  // the old per-cell '─' glitter goes red on the glyph half.
+  const { h, fx, mod } = await bootCity()
+  try {
+    const T = mod.cityTables(h.term.cols)
+    const cols = h.term.cols
+    // Tier of an attribute byte (src/cellgrid.js): FAINT 64, DIM 4, MUTED 32.
+    const level = (a) => (a & 64) ? 0 : (a & 4) ? 1 : (a & 32) ? 2 : 3
+    fx.reset(h.program)
+    let t = 300
+    for (let k = 0; k < 6; k++) {
+      drawWith(h, fx, t, signal({ pulse: 1, level: 0.3 + k * 0.12 })); t += 0.3
+      drawWith(h, fx, t, signal({ pulse: 0.1 })); t += 0.3
+      // The brightest lit window per column, read off the grid.
+      const best = new Array(cols).fill(-1)
+      for (let y = 1; y <= mod.SKY_BOT; y++) for (let x = 0; x < cols; x++) {
+        const i = y * cols + x
+        if (T.kind[i] === mod.KIND.WIN && h.row(y)[x] === '■') best[x] = Math.max(best[x], level(h.term.attrs[i]))
+      }
+      for (let y = mod.WATER_TOP; y < VIZ_BOT; y++) {
+        const row = h.row(y)
+        assert.ok(!/[~─=]/.test(row), `kick ${k}: glitter on the bay, row ${y}: ${row}`)
+        for (let x = 0; x < cols; x++) {
+          if (row[x] !== '│') continue
+          const src = Math.max(best[x - 1] ?? -1, best[x] ?? -1, best[x + 1] ?? -1)
+          assert.ok(src >= 0, `kick ${k}: a streak at ${x},${y} under no lit window`)
+          assert.ok(level(h.term.attrs[y * cols + x]) < src, `kick ${k}: the streak at ${x},${y} is as bright as its window`)
+        }
+      }
+    }
+  } finally { h.shutdown() }
+})
+
+test('RIPPLE: the moon is strokes, never glyph mass, and dimmer than the beacon at rest', async () => {
+  const { h, fx, mod } = await bootCity()
+  try {
+    const T = mod.cityTables(h.term.cols)
+    fx.reset(h.program)
+    drawWith(h, fx, 400, signal({ pulse: 0.1 }), true)
+    for (let y = 1; y < VIZ_BOT; y++) assert.ok(!/[█▀▄▌▐]/.test(h.row(y).slice(T.mx - 4, T.mx + 5)) || y > 6, `block glyphs in the moon, row ${y}`)
+    for (let y = 1; y < VIZ_BOT; y++) assert.ok(!h.row(y).includes('█'), `a full block on row ${y}`)
+    // And the kick flares the beacon wider than any star: arms either side.
+    drawWith(h, fx, 401, signal({ pulse: 0 }))
+    drawWith(h, fx, 401.05, signal({ pulse: 1 }))
+    const tip = h.row(mod.TOWER_TOP).slice(T.tx - 2, T.tx + 3)
+    assert.equal(tip, '·─•─·', `the beacon flare: '${tip}'`)
+    assert.ok(attrAt(h, T.tx, mod.TOWER_TOP) & BRIGHT, 'the beacon is BRIGHT on the kick')
+    drawWith(h, fx, 401.6, signal({ pulse: 0.1 }))
+    assert.equal(h.row(mod.TOWER_TOP).slice(T.tx - 1, T.tx + 2).trim(), '•', 'the flare is gone between beats')
   } finally { h.shutdown() }
 })

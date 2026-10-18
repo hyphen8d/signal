@@ -42,6 +42,23 @@
 // BRIGHT is kept to the kick's accents. tests/visual-boombap.test.mjs caps
 // both.
 //
+// 2026-10-16 (design pass). The viz-critic, judging the real tube, found
+// everything at one DIM tier -- the brightest things on screen were the FM
+// dial's digits and the EQ's LEDs, not the speakers the kick is about -- and
+// the wall and sidewalk drawn at the same weight as the case outline, so at
+// the top of the frame the brick joints read as part of the box. What
+// changed:
+//   - The cones' ridges sit at MUTED at rest, whatever the level (they
+//     were FAINT on a quiet passage, DIM on most), and go NORMAL with a
+//     BRIGHT dust cap on the kick. The surround still warms with loudness.
+//   - The EQ's LEDs top out at MUTED, the peak LED no longer BRIGHT: the
+//     dust cap is the one BRIGHT thing, so the beat is the brightest event
+//     in the frame. The dial text drops to FAINT, its needle to MUTED.
+//   - The wall's joints and the paving are FAINT DOTTED lines ('┈' / '┊',
+//     the font's light quadruple-dash rules) and the curb a row of '.', so
+//     the background reads as texture behind the case and never as a second
+//     outline.
+//
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
 
@@ -170,6 +187,9 @@ export default {
       p._boomEq[i] = cur + (target - cur) * (target > cur ? 0.5 : 0.12)
     }
 
+    // The handle's ends, which the wall keeps clear of.
+    const hx0 = Math.round(L.mid - 15), hx1 = Math.round(L.mid + 15)
+
     // --- background: brick wall, sidewalk ------------------------------------
     // Every cell of the canvas is written here first, so nothing from the
     // previous frame (or the previous effect) survives under the box.
@@ -179,13 +199,17 @@ export default {
         if (y >= BODY_TOP && y <= BODY_BOT && x >= L.x0 - 1 && x <= L.x1 + 1) {
           // A clear column round the case: a wall joint flush against its
           // edge read as a doubled border.
+        } else if (y >= HANDLE_Y && y < BODY_TOP && x >= hx0 - 1 && x <= hx1 + 1) {
+          // And clear under the handle's arch (2026-10-16 design pass): a
+          // joint running through its posts read as part of the case.
         } else if (y >= VIZ_BOT - 2) {
-          // Curb, then the paving: a flat edge and a sparse flagstone seam.
-          ch = y === VIZ_BOT - 2 ? '▁' : (x % 9 === 0 ? '│' : ' ')
+          // Curb, then the paving: a dotted edge and a sparse flagstone seam.
+          // Dotted since the 2026-10-16 design pass -- see the header.
+          ch = y === VIZ_BOT - 2 ? (x % 2 === 0 ? '.' : ' ') : (x % 9 === 0 ? '┊' : ' ')
         } else if (y % 3 === 0) {
-          ch = '─'
+          ch = '┈'
         } else if ((x + (Math.floor(y / 3) % 2) * 5) % 10 === 0) {
-          ch = '│'
+          ch = '┊'
         }
         term.put(x, y, ch, at)
       }
@@ -204,7 +228,6 @@ export default {
     for (let x = x0 + 1; x < x1; x++) term.put(x, DIAL_Y + 1, '·', FAINT)
 
     // Handle: an arch over the middle third, on two posts.
-    const hx0 = Math.round(mid - 15), hx1 = Math.round(mid + 15)
     for (let x = hx0 + 1; x < hx1; x++) term.put(x, HANDLE_Y, '─', DIM)
     term.put(hx0, HANDLE_Y, '╭', DIM); term.put(hx1, HANDLE_Y, '╮', DIM)
     term.put(hx0, HANDLE_Y + 1, '│', DIM); term.put(hx1, HANDLE_Y + 1, '│', DIM)
@@ -216,9 +239,9 @@ export default {
     // FM dial across the top band, with its needle parked on a station.
     const dialW = Math.min(DIAL.length, x1 - x0 - 4)
     const dialX = Math.round(mid - dialW / 2)
-    term.text(dialX, DIAL_Y, DIAL.slice(0, dialW), DIM)
+    term.text(dialX, DIAL_Y, DIAL.slice(0, dialW), FAINT)
     const needle = dialX + Math.round(dialW * 0.62)
-    term.put(needle, DIAL_Y, '│', NORMAL)
+    term.put(needle, DIAL_Y, '│', MUTED)
     term.put(x0 + 2, DIAL_Y, '●', kick > 0.35 ? NORMAL : DIM)       // power LED, beats with the kick
     term.text(x1 - 7, DIAL_Y, 'STEREO', FAINT)
 
@@ -244,7 +267,10 @@ export default {
     // version this replaced: at rest the speakers looked the same at any
     // volume.)
     const loud = p._boomLoud
-    const restAt = loud > 0.5 ? MUTED : loud > 0.25 ? DIM : FAINT
+    // 2026-10-16 (design pass): MUTED at rest at any level -- a FAINT/DIM
+    // cone left the speakers the dimmest things on the box. Loudness still
+    // shows in the surround below.
+    const restAt = MUTED
     const ry = SPK_RY
     const push = 1 + 0.24 * pump
     const coneAt = pump === 1 ? NORMAL : restAt
@@ -305,8 +331,8 @@ export default {
 
     // --- the graphic EQ ----------------------------------------------------------
     // Nine bars two columns apart, one per band, EQ_ROWS tall, lit from the
-    // bottom. The peak cell of a hot bar is the one place BRIGHT appears
-    // without a kick behind it.
+    // bottom. (The peak cell of a hot bar was BRIGHT until the 2026-10-16
+    // design pass; BRIGHT is the dust cap's alone now.)
     // EQ_GAIN: a band sits around 0.3-0.6 most of the time (the tap's AGC
     // and syntheticAudio both centre there), which lit one or two LEDs of
     // four and read as an idle meter. 1.5 puts typical music at two or three
@@ -319,7 +345,9 @@ export default {
         const y = EQ_Y0 + EQ_ROWS - 1 - r
         const on = r < lit
         const top = on && r === lit - 1
-        term.put(eqX + i * 2, y, on ? '■' : '·', !on ? FAINT : top && lit === EQ_ROWS ? BRIGHT : r >= 2 ? NORMAL : DIM)
+        // Capped at MUTED (2026-10-16 design pass): the LEDs were BRIGHT and
+        // NORMAL, out-shining the speakers between beats.
+        term.put(eqX + i * 2, y, on ? '■' : '·', !on ? FAINT : top || r >= 2 ? MUTED : DIM)
       }
     }
     // Knobs.

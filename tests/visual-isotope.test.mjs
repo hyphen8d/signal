@@ -309,3 +309,29 @@ test('ATOMIC AGE: re-entry after a long visit carries no beat clock from the pre
     assert.deepEqual(h.program._isoPhase, before, 'the first frame after re-entry moved the electrons')
   } finally { h.shutdown() }
 })
+
+test('ATOMIC AGE: the shockwave ring sits a tier under the electrons', async () => {
+  // 2026-10-16 (design pass): at NORMAL the ring briefly crowded the emblem.
+  // Every NORMAL dot cell on a kick frame must be an electron. Mutation-
+  // checked: the ring back at NORMAL goes red.
+  const { h, fx, mod } = await bootAtom()
+  try {
+    fx.reset(h.program)
+    drawWith(h, fx, 2.0, signal({ pulse: 0.05 }))
+    drawWith(h, fx, 2.02, signal({ pulse: 1 }))
+    drawWith(h, fx, 2.2, signal({ pulse: 0.5 }))
+    assert.ok(dotsBeyond(h, mod, 6) > 10, 'test setup: the ring is out')
+    const electrons = h.program._isoElectronAt
+    let ring = 0
+    for (let y = 1; y < VIZ_BOT; y++) {
+      const row = h.row(y)
+      for (let x = 0; x < h.term.cols; x++) {
+        if (!isDots(row[x]) || attrAt(h, x, y) !== 0) continue
+        const nearElectron = electrons.some(([ex, ey]) => Math.abs(ex - x) <= 1 && Math.abs(ey - y) <= 1)
+        assert.ok(nearElectron, `a NORMAL dot cell at ${x},${y} that is not an electron`)
+      }
+    }
+    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < h.term.cols; x++) if (isDots(h.row(y)[x]) && attrAt(h, x, y) === 32) ring++
+    assert.ok(ring > 10, `only ${ring} MUTED dot cells -- the ring is not there at MUTED`)
+  } finally { h.shutdown() }
+})
