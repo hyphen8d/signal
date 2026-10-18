@@ -125,7 +125,10 @@ test('KEEP: the castle silhouette reads back -- crenellations, a tall tower, sol
     // A solid mass of stone -- a silhouette, not an outline.
     let solid = 0
     for (let y = 1; y < CANVAS_BOT; y++) for (const c of rows[y]) if (SOLID.has(c)) solid++
-    assert.ok(solid > 400, `only ${solid} solid cells in the silhouette`)
+    // 2026-10-16 (design pass) -- 400 -> 340: the ridges' '▄' rims used to
+    // count here, and they are line-drawn now. The castle and crag alone
+    // are ~380.
+    assert.ok(solid > 340, `only ${solid} solid cells in the silhouette`)
     // The moon: a crescent of block cells in the upper right, clear of the castle.
     let moon = 0
     for (let y = 1; y < 9; y++) for (let x = 60; x < 80; x++) if (SOLID.has(rows[y][x])) moon++
@@ -284,5 +287,71 @@ test('KEEP: full blocks stay accents on both layouts (tube bloom, audit M1)', as
     assert.ok(liteInk > 200, `the lite canvas is nearly empty (${liteInk}) -- the cap proves nothing`)
     const liteCap = 42 * (CANVAS_BOT - 1) * 0.01
     assert.ok(liteWorst <= liteCap, `${liteWorst} '█' cells in one lite frame (cap ${liteCap})`)
+  } finally { h.shutdown() }
+})
+
+test('KEEP: the mountains are an outline, so the keep is the one mass (design pass)', async () => {
+  // 2026-10-16 -- on the tube the ridges' '▄' rim and '▒'/'░' haze rastered
+  // as the same stepped blocks, at the same tier, as the castle, and the
+  // keep did not separate from the mountains. The ridges are now one
+  // line-drawn rim each. Read off the open right-hand third of the frame,
+  // clear of the crag and below the moon: no shade block at all, and a rim
+  // line present.
+  const h = await bootKeep()
+  try {
+    h.advance(1500)
+    let blocks = 0, rim = 0
+    for (let y = 9; y < CANVAS_BOT; y++) {
+      const r = h.row(y)
+      for (let x = 66; x < 80; x++) {
+        if ('░▒▓█▄▀'.includes(r[x])) blocks++
+        if ('_-/\\'.includes(r[x])) rim++
+      }
+    }
+    assert.equal(blocks, 0, `${blocks} shade blocks in the mountains -- they should be an outline`)
+    assert.ok(rim >= 14, `only ${rim} rim cells -- the ridges are not drawn`)
+  } finally { h.shutdown() }
+})
+
+test('KEEP: the mist is sparse drifting wisps, not blocks (design pass)', async () => {
+  // 2026-10-16 -- the mist was '░▒' blocks with ':'/'.' speckle, and the
+  // bottom third read as rubble on the tube. It is now '~' and '─' wisps at
+  // DIM. Over two seconds of frames: no block or speckle glyph in the mist
+  // rows that the old bank drew (the crag's own '▒' is excluded by reading
+  // only open-air cells, i.e. cells that are not stone in the scene),
+  // wisps present and moving, and sparse.
+  // Mutation-checked: with the old block bank restored this goes red on
+  // the first assertion.
+  const h = await bootKeep()
+  try {
+    h.advance(1000)
+    const { KEEP_MIST_TOP } = await import(`../visuals/keep.js?v=${globalThis.SIGNAL_BUILD}`)
+    const S = h.program._keepScene
+    const ROCKISH = new Set([3, 4, 5]) // ROCK, WINDOW, GATE in keep.js
+    let junk = 0, wisps = 0, air = 0, notDim = 0
+    const frames = []
+    for (let f = 0; f < 20; f++) {
+      h.advance(100)
+      let snap = ''
+      for (let y = KEEP_MIST_TOP; y < CANVAS_BOT; y++) {
+        const r = h.row(y)
+        snap += r
+        for (let x = 0; x < h.term.cols; x++) {
+          if (ROCKISH.has(S.kind[y * S.cols + x])) continue
+          air++
+          if ('░▒▓█:.'.includes(r[x])) junk++
+          if (r[x] === '~' || r[x] === '─') {
+            wisps++
+            if (attrAt(h, x, y) !== DIM) notDim++
+          }
+        }
+      }
+      frames.push(snap)
+    }
+    assert.equal(junk, 0, `${junk} block/speckle cells in open-air mist`)
+    assert.ok(wisps > 20 * 8, `only ${wisps} wisp cells over 20 frames`)
+    assert.ok(wisps / air < 0.35, `wisps cover ${(100 * wisps / air).toFixed(0)}% of the open air -- a bank, not wisps`)
+    assert.equal(notDim, 0, `${notDim} wisp cells not at DIM`)
+    assert.notEqual(frames[0], frames[frames.length - 1], 'the wisps do not drift')
   } finally { h.shutdown() }
 })

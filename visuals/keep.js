@@ -18,6 +18,16 @@
 // hits: mid/level feed the torchlight, bass/level thicken the mist, and a
 // real onset makes the bat flight more likely.
 //
+// 2026-10-16 (design pass) -- judged off the real tube: the castle did not
+// separate from the mountains (keep, crag and ridges all stepped shade
+// blocks at about one tier), and the mist bank of '░▒' with speckle read
+// as rubble. Changed: the ridges are a line-drawn outline only ('_' '-'
+// '/' '\\' at DIM, nothing under it), stopped at the castle's flanks so the
+// battlement still reads as merlons; the mist is sparse horizontal wisps,
+// '~' ends and '─' bodies at DIM, drifting on the same accumulated phase.
+// The keep is the one mass in the frame again. Still ambient: nothing
+// thumps, the mist thickens with bass and level.
+//
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
 
@@ -76,6 +86,12 @@ export const KEEP_MOON = { cx: 68, cy: 4.5, r: 4.2, bx: 2.0, by: 0, br: 3.8 }
 // toward the bottom of the canvas so the crag's base is buried and the
 // castle's upper half never is.
 export const KEEP_MIST_TOP = 12
+// Wisp thresholds on the mist density (design pass): above THIN a cell is
+// a '~' wisp end, above THICK a '─' wisp body, and over stone only a
+// density above STONE shows (as a body).
+export const KEEP_WISP_THIN = 0.42
+export const KEEP_WISP_THICK = 0.56
+export const KEEP_WISP_STONE = 0.64
 
 // Bats. One flock at a time; its timing lives on the effect clock, so
 // reset() clears it (see there). Speed in columns per second -- 2026-09-13:
@@ -126,21 +142,31 @@ function buildScene(cols) {
   const ridge = (x, far) => far
     ? 20.5 + 2.2 * Math.sin(x * 0.085 + 1.0) + 1.2 * Math.sin(x * 0.21 + 0.4) + 0.5 * Math.sin(x * 0.53)
     : 25.5 + 1.6 * Math.sin(x * 0.12 + 3.1) + 1.0 * Math.sin(x * 0.31 + 1.7)
+  // 2026-10-16 (design pass) -- and the rim-plus-haze was still too much.
+  // On the tube the '▄' rim and the '▒'/'░' rows under it rastered as the
+  // same stepped blocks, at the same FAINT tier, as the masonry, and the
+  // castle did not separate from the mountains at all. The ridges are now
+  // an OUTLINE only: one line-drawn rim per ridge ('_' '-' '/' '\\', picked
+  // from the profile's slope and which half of the cell the rim falls in),
+  // DIM, with nothing under it but dark. The keep is the one mass again.
+  // Cells under a rim stay RIDGE kind (blank), so no star shows through
+  // the mountain.
   for (const far of [true, false]) {
     for (let x = 0; x < cols; x++) {
       const top = ridge(x, far)  // in half-rows
+      const rimY = Math.floor(top / 2)
+      const slope = ridge(x + 1, far) - ridge(x - 1, far)  // half-rows per 2 cols, + = falling
       for (let y = 1; y < rows; y++) {
         const i = y * cols + x
-        const depth = y * 2 + 1 - top  // half-rows below the rim
-        if (depth < 0) continue
-        let c
-        if (depth < 1) c = '▄'
-        else if (depth < 3) c = far ? '░' : '▒'
-        else if (hash2(x * 5 + (far ? 1 : 2), y) < Math.max(0.05, 0.45 - depth * 0.08)) c = '░'
-        else c = ' '
+        if (y < rimY) continue
         kind[i] = RIDGE
-        ch[i] = c
-        attr[i] = FAINT
+        if (y === rimY) {
+          ch[i] = slope > 1.2 ? '\\' : slope < -1.2 ? '/' : top - rimY * 2 < 1 ? '-' : '_'
+          attr[i] = DIM
+        } else {
+          ch[i] = ' '
+          attr[i] = FAINT
+        }
       }
     }
   }
@@ -187,6 +213,17 @@ function buildScene(cols) {
       }
     }
   })
+  // Design pass: the ridge outline stops at the castle's flanks. Seen
+  // through the gaps of a battlement, a rim line turned '▓ ▓ ▓' into
+  // '▓_▓_▓' and the parapet stopped reading as merlons; the rim behind the
+  // castle is hidden by it anyway. Those cells go back to sky (and can
+  // carry a star, as open sky between merlons should).
+  for (let y = KEEP_ART_TOP; y < KEEP_ART_TOP + KEEP_ART.length; y++) {
+    for (let x = artL; x <= artR; x++) {
+      const i = y * cols + x
+      if (kind[i] === RIDGE) { kind[i] = SKY; ch[i] = ' '; attr[i] = FAINT }
+    }
+  }
 
   // The crag: flares out below the castle's footing and runs off the
   // bottom of the canvas, jagged at the edges by a hash so it reads as
@@ -342,22 +379,24 @@ export default {
 
         // Mist: three layers drifting the same way at different speeds --
         // that difference is what reads as rolling rather than sliding.
+        // 2026-10-16 (design pass) -- drawn as WISPS now. The bank was
+        // '░'/'▒' blocks with ':'/'.' speckle, and on the tube the bottom
+        // third read as rubble, not as mist (rubric 4: shade blocks are
+        // mass, never mist). The field is the same three sines, stretched
+        // long in x and decorrelated row to row, so what crosses the
+        // threshold is a scatter of horizontal streaks; each is '~' at its
+        // thin ends and '─' through its thick middle, DIM, drifting with
+        // the phase. Over stone only the thick middles show, so the crag
+        // is veiled by lines across it rather than painted out.
         if (mistBase > 0 && k !== MOON) {
-          const n = 0.58
-            + 0.26 * Math.sin(x * 0.11 - ph * 1.0 + y * 0.63)
-            + 0.2 * Math.sin(x * 0.24 - ph * 1.7 - y * 1.1 + 2.0)
-            + 0.14 * Math.sin(x * 0.05 - ph * 0.45 + y * 0.3 + 4.0)
+          const n = 0.5
+            + 0.28 * Math.sin(x * 0.07 - ph * 0.8 + y * 1.9)
+            + 0.22 * Math.sin(x * 0.16 - ph * 1.4 - y * 2.7 + 2.0)
+            + 0.14 * Math.sin(x * 0.035 - ph * 0.4 + y * 0.9 + 4.0)
           const d = mistBase * n * thick
-          // Over stone the mist only shows where it's thick: it veils the
-          // crag in drifting patches rather than erasing it.
           const solid = k === ROCK || k === WINDOW || k === GATE
-          if (d > (solid ? 0.56 : 0.3)) {
-            // Over stone the thin tiers (':' '.') would read as holes
-            // punched in the rock rather than as mist in front of it, so
-            // a veil there is never thinner than '░'.
-            c = d > 0.8 ? '▒' : d > 0.62 || solid ? '░' : d > 0.45 ? ':' : '.'
-            a = d > 0.8 ? MUTED : d > 0.45 ? DIM : FAINT
-            term.put(x, y, c, a)
+          if (d > (solid ? KEEP_WISP_STONE : KEEP_WISP_THIN)) {
+            term.put(x, y, d > KEEP_WISP_THICK ? '─' : '~', DIM)
             continue
           }
         }
