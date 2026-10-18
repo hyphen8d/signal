@@ -26,6 +26,16 @@
 // at import, so the per-frame cost is one pass over 80x21 cells plus a few
 // dozen overlay puts.
 //
+// 2026-10-16 (design pass) -- judged off the real tube: the moon was a
+// 15x7 block of '0@#' letters and read as text; the palm (two slashes a
+// row, near-flat fronds with leaflets and 'o/o' coconuts) read as a hut;
+// and the onset flare was one '*' swapped for the tongue, so LOUD and KICK
+// could not be told apart. Changed: the moon is its rim in half-blocks
+// (KEEP's crescent technique, plus '▌'/'▐' on the sides) at NORMAL, dark
+// inside but for two DIM ░ maria; the trunk is one '(' / '/' a row; five
+// long fronds arch up off the crown and fall past it; and a real onset
+// stands a 2-3 row BRIGHT flame column on each torch for the whole flare.
+//
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
 
@@ -58,6 +68,30 @@ export const TORCHES = [
 ]
 // The flare's decay, in seconds of effect clock.
 const FLARE_S = 0.7
+// Flare level above which the flame column stands three rows, not two.
+export const FLARE_TALL = 0.35
+
+// Is a half-row inside the moon? Half-rows are centred at y -/+ 0.25.
+function inMoon(x, hy) {
+  const dx = x - MOON_X, dy = (hy - MOON_Y) * ASPECT
+  return dx * dx + dy * dy < (MOON_R + 0.5) * (MOON_R + 0.5)
+}
+/** The moon at cell (x, y): null (sky), 'in' (inside the rim), or the rim
+ *  glyph. Pure, exported so the test can walk the disc. */
+export function moonCell(x, y) {
+  const top = inMoon(x, y - 0.25), bot = inMoon(x, y + 0.25)
+  if (!top && !bot) return null
+  if (top !== bot) return top ? '▀' : '▄'
+  // Both halves in: rim if the half-row above or below is out (the top and
+  // bottom arcs, '▀'/'▄' would leave a hole) or a side neighbour is out.
+  if (!inMoon(x, y - 0.75)) return '▄'
+  if (!inMoon(x, y + 0.75)) return '▀'
+  const l = inMoon(x - 1, y - 0.25) && inMoon(x - 1, y + 0.25)
+  const r = inMoon(x + 1, y - 0.25) && inMoon(x + 1, y + 0.25)
+  if (!l) return '▐'
+  if (!r) return '▌'
+  return 'in'
+}
 
 // Island profile: height in rows above the horizon, per column. A volcano cone
 // (slope 0.6 row/col, a hair steeper than 45 degrees once ASPECT is applied, so
@@ -87,7 +121,10 @@ for (let x = 0; x < 80; x++) {
 const CROWN = { x: 17, y: 5 }
 const TRUNK_X = new Float32Array(VIZ_BOT + 1).fill(NaN)
 {
-  const p0 = { x: 3, y: 21 }, p1 = { x: 5, y: 9 }, p2 = CROWN
+  // 2026-10-16 (design pass) -- control point lowered from (5, 9): the old
+  // curve went near-vertical then turned 3 columns a row under the crown,
+  // which is where the two-character '(/' rows came from.
+  const p0 = { x: 3, y: 21 }, p1 = { x: 6, y: 13 }, p2 = CROWN
   for (let i = 0; i <= 400; i++) {
     const s = i / 400, u = 1 - s
     const x = u * u * p0.x + 2 * u * s * p1.x + s * s * p2.x
@@ -98,9 +135,14 @@ const TRUNK_X = new Float32Array(VIZ_BOT + 1).fill(NaN)
 // Fronds: [angle in degrees (0 = right, -90 = up), length in cols, droop].
 // Mostly sideways and drooping, the silhouette that says "palm" rather than
 // "star"; two short hanging ones fill the crown out from underneath.
+// 2026-10-16 (design pass) -- five long arching strokes, from seven. The
+// old set was near-flat (droop 5-7 over length 12-15 ends a row or two
+// below the crown), so the two big ones made one horizontal line with
+// leaflets hanging off it: a roof, with the 'o/o' coconuts as its eaves.
+// Each frond now rises off the crown and falls past it -- droop is about
+// the length -- which is the arc that says palm.
 const FRONDS = [
-  [-16, 15, 7], [10, 12, 6], [-72, 6, 4], [196, 13, 7],
-  [168, 10, 5], [60, 6, 3], [122, 6, 3],
+  [-40, 16, 15], [-4, 13, 12], [220, 15, 15], [184, 12, 11], [-72, 9, 10],
 ]
 
 // Direction -> rib character, from the frond's tangent in VISUAL space.
@@ -186,17 +228,24 @@ export default {
           // reads as a bright textured face with the '#' maria and 'O' rim
           // still legible, not as a lit block. Left as it is; the lesson is
           // coverage, not tier -- a BRIGHT '█' fill here would be the bug.
+          // 2026-10-16 (design pass) -- the face is gone: it was a 15x7
+          // block of 'O', '@' and '#' that read as TEXT on the tube, not
+          // as a disc. Now the moon is its rim only, drawn the way KEEP's
+          // crescent is: sampled per half-row and set in half-blocks, so
+          // the top and bottom of the circle are sub-cell curves. The sides
+          // take '▐'/'▌' (the half of the cell toward the inside) so the
+          // rim is half a cell thick all the way round. NORMAL, the
+          // brightest steady thing in the sky. Two dim maria inside give it
+          // a face without filling it into a slab.
           const mdx = x - MOON_X, mdy = (y - MOON_Y) * ASPECT
           const md = Math.sqrt(mdx * mdx + mdy * mdy)
-          if (md < MOON_R + 0.5) {
-            // Maria: two fixed elliptical patches up-left and down-right, the
-            // way a full moon's face actually sits. A hashed texture was
-            // tried first and read as noise, not as a face.
-            const m1x = mdx + 2.5, m1y = mdy + 2.2, m2x = mdx - 2.8, m2y = mdy - 2.6
-            const mare = m1x * m1x + m1y * m1y < 7 || m2x * m2x + m2y * m2y < 5
-            if (md > MOON_R - 0.6) term.put(x, y, 'O', NORMAL)
-            else if (mare) term.put(x, y, '#', NORMAL)
-            else term.put(x, y, '@', BRIGHT)
+          const mc = moonCell(x, y)
+          if (mc) {
+            if (mc === 'in') {
+              const m1x = mdx + 2.5, m1y = mdy + 2.2, m2x = mdx - 2.8, m2y = mdy - 2.6
+              const mare = m1x * m1x + m1y * m1y < 7 || m2x * m2x + m2y * m2y < 5
+              term.put(x, y, mare ? '░' : ' ', DIM)
+            } else term.put(x, y, mc, NORMAL)
             continue
           }
           // Halo: a thin, sparse ring of moonlit haze.
@@ -297,13 +346,28 @@ export default {
       term.put(tx - 1, cupY - 1, '(', f1 > 0.5 ? NORMAL : MUTED)
       term.put(tx, cupY - 1, 'W', BRIGHT)
       term.put(tx + 1, cupY - 1, ')', f1 > 0.5 ? MUTED : NORMAL)
-      const tongue = flare > 0.3 ? '*' : lean < 0 ? '(' : lean > 0 ? ')' : '^'
-      if (height > 1.5) term.put(tx + lean, cupY - 2, tongue, height > 2 ? BRIGHT : NORMAL)
-      if (height > 2.4) term.put(tx + lean, cupY - 3, "'", NORMAL)
-      if (height > 3.1) term.put(tx + lean * 2, cupY - 4, '.', MUTED)
+      if (flare > 0) {
+        // 2026-10-16 (design pass) -- the flare was a '*' swapped in for
+        // the tongue: one cell, and LOUD and KICK could not be told apart.
+        // Now a real onset stands a flame COLUMN on the cup -- three rows
+        // of BRIGHT while it is fresh, two as it dies -- for the whole
+        // flare, so the beat is a torch roaring up, not a changed glyph.
+        const rows = flare > FLARE_TALL ? 3 : 2
+        for (let k = 0; k < rows; k++) {
+          const fy = cupY - 2 - k
+          if (fy < 1) break
+          const ch = k === rows - 1 ? '^' : (k + (f1 > 0.5 ? 1 : 0)) % 2 ? ')' : '('
+          term.put(tx + (k === rows - 1 ? lean : 0), fy, ch, BRIGHT)
+        }
+      } else {
+        const tongue = lean < 0 ? '(' : lean > 0 ? ')' : '^'
+        if (height > 1.5) term.put(tx + lean, cupY - 2, tongue, height > 2 ? BRIGHT : NORMAL)
+        if (height > 2.4) term.put(tx + lean, cupY - 3, "'", NORMAL)
+        if (height > 3.1) term.put(tx + lean * 2, cupY - 4, '.', MUTED)
+      }
       // Sparks lifting off a flare.
       if (fAge >= 0 && fAge < FLARE_S * 1.4) {
-        const sy = cupY - 3 - Math.floor(fAge * 9)
+        const sy = cupY - 5 - Math.floor(fAge * 9)
         if (sy >= 1) term.put(tx + Math.round(Math.sin(fAge * 7 + i * 2) * 1.5), sy, '.', DIM)
       }
     }
@@ -314,12 +378,15 @@ export default {
     // winds), but louder passages move it further.
     const sway = auMul(A, A.level, 0.6, 1.25)
     const lean = Math.sin(t * 0.45) * 0.8 * sway
+    // 2026-10-16 (design pass) -- ONE character a row: '(' where the trunk
+    // rises near-vertical (the bow of the curve), '/' where it leans over.
+    // The old pair per row ('(/', '//') read as a thick ladder, and with
+    // the flat fronds above it, as a hut.
     for (let y = CROWN.y + 1; y <= 21; y++) {
       const frac = (21 - y) / (21 - CROWN.y)
       const x = Math.round(TRUNK_X[y] + lean * frac * frac)
-      const ringed = y % 2 === 0
-      term.put(x, y, ringed ? '(' : '/', DIM)
-      term.put(x + 1, y, '/', ringed ? MUTED : DIM)
+      const above = y - 1 > CROWN.y ? TRUNK_X[y - 1] : CROWN.x
+      term.put(x, y, above - TRUNK_X[y] < 0.6 ? '(' : '/', MUTED)
     }
     const cx = CROWN.x + lean
     for (let i = 0; i < FRONDS.length; i++) {
@@ -327,22 +394,16 @@ export default {
       const a = (deg * Math.PI) / 180 + Math.sin(t * 0.55 + i * 0.9) * 0.07 * sway
       const droop = droop0 + Math.sin(t * 0.7 + i * 1.3) * 0.9 * sway
       const ca = Math.cos(a), sa = Math.sin(a)
-      const steps = Math.ceil(len * (Math.abs(ca) > 0.5 ? 1 : 1.2))
+      const steps = Math.ceil(len * 1.6)
       for (let k = 1; k <= steps; k++) {
         const u = k / steps
         const x = Math.round(cx + ca * len * u)
         const y = Math.round(CROWN.y + (sa * len * u + droop * u * u) / ASPECT)
         if (y < 1 || y >= VIZ_BOT || x < 0 || x >= cols) continue
-        const ch = u > 0.93 ? ',' : ribChar(ca * len, sa * len + 2 * droop * u)
-        term.put(x, y, ch, u < 0.5 ? MUTED : DIM)
-        // Leaflets hang under the outer two-thirds of each sideways rib.
-        if (u > 0.3 && u < 0.9 && k % 3 === 0 && Math.abs(ca) > 0.4 && y + 1 < VIZ_BOT) {
-          term.put(x, y + 1, "'", FAINT)
-        }
+        // Design pass: no hanging leaflets and no coconuts -- each frond is
+        // one clean stroke, MUTED to its midpoint and DIM to the tip.
+        term.put(x, y, ribChar(ca * len, sa * len + 2 * droop * u), u < 0.55 ? MUTED : DIM)
       }
     }
-    term.put(CROWN.x + Math.round(lean) - 1, CROWN.y + 1, 'o', DIM)
-    term.put(CROWN.x + Math.round(lean) + 1, CROWN.y + 1, 'o', DIM)
-    term.put(CROWN.x + Math.round(lean), CROWN.y, '*', MUTED)
   },
 }
