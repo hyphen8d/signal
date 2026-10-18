@@ -105,11 +105,36 @@ test('FROST: the subject is on the grid -- a heart, its point, the word, the ref
     const width = (r) => { const xs = cells.filter((c) => c.y === mod.HEART_Y0 + r).map((c) => c.x); return Math.max(...xs) - Math.min(...xs) }
     for (let r = 4; r < mod.HEART_H - 1; r++) assert.ok(width(r + 1) < width(r), `the heart does not narrow at row ${r}`)
     assert.ok(width(mod.HEART_H - 1) <= 5, 'the heart has no point')
-    assert.ok(h.row(mod.HEART_Y0 + mod.WORD_ROW).includes(mod.WORD), 'the word is not lettered inside the heart')
+    assert.ok(h.row(mod.HEART_Y0 + mod.WORD_ROW).includes('C O L D   W A V E'), 'the word is not lettered inside the heart')
     // The reflection: tube glyphs under the curb, mirrored (an upside-down
     // point's corners are '╭' / '╮').
     const under = Array.from({ length: VIZ_BOT - mod.CURB_Y - 1 }, (_, i) => h.row(mod.CURB_Y + 1 + i)).join('')
     assert.ok((under.match(/[╭╮]/g) || []).length >= 6, 'no reflection under the curb')
+    // Both lobes: the lowest puddle row is the reflection of the lobe tops,
+    // two separate runs of tube with a gap between them (the notch).
+    const last = h.row(VIZ_BOT - 1).trim()
+    assert.match(last, /^╰─+╯ +╰─+╯$/, `the reflection's last row is not two lobes: "${last}"`)
+    // Joined diagonals: ONE shift for the whole puddle. Under a single shift
+    // the flipped REFLECT art matches the grid everywhere but the 5% the
+    // ripples drop out; a per-row phase (the old pyramid) cannot.
+    const x0 = Math.round(h.term.cols / 2 - mod.HEART_W / 2)
+    const FLIP = { '╭': '╰', '╰': '╭', '╮': '╯', '╯': '╮' }
+    let best = 0, total = 0
+    for (let shift = -2; shift <= 2; shift++) {
+      let hits = 0; total = 0
+      mod.REFLECT.forEach((art, rr) => {
+        const y = mod.CURB_Y + mod.REFLECT_H - rr
+        if (y >= VIZ_BOT) return
+        const row = h.row(y)
+        for (let c = 0; c < art.length; c++) {
+          if (art[c] === ' ') continue
+          total++
+          if (row[x0 + c + shift] === (FLIP[art[c]] || art[c])) hits++
+        }
+      })
+      best = Math.max(best, hits)
+    }
+    assert.ok(best >= total * 0.88, `the reflection matches its art at one shift in only ${best}/${total} cells`)
   } finally { h.shutdown() }
 })
 
@@ -159,8 +184,18 @@ test('FROST: the strike stays inside the BRIGHT budget and its glow ends with it
     assert.ok(worst <= 16, `${worst} BRIGHT cells in one frame`)
     drawWith(h, fx, 30, signal({ pulse: 0 }))
     drawWith(h, fx, 30.02, signal({ pulse: 1 }))
-    const glow = () => Array.from({ length: VIZ_BOT - 1 }, (_, i) => h.row(i + 1)).join('').split('░').length - 1
+    const canvas = () => Array.from({ length: VIZ_BOT - 1 }, (_, i) => h.row(i + 1)).join('')
+    const glow = () => canvas().split('·').length - 1
     assert.ok(glow() > 20, 'no glow round the tube as it strikes')
+    // Shade blocks raster as a checkered slab, not light (design pass).
+    assert.ok(!/[░▒▓█]/.test(canvas()), 'shade blocks on the canvas')
+    // Outside only: nothing inside the glass but the word.
+    const x0 = Math.round(h.term.cols / 2 - mod.HEART_W / 2)
+    for (let r = 2; r < mod.HEART_H; r++) {
+      const art = mod.HEART[r], row = h.row(mod.HEART_Y0 + r)
+      const inside = row.slice(x0 + art.search(/\S/) + 1, x0 + art.trimEnd().length - 1)
+      assert.ok(!inside.includes('·'), `art row ${r}: the glow landed inside the heart`)
+    }
     drawWith(h, fx, 30.02 + mod.STRIKE_S + 0.01, signal({ pulse: 0.9 }))
     assert.equal(glow(), 0, 'the strike glow outlived the strike')
   } finally { h.shutdown() }
@@ -193,5 +228,83 @@ test('FROST: re-entry after a long visit carries no strike clock from the last o
     const t = effectT(h)
     assert.ok(h.program._frostKickAt <= t + 0.05, `_frostKickAt ${h.program._frostKickAt} on a clock at ${t}`)
     assert.equal(h.program._frostPrevPulse <= 1, true)
+  } finally { h.shutdown() }
+})
+
+test('FROST: the sign spells the locked station, not COLD WAVE everywhere', async () => {
+  // [V] cycles any effect onto any station; a sign reading COLD WAVE on
+  // CIPHER was the critic's finding. Boot a different station and draw.
+  const h = await boot({ station: 'cipher' })
+  try {
+    h.powerOn()
+    h.advance(6000)
+    const { VISUALS } = await import(`../visuals/index.js?v=${globalThis.SIGNAL_BUILD}`)
+    const mod = await import(`../visuals/frost.js?v=${globalThis.SIGNAL_BUILD}`)
+    const fx = VISUALS.frost
+    assert.equal(h.program.lockedStation && h.program.lockedStation.id, 'cipher', 'test setup: locked on CIPHER')
+    fx.reset(h.program)
+    drawWith(h, fx, 10, signal())
+    const signRow = h.row(mod.HEART_Y0 + mod.WORD_ROW)
+    assert.ok(signRow.includes('C I P H E R'), `the sign does not read CIPHER: "${signRow}"`)
+    assert.ok(!/C ?O ?L ?D/.test(signRow), 'COLD WAVE is still on the sign')
+    // Too long to letter-space: unspaced. Nothing that fits, or no station:
+    // the fallback.
+    h.program.lockedStation = { callsign: 'DISTORTION FIELD' }
+    drawWith(h, fx, 10.1, signal())
+    assert.ok(h.row(mod.HEART_Y0 + mod.WORD_ROW).includes('DISTORTION FIELD'), 'a long callsign did not fall back to unspaced')
+    h.program.lockedStation = null
+    drawWith(h, fx, 10.2, signal())
+    assert.ok(h.row(mod.HEART_Y0 + mod.WORD_ROW).includes(mod.FALLBACK_WORD), 'no station, no fallback word')
+    assert.equal(mod.signWord({ callsign: 'X'.repeat(40) }), mod.FALLBACK_WORD)
+    // Whatever the word, it stays inside the glass.
+    const x0 = Math.round(h.term.cols / 2 - mod.HEART_W / 2)
+    for (const name of ['COLD WAVE', 'CIRCUIT CRUSH', 'NINE INCH NAILS', 'DISTORTION FIELD']) {
+      const w = mod.signWord({ callsign: name })
+      const at = x0 + Math.round((mod.HEART_W - w.length) / 2)
+      assert.ok(at >= x0 + 2 && at + w.length <= x0 + mod.HEART_W - 2, `${name} runs into the tube`)
+    }
+  } finally { h.shutdown() }
+})
+
+test('FROST: the brick wall is on the grid at a tier the tube can show, and under the sign', async () => {
+  // The wall used to be FAINT dotted dashes: on the real tube, no wall. It
+  // must be solid brickwork (mortar runs, joints) lit DIM round the sign --
+  // and never brighter than DIM, or the scenery outshines the resting tube.
+  const { h, fx, mod } = await bootFrost()
+  try {
+    for (let f = 0; f < 240; f++) drawWith(h, fx, 10 + f / 60, signal({ level: 0.6, pulse: 0 }))
+    const cols = h.term.cols
+    const x0 = Math.round(cols / 2 - mod.HEART_W / 2)
+    let dimBrick = 0, tooBright = 0, mortarRun = 0
+    for (let y = 1; y < mod.CURB_Y; y++) {
+      const row = h.row(y)
+      let run = 0
+      for (let x = 0; x < cols; x++) {
+        // Wall only: not the heart (MARGIN blanks round it) and not the
+        // transformer's cable row.
+        if ((x >= x0 && x < x0 + mod.HEART_W && y >= mod.HEART_Y0) || (y === mod.HEART_Y0 + 8 && x >= x0 + mod.HEART_W)) { run = 0; continue }
+        const ch = row[x], a = attrAt(h, x, y)
+        if (!'─│┬┴┼'.includes(ch)) { run = 0; continue }
+        if (a & DIM) dimBrick++
+        else if (!(a & FAINT)) tooBright++
+        run = '─┬┴┼'.includes(ch) ? run + 1 : 0
+        mortarRun = Math.max(mortarRun, run)
+      }
+    }
+    assert.ok(dimBrick >= 40, `only ${dimBrick} wall cells lit DIM -- no visible wall`)
+    assert.equal(tooBright, 0, `${tooBright} wall cells brighter than DIM`)
+    assert.ok(mortarRun >= 8, `the longest mortar run is ${mortarRun} -- the wall is not solid brickwork`)
+    // The light falls off: the far corners of the wall are FAINT, not DIM.
+    assert.ok(attrAt(h, 0, 2) & FAINT, 'the wall is lit DIM all the way to the edge -- no falloff')
+    assert.ok(dimBrick > 0 && dimBrick < 0.8 * (dimBrick + countFaint()), 'the wall is uniformly lit')
+    function countFaint() {
+      let n = 0
+      for (let y = 1; y < mod.CURB_Y; y++) for (let x = 0; x < cols; x++) if ('─│┬┴┼'.includes(h.row(y)[x]) && attrAt(h, x, y) & FAINT) n++
+      return n
+    }
+    // The resting tube is a tier over the wall.
+    const tube = tubeCells(h, mod).map(({ x, y }) => attrAt(h, x, y))
+    // (Six cells of the right lobe buzz on a timer and may be a tier down.)
+    assert.ok(tube.filter((a) => a === MUTED).length >= tube.length - 6, 'the resting tube is not MUTED, a tier over the DIM wall')
   } finally { h.shutdown() }
 })
