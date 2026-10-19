@@ -1,11 +1,18 @@
-// RIPPLE (CITY LIGHTS, rebuilt 2026-10-16 as a night skyline over the bay) --
-// what the effect leaves on the grid, read back off it: the canvas contract,
-// that the skyline, tower, moon and quay are there and the bay reflects the
-// lit windows, that a kick changes the city's lights and the change HOLDS
-// until the next kick (the first cut flashed and dropped back, and the probe
-// measured the kick at 1.5x), that with no tap the synthetic pulse still
-// steps it, that mute stops it, that re-entry carries no kick clock over, and
-// the tube-bloom caps.
+// RIPPLE (CITY LIGHTS), rebuilt 2026-10-18 as TOKYO BAY: Tokyo Tower over
+// the bay at night in beam-resolution pixel art (putGlyph bitmaps, FLAME's
+// technique). What it leaves on the grid, read off the gfx plane -- a
+// putGlyph() cell holds a space in the character plane, so a character
+// reading of this effect sees nothing at all:
+//  - the canvas contract (every cell repainted, by put or putGlyph; nothing
+//    outside rows 1..21) and no text on the canvas;
+//  - the picture: the tower is the brightest thing at rest, the city has
+//    lit windows, the bay holds a reflection under the tower;
+//  - THE BEAT: a kick lights the tower BRIGHT (the only BRIGHT on screen)
+//    and sends a ring of light across the bay, which is still there a
+//    second later -- set beside a kick-less frame the bay differs plainly;
+//  - no tap: the synthetic ~0.9s pulse still kicks; muted: no kicks, no
+//    rings, nothing BRIGHT, but the water still moves;
+//  - re-entry carries no ring or kick clock over.
 //
 // The frame loop rewrites p._au every frame (visualizer.js), so everything
 // about the beat is driven by calling the effect's draw directly with a
@@ -15,22 +22,18 @@
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { boot } from './harness.mjs'
-import { parseBDF } from '../src/bdf.js'
 
-const here = path.dirname(fileURLToPath(import.meta.url))
 const VIZ_BOT = 22
 // Attribute bits, src/cellgrid.js.
-const BRIGHT = 1
+const BRIGHT = 1, DIM = 4, MUTED = 32, FAINT = 64
+// Tier of an attribute byte, dark to light: FAINT 0 .. BRIGHT 4.
+const tierOf = (a) => (a & FAINT) ? 0 : (a & DIM) ? 1 : (a & MUTED) ? 2 : (a & BRIGHT) ? 4 : 3
 const effectT = (h) => (Date.now() - h.program._vizEnterAt) / 1000
-const attrAt = (h, x, y) => h.term.attrs[y * h.term.cols + x]
 
 const signal = (over = {}) => ({
-  level: 0.6, bass: 0.4, mid: 0.4, treble: 0.3,
-  bands9: new Array(9).fill(0.45), onset: false, pulse: 0, ...over,
+  level: 0.6, bass: 0.5, mid: 0.4, treble: 0.3,
+  bands9: new Array(9).fill(0.45), onset: false, pulse: 0.15, ...over,
 })
 
 async function bootCity() {
@@ -49,28 +52,51 @@ function drawWith(h, fx, t, A, muted = false) {
   fx.draw(h.program, { term: h.term }, t)
 }
 
-/** Chars + attrs of every window cell, as one string. */
-function windows(h, mod) {
-  const T = mod.cityTables(h.term.cols)
-  let s = ''
-  for (let i = 0; i < T.kind.length; i++) {
-    if (T.kind[i] !== mod.KIND.WIN) continue
-    s += String.fromCodePoint(h.term.chars[i]) + h.term.attrs[i] + ','
+/** Lit pixels in cell rows [y0, y1). */
+function litPixels(h, y0, y1) {
+  let n = 0
+  for (let y = y0; y < y1; y++) for (let x = 0; x < h.term.cols; x++) {
+    const bits = h.term.gfx[y * h.term.cols + x]
+    if (!bits) continue
+    for (const row of bits) { let r = row; while (r) { n += r & 1; r >>>= 1 } }
   }
-  return s
+  return n
 }
-const changed = (a, b) => { const x = a.split(','), y = b.split(','); let n = 0; for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) n++; return n }
+/** The cell rows holding the bay: the row the shore falls in, and below. */
+const bayRows = (h, mod) => {
+  const S = mod.sceneTables(h.term.cols, h.term.font.cellW, h.term.font.cellH)
+  return [Math.floor(S.HY / S.ch) + 2, VIZ_BOT]
+}
+/** Copy of the bay's bitmaps, for comparing frames. */
+function baySnap(h, mod) {
+  const [y0, y1] = bayRows(h, mod)
+  const out = []
+  for (let y = y0; y < y1; y++) for (let x = 0; x < h.term.cols; x++) {
+    const bits = h.term.gfx[y * h.term.cols + x]
+    out.push(bits ? Array.from(bits) : null)
+  }
+  return out
+}
+/** Pixels set in `b` and not in `a`. */
+function newPixels(a, b) {
+  let n = 0
+  for (let i = 0; i < a.length; i++) {
+    const rb = b[i]; if (!rb) continue
+    const ra = a[i]
+    for (let k = 0; k < rb.length; k++) { let d = rb[k] & ~(ra ? ra[k] : 0); while (d) { n += d & 1; d >>>= 1 } }
+  }
+  return n
+}
 
-test('RIPPLE: repaints every canvas cell and nothing outside rows 1..21', async () => {
+test('RIPPLE: repaints every canvas cell, by put or putGlyph, and nothing outside rows 1..21', async () => {
   const { h, fx } = await bootCity()
   try {
-    const origDraw = fx.draw, origPut = h.term.put, cols = h.term.cols
+    const origDraw = fx.draw, origPut = h.term.put, origGlyph = h.term.putGlyph, cols = h.term.cols
     const outside = []
-    let hit = null, frames = 0, short = 0
-    h.term.put = function (x, y, ...rest) {
-      if (hit) { if (y < 1 || y >= VIZ_BOT) outside.push(y); else if (x >= 0 && x < cols) hit[y * cols + x] = 1 }
-      return origPut.call(this, x, y, ...rest)
-    }
+    let hit = null, frames = 0, short = 0, glyphs = 0
+    const mark = (x, y) => { if (y < 1 || y >= VIZ_BOT) outside.push(y); else if (x >= 0 && x < cols) hit[y * cols + x] = 1 }
+    h.term.put = function (x, y, ...rest) { if (hit) mark(x, y); return origPut.call(this, x, y, ...rest) }
+    h.term.putGlyph = function (x, y, ...rest) { if (hit) { mark(x, y); glyphs++ } return origGlyph.call(this, x, y, ...rest) }
     fx.draw = function (...args) {
       hit = new Uint8Array(cols * VIZ_BOT)
       try { return origDraw.apply(this, args) } finally {
@@ -81,78 +107,96 @@ test('RIPPLE: repaints every canvas cell and nothing outside rows 1..21', async 
         hit = null
       }
     }
-    try { h.advance(3000) } finally { fx.draw = origDraw; h.term.put = origPut }
+    try { h.advance(3000) } finally { fx.draw = origDraw; h.term.put = origPut; h.term.putGlyph = origGlyph }
     assert.ok(frames > 100, `draw should have run (ran ${frames})`)
+    assert.ok(glyphs > frames * 300, `only ${glyphs} bitmap cells over ${frames} frames -- the picture is not in pixels`)
     assert.deepEqual([...new Set(outside)], [], 'the effect wrote to rows outside the canvas')
     assert.equal(short, 0, `${short} of ${frames} frames left canvas cells unpainted`)
+    // No text on the canvas: the old build's box-drawing outline is gone.
+    for (let y = 1; y < VIZ_BOT; y++) assert.equal(h.row(y).trim(), '', `characters on canvas row ${y}: ${h.row(y)}`)
   } finally { h.shutdown() }
 })
 
-test('RIPPLE: every character it draws exists in the BDF font', async () => {
-  const { h } = await bootCity()
-  try {
-    const font = parseBDF(readFileSync(path.join(here, '../fonts/ter-u16n.bdf'), 'utf8'))
-    const seen = new Set()
-    for (let f = 0; f < 120; f++) { h.advance(50); for (let y = 1; y < VIZ_BOT; y++) for (const c of h.row(y)) seen.add(c) }
-    const missing = [...seen].filter((c) => c !== ' ' && !font.glyphs.has(c.codePointAt(0)))
-    assert.deepEqual(missing, [], `glyphs not in the font: ${missing.join(' ')}`)
-  } finally { h.shutdown() }
-})
-
-test('RIPPLE: the skyline reads back -- tower, moon, lit windows, quay, and their reflection', async () => {
+test('RIPPLE: the picture reads back -- the tower brightest, lit windows, its reflection on the bay', async () => {
   const { h, fx, mod } = await bootCity()
   try {
     fx.reset(h.program)
-    drawWith(h, fx, 50, signal({ pulse: 1 }))
-    drawWith(h, fx, 50.2, signal({ pulse: 0.2 }))
-    const T = mod.cityTables(h.term.cols)
-    // The tower: beacon at its tip, mast under it, both legs lower down.
-    assert.equal(h.row(mod.TOWER_TOP)[T.tx], '•', 'no beacon at the tower tip')
-    assert.equal(h.row(mod.TOWER_TOP + 1)[T.tx], '│', 'no mast under the beacon')
-    const legRow = h.row(mod.SKY_BOT - 2)
-    assert.ok(legRow.slice(T.tx - 6, T.tx).includes('/') && legRow.slice(T.tx + 1, T.tx + 7).includes('\\'), `tower legs missing: ${legRow}`)
-    // The moon: the crescent's strokes around its column in the top rows
-    // (since the 2026-10-16 design pass; it was half blocks before).
-    let moon = 0
-    for (let y = 1; y <= 7; y++) for (let x = T.mx - 4; x <= T.mx + 4; x++) if ('/\\|.-\'`'.includes(h.row(y)[x])) moon++
-    assert.ok(moon >= 8, `only ${moon} moon cells`)
-    // The quay is one unbroken line.
-    assert.equal(h.row(mod.QUAY_Y).replace(/▀/g, ''), '', 'the quay is broken')
-    // Lit windows: plenty of them, and every one inside the skyline.
-    let lit = 0
-    for (let y = 1; y <= mod.SKY_BOT; y++) lit += [...h.row(y)].filter((c) => c === '■').length
-    assert.ok(lit >= 40, `only ${lit} lit windows -- the city is dark`)
-    // The bay holds their light as vertical streaks.
-    let streaks = 0
-    for (let y = mod.WATER_TOP; y < VIZ_BOT; y++) streaks += [...h.row(y)].filter((c) => c === '│').length
-    assert.ok(streaks >= 20, `only ${streaks} reflection streaks on the bay`)
+    drawWith(h, fx, 50, signal())
+    const cols = h.term.cols
+    const S = mod.sceneTables(cols, h.term.font.cellW, h.term.font.cellH)
+    const tcx = Math.floor(S.tx / S.cw)
+    // The tower's column: lit cells from its antenna down to the shore, at
+    // NORMAL -- the top tier at rest, and nothing else on screen above it.
+    const shoreRow = Math.floor(S.HY / S.ch) // canvas-relative
+    let towerCells = 0, worst = 0
+    for (let cy = 0; cy < shoreRow; cy++) {
+      const i = (cy + 1) * cols + tcx
+      if (h.term.gfx[i]) { towerCells++; assert.equal(tierOf(h.term.attrs[i]), 3, `tower cell at row ${cy + 1} is not NORMAL`) }
+    }
+    assert.ok(towerCells >= shoreRow - 1, `the tower stands in only ${towerCells} of ${shoreRow} rows`)
+    for (let i = cols; i < cols * VIZ_BOT; i++) if (h.term.gfx[i]) worst = Math.max(worst, tierOf(h.term.attrs[i]))
+    assert.equal(worst, 3, 'at rest nothing outshines the tower')
+    // Windows: hundreds of lit window pixels in the skyline.
+    let win = 0
+    for (let k = 0; k < S.winId.length; k++) if (mod.windowLit(S, k, 50)) win++
+    assert.ok(win > 150, `only ${win} windows lit`)
+    assert.ok(litPixels(h, 1, shoreRow + 1) > 2000, 'the sky half is nearly dark')
+    // The reflection: the tower's column on the bay is lit.
+    let refl = 0
+    for (let y = shoreRow + 2; y < VIZ_BOT; y++) for (let x = tcx - 1; x <= tcx + 1; x++) if (h.term.gfx[y * cols + x]) refl++
+    assert.ok(refl >= 8, `the tower's reflection is only ${refl} cells`)
   } finally { h.shutdown() }
 })
 
-test('RIPPLE: a kick changes the city lights, and the change holds until the next kick', async () => {
+test('RIPPLE: a kick lights the tower BRIGHT and sends a ring across the bay that is still there a second later', async () => {
+  // The same timeline twice, with and without one kick: everything else in
+  // the picture (swell, glints, windows) is a function of the clock, so what
+  // differs on the bay away from the tower's own reflection is the ring.
+  // Mutation-checked 2026-10-18: neutering the kick's edge (BEAT_RISE out of
+  // reach) fails the BRIGHT half; skipping the ring draw fails the bay half
+  // (a first version compared against an earlier frame instead, and the
+  // swell alone passed it).
   const { h, fx, mod } = await bootCity()
   try {
-    fx.reset(h.program)
-    let t = 100
-    // Settle on one latch, then hold with no rising edge.
-    drawWith(h, fx, t, signal({ pulse: 1 })); t += 0.1
-    for (let i = 0; i < 6; i++) { drawWith(h, fx, t, signal({ pulse: 0.1 })); t += 0.05 }
-    const before = windows(h, mod)
-    for (let i = 0; i < 10; i++) { drawWith(h, fx, t, signal({ pulse: 0.1 })); t += 0.05 }
-    assert.equal(changed(before, windows(h, mod)), 0, 'the windows changed with no kick')
-    // A kick: same level and bands, so only the beat itself can change them.
-    drawWith(h, fx, t, signal({ pulse: 1 })); t += 0.1
-    drawWith(h, fx, t, signal({ pulse: 0.5 })); t += 0.05
-    const after = windows(h, mod)
-    const n = changed(before, after)
-    assert.ok(n >= 15, `a kick changed only ${n} windows`)
-    // ...and holds.
-    for (let i = 0; i < 8; i++) { drawWith(h, fx, t, signal({ pulse: 0.3 })); t += 0.05 }
-    assert.equal(changed(after, windows(h, mod)), 0, 'the kick\'s lights did not hold until the next kick')
+    const S = mod.sceneTables(h.term.cols, h.term.font.cellW, h.term.font.cellH)
+    const tcx = Math.floor(S.tx / S.cw)
+    const brightCells = (near) => {
+      let n = 0
+      for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < h.term.cols; x++) {
+        const i = y * h.term.cols + x
+        if (h.term.gfx[i] && (h.term.attrs[i] & BRIGHT) && (Math.abs(x - tcx) <= 5) === near) n++
+      }
+      return n
+    }
+    const run = (kick, check) => {
+      fx.reset(h.program)
+      h.program._rippleLvl = 0.7
+      let t = 100
+      // Loud and steady, no edge: the LOUD tile.
+      for (let i = 0; i < 40; i++) { drawWith(h, fx, t, signal({ level: 0.7 })); t += 1 / 30 }
+      assert.equal(brightCells(true) + brightCells(false), 0, 'BRIGHT on screen with no kick')
+      drawWith(h, fx, t, signal({ level: 0.7, pulse: kick ? 1 : 0.15, onset: kick })); t += 1 / 30
+      for (let i = 0; i < 5; i++) { drawWith(h, fx, t, signal({ level: 0.7 })); t += 1 / 30 }
+      check?.()
+      for (let i = 0; i < 30; i++) { drawWith(h, fx, t, signal({ level: 0.7 })); t += 1 / 30 }
+      return baySnap(h, mod)
+    }
+    const loud = run(false)
+    const kick = run(true, () => {
+      const near = brightCells(true), off = brightCells(false)
+      assert.ok(near >= 8, `the kick lit only ${near} tower cells BRIGHT`)
+      assert.equal(off, 0, `${off} BRIGHT cells off the tower -- only the tower may flare`)
+    })
+    // A second on: the tower is back to NORMAL, the ring is out on the water.
+    assert.equal(brightCells(true) + brightCells(false), 0, 'the flare held past a second -- a strobe at any real tempo')
+    const away = (snap) => snap.map((b, i) => (Math.abs((i % h.term.cols) - tcx) <= 6 ? null : b))
+    // Crest gained plus trough cleared: the ring is both.
+    const moved = newPixels(away(loud), away(kick)) + newPixels(away(kick), away(loud))
+    assert.ok(moved >= 100, `a second after the kick only ${moved} bay pixels changed away from the tower -- the ring is not visible`)
   } finally { h.shutdown() }
 })
 
-test('RIPPLE: with no tap the synthetic ~0.9s pulse still steps the city', async () => {
+test('RIPPLE: with no tap the synthetic ~0.9s pulse still kicks the tower', async () => {
   const { h } = await bootCity()
   try {
     const s0 = h.program._rippleStep
@@ -162,111 +206,38 @@ test('RIPPLE: with no tap the synthetic ~0.9s pulse still steps the city', async
   } finally { h.shutdown() }
 })
 
-test('RIPPLE: muted, the city holds its lights and the rain keeps falling', async () => {
+test('RIPPLE: muted, no kick, no ring and nothing BRIGHT -- but the water still moves', async () => {
   const { h, fx, mod } = await bootCity()
   try {
     fx.reset(h.program)
     let t = 200
-    drawWith(h, fx, t, signal({ pulse: 1 })); t += 0.3
-    drawWith(h, fx, t, signal({ pulse: 0.2 })); t += 0.05   // the wave has crossed
-    const before = windows(h, mod)
-    // Rain is counted across the whole muted run: a single frame can land
-    // between one ring fading and the next opening.
-    let rain = 0
-    for (let i = 0; i < 10; i++) {
-      drawWith(h, fx, t, signal({ pulse: i % 2 ? 0 : 1, onset: true }), true); t += 0.25
-      for (let y = mod.WATER_TOP; y < VIZ_BOT; y++) rain += [...h.row(y)].filter((c) => c === '·' || c === '∙').length
+    const s0 = h.program._rippleStep
+    let bright = 0
+    const snaps = []
+    for (let i = 0; i < 60; i++) {
+      drawWith(h, fx, t, signal({ pulse: i % 10 ? 0 : 1, onset: true }), true); t += 1 / 30
+      for (let k = h.term.cols; k < h.term.cols * VIZ_BOT; k++) if (h.term.gfx[k] && (h.term.attrs[k] & BRIGHT)) bright++
+      if (i % 20 === 0) snaps.push(baySnap(h, mod))
     }
-    assert.equal(changed(before, windows(h, mod)), 0, 'kicks changed the lights while muted')
-    assert.ok(rain > 0, 'the rain stopped while muted')
+    assert.equal(h.program._rippleStep, s0, 'a kick landed while muted')
+    assert.equal(bright, 0, 'BRIGHT cells while muted')
+    assert.ok(newPixels(snaps[0], snaps[2]) > 50, 'the bay froze while muted')
+    assert.ok(litPixels(h, 1, VIZ_BOT) > 2000, 'muted went dark rather than faint')
   } finally { h.shutdown() }
 })
 
-test('RIPPLE: re-entry after a long visit carries no kick clock from the previous visit', async () => {
+test('RIPPLE: re-entry after a long visit carries no kick clock or ring from the previous visit', async () => {
   const { h } = await bootCity()
   try {
-    h.advance(120000)
+    // 30s is plenty: any clock left over sits far in the restarted one's future.
+    h.advance(30000)
     h.key('e'); h.advance(500)
     h.key('v'); h.advance(100)
-    assert.ok(h.program._rippleKickAt <= effectT(h) + 0.05, `kick clock ${h.program._rippleKickAt} on a clock at ${effectT(h)}`)
+    const t = effectT(h)
+    assert.ok(h.program._rippleKickAt <= t + 0.05, `kick clock ${h.program._rippleKickAt} on a clock at ${t}`)
+    for (const r of h.program._ripples) assert.ok(r.startT <= t + 0.05, `a ring starts at ${r.startT} on a clock at ${t}`)
     const s0 = h.program._rippleStep
     h.advance(2500)
     assert.ok(h.program._rippleStep > s0, 'no kick landed after re-entry')
-  } finally { h.shutdown() }
-})
-
-test('RIPPLE: full blocks stay accents and BRIGHT is the beacon alone (tube bloom)', async () => {
-  const { h } = await bootCity()
-  try {
-    let worstFull = 0, worstBright = 0
-    for (let f = 0; f < 60; f++) {
-      h.advance(50)
-      let full = 0, bright = 0
-      for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < h.term.cols; x++) {
-        if (h.row(y)[x] === '█') full++
-        if (attrAt(h, x, y) & BRIGHT) bright++
-      }
-      worstFull = Math.max(worstFull, full); worstBright = Math.max(worstBright, bright)
-    }
-    const cells = h.term.cols * (VIZ_BOT - 1)
-    assert.ok(worstFull <= cells * 0.01, `${worstFull} full blocks in one frame`)
-    assert.ok(worstBright <= 1, `${worstBright} BRIGHT cells in one frame -- only the beacon may flare`)
-  } finally { h.shutdown() }
-})
-
-test('RIPPLE: the reflection is the skyline\'s lit columns, one tier down -- no random dashes', async () => {
-  // 2026-10-16 (design pass): the bay used to be scattered '- = ~ . ¦' that
-  // did not read as the city upside down. Every streak cell must now sit
-  // under a column holding a lit window (within the swell's one-column sway)
-  // and be dimmer than that column's brightest window. Mutation-checked:
-  // drawing the streaks at the window's own tier goes red on the tier half;
-  // the old per-cell '─' glitter goes red on the glyph half.
-  const { h, fx, mod } = await bootCity()
-  try {
-    const T = mod.cityTables(h.term.cols)
-    const cols = h.term.cols
-    // Tier of an attribute byte (src/cellgrid.js): FAINT 64, DIM 4, MUTED 32.
-    const level = (a) => (a & 64) ? 0 : (a & 4) ? 1 : (a & 32) ? 2 : 3
-    fx.reset(h.program)
-    let t = 300
-    for (let k = 0; k < 6; k++) {
-      drawWith(h, fx, t, signal({ pulse: 1, level: 0.3 + k * 0.12 })); t += 0.3
-      drawWith(h, fx, t, signal({ pulse: 0.1 })); t += 0.3
-      // The brightest lit window per column, read off the grid.
-      const best = new Array(cols).fill(-1)
-      for (let y = 1; y <= mod.SKY_BOT; y++) for (let x = 0; x < cols; x++) {
-        const i = y * cols + x
-        if (T.kind[i] === mod.KIND.WIN && h.row(y)[x] === '■') best[x] = Math.max(best[x], level(h.term.attrs[i]))
-      }
-      for (let y = mod.WATER_TOP; y < VIZ_BOT; y++) {
-        const row = h.row(y)
-        assert.ok(!/[~─=]/.test(row), `kick ${k}: glitter on the bay, row ${y}: ${row}`)
-        for (let x = 0; x < cols; x++) {
-          if (row[x] !== '│') continue
-          const src = Math.max(best[x - 1] ?? -1, best[x] ?? -1, best[x + 1] ?? -1)
-          assert.ok(src >= 0, `kick ${k}: a streak at ${x},${y} under no lit window`)
-          assert.ok(level(h.term.attrs[y * cols + x]) < src, `kick ${k}: the streak at ${x},${y} is as bright as its window`)
-        }
-      }
-    }
-  } finally { h.shutdown() }
-})
-
-test('RIPPLE: the moon is strokes, never glyph mass, and dimmer than the beacon at rest', async () => {
-  const { h, fx, mod } = await bootCity()
-  try {
-    const T = mod.cityTables(h.term.cols)
-    fx.reset(h.program)
-    drawWith(h, fx, 400, signal({ pulse: 0.1 }), true)
-    for (let y = 1; y < VIZ_BOT; y++) assert.ok(!/[█▀▄▌▐]/.test(h.row(y).slice(T.mx - 4, T.mx + 5)) || y > 6, `block glyphs in the moon, row ${y}`)
-    for (let y = 1; y < VIZ_BOT; y++) assert.ok(!h.row(y).includes('█'), `a full block on row ${y}`)
-    // And the kick flares the beacon wider than any star: arms either side.
-    drawWith(h, fx, 401, signal({ pulse: 0 }))
-    drawWith(h, fx, 401.05, signal({ pulse: 1 }))
-    const tip = h.row(mod.TOWER_TOP).slice(T.tx - 2, T.tx + 3)
-    assert.equal(tip, '·─•─·', `the beacon flare: '${tip}'`)
-    assert.ok(attrAt(h, T.tx, mod.TOWER_TOP) & BRIGHT, 'the beacon is BRIGHT on the kick')
-    drawWith(h, fx, 401.6, signal({ pulse: 0.1 }))
-    assert.equal(h.row(mod.TOWER_TOP).slice(T.tx - 1, T.tx + 2).trim(), '•', 'the flare is gone between beats')
   } finally { h.shutdown() }
 })

@@ -1,76 +1,91 @@
-// SIGNAL -- visualizer effect "FROST" (COLD WAVE). Rebuilt 2026-10-16.
+// SIGNAL -- visualizer effect "FROST" (COLD WAVE), labelled NEON HEART.
 //
-// A neon sign on a brick wall at night: a big heart bent from glass tubing,
-// the station's callsign lettered across its middle (COLD WAVE's, as
-// built), hung from two wires off the top of the frame, with a little
-// transformer box on the wall and the whole thing mirrored, broken up by
-// the wet, in the pavement under the curb.
+// 2026-10-18 -- the pixel rebuild. A neon heart bent from one length of
+// round glass tube, hung on two wires in a dark, rainy window, its
+// reflection rippling in the wet pavement under the curb. It BEATS: every
+// kick the tube flares and the whole heart thumps bigger, then settles.
 //
-// Why it fits: COLD WAVE is synthpop, new wave and cold wave -- "synthetic
-// hearts, borrowed neon" is its own tagline -- so the subject is exactly
-// that, a synthetic heart in borrowed neon. It keeps the old FROST's idea
-// ("neon signage losing power", cold rather than warm) and finally makes it
-// a picture: one letter of the sign is always a little unreliable.
+// What Matt said: looking at build 2026-10-18.1 live, "neon heart same" --
+// it still needed work, maybe a different style. Captured on the real tube
+// the box-drawn heart read as a stair-stepped PIXEL-HEART OUTLINE (clip art,
+// not neon), the brick wall as a grid, the puddle as a squashed staircase,
+// and the KICK tile as the LOUD tile: a 45ms strike and a 0.3s hold cannot
+// survive a still, and on the tube a NORMAL '─' and a BRIGHT '─' are the
+// same thin line. Tuning could not fix it; box characters cannot curve.
 //
-// What it replaced: FROST had been a full-screen wireframe grid whose nodes
-// lit and decayed (57th pass, "Neon Grid Decay"). Measured 2026-10-16 it
-// changed 29% of the screen with the music and showed the kick at 3.7x, but
-// in a screenshot it read as a sparse grid of dots -- an empty screen. The
-// numbers were not the problem; nobody could tell what it was.
+// What was chosen, and why:
+//   - STYLE: per-cell pixel bitmaps (term.putGlyph, FLAME's renderer). Real
+//     neon is a round glowing tube with a soft halo and smooth curves --
+//     exactly what 8x16 bitmaps can draw and box characters cannot. The
+//     heart is the classic parametric curve, rendered from a distance field
+//     of its centre line (built once per grid width), so the tube is a
+//     solid core with an exponential halo falling off around it, dithered
+//     with FLAME's 4x4 ordered screen. Each cell takes the lowest beam tier
+//     its brightest pixel needs and the rest of the cell is dithered down
+//     to its own intensity, so the halo fades across tiers rather than
+//     stepping. Geometry is in DISPLAY units (a framebuffer pixel is ~0.74
+//     as wide as it is tall on the 4:3 face), so the heart is round, not
+//     stretched.
+//   - SUBJECT: kept -- "synthetic hearts, borrowed neon" is the station's
+//     own tagline, and a neon heart in a rainy window is the cold-wave
+//     record sleeve. What failed was the rendering. Dropped with the box
+//     art: the brick wall (it read as a grid), the transformer box, and the
+//     lettering inside the heart (the callsign in terminal text inside a
+//     pixel tube read as a caption, not as part of the sign; one subject).
+//     Added: rain, which is what keeps the MUTED state alive.
 //
-// Audio. Two hooks, both on things a neon sign actually does:
-//   - THE KICK strikes the tube: light runs from the heart's point up both
-//     sides to the lobes in 45ms, the running front BRIGHT, then the whole
-//     outline (and the word) holds lit for 0.3s and drops back to its cold
-//     resting glow in one step. A rising edge on `pulse` (DANCEFLOOR's
-//     BEAT_RISE / STEP_GAP idiom), so it lands on syntheticAudio's pulse
-//     with no tap and on real onsets with one. Only the running front is
-//     BRIGHT -- a whole outline at BRIGHT is a slab of bloom on the tube
-//     (the UPRISING/KEEP lesson) -- the held tube is NORMAL.
-//   - LEVEL sets the resting glow of the tubes, eased over about a second:
-//     quiet passages sit at DIM, loud ones at MUTED (never NORMAL, which is
-//     the struck tier), and how much of the brick wall the sign lights.
-//     Muted, the sign is a cold DIM outline that never strikes.
-// The flicker (one letter, one short run of the heart) is NOT audio: it is
-// a hash of the time slot, so it carries no state and needs no reset, and it
-// is gentle -- a cell drops a tier or goes dark for a tenth of a second
-// every few seconds, never a strobe. Nothing here touches crt.params, so the
-// rear panel's CALM setting has nothing to gate.
+// The rubric, point by point:
+//   1. ONE SUBJECT: a neon heart. Nameable from across the room.
+//   2. ONE MUSICAL ELEMENT: the heart beats. A rising edge on `pulse`
+//      (DANCEFLOOR's BEAT_RISE / STEP_GAP idiom, so syntheticAudio's pulse
+//      drives it with no tap) sets off a THUMP: the heart scales up
+//      THUMP_SCALE, the core goes past NORMAL into BRIGHT and the halo
+//      widens and brightens, held THUMP_HOLD_S, then an exponential fall
+//      (THUMP_TAU_S) back to rest well inside a 120bpm beat. LEVEL sets the
+//      resting glow (core MUTED when quiet, NORMAL when loud, halo with it)
+//      over about a second, so it never moves on its own between kicks.
+//      SLOW MACHINES: a thump is drawn at full strength on at least
+//      THUMP_MIN_FRAMES frames whatever the clock says. At 60fps that is
+//      50ms, inside the hold, so it changes nothing; on a set drawing a few
+//      frames a second (the Haswell box; tools/viz-sheet.mjs's swiftshader
+//      at ~1fps) a clock-timed thump fell entirely between two frames and
+//      the beat was invisible -- which is how the KICK tile of the last
+//      build came to equal its LOUD tile.
+//   3. BRIGHTNESS ORDER: tube core (MUTED..NORMAL, BRIGHT only in a thump)
+//      > halo > reflection (two-fifths of the tube, fading with depth) >
+//      wires, curb and rain (FAINT; rain brightens only where it falls
+//      through the heart's glow, capped under the tube).
+//   4. SHAPES: one smooth tube, thin lines of rain. No shade blocks; the
+//      glow is dithered pixels, never '░'.
+//   5. FOUR STATES: NO TAP beats to syntheticAudio's 0.9s pulse at its
+//      level. LOUD glows NORMAL with a wider halo; quiet glows MUTED. MUTED
+//      switches the sign off: the glass shows as a cold double outline (the
+//      tube's two walls), FAINT, with no halo and no beat -- and the rain
+//      still falls past it and the puddle still ripples, so it is off, not
+//      dead.
+//   6. REAL-RADIO TEST: a neon heart in a shop window at night, on a set's
+//      screen, is a picture TV has shown for fifty years.
+// Also a neon detail with no audio in it: a short stretch of tube by the
+// electrodes (the notch, where the glass's two ends meet) drops out for a
+// tenth of a second every few seconds -- a hash of the time slot, so it
+// carries no state and needs no reset; never a strobe. Nothing here
+// touches crt.params, so the rear panel's CALM setting has nothing to gate.
 //
-// 2026-10-16 (design pass) -- the viz-critic read this off the real tube and
-// found four things the grid had been hiding:
-//   - THE WALL WAS GONE. FAINT dotted '┈'/'¦', clipped to an ellipse and
-//     blanked round the sign, rasters as a few stray dashes: no wall. Now it
-//     is solid brickwork -- '─' mortar every second row, '│' joints staggered
-//     half a brick, '┬'/'┴'/'┼' where they meet so the courses join -- DIM
-//     where the sign lights it, falling off to FAINT with distance (per
-//     brick-length, hash-dithered, so the edge is ragged rather than an
-//     ellipse). The lit patch grows with the eased level, as before. The
-//     critic asked for MUTED near the sign; that is the tube's own resting
-//     tier, so the wall stops at DIM and the tube's rest was raised to MUTED
-//     at every unmuted level (it used to sit at DIM when quiet) -- subject
-//     brightest, scenery a tier under it. MARGIN stays: the wall still stops
-//     two columns short of the glass, and that is what keeps the wall's
-//     solid line from reading as more tubing now it IS solid line.
-//   - THE HALO WAS BLOCKY. A '░' ring round the whole heart rasters as a
-//     checkered second outline, not glow. It is now '·' DIM on the cells
-//     OUTSIDE the heart only, for the same 45ms strike.
-//   - THE REFLECTION READ AS A PYRAMID. The curb at row 15 left six puddle
-//     rows, enough for the heart's lower half only, and a per-row sine shift
-//     plus 18% dropout broke the diagonals into loose steps. Now: the sign
-//     hangs a row higher (HEART_Y0 2, curb 14, seven puddle rows), and the
-//     puddle mirrors a hand-drawn SQUASHED heart (REFLECT, seven rows, both
-//     lobes, four-column steps) rather than row-sampling the big one, which
-//     would have broken every diagonal; one shift for the whole reflection,
-//     so the steps stay joined; dropout 5%. The reflection sits a tier under
-//     the tube (DIM at rest, MUTED struck, FAINT muted).
-//   - THE WORD WAS HARDCODED. 'COLD WAVE' showed on every station [V] cycled
-//     here. It is now the locked station's callsign, letter-spaced as before
-//     when that fits inside the heart (13 letters or fewer), unspaced when
-//     only that fits, and 'O P E N' -- what a neon sign in a window says --
-//     with no station or nothing that fits. signWord() is the rule.
-// Also: the per-frame string keys and array copies (MARGIN.has(`x,y`), the
-// interior scan's reverse()) are gone -- the masks are built once.
+// ---- history (condensed) ----
+// 57th pass "Neon Grid Decay": a full-screen wireframe grid whose nodes lit
+// and decayed. Measured well (29% of the screen moved, kick at 3.7x) and
+// read as a sparse grid of dots -- nobody could tell what it was.
+// 2026-10-16 rebuild: the same neon-heart idea in box characters -- a
+// hand-drawn 31x12 '╭─╯' heart with the callsign lettered inside, hung on a
+// brick wall, a strike running up the tube in 45ms, a squashed box-drawn
+// reflection. The design pass that night made the wall solid brickwork,
+// the halo '·' instead of '░', and the word follow the locked station.
+// Lessons kept from it: neon strikes all at once (a slow surge measured
+// 0.51x on the beat probe -- the change landed BETWEEN kicks); the resting
+// glow must never reach the struck tier or a kick has nothing to change;
+// a whole outline at BRIGHT is a slab of bloom -- here the tube is a few
+// pixels of each cell, not a whole glyph, which is why the thump may light
+// it BRIGHT end to end (tests/visual-frost.test.mjs bounds the lit area).
 
 import { BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
@@ -79,341 +94,329 @@ const { VIZ_BOT } = await import(`../layout.js?v=${V}`)
 const { hash2 } = await import(`./shared.js?v=${V}`)
 
 // --- the beat -----------------------------------------------------------------
-// Same thresholds DANCEFLOOR uses and for the same reasons: 0.2 survives a
-// frame handed over 250ms late by the fallback ticker, and 0.22s between
-// surges keeps a hi-hat onset from re-firing one mid-run.
 export const BEAT_RISE = 0.2
 export const STEP_GAP_S = 0.22
-// The strike: how long the light takes to run from the point to the top of
-// the lobes, and how long the whole tube then holds lit before it drops
-// back to its resting glow in ONE step.
-// 2026-10-16 -- the first cut ran the head up over 0.32s and let the trail
-// fade through two tiers over 0.7s. It looked like a surge in a still and
-// measured 0.51x on the beat probe: nearly every cell it changed, it changed
-// BETWEEN kicks, so the kick itself was the quietest moment on the screen.
-// Neon strikes all at once; a 45ms run (three frames) is still visibly a run
-// from the point upward, and a single drop after the hold keeps the change
-// on the beat. See tests/visual-frost.test.mjs for the ratio it holds to.
-export const STRIKE_S = 0.045
-export const HOLD_S = 0.3
-// The resting glow never reaches the lit tier, or at a loud level the sign
-// would already be lit and a kick would change nothing.
-export const REST_MAX = 0.5
+export const THUMP_HOLD_S = 0.08
+export const THUMP_TAU_S = 0.16
+export const THUMP_SCALE = 0.07
+export const THUMP_MIN_FRAMES = 3
 
-// --- the sign -----------------------------------------------------------------
-// Hand-drawn: a computed heart curve on 2:1 cells comes out as a lumpy
-// shield. 31 columns by 12 rows. The point is the bottom row; the two lobe
-// tops are row 0.
-export const HEART = [
-  '   ╭────────╮     ╭────────╮   ',
-  ' ╭─╯        ╰─╮ ╭─╯        ╰─╮ ',
-  '╭╯            ╰─╯            ╰╮',
-  '│                             │',
-  '╰╮                           ╭╯',
-  ' ╰─╮                       ╭─╯ ',
-  '   ╰─╮                   ╭─╯   ',
-  '     ╰─╮               ╭─╯     ',
-  '       ╰─╮           ╭─╯       ',
-  '         ╰─╮       ╭─╯         ',
-  '           ╰─╮   ╭─╯           ',
-  '             ╰───╯             ',
-]
-export const HEART_W = HEART[0].length
-export const HEART_H = HEART.length
-// The same heart squashed to seven rows for the puddle (design pass): the
-// lobes kept whole, the '│' and '╰╮' rows dropped, and the taper stepping
-// four columns a row instead of two, so every diagonal is still a joined
-// staircase. Drawn right way up; the draw flips it.
-export const REFLECT = [
-  '   ╭────────╮     ╭────────╮   ',
-  ' ╭─╯        ╰─╮ ╭─╯        ╰─╮ ',
-  '╭╯            ╰─╯            ╰╮',
-  '╰───╮                     ╭───╯',
-  '    ╰───╮             ╭───╯    ',
-  '        ╰───╮     ╭───╯        ',
-  '            ╰─────╯            ',
-]
-export const REFLECT_H = REFLECT.length
-// Rows on the canvas: the heart's top row, the curb, and where the word sits
-// inside the heart (row 3/4 of the art is its widest point). The heart hangs
-// at row 2 so the puddle under the curb has room for all of REFLECT.
-export const HEART_Y0 = 2
-export const CURB_Y = HEART_Y0 + HEART_H          // 14
-export const WORD_ROW = 4                          // art row
-// The widest a word may be on WORD_ROW: the interior there runs art columns
-// 2..28 (27 cells), less a column of dark glass each side.
-export const WORD_MAX = 25
-export const FALLBACK_WORD = 'O P E N'
+// --- the tube -----------------------------------------------------------------
+// Beam levels, src/term.js: what each attribute tier draws at. Pixel
+// intensities here are on the same 0..255 scale.
+const LV_BRIGHT = 255, LV_NORMAL = 205, LV_MUTED = 180, LV_DIM = 150, LV_FAINT = 100
+// Tube radius, in display units (one framebuffer pixel tall).
+export const TUBE_R = 1.5
+// Display units per curve unit. The curve spans y -17..12 (29 units), so
+// the heart stands ~177 pixels -- eleven rows.
+export const HEART_K = 6.1
+// The electrodes: no glass within this angle of the notch.
+const GAP_THETA = 0.1
+// The distance field stores display units x FIELD_Q in a Uint8, out to
+// FIELD_REACH -- past where any halo is visible.
+const FIELD_Q = 4
+const FIELD_REACH = 26
+// Below this, a cell is dark and gets a plain space.
+const CELL_MIN = 12
 
-/** The sign's lettering for a station: its callsign letter-spaced when that
- *  fits inside the heart, unspaced when only that fits, else OPEN. */
-export function signWord(station) {
-  const name = String((station && station.callsign) || '').trim().toUpperCase()
-  if (!name) return FALLBACK_WORD
-  const spaced = name.split('').join(' ')
-  if (spaced.length <= WORD_MAX) return spaced
-  if (name.length <= WORD_MAX) return name
-  return FALLBACK_WORD
-}
-/** Which letter of the word is losing power: an A if it has one (COLD WAVE's
- *  A of WAVE, as built), else the last letter. */
-function flakyIndex(word) {
-  const a = word.lastIndexOf('A')
-  return a >= 0 ? a : word.length - 1
-}
+// 4x4 ordered dither -- FLAME's.
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((b) => (b + 0.5) / 16)
 
-// Mirror pairs for the reflection: a tube seen upside down in a puddle.
-const FLIP = { '╭': '╰', '╰': '╭', '╮': '╯', '╯': '╮' }
+/** The heart curve at θ (-π..π), curve units, y up. θ = 0 is the notch,
+ *  ±π the point. */
+export function heartAt(th) {
+  const s = Math.sin(th)
+  return [16 * s * s * s, 13 * Math.cos(th) - 5 * Math.cos(2 * th) - 2 * Math.cos(3 * th) - Math.cos(4 * th)]
+}
+// The curve's vertical middle, which it is placed and scaled about.
+const HEART_YMID = (12 - 17) / 2
 
-// Tube cells of the heart, each with `d`, its distance along the tube from
-// the point (0) to the lobe tops (1) -- the surge's coordinate. Row-based
-// with a lean toward the centre line, so the head climbs both sides together
-// and the dip between the lobes (row 2's '╰─╯') lights last but one.
-// `buzz` marks the run of tube that buzzes: six cells of the right lobe's
-// outer edge.
-const TUBE = []
-for (let r = 0; r < HEART_H; r++) {
-  for (let c = 0; c < HEART_W; c++) {
-    const ch = HEART[r][c]
-    if (ch === ' ') continue
-    TUBE.push({ c, r, ch, d: (HEART_H - 1 - r) / (HEART_H - 1), buzz: c >= HEART_W - 5 && r <= 2 })
-  }
-}
-// The reflection's tube cells, flipped once here: `k` is the puddle row
-// (1 = just under the curb, showing the point).
-const PUDDLE = []
-for (let rr = 0; rr < REFLECT_H; rr++) {
-  for (let c = 0; c < HEART_W; c++) {
-    const ch = REFLECT[rr][c]
-    if (ch === ' ') continue
-    PUDDLE.push({ c, k: REFLECT_H - rr, ch: FLIP[ch] || ch, d: (REFLECT_H - 1 - rr) / (REFLECT_H - 1) })
-  }
-}
-// Masks in art coordinates, padded by PAD all round so the margin's reach
-// past the art needs no bounds checks. Built once; the draw indexes them.
-const PAD = 2
-const MW = HEART_W + 2 * PAD, MH = HEART_H + 2 * PAD
-const mi = (c, r) => (r + PAD) * MW + (c + PAD)
-const isTube = new Uint8Array(MW * MH)
-for (const cell of TUBE) isTube[mi(cell.c, cell.r)] = 1
-// A dark margin round the tube: the wall stops two columns and one row short
-// of the glass, so no mortar line can run into the outline and read as more
-// tubing (the first cut used '─' for both).
-const MARGIN = new Uint8Array(MW * MH)
-for (const cell of TUBE) {
-  for (let dr = -1; dr <= 1; dr++) for (let dc = -2; dc <= 2; dc++) MARGIN[mi(cell.c + dc, cell.r + dr)] = 1
-}
-// Outside the heart: a flood fill from the padded border through non-tube
-// cells. What it never reaches is the glass box's interior -- which includes
-// nothing of the notch between the lobes, unlike the old per-row scan that
-// needed it carved out by hand.
-const OUTSIDE = new Uint8Array(MW * MH)
-{
-  const stack = [0]
-  OUTSIDE[0] = 1
-  while (stack.length) {
-    const i = stack.pop()
-    const x = i % MW, y = (i - x) / MW
-    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-      const nx = x + dx, ny = y + dy
-      if (nx < 0 || ny < 0 || nx >= MW || ny >= MH) continue
-      const j = ny * MW + nx
-      if (OUTSIDE[j] || isTube[j]) continue
-      OUTSIDE[j] = 1
-      stack.push(j)
+/** Geometry for one grid width, built on first draw (most sessions never
+ *  open this effect, and tools/dead-feedback.mjs keeps every boot alive --
+ *  FLAME's reason for the same laziness): the distance field of the tube's
+ *  centre line, which stretch of tube each pixel is nearest, and the
+ *  pixel/bitmap buffers. Rebuilt if the width changes (the 2026-09-13
+ *  audit's L5 shape). Framebuffer coordinates throughout: x counts the
+ *  blank ninth column of each cell, so the curve is placed where it is
+ *  seen. */
+function build(term) {
+  const cols = term.cols
+  const { cellW, cellH } = term.font
+  const adv = cellW + 1
+  const rows = VIZ_BOT - 1
+  const FW = cols * adv, FH = rows * cellH
+  // Width of a framebuffer pixel in display units, on the 4:3 face.
+  const aspect = (4 / 3) / (FW / (term.rows * cellH))
+  const cx = FW / 2
+  const cy = 22 + (12 - HEART_YMID) * HEART_K // lobes 22px under the canvas top
+  const field = new Uint8Array(FW * FH).fill(255)
+  const seg = new Uint8Array(FW * FH)
+  const N = 1600 // ~0.4 display units apart along the curve
+  const rx = Math.ceil(FIELD_REACH / aspect), ry = FIELD_REACH
+  let lobeX = 0, lobeY = 1e9
+  for (let n = 0; n < N; n++) {
+    const th = -Math.PI + (2 * Math.PI * (n + 0.5)) / N
+    if (Math.abs(th) < GAP_THETA) continue
+    const [hx, hy] = heartAt(th)
+    const X = cx + (hx * HEART_K) / aspect
+    const Y = cy - (hy - HEART_YMID) * HEART_K
+    if (th > 0 && Y < lobeY) { lobeY = Y; lobeX = X }
+    const sid = 1 + Math.floor(((th + Math.PI) / (2 * Math.PI)) * 64)
+    const x0 = Math.max(0, Math.floor(X - rx)), x1 = Math.min(FW - 1, Math.ceil(X + rx))
+    const y0 = Math.max(0, Math.floor(Y - ry)), y1 = Math.min(FH - 1, Math.ceil(Y + ry))
+    for (let y = y0; y <= y1; y++) {
+      const dy2 = (y - Y) * (y - Y)
+      for (let x = x0; x <= x1; x++) {
+        const dx = (x - X) * aspect
+        const q = Math.sqrt(dx * dx + dy2) * FIELD_Q
+        const i = y * FW + x
+        if (q < field[i]) { field[i] = q; seg[i] = sid }
+      }
     }
   }
-}
-const INTERIOR = []
-for (let r = 0; r < HEART_H; r++) {
-  for (let c = 0; c < HEART_W; c++) if (!isTube[mi(c, r)] && !OUTSIDE[mi(c, r)]) INTERIOR.push({ c, r })
-}
-// The strike's glow: the outside cells touching the tube (left, right,
-// above, below). Outside only -- inside, it crowded the word.
-const HALO = []
-{
-  const seen = new Uint8Array(MW * MH)
-  for (const cell of TUBE) {
-    for (const [dc, dr] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-      const c = cell.c + dc, r = cell.r + dr
-      const i = mi(c, r)
-      if (!OUTSIDE[i] || seen[i]) continue
-      seen[i] = 1
-      HALO.push({ c, r })
-    }
+  return {
+    cols, cellW, cellH, adv, rows, FW, FH, cx, cy,
+    field, seg,
+    lobeDX: lobeX - cx, lobeY,
+    curbY: Math.round(cy + (HEART_YMID + 17) * HEART_K + 16),
+    // Everything the heart can light, from its centre at rest scale.
+    reachX: (16 * HEART_K + FIELD_REACH) / aspect + 2,
+    reachUp: (12 - HEART_YMID) * HEART_K + FIELD_REACH + 2,
+    lum: new Uint16Array(FW * FH),
+    lut: new Uint16Array(256),
+    xmap: new Int32Array(FW),
+    mark: new Uint8Array(cols * rows),
+    // Two bitmaps per cell, alternated per frame: putGlyph() skips a
+    // same-reference re-put, so a bitmap rewritten in place never shows.
+    bufs: [0, 1].map(() => Array.from({ length: cols * rows }, () => new Uint16Array(cellH))),
+    front: 0,
   }
 }
 
-// --- the wall -------------------------------------------------------------------
-// Bricks BRICK_W columns long, one row deep, with a mortar row between
-// courses; alternate courses are offset half a brick. Rows of the canvas
-// whose (y - 1) is odd are mortar.
-export const BRICK_W = 8
-const isMortar = (y) => (y - 1) % 2 === 1
-const jointAt = (x, y) => y >= 1 && y < CURB_Y && !isMortar(y) && (x + (Math.floor((y - 1) / 2) % 2 ? BRICK_W / 2 : 0)) % BRICK_W === 0
-
-/** How lit a stretch of tube is, `d` along it from the point (0) to the
- *  lobes (1), `age` seconds after the last kick. Module-level rather than a
- *  closure in draw() so the frame allocates nothing (design pass). */
-function tubeLevel(glow, age, d) {
-  if (age < 0 || age >= STRIKE_S + HOLD_S) return glow
-  const front = age / STRIKE_S                     // 0 at the point, 1 at the lobes
-  if (front < 1) {
-    if (d > front) return glow                     // not reached yet
-    // The running front is BRIGHT: about two rows of tube on each side,
-    // so the frame stays inside the 16-cell BRIGHT budget DANCEFLOOR
-    // set (0.3 measured 24 in the worst frame, 0.2 measured 18).
-    return front - d < 0.15 ? 1 : 0.7
+/** Grid cells (x, y on the term) the tube's centre line passes through at
+ *  rest scale, every `step` radians round the curve -- where a test looks
+ *  for the subject. */
+export function tubeCellsFor(term, step = 0.05) {
+  const { cellW, cellH } = term.font
+  const adv = cellW + 1
+  const FW = term.cols * adv
+  const aspect = (4 / 3) / (FW / (term.rows * cellH))
+  const cx = FW / 2, cy = 22 + (12 - HEART_YMID) * HEART_K
+  const out = []
+  for (let th = -Math.PI + step / 2; th < Math.PI; th += step) {
+    if (Math.abs(th) < GAP_THETA + 0.05) continue
+    const [hx, hy] = heartAt(th)
+    const X = cx + (hx * HEART_K) / aspect, Y = cy - (hy - HEART_YMID) * HEART_K
+    out.push({ x: Math.floor(X / adv), y: 1 + Math.floor(Y / cellH), th })
   }
-  return 0.7
+  return out
 }
 
-const tier = (v) => (v > 0.82 ? BRIGHT : v > 0.55 ? NORMAL : v > 0.33 ? MUTED : DIM)
+/** The thump, 1 at the kick falling to 0. `framesSince` counts drawn
+ *  frames since the kick -- see SLOW MACHINES in the header. */
+export function thump(age, framesSince) {
+  if (age < 0 || age > 2) return 0
+  if (framesSince < THUMP_MIN_FRAMES || age < THUMP_HOLD_S) return 1
+  return Math.exp(-(age - THUMP_HOLD_S) / THUMP_TAU_S)
+}
+
+/** The tier a cell is drawn at: the lowest whose beam reaches its
+ *  brightest pixel. */
+export const tierOf = (m) => (m >= 232 ? BRIGHT : m >= 193 ? NORMAL : m >= 166 ? MUTED : m >= 126 ? DIM : FAINT)
+const levelOf = (a) => (a === BRIGHT ? LV_BRIGHT : a === NORMAL ? LV_NORMAL : a === MUTED ? LV_MUTED : a === DIM ? LV_DIM : LV_FAINT)
+
+/** Marks the cells under a framebuffer rectangle as having something in
+ *  them, so the packing pass reads only those. */
+function markRect(G, x0, y0, x1, y1) {
+  const c0 = Math.max(0, Math.floor(x0 / G.adv)), c1 = Math.min(G.cols - 1, Math.floor(x1 / G.adv))
+  const r0 = Math.max(0, Math.floor(y0 / G.cellH)), r1 = Math.min(G.rows - 1, Math.floor(y1 / G.cellH))
+  for (let r = r0; r <= r1; r++) G.mark.fill(1, r * G.cols + c0, r * G.cols + c1 + 1)
+}
 
 export default {
   key: 'frost',
   label: 'NEON HEART',
   /** Seeds this effect's state on the program object (once, at boot). */
   init(p) {
+    p._frost = null
     p._frostPrevPulse = 0
     p._frostKickAt = -99
-    p._frostGlow = 0.4
-    p._frostWordOf = undefined
-    p._frostWord = FALLBACK_WORD
-    p._frostFlaky = flakyIndex(FALLBACK_WORD)
+    p._frostKickFrames = 99
+    p._frostGlow = 0.5
+    p._frostLastT = -1
   },
   /** Re-arms clocks on every visualizer entry. The effect clock restarts at
-   *  0, so a kick time from the last visit would read as a surge scheduled
-   *  in the future -- the FLAME/BREACH/RIPPLE shape the 2026-09-12 audit
-   *  found. Both clocks go back to "long ago". */
+   *  0, so a kick time or a last-frame time from the last visit would read
+   *  as a thump scheduled in the future (the 2026-09-12 audit's shape). */
   reset(p) {
     p._frostPrevPulse = 0
     p._frostKickAt = -99
-    p._frostGlow = 0.4
+    p._frostKickFrames = 99
+    p._frostGlow = 0.5
+    p._frostLastT = -1
   },
   draw(p, s, t) {
     const { term } = s
-    const cols = term.cols
+    if (!p._frost || p._frost.cols !== term.cols) p._frost = build(term)
+    const G = p._frost
     const A = p.muted ? SILENT_AUDIO : (p._au || syntheticAudio(t))
 
-    const x0 = Math.round(cols / 2 - HEART_W / 2)
-    // The word follows the locked station; worked out only when the callsign
-    // changes, so the frame allocates nothing.
-    const callsign = p.lockedStation ? p.lockedStation.callsign : null
-    if (callsign !== p._frostWordOf) {
-      p._frostWordOf = callsign
-      p._frostWord = signWord(p.lockedStation)
-      p._frostFlaky = flakyIndex(p._frostWord)
-    }
-    // --- the beat ------------------------------------------------------------
+    // --- the beat ---------------------------------------------------------------
     const pulse = A.pulse || 0
     if (!p.muted && pulse - p._frostPrevPulse >= BEAT_RISE && t - p._frostKickAt >= STEP_GAP_S) {
       p._frostKickAt = t
-    }
+      p._frostKickFrames = 0
+    } else if (p._frostKickFrames < 99) p._frostKickFrames++
     p._frostPrevPulse = pulse
-    // Resting glow follows the LEVEL over about a second (2% a frame), not
-    // the frame: level carries the kick's own envelope, and tracking it
-    // closely would step things twice a beat -- off the beat, which is the
-    // motion the strike exists to avoid. Design pass: unmuted it always sits
-    // in the MUTED tier (0.34..0.5), a tier over the wall; the level now
-    // shows as how much wall the sign lights. Muted it is DIM.
-    const target = p.muted ? 0.22 : Math.min(REST_MAX, 0.34 + 0.16 * Math.min(1, A.level || 0))
-    p._frostGlow += (target - p._frostGlow) * 0.02
-
-    const age = t - p._frostKickAt
+    const env = p.muted ? 0 : thump(t - p._frostKickAt, p._frostKickFrames)
+    // Resting glow: follows the LEVEL over about a second, by the clock.
+    let dt = t - p._frostLastT
+    if (dt < 0 || dt > 0.5) dt = 0.5
+    p._frostLastT = t
+    const target = p.muted ? 0 : 0.35 + 0.65 * Math.min(1, A.level || 0)
+    p._frostGlow += (target - p._frostGlow) * (1 - Math.exp(-dt / 0.8))
     const glow = p._frostGlow
-    const slot = Math.floor(t * 9)               // ~110ms flicker slots
-    const flakeTube = hash2(slot, 7) < 0.035, flakeWord = hash2(slot, 3) < 0.035
 
-    // --- the wall ---------------------------------------------------------------
-    // Solid brickwork (design pass): DIM where the sign lights it, FAINT
-    // beyond, never brighter than DIM -- the tube rests at MUTED. The lit
-    // patch is an ellipse round the sign whose size follows the slow glow,
-    // its edge dithered per half-brick so it frays rather than draws a line.
-    // Muted, the sign throws no light and the whole wall is FAINT.
-    const reach = 0.8 + 2.5 * (p._frostGlow - 0.34)
-    const cy = HEART_Y0 + 5.5
-    for (let y = 1; y < VIZ_BOT; y++) {
-      for (let x = 0; x < cols; x++) {
-        let ch = ' ', attr = FAINT
-        if (y < CURB_Y) {
-          if (isMortar(y)) {
-            const up = jointAt(x, y - 1), down = jointAt(x, y + 1)
-            ch = up && down ? '┼' : up ? '┴' : down ? '┬' : '─'
-          } else if (jointAt(x, y)) ch = '│'
-          const ac = x - x0, ar = y - HEART_Y0
-          if (ac >= -PAD && ac < HEART_W + PAD && ar >= -PAD && ar < HEART_H + PAD && MARGIN[mi(ac, ar)]) ch = ' '
-          if (!p.muted && ch !== ' ') {
-            const dx = (x - cols / 2) / (23 * reach), dy = (y - cy) / (7.5 * reach)
-            const fray = (hash2(Math.floor(x / 4), y) - 0.5) * 0.35
-            if (dx * dx + dy * dy < 1 + fray) attr = DIM
-          }
+    // --- the tube's profile, as a table over distance ---------------------------
+    // Lit: a solid core, then a halo falling off exponentially and faded to
+    // nothing before the field's reach (else it stops at the edge of the
+    // stamped window as a box). Off (muted): only the glass's two walls.
+    const on = !p.muted
+    const core = LV_MUTED - 8 + (LV_NORMAL - LV_MUTED + 8) * glow + (290 - LV_NORMAL) * env
+    const haloPeak = 38 + 34 * glow + 110 * env
+    const haloLen = 2.6 + 2.4 * glow + 6 * env
+    const lut = G.lut
+    for (let q = 0; q < 256; q++) {
+      const d = q / FIELD_Q
+      let v = 0
+      if (on) {
+        if (d <= TUBE_R) v = core
+        else {
+          const fade = Math.max(0, 1 - (d - TUBE_R) / (FIELD_REACH - TUBE_R - 2))
+          v = haloPeak * Math.exp(-(d - TUBE_R) / haloLen) * fade * fade
         }
-        term.put(x, y, ch, attr)
+      } else if (Math.abs(d - TUBE_R) < 0.7) v = 108
+      lut[q] = v < 6 ? 0 : Math.min(400, v)
+    }
+
+    const { FW, FH, field, seg, lum, cx, cy, curbY, xmap } = G
+    lum.fill(0)
+    G.mark.fill(0)
+
+    // --- the heart ----------------------------------------------------------------
+    // Scaled about its centre by the thump: each pixel samples the rest
+    // field where it would sit on the unscaled heart. Only the heart's own
+    // box is walked.
+    const sc = 1 + THUMP_SCALE * env
+    const buzz = on && hash2(Math.floor(t * 9), 7) < 0.04
+    const xLo = Math.max(0, Math.floor(cx - G.reachX * sc)), xHi = Math.min(FW - 1, Math.ceil(cx + G.reachX * sc))
+    const top = Math.max(0, Math.floor(cy - G.reachUp * sc))
+    for (let x = xLo; x <= xHi; x++) xmap[x] = Math.round(cx + (x - cx) / sc)
+    for (let y = top; y < curbY; y++) {
+      const sy = Math.round(cy + (y - cy) / sc)
+      if (sy < 0 || sy >= FH) continue
+      const row = y * FW, srow = sy * FW
+      for (let x = xLo; x <= xHi; x++) {
+        const si = srow + xmap[x]
+        const f = field[si]
+        if (f === 255) continue
+        const q = (f * sc) | 0
+        if (q >= 255) continue
+        // The buzzing stretch: just right of the notch.
+        lum[row + x] = buzz && seg[si] >= 33 && seg[si] <= 36 ? lut[q] * 0.3 : lut[q]
       }
     }
-
-    // --- wires and fittings ------------------------------------------------------
-    for (const wx of [x0 + 7, x0 + HEART_W - 8]) {
-      for (let y = 1; y < HEART_Y0; y++) term.put(wx, y, '┊', DIM)
-    }
-    // Transformer on the wall at the right, its cable running to the sign.
-    const bx = x0 + HEART_W + 4
-    const by = HEART_Y0 + 7
-    if (bx + 4 < cols) {
-      term.put(bx, by, '╔', DIM); term.put(bx + 1, by, '═', DIM); term.put(bx + 2, by, '═', DIM); term.put(bx + 3, by, '╗', DIM)
-      term.put(bx, by + 1, '║', DIM); term.put(bx + 1, by + 1, '•', p.muted ? FAINT : MUTED); term.put(bx + 2, by + 1, ' ', DIM); term.put(bx + 3, by + 1, '║', DIM)
-      term.put(bx, by + 2, '╚', DIM); term.put(bx + 1, by + 2, '═', DIM); term.put(bx + 2, by + 2, '═', DIM); term.put(bx + 3, by + 2, '╝', DIM)
-      for (let x = x0 + HEART_W - 1; x < bx; x++) term.put(x, by + 1, x === x0 + HEART_W - 1 ? ' ' : '─', DIM)
+    markRect(G, xLo, top, xHi, curbY - 1)
+    // Hang wires, one pixel wide, from the lobe tops to the top of the canvas.
+    for (const side of [-1, 1]) {
+      const wx = Math.round(cx + side * G.lobeDX * sc)
+      const wy = Math.round(cy + (G.lobeY - cy) * sc - TUBE_R - 1)
+      for (let y = 0; y < wy; y++) if (lum[y * FW + wx] < 96) lum[y * FW + wx] = 96
+      markRect(G, wx, 0, wx, wy)
     }
 
-    // --- the heart ---------------------------------------------------------------
-    // Interior first: the glass box is dark, the wall does not show through.
-    for (const cell of INTERIOR) term.put(x0 + cell.c, HEART_Y0 + cell.r, ' ', FAINT)
-    // The strike's glow: '·' DIM on the cells just outside the tube for the
-    // length of the strike (45ms) and no longer -- the bloom neon throws as
-    // it catches. It starts and ends inside the beat, so it adds to what the
-    // kick changes and nothing to what happens between kicks.
-    if (age >= 0 && age < STRIKE_S) {
-      for (const cell of HALO) {
-        const x = x0 + cell.c, y = HEART_Y0 + cell.r
-        if (x >= 0 && x < cols && y >= 1 && y < CURB_Y) term.put(x, y, '·', DIM)
+    // --- the wet pavement ---------------------------------------------------------
+    // The curb, then the heart upside down in the puddle: squashed, two-
+    // fifths as bright and fading with depth, each row slid sideways by a
+    // ripple running down it, and now and then a row lost where the rain
+    // breaks the surface.
+    lum.fill(70, curbY * FW, curbY * FW + FW)
+    markRect(G, 0, curbY, FW - 1, curbY)
+    const deep = FH - curbY - 1
+    const drop = Math.floor(t * 3)
+    for (let y = curbY + 2; y < FH; y++) {
+      const k = (y - curbY) / deep
+      if (hash2(y >> 1, drop) < 0.1) continue
+      const sy = Math.round(curbY - (y - curbY) * 1.75)
+      if (sy < 0) continue
+      const shift = Math.round(Math.sin(y * 0.45 - t * 2.4) * (1 + 2.5 * k))
+      const gain = 0.42 * (1 - 0.45 * k)
+      const row = y * FW, srow = sy * FW
+      const a = Math.max(0, xLo - shift - 4), b = Math.min(FW - 1, xHi - shift + 4)
+      for (let x = a; x <= b; x++) {
+        const sx = x + shift
+        if (sx < 0 || sx >= FW) continue
+        const v = lum[srow + sx]
+        if (v) lum[row + x] = v * gain
       }
-    }
-    for (const cell of TUBE) {
-      let v = tubeLevel(glow, age, cell.d)
-      if (cell.buzz && flakeTube) v *= 0.35
-      term.put(x0 + cell.c, HEART_Y0 + cell.r, cell.ch, tier(v))
-    }
-    // The word. It lights when the surge is half way up, as if on the same
-    // circuit further along; at rest it glows with the tube.
-    const word = p._frostWord
-    const wx = x0 + Math.round((HEART_W - word.length) / 2)
-    const wv = Math.max(p._frostGlow, tubeLevel(glow, age, 0.6) * 0.85)
-    for (let i = 0; i < word.length; i++) {
-      const ch = word[i]
-      if (ch === ' ') continue
-      let attr = tier(Math.min(0.8, wv))
-      if (i === p._frostFlaky && flakeWord) attr = FAINT
-      term.put(wx + i, HEART_Y0 + WORD_ROW, ch, attr)
+      markRect(G, a, y, b, y)
     }
 
-    // --- curb and reflection ---------------------------------------------------
-    for (let x = 0; x < cols; x++) term.put(x, CURB_Y, '▁', FAINT)
-    // The puddle mirrors REFLECT about the curb, a tier under the tube. ONE
-    // slow shift for every row -- a column either way a few times a minute --
-    // so the staircase diagonals stay joined (a per-row phase broke them into
-    // loose steps), and a 5% dropout where the ripples break the surface.
-    const shift = Math.round(Math.sin(t * 0.5) * 1.2)
-    const drop = Math.floor(t * 0.8)
-    for (const cell of PUDDLE) {
-      const y = CURB_Y + cell.k
-      if (y >= VIZ_BOT) continue
-      const x = x0 + cell.c + shift
-      if (x < 0 || x >= cols) continue
-      if (hash2(cell.c + drop, y) < 0.05) continue
-      const v = tubeLevel(glow, age, cell.d)
-      term.put(x, y, cell.ch, v > 0.55 ? MUTED : v > 0.3 ? DIM : FAINT)
+    // --- rain on the glass ----------------------------------------------------------
+    // Thin streaks falling past the sign, lit by it where they cross its
+    // glow and capped under the tube. Pure functions of t: no state.
+    for (let i = 0; i < 34; i++) {
+      const v = 150 + 110 * hash2(i, 1)
+      const len = 8 + Math.floor(9 * hash2(i, 2))
+      const span = curbY + len
+      const pos = t * v + hash2(i, 3) * span
+      const cyc = Math.floor(pos / span)
+      const head = Math.floor(pos - cyc * span)
+      let x = Math.floor(hash2(i, cyc * 7 + 4) * FW)
+      if (x % G.adv === G.adv - 1) x--
+      for (let j = 0; j < len; j++) {
+        const y = head - j
+        if (y < 0 || y >= curbY) continue
+        const i2 = y * FW + x
+        const here = lum[i2]
+        const r = 40 + 50 * (1 - j / len) + 0.7 * Math.min(here, 140)
+        if (r > here) lum[i2] = Math.min(130, r)
+      }
+      markRect(G, x, Math.max(0, head - len), x, Math.min(curbY - 1, head))
+    }
+
+    // --- pixels to cells --------------------------------------------------------------
+    G.front ^= 1
+    const bufs = G.bufs[G.front]
+    const { cols, cellW, cellH, adv, rows, mark } = G
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const ci = r * cols + c
+        if (!mark[ci]) { term.put(c, r + 1, ' '); continue }
+        const base = r * cellH * FW + c * adv
+        let m = 0
+        for (let py = 0; py < cellH; py++) {
+          const o = base + py * FW
+          for (let px = 0; px < cellW; px++) if (lum[o + px] > m) m = lum[o + px]
+        }
+        if (m < CELL_MIN) { term.put(c, r + 1, ' '); continue }
+        const attr = tierOf(m)
+        const inv = 1 / levelOf(attr)
+        const bits = bufs[ci]
+        let any = 0
+        for (let py = 0; py < cellH; py++) {
+          const o = base + py * FW
+          const b4 = (py & 3) * 4
+          let w = 0
+          for (let px = 0; px < cellW; px++) {
+            if (lum[o + px] * inv > BAYER[b4 + (px & 3)]) w |= 1 << (cellW - 1 - px)
+          }
+          bits[py] = w
+          any |= w
+        }
+        if (any) term.putGlyph(c, r + 1, bits, attr)
+        else term.put(c, r + 1, ' ')
+      }
     }
   },
 }

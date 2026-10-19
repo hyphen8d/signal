@@ -1,14 +1,18 @@
-// FROST (COLD WAVE, rebuilt 2026-10-16 as a neon heart) -- what the effect
-// leaves on the grid, read back off it: the canvas contract at three widths,
-// that the subject is actually there (the heart's outline, its point, the
-// word inside it, the reflection under the curb), that a kick STRIKES the
-// tube -- and that nothing does when there is no rising edge -- that the
-// strike stays inside the BRIGHT budget, that mute settles it cold, and that
-// re-entry carries no strike clock from the last visit.
+// FROST / NEON HEART (COLD WAVE, rebuilt 2026-10-18 in pixel bitmaps) --
+// what the effect leaves on the grid, read back off it. The heart is drawn
+// through putGlyph(), so a character read sees every lit cell as a space:
+// these tests read term.gfx (the bitmaps) and term.attrs (the beam tier).
+//
+// Claims: the canvas contract at three widths; the subject is there (a lit,
+// symmetric tube along the heart curve, dark inside, a reflection under the
+// curb); a kick THUMPS -- the tube goes BRIGHT and the heart grows -- and a
+// pulse that only creeps up does not; the thump settles inside a beat; it
+// lights thin tube, not slabs; it is seen on a slow machine; muted, the
+// sign is off but the picture still moves; re-entry carries no kick clock.
 //
 // The frame loop rewrites p._au every frame (visualizer.js), so the beat is
-// driven by calling the effect's draw directly with a crafted signal, the way
-// tests/visual-dancefloor.test.mjs does.
+// driven by calling the effect's draw directly with a crafted signal, the
+// way tests/visual-dancefloor.test.mjs does.
 //
 // Run: node --test tests/visual-frost.test.mjs
 
@@ -20,7 +24,7 @@ import { parseBDF } from '../src/bdf.js'
 import { Term } from '../src/term.js'
 
 const VIZ_BOT = 22
-// Attribute bits, src/cellgrid.js.
+// Attribute bits, src/cellgrid.js. NORMAL is 0.
 const BRIGHT = 1, DIM = 4, MUTED = 32, FAINT = 64
 const NORMAL = 0
 const effectT = (h) => (Date.now() - h.program._vizEnterAt) / 1000
@@ -42,22 +46,33 @@ async function bootFrost() {
   return { h, fx: VISUALS.frost, mod }
 }
 
-function drawWith(h, fx, t, A) {
-  h.program.muted = false
+function drawWith(h, fx, t, A, muted = false) {
+  h.program.muted = muted
   h.program._au = A
   fx.draw(h.program, { term: h.term }, t)
 }
-
-/** Grid coordinates of every tube cell, read from the module's own art and
- *  placed the way draw() places it (centred on the term's width). */
-function tubeCells(h, mod) {
-  const x0 = Math.round(h.term.cols / 2 - mod.HEART_W / 2)
+/** Settles at rest: a flat pulse for two seconds of frames. */
+function settle(h, fx, t0, A = signal()) {
+  for (let f = 0; f < 120; f++) drawWith(h, fx, t0 + f / 60, A)
+  return t0 + 2
+}
+const idx = (h, x, y) => y * h.term.cols + x
+const pix = (h, x, y) => { const b = h.term.gfx[idx(h, x, y)]; let n = 0; if (b) for (const w of b) for (let v = w; v; v &= v - 1) n++; return n }
+const lit = (a) => a === NORMAL || a === MUTED || (a & BRIGHT)
+/** Cells on the canvas carrying a bitmap, at a given attribute test. */
+function cellsWhere(h, pred) {
   const out = []
-  mod.HEART.forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== ' ') out.push({ x: x0 + c, y: mod.HEART_Y0 + r, ch }) }))
+  for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < h.term.cols; x++) {
+    const i = idx(h, x, y)
+    if (h.term.gfx[i] && pred(h.term.attrs[i])) out.push({ x, y })
+  }
   return out
 }
-const attrAt = (h, x, y) => h.term.attrs[y * h.term.cols + x]
-const lit = (a) => a === NORMAL || (a & BRIGHT)
+/** Horizontal extent of the cells lit at MUTED or above on the canvas. */
+function litSpan(h) {
+  const c = cellsWhere(h, lit)
+  return Math.max(...c.map((p) => p.x)) - Math.min(...c.map((p) => p.x))
+}
 
 test('FROST: repaints every canvas cell and nothing outside rows 1..21, at 60, 80 and 100 columns', async () => {
   const { h, fx } = await bootFrost()
@@ -65,246 +80,158 @@ test('FROST: repaints every canvas cell and nothing outside rows 1..21, at 60, 8
   try {
     for (const cols of [60, 80, 100]) {
       const term = new Term(font, cols, 25, 6, 5)
-      const put = term.put
       const hit = new Uint8Array(cols * VIZ_BOT)
       const outside = []
-      term.put = function (x, y, ...rest) {
-        if (y < 1 || y >= VIZ_BOT) outside.push(`${x},${y}`)
-        else if (x >= 0 && x < cols) hit[y * cols + x] = 1
-        else outside.push(`${x},${y}`)
-        return put.call(this, x, y, ...rest)
+      for (const fn of ['put', 'putGlyph']) {
+        const orig = term[fn]
+        term[fn] = function (x, y, ...rest) {
+          if (y < 1 || y >= VIZ_BOT || x < 0 || x >= cols) outside.push(`${x},${y}`)
+          else hit[y * cols + x] = 1
+          return orig.call(this, x, y, ...rest)
+        }
       }
       h.program.muted = false
       fx.reset(h.program)
-      // A strike in progress too, so the halo and the front are in scope.
       h.program._au = signal({ pulse: 0 }); fx.draw(h.program, { term }, 5)
       h.program._au = signal({ pulse: 1, level: 1 }); fx.draw(h.program, { term }, 5.02)
-      term.put = put
       assert.deepEqual(outside.slice(0, 5), [], `${cols} cols: ${outside.length} puts landed outside the canvas`)
       let missed = 0
       for (let i = cols; i < cols * VIZ_BOT; i++) if (!hit[i]) missed++
       assert.equal(missed, 0, `${cols} cols: ${missed} canvas cells unpainted`)
+      assert.ok(term.gfx.some(Boolean), `${cols} cols: no pixels drawn`)
     }
   } finally { h.shutdown() }
 })
 
-test('FROST: the subject is on the grid -- a heart, its point, the word, the reflection', async () => {
+test('FROST: the subject is on the grid -- a lit, symmetric heart, dark inside, reflected under the curb', async () => {
   const { h, fx, mod } = await bootFrost()
   try {
-    drawWith(h, fx, 10, signal())
-    const cells = tubeCells(h, mod)
-    const wrong = cells.filter(({ x, y, ch }) => h.row(y)[x] !== ch)
-    assert.equal(wrong.length, 0, `${wrong.length} tube cells are not the heart's outline`)
-    // Symmetric: each art row's outline is centred on the heart's axis.
-    const cx = Math.round(h.term.cols / 2 - mod.HEART_W / 2) + (mod.HEART_W - 1) / 2
-    for (let r = 0; r < mod.HEART_H; r++) {
-      const xs = cells.filter((c) => c.y === mod.HEART_Y0 + r).map((c) => c.x)
-      assert.ok(Math.abs((Math.min(...xs) + Math.max(...xs)) / 2 - cx) <= 0.5, `heart row ${r} is off-centre`)
-    }
-    // Widest at the lobes, narrowing to a point: the last row is the narrowest.
-    const width = (r) => { const xs = cells.filter((c) => c.y === mod.HEART_Y0 + r).map((c) => c.x); return Math.max(...xs) - Math.min(...xs) }
-    for (let r = 4; r < mod.HEART_H - 1; r++) assert.ok(width(r + 1) < width(r), `the heart does not narrow at row ${r}`)
-    assert.ok(width(mod.HEART_H - 1) <= 5, 'the heart has no point')
-    assert.ok(h.row(mod.HEART_Y0 + mod.WORD_ROW).includes('C O L D   W A V E'), 'the word is not lettered inside the heart')
-    // The reflection: tube glyphs under the curb, mirrored (an upside-down
-    // point's corners are '╭' / '╮').
-    const under = Array.from({ length: VIZ_BOT - mod.CURB_Y - 1 }, (_, i) => h.row(mod.CURB_Y + 1 + i)).join('')
-    assert.ok((under.match(/[╭╮]/g) || []).length >= 6, 'no reflection under the curb')
-    // Both lobes: the lowest puddle row is the reflection of the lobe tops,
-    // two separate runs of tube with a gap between them (the notch).
-    const last = h.row(VIZ_BOT - 1).trim()
-    assert.match(last, /^╰─+╯ +╰─+╯$/, `the reflection's last row is not two lobes: "${last}"`)
-    // Joined diagonals: ONE shift for the whole puddle. Under a single shift
-    // the flipped REFLECT art matches the grid everywhere but the 5% the
-    // ripples drop out; a per-row phase (the old pyramid) cannot.
-    const x0 = Math.round(h.term.cols / 2 - mod.HEART_W / 2)
-    const FLIP = { '╭': '╰', '╰': '╭', '╮': '╯', '╯': '╮' }
-    let best = 0, total = 0
-    for (let shift = -2; shift <= 2; shift++) {
-      let hits = 0; total = 0
-      mod.REFLECT.forEach((art, rr) => {
-        const y = mod.CURB_Y + mod.REFLECT_H - rr
-        if (y >= VIZ_BOT) return
-        const row = h.row(y)
-        for (let c = 0; c < art.length; c++) {
-          if (art[c] === ' ') continue
-          total++
-          if (row[x0 + c + shift] === (FLIP[art[c]] || art[c])) hits++
-        }
-      })
-      best = Math.max(best, hits)
-    }
-    assert.ok(best >= total * 0.88, `the reflection matches its art at one shift in only ${best}/${total} cells`)
+    settle(h, fx, 10)
+    const tube = mod.tubeCellsFor(h.term)
+    const unlit = tube.filter(({ x, y }) => !h.term.gfx[idx(h, x, y)] || !lit(h.term.attrs[idx(h, x, y)]))
+    // A few cells may be the buzzing stretch on its off slot, or straddle
+    // a cell's blank ninth column.
+    assert.ok(unlit.length <= tube.length * 0.1, `${unlit.length}/${tube.length} points of the heart curve are not lit tube`)
+    // Thin tube, not filled glyphs: the tube's cells are mostly dark pixels.
+    const area = tube.reduce((n, { x, y }) => n + pix(h, x, y), 0) / tube.length
+    assert.ok(area > 8 && area < 80, `tube cells average ${area.toFixed(0)} lit pixels of 128`)
+    // Dark inside: the cell at the heart's middle carries nothing above FAINT.
+    const ys = tube.map((p) => p.y), xs = tube.map((p) => p.x)
+    const mx = Math.round((Math.min(...xs) + Math.max(...xs)) / 2), my = Math.round((Math.min(...ys) + Math.max(...ys)) / 2)
+    assert.ok(!h.term.gfx[idx(h, mx, my)] || h.term.attrs[idx(h, mx, my)] & (FAINT | DIM), 'the inside of the heart is lit')
+    // Symmetric: the lit cells mirror about the centre column (the rain is
+    // FAINT and excluded by asking for MUTED and above).
+    const cells = cellsWhere(h, lit)
+    const set = new Set(cells.map((p) => `${p.x},${p.y}`))
+    const axis = (Math.min(...cells.map((p) => p.x)) + Math.max(...cells.map((p) => p.x))) / 2
+    const mirrored = cells.filter((p) => set.has(`${Math.round(2 * axis - p.x)},${p.y}`) || set.has(`${Math.round(2 * axis - p.x) + 1},${p.y}`) || set.has(`${Math.round(2 * axis - p.x) - 1},${p.y}`))
+    assert.ok(mirrored.length >= cells.length * 0.9, `only ${mirrored.length}/${cells.length} lit cells have a mirror`)
+    // The reflection: pixels under the heart's point, below the curb, dimmer
+    // than the tube.
+    const below = cellsWhere(h, () => true).filter((p) => p.y > Math.max(...ys) + 1 && p.x >= Math.min(...xs) && p.x <= Math.max(...xs))
+    assert.ok(below.length >= 30, `only ${below.length} cells of reflection`)
+    assert.ok(below.every((p) => !lit(h.term.attrs[idx(h, p.x, p.y)]) || pix(h, p.x, p.y) < 40), 'the reflection outshines the tube')
+    // No characters on the canvas at all: it is a picture.
+    const text = Array.from({ length: VIZ_BOT - 1 }, (_, i) => h.row(i + 1)).join('')
+    assert.equal(text.trim(), '', 'characters on the canvas')
   } finally { h.shutdown() }
 })
 
-test('FROST: a kick strikes the tube; no rising edge, no strike', async () => {
+test('FROST: a kick thumps the heart -- BRIGHT and bigger; no rising edge, no thump', async () => {
   const { h, fx, mod } = await bootFrost()
   try {
-    const cells = tubeCells(h, mod)
-    const litCount = () => cells.filter(({ x, y }) => lit(attrAt(h, x, y))).length
-    // Settle at rest: pulse flat.
-    for (let f = 0; f < 120; f++) drawWith(h, fx, 10 + f / 60, signal({ pulse: 0 }))
-    assert.equal(litCount(), 0, 'the tube is lit at rest -- a kick would have nothing to change')
-    // A held-high pulse is not a kick either.
-    drawWith(h, fx, 12.0, signal({ pulse: 0.15 }))
-    drawWith(h, fx, 12.02, signal({ pulse: 0.3 }))
-    drawWith(h, fx, 12.04, signal({ pulse: 0.3 }))
-    assert.equal(litCount(), 0, 'a pulse that only creeps up struck the tube')
-    // The kick: a rise of more than BEAT_RISE in one frame.
-    drawWith(h, fx, 13.0, signal({ pulse: 0 }))
-    drawWith(h, fx, 13.02, signal({ pulse: 1 }))
-    // Mid-strike: the front has passed the point and not yet the lobes.
-    const point = cells.filter((c) => c.y === mod.HEART_Y0 + mod.HEART_H - 1)
-    const lobes = cells.filter((c) => c.y === mod.HEART_Y0)
-    assert.ok(point.every(({ x, y }) => lit(attrAt(h, x, y))), 'the strike did not start at the point')
-    assert.ok(lobes.every(({ x, y }) => !lit(attrAt(h, x, y))), 'the strike reached the lobes in one frame -- no run')
-    drawWith(h, fx, 13.02 + mod.STRIKE_S + 0.02, signal({ pulse: 0.8 }))
-    assert.equal(litCount(), cells.length, 'after the strike the whole outline should hold lit')
-    drawWith(h, fx, 13.02 + mod.STRIKE_S + mod.HOLD_S + 0.05, signal({ pulse: 0.2 }))
-    assert.equal(litCount(), 0, 'the tube did not drop back after the hold')
+    let t = settle(h, fx, 10)
+    assert.equal(cellsWhere(h, (a) => a & BRIGHT).length, 0, 'BRIGHT at rest -- a kick would have nothing to add')
+    const restSpan = litSpan(h)
+    // A held-high pulse, and one that creeps up, are not kicks.
+    drawWith(h, fx, t, signal({ pulse: 0.15 }))
+    drawWith(h, fx, t + 0.02, signal({ pulse: 0.3 }))
+    drawWith(h, fx, t + 0.04, signal({ pulse: 0.45 }))
+    drawWith(h, fx, t + 0.06, signal({ pulse: 0.45 }))
+    assert.equal(cellsWhere(h, (a) => a & BRIGHT).length, 0, 'a pulse that only creeps up thumped')
+    t = settle(h, fx, t + 1, signal({ pulse: 0 }))
+    // The kick.
+    drawWith(h, fx, t, signal({ pulse: 1 }))
+    const bright = cellsWhere(h, (a) => a & BRIGHT).length
+    assert.ok(bright >= 40, `only ${bright} BRIGHT cells on the kick -- the thump is not visible`)
+    assert.ok(litSpan(h) >= restSpan + 2, `the heart did not grow on the kick (${restSpan} -> ${litSpan(h)} columns)`)
+    // Thin tube even at BRIGHT: no slab of bloom.
+    const brightCells = cellsWhere(h, (a) => a & BRIGHT)
+    const area = brightCells.reduce((n, p) => n + pix(h, p.x, p.y), 0) / brightCells.length
+    assert.ok(area < 70, `BRIGHT cells average ${area.toFixed(0)} lit pixels of 128 -- a slab`)
+    // Settles inside a beat: half a second on, the tube is back under BRIGHT
+    // and back to its rest size.
+    for (let f = 1; f <= 33; f++) drawWith(h, fx, t + f / 60, signal({ pulse: Math.exp(-f / 6) }))
+    assert.equal(cellsWhere(h, (a) => a & BRIGHT).length, 0, 'the thump outlived a 120bpm beat')
+    assert.ok(Math.abs(litSpan(h) - restSpan) <= 1, 'the heart did not shrink back')
+    assert.ok(mod.thump(0.55, 30) < 0.1)
   } finally { h.shutdown() }
 })
 
-test('FROST: the strike stays inside the BRIGHT budget and its glow ends with it', async () => {
-  // A whole outline at BRIGHT is a slab of bloom on the tube (the UPRISING /
-  // KEEP lesson); only the running front may be BRIGHT, 16 cells at most,
-  // the cap DANCEFLOOR set. The '░' halo must be gone once the strike is.
+test('FROST: a thump is seen on a slow machine -- full strength on the frame after the kick even 1s later', async () => {
+  // At a frame or so a second (the Haswell box, headless swiftshader) a
+  // clock-timed thump fell entirely between frames.
   const { h, fx, mod } = await bootFrost()
   try {
-    let worst = 0
-    for (let f = 0; f < 90; f++) {
-      const phase = (f % 30) / 30
-      drawWith(h, fx, 20 + f / 60, signal({ level: 1, pulse: Math.exp(-phase * 6) }))
-      let b = 0
-      for (let i = h.term.cols; i < h.term.cols * VIZ_BOT; i++) if (h.term.attrs[i] & BRIGHT) b++
-      worst = Math.max(worst, b)
-    }
-    assert.ok(worst > 0, 'the strike never showed a BRIGHT front')
-    assert.ok(worst <= 16, `${worst} BRIGHT cells in one frame`)
-    drawWith(h, fx, 30, signal({ pulse: 0 }))
-    drawWith(h, fx, 30.02, signal({ pulse: 1 }))
-    const canvas = () => Array.from({ length: VIZ_BOT - 1 }, (_, i) => h.row(i + 1)).join('')
-    const glow = () => canvas().split('·').length - 1
-    assert.ok(glow() > 20, 'no glow round the tube as it strikes')
-    // Shade blocks raster as a checkered slab, not light (design pass).
-    assert.ok(!/[░▒▓█]/.test(canvas()), 'shade blocks on the canvas')
-    // Outside only: nothing inside the glass but the word.
-    const x0 = Math.round(h.term.cols / 2 - mod.HEART_W / 2)
-    for (let r = 2; r < mod.HEART_H; r++) {
-      const art = mod.HEART[r], row = h.row(mod.HEART_Y0 + r)
-      const inside = row.slice(x0 + art.search(/\S/) + 1, x0 + art.trimEnd().length - 1)
-      assert.ok(!inside.includes('·'), `art row ${r}: the glow landed inside the heart`)
-    }
-    drawWith(h, fx, 30.02 + mod.STRIKE_S + 0.01, signal({ pulse: 0.9 }))
-    assert.equal(glow(), 0, 'the strike glow outlived the strike')
+    settle(h, fx, 10)
+    drawWith(h, fx, 13, signal({ pulse: 0 }))
+    drawWith(h, fx, 14, signal({ pulse: 1 }))
+    drawWith(h, fx, 15, signal({ pulse: 0.15 }))
+    assert.ok(cellsWhere(h, (a) => a & BRIGHT).length >= 40, 'the second frame after a kick, a second late, shows no thump')
+    assert.equal(mod.thump(1, 1), 1)
+    assert.equal(mod.thump(1, mod.THUMP_MIN_FRAMES), Math.exp(-(1 - mod.THUMP_HOLD_S) / mod.THUMP_TAU_S))
   } finally { h.shutdown() }
 })
 
-test('FROST: muted, the sign is a cold DIM outline that never strikes', async () => {
+test('FROST: louder glows brighter at rest; muted, the sign is off but the picture still moves', async () => {
   const { h, fx, mod } = await bootFrost()
   try {
-    const cells = tubeCells(h, mod)
-    h.program.muted = true
-    for (let f = 0; f < 240; f++) {
-      h.program._au = signal({ pulse: f % 30 === 0 ? 1 : 0, level: 1 })
-      fx.draw(h.program, { term: h.term }, 40 + f / 60)
-    }
-    const attrs = cells.map(({ x, y }) => attrAt(h, x, y))
-    assert.ok(attrs.every((a) => a & (DIM | FAINT)), 'a muted sign is still glowing above DIM')
+    const tube = mod.tubeCellsFor(h.term)
+    const tierCount = (pred) => tube.filter(({ x, y }) => h.term.gfx[idx(h, x, y)] && pred(h.term.attrs[idx(h, x, y)])).length
+    settle(h, fx, 10, signal({ level: 0.05 })); settle(h, fx, 12, signal({ level: 0.05 }))
+    const quietNormal = tierCount((a) => a === NORMAL)
+    settle(h, fx, 14, signal({ level: 1 })); settle(h, fx, 16, signal({ level: 1 }))
+    const loudNormal = tierCount((a) => a === NORMAL)
+    assert.ok(loudNormal > quietNormal + tube.length * 0.5, `loud ${loudNormal} vs quiet ${quietNormal} NORMAL tube cells`)
+    // Muted: kicks do nothing, nothing above FAINT/DIM anywhere on the canvas.
+    for (let f = 0; f < 240; f++) drawWith(h, fx, 20 + f / 60, signal({ pulse: f % 30 === 0 ? 1 : 0, level: 1 }), true)
+    assert.equal(cellsWhere(h, (a) => !(a & (FAINT | DIM))).length, 0, 'a muted sign still glows above DIM')
+    // ...and still the outline of the glass.
+    const glass = tube.filter(({ x, y }) => h.term.gfx[idx(h, x, y)]).length
+    assert.ok(glass >= tube.length * 0.8, `the switched-off tube is not there (${glass}/${tube.length})`)
+    // Alive: rain and ripples move between two muted frames.
+    const before = h.term.gfx.map((b) => (b ? b.join(',') : ''))
+    drawWith(h, fx, 25, signal(), true)
+    const moved = h.term.gfx.filter((b, i) => (b ? b.join(',') : '') !== before[i]).length
+    assert.ok(moved >= 5, `only ${moved} cells changed between muted frames -- dead`)
   } finally { h.shutdown() }
 })
 
-test('FROST: re-entry after a long visit carries no strike clock from the last one', async () => {
-  // The effect clock restarts at 0 on entry; a kick time left at t=500 would
-  // read as a strike scheduled in the future (the 2026-09-12 audit's shape).
+test('FROST: no tap, it beats to the synthetic pulse', async () => {
+  const { h, fx } = await bootFrost()
+  try {
+    h.program._au = null
+    let peak = 0, trough = Infinity
+    for (let f = 0; f < 180; f++) {
+      h.program.muted = false; h.program._au = null
+      fx.draw(h.program, { term: h.term }, 30 + f / 60)
+      const b = cellsWhere(h, (a) => a & BRIGHT).length
+      peak = Math.max(peak, b); trough = Math.min(trough, b)
+    }
+    assert.ok(peak >= 40 && trough === 0, `synthetic beat: BRIGHT cells range ${trough}..${peak}`)
+  } finally { h.shutdown() }
+})
+
+test('FROST: re-entry after a long visit carries no kick clock from the last one', async () => {
   const { h, fx } = await bootFrost()
   try {
     drawWith(h, fx, 500, signal({ pulse: 0 }))
     drawWith(h, fx, 500.02, signal({ pulse: 1 }))
-    assert.ok(h.program._frostKickAt > 400, 'test setup: a strike late in a long visit')
+    assert.ok(h.program._frostKickAt > 400, 'test setup: a kick late in a long visit')
     h.key('e'); h.advance(200)
     h.key('v'); h.advance(300)
     const t = effectT(h)
     assert.ok(h.program._frostKickAt <= t + 0.05, `_frostKickAt ${h.program._frostKickAt} on a clock at ${t}`)
-    assert.equal(h.program._frostPrevPulse <= 1, true)
-  } finally { h.shutdown() }
-})
-
-test('FROST: the sign spells the locked station, not COLD WAVE everywhere', async () => {
-  // [V] cycles any effect onto any station; a sign reading COLD WAVE on
-  // CIPHER was the critic's finding. Boot a different station and draw.
-  const h = await boot({ station: 'cipher' })
-  try {
-    h.powerOn()
-    h.advance(6000)
-    const { VISUALS } = await import(`../visuals/index.js?v=${globalThis.SIGNAL_BUILD}`)
-    const mod = await import(`../visuals/frost.js?v=${globalThis.SIGNAL_BUILD}`)
-    const fx = VISUALS.frost
-    assert.equal(h.program.lockedStation && h.program.lockedStation.id, 'cipher', 'test setup: locked on CIPHER')
-    fx.reset(h.program)
-    drawWith(h, fx, 10, signal())
-    const signRow = h.row(mod.HEART_Y0 + mod.WORD_ROW)
-    assert.ok(signRow.includes('C I P H E R'), `the sign does not read CIPHER: "${signRow}"`)
-    assert.ok(!/C ?O ?L ?D/.test(signRow), 'COLD WAVE is still on the sign')
-    // Too long to letter-space: unspaced. Nothing that fits, or no station:
-    // the fallback.
-    h.program.lockedStation = { callsign: 'DISTORTION FIELD' }
-    drawWith(h, fx, 10.1, signal())
-    assert.ok(h.row(mod.HEART_Y0 + mod.WORD_ROW).includes('DISTORTION FIELD'), 'a long callsign did not fall back to unspaced')
-    h.program.lockedStation = null
-    drawWith(h, fx, 10.2, signal())
-    assert.ok(h.row(mod.HEART_Y0 + mod.WORD_ROW).includes(mod.FALLBACK_WORD), 'no station, no fallback word')
-    assert.equal(mod.signWord({ callsign: 'X'.repeat(40) }), mod.FALLBACK_WORD)
-    // Whatever the word, it stays inside the glass.
-    const x0 = Math.round(h.term.cols / 2 - mod.HEART_W / 2)
-    for (const name of ['COLD WAVE', 'CIRCUIT CRUSH', 'NINE INCH NAILS', 'DISTORTION FIELD']) {
-      const w = mod.signWord({ callsign: name })
-      const at = x0 + Math.round((mod.HEART_W - w.length) / 2)
-      assert.ok(at >= x0 + 2 && at + w.length <= x0 + mod.HEART_W - 2, `${name} runs into the tube`)
-    }
-  } finally { h.shutdown() }
-})
-
-test('FROST: the brick wall is on the grid at a tier the tube can show, and under the sign', async () => {
-  // The wall used to be FAINT dotted dashes: on the real tube, no wall. It
-  // must be solid brickwork (mortar runs, joints) lit DIM round the sign --
-  // and never brighter than DIM, or the scenery outshines the resting tube.
-  const { h, fx, mod } = await bootFrost()
-  try {
-    for (let f = 0; f < 240; f++) drawWith(h, fx, 10 + f / 60, signal({ level: 0.6, pulse: 0 }))
-    const cols = h.term.cols
-    const x0 = Math.round(cols / 2 - mod.HEART_W / 2)
-    let dimBrick = 0, tooBright = 0, mortarRun = 0
-    for (let y = 1; y < mod.CURB_Y; y++) {
-      const row = h.row(y)
-      let run = 0
-      for (let x = 0; x < cols; x++) {
-        // Wall only: not the heart (MARGIN blanks round it) and not the
-        // transformer's cable row.
-        if ((x >= x0 && x < x0 + mod.HEART_W && y >= mod.HEART_Y0) || (y === mod.HEART_Y0 + 8 && x >= x0 + mod.HEART_W)) { run = 0; continue }
-        const ch = row[x], a = attrAt(h, x, y)
-        if (!'─│┬┴┼'.includes(ch)) { run = 0; continue }
-        if (a & DIM) dimBrick++
-        else if (!(a & FAINT)) tooBright++
-        run = '─┬┴┼'.includes(ch) ? run + 1 : 0
-        mortarRun = Math.max(mortarRun, run)
-      }
-    }
-    assert.ok(dimBrick >= 40, `only ${dimBrick} wall cells lit DIM -- no visible wall`)
-    assert.equal(tooBright, 0, `${tooBright} wall cells brighter than DIM`)
-    assert.ok(mortarRun >= 8, `the longest mortar run is ${mortarRun} -- the wall is not solid brickwork`)
-    // The light falls off: the far corners of the wall are FAINT, not DIM.
-    assert.ok(attrAt(h, 0, 2) & FAINT, 'the wall is lit DIM all the way to the edge -- no falloff')
-    assert.ok(dimBrick > 0 && dimBrick < 0.8 * (dimBrick + countFaint()), 'the wall is uniformly lit')
-    function countFaint() {
-      let n = 0
-      for (let y = 1; y < mod.CURB_Y; y++) for (let x = 0; x < cols; x++) if ('─│┬┴┼'.includes(h.row(y)[x]) && attrAt(h, x, y) & FAINT) n++
-      return n
-    }
-    // The resting tube is a tier over the wall.
-    const tube = tubeCells(h, mod).map(({ x, y }) => attrAt(h, x, y))
-    // (Six cells of the right lobe buzz on a timer and may be a tier down.)
-    assert.ok(tube.filter((a) => a === MUTED).length >= tube.length - 6, 'the resting tube is not MUTED, a tier over the DIM wall')
+    assert.ok(h.program._frostLastT <= t + 0.05, `_frostLastT ${h.program._frostLastT} on a clock at ${t}`)
   } finally { h.shutdown() }
 })
