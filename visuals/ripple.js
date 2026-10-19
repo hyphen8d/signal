@@ -1,75 +1,120 @@
-// SIGNAL -- visualizer effect "RIPPLE" (CITY LIGHTS). Rebuilt 2026-10-16.
+// SIGNAL -- visualizer effect "RIPPLE" (CITY LIGHTS), labelled TOKYO BAY.
 //
-// A night city over the bay: two ranks of tower blocks with grids of lit
-// windows, a lattice broadcast tower standing over them with a beacon at its
-// tip, a few rooftop signs, a moon in the upper left -- and in the lower
-// third the bay itself, holding a broken, shimmering reflection of all of
-// it, with rain rings opening on the water.
+// ---- 2026-10-18: the bay in pixels (third build) ----
 //
-// Why it fits: CITY LIGHTS is city pop -- glossy, warm, late-night Tokyo
-// records, the bay at night from a car or a hotel window. That is a PLACE,
-// so this is a composed picture like KEEP and LAGOON rather than a field,
-// and the tempo is calm: nothing on it strobes.
+// What Matt said, live on build 2026-10-18.1: "Bayside, maybe try a
+// different style." What the real tube showed (the before sheet): the
+// 2026-10-16 skyline read as a thin box-drawing OUTLINE -- '▄' roofs, '░'
+// faces, '■' windows, a '/ \ ─ ┼' lattice -- a schematic of a city, not a
+// city at night, and the KICK tile was barely distinguishable from LOUD:
+// the kick's work was a random 25% of windows changing state, which in a
+// still is just a different random arrangement of the same dots. Tuning
+// could not fix either; both are the character grid's limits.
 //
-// What it replaced. The old RIPPLE (45th pass) was the rain rings alone:
-// ring bands expanding from random points over a faint full-screen neon
-// shimmer of '.' and ':'. On the 2026-10-16 review it read as a dotted
-// texture with no subject, and the rings were hard to find in it; the
-// reactivity probe measured it changing 50% of the screen with the music
-// but showing the kick at only 3.4x. The rings were the right idea in the
-// wrong place -- rain belongs on water -- so they are kept, on the bay.
+// What this is instead -- style: BEAM-RESOLUTION PIXEL ART, every canvas
+// cell an 8x16 bitmap through putGlyph() (the technique FLAME proved, and
+// Matt approved FLAME live). The canvas becomes a 640x336 picture and the
+// city is drawn the way a night city actually looks: building SILHOUETTES
+// cut out of a dithered horizon glow, defined by nothing but their lit
+// windows (2-3 pixel squares, hundreds of them), rather than outlined.
 //
-// The music, and the one thing it does on the beat:
-// - THE KICK (a rising edge on `pulse`, as DANCEFLOOR reads it -- a real
-//   onset with a tap, syntheticAudio's own ~0.9s pulse without one) flares
-//   the tower's beacon and sends a wave out from it across the skyline:
-//   where the wave passes, the city's lights change -- a share of windows
-//   switch on and others go dark (CHURN), and the lit count and brightness
-//   take the level and the nine bands latched at that kick (low bands at the
-//   left). The tower broadcasting and the city answering is the subject's own
-//   logic, and the reflection follows because it is read from the skyline;
-//   the glitter on the water re-breaks on the kick too.
-// - Everything the kick changes HOLDS until the next one. 2026-10-16 -- the
-//   first cut flashed windows up a tier for 160ms and let them drop back,
-//   and the probe measured the kick at 1.5x: the drop was a second change
-//   as large as the flash, landing between beats. A light that switches on
-//   and stays on is also what a city at night actually does. Live bands
-//   would be worse again: every window re-tiered on every frame.
-// - A real ONSET drops a raindrop on the bay (the old RIPPLE's conscripted
-//   ring, kept), sized by the bass under it; ambient rain keeps falling on a
-//   stagger either way, so the bay is never still.
-// Muted (SILENT_AUDIO): no kicks and no onsets, so the city holds whatever
-// it last latched, at a calm floor -- lights stay on, rain keeps falling.
+// Subject: Tokyo Bay at night -- one nameable picture, Tokyo Tower standing
+// over the skyline across the water, a suspension bridge strung with lights
+// on the left (the Rainbow Bridge, as seen from the Odaiba shore -- the
+// view every city-pop night-drive edit cuts to), a crescent moon, and the
+// bay below holding a true REFLECTION: the sky's own pixels mirrored and
+// wobbled row by row, one tier dimmer, so the city's light runs down into
+// the water as broken streaks. CITY LIGHTS' freqNote is Bay FM 78.0; the
+// bay was always the place. Kept from the old effect: the bay, the tower
+// as the thing that answers the beat, rain-ring water. Dropped: every
+// box-drawing glyph, the signs, the per-window churn.
 //
-// Tube rules (the KEEP/DANCEFLOOR lesson): '█' blooms into a slab on the
-// real shader at any tier, so it appears nowhere (the moon's few interior
-// cells were the last of it, until 2026-10-16); building bodies are '▒'/'░' at FAINT; nothing reaches BRIGHT but
-// the beacon. CITY LIGHTS carries the heaviest bloomAmt on the roster.
+// The musical element is ONE thing: the tower's light.
+//  - THE KICK (a rising edge on `pulse`, as DANCEFLOOR reads it -- a real
+//    onset with a tap, syntheticAudio's own ~0.9s pulse without one): the
+//    tower lights up from its base to the antenna (BRIGHT climbing the
+//    lattice over ~0.1s, held ~0.3s, easing back to NORMAL), its aureole
+//    swells, and a RING leaves its reflection and spreads slowly out across
+//    the bay (70px/s, a flattened ellipse, alive 4.5s, at most five at once)
+//    -- the station's name for this effect, on the water where rain always
+//    belonged. The ring is what makes the kick readable in a still: after a
+//    kick there is a fresh ring under the tower, between kicks there is none.
+//  - LEVEL (eased over ~0.7s, never per-frame) sets the aureole's size
+//    around the tower's main deck, so a loud passage glows wider than a
+//    quiet one without anything flickering.
+//  The city itself does not dance: windows switch on and off on their own
+//  slow clock (each re-decides every ~30s, staggered), aircraft lights
+//  blink on a 2s cycle, the water moves. City pop is warm and calm, and a
+//  skyline that strobes with the hi-hat is not a city.
 //
-// 2026-10-16 (design pass). The viz-critic, judging the real tube, found two
-// faults. The reflection was noise -- scattered `- = ~ . ¦` that did not read
-// as the city upside down -- and the moon outshone the beacon: its '█'/'▀'
-// crescent, a solid glyph mass, bloomed brighter than the one-cell beacon the
-// kick is about, even at DIM. What changed:
-//   - The reflection is built from the skyline's actual lit windows: under
-//     every column that holds a lit window, a vertical streak running down
-//     from the quay, `│` near and `¦` further out, one tier below the
-//     brightest window in that column, and a tier dimmer again in the deeper
-//     half. Its length follows how many windows in the column are lit, so a
-//     kick that switches lights on or off visibly lengthens or cuts the
-//     streaks under them. The random dashes and '~' are gone; the swell is a
-//     one-column sway per row and a few gaps that re-break on the kick.
-//   - The moon is a crescent drawn in strokes now, not glyph mass, held at
-//     DIM. The critique asked for it "down to NORMAL"; it was nominally DIM
-//     already, and what outshone the beacon was the solid '█' raster, so the
-//     fix is the glyphs. The beacon gets a flare on the kick -- '─•─' with
-//     NORMAL arms -- so the tip of the tower is the brightest, widest thing
-//     on screen for that beat.
+// The rubric (visuals/index.js), point by point:
+//  1. ONE SUBJECT -- Tokyo Tower over the bay at night.
+//  2. ONE MUSICAL ELEMENT -- the tower's light: kick = light-up + ring on
+//     the water; level = aureole size. KICK vs LOUD: a ring vs no ring.
+//  3. BRIGHTNESS ORDER -- the tower is NORMAL at rest and the only thing
+//     ever BRIGHT; front-rank windows and bridge lights MUTED; back-rank
+//     windows, cables, moon DIM; glow, stars and roofs FAINT; reflections
+//     one tier under their source.
+//  4. SHAPES, NOT SOUP -- no characters on the canvas at all. Mass is
+//     negative space (a building is where the glow is not); nothing fills a
+//     cell solid (the moon is the one solid shape, a few cells, at DIM).
+//  5. FOUR STATES -- NO TAP: synthetic kicks every ~0.9s, rings on the
+//     water; MUTED: no kicks, no rings, no aureole, the windows a tier down
+//     (the set is quiet, the picture faint but whole), the tower still
+//     NORMAL, blinkers and water still moving; quiet: a tight aureole;
+//     loud: a wide one.
+//  6. REAL-RADIO TEST -- it is the picture on the record sleeve (and the
+//     view out of the hotel window) that this station plays.
 //
-// Everything about the city's layout is a pure function of the grid width,
-// built once per width in cityTables(), so a term of any width draws the
-// same picture a fresh init at that width would. The rain slots store their
-// x as a FRACTION of the width for the same reason.
+// One attribute per cell is the constraint pixel art meets on this tube:
+// a cell's pixels all glow at its attribute. So each cell takes the
+// brightest tier any of its pixels wants, and drops pixels more than one
+// tier under that -- otherwise a cell holding a FAINT glow dot and a
+// NORMAL tower strut would light the glow dot at NORMAL. Where the tower
+// crosses windows, the windows go; that reads as the tower in front.
+//
+// Round by round, off the real tube (2026-10-18, tools/viz-sheet.mjs):
+//  - round 1: the picture read at a glance -- but the horizon glow, at 0.42
+//    density, rastered as a striped slab where the buildings dip near the
+//    tower (now 0.16), and the aureole, drawn in two tiers, showed the cell
+//    grid as a box around its inner tier (now one tier, shape by density).
+//  - rounds 2-3: no ring anywhere. A 1px dotted crest at MUTED was the same
+//    texture as the reflection's own dashes and disappeared into it. Each
+//    ring is now a dark trough with a 3x2-pixel crest just outside it, the
+//    crest NORMAL for its first second.
+//  - round 4: that crest bloomed into the heaviest line on screen, past the
+//    tower. Round 5 (final): a 2x1 MUTED crest, the trough doing the work;
+//    the rings read as fine ripples and the tower stays the brightest thing.
+//  - The machine was loaded to ~0.3fps for these, which puts a sheet's KICK
+//    tile ~6s after its kick, past any ring's life; the beat was judged off
+//    a capture with the page clock slowed 8x (record-demo.mjs's trick), so
+//    the tile lands ~0.7s after the kick as it does at a normal 1-3fps.
+//
+// Cost: the picture renders at RENDER_HZ (30), plus once on the frame of a
+// kick so the beat never lands late; between renders the draw re-puts the
+// same bitmaps, which cellgrid.js skips as no-ops. Two bitmaps per cell,
+// alternated per render (FLAME's rule: a same-reference putGlyph is a
+// no-op, so an in-place rewrite would never re-raster). Buffers are built
+// on first draw, not at boot (FLAME's heap lesson with dead-feedback).
+// Everything static is a pure function of the grid size, built once in
+// sceneTables(); a term of any width draws what a fresh init would.
+//
+// ---- history, condensed ----
+// 45th pass: RIPPLE was rain rings expanding from random points over a
+// faint full-screen '.' ':' neon shimmer. 2026-10-16 review: a dotted
+// texture with no subject, the kick at 3.4x on the reactivity probe.
+// 2026-10-16 rebuild (BAYSIDE): a box-drawn night skyline with a lattice
+// broadcast tower, window grids, rooftop signs, a moon and the rain rings
+// moved onto a bay reflection. Lessons kept: a kick that flashes and drops
+// back measured 1.5x (the drop is a second change as big as the flash), so
+// the ring here travels and fades rather than blinking; '█' slabs bloom
+// past anything at any tier on CITY LIGHTS' heavy bloomAmt, so the one
+// solid shape (the moon) is small and DIM; random '- = ~' on the water did
+// not read as a reflection, so the water here is the sky's actual pixels.
+// That build's design-pass fixes (reflection read off lit windows, moon in
+// strokes) were all character-grid workarounds this one no longer needs.
+// 2026-09-12 audit (M5): every effect-clock time on the program object
+// (ring starts, the kick time, the render clock) is cleared in reset().
 //
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
@@ -80,391 +125,497 @@ const { SILENT_AUDIO, syntheticAudio } = await import(`../audio/tap.js?v=${V}`)
 const { VIZ_BOT } = await import(`../layout.js?v=${V}`)
 const { hash2 } = await import(`./shared.js?v=${V}`)
 
-// --- geometry ---------------------------------------------------------------
-// The last row of the skyline (building bases), the quay under it, and the
-// bay below that: rows 15..21, a third of the canvas.
-export const SKY_BOT = 13
-export const QUAY_Y = 14
-export const WATER_TOP = 15
-// Reflection mirrors about the quay: water row w shows skyline row 2*QUAY_Y - w.
-export const mirrorRow = (w) => 2 * QUAY_Y - w
+// Tiers, dark to light: a pixel's value in the picture buffer (-1 = dark).
+export const TIERS = [FAINT, DIM, MUTED, NORMAL, BRIGHT]
+export const T_BRIGHT = 4, T_NORMAL = 3
 
-// The tower: its column as a fraction of the width, its tip row, and its
-// half-width at the base. Right of centre, clear of the moon.
-export const TOWER_FX = 0.64
-export const TOWER_TOP = 2
-const TOWER_BASE_HW = 5
+// --- geometry (fractions of the canvas, so any width draws the same) -------
+export const HORIZON = 0.6        // the far shore, as a share of the canvas height
+export const TOWER_FX = 0.62      // Tokyo Tower's column
+export const TOWER_TOP = 10       // its antenna tip, in pixels below the canvas top
+const MOON = { fx: 0.85, y: 44, r: 13, ox: 5, oy: -3, r2: 11.5 }
+const BRIDGE = { pa: 0.07, pb: 0.31, end: 0.42, deckUp: 15, pylonUp: 80 }
+// A pixel on the face is ~1.2x as tall as it is wide (9-dot advance, 25 rows
+// on 4:3), so a circle in pixels is squashed by this much vertically.
+const PX_ASPECT = 1.2
 
-// The moon, upper left: a crescent, as KEEP draws its own -- a disc minus a
-// second disc offset to the right, sampled per half-row (a cell is ~2:1).
-// 2026-10-16 -- a full disc at this size rendered as a box of '█'; the
-// crescent reads as a moon at a glance and keeps the full blocks to a few.
-export const MOON = { fx: 0.16, cy: 3.5, r: 3.4, bx: 1.7, br: 3.0 }
-// The crescent as drawn since 2026-10-16 (see cityTables); MOON.fx still
-// places it, the disc parameters are kept for the record of what it was.
-export const MOON_TOP = 2
-export const MOON_ART = [
-  "  .-'",
-  ' //  ',
-  '||   ',
-  ' \\\\  ',
-  '  `-.',
-]
-
-// --- the beat ----------------------------------------------------------------
+// --- the beat -----------------------------------------------------------------
 // Same edge and rate limit DANCEFLOOR uses, for the same reasons (a late
 // fallback-ticker frame, a hi-hat onset).
 export const BEAT_RISE = 0.2
 export const STEP_GAP_S = 0.22
-// The wave crosses ~50 columns in under 60ms -- three or four frames, so it
-// reads as a burst spreading out from the tower, and the whole skyline has
-// answered well inside the beat.
-export const WAVE_SPEED = 900
-// The share of windows that change state on a kick.
-export const CHURN = 0.25
+// The flare's time constant. BRIGHT while flare > FLARE_BRIGHT: ~0.3s.
+export const FLARE_S = 0.5
+const FLARE_BRIGHT = 0.55
+// The light-up climbs the tower base to tip in this long.
+const CLIMB_S = 0.1
+// Rings of light on the bay, one per kick.
+export const RING_SLOTS = 5
+export const RING_LIFE = 4.5
+export const RING_SPEED = 70      // px/s across the water
+const RING_FLAT = 0.22            // ellipse height over width: the bay seen from low
+export const RENDER_HZ = 30
 
-// --- rain on the bay ------------------------------------------------------------
-// 2026-10-16 -- four slots at 3.4 columns a second: enough rain to keep the
-// bay alive, few and slow enough that the rings' own motion between beats
-// does not bury the kick (the probe measured the rings as most of what
-// changed between beats at seven slots).
-export const RIPPLE_SLOTS = 4
-export const RIPPLE_MAXAGE = 2.4
-export const RIPPLE_SPEED = 3.4
-const RING_BAND = 1.2
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
+const dither = (x, y) => (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16
 
-// Intensity tiers, dark to light. BRIGHT is the beacon's alone.
-const TIERS = [FAINT, DIM, MUTED, NORMAL]
+// Pixel owners in the sky, painted back to front. Exported for the tests.
+export const OWN = { SKY: 0, MOON: 1, BACK: 2, TOWER: 3, FRONT: 4, BRIDGE: 5 }
 
-// Signs, chosen per building by hash. Short enough for a narrow roof.
-const SIGNS = ['HOTEL', 'BAR', 'CAFE', 'CLUB', 'RAMEN', 'KISSA']
+const sceneCache = new Map()
+/** The static picture at one grid size: the sky layer, the window list, the
+ *  tower's pixels, the blinkers. Built once per size and cached. */
+export function sceneTables(cols, cw = 8, ch = 16) {
+  const key = `${cols}x${cw}x${ch}`
+  let S = sceneCache.get(key)
+  if (S) return S
+  const rows = VIZ_BOT - 1
+  const W = cols * cw, H = rows * ch
+  const HY = Math.round(H * HORIZON)
+  const sky = new Int8Array(W * HY).fill(-1)
+  const own = new Uint8Array(W * HY)
+  const set = (x, y, v, o) => {
+    x = Math.round(x); y = Math.round(y)
+    if (x < 0 || x >= W || y < 0 || y >= HY) return
+    sky[y * W + x] = v; own[y * W + x] = o
+  }
+  const tx = Math.round(W * TOWER_FX)
 
-// Cell kinds in the skyline buffer.
-const K_SKY = 0, K_BODY = 1, K_WIN = 2, K_TOWER = 3, K_SIGN = 4, K_MOON = 5, K_STAR = 6, K_ROOF = 7
-// Exported for tests/visual-ripple.test.mjs, which reads windows back by kind.
-export const KIND = { SKY: K_SKY, BODY: K_BODY, WIN: K_WIN, TOWER: K_TOWER, SIGN: K_SIGN, MOON: K_MOON, STAR: K_STAR, ROOF: K_ROOF }
+  // Horizon glow: the city's light on the haze, densest at the shore. The
+  // buildings are what is cut out of it.
+  const GLOW = 56
+  for (let y = HY - GLOW; y < HY; y++) {
+    const d = Math.pow((y - (HY - GLOW)) / GLOW, 2) * 0.16
+    for (let x = 0; x < W; x++) if (d > dither(x, y)) sky[y * W + x] = 0
+  }
+  // Stars, high up, a few of them DIM.
+  for (let y = 0; y < HY - 90; y++) for (let x = 0; x < W; x++) {
+    const h = hash2(x * 1.7, y * 2.3)
+    if (h < 0.0016) sky[y * W + x] = h < 0.0004 ? 1 : 0
+  }
+  // The moon: a disc minus an offset disc, DIM, upper right.
+  const mx = Math.round(W * MOON.fx)
+  for (let y = MOON.y - 20; y <= MOON.y + 20; y++) for (let x = mx - 18; x <= mx + 18; x++) {
+    const dx = x - mx, dy = (y - MOON.y) * PX_ASPECT
+    const ex = dx - MOON.ox, ey = dy - MOON.oy
+    if (dx * dx + dy * dy <= MOON.r * MOON.r && ex * ex + ey * ey > MOON.r2 * MOON.r2) set(x, y, 1, OWN.MOON)
+  }
 
-/** The city at one width: buildings, windows, tower, signs, moon, stars.
- *  Built once per width and cached. */
-const tableCache = new Map()
-export function cityTables(cols) {
-  let T = tableCache.get(cols)
-  if (T) return T
-  const tx = Math.round(cols * TOWER_FX)
-  const nearTower = (x0, x1) => x1 >= tx - TOWER_BASE_HW - 1 && x0 <= tx + TOWER_BASE_HW + 1
+  // Buildings: a back rank (taller, DIM windows) and a front rank (lower,
+  // MUTED windows). Low around the tower, so its whole lattice shows.
   const buildings = []
-  // Back rank: taller, dimmer. Front rank: shorter, brighter, overlapping.
-  const rank = (layer, startX, wMin, wSpan, hMin, hSpan, seed) => {
-    let x = startX, i = 0
-    while (x < cols) {
+  const rank = (layer, seed, wMin, wSpan, hMin, hSpan) => {
+    let x = -6, i = 0
+    while (x < W) {
       const w = wMin + Math.floor(hash2(i, seed) * wSpan)
       let h = hMin + Math.floor(hash2(i, seed + 1) * hSpan)
-      // Now and then a tower block well over its neighbours, so the
-      // skyline is a skyline and not a band.
-      if (layer === 0 && hash2(i, seed + 3) < 0.22) h += 3
-      const x0 = x, x1 = Math.min(cols - 1, x + w - 1)
-      // Low around the broadcast tower, so its whole lattice shows.
-      if (nearTower(x0, x1)) h = Math.min(h, layer === 1 ? 2 : 4)
-      buildings.push({ layer, x0, x1, top: SKY_BOT - h + 1, i })
-      x += w + (hash2(i, seed + 2) < 0.35 ? 1 : 0)
+      if (layer === 0 && hash2(i, seed + 3) < 0.2) h += 34
+      const x0 = x, x1 = x + w - 1
+      if (x1 >= tx - 50 && x0 <= tx + 50) h = Math.min(h, layer === 0 ? 30 : 16)
+      buildings.push({ layer, x0, x1, top: HY - h, i })
+      x += w + (hash2(i, seed + 2) < 0.4 ? 3 : 0)
       i++
     }
   }
-  rank(0, -2, 5, 6, 5, 4, 11)
-  rank(1, -4, 5, 6, 2, 5, 23)
-
-  const n = cols * (SKY_BOT + 1)
-  const kind = new Uint8Array(n)
-  const layer = new Uint8Array(n)
-  const ch = new Array(n).fill(' ')
-  const winId = new Float32Array(n)
-  const band = new Uint8Array(n)
-  const at = (x, y) => y * cols + x
-  for (let x = 0; x < cols; x++) for (let y = 1; y <= SKY_BOT; y++) band[at(x, y)] = Math.min(8, Math.floor(x / cols * 9))
-
-  // Stars, then the moon, then the back rank, the tower, the front rank, signs.
-  for (let y = 1; y <= 6; y++) for (let x = 0; x < cols; x++) {
-    if (hash2(x, y * 3 + 1) < 0.014) { kind[at(x, y)] = K_STAR; ch[at(x, y)] = '·' }
+  rank(0, 11, 18, 34, 36, 64)
+  rank(1, 23, 22, 36, 12, 42)
+  const paintBuilding = (b) => {
+    const o = b.layer === 0 ? OWN.BACK : OWN.FRONT
+    for (let y = b.top; y < HY; y++) for (let x = b.x0; x <= b.x1; x++) set(x, y, y === b.top ? 0 : -1, o)
   }
-  const mx = Math.round(cols * MOON.fx)
-  // 2026-10-16 (design pass): a crescent drawn in strokes, not a sampled
-  // disc of '█'/'▀'/'▄' -- that slab bloomed past the beacon at any tier,
-  // and a stroke-sampled disc at this size came out as a jumble of corners.
-  // Hand-drawn, opening to the right, doubled through the middle for weight.
-  MOON_ART.forEach((row, r) => {
-    for (let k = 0; k < row.length; k++) {
-      const x = mx - 2 + k, y = MOON_TOP + r
-      if (row[k] === ' ' || x < 0 || x >= cols) continue
-      kind[at(x, y)] = K_MOON
-      ch[at(x, y)] = row[k]
+  for (const b of buildings) if (b.layer === 0) paintBuilding(b)
+
+  // Tokyo Tower: antenna, top deck, an upper lattice, the main deck, and
+  // legs splaying to an arch. In front of the back rank, behind the front.
+  const yT = TOWER_TOP, yB = HY - 1, Ht = yB - yT
+  const tset = (x, y) => set(x, y, T_NORMAL, OWN.TOWER)
+  const hwAt = (y) => {
+    const f = (y - yT) / Ht
+    if (f < 0.52) return 2 + Math.max(0, (f - 0.24) / 0.28) * 6
+    return 10 + 22 * Math.pow(Math.max(0, f - 0.58) / 0.42, 1.8)
+  }
+  const line = (x0, y0, x1, y1) => {
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1)
+    for (let k = 0; k <= n; k++) tset(x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n)
+  }
+  const yDeckTop = Math.round(yT + 0.21 * Ht), yMain = Math.round(yT + 0.52 * Ht)
+  const yLegs = Math.round(yT + 0.58 * Ht)
+  for (let y = yT; y < yDeckTop; y++) { tset(tx, y); if (y > yT + 0.1 * Ht) tset(tx + 1, y) }
+  for (let y = yDeckTop; y < yDeckTop + 4; y++) for (let x = tx - 4; x <= tx + 5; x++) if (y !== yDeckTop + 2 || x === tx - 4 || x === tx + 5) tset(x, y)
+  // The two lattices: legs as continuous lines, X bracing between them.
+  const legs = (ya, yb, step, thick) => {
+    let prevL = null, prevR = null
+    for (let y = ya; y < yb; y++) {
+      const hw = hwAt(y)
+      const l = Math.round(tx - hw), r = Math.round(tx + 1 + hw)
+      for (let k = 0; k < thick; k++) { tset(l + k, y); tset(r - k, y) }
+      if (prevL !== null) { for (let x = Math.min(l, prevL); x <= Math.max(l, prevL); x++) tset(x, y); for (let x = Math.min(r, prevR); x <= Math.max(r, prevR); x++) tset(x, y) }
+      prevL = l; prevR = r
     }
-  })
-  const drawBuilding = (b) => {
-    for (let x = Math.max(0, b.x0); x <= b.x1; x++) {
-      for (let y = b.top; y <= SKY_BOT; y++) {
-        const i = at(x, y)
-        layer[i] = b.layer
-        if (y === b.top) { kind[i] = K_ROOF; ch[i] = '▄'; continue }
-        const interior = x > b.x0 && x < b.x1
-        // A window on every other column of the face and every row under the
-        // roof; the edges of the face are solid, so each block reads as one.
-        if (interior && (x - b.x0) % 2 === 1) {
-          kind[i] = K_WIN
-          winId[i] = hash2(x * 7 + b.layer, y * 13 + b.i)
-          ch[i] = '■'
-        } else {
-          kind[i] = K_BODY
-          ch[i] = bodyGlyph(b.layer, x, y)
+    for (let y = ya; y + step <= yb; y += step) {
+      const l0 = Math.round(tx - hwAt(y)), r0 = Math.round(tx + 1 + hwAt(y))
+      const y1 = y + step - 1
+      const l1 = Math.round(tx - hwAt(y1)), r1 = Math.round(tx + 1 + hwAt(y1))
+      line(l0, y, r1, y1); line(r0, y, l1, y1)
+    }
+  }
+  legs(yDeckTop + 4, yMain, 10, 1)
+  // The main deck: a two-storey box with a row of lit observation windows.
+  for (let y = yMain; y < yLegs; y++) for (let x = tx - 13; x <= tx + 14; x++) {
+    const edge = y === yMain || y === yLegs - 1 || x === tx - 13 || x === tx + 14
+    if (edge || ((y - yMain) === 3 && x % 2 === 0)) tset(x, y)
+  }
+  legs(yLegs, yB - 10, 14, 2)
+  // The base: legs down to the ground, an arch between them.
+  for (let y = yB - 10; y <= yB; y++) {
+    const hw = hwAt(y)
+    for (let k = 0; k < 3; k++) { tset(Math.round(tx - hw) + k, y); tset(Math.round(tx + 1 + hw) - k, y) }
+  }
+  const archW = hwAt(yB) - 3
+  for (let x = -archW; x <= archW; x++) {
+    tset(tx + x, yB - Math.round(8 * Math.sqrt(Math.max(0, 1 - (x / archW) ** 2))))
+  }
+  for (let x = Math.round(tx - hwAt(yB - 10)); x <= Math.round(tx + 1 + hwAt(yB - 10)); x++) tset(x, yB - 10)
+
+  for (const b of buildings) if (b.layer === 1) paintBuilding(b)
+
+  // The bridge: two pylons, a main span sagging between them, side spans to
+  // the deck, suspenders, a lit deck. Nearest of all.
+  const pa = Math.round(W * BRIDGE.pa), pb = Math.round(W * BRIDGE.pb), bEnd = Math.round(W * BRIDGE.end)
+  const yd = HY - BRIDGE.deckUp, yp = HY - BRIDGE.pylonUp
+  const bset = (x, y, v) => set(x, y, v, OWN.BRIDGE)
+  for (let x = -2; x <= bEnd; x++) { bset(x, yd, 1); bset(x, yd + 1, 1); if (x % 4 === 0) bset(x, yd - 1, 2) }
+  for (const px of [pa, pb]) {
+    for (let y = yp; y < HY; y++) { bset(px - 1, y, 1); bset(px + 1, y, 1); if (y < yp + 3 || y === yp + 22) bset(px, y, 1) }
+    bset(px, yp - 1, 2) // the pylon's aircraft light, a fixed point
+  }
+  const cable = (x0, y0, x1, y1, sag) => {
+    for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) {
+      const u = (x - x0) / (x1 - x0)
+      const y = Math.round(y0 + (y1 - y0) * u + sag * 4 * u * (1 - u))
+      bset(x, y, (x % 5 === 0) ? 2 : 1)
+      if (x % 6 === 3) for (let yy = y + 2; yy < yd; yy += 2) bset(x, yy, 0)
+    }
+  }
+  cable(pa, yp, pb, yp, yd - 5 - yp)
+  cable(-4, yd - 3, pa, yp, 10)
+  cable(pb, yp, bEnd, yd - 3, 10)
+
+  // Windows, last, on the pixels each building still owns.
+  const win = [] // [tier, id, ...pixel indices]
+  for (const b of buildings) {
+    const o = b.layer === 0 ? OWN.BACK : OWN.FRONT
+    const pw = b.layer === 0 ? 5 : 6, sw = b.layer === 0 ? 2 : 3
+    for (let y = b.top + 4; y + 2 < HY - 1; y += 6) {
+      for (let x = b.x0 + 3; x + sw <= b.x1 - 2; x += pw) {
+        const pix = []
+        for (let yy = y; yy < y + 2; yy++) for (let xx = x; xx < x + sw; xx++) {
+          if (xx < 0 || xx >= W) continue
+          const i = yy * W + xx
+          if (own[i] === o) pix.push(i)
         }
+        if (pix.length) win.push({ tier: b.layer === 0 ? 1 : 2, id: hash2(x * 0.37 + b.layer, y * 1.31), pix })
       }
     }
   }
-  for (const b of buildings) if (b.layer === 0) drawBuilding(b)
-  // The tower: two legs tapering to the tip, a mast, cross-bracing every
-  // other row, and two decks. In front of the back rank, behind the front.
-  for (let y = TOWER_TOP; y <= SKY_BOT; y++) {
-    const f = (y - TOWER_TOP) / (SKY_BOT - TOWER_TOP)
-    const hw = Math.round(f * f * TOWER_BASE_HW + f * 0.6)
-    const put = (x, c) => { if (x >= 0 && x < cols) { kind[at(x, y)] = K_TOWER; ch[at(x, y)] = c; layer[at(x, y)] = 0 } }
-    if (y <= TOWER_TOP + 1) { put(tx, '│'); continue }
-    const deck = y === TOWER_TOP + 4 || y === TOWER_TOP + 7
-    if (hw === 0) { put(tx, deck ? '■' : '┼'); continue }
-    put(tx - hw, '/'); put(tx + hw, '\\')
-    for (let x = tx - hw + 1; x < tx + hw; x++) {
-      if (deck) put(x, '▀')
-      else if (x === tx) put(x, '┼')
-      else if ((y - TOWER_TOP) % 2 === 0) put(x, '─')
-    }
+  const winStart = new Int32Array(win.length + 1)
+  let n = 0
+  win.forEach((w, k) => { winStart[k] = n; n += w.pix.length })
+  winStart[win.length] = n
+  const winPix = new Int32Array(n)
+  win.forEach((w, k) => winPix.set(w.pix, winStart[k]))
+  const winId = Float32Array.from(win, (w) => w.id)
+  const winTier = Uint8Array.from(win, (w) => w.tier)
+
+  // The tower's own pixels, for the light-up, with their height (0 = tip).
+  const tp = []
+  for (let i = 0; i < W * HY; i++) if (own[i] === OWN.TOWER) tp.push(i)
+  const towerPix = Int32Array.from(tp)
+  const towerUp = Float32Array.from(tp, (i) => 1 - (Math.floor(i / W) - yT) / Ht)
+
+  // Aircraft-warning blinkers on the tallest roofs.
+  const blink = buildings.filter((b) => b.layer === 0 && HY - b.top > 70).map((b) => ({
+    x: Math.round((b.x0 + b.x1) / 2), y: b.top - 3, phase: hash2(b.i, 5),
+  })).filter((b) => b.x > 0 && b.x < W - 2 && own[(b.y + 3) * W + b.x] === OWN.BACK)
+
+  S = {
+    cols, cw, ch, rows, W, H, HY, tx, mx, yMain, yLegs, yd, yT, Ht,
+    sky, own, winStart, winPix, winId, winTier, towerPix, towerUp, blink, buildings,
   }
-  for (const b of buildings) if (b.layer === 1) drawBuilding(b)
-  // One sign per few blocks, each word once, never two within 12 columns.
-  const signs = []
-  for (const b of buildings) {
-    if (b.layer !== 1 || b.top < 4 || b.x0 < 1 || b.x1 > cols - 2 || nearTower(b.x0, b.x1)) continue
-    if (hash2(b.i, 41) > 0.5) continue
-    if (signs.some((g) => Math.abs(g.x - b.x0) < 12)) continue
-    const word = SIGNS.find((w) => w.length <= b.x1 - b.x0 + 1 && !signs.some((g) => g.word === w))
-    if (!word) continue
-    const sx = Math.round((b.x0 + b.x1 - word.length + 1) / 2), sy = b.top - 1
-    for (let k = 0; k < word.length; k++) {
-      const i = at(sx + k, sy)
-      if (kind[i] === K_TOWER || kind[i] === K_MOON) continue
-      kind[i] = K_SIGN; ch[i] = word[k]
-    }
-    signs.push({ x: sx, y: sy, len: word.length, i: b.i, word })
-  }
-  T = { cols, tx, mx, kind, layer, ch, winId, band, signs, buildings }
-  tableCache.set(cols, T)
-  return T
+  sceneCache.set(key, S)
+  return S
 }
 
-// A building's face where there is no lit window. 2026-10-16 (tube check):
-// '▒' faces glowed as solid slabs under CITY LIGHTS' bloom and the windows
-// drowned in them, so the front rank is '░' and the back rank a thinned
-// '░' -- far blocks read as a roofline and their lights, which is how a
-// skyline at night actually looks.
-const bodyGlyph = (layer, x, y) => layer === 1 ? '░' : (hash2(x, y * 7) < 0.4 ? '░' : ' ')
-
-
-function respawnRing(r, t, delay) {
-  r.fx = Math.random()
-  r.y = WATER_TOP + 0.5 + Math.random() * (VIZ_BOT - WATER_TOP - 1)
-  r.startT = t + delay
-  r.amp = 1
+/** Is window k lit at time t? Each window re-decides on its own slow clock,
+ *  staggered, so the city changes a light or two a second, never in step. */
+const WIN_EPOCH_S = 30
+export function windowLit(S, k, t) {
+  const id = S.winId[k]
+  const frac = S.winTier[k] === 1 ? 0.34 : 0.46
+  return hash2(id * 91.7, Math.floor(t / WIN_EPOCH_S + id * 13)) < frac
 }
+
+function allocScene(p, term) {
+  const { cellW, cellH } = term.font
+  const S = sceneTables(term.cols, cellW, cellH)
+  const cells = term.cols * S.rows
+  const cellOf = new Int16Array(S.W)
+  for (let x = 0; x < S.W; x++) cellOf[x] = Math.floor(x / cellW)
+  p._rippleScene = {
+    S,
+    lv: new Int8Array(S.W * S.H),
+    bufs: [0, 1].map(() => Array.from({ length: cells }, () => new Uint16Array(cellH))),
+    // Which of the two bitmaps each cell shows: flipped only when that cell
+    // is repacked, since the sky's cells are not repacked every render.
+    which: new Uint8Array(cells),
+    lit: new Uint8Array(cells),
+    attr: new Uint8Array(cells),
+    cellOf,
+    rowMax: new Int8Array(term.cols),
+    rowBits: new Uint16Array(term.cols),
+    // The cell row the shore falls in, and everything under it, is the
+    // water's: repacked every render. Above it, only when the sky changed.
+    waterRow: Math.floor(S.HY / cellH),
+    skyKey: '',
+  }
+  p._rippleRenderT = -Infinity
+}
+
+function ringSlot() { return { startT: -Infinity, amp: 1 } }
 
 export default {
   key: 'ripple',
-  label: 'BAYSIDE',
-  /** Seeds this effect's state on the program object (once, at boot). */
+  label: 'TOKYO BAY',
+  /** Seeds this effect's state on the program object (once, at boot). The
+   *  picture buffers are built lazily on first draw. */
   init(p) {
-    p._ripples = Array.from({ length: RIPPLE_SLOTS }, () => {
-      const r = {}
-      respawnRing(r, 0, 0)
-      r.startT = -Math.random() * RIPPLE_MAXAGE
-      return r
-    })
+    p._rippleScene = null
+    p._ripples = Array.from({ length: RING_SLOTS }, ringSlot)
     p._rippleStep = 0
-    p._rippleLvl = p._rippleLvlPrev = 0.5
-    p._rippleBands = new Array(9).fill(0.45)
-    p._rippleBandsPrev = new Array(9).fill(0.45)
+    p._rippleLvl = 0.4
     p._ripplePrevPulse = 0
     p._rippleKickAt = -Infinity
+    p._rippleRenderT = -Infinity
+    p._rippleLastT = 0
   },
-  /** Re-arms clocks/accumulators on every visualizer entry. */
+  /** Re-arms clocks on every visualizer entry (2026-09-12 audit, M5): the
+   *  ring starts, the kick time and the render clock are all effect-clock
+   *  times, and the clock restarts at 0. The eased level is not a clock and
+   *  carries over. */
   reset(p) {
-    // 2026-09-12 (audit, M5) -- every ring's startT is an absolute
-    // effect-clock value, so after a long visit a re-entry left them in the
-    // future of the restarted clock: skipped by the draw, never respawned.
-    // Re-seeded on the same stagger init() uses. The kick time is the same
-    // kind of value (2026-10-16): left over, it would hold the wave for as
-    // long as the last visit lasted. The latched level and bands are not
-    // clocks and carry over -- the city comes back lit the way it was left.
-    for (const r of p._ripples) {
-      respawnRing(r, 0, 0)
-      r.startT = -Math.random() * RIPPLE_MAXAGE
-    }
+    for (const r of p._ripples) { r.startT = -Infinity; r.amp = 1 }
     p._rippleKickAt = -Infinity
     p._ripplePrevPulse = 0
+    p._rippleRenderT = -Infinity
+    p._rippleLastT = 0
+    if (p._rippleScene) p._rippleScene.skyKey = ''
   },
   draw(p, s, t) {
     const { term } = s
-    const cols = term.cols
-    const T = cityTables(cols)
+    if (!p._rippleScene || p._rippleScene.S.cols !== term.cols || p._rippleScene.S.ch !== term.font.cellH) allocScene(p, term)
+    const R = p._rippleScene
     const muted = !!p.muted
     const A = muted ? SILENT_AUDIO : (p._au || syntheticAudio(t))
-    const at = (x, y) => y * cols + x
+    if (t < p._rippleLastT) { p._rippleLastT = t; p._rippleRenderT = -Infinity }
+    const dt = Math.min(0.25, t - p._rippleLastT)
+    p._rippleLastT = t
 
-    // --- the beat ---------------------------------------------------------------
+    // The beat.
     const pulse = A.pulse || 0
+    let kicked = false
     if (!muted && pulse - p._ripplePrevPulse >= BEAT_RISE && t - p._rippleKickAt >= STEP_GAP_S) {
-      // The previous kick's latch is kept: cells the wave has not reached
-      // yet still show it, so the change spreads rather than lands at once.
+      kicked = true
       p._rippleStep++
       p._rippleKickAt = t
-      p._rippleLvlPrev = p._rippleLvl
-      p._rippleLvl = Math.min(1, Math.max(0, A.level || 0))
-      const b9 = A.bands9 || []
-      for (let i = 0; i < 9; i++) {
-        p._rippleBandsPrev[i] = p._rippleBands[i]
-        p._rippleBands[i] = Math.min(1, Math.max(0, b9[i] ?? A.level ?? 0))
-      }
+      let slot = p._ripples[0]
+      for (const r of p._ripples) if (r.startT < slot.startT) slot = r
+      slot.startT = t
+      slot.amp = 0.8 + 0.4 * Math.min(1, A.bass || 0)
     }
     p._ripplePrevPulse = pulse
-    const step = p._rippleStep
-    const litNow = 0.3 + 0.4 * p._rippleLvl, litPrev = 0.3 + 0.4 * p._rippleLvlPrev
-    const sinceKick = t - p._rippleKickAt
+    // Level, eased: the aureole breathes with the music, never flickers.
+    const target = Math.min(1, Math.max(0, A.level || 0))
+    p._rippleLvl += (target - p._rippleLvl) * Math.min(1, dt / 0.7)
 
-    // --- rain -------------------------------------------------------------------
-    // An ambient drop lands as soon as its last ring has faded: the slots'
-    // random starting ages keep them out of step, and onsets break the
-    // rhythm up. 2026-10-16 -- the old RIPPLE waited up to 0.6s before a
-    // respawn; with four slots instead of eleven, two waiting at once left
-    // the bay with one ring, and tests/visuals.test.mjs's re-entry check
-    // caught it two runs in twenty.
-    for (const r of p._ripples) if (t - r.startT > RIPPLE_MAXAGE) respawnRing(r, t, 0)
-    if (!muted && A.onset) {
-      let oldest = null
-      for (const r of p._ripples) {
-        if (t - r.startT > RIPPLE_MAXAGE * 0.45 && (!oldest || r.startT < oldest.startT)) oldest = r
-      }
-      if (oldest) { respawnRing(oldest, t, 0); oldest.amp = 1 + 0.4 * Math.min(1, A.bass || 0) }
+    if (kicked || t - p._rippleRenderT >= 1 / RENDER_HZ) {
+      p._rippleRenderT = t
+      render(p, R, t, muted)
     }
-
-    // --- the skyline: a tier per cell, then paint it ----------------------------
-    // Reused per width: the tier of each skyline cell this frame (-1 = dark),
-    // which the reflection reads back.
-    if (!T.tier) T.tier = new Int8Array(T.kind.length)
-    const tier = T.tier
-    const beacon = muted ? 0 : Math.max(0, 1 - sinceKick / 0.3)
-    for (let y = 1; y <= SKY_BOT; y++) {
-      for (let x = 0; x < cols; x++) {
-        const i = at(x, y)
-        const k = T.kind[i]
-        let c = T.ch[i], tr = -1
-        if (k === K_SKY) { c = ' ' }
-        else if (k === K_STAR) tr = 0
-        else if (k === K_MOON) tr = 1
-        else if (k === K_ROOF || k === K_BODY) tr = 0
-        else if (k === K_TOWER) {
-          tr = 1
-          if (y === TOWER_TOP) { c = '•'; tr = beacon > 0.4 ? 4 : (Math.floor(t * 1.2) % 2 ? 2 : 1) }
-        } else if (k === K_SIGN) {
-          // A sign drops out now and then for a quarter second -- a tube
-          // on its way out. Slow enough to be a detail, never a strobe.
-          const sg = T.signs.find((g) => g.y === y && x >= g.x && x < g.x + g.len)
-          tr = hash2(sg ? sg.i : 0, Math.floor(t * 4)) < 0.03 ? 0 : 2
-        } else if (k === K_WIN) {
-          const id = T.winId[i]
-          // Has the last kick's wave reached this column yet?
-          const arrived = sinceKick >= Math.abs(x - T.tx) / WAVE_SPEED
-          const st = arrived ? step : step - 1
-          let lit = id < (arrived ? litNow : litPrev)
-          if (hash2(id * 977, st) < CHURN) lit = !lit
-          const b = (arrived ? p._rippleBands : p._rippleBandsPrev)[T.band[i]]
-          // Lit windows sit well above the FAINT bodies: MUTED in the front
-          // rank (NORMAL where the band is hot), DIM in the back. A window at
-          // the body's own tier is a window nobody can see.
-          const kt = (T.layer[i] === 0 ? 1 : 2) + (b > 0.6 ? 1 : 0)
-          if (lit) tr = Math.min(3, kt)
-          else { c = bodyGlyph(T.layer[i], x, y); tr = 0 }
-        }
-        // The beacon's flare (2026-10-16 design pass): arms either side of
-        // the tip while it is lit, so the kick's subject is the widest light
-        // in the sky as well as the brightest.
-        if (y === TOWER_TOP && beacon > 0.4 && x !== T.tx && Math.abs(x - T.tx) <= 2) {
-          c = Math.abs(x - T.tx) === 1 ? '─' : '·'; tr = Math.abs(x - T.tx) === 1 ? 3 : 2
-        }
-        tier[i] = tr
-        if (tr < 0) term.put(x, y, ' ')
-        else term.put(x, y, c, tr === 4 ? BRIGHT : TIERS[tr])
-      }
-    }
-
-    // --- the quay -----------------------------------------------------------------
-    for (let x = 0; x < cols; x++) term.put(x, QUAY_Y, '▀', FAINT)
-
-    // --- the bay: reflection, moon path, rain ---------------------------------------
-    // 2026-10-16 (design pass): the reflection is read off the lit windows,
-    // column by column -- see the header. colTier/colLit are reused per width.
-    if (!T.colTier) { T.colTier = new Int8Array(cols); T.colLit = new Uint8Array(cols) }
-    const colTier = T.colTier, colLit = T.colLit
-    for (let x = 0; x < cols; x++) {
-      let best = -1, n = 0
-      for (let y = 1; y <= SKY_BOT; y++) {
-        const i = at(x, y)
-        if (T.kind[i] === K_WIN && tier[i] >= 1) { n++; if (tier[i] > best) best = tier[i] }
-      }
-      colTier[x] = best; colLit[x] = n
-    }
-    const bayRows = VIZ_BOT - WATER_TOP
-    // The swell re-breaks the streaks on each kick, and drifts slowly between
-    // them so a long quiet passage is not frozen water.
-    const glit = step * 3 + Math.floor(t * 0.25)
-    for (let w = WATER_TOP; w < VIZ_BOT; w++) {
-      const depth = w - WATER_TOP
-      const deep = depth >= bayRows / 2
-      // The swell's sideways sway: one column at most, advancing a notch on
-      // each kick with a slow drift under that.
-      const dx = Math.round(Math.sin(w * 1.9 + step * 0.35 + t * 0.06) * Math.min(1, 0.3 + depth * 0.15))
-      const pathHW = 1 + depth * 0.45
-      for (let x = 0; x < cols; x++) {
-        let c = ' ', a = FAINT
-        // Rain first: a ring cell wins over whatever it falls on.
-        let v = 0
-        for (const r of p._ripples) {
-          const age = t - r.startT
-          if (age < 0 || age > RIPPLE_MAXAGE) continue
-          const ex = x - r.fx * cols, ey = (w - r.y) * 3
-          const ringDist = Math.abs(Math.sqrt(ex * ex + ey * ey) - age * RIPPLE_SPEED)
-          if (ringDist < RING_BAND) v = Math.max(v, (1 - ringDist / RING_BAND) * (1 - age / RIPPLE_MAXAGE) * (r.amp || 1))
-        }
-        if (v > 0.15) {
-          // Dots, two tiers: a ring reads as a ring and not as a cluster of
-          // bubbles ('o' did), and each cell changes as few times as it can
-          // while the ring fades.
-          c = v > 0.45 ? '∙' : '·'
-          a = v > 0.45 ? DIM : FAINT
-          term.put(x, w, c, a)
-          continue
-        }
-        const sx = x + dx
-        const ct = sx >= 0 && sx < cols ? colTier[sx] : -1
-        // A lit column's streak: two rows plus one per lit window, so the
-        // busier the column, the further its light reaches across the bay.
-        if (ct >= 1 && depth < 2 + colLit[sx] && hash2(sx * 3 + w, glit) >= 0.12) {
-          c = deep ? '¦' : '│'
-          a = TIERS[Math.max(0, ct - 1 - (deep ? 1 : 0))]
-        } else if (sx === T.tx && hash2(w * 5, glit) >= 0.3) {
-          // The tower's mast, faint on the water.
-          c = '¦'; a = FAINT
-        } else if (Math.abs(x - T.mx) <= pathHW && (x + w) % 2 === 0) {
-          // The moon's path: a column of glints widening toward the viewer,
-          // fixed rather than random, so it reads as the moon's and not noise.
-          c = '-'; a = FAINT
-        }
-        term.put(x, w, c, a)
-      }
+    const cols = term.cols
+    for (let cy = 0; cy < R.S.rows; cy++) for (let cx = 0; cx < cols; cx++) {
+      const i = cy * cols + cx
+      // Re-put every frame: the same reference is a no-op in cellgrid.js,
+      // and a cell something else wrote over in between gets the picture back.
+      if (R.lit[i]) term.putGlyph(cx, cy + 1, R.bufs[R.which[i]][i], R.attr[i])
+      else term.put(cx, cy + 1, ' ')
     }
   },
+}
+
+/** Flare of the tower at time t: 1 on the kick, easing to 0. */
+export function flareAt(p, t) {
+  const since = t - p._rippleKickAt
+  return since >= 0 ? Math.exp(-since / FLARE_S) : 0
+}
+
+function render(p, R, t, muted) {
+  const { S } = R
+  const since = t - p._rippleKickAt
+  const flare = muted ? 0 : flareAt(p, t)
+  // Everything the sky shows this render, quantized: the aureole's radius in
+  // 2px steps, how far up the tower the kick's light has climbed, and the
+  // half-second tick the windows and blinkers change on. The sky is rebuilt
+  // and repacked only when this changes -- most renders it does not.
+  const rad = muted ? 0 : 18 + 2 * Math.round((34 * p._rippleLvl + 26 * flare) / 2)
+  const climb = flare > FLARE_BRIGHT ? Math.min(4, Math.floor(Math.max(0, since) / CLIMB_S * 4)) + 1 : 0
+  const tick = Math.floor(t * 2)
+  const key = `${rad}|${climb}|${tick}|${muted}`
+  if (key !== R.skyKey) {
+    R.skyKey = key
+    renderSky(R, tick / 2, rad, climb / 5, muted)
+    pack(R, 0, R.waterRow)
+  }
+  renderWater(p, R, t, muted)
+  pack(R, R.waterRow, S.rows)
+}
+
+function renderSky(R, t, rad, climb, muted) {
+  const { S, lv } = R
+  const { W, HY, tx } = S
+  lv.set(S.sky)
+  // The aureole: the tower's light on the haze, centred on the main deck.
+  const cy0 = S.yMain + 3
+  if (rad > 0) for (let y = Math.max(0, Math.floor(cy0 - rad / PX_ASPECT)); y < Math.min(HY, cy0 + rad / PX_ASPECT); y++) {
+    for (let x = Math.max(0, Math.floor(tx - rad)); x < Math.min(W, tx + rad); x++) {
+      const i = y * W + x
+      if (S.own[i] !== OWN.SKY || lv[i] >= 1) continue
+      const dx = x - tx, dy = (y - cy0) * PX_ASPECT
+      const d = Math.sqrt(dx * dx + dy * dy) / rad
+      if (d >= 1) continue
+      // One tier throughout: two tiers drew the cell grid's box around the
+      // inner one (2026-10-18 round 2). The shape is the density alone.
+      if (Math.pow(1 - d, 1.8) * 0.45 > dither(x, y)) lv[i] = 1
+    }
+  }
+  // Windows.
+  for (let k = 0; k < S.winId.length; k++) {
+    if (!windowLit(S, k, t)) continue
+    // Muted, the city's lights sit a tier down: the set is quiet, the
+    // picture faint but whole, and the tower still the brightest thing.
+    const tier = S.winTier[k] - (muted ? 1 : 0)
+    for (let j = S.winStart[k]; j < S.winStart[k + 1]; j++) lv[S.winPix[j]] = tier
+  }
+  // Blinkers: a 2x2 light, on for one second in two.
+  for (const b of S.blink) {
+    if (((t * 0.5 + b.phase) % 1) >= 0.5) continue
+    for (let yy = 0; yy < 2; yy++) for (let xx = 0; xx < 2; xx++) lv[(b.y + yy) * W + b.x + xx] = 2
+  }
+  // The tower: NORMAL, and BRIGHT from the base up as far as the kick's
+  // light has climbed (climb 0 = none).
+  for (let j = 0; j < S.towerPix.length; j++) {
+    lv[S.towerPix[j]] = climb > 0 && S.towerUp[j] <= climb ? T_BRIGHT : T_NORMAL
+  }
+}
+
+function renderWater(p, R, t, muted) {
+  const { S, lv } = R
+  const { W, H, HY, tx } = S
+  lv.fill(-1, W * HY)
+  // The bay: the sky mirrored at the shore, one tier down, each pixel row
+  // pushed sideways by the swell -- more the nearer it is.
+  for (let y = HY; y < H; y++) {
+    const depth = y - HY
+    const sy = HY - 1 - depth
+    if (sy < 0) break
+    if (depth % 3 === 2) continue // the gaps between swells
+    const amp = 0.6 + depth * 0.04
+    const dx = Math.round(amp * Math.sin(depth * 0.5 - t * 2.2 + 2 * Math.sin(depth * 0.11 + t * 0.5)))
+    const row = y * W, src = sy * W
+    const x0 = Math.max(0, -dx), x1 = Math.min(W, W - dx)
+    for (let x = x0; x < x1; x++) {
+      const v = lv[src + x + dx]
+      if (v >= 1) lv[row + x] = v - 1
+    }
+  }
+  // Glints: short FAINT dashes drifting on the dark water, so the bay is
+  // never black where nothing above it is lit.
+  for (let y = HY + 4; y < H; y += 3) {
+    const k = Math.floor(t * 0.6 + y * 0.37)
+    for (let g = 0; g < 3; g++) {
+      const gx = Math.floor(hash2(y + g * 31, k) * W), len = 3 + Math.floor(hash2(g, y + k) * 6)
+      for (let x = gx; x < Math.min(W, gx + len); x++) if (lv[y * W + x] < 0) lv[y * W + x] = 0
+    }
+  }
+  // The rings: flattened ellipses spreading from under the tower. Each is
+  // a dark trough with a crest just outside it -- 2026-10-18 round 3: a 1px
+  // dotted crest alone vanished into the reflection's own dashes on the
+  // tube, so the trough clears a lane through the water for it. Round 4: a
+  // 3x2 NORMAL crest bloomed into the heaviest line on screen, past the
+  // tower; the crest is 2x1 at MUTED now and the trough does the work.
+  // MUTED fading through DIM to FAINT; the far half one tier down.
+  if (muted) return
+  const cy = HY + 10
+  const ellipse = (r, rx, fn) => {
+    const ry = rx * RING_FLAT
+    const n = Math.ceil(Math.PI * rx * 0.8)
+    for (let k = 0; k < n; k++) {
+      const th = (k / n) * Math.PI * 2
+      const x = Math.round(tx + rx * Math.cos(th)), y = Math.round(cy + ry * Math.sin(th))
+      if (y < HY + 1 || y >= H - 1 || x < 0 || x >= W - 2) continue
+      fn(x, y, th, k)
+    }
+  }
+  const live = p._ripples.filter((r) => t - r.startT >= 0 && t - r.startT <= RING_LIFE)
+  for (const r of live) {
+    const rx = 6 + (t - r.startT) * RING_SPEED * r.amp - 5
+    if (rx > 3) ellipse(r, rx, (x, y) => { for (let yy = -1; yy < 2; yy++) for (let xx = 0; xx < 3; xx++) lv[(y + yy) * W + x + xx] = -1 })
+  }
+  for (const r of live) {
+    const age = t - r.startT
+    const tier = age < 1.6 ? 2 : age < 3.2 ? 1 : 0
+    ellipse(r, 6 + age * RING_SPEED * r.amp, (x, y, th, k) => {
+      // Broken here and there, like light on water -- a few gaps, not dots.
+      if (hash2(Math.floor(k / 4), r.startT * 7) < 0.15) return
+      const tr = Math.sin(th) < 0 ? Math.max(0, tier - 1) : tier
+      for (let xx = 0; xx < 2; xx++) if (lv[y * W + x + xx] < tr) lv[y * W + x + xx] = tr
+    })
+  }
+}
+
+/** Picture -> one bitmap and one attribute per cell, for cell rows
+ *  [r0, r1): the brightest tier in the cell, and only pixels within one tier
+ *  of it (see the header). Linear passes over the picture, a cell row at a
+ *  time. */
+function pack(R, r0, r1) {
+  const { S, lv, cellOf, rowMax, rowBits } = R
+  const { W, cw, ch, cols } = S
+  for (let cy = r0; cy < r1; cy++) {
+    rowMax.fill(-1)
+    const base = cy * ch * W
+    for (let o = base, end = base + ch * W, x = 0; o < end; o++, x = x + 1 === W ? 0 : x + 1) {
+      const v = lv[o]
+      if (v > rowMax[cellOf[x]]) rowMax[cellOf[x]] = v
+    }
+    for (let cx = 0; cx < cols; cx++) {
+      const ci = cy * cols + cx
+      if (rowMax[cx] < 0) { R.lit[ci] = 0; continue }
+      R.lit[ci] = 1
+      R.attr[ci] = TIERS[rowMax[cx]]
+      R.which[ci] ^= 1
+    }
+    for (let py = 0; py < ch; py++) {
+      rowBits.fill(0)
+      const o = base + py * W
+      for (let x = 0; x < W; x++) {
+        const v = lv[o + x]
+        if (v < 0) continue
+        const c = cellOf[x], m = rowMax[c]
+        if (v >= m - 1) rowBits[c] |= 1 << (cw - 1 - (x - c * cw))
+      }
+      for (let cx = 0; cx < cols; cx++) {
+        const ci = cy * cols + cx
+        if (R.lit[ci]) R.bufs[R.which[ci]][ci][py] = rowBits[cx]
+      }
+    }
+  }
 }
