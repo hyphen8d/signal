@@ -380,7 +380,16 @@ const trial = async (setup, act, bootOpts = {}, band = null) => {
   // too many idle animations live there, and the seeding would be leaned on
   // for every one of them. A change that is ONLY a brightness step stays
   // invisible here, the meter wipe's case (see CLAUDE.md).
-  for (let i = 0; i < FRAMES; i++) { h.advance(FRAME_MS); frames.push(h.rows().join('\n') + '\n' + h.term.inverse.join('')) }
+  //
+  // 2026-10-18 -- the row-0 clock is masked. It reads the REAL time of day
+  // (`new Date()`, which the harness's fake clock does not reach), so a
+  // state whose trials straddle a minute boundary saw its control and its
+  // canaries disagree and reported UNSTABLE. Cheap states almost never
+  // straddle one; the pixel NEON HEART, ~190ms to build its glow on each
+  // fresh boot, made the YM visualizer state long enough to do it 2 runs
+  // in 3. No key changes the clock, so masking it hides nothing.
+  const sig = () => h.rows().join('\n').replace(/\d\d\/\d\d \d\d:\d\d/, 'MM/DD HH:MM')
+  for (let i = 0; i < FRAMES; i++) { h.advance(FRAME_MS); frames.push(sig() + '\n' + h.term.inverse.join('')) }
   const endScanning = !!h.program.scanning
   h.shutdown()
   return { frames, clicks, label, booted, endScanning }
