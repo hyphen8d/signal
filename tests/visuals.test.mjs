@@ -74,6 +74,9 @@ test('RIPPLE: re-entry re-seeds every slot instead of leaving them in the future
   // Without reset(), 9 of 11 slots came back with startT ~118s while t was
   // 2s: age < 0, skipped by the draw, and never respawned because the
   // respawn test is age > MAXAGE. A fresh respawn is at most 0.6s ahead.
+  // 2026-10-18 (TOKYO BAY): the slots are rings of light, one per kick, and
+  // reset() empties them (startT -Infinity); two seconds in, the synthetic
+  // pulse's kicks at ~0, 0.9 and 1.8s have each started one.
   const h = await bootInto('ripple', 'city-lights')
   try {
     h.advance(120000)
@@ -142,7 +145,7 @@ test('the 2026-09-13 effects draw correctly at a width other than the one they b
       p._au = signal
       fx.init(p, initTerm === 'self' ? term : h.term)
       fx.reset(p)
-      const put = term.put
+      const put = term.put, putGlyph = term.putGlyph
       const outside = []
       let missed = 0
       for (let f = 0; f < 30; f++) {
@@ -152,12 +155,24 @@ test('the 2026-09-13 effects draw correctly at a width other than the one they b
           else if (x >= 0 && x < cols) hit[y * cols + x] = 1
           return put.call(this, x, y, ...rest)
         }
-        try { fx.draw(p, { term }, 5 + f / 30) } finally { term.put = put }
+        // 2026-10-18 -- RIPPLE draws in bitmaps now (putGlyph), which paints
+        // a cell as surely as put() does; counted the same way.
+        term.putGlyph = function (x, y, ...rest) {
+          if (y < 1 || y >= VIZ_BOT) outside.push(y)
+          else if (x >= 0 && x < cols) hit[y * cols + x] = 1
+          return putGlyph.call(this, x, y, ...rest)
+        }
+        try { fx.draw(p, { term }, 5 + f / 30) } finally { term.put = put; term.putGlyph = putGlyph }
         for (let i = cols; i < cols * VIZ_BOT; i++) if (!hit[i]) missed++
       }
       const rows = Array.from({ length: VIZ_BOT - 1 }, (_, i) => {
         let s = ''
-        for (let x = 0; x < cols; x++) s += String.fromCodePoint(term.chars[(i + 1) * cols + x]) + term.attrs[(i + 1) * cols + x]
+        for (let x = 0; x < cols; x++) {
+          const k = (i + 1) * cols + x
+          s += String.fromCodePoint(term.chars[k]) + term.attrs[k]
+          // A bitmap cell's picture is its gfx bits, not its (space) char.
+          if (term.gfx[k]) s += '[' + Array.from(term.gfx[k]).join('.') + ']'
+        }
         return s
       })
       return { rows, outside, missed, term }
