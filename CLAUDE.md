@@ -32,7 +32,8 @@ to name these scripts:
 ```bash
 node tools/admin-server.mjs         # npm run admin — the admin backend + the app, port 8080
 python3 tools/dev-server.py 8000    # dev server (no-store headers); open http://localhost:8000
-node --test tests/*.test.mjs        # npm test — headless suite, ~40s, no network
+npm test                            # NODE_COMPILE_CACHE=.node-compile-cache node --test tests/*.test.mjs — ~50s, no network
+node tools/test-quick.mjs           # npm run test:quick — only the tests your diff can reach; full suite before merge
 node tools/lint-roster.js           # npm run lint — offline roster rules
 node tools/verify-roster.js         # npm run verify — lint + oEmbed check of every track (network)
 node tools/check-roster.mjs         # npm run health — deep-probe roster tracks in batches (network)
@@ -45,7 +46,12 @@ node tools/voice-render.mjs         # npm run voice — render a voice clip (net
 node tools/shoot.mjs                # npm run shoot — regenerate screenshots/ (headless Chrome + ImageMagick)
 node tools/record-demo.mjs          # npm run record — re-record screenshots/demo.{mp4,gif} (headless Chrome + ffmpeg)
 node tools/itch-zip.mjs             # npm run itch — package dist/signal-itch.zip for itch.io
-node tools/dead-feedback.mjs        # npm run deadfeedback — input-feedback sweep (headless, ~1min)
+node tools/dead-feedback.mjs        # npm run deadfeedback — input-feedback sweep (headless, ~3min)
+node tools/viz-preview.mjs <fx|all> # npm run preview — fast visualizer preview from the harness Term (~1s; iterate here)
+node tools/viz-sheet.mjs <fx>       # npm run vizsheet — real-tube contact sheet (headless Chrome; confirm here once)
+node tools/ship.mjs pr --title=...  # npm run ship -- pr — ship a BRANCH: test, stamp above origin/main, push, open PR (never merges)
+node tools/ship.mjs merge <pr>      # only on a human go-ahead; plain --merge, confirmed by fetch + origin/main
+node tools/ship.mjs verify [stamp]  # live check: build.json, then changed app files at ?v=<stamp> vs origin/main
 ```
 
 `file://` does not work — the BDF font fetch needs a real origin. Use
@@ -62,6 +68,21 @@ Adding a clip never exposed it; a URL nobody has fetched cannot be stale.
 A tab already open across a deploy re-reads `build.json` every 30 minutes and
 reloads at the next power-off (`tickBuild()` in `program.js`, 2026-09-21), so
 a deploy reaches a radio left playing without anyone closing the tab.
+
+**Shipping a branch (sessions, terminals) is `tools/ship.mjs`; the
+dashboard's SHIP is for main** (2026-10-20). `pr` re-fetches after the suite
+and stamps strictly above origin/main, because a parallel session's identical
+stamp makes a deploy a cache no-op, and it stops after `gh pr create`, taking
+the PR number gh printed. Merging is its own subcommand because it needs a
+human go-ahead -- if a classifier refuses `gh pr merge`, do not route around
+it through this tool. `merge` never passes `--delete-branch` (which has
+printed a fatal error AFTER a successful merge from a worktree) and judges
+success by `git fetch` + origin/main, never by gh. `verify` judges the LIVE
+site, not the repo -- a fresh stamp alone does not prove the content shipped.
+After a merge the served checkout (~/Work/signal) is fast-forwarded only if
+it is on main and clean; otherwise the command is printed. The design record
+is the tool's header; `tools/lib/git-checks.mjs` holds the repo-state
+refusals SHIP and ship.mjs share, so change them there.
 
 ## The admin backend
 
@@ -556,6 +577,33 @@ grid (`h.row(y)`, `h.find(text)`). `boot({ mobile: true })` forces the lite
 layout. Each boot gets fresh module instances (unique `?v=`). Add a scenario
 here when you change a state transition; add to `tests/helpers.test.mjs` for
 pure helpers; `tests/roster.test.mjs` runs `tools/lint-roster.js`.
+
+**What keeps the suite fast** (2026-10-20; ~130s under load, 63s quiet, now
+~45-50s; the box is 2 cores/4 threads, so it is CPU-bound and more
+concurrency buys nothing -- only less work does):
+
+- **`advance()` does not rasterise.** The harness rasters the Term only when
+  the beam framebuffer is read (`h.fb` / `h.flushRaster()`; never read
+  `h.term.fb` directly). That is byte-exact because dirty rows accumulate
+  until `raster()` clears them; `tests/lazy-raster.test.mjs` proves it
+  against `boot({ eagerRaster: true })` across the radio and every
+  `putGlyph` effect. **A new pixel effect belongs in that test's list.**
+- **Node's compile cache**, in `.node-compile-cache/` (gitignored, ~70MB, per
+  machine): the harness's `?v=test<n>` tags repeat run to run, which is what
+  makes it hit. package.json and the admin server's suite task both name it;
+  `tests/admin-server.test.mjs` asserts they agree.
+- **A long visit is simulated cheaply.** The re-entry tests need stale
+  clocks, not minutes: `visuals.test.mjs` uses `M5_VISIT_MS` (20s). Shorten
+  one only with a mutation check of the reset line it guards.
+- **`npm run test:quick` is the inner loop** (`tools/test-quick.mjs`): it maps
+  the diff onto the tests that can see it and escalates to the full suite for
+  app code every boot loads. SHIP, PREFLIGHT and `ship.mjs pr` always run
+  everything.
+
+The next lever, not taken: module compile/resolve is still ~25-33% of
+`program.test`'s CPU, and sharing stateless modules across boots would cut
+it -- but that collides with the one-instance-per-URL rule above, so it is a
+decision, not a tweak.
 
 One trap when writing scenarios: **a fresh boot lands on a random station**,
 and pressing the preset you are already on is a no-op flash rather than a
@@ -1186,6 +1234,27 @@ flowchart LR
   — the image most people see first, and the only one nobody looks at
   locally — still showing the old header. A shot no tool owns is a shot
   that rots.
+- **Headless Chrome goes through `tools/lib/capture.mjs`** (2026-10-20).
+  shoot, viz-sheet and record-demo take a lock at
+  `~/.cache/signal/capture.lock` -- one capture at a time across every
+  worktree, and a waiter prints whom it waits on. Chrome runs in its own
+  process group and is killed on every exit path; its profile lives under
+  `~/.cache/signal/runs/`, never /tmp; each launch reaps run dirs whose owner
+  pid is dead and orphaned old-style `/tmp/signal-shoot-*` Chromes. Why: on
+  2026-10-18 four parallel agents' swiftshader Chromes ran at 0.2-0.8fps
+  each, orphans from two days earlier burned ~3.6 cores, and ~146 leaked
+  profiles filled /tmp. It also launches `/opt/google/chrome/google-chrome`
+  directly, because the `-stable` wrapper reads `chrome-flags.conf` and was
+  loading the desktop's extensions into every capture. Do not launch Chrome
+  any other way.
+- **Visualizers: iterate on `viz-preview`, confirm on `viz-sheet` once.** The
+  preview renders the real Term framebuffer in about a second, tinted by the
+  station's phosphor, but has no bloom, persistence or pulseBloom. viz-sheet
+  captures each effect on its own station, and its KICK tile is timed from
+  the delivered onset under a slowed page clock (`--clock=auto`, about 60
+  app-fps) and captioned with the kick's age -- read that number before
+  concluding an effect has no beat. Before 2026-10-20 the tile was taken
+  seconds late on a loaded box and showed a settled frame for every effect.
 - **`tools/itch-zip.mjs` packages the app for itch.io** (2026-09-22).
   itch serves an uploaded zip from its own origin and cannot point a Play
   button at a site hosted elsewhere, so **the itch listing is a COPY that
