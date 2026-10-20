@@ -229,8 +229,12 @@ test('RIPPLE: muted, no kick, no ring and nothing BRIGHT -- but the water still 
 test('RIPPLE: re-entry after a long visit carries no kick clock or ring from the previous visit', async () => {
   const { h } = await bootCity()
   try {
-    // 30s is plenty: any clock left over sits far in the restarted one's future.
-    h.advance(30000)
+    // Any clock left over sits far in the restarted one's future, and the
+    // assertions allow 0.05s past a clock at ~0.1s. 2026-10-20 (test-speed
+    // pass): was 30s, which was 2.3s of the suite's CPU; 8s still leaves
+    // every stale kick and ring ~6s ahead. Mutation-checked: deleting
+    // reset()'s _rippleKickAt line, or its startT loop, still goes red.
+    h.advance(8000)
     h.key('e'); h.advance(500)
     h.key('v'); h.advance(100)
     const t = effectT(h)

@@ -12,12 +12,16 @@
     "lint": "node tools/lint-roster.js",
     "lyrics": "node tools/lyrics-audit.mjs",
     "record": "node tools/record-demo.mjs",
+    "ship": "node tools/ship.mjs",
     "shoot": "node tools/shoot.mjs",
     "stamp": "node tools/stamp.js",
     "stations": "node tools/stations-to-md.js",
-    "test": "node --test tests/*.test.mjs",
+    "test": "NODE_COMPILE_CACHE=.node-compile-cache node --test tests/*.test.mjs",
+    "test:quick": "node tools/test-quick.mjs",
     "verify": "node tools/verify-roster.js",
     "voice": "node tools/voice-render.mjs",
-    "watch": "node tools/roster-watch.mjs"
+    "watch": "node tools/roster-watch.mjs",
+    "preview": "node tools/viz-preview.mjs",
+    "vizsheet": "node tools/viz-sheet.mjs"
   }
 }

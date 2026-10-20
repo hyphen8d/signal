@@ -39,6 +39,7 @@ import {
   patchStationTracksDetailed, patchStationField, verifyPatch,
 } from './lib/roster.mjs'
 import { mergeRejection } from './lib/rejections.mjs'
+import { parsePorcelain, inProgressBlockers } from './lib/git-checks.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(here, '..')
@@ -222,9 +223,18 @@ const testFiles = () => readdirSync(abs('tests')).filter(f => f.endsWith('.test.
 // target; the URL is the address this server actually bound, because the
 // systemd unit binds the tailnet and 127.0.0.1 would not reach it there.
 const localAppUrl = () => `http://${LOOPBACK ? '127.0.0.1' : (HOST.includes(':') ? `[${HOST}]` : HOST)}:${PORT}/`
+// 2026-10-20 (test-speed pass) -- the suite runs with Node's module compile
+// cache, the same as `npm test` in package.json. Every harness boot imports
+// a fresh module graph under a unique `?v=test<n>`, and those tags are the
+// same n on every run of a given file, so V8's code cache hits on the second
+// run onward: measured ~10% less CPU on program/game/visuals. The directory
+// is gitignored (SHIP stages the whole tree and must never sweep ~70MB of V8
+// blobs into a commit) and dot-prefixed, so the static allowlist refuses it
+// too. A third element of cmd() is extra env for the child.
+const COMPILE_CACHE = { NODE_COMPILE_CACHE: abs('.node-compile-cache') }
 export const TASKS = {
   lint: { label: 'lint roster', cmd: () => ['node', ['tools/lint-roster.js']] },
-  test: { label: 'test suite', cmd: () => ['node', ['--test', ...testFiles()]] },
+  test: { label: 'test suite', cmd: () => ['node', ['--test', ...testFiles()], COMPILE_CACHE] },
   verify: { label: 'verify roster', network: true, cmd: () => ['node', ['tools/verify-roster.js']] },
   stamp: { label: 'bump build stamp', cmd: () => ['node', ['tools/stamp.js']] },
   stations: { label: 'regenerate stations.md', cmd: () => ['node', ['tools/stations-to-md.js']] },
@@ -329,19 +339,9 @@ async function gitState() {
     const c = await git(['rev-list', '--count', `${upstream.out}..HEAD`])
     if (c.code === 0) ahead = +c.out
   }
-  const dirty = (status.raw || '').split('\n').filter(Boolean).map((l) => {
-    // XY<space>PATH. A rename is "R  old -> new"; show the destination,
-    // which is the name that will exist after the commit.
-    const code = l.slice(0, 2).trim()
-    let file = l.slice(3)
-    const arrow = file.indexOf(' -> ')
-    if (arrow !== -1) file = file.slice(arrow + 4)
-    // Paths with spaces or non-ASCII come back quoted.
-    if (file.startsWith('"') && file.endsWith('"')) {
-      try { file = JSON.parse(file) } catch (e) { /* leave as-is */ }
-    }
-    return { code, file }
-  })
+  // The porcelain parse (fixed-width columns, renames, quoted paths) lives
+  // in tools/lib/git-checks.mjs since 2026-10-20, shared with tools/ship.mjs.
+  const dirty = parsePorcelain(status.raw)
   return {
     branch: branch.code === 0 ? branch.out : '(unknown)',
     lastCommit: last.code === 0 ? last.out : '',
@@ -806,8 +806,8 @@ async function handleApi(req, res, url) {
     return withLock(res, `task "${task}"`, async () => {
       const ac = abortOnDisconnect(res)
       const s = openStream(res)
-      const [cmd, args] = spec.cmd()
-      const code = await run(cmd, args, s.emit, { signal: ac.signal })
+      const [cmd, args, env] = spec.cmd()
+      const code = await run(cmd, args, s.emit, { signal: ac.signal, env })
       s.emit({ type: 'exit', code, task })
       return s.end()
     })
@@ -824,8 +824,8 @@ async function handleApi(req, res, url) {
     let failed = null
     for (const task of steps) {
       s.emit({ type: 'step', task, label: TASKS[task].label })
-      const [cmd, args] = TASKS[task].cmd()
-      const code = await run(cmd, args, s.emit, { signal: ac.signal })
+      const [cmd, args, env] = TASKS[task].cmd()
+      const code = await run(cmd, args, s.emit, { signal: ac.signal, env })
       s.emit({ type: 'step-done', task, code })
       if (code !== 0) { failed = task; break }
     }
@@ -860,11 +860,10 @@ async function shipBlockers() {
   if (st.branch !== 'main') out.push(`on branch "${st.branch}", not main -- Pages deploys main`)
   if (!st.upstream) out.push(`${st.branch || 'this branch'} has no upstream to push to`)
   const gitDir = (await git(['rev-parse', '--git-dir'])).out || '.git'
-  for (const f of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) {
-    if (existsSync(path.resolve(ROOT, gitDir, f))) out.push(`a git ${f.replace(/_HEAD|-.*$/, '').toLowerCase()} is in progress -- finish or abort it first`)
-  }
-  const unmerged = st.dirty.filter((d) => /U|AA|DD/.test(d.code))
-  if (unmerged.length) out.push(`unmerged files: ${unmerged.map((d) => d.file).join(', ')}`)
+  // In-progress merge/rebase/cherry-pick/revert and unmerged paths: shared
+  // with tools/ship.mjs (2026-10-20), which ships a branch through a PR and
+  // refuses the same states for the same reasons.
+  out.push(...inProgressBlockers(ROOT, gitDir, st.dirty))
   if (!st.dirty.length) out.push('nothing to ship -- the working tree is clean')
   if (st.upstream && !out.length) {
     const f = await git(['fetch', '--quiet'])
@@ -914,8 +913,8 @@ async function ship(req, res, message, includeNetwork) {
   ]
   for (const [task, label] of pipeline) {
     s.emit({ type: 'step', task, label })
-    const [cmd, args] = TASKS[task].cmd()
-    const code = await run(cmd, args, s.emit, { signal: ac.signal })
+    const [cmd, args, env] = TASKS[task].cmd()
+    const code = await run(cmd, args, s.emit, { signal: ac.signal, env })
     s.emit({ type: 'step-done', task, code })
     if (code !== 0) {
       restoreStamp()

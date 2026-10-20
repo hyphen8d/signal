@@ -32,3 +32,10 @@ dist/
 
 # check-roster.mjs batch lock (2026-10-15): per-machine, never committed.
 .roster-health.json.lock
+
+# Node's module compile cache for the test suite (2026-10-20): `npm test`,
+# `npm run test:quick` and the admin server's suite task all point
+# NODE_COMPILE_CACHE here. ~70MB of V8 code-cache blobs, one per ?v=test<n>
+# module instance; per-machine and per-Node-version, so never committed
+# (SHIP stages everything that is not ignored).
+.node-compile-cache/

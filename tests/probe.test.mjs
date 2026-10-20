@@ -13,7 +13,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -48,7 +48,7 @@ test('playability reads the throttle off WHERE the answer came from', async () =
   }
 })
 
-test('check-roster --report leaves the record byte-identical', () => {
+test('check-roster --report leaves the record byte-identical', (t) => {
   // 2026-09-12 (audit, L4). The dashboard's GET /api/health runs --report,
   // and a GET is the one request a cross-origin page can make without the
   // X-Signal-Admin preflight -- so --report pruning orphans was a file write
@@ -56,6 +56,8 @@ test('check-roster --report leaves the record byte-identical', () => {
   // fixture: the prune, if it still ran here, would delete that row.
   const here = path.dirname(fileURLToPath(import.meta.url))
   const dir = mkdtempSync(path.join(tmpdir(), 'signal-health-'))
+  // 2026-10-20 -- this dir was never removed: ~120 signal-health-* in /tmp.
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
   const store = path.join(dir, 'roster-health.json')
   const before = JSON.stringify({ version: 1, records: { zzzzzzzzzzz: { at: '2026-09-01T00:00:00.000Z', flags: [], status: 'OK', stationId: 'nowhere' } } }, null, 2) + '\n'
   writeFileSync(store, before)

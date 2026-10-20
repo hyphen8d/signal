@@ -32,11 +32,11 @@
 // IFrame player -- but it needs --autoplay-policy=no-user-gesture-required,
 // since nothing here is a real gesture as far as Chrome is concerned.
 
-import { spawn, spawnSync } from 'node:child_process'
-import { writeFileSync, mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { CHROME, acquireLock, connectCdp, launchChrome, makeRunDir, slowClockScript } from './lib/capture.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const SHOTS = path.join(here, '..', 'screenshots')
@@ -45,115 +45,87 @@ const flag = (n, d) => { const h = args.find((a) => a.startsWith(`--${n}=`)); re
 const URL_ = flag('url', 'https://hyphen8d.github.io/signal/')
 const W = 1273, H = 952, SCALE = 2   // 2x then downscaled: the aperture mask resolves far better
 
-const CHROME = ['/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chrome']
-  .find((p) => spawnSync('test', ['-x', p]).status === 0)
-if (!CHROME) { console.error('No Chrome/Chromium binary found.'); process.exit(2) }
-
 // Key codes for everything the shots press. e.key is what program.js switches
 // on, but CDP needs the physical code and virtual keycode too or the event
 // never reaches the page as a real keydown.
 export const KEYS = {
   p: ['KeyP', 80], g: ['KeyG', 71], v: ['KeyV', 86], c: ['KeyC', 67], n: ['KeyN', 78], y: ['KeyY', 89],
-  2: ['Digit2', 50], 3: ['Digit3', 51],
+  0: ['Digit0', 48], 1: ['Digit1', 49], 2: ['Digit2', 50], 3: ['Digit3', 51], 4: ['Digit4', 52],
+  5: ['Digit5', 53], 6: ['Digit6', 54], 7: ['Digit7', 55], 8: ['Digit8', 56], 9: ['Digit9', 57],
 }
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 // Exported for tools/viz-sheet.mjs, which drives the same Chrome for the
 // visualizer contact sheets; importing this file runs nothing (see below).
-export async function session(fn) {
-  const profile = mkdtempSync(path.join(tmpdir(), 'signal-shoot-'))
-  const chrome = spawn(CHROME, [
-    // Port 0 = let Chrome pick, then read it back out of the profile. A fixed
-    // port silently connects the NEXT run to the PREVIOUS Chrome if that one
-    // has not fully exited yet -- which reads as "window.screen0 never
-    // appeared" against a stale about:blank, and cost a real debugging detour.
-    '--headless=new', '--remote-debugging-port=0', `--window-size=${W},${H}`,
-    '--hide-scrollbars', '--no-first-run', '--no-default-browser-check',
-    '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
-    '--mute-audio', '--autoplay-policy=no-user-gesture-required',
-    `--user-data-dir=${profile}`, URL_,
-  ], { stdio: ['ignore', 'ignore', 'pipe'] })
-  chrome.stderr.on('data', () => {})
-
-  const portFile = path.join(profile, 'DevToolsActivePort')
-  let port
-  for (let i = 0; i < 80 && !port; i++) {
-    if (existsSync(portFile)) {
-      const n = +readFileSync(portFile, 'utf8').split('\n')[0]
-      if (n) port = n
+//
+// 2026-10-20 -- the Chrome itself comes from tools/lib/capture.mjs: one
+// capture at a time across every process and worktree (a lock under
+// ~/.cache/signal/), Chrome in its own process group and always killed, its
+// profile outside /tmp and always removed, and a reaper for what an earlier
+// crashed run left behind. That file's header has the 2026-10-18 incident it
+// answers. `opts.clock` slows the page's clock (record-demo's trick) so a
+// 1-3fps swiftshader run still renders many frames per app-second;
+// `opts.url` overrides --url.
+export async function session(fn, opts = {}) {
+  if (!CHROME) throw new Error('No Chrome/Chromium binary found.')
+  const slow = opts.clock || 1
+  const chrome = await launchChrome({ kind: opts.kind || 'shoot', width: W, height: H })
+  let cdp
+  try {
+    cdp = await connectCdp(chrome.wsUrl)
+    const { send } = cdp
+    const api = {
+      send,
+      clock: slow,
+      ev: async (e) => (await send('Runtime.evaluate', { expression: e, returnByValue: true, awaitPromise: true })).result?.value,
+      async key(k) {
+        const [code, vk] = KEYS[k]
+        for (const type of ['keyDown', 'keyUp']) {
+          await send('Input.dispatchKeyEvent', {
+            type, key: String(k), code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk,
+            ...(type === 'keyDown' ? { text: String(k) } : {}),
+          })
+        }
+      },
+      /** Wait on rAF ticks, not milliseconds -- see note 2 up top. */
+      async settleFrames(n = 240) {
+        await api.ev('window.__f = 0; (function t(){ window.__f++; requestAnimationFrame(t) })()')
+        for (let i = 0; i < 3000; i++) { if ((await api.ev('window.__f')) > n) return; await sleep(100) }
+      },
+      /** Let `ms` of the PAGE's time pass: sleep(ms) at clock 1, `clock` times
+       *  longer on the wall under a slowed clock. A step that waits out an app
+       *  animation has to wait in app time, or a slowed run cuts it short. */
+      async appSleep(ms) {
+        const t0 = await api.ev('performance.now()')
+        await sleep(Math.max(0, ms * slow - 100))
+        for (let i = 0; i < 10000; i++) { if ((await api.ev('performance.now()')) - t0 >= ms) return; await sleep(50) }
+      },
+      /** Poll a page-side predicate until true. */
+      async until(expr, tries = 60, gap = 500) {
+        for (let i = 0; i < tries; i++) { if (await api.ev(expr)) return true; await sleep(gap) }
+        return false
+      },
+      async png(file) {
+        const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false })
+        writeFileSync(file, Buffer.from(shot.data, 'base64'))
+      },
     }
-    if (!port) await sleep(250)
-  }
-  let wsUrl
-  for (let i = 0; i < 80 && port && !wsUrl; i++) {
-    try {
-      const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()
-      wsUrl = list.find((t) => t.type === 'page' && t.webSocketDebuggerUrl)?.webSocketDebuggerUrl
-    } catch { /* not up yet */ }
-    if (!wsUrl) await sleep(250)
-  }
-  if (!wsUrl) { chrome.kill(); throw new Error('chrome exposed no page target') }
 
-  const ws = new WebSocket(wsUrl)
-  await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej })
-  let seq = 0
-  const pending = new Map()
-  ws.onmessage = (m) => {
-    const msg = JSON.parse(m.data)
-    if (msg.id && pending.has(msg.id)) {
-      const { res, rej } = pending.get(msg.id); pending.delete(msg.id)
-      msg.error ? rej(new Error(JSON.stringify(msg.error))) : res(msg.result)
-    }
-  }
-  const send = (method, params = {}) => new Promise((res, rej) => {
-    const id = ++seq; pending.set(id, { res, rej }); ws.send(JSON.stringify({ id, method, params }))
-  })
-
-  const api = {
-    send,
-    ev: async (e) => (await send('Runtime.evaluate', { expression: e, returnByValue: true, awaitPromise: true })).result?.value,
-    async key(k) {
-      const [code, vk] = KEYS[k]
-      for (const type of ['keyDown', 'keyUp']) {
-        await send('Input.dispatchKeyEvent', {
-          type, key: String(k), code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk,
-          ...(type === 'keyDown' ? { text: String(k) } : {}),
-        })
-      }
-    },
-    /** Wait on rAF ticks, not milliseconds -- see note 2 up top. */
-    async settleFrames(n = 240) {
-      await api.ev('window.__f = 0; (function t(){ window.__f++; requestAnimationFrame(t) })()')
-      for (let i = 0; i < 300; i++) { if ((await api.ev('window.__f')) > n) return; await sleep(100) }
-    },
-    /** Poll a page-side predicate until true. */
-    async until(expr, tries = 60, gap = 500) {
-      for (let i = 0; i < tries; i++) { if (await api.ev(expr)) return true; await sleep(gap) }
-      return false
-    },
-    async png(file) {
-      const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false })
-      writeFileSync(file, Buffer.from(shot.data, 'base64'))
-    },
-  }
-
-  await send('Page.enable')
-  await send('Runtime.enable')
-  await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: SCALE, mobile: false })
-  if (!await api.until('!!(window.screen0 && window.screen0.program)', 80, 250)) throw new Error('window.screen0 never appeared')
-  await api.until('window.screen0.program._powerAnimating === false', 40, 150)
-  await sleep(400)
-
-  try { return await fn(api) } finally {
-    ws.close()
-    chrome.kill()
-    // Chrome does not release the profile dir the instant it is signalled, and
-    // an ENOTEMPTY here was masking the real error from the recipe above --
-    // cleanup failure is never the interesting failure. Give it a beat, then
-    // shrug it off; these live in os.tmpdir().
-    await sleep(400)
-    try { rmSync(profile, { recursive: true, force: true }) } catch { /* tmp, it can wait for a reboot */ }
+    await send('Page.enable')
+    await send('Runtime.enable')
+    await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: SCALE, mobile: false })
+    // Chrome starts on about:blank so the clock is in place before the app's
+    // first script runs (a reload after the fact would boot the app twice).
+    await send('Page.addScriptToEvaluateOnNewDocument', { source: slowClockScript(slow) })
+    await send('Page.navigate', { url: opts.url || URL_ })
+    if (!await api.until('!!(window.screen0 && window.screen0.program)', 80 + 40 * slow, 250)) throw new Error('window.screen0 never appeared')
+    await api.until('window.screen0.program._powerAnimating === false', 40 * slow, 150)
+    await api.appSleep(400)
+    return await fn(api)
+  } finally {
+    cdp?.close()
+    await chrome.close()
   }
 }
 
@@ -282,8 +254,14 @@ const names = [...new Set(want.length ? want : Object.keys(RECIPES))]
 const known = [...Object.keys(RECIPES), ...Object.keys(ALIASES)].join(', ')
 for (const n of names) if (!RECIPES[n]) { console.error(`Unknown shot "${n}". Known: ${known}`); process.exit(2) }
 
+// Hold the capture lock across every recipe, so another tool cannot slip a
+// Chrome in between two of ours (session() re-enters it). Tiles go in a run
+// dir under ~/.cache/signal/runs/, removed on exit, never /tmp.
+await acquireLock()
+const scratch = makeRunDir('shoot-tiles')
 for (const name of names) {
-  const tmp = mkdtempSync(path.join(tmpdir(), `signal-${name}-`))
+  const tmp = path.join(scratch.work, name)
+  mkdirSync(tmp, { recursive: true })
   try {
     process.stdout.write(`${name}... `)
     // One retry. Back-to-back sessions occasionally lose a race -- the
