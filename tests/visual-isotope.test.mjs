@@ -310,10 +310,15 @@ test('ATOMIC AGE: re-entry after a long visit carries no beat clock from the pre
   } finally { h.shutdown() }
 })
 
-test('ATOMIC AGE: the shockwave ring sits a tier under the electrons', async () => {
-  // 2026-10-16 (design pass): at NORMAL the ring briefly crowded the emblem.
-  // Every NORMAL dot cell on a kick frame must be an electron. Mutation-
-  // checked: the ring back at NORMAL goes red.
+test('ATOMIC AGE: the shockwave ring is a dotted FAINT line, lighter than the orbits', async () => {
+  // 2026-10-16 (design pass): at NORMAL the ring briefly crowded the emblem,
+  // so it went to MUTED. 2026-10-20 (CRITIQUE-1020): at MUTED, solid, it was
+  // as heavy as the orbits and a kick read as a fourth orbit. It is now
+  // dotted, at the orbits' own FAINT (there is no tier under it). Read by
+  // drawing the same instant twice, with and without the kick: what the
+  // kick adds on cells that were dark is the ring alone. Mutation-checked:
+  // SHOCK_DOT_GAP 1 (a solid line) or SHOCK_ATTR MUTED goes red, and so
+  // does the ring back at NORMAL (the electron check below).
   const { h, fx, mod } = await bootAtom()
   try {
     fx.reset(h.program)
@@ -321,17 +326,34 @@ test('ATOMIC AGE: the shockwave ring sits a tier under the electrons', async () 
     drawWith(h, fx, 2.02, signal({ pulse: 1 }))
     drawWith(h, fx, 2.2, signal({ pulse: 0.5 }))
     assert.ok(dotsBeyond(h, mod, 6) > 10, 'test setup: the ring is out')
+    const cols = h.term.cols
     const electrons = h.program._isoElectronAt
-    let ring = 0
+    const kicked = []
     for (let y = 1; y < VIZ_BOT; y++) {
       const row = h.row(y)
-      for (let x = 0; x < h.term.cols; x++) {
+      for (let x = 0; x < cols; x++) {
+        kicked.push(isDots(row[x]) ? [row[x].codePointAt(0) - 0x2800, attrAt(h, x, y)] : null)
         if (!isDots(row[x]) || attrAt(h, x, y) !== 0) continue
         const nearElectron = electrons.some(([ex, ey]) => Math.abs(ex - x) <= 1 && Math.abs(ey - y) <= 1)
         assert.ok(nearElectron, `a NORMAL dot cell at ${x},${y} that is not an electron`)
       }
     }
-    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < h.term.cols; x++) if (isDots(h.row(y)[x]) && attrAt(h, x, y) === 32) ring++
-    assert.ok(ring > 10, `only ${ring} MUTED dot cells -- the ring is not there at MUTED`)
+    // The same instant with no kick: dt is 0, so nothing else moves.
+    h.program._isoKickAt = -Infinity
+    drawWith(h, fx, 2.2, signal({ pulse: 0.5 }))
+    let ringCells = 0, ringDots = 0
+    for (let y = 1; y < VIZ_BOT; y++) {
+      const row = h.row(y)
+      for (let x = 0; x < cols; x++) {
+        const k = kicked[(y - 1) * cols + x]
+        if (!k || isDots(row[x])) continue
+        ringCells++
+        let b = k[0]; while (b) { ringDots += b & 1; b >>>= 1 }
+        assert.equal(k[1], 64, `a ring cell at ${x},${y} is drawn above FAINT (attr ${k[1]})`)
+      }
+    }
+    assert.ok(ringCells > 20, `only ${ringCells} cells hold the ring alone -- the ring is not there`)
+    const perCell = ringDots / ringCells
+    assert.ok(perCell <= 1.6, `${perCell.toFixed(2)} dots per ring cell -- a solid line, not a dotted one`)
   } finally { h.shutdown() }
 })
