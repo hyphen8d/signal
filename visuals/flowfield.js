@@ -83,6 +83,37 @@
 //   BRIGHT above 0.5 rather than 0.35): at 120bpm the old one left the wax
 //   BRIGHT for most of every beat, which is a lamp, not a pulse.
 //
+// - 2026-10-20 (polish; the design critique of the real-tube sheet). It
+//   read instantly as a lava lamp; four things were wrong, all of them the
+//   CELL showing through the pixels, plus one of scale:
+//   * On the kick the haze became full-width horizontal ribbons with hard
+//     tops and bottoms. Cause: lit haze was MUTED and unlit DIM, and a cell's
+//     attribute is its brightest pixel's, so every bank's lit edge snapped to
+//     a 16px cell row. Fix: the room is DIM throughout and the lamp's light
+//     is density only. The sideways stretch came down from 8:1 to ~3:1 (it
+//     was also making stripes), and the haze's density has a soft ceiling
+//     (ROOM_MAX): saturated, the lit haze beside the glass filled whole 4x4
+//     dither tiles and showed their staircase outline.
+//   * The kick blew the halo out over most of the canvas. Now it brightens
+//     the halo (glow +1.1) far more than it widens it (reach +0.25), so the
+//     flare stays within about a third of the canvas round the lamp.
+//   * The glass filled as a flat block with a stepped notch above the bottom
+//     blob. The notch was the same cell rule: liquid pixels in a cell that
+//     also holds wax took the wax's tier. The wax field is now computed per
+//     render before shading (fBuf, which shadeRow reads instead of summing
+//     the blobs itself), cells holding wax are marked, and the liquid in
+//     them is thinned by a tier's worth (LIQ_IN_WAX); room pixels in the
+//     cells the lamp's MUTED rim shares are thinned the same way. The liquid
+//     also thins toward the glass (lit from the bulb at the centre).
+//   * The liquid's screen-door mesh competed with the wax: its density is
+//     halved, and a faint highlight stripe down the glass's left side keeps
+//     it reading as glass.
+//   Tests: the room is one tier with no solid tile, the kick's gain is near
+//   the lamp not in the far thirds, and the liquid fades outward and is
+//   thinned in wax cells -- each mutation-checked against the old shape.
+//   So the rubric's brightness order is now: wax > glass rim, liquid, lit
+//   haze by DENSITY (all MUTED/DIM) > the far haze.
+//
 // COST. The first cut took ~3x FLAME's time per frame, which on this tube
 // is a dropped frame. Three fixes: the haze noise is sampled every 8px and
 // interpolated (it is smooth at that scale); the room away from the lamp is
@@ -171,6 +202,11 @@ const BLOBS = [
 // lamp with wax in it. A lone blob's edge (d = r) sits at WAX_EDGE.
 const WAX_EDGE = 0.5625
 const WAX_FRINGE = 0.3
+// The wax field is computed into a buffer FB_W wide centred on the lamp.
+const FB_HALF = 48, FB_W = 2 * FB_HALF + 1
+// Liquid pixels sharing a cell with wax are thinned by this per tier the wax
+// lifts the cell above the liquid's own (MUTED -> NORMAL, -> BRIGHT).
+const LIQ_IN_WAX = [1, 0.5, 0.3]
 
 // --- the music ----------------------------------------------------------------
 export const KICK_GAP_S = 0.22   // least time between two kicks
@@ -178,7 +214,8 @@ export const KICK_HOLD_S = 0.14  // the flare holds this long at full...
 const KICK_TAU = 0.3             // ...then releases on this time constant
 const BEAT_RISE = 0.3            // a pulse jump this big is a kick
 const LOUD_TAU = 0.6             // the glow's breath, seconds
-const RENDER_HZ = 30             // the bitmaps are rebuilt at most this often
+const RENDER_HZ = 30
+const ROOM_MAX = 0.62            // the haze's density ceiling (soft knee)             // the bitmaps are rebuilt at most this often
 const clamp01 = (v) => Math.min(1, Math.max(0, v || 0))
 
 // Pixel tiers -> attributes. 0 is "nothing here", never an attribute
@@ -223,9 +260,10 @@ export function hazeAt(x, y, t, H) {
   // stretched ~8:1 sideways, so they lie in layers the way smoke does in a
   // still room. The first cut was 3:1 with a tight threshold and rendered
   // as camouflage: hard-edged blots, which is a texture, not a haze.
-  const w = vnoise(x / 110 + 3.7, y / 46 - t * 0.07)
-  const u = x / 150 + t * 0.04 + 1.1 * w
-  const v = y / 19 + t * 0.2 + 0.6 * w
+  // 2026-10-20: 150/19 (8:1) -> 96/30 (~3:1); see the polish note above.
+  const w = vnoise(x / 96 + 3.7, y / 52 - t * 0.07)
+  const u = x / 96 + t * 0.06 + 1.1 * w
+  const v = y / 30 + t * 0.13 + 0.6 * w
   const n = 0.65 * vnoise(u, v) + 0.35 * vnoise(u * 2.3 + 7.1, v * 2.1 - t * 0.1)
   return smooth(0.38, 0.92, n) * (0.25 + 0.75 * (1 - y / H))
 }
@@ -257,6 +295,8 @@ export default {
       roomT: new Uint8Array(GW * GH), // ...and its tier (lit by the lamp or not)
       HW8: (W >> 3) + 2, HH8: (H >> 3) + 2, hz8: new Float32Array(((W >> 3) + 2) * ((H >> 3) + 2)),
       haloX: new Float32Array(GW),
+      fBuf: new Float32Array(FB_W * (GLASS_BOT - GLASS_TOP)),
+      waxCell: new Uint8Array(term.cols * rows),
       ctx: { cx: 0, nb: 0, waxTier: 0, liquidTier: 0, liquid: 0, muted: false },
       bx: new Float32Array(8), by: new Float32Array(8), bir2: new Float32Array(8), biy: new Float32Array(8),
       bufs: [0, 1].map(() => Array.from({ length: term.cols * rows }, () => new Uint16Array(cellH))),
@@ -341,9 +381,12 @@ function renderLamp(F, t, ph, loud, kick, muted) {
   // The lamp's light: a halo centred low in the glass, reaching further as
   // the music gets louder and blowing out on a kick.
   const gy0 = (GLASS_TOP + GLASS_BOT) * 0.56
-  const reach = muted ? 0.55 : 0.75 + 0.6 * loud + 1.3 * kick
+  // The kick brightens the halo far more than it widens it (2026-10-20):
+  // reach +0.25, glow +1.1, so the blow-out stays within about a third of
+  // the canvas round the lamp instead of most of it.
+  const reach = muted ? 0.55 : 0.75 + 0.55 * loud + 0.25 * kick
   const irx2 = 1 / Math.pow(70 * reach, 2), iry2 = 1 / Math.pow(105 * reach, 2)
-  const glow = muted ? 0.45 : 0.7 + 0.3 * loud + 0.6 * kick
+  const glow = muted ? 0.45 : 0.7 + 0.3 * loud + 1.1 * kick
   // The room -- haze lit by the lamp -- on a coarse grid every 4 pixels,
   // bilinear per pixel below. Everything costly (the noise, the halo's exp)
   // happens here, 1/16th as often as per pixel.
@@ -367,8 +410,15 @@ function renderLamp(F, t, ph, loud, kick, muted) {
       const a = hz8[j] + (hz8[j + 1] - hz8[j]) * fx
       const b = hz8[j + HW8] + (hz8[j + HW8 + 1] - hz8[j + HW8]) * fx
       const d = (a + (b - a) * fy) * (0.13 + 1.0 * L) + 0.06 * L
-      roomN[i] = Math.min(16, Math.round(d * 16))
-      roomT[i] = L > 0.3 ? 3 : 2
+      // Soft-saturated, never solid (2026-10-20): at full density the lit
+      // haze beside the lamp filled whole 4x4 blocks and showed their
+      // staircase outline. A haze stays a dither, however hard the kick.
+      roomN[i] = Math.round(ROOM_MAX * 16 * (1 - Math.exp(-d / ROOM_MAX)))
+      // One tier for the whole room (2026-10-20): the lamp's light is
+      // density, never a tier step -- a cell's attribute is its brightest
+      // pixel's, so a lit/unlit tier split quantised every bank's edge to
+      // a 16px cell row and the kick rendered as horizontal scan bars.
+      roomT[i] = 2
     }
   }
 
@@ -390,7 +440,30 @@ function renderLamp(F, t, ph, loud, kick, muted) {
   bx[nb] = cx + 4 * Math.sin(ph * 0.9); by[nb] = GLASS_TOP - 3; bir2[nb] = 1 / Math.pow(2 * 10 * swell, 2); biy[nb] = 1 / 0.45; nb++
   const waxTier = muted ? 3 : kick > 0.5 ? 5 : 4
   const liquidTier = muted ? 2 : 3
-  const liquid = muted ? 0.1 : 0.14 + 0.08 * loud + 0.22 * kick
+  // Halved 2026-10-20 (it read as a screen-door mesh over the wax).
+  const liquid = muted ? 0.05 : 0.07 + 0.04 * loud + 0.16 * kick
+
+  // The wax field, once per render over the glass's box, before shading:
+  // shadeRow reads it back, and a cell holding any wax is marked, so the
+  // liquid in it can be thinned to make up for the tier the wax lifts the
+  // whole cell to (the "stepped notch" of the 2026-10-20 critique).
+  const { fBuf, waxCell } = F
+  waxCell.fill(0)
+  for (let y = GLASS_TOP; y < GLASS_BOT; y++) {
+    const hw = lampRow(y)[1], o = (y - GLASS_TOP) * FB_W
+    for (let x = 0; x < FB_W; x++) {
+      const px = cx - FB_HALF + x
+      if (Math.abs(px - cx) > hw) { fBuf[o + x] = 0; continue }
+      let f = 0
+      for (let k = 0; k < nb; k++) {
+        const ex = px - bx[k], ey = y - by[k]
+        const q = 1 - (ex * ex + ey * ey * biy[k]) * bir2[k]
+        if (q > 0) f += q * q
+      }
+      fBuf[o + x] = f
+      if (f > WAX_FRINGE) waxCell[((y / F.cellH) | 0) * F.cols + ((px / F.cellW) | 0)] = 1
+    }
+  }
 
   F.front ^= 1
   F.lit.fill(0)
@@ -407,7 +480,7 @@ function renderLamp(F, t, ph, loud, kick, muted) {
  *  throwing that away on the way out (81 "exit from OSR'd inner loop"
  *  deopts in a 60-render bench, ~80ms a render). */
 function shadeRow(F, R, bufs, py) {
-  const { cellW, cellH, cols, roomN, roomT, GW, bx, by, bir2, biy } = F
+  const { cellW, cellH, cols, roomN, roomT, GW, fBuf, waxCell } = F
   const { cx, nb, waxTier, liquidTier, liquid, muted } = R
   const tierOut = F.tier, lit = F.lit
   const gh = GLASS_BOT - GLASS_TOP
@@ -418,7 +491,9 @@ function shadeRow(F, R, bufs, py) {
     const kind = lr[0], hwRow = lr[1]
     const g0 = py >> 2
     const sGlass = kind === 2 ? (py - GLASS_TOP) / gh : 0
-    const liquidRow = liquid + 0.32 * Math.pow(sGlass, 4) * (muted ? 0.5 : 1)
+    const liquidRow = liquid + 0.2 * Math.pow(sGlass, 4) * (muted ? 0.5 : 1)
+    const liqThin = LIQ_IN_WAX[Math.min(2, Math.max(0, waxTier - liquidTier))]
+    const fRow = (py - GLASS_TOP) * FB_W + FB_HALF - cx
     const metalRim = (kind === 1 && py < CAP_TOP + 2) || (kind === 3 && py < GLASS_BOT + 1) ||
       (kind === 4 && py < COLLAR_BOT + 1) || py >= BASE_BOT - 1
     const brow = (ry & 3) * 4
@@ -459,15 +534,17 @@ function shadeRow(F, R, bufs, py) {
             // The glass: its rim, the liquid (lit from the bulb below), the wax.
             if (edge < 1.5) { d = 0.8; tier = 3 }
             else {
-              let f = 0
-              for (let k = 0; k < nb; k++) {
-                const ex = px - bx[k], ey = py - by[k]
-                const q = 1 - (ex * ex + ey * ey * biy[k]) * bir2[k]
-                if (q > 0) f += q * q
-              }
+              const f = fBuf[fRow + px]
               if (f >= WAX_EDGE) { d = 1; tier = waxTier }
               else if (f > WAX_FRINGE) { d = 0.2 + 0.6 * (f - WAX_FRINGE) / (WAX_EDGE - WAX_FRINGE); tier = waxTier }
-              else { d = liquidRow; tier = liquidTier }
+              else if (dx < 0 && adx > hwRow * 0.55 && adx < hwRow * 0.68) { d = 0.35; tier = liquidTier }
+              else {
+                // The liquid is lit from the bulb at the centre and thins
+                // toward the glass (2026-10-20), so a flare is a glow in
+                // the glass, not a flat filled block.
+                const r = adx / hwRow
+                d = liquidRow * (1 - 0.7 * r * r) * (waxCell[ci] ? liqThin : 1); tier = liquidTier
+              }
             }
           } else if (edge < 1.5 || metalRim) { d = 1; tier = 3 }
           // The metal: dark against the lit haze, one rim, one highlight.
@@ -477,9 +554,12 @@ function shadeRow(F, R, bufs, py) {
           if (adx < SHELF_HW) { d = 1 - 0.6 * adx / SHELF_HW; tier = 3 }
         } else if (py < SHELF_Y) {
           // The room, beside the lamp: the same block value the fast path
-          // below reads, so the two meet without a seam.
+          // reads, so the two meet without a seam -- thinned by a tier's
+          // worth, since this cell also holds the lamp's MUTED rim, which
+          // lifts the whole cell (2026-10-20: unthinned, the haze either
+          // side of the lamp showed as a brighter column of cells).
           const i0 = g0 * GW + (px >> 2)
-          d = roomN[i0] / 16; tier = roomT[i0]
+          d = roomN[i0] / 16 * LIQ_IN_WAX[1]; tier = roomT[i0]
         }
         if (d > BAYER[brow + (px0 & 3)]) {
           bits |= 1 << (cellW - 1 - px0)
