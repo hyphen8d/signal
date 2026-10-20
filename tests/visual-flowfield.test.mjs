@@ -9,7 +9,10 @@
 // rising edge kicks; that it kicks with no tap; that MUTED is dim but never
 // blank, never kicks and still moves; that a change of level changes the
 // wax's speed and the lamp's reach but never jumps the haze or the wax; that
-// re-entry carries no kick clock; and that BRIGHT stays on the wax.
+// re-entry carries no kick clock; and that BRIGHT stays on the wax. Since
+// the 2026-10-20 polish: the room's haze is one tier with no solid dither
+// tile (no cell-row bars), the kick's light stays round the lamp, and the
+// liquid fades toward the glass and is thinned in cells the wax shares.
 //
 // The frame loop rewrites p._au every frame (visualizer.js), so the audio is
 // driven by calling the effect's draw directly with a crafted signal, as
@@ -325,5 +328,97 @@ test('LAVA LAMP: BRIGHT stays on the wax (tube bloom)', async () => {
       drawWith(h, fx, t, signal({ pulse: f % 8 === 0 ? 1 : 0, level: 0.95, bass: 0.95 }))
       assert.equal(cellsWith(h.term, BRIGHT, outside), 0, `BRIGHT outside the glass at frame ${f}`)
     }
+  } finally { h.shutdown() }
+})
+
+// 2026-10-20 polish (the critique: on the kick the haze became full-width
+// scan bars with cell-row edges, the glow blew out across most of the
+// canvas, and the glass filled as a flat block with a stepped notch).
+test('LAVA LAMP: the haze is one tier and never solid -- light is density, so no cell-row bars', async () => {
+  const { h, fx, mod } = await bootLamp()
+  try {
+    // The room: every cell clear of the lamp (glass and cap at most 46px
+    // each side of centre, the base 58px), right up beside the glass, where
+    // the lit haze is densest.
+    const shelfRow = 1 + Math.floor(mod.SHELF_Y / CELL_H), mid = h.term.cols >> 1
+    const baseRow = 1 + Math.floor(mod.GLASS_BOT / CELL_H)
+    const room = (x, y) => y < shelfRow && Math.abs(x - mid) > (y >= baseRow ? 9 : 7)
+    let t = settle(h, fx, 1, signal({ level: 1 }))
+    for (let f = 0; f < 12; f++) {
+      t += 0.016; drawWith(h, fx, t, f === 0 ? signal(KICK) : signal({ pulse: 0.8, level: 1 }))
+      let tiered = 0, solid = 0
+      for (let y = 1; y < VIZ_BOT; y++) {
+        for (let x = 0; x < h.term.cols; x++) {
+          const i = y * h.term.cols + x, g = h.term.gfx[i]
+          if (!g || !room(x, y)) continue
+          if (!(h.term.attrs[i] & DIM)) tiered++
+          // A solid 4x4 dither tile (the old knee-less haze saturated to
+          // these and drew their staircase outline).
+          for (let r = 0; r < CELL_H; r += 4) {
+            for (const m of [0xf0, 0x0f]) if ((g[r] & g[r + 1] & g[r + 2] & g[r + 3] & m) === m) solid++
+          }
+        }
+      }
+      assert.equal(tiered, 0, `frame ${f}: ${tiered} room cells above DIM -- a tier step draws a cell-row edge`)
+      assert.equal(solid, 0, `frame ${f}: ${solid} solid 4x4 tiles in the room -- the haze filled a block`)
+    }
+  } finally { h.shutdown() }
+})
+
+test('LAVA LAMP: the kick lights the haze round the lamp, not the far room', async () => {
+  const { h, fx } = await bootLamp()
+  try {
+    const cols = h.term.cols, mid = cols >> 1, third = Math.round(cols / 6)
+    const near = (x) => Math.abs(x - mid) <= third
+    const far = (x) => Math.abs(x - mid) > third + 4
+    let t = settle(h, fx, 1)
+    t += 0.034; drawWith(h, fx, t, signal())
+    const n0 = litPixels(h.term, (x) => near(x)), f0 = litPixels(h.term, (x) => far(x))
+    t += 0.016; drawWith(h, fx, t, signal(KICK))
+    const n1 = litPixels(h.term, (x) => near(x)), f1 = litPixels(h.term, (x) => far(x))
+    // Measured 2026-10-20: near +~1500 px, far +~100. With the old reach
+    // (1.3 per kick) the far thirds gained about as much as the middle.
+    assert.ok(n1 - n0 > 600, `the kick lit only ${n1 - n0} more px round the lamp`)
+    assert.ok(f1 - f0 < (n1 - n0) * 0.25, `the far room gained ${f1 - f0} px against ${n1 - n0} near the lamp`)
+  } finally { h.shutdown() }
+})
+
+test('LAVA LAMP: on the kick the liquid glows from the centre, with no notch where the wax is', async () => {
+  const { h, fx, mod } = await bootLamp()
+  try {
+    let t = settle(h, fx, 1)
+    t += 0.016; drawWith(h, fx, t, signal(KICK))
+    // Pixel-level, off the effect's own wax field: a liquid pixel is a glass
+    // pixel clear of the rim, the highlight stripe and the wax's fringe.
+    const F = h.program._lava, cols = h.term.cols
+    const cx = (cols * CELL_W) >> 1
+    const FB_W = F.fBuf.length / (mod.GLASS_BOT - mod.GLASS_TOP), FB_HALF = (FB_W - 1) / 2
+    const tally = () => ({ on: 0, n: 0 })
+    const centre = tally(), outer = tally(), inWax = tally(), clear = tally()
+    for (let y = mod.GLASS_TOP + 20; y < mod.GLASS_BOT - 20; y++) {
+      const hw = mod.lampRow(y)[1]
+      for (let x = Math.ceil(cx - hw + 3); x <= cx + hw - 3; x++) {
+        const dx = x - cx, adx = Math.abs(dx)
+        if (dx < 0 && adx > hw * 0.5 && adx < hw * 0.72) continue
+        if (F.fBuf[(y - mod.GLASS_TOP) * FB_W + FB_HALF + dx] > 0.25) continue
+        const ci = (1 + Math.floor(y / CELL_H)) * cols + Math.floor(x / CELL_W)
+        const g = h.term.gfx[ci]
+        const on = g && (g[y % CELL_H] >> (CELL_W - 1 - (x % CELL_W))) & 1 ? 1 : 0
+        const wax = !(h.term.attrs[ci] & (MUTED | DIM | FAINT))
+        const band = wax ? null : adx < hw * 0.4 ? centre : adx > hw * 0.75 ? outer : null
+        for (const b of [band, wax ? inWax : clear]) {
+          if (b) { b.on += on; b.n++ }
+        }
+      }
+    }
+    const share = (b) => b.on / Math.max(1, b.n)
+    assert.ok(centre.n > 200 && outer.n > 100 && inWax.n > 50 && clear.n > 200, 'test setup: too few liquid pixels')
+    // Old: one flat density across the glass (outer/centre ~1), and the
+    // liquid in a wax cell lifted to the wax's tier at full density -- the
+    // stepped notch.
+    assert.ok(share(outer) < share(centre) * 0.7,
+      `the liquid at the glass (${share(outer).toFixed(2)}) is as dense as at the centre (${share(centre).toFixed(2)})`)
+    assert.ok(share(inWax) < share(clear) * 0.8,
+      `liquid in wax cells (${share(inWax).toFixed(2)}) is not thinned against the rest (${share(clear).toFixed(2)})`)
   } finally { h.shutdown() }
 })
