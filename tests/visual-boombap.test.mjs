@@ -5,6 +5,9 @@
 // that it kicks with no tap at all (syntheticAudio), that mute stills it,
 // that re-entry after a long visit carries no kick clock, and the tube caps
 // ('█' and BRIGHT) every effect since UPRISING has had to keep.
+// Since 2026-10-20 the speakers are pixel bitmaps, so what is read about
+// them is term.gfx (a putGlyph() cell holds a space), plus that they are
+// round on the 4:3 face.
 //
 // The frame loop rewrites p._au every frame (visualizer.js), so everything
 // about the beat is driven by calling the effect's draw directly with a
@@ -48,7 +51,16 @@ function drawWith(h, fx, t, A, term = h.term) {
   fx.draw(h.program, { term }, t)
 }
 
-/** Both speakers' cells (chars + attrs) as one string -- what the kick moves. */
+/** Lit pixels in one cell's bitmap (0 for a character cell). The speakers
+ *  are pixel bitmaps since the 2026-10-20 polish pass. */
+function px(term, x, y) {
+  const bits = term.gfx[y * term.cols + x]
+  let n = 0
+  if (bits) for (const row of bits) { let r = row; while (r) { n += r & 1; r >>>= 1 } }
+  return n
+}
+
+/** Both speakers' cells (chars + attrs + bitmaps) as one string -- what the kick moves. */
 function cones(h, mod, term = h.term) {
   const L = mod.boomLayout(term.cols)
   let s = ''
@@ -56,13 +68,13 @@ function cones(h, mod, term = h.term) {
     for (let y = mod.SPK_CY - mod.SPK_RY; y <= mod.SPK_CY + mod.SPK_RY; y++) {
       for (let x = Math.ceil(cx - L.rx + 1); x <= Math.floor(cx + L.rx - 1); x++) {
         const i = y * term.cols + x
-        s += String.fromCodePoint(term.chars[i]) + term.attrs[i]
+        s += String.fromCodePoint(term.chars[i]) + term.attrs[i] + (term.gfx[i] ? Array.from(term.gfx[i]).join('.') : '-') + '|'
       }
     }
   }
   return s
 }
-const diffCount = (a, b) => { let n = 0; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) n++; return n }
+const diffCount = (a, b) => { const A = a.split('|'), B = b.split('|'); let n = 0; for (let i = 0; i < Math.max(A.length, B.length); i++) if (A[i] !== B[i]) n++; return n }
 
 /** Draws quiet frames until the kick clock and the springs have settled. */
 function settle(h, fx, t0, A = signal()) {
@@ -110,13 +122,18 @@ test('BOOM BAP: the boombox is there -- case, handle, two speakers, the deck, th
     assert.ok(L.x1 - L.x0 >= 60, `the box fills the frame (${L.x1 - L.x0 + 1} cols)`)
     assert.match(h.row(mod.HANDLE_Y), /╭─+╮/, 'the handle arches over the case')
     for (const cx of [L.lcx, L.rcx]) {
-      // Each speaker: its frame at both ends of its middle row, the dust cap
-      // dead centre, the frame's top and bottom arcs.
-      assert.equal(at(Math.round(cx - L.rx), mod.SPK_CY), '│', `speaker frame, left side (cx ${cx})`)
-      assert.equal(at(Math.round(cx + L.rx), mod.SPK_CY), '│', `speaker frame, right side (cx ${cx})`)
-      assert.ok(h.row(mod.SPK_CY).slice(Math.floor(cx) - 1, Math.ceil(cx) + 2).includes('●'), 'a dust cap at the centre')
-      assert.equal(at(Math.round(cx), mod.SPK_CY - mod.SPK_RY), '─', 'the frame closes over the top')
-      assert.equal(at(Math.round(cx), mod.SPK_CY + mod.SPK_RY), '─', 'and under the bottom')
+      // Each speaker, in pixels: its frame lit at both ends of its middle
+      // row and over the top and under the bottom, the dust cap lit dead
+      // centre, and the cone dark between the ridges.
+      const c = Math.round(cx)
+      const col = (y) => { let n = 0; for (let x = c - 1; x <= c + 1; x++) n += px(h.term, x, y); return n }
+      assert.ok(px(h.term, Math.round(cx - L.rx), mod.SPK_CY) > 8, `speaker frame, left side (cx ${cx})`)
+      assert.ok(px(h.term, Math.round(cx + L.rx), mod.SPK_CY) > 8, `speaker frame, right side (cx ${cx})`)
+      assert.ok(px(h.term, c, mod.SPK_CY) > 30, 'a dust cap at the centre')
+      let top = 0, bot = 0
+      for (let y = mod.SPK_CY - mod.SPK_RY; y < mod.SPK_CY - 2; y++) top += col(y)
+      for (let y = mod.SPK_CY + 3; y <= mod.SPK_CY + mod.SPK_RY; y++) bot += col(y)
+      assert.ok(top > 10 && bot > 10, `the frame closes over the top and under the bottom (${top}, ${bot} px)`)
     }
     assert.ok(h.find('C-90') >= 0, 'a cassette in the deck')
     let bars = 0
@@ -134,11 +151,16 @@ test('BOOM BAP: a kick pumps the cones OUT, and they come back to rest', async (
     const out = cones(h, mod)
     const moved = diffCount(rest, out)
     assert.ok(moved >= 30, `the kick moved only ${moved / 2 | 0} cone cells -- it has to be the thing you see`)
+    // And the cone itself moved, not only its tier: the ridges and the cap
+    // are thrown outward, so the bitmaps change (attributes stripped here).
+    const shape = (str) => str.split('|').map((c) => c.replace(/^.\d+/, '')).join('|')
+    const reshaped = diffCount(shape(rest), shape(out))
+    assert.ok(reshaped >= 60, `the kick re-drew only ${reshaped} cone bitmaps -- the ridges have to jump out`)
     const L = mod.boomLayout(h.term.cols)
-    const cap = Math.round(L.lcx)
-    const capRow = h.row(mod.SPK_CY)
-    const capX = capRow.indexOf('●', cap - 2)
-    assert.ok(capX >= 0 && h.term.attrs[mod.SPK_CY * h.term.cols + capX] & BRIGHT, 'the dust cap lights on the kick')
+    for (const cx of [L.lcx, L.rcx]) {
+      const i = mod.SPK_CY * h.term.cols + Math.round(cx)
+      assert.ok(h.term.gfx[i] && h.term.attrs[i] & BRIGHT, `the dust cap lights on the kick (cx ${cx})`)
+    }
     // Held, then released: past KICK_HOLD_S with the pulse fallen, the cones
     // are exactly where they started.
     for (let i = 0; i < 12; i++) { t += 0.016; drawWith(h, fx, t, signal({ pulse: Math.max(0, 1 - i * 0.1) })) }
@@ -246,9 +268,11 @@ test('BOOM BAP: the speakers outrank the box -- MUTED cones at rest, BRIGHT only
     // A quiet passage, settled: the cone's ridges are MUTED anyway.
     const quiet = signal({ level: 0.1, bass: 0.1, bands9: new Array(9).fill(0.9) })
     let t = settle(h, fx, 1, quiet)
+    // The two ridges cross the middle row between the frame and the cap:
+    // lit cells there, and every lit one MUTED.
     let ridges = 0
-    for (let x = Math.ceil(L.lcx - L.rx + 1); x < Math.floor(L.lcx - 1); x++) {
-      if (h.row(mod.SPK_CY)[x] === '│') {
+    for (let x = Math.ceil(L.lcx - L.rx * 0.8); x < Math.floor(L.lcx - L.rx * 0.25); x++) {
+      if (px(h.term, x, mod.SPK_CY)) {
         ridges++
         assert.equal(h.term.attrs[mod.SPK_CY * h.term.cols + x], MUTED, `the cone ridge at ${x} is not MUTED at rest`)
       }
@@ -260,7 +284,11 @@ test('BOOM BAP: the speakers outrank the box -- MUTED cones at rest, BRIGHT only
     t += 0.016; drawWith(h, fx, t, hot)
     let caps = 0
     for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < h.term.cols; x++) {
-      if (h.term.attrs[y * h.term.cols + x] & BRIGHT) { caps++; assert.equal(h.row(y)[x], '●', `BRIGHT '${h.row(y)[x]}' at ${x},${y}`) }
+      if (h.term.attrs[y * h.term.cols + x] & BRIGHT) {
+        caps++
+        const onCap = Math.abs(y - mod.SPK_CY) <= 1 && [L.lcx, L.rcx].some((cx) => Math.abs(x - cx) <= 2.5)
+        assert.ok(onCap && h.term.gfx[y * h.term.cols + x], `BRIGHT '${h.row(y)[x]}' at ${x},${y}, off the dust caps`)
+      }
     }
     assert.ok(caps >= 2, `test setup: the kick lit ${caps} dust-cap cells`)
     // The wall and the paving: FAINT dotted rules, never a solid line.
@@ -276,5 +304,35 @@ test('BOOM BAP: the speakers outrank the box -- MUTED cones at rest, BRIGHT only
     // And the handle's arch is clear of the wall.
     const hx0 = Math.round(L.mid - 15), hx1 = Math.round(L.mid + 15)
     assert.equal(h.row(mod.HANDLE_Y + 1).slice(hx0 + 1, hx1).trim(), '', 'a wall joint under the handle')
+  } finally { h.shutdown() }
+})
+
+test('BOOM BAP: the speakers are round on the face, not eggs (2026-10-20)', async () => {
+  // The character cones were ellipses SPK_RY rows tall and read as upright
+  // eggs / hex nuts. In pixels the vertical radius is corrected for the 4:3
+  // face the grid is stretched onto: a beam pixel shows taller than wide.
+  const { h, fx, mod } = await bootBox()
+  try {
+    settle(h, fx, 1)
+    const L = mod.boomLayout(h.term.cols)
+    const { cellW, cellH } = h.term.font
+    const k = (h.term.cols * cellW * 0.75) / (h.term.rows * cellH)
+    let minX = Infinity, maxX = -1, minY = Infinity, maxY = -1
+    for (let y = 1; y < VIZ_BOT; y++) {
+      for (let x = Math.floor(L.lcx - L.rx - 2); x <= Math.ceil(L.lcx + L.rx + 2); x++) {
+        const bits = h.term.gfx[y * h.term.cols + x]
+        if (!bits) continue
+        bits.forEach((row, py) => {
+          for (let b = 0; b < cellW; b++) {
+            if (!(row & (1 << (cellW - 1 - b)))) continue
+            const X = x * cellW + b, Y = y * cellH + py
+            minX = Math.min(minX, X); maxX = Math.max(maxX, X); minY = Math.min(minY, Y); maxY = Math.max(maxY, Y)
+          }
+        })
+      }
+    }
+    const w = maxX - minX + 1, tall = (maxY - minY + 1) * k
+    assert.ok(w > 60, `test setup: found the left speaker (${w}px wide)`)
+    assert.ok(Math.abs(tall / w - 1) < 0.08, `the speaker shows ${w}px wide by ${tall.toFixed(0)}px tall on the face`)
   } finally { h.shutdown() }
 })

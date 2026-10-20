@@ -59,6 +59,31 @@
 //     the background reads as texture behind the case and never as a second
 //     outline.
 //
+// 2026-10-20 (polish pass). The critic, on the 10-20 tube sheets: "the
+// speakers are octagonal nuts with `••` eyes, so the boombox wears two
+// faces", and on the kick the cap became "a `█` plus-sign slab, a cross".
+// Both were the character renderer, not the design: concentric ellipses of
+// `/ \ │ ─` step into octagons on a 2:1 cell; the '░' surround landed as
+// blocks at the eight points where the curve crossed a cell (the "lugs");
+// the cap's centre straddled two cells, so two '●' side by side -- eyes; and
+// the '▒' dome round it lit as a cross on the kick. What changed:
+//   - The two speakers are putGlyph() pixel bitmaps (FLAME's renderer, the
+//     critic's first fix): a frame ring, a quarter-dithered rubber surround,
+//     two thin ridges on a dark cone, and a filled dust cap. Round on the
+//     FACE, not the grid -- the vertical radius is corrected for the 4:3
+//     stretch, where the character cones were SPK_RY rows tall and showed
+//     as upright eggs.
+//   - The kick is the same event, held the same KICK_HOLD_S: the ridges and
+//     the cap are thrown ~6px outward (SPK_PUSH 1.12, was 1.24 of a much
+//     coarser ring), the ridges go MUTED -> NORMAL and the cap DIM -> BRIGHT,
+//     its dither filling in. BRIGHT only on cells that are mostly cap.
+//   - The bitmaps are a pure function of (width, pump, surround tier), so
+//     they are built once per state and cached; the case clear skips the
+//     speakers' cells, so an unchanged frame re-puts the same reference and
+//     re-rasters nothing.
+// Left alone: the case outline was already NORMAL and the wall FAINT
+// (the critic's third point); the deck, dial and EQ are unchanged.
+//
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
 
@@ -109,19 +134,6 @@ export function boomLayout(cols) {
   L = { bodyW, x0, x1, mid, deckHalf, rx, lcx: x0 + 2 + rx, rcx: x1 - 2 - rx }
   LAYOUTS.set(cols, L)
   return L
-}
-
-// Ring glyph from the slope of the ellipse where a cell sits, measured in
-// CELLS (an ellipse rx columns wide and ry rows tall): shallow is '─', steep
-// is '│', and only the genuinely diagonal stretch gets a slash. Choosing by
-// angle instead drew runs of '////' on the shallow shoulders, where a 2:1
-// cell makes the curve far flatter than its angle says. (Screen y runs down,
-// so the upper-right quadrant slopes like '\'.)
-function ringGlyph(nx, ny, rx, ry) {
-  const tx = Math.abs(ny * rx), ty = Math.abs(nx * ry)   // tangent, in cells
-  if (ty < tx * 0.4) return '─'
-  if (ty > tx * 2.5) return '│'
-  return (nx > 0) === (ny < 0) ? '\\' : '/'
 }
 
 const REEL_SPOKES = ['│', '/', '─', '\\']
@@ -217,8 +229,9 @@ export default {
 
     // --- the case ---------------------------------------------------------------
     const { x0, x1, mid, deckHalf, rx } = L
+    const spk = speakerMask(term, L)
     for (let y = BODY_TOP; y <= BODY_BOT; y++) {
-      for (let x = x0; x <= x1; x++) term.put(x, y, ' ')
+      for (let x = x0; x <= x1; x++) if (!spk[y * cols + x]) term.put(x, y, ' ')
     }
     for (let x = x0 + 1; x < x1; x++) { term.put(x, BODY_TOP, '─', NORMAL); term.put(x, BODY_BOT, '─', NORMAL) }
     for (let y = BODY_TOP + 1; y < BODY_BOT; y++) { term.put(x0, y, '│', NORMAL); term.put(x1, y, '│', NORMAL) }
@@ -246,66 +259,15 @@ export default {
     term.text(x1 - 7, DIAL_Y, 'STEREO', FAINT)
 
     // --- the speakers -----------------------------------------------------------
-    // Concentric rings on an ellipse rx wide and SPK_RY tall. Ring radii are
-    // in units of the speaker's own radius; a cell sits on a ring when it is
-    // within RING_W cells of it, measured along the ellipse's gradient so the
-    // outline is one cell thick all the way round. Back to front: the frame,
-    // the rubber surround (a '░' band), two ridges on the cone, the dust cap.
-    // The kick pushes the ridges and the cap OUTWARD and lifts them a tier or
-    // two -- the cone moving is the beat. The pump is two positions held, not
-    // a continuum: OUT for KICK_HOLD_S after the kick, then at rest. A real
-    // cone snaps out and back. The first cut eased smoothly and sent a
-    // pressure ring out after each kick, which kept the speakers moving for a
-    // quarter-second after every beat: the reactivity probe scored it 2.95x,
-    // the motion between kicks diluting the kick itself. A three-step
-    // (out / half / rest) still scored 4.4x for the same reason.
+    // Pixel cones (2026-10-20 polish -- see the header): the bitmaps are a
+    // pure function of (width, pump, surround tier), built once each and
+    // re-put every frame. The case clear above skips these cells, so an
+    // unchanged frame's putGlyph() is the same reference and costs nothing.
     const pump = !muted && t - p._boomKickAt < KICK_HOLD_S ? 1 : 0
-    // Between kicks the cones sit at a tier set by how loud the passage is --
-    // `_boomLoud`, the level smoothed over about a second, so a loud chorus
-    // reads hotter than a quiet verse without the cones flickering between
-    // beats. (Without it the music changed 4.6% of the frame, less than the
-    // version this replaced: at rest the speakers looked the same at any
-    // volume.)
-    const loud = p._boomLoud
-    // 2026-10-16 (design pass): MUTED at rest at any level -- a FAINT/DIM
-    // cone left the speakers the dimmest things on the box. Loudness still
-    // shows in the surround below.
-    const restAt = MUTED
-    const ry = SPK_RY
-    const push = 1 + 0.24 * pump
-    const coneAt = pump === 1 ? NORMAL : restAt
-    const ridges = [
-      { r: 1.0, at: NORMAL },                                   // the frame
-      { r: 0.62 * push, at: coneAt },
-      { r: 0.4 * push, at: coneAt },
-    ]
-    const RING_W = 0.42
-    for (const cx of [L.lcx, L.rcx]) {
-      const xa = Math.max(0, Math.floor(cx - rx - 1)), xb = Math.min(cols - 1, Math.ceil(cx + rx + 1))
-      for (let y = SPK_CY - ry; y <= SPK_CY + ry; y++) {
-        for (let x = xa; x <= xb; x++) {
-          const nx = (x - cx) / rx, ny = (y - SPK_CY) / ry
-          const d = Math.hypot(nx, ny)
-          if (d > 1.08) continue
-          const g = Math.hypot(nx / rx, ny / ry) / Math.max(d, 1e-6)  // |grad d| per cell
-          const near = (r) => Math.abs(d - r) / Math.max(g, 1e-6) < RING_W
-          let ch = ' ', at = FAINT
-          if (d < 0.2 * push) {
-            // Dust cap: a dome that lights on the kick.
-            // Only the centre '●' goes BRIGHT; a BRIGHT '▓' cap bloomed into a
-            // lit cross on the tube (Chrome check, 2026-10-16).
-            if (d < 0.1) { ch = '●'; at = pump === 1 ? BRIGHT : pump > 0 ? NORMAL : DIM }
-            else { ch = pump > 0 ? '▒' : '░'; at = pump === 1 ? NORMAL : pump > 0 ? MUTED : DIM }
-          } else {
-            let hit = null
-            for (const rg of ridges) if (near(rg.r)) { hit = rg; break }
-            if (hit) { ch = ringGlyph(nx, ny, rx, ry); at = hit.at }
-            else if (d > 0.84 && d < 1.0) { ch = '░'; at = loud > 0.5 ? DIM : FAINT }    // the rubber surround
-            else if (d >= 1.0) continue
-          }
-          term.put(x, y, ch, at)
-        }
-      }
+    const cells = speakerCells(term, L, pump, p._boomLoud > 0.5)
+    for (const c of cells) {
+      if (c.bits) term.putGlyph(c.x, c.y, c.bits, c.attr)
+      else term.put(c.x, c.y, ' ')
     }
 
     // --- the cassette deck ------------------------------------------------------
@@ -353,4 +315,106 @@ export default {
     // Knobs.
     term.text(Math.round(mid - 7), KNOB_Y, 'VOL ○   BASS ○', DIM)
   },
+}
+
+// --- pixel speakers (2026-10-20) ----------------------------------------------
+// Radii in units of the speaker's own radius, back to front. PUSH is how far
+// the kick throws the ridges and the cap outward (~6px on the 80-column set).
+const SPK_FRAME = 1.0, SPK_SURROUND = [0.85, 0.95], SPK_RIDGES = [0.66, 0.45], SPK_CAP = 0.17
+const SPK_PUSH = 1.12
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
+
+/** Pixel geometry of both speakers for a term: centres and radii in beam
+ *  pixels. The vertical radius is corrected for the face's aspect (the grid
+ *  is stretched onto a 4:3 face, so a beam pixel shows taller than wide) --
+ *  the character cones were ellipses SPK_RY rows tall and read as eggs. */
+function speakerGeom(term, L) {
+  const { cellW, cellH } = term.font
+  const k = (term.cols * cellW * 0.75) / (term.rows * cellH) // displayed px per beam px, vertically
+  const Rx = L.rx * cellW
+  const Ry = Math.min(Rx / k, (SPK_RY + 0.45) * cellH)
+  const cy = (SPK_CY + 0.5) * cellH
+  return { cellW, cellH, Rx, Ry, cy, cxs: [L.lcx, L.rcx].map((c) => (c + 0.5) * cellW) }
+}
+
+const MASKS = new Map()
+/** Which cells the speakers own (1) on this grid, cached per width. */
+function speakerMask(term, L) {
+  let m = MASKS.get(term.cols)
+  if (m) return m
+  m = new Uint8Array(term.cols * term.rows)
+  const G = speakerGeom(term, L)
+  for (const cxp of G.cxs) {
+    const xa = Math.floor((cxp - G.Rx - 2) / G.cellW), xb = Math.floor((cxp + G.Rx + 2) / G.cellW)
+    const ya = Math.floor((G.cy - G.Ry - 2) / G.cellH), yb = Math.floor((G.cy + G.Ry + 2) / G.cellH)
+    for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) m[y * term.cols + x] = 1
+  }
+  MASKS.set(term.cols, m)
+  return m
+}
+
+const SPEAKERS = new Map()
+/** The speakers' cells for one state: [{x, y, bits, attr}], bits null for a
+ *  cell with nothing lit. Built once per (width, pump, surround tier). */
+function speakerCells(term, L, pump, warm) {
+  const key = `${term.cols}|${pump}|${warm ? 1 : 0}`
+  let out = SPEAKERS.get(key)
+  if (out) return out
+  out = []
+  const G = speakerGeom(term, L)
+  const mask = speakerMask(term, L)
+  const push = pump ? SPK_PUSH : 1
+  const ridges = SPK_RIDGES.map((r) => r * push)
+  const cap = SPK_CAP * push
+  for (let y = 0; y < term.rows; y++) {
+    for (let x = 0; x < term.cols; x++) {
+      if (!mask[y * term.cols + x]) continue
+      const bits = new Uint16Array(G.cellH)
+      let any = 0, capPx = 0, framePx = 0, ridgePx = 0
+      for (let py = 0; py < G.cellH; py++) {
+        let row = 0
+        for (let px = 0; px < G.cellW; px++) {
+          const sx = x * G.cellW + px + 0.5, sy = y * G.cellH + py + 0.5
+          // The nearer speaker; they never overlap.
+          const cxp = Math.abs(sx - G.cxs[0]) < Math.abs(sx - G.cxs[1]) ? G.cxs[0] : G.cxs[1]
+          const nx = (sx - cxp) / G.Rx, ny = (sy - G.cy) / G.Ry
+          const d = Math.hypot(nx, ny)
+          // Distance to a ring in screen px along the gradient, so a line is
+          // the same thickness all the way round.
+          const g = Math.hypot(nx / G.Rx, ny / G.Ry) / Math.max(d, 1e-6)
+          const off = (r) => Math.abs(d - r) / Math.max(g, 1e-6)
+          const th = BAYER[(py & 3) * 4 + (px & 3)]
+          let on = false
+          if (d < cap) {
+            // The dust cap: a filled dome, its rim solid, the face dithered
+            // (half at rest, nearly full on the kick).
+            on = off(cap) < 1.2 || th < (pump ? 13 : 8)
+            if (on) capPx++
+          } else if (off(SPK_FRAME) < 1.4 || off(SPK_FRAME - 0.035) < 0.6) {
+            on = true; framePx++
+          } else if (ridges.some((r) => off(r) < 0.75)) {
+            on = true; ridgePx++
+          } else if (d > SPK_SURROUND[0] && d < SPK_SURROUND[1]) {
+            on = th < 4 // the rubber surround: a quarter-lit band
+          }
+          if (on) row |= 1 << (G.cellW - 1 - px)
+        }
+        bits[py] = row
+        any |= row
+      }
+      // One attribute per cell, by what the cell holds: the cap sits DIM and
+      // lights on the kick (BRIGHT only where the cell is mostly cap, so the
+      // rim's edge cells do not bloom into a ring), the frame is NORMAL, the ridges MUTED
+      // at rest and NORMAL on the kick, a cell of surround alone DIM or FAINT
+      // by the passage's loudness.
+      const attr = capPx > G.cellW * G.cellH * 0.3 ? (pump ? BRIGHT : DIM)
+        : capPx ? (pump ? NORMAL : DIM)
+          : framePx ? NORMAL
+            : ridgePx ? (pump ? NORMAL : MUTED)
+              : warm ? DIM : FAINT
+      out.push({ x, y, bits: any ? bits : null, attr })
+    }
+  }
+  SPEAKERS.set(key, out)
+  return out
 }
