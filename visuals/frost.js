@@ -53,16 +53,17 @@
 //      build came to equal its LOUD tile.
 //   3. BRIGHTNESS ORDER: tube core (MUTED..NORMAL, BRIGHT only in a thump)
 //      > halo > reflection (two-fifths of the tube, fading with depth) >
-//      wires, curb and rain (FAINT; rain brightens only where it falls
-//      through the heart's glow, capped under the tube).
+//      wires (FAINT, DIM where they meet the sign), curb and rain (FAINT;
+//      rain brightens only where it falls through the heart's glow, capped
+//      under the tube).
 //   4. SHAPES: one smooth tube, thin lines of rain. No shade blocks; the
 //      glow is dithered pixels, never '░'.
 //   5. FOUR STATES: NO TAP beats to syntheticAudio's 0.9s pulse at its
 //      level. LOUD glows NORMAL with a wider halo; quiet glows MUTED. MUTED
-//      switches the sign off: the glass shows as a cold double outline (the
-//      tube's two walls), FAINT, with no halo and no beat -- and the rain
-//      still falls past it and the puddle still ripples, so it is off, not
-//      dead.
+//      switches the sign off: the glass shows as a solid unlit tube at DIM
+//      (2026-10-20; it was the tube's two walls), with no halo and no beat
+//      -- and the rain still falls past it and the puddle still ripples, so
+//      it is off, not dead.
 //   6. REAL-RADIO TEST: a neon heart in a shop window at night, on a set's
 //      screen, is a picture TV has shown for fifty years.
 // Also a neon detail with no audio in it: a short stretch of tube by the
@@ -70,6 +71,33 @@
 // tenth of a second every few seconds -- a hash of the time slot, so it
 // carries no state and needs no reset; never a strobe. Nothing here
 // touches crt.params, so the rear panel's CALM setting has nothing to gate.
+//
+// ---- 2026-10-20 polish ----
+// The critique (CRITIQUE-1020, POLISH, first pass in pixels): the heart and
+// its beat read -- the thump is the best beat on the roster -- but three
+// things did not. Each fixed in place; subject, style and beat untouched.
+//   - THE REFLECTION read as a moustache or a bat: a stair-stepped,
+//     flattened shape that looked wider than the heart. Two causes. Each
+//     water row sampled ONE source row 1.75 rows apart, so a shallow stretch
+//     of a 3px tube came back as single-pixel steps; and a 1-3.5px sideways
+//     shove per row made those steps jagged. Now (TOKYO BAY's method, the
+//     critic's ask) each water row takes the brightest of the source rows
+//     it squashes (REFLECT_SQUASH 0.6), so a shallow stretch is one dash;
+//     every third row is a dark swell gap, so the water is drawn in
+//     horizontal dashes; and the swell is TOKYO BAY's gentle one, 0.6px
+//     near the curb growing to 3px. Two-fifths of the tube, fading with
+//     depth, the heart's own width (the test pins both).
+//   - MUTED read as a cookie cutter: the two walls of the glass, FAINT,
+//     with a dark core. An unlit tube is a dim SOLID tube -- the core is
+//     filled now, at DIM.
+//   - THE WIRES were two ticks into the top bar: the lobes were 22px under
+//     the canvas top. The heart hangs at HEART_TOP 30 now and the curb sits
+//     12px under its point instead of 16, so the reflection keeps room for
+//     the whole heart at 0.6. Each wire is solid at its cell's own beam
+//     level -- FAINT in the dark, DIM (or the sign's own glow, in the cell
+//     it shares with the tube) where it meets the lobe -- because a 1px
+//     line at a fraction of its cell's level dithers into a dotted one,
+//     which the first cut of this fix did.
 //
 // ---- history (condensed) ----
 // 57th pass "Neon Grid Decay": a full-screen wireframe grid whose nodes lit
@@ -110,6 +138,14 @@ export const TUBE_R = 1.5
 // Display units per curve unit. The curve spans y -17..12 (29 units), so
 // the heart stands ~177 pixels -- eleven rows.
 export const HEART_K = 6.1
+// The lobes' tops, in pixels under the canvas top. 2026-10-20: 22 -> 30,
+// so the hang wires are long enough to read as wires (see the header).
+export const HEART_TOP = 30
+// The reflection's vertical squash: a source row per 1/REFLECT_SQUASH
+// reflection rows' worth of the heart (the critique's ~0.6).
+export const REFLECT_SQUASH = 0.6
+// Pixels from the heart's point to the curb.
+const CURB_GAP = 12
 // The electrodes: no glass within this angle of the notch.
 const GAP_THETA = 0.1
 // The distance field stores display units x FIELD_Q in a Uint8, out to
@@ -148,7 +184,7 @@ function build(term) {
   // Width of a framebuffer pixel in display units, on the 4:3 face.
   const aspect = (4 / 3) / (FW / (term.rows * cellH))
   const cx = FW / 2
-  const cy = 22 + (12 - HEART_YMID) * HEART_K // lobes 22px under the canvas top
+  const cy = HEART_TOP + (12 - HEART_YMID) * HEART_K // lobes HEART_TOP px under the canvas top
   const field = new Uint8Array(FW * FH).fill(255)
   const seg = new Uint8Array(FW * FH)
   const N = 1600 // ~0.4 display units apart along the curve
@@ -178,7 +214,7 @@ function build(term) {
     cols, cellW, cellH, adv, rows, FW, FH, cx, cy,
     field, seg,
     lobeDX: lobeX - cx, lobeY,
-    curbY: Math.round(cy + (HEART_YMID + 17) * HEART_K + 16),
+    curbY: Math.round(cy + (HEART_YMID + 17) * HEART_K + CURB_GAP),
     // Everything the heart can light, from its centre at rest scale.
     reachX: (16 * HEART_K + FIELD_REACH) / aspect + 2,
     reachUp: (12 - HEART_YMID) * HEART_K + FIELD_REACH + 2,
@@ -201,7 +237,7 @@ export function tubeCellsFor(term, step = 0.05) {
   const adv = cellW + 1
   const FW = term.cols * adv
   const aspect = (4 / 3) / (FW / (term.rows * cellH))
-  const cx = FW / 2, cy = 22 + (12 - HEART_YMID) * HEART_K
+  const cx = FW / 2, cy = HEART_TOP + (12 - HEART_YMID) * HEART_K
   const out = []
   for (let th = -Math.PI + step / 2; th < Math.PI; th += step) {
     if (Math.abs(th) < GAP_THETA + 0.05) continue
@@ -295,7 +331,7 @@ export default {
           const fade = Math.max(0, 1 - (d - TUBE_R) / (FIELD_REACH - TUBE_R - 2))
           v = haloPeak * Math.exp(-(d - TUBE_R) / haloLen) * fade * fade
         }
-      } else if (Math.abs(d - TUBE_R) < 0.7) v = 108
+      } else if (d <= TUBE_R + 0.2) v = 140 // unlit glass: a solid tube at DIM
       lut[q] = v < 6 ? 0 : Math.min(400, v)
     }
 
@@ -327,36 +363,61 @@ export default {
       }
     }
     markRect(G, xLo, top, xHi, curbY - 1)
-    // Hang wires, one pixel wide, from the lobe tops to the top of the canvas.
+    // Hang wires, one pixel wide, from the top of the canvas to the lobe
+    // tops: FAINT up in the dark, DIM in the cell row they meet the sign.
+    // A wire's value is its cell's whole beam level, never a fraction of
+    // it -- a 1px line under the dither breaks into a dotted one (the first
+    // cut of this did exactly that) -- so in the cell it shares with the
+    // tube it takes that cell's brightest pixel: the wire lit by the sign.
     for (const side of [-1, 1]) {
-      const wx = Math.round(cx + side * G.lobeDX * sc)
+      let wx = Math.round(cx + side * G.lobeDX * sc)
+      if (wx % G.adv === G.adv - 1) wx-- // not in a cell's blank ninth column
       const wy = Math.round(cy + (G.lobeY - cy) * sc - TUBE_R - 1)
-      for (let y = 0; y < wy; y++) if (lum[y * FW + wx] < 96) lum[y * FW + wx] = 96
+      const lastRow = Math.floor((wy - 1) / G.cellH)
+      for (let r = 0; r <= lastRow; r++) {
+        let v = LV_FAINT
+        if (r === lastRow) {
+          v = LV_DIM
+          const c0 = Math.floor(wx / G.adv) * G.adv
+          for (let y = r * G.cellH; y < (r + 1) * G.cellH; y++) {
+            for (let x = c0; x < c0 + G.cellW; x++) if (lum[y * FW + x] > v) v = lum[y * FW + x]
+          }
+        }
+        for (let y = r * G.cellH; y < Math.min(wy, (r + 1) * G.cellH); y++) if (lum[y * FW + wx] < v) lum[y * FW + wx] = v
+      }
       markRect(G, wx, 0, wx, wy)
     }
 
     // --- the wet pavement ---------------------------------------------------------
-    // The curb, then the heart upside down in the puddle: squashed, two-
-    // fifths as bright and fading with depth, each row slid sideways by a
-    // ripple running down it, and now and then a row lost where the rain
-    // breaks the surface.
+    // The curb, then the heart upside down in the puddle (2026-10-20, TOKYO
+    // BAY's method): squashed to REFLECT_SQUASH, two-fifths as bright and
+    // fading with depth, drawn as horizontal dashes -- every third row left
+    // dark, each lit row the brightest of the source rows it squashes (so a
+    // shallow stretch of tube is one dash, not a staircase of single
+    // pixels), slid sideways by a gentle swell that grows with depth. Now
+    // and then a pair of rows is lost where the rain breaks the surface.
     lum.fill(70, curbY * FW, curbY * FW + FW)
     markRect(G, 0, curbY, FW - 1, curbY)
     const deep = FH - curbY - 1
     const drop = Math.floor(t * 3)
+    const step = 1 / REFLECT_SQUASH
     for (let y = curbY + 2; y < FH; y++) {
-      const k = (y - curbY) / deep
-      if (hash2(y >> 1, drop) < 0.1) continue
-      const sy = Math.round(curbY - (y - curbY) * 1.75)
-      if (sy < 0) continue
-      const shift = Math.round(Math.sin(y * 0.45 - t * 2.4) * (1 + 2.5 * k))
-      const gain = 0.42 * (1 - 0.45 * k)
-      const row = y * FW, srow = sy * FW
+      const depth = y - curbY
+      if (depth % 3 === 0) continue // the dark between the swells
+      const k = depth / deep
+      if (hash2(y >> 1, drop) < 0.08) continue
+      const s0 = Math.round(curbY - (depth - 1) * step), s1 = Math.round(curbY - depth * step)
+      if (s1 < 0) continue
+      const amp = 0.6 + 2.4 * k
+      const shift = Math.round(amp * Math.sin(depth * 0.5 - t * 2.2 + 2 * Math.sin(depth * 0.11 + t * 0.5)))
+      const gain = 0.4 * (1 - 0.45 * k)
+      const row = y * FW
       const a = Math.max(0, xLo - shift - 4), b = Math.min(FW - 1, xHi - shift + 4)
       for (let x = a; x <= b; x++) {
         const sx = x + shift
         if (sx < 0 || sx >= FW) continue
-        const v = lum[srow + sx]
+        let v = 0
+        for (let sy = Math.max(0, s1); sy < s0; sy++) { const u = lum[sy * FW + sx]; if (u > v) v = u }
         if (v) lum[row + x] = v * gain
       }
       markRect(G, a, y, b, y)

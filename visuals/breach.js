@@ -33,6 +33,28 @@
 // shape is unchanged -- tests/visuals.test.mjs reads it (H4, M5) -- and a
 // resolve never lands on the box or its margin, so the box cannot paint a
 // word over (or the word the box).
+//
+// 2026-10-20 (polish, from the set critique) -- "overprinted garbage in the
+// KEY field, and the kick moves the bar 5% -> 11%, which reads as nothing."
+// Subject, composition and rendering untouched; four tweaks:
+//   - THE KEY FIELD is three fixed slots (KEY_SLOT_W). It used to re-lay
+//     the three newest words, newest first, on every resolve anywhere --
+//     several times a second -- and under phosphor persistence each lay
+//     ghosted through the last ('0BAFS404A6YN'). Now a resolve only offers
+//     a candidate; a KICK accepts it into one slot, round-robin (so the
+//     field changes when the status says KEY ACCEPTED, and only one slot
+//     of it), and empty slots fill at once at the start of an attempt.
+//     CIPHER's glyph is never a key: in that field it read as corruption.
+//     ACCESS GRANTED ending clears the field with the bar.
+//   - THE KICK moves the bar a sixth (KICK_STEP 0.05 -> 1/6), so a beat is
+//     about five cells and access lands every ~6 kicks.
+//   - BRIGHTNESS ORDER: rain heads BRIGHT -> NORMAL, necks NORMAL ->
+//     MUTED, so BRIGHT in the rain means a resolved word and nothing else;
+//     CIPHER's glyph, when it resolves in the rain, is NORMAL (a station
+//     mark, not a cracked word).
+//   - DENSITY: half the streams are "low" (LOW_SHARE) and begin at the
+//     box's top margin row, so the rows above the box carry about half the
+//     rain and stop reading as a wall.
 
 import { BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
@@ -59,13 +81,39 @@ export function boxRect(cols) {
 // Rows inside the box (relative to its top).
 export const ROW_USER = 2, ROW_KEY = 3, ROW_BAR = 5, ROW_STATUS = 6
 // How far one kick moves the bar, and how long ACCESS GRANTED holds.
-export const KICK_STEP = 0.05
+// 2026-10-20 (polish) -- 0.05 -> 1/6: a kick moved the bar one cell
+// (5% -> 11% on the critic's sheet), which reads as nothing. A sixth of
+// the bar is about five cells, and ACCESS GRANTED lands every ~6 kicks
+// (fewer with the level creep) -- often enough to be seen, rare enough
+// that the box is not ACCESS GRANTED half the time.
+export const KICK_STEP = 1 / 6
 export const GRANTED_HOLD = 1.8
 // How long a kick holds the double-line frame (s of effect clock) -- a
 // countdown, not an absolute time, so re-entry cannot strand it.
 export const KICK_HOLD = 0.35
-// Stream shape: head, neck (NORMAL), body (DIM), end (FAINT).
+// Stream shape: head, neck, body (DIM), end (FAINT). 2026-10-20 (polish)
+// -- the head was BRIGHT, the same tier as a resolved word, so the words
+// did not stand out of the rain (rubric 3). Head NORMAL, neck MUTED now;
+// BRIGHT in the rain belongs to the words alone.
 const NECK = 2
+export const RAIN_HEAD = NORMAL, RAIN_NECK = MUTED
+// 2026-10-20 (polish) -- the rain above the box read as a wall. This share
+// of streams is "low": it begins at the box's top margin row instead of at
+// row 1, so the rows above the box carry about half the rain the rows
+// below do, and the box sits under open sky rather than under a curtain.
+export const LOW_SHARE = 0.5
+// The KEY field: three fixed slots, each as wide as the longest word, so a
+// new key rewrites one slot and never shifts the others.
+// 2026-10-20 (polish) -- the field used to be the three newest words,
+// newest first, re-laid every time any word resolved anywhere (several a
+// second). On the tube each re-lay ghosted through the last one under
+// phosphor persistence and the field read as overprinted garbage
+// ('0BAFS404A6YN'). Now a slot changes only when a KICK accepts a key
+// (KEY ACCEPTED is the status that says so), plus the first fill of an
+// empty slot; and CIPHER's glyph is never a key -- in the KEY field it
+// read as corruption.
+export const KEY_SLOT_W = 5
+export const KEY_GLYPH = '╬╬╬'
 
 /** Would a word of `len` cells starting at column `x` on `row` share a cell
  *  with a word some other column already holds? (2026-09-12, audit H4.) */
@@ -95,6 +143,48 @@ function respawn(col, first) {
   // spawn is scattered over the whole cycle so the screen opens mid-rain.
   const gap = 2 + Math.random() * 28
   col.head = first ? -gap + Math.random() * (VIZ_BOT + gap) : -gap
+  // A low stream's head is counted from the box's top margin row, not from
+  // row 1 (see LOW_SHARE); headRow() applies the offset.
+  col.low = Math.random() < LOW_SHARE
+}
+
+/** The row a column's stream head is on, given the box's top margin row. */
+export function headRow(col, by0) {
+  return Math.floor(col.head) + (col.low ? by0 - 1 : 0)
+}
+
+/** Empties the KEY field: a fresh attempt. */
+function clearKeys(p) {
+  p._breachKeys[0] = p._breachKeys[1] = p._breachKeys[2] = null
+  p._breachKeyNext = 0
+  p._breachKeyNew = -1
+  p._breachCand = null
+}
+
+/** A word just resolved in the rain. It becomes the candidate a kick will
+ *  accept; if a slot is still empty it fills that one at once, so the
+ *  field is not blank for the first few kicks of an attempt. */
+export function offerKey(p, word) {
+  if (word === KEY_GLYPH || p._breachKeys.includes(word)) return
+  const empty = p._breachKeys.indexOf(null)
+  if (empty >= 0) {
+    p._breachKeys[empty] = word
+    p._breachKeyNew = empty
+    p._breachKeyNext = (empty + 1) % p._breachKeys.length
+  } else {
+    p._breachCand = word
+  }
+}
+
+/** A kick: the candidate replaces ONE slot, round-robin. */
+function acceptKey(p) {
+  const w = p._breachCand
+  if (!w || p._breachKeys.includes(w)) return
+  const i = p._breachKeyNext || 0
+  p._breachKeys[i] = w
+  p._breachKeyNew = i
+  p._breachKeyNext = (i + 1) % p._breachKeys.length
+  p._breachCand = null
 }
 
 function putStr(term, x, y, str, attr, max) {
@@ -120,12 +210,13 @@ export default {
     // 2026-10-16 (design pass) -- the box: progress 0..1, the kick
     // envelope, a granted countdown (seconds left, relative -- not an
     // absolute effect-clock time), the last pulse (for the rising edge) and
-    // the three newest cracked fragments, newest first.
+    // the KEY field (three fixed slots; see KEY_SLOT_W and offerKey).
     p._breachProg = 0
     p._breachKick = 0
     p._breachGranted = 0
     p._breachPrevHit = false
     p._breachKeys = [null, null, null]
+    clearKeys(p)
   },
   /** Re-arms clocks/accumulators on every visualizer entry. */
   reset(p) {
@@ -145,7 +236,7 @@ export default {
     p._breachKick = 0
     p._breachGranted = 0
     p._breachPrevHit = false
-    p._breachKeys[0] = p._breachKeys[1] = p._breachKeys[2] = null
+    clearKeys(p)
   },
   // BREACH effect (44th pass) -- for CIPHER. Vertical hex-noise columns
   // scrolling down through the real beam-intensity tiers (bright head,
@@ -204,12 +295,12 @@ export default {
     p._breachKick = Math.max(0, p._breachKick - bdt)
     if (p._breachGranted > 0) {
       p._breachGranted -= bdt
-      if (p._breachGranted <= 0) { p._breachGranted = 0; p._breachProg = 0 }
+      if (p._breachGranted <= 0) { p._breachGranted = 0; p._breachProg = 0; clearKeys(p) }
     } else if (!muted) {
       // A slow creep with the level, so a track with no clear onsets still
       // gets in eventually; the kicks are what you see move it.
       p._breachProg += bdt * 0.012 * A.level
-      if (kick) p._breachProg += KICK_STEP
+      if (kick) { p._breachProg += KICK_STEP; acceptKey(p) }
       if (p._breachProg >= 1) { p._breachProg = 1; p._breachGranted = GRANTED_HOLD }
     }
     if (kick) p._breachKick = KICK_HOLD
@@ -220,7 +311,7 @@ export default {
       const col = cols[x]
       const band = A.bands9[x % 9]
       col.head += bdt * col.speed * speedMul * auMul(A, band, 0.5, 3.2)
-      if (col.head - col.len > VIZ_BOT) respawn(col, false)
+      if (headRow(col, by0) - col.len > VIZ_BOT) respawn(col, false)
       if (col.resolveAt < 0) col.resolveAt = t + 2 + Math.random() * 5
       // A kick resolves a burst of words across the rain.
       if (kick && !col.word && Math.random() < 0.08) col.resolveAt = t
@@ -228,8 +319,8 @@ export default {
       // with no stream on screen waits for one -- which is also what keeps
       // the words a handful at a time rather than a field of them (the
       // first capture of this pass, resolving anywhere, had a dozen up).
-      const hr = Math.floor(col.head) - 2
-      const streamUp = hr >= 2 && hr < VIZ_BOT - 2
+      const hr = headRow(col, by0) - 2
+      const streamUp = hr >= (col.low ? by0 : 2) && hr < VIZ_BOT - 2
       if (t > col.resolveAt && !col.word && (!streamUp || Math.random() < 0.6)) {
         col.resolveAt = t + 0.5 + Math.random() * 2
       } else if (t > col.resolveAt && !col.word) {
@@ -248,21 +339,22 @@ export default {
           col.wordRow = row
           col.wordUntil = t + 0.5 + Math.random() * 0.4
           col.resolveAt = t + 2 + Math.random() * 5
-          if (word !== p._breachKeys[0] && word !== p._breachKeys[1] && word !== p._breachKeys[2]) {
-            p._breachKeys[2] = p._breachKeys[1]; p._breachKeys[1] = p._breachKeys[0]; p._breachKeys[0] = word
-          }
+          // A cracked fragment is a CANDIDATE key; a kick accepts it (or
+          // it fills a slot that is still empty). CIPHER's glyph never is.
+          offerKey(p, word)
         }
       }
       if (col.word && t > col.wordUntil) col.word = null
-      const headRow = Math.floor(col.head)
+      const hRow = headRow(col, by0)
+      const top = col.low ? by0 : 1
       const inBoxCols = x >= bx0 && x <= bx1
       for (let y = 1; y < VIZ_BOT; y++) {
         if (inBoxCols && y >= by0 && y <= by1) continue
-        const dist = headRow - y
-        if (dist < 0 || dist >= col.len) { term.put(x, y, 32); continue }
+        const dist = hRow - y
+        if (y < top || dist < 0 || dist >= col.len) { term.put(x, y, 32); continue }
         let attr
-        if (dist === 0) attr = muted ? DIM : BRIGHT
-        else if (dist <= NECK) attr = muted ? DIM : NORMAL
+        if (dist === 0) attr = muted ? DIM : RAIN_HEAD
+        else if (dist <= NECK) attr = muted ? DIM : RAIN_NECK
         else if (dist < col.len - 2) attr = muted ? FAINT : DIM
         else attr = FAINT
         // The glyphs are fixed in place for the life of the stream; only
@@ -285,10 +377,13 @@ export default {
     // without anyone able to see the difference. Drawn last, a word also
     // holds over the rain of its own columns for its wordUntil beat, which
     // is the resolve-then-dissolve the comment above describes.
-    const wAttr = muted ? NORMAL : BRIGHT
+    // 2026-10-20 (polish) -- CIPHER's glyph is a station mark in the rain,
+    // not a cracked word: it resolves a tier under the words (NORMAL, the
+    // rain heads' tier), so BRIGHT reads as "a word" and nothing else.
     for (let x = 0; x < term.cols; x++) {
       const col = cols[x]
       if (!col.word) continue
+      const wAttr = col.word === KEY_GLYPH ? (muted ? DIM : NORMAL) : (muted ? NORMAL : BRIGHT)
       for (let wi = 0; wi < col.word.length; wi++) {
         const wx = x + wi
         if (wx < term.cols) term.put(wx, col.wordRow, col.word.charCodeAt(wi), wAttr)
@@ -332,11 +427,13 @@ function drawBox(p, term, box, muted) {
   putStr(term, X + 3, Y + ROW_USER, 'USER', label, 4)
   putStr(term, X + 10, Y + ROW_USER, 'root', value, 4)
   putStr(term, X + 3, Y + ROW_KEY, 'KEY', label, 3)
-  let kx = X + 10
-  for (let i = 0; i < 3; i++) {
+  // Fixed slots (KEY_SLOT_W + 1 apart); the interior was blanked above, so
+  // a slot shorter than its width leaves spaces, never the last key's tail.
+  for (let i = 0; i < p._breachKeys.length; i++) {
     const k = p._breachKeys[i]
-    if (!k || kx + k.length > X + W - 3) break
-    kx += putStr(term, kx, Y + ROW_KEY, k, i === 0 ? value : label, k.length) + 1
+    const kx = X + 10 + i * (KEY_SLOT_W + 1)
+    if (!k || kx + KEY_SLOT_W > X + W - 3) continue
+    putStr(term, kx, Y + ROW_KEY, k, i === p._breachKeyNew ? value : label, KEY_SLOT_W)
   }
   // The bar: [████····]  NN%
   const barW = W - 16

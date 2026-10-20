@@ -35,7 +35,9 @@
 // against the fine linework. The dot layers are
 // merged per cell rather than blitted one over another (see composeDots):
 // blit() replaces a cell outright, so a cell where an orbit and the ring
-// cross would show only whichever layer went last.
+// cross would show only whichever layer went last. The ring is the one
+// dotted line among them, at the orbits' FAINT (2026-10-20; the note at
+// composeDots' call has why).
 //
 // Audio, on amplitude and on the beat (never a `t *` frequency term -- a
 // rate that jumps with the music makes things jump, not speed up):
@@ -100,6 +102,10 @@ const STRETCH = 1.25
 // late. From 60px it is visible on the kick's own frame.
 const SHOCK_FROM = 60
 const SHOCK_REACH = 120
+// The ring's dot spacing along its arc, in dots -- see the shockwave draw.
+export const SHOCK_DOT_GAP = 3
+// Its tier: the orbits' own FAINT -- see the composeDots note.
+export const SHOCK_ATTR = FAINT
 
 // Electron speed in radians a second along its orbit: a floor so the atom is
 // never stopped, plus a span that LEVEL fills. Each orbit runs at its own
@@ -356,9 +362,14 @@ export default {
       // flare. A slow ring reads as a ripple, not a hit -- see FLARE_S.
       const k = Math.min(1, sinceKick / SHOCK_SNAP_S)
       const r = SHOCK_FROM + (SHOCK_REACH - SHOCK_FROM) * (1 - (1 - k) * (1 - k) * (1 - k))
-      for (let j = 0; j < 360; j++) {
-        const a = (j / 360) * Math.PI * 2
-        L.shock.plot(g.cx + (Math.cos(a) * r * g.stretch) / g.dotW, g.cy + (Math.sin(a) * r) / g.dotH)
+      // Dotted (2026-10-20 polish): one dot every SHOCK_DOT_GAP dots of
+      // arc, so the ring is a different line from the orbits, not a fourth
+      // one. The arc is measured in dots (a dot is wider than it is tall).
+      const rx = (r * g.stretch) / g.dotW, ry = r / g.dotH
+      const n = Math.round((Math.PI * (rx + ry)) / SHOCK_DOT_GAP)
+      for (let j = 0; j < n; j++) {
+        const a = (j / n) * Math.PI * 2
+        L.shock.plot(g.cx + Math.cos(a) * rx, g.cy + Math.sin(a) * ry)
       }
     }
     // The electrons: a filled disc of dots at each one's place on its orbit.
@@ -388,11 +399,21 @@ export default {
     // NO TAP capture the ring, at full NORMAL and with the previous kick's
     // ring still in the tube's persistence, briefly crowded the emblem. One
     // tier down it still lands on the beat and no longer outranks the atom.
+    // 2026-10-20 (polish): the viz-critic rated ATOMIC AGE KEEP again, with
+    // one note: the ring, solid at MUTED, was as heavy as the orbits, so on
+    // the beat the emblem read as an atom with FOUR orbits. The critic asked
+    // for a tier under the orbits and a dotted line; the orbits are already
+    // FAINT, the bottom tier, so the ring takes their FAINT and is dotted
+    // (SHOCK_DOT_GAP): a different TEXTURE from every orbit rather than a
+    // dimmer copy of one. It goes last in priority, so where it crosses an
+    // orbit or a tail that line keeps its own tier. The kick still lands --
+    // the nucleus flare and the electrons' jolt are unchanged, and a dotted
+    // circle across three solid ellipses is plain in a still.
     composeDots(term, [
       { dc: L.electron, attr: NORMAL },
-      { dc: L.shock, attr: MUTED },
       { dc: L.trail, attr: MUTED },
       { dc: L.orbit, attr: FAINT },
+      { dc: L.shock, attr: SHOCK_ATTR },
     ])
 
     // --- the starbursts ----------------------------------------------------------

@@ -90,6 +90,32 @@
 // needs a person at 60fps. The forced red phosphor is part of how this looks:
 // judge it on NIN ([0]), not on preset 2's tint.
 //
+// 2026-10-20 (polish; the design critique of the real-tube sheet). Subject,
+// beat and MUTED passed; four things did not:
+//   - THE HEAD read as a mosaic: three flank densities and two rib stripes
+//     under a NORMAL outline, so with a cell taking its brightest pixel's
+//     tier the face broke into rectangular blocks. Now one tier (NORMAL) and
+//     one density (TUP_DENS) for rod, head, ears, bolts and die, lit only on
+//     the top and left faces; the die warms by density, not by a tier step.
+//   - THE HAZARD FLOOR was nearly as bright as the billet: it shared the
+//     floor line's cell row and so its MUTED. Now FAINT, from the next row.
+//   - THE TEAR left glyph debris in the margins: the band could land on bare
+//     air, and the gap it slid out of filled with noise. Now every tear runs
+//     through the hammer head (the hammer itself slips) and the gap is dark.
+//   - THE GHOST. KICK(+34) showed the raised head hanging above the landed
+//     one; the critic suspected persistence at the capture's 2.7fps. It is
+//     persistence, but NOT a low-fps artefact: viz-sheet slows the page
+//     clock to ~60 app-frames per second, the beam's decay is rescaled per
+//     frame (decayForFrame), and NIN has no decay of its own (the base 0.75),
+//     so two frames after the blow the raised head is still 0.75^2 = 56% lit
+//     and under 10% only after ~8 frames (~130ms) -- exactly what a viewer at
+//     60fps sees. viz-preview, which has no persistence, shows no ghost. The
+//     cause is the drop itself: the head teleports from ready to contact in
+//     one frame. Rather than slow the blow (it must land ON the beat), the
+//     air it fell through now holds a dithered smear for STREAK_S, densest at
+//     the head, so the afterglow joins the landed head as one motion.
+//     (Sparse vertical speed lines were tried first and read as bristles.)
+//
 // ---- older history, condensed ----
 // DREAD (45th pass, the secret station) was a coarse panel grid flickering
 // erratically with occasional full-row tears -- the one visual meant to read
@@ -138,6 +164,9 @@ export const KICK_TEAR_CHANCE = 0.35
 export const AMBIENT_TEAR_RATE = 0.3
 export const TEAR_MAX_S = 0.18
 export const RENDER_HZ = 30
+// The head's body density (of 16), and how long the drop's speed lines last.
+export const TUP_DENS = 5
+export const STREAK_S = 0.09
 
 // --- the picture, in canvas pixels (y 0 = the top of canvas row 1) --------------
 // Rows are fixed (the canvas is rows 1..VIZ_BOT-1); columns are centred on
@@ -154,7 +183,6 @@ export const CYL_BOT = 56
 const TIERS = [FAINT, DIM, MUTED, NORMAL, BRIGHT]
 const T_FAINT = 0, T_DIM = 1, T_MUTED = 2, T_NORMAL = 3, T_BRIGHT = 4
 const mat = (tier, dens) => ((tier + 1) << 5) | Math.max(0, Math.min(16, dens | 0))
-const NOISE = mat(T_MUTED, 16)
 // 4x4 ordered dither: a regular screen reads as a treatment, scattered as noise.
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
 const clamp01 = (v) => Math.max(0, Math.min(1, v))
@@ -180,6 +208,8 @@ export default {
     p._dreadLastT = null
     p._dreadHeat = 0.4
     p._dreadLift = 0.7
+    p._dreadDropFrom = RAISED_TOP   // where the head fell from (a position)
+    p._dreadTopPrev = null
   },
   /** Re-arms clocks on every visualizer entry. */
   reset(p) {
@@ -242,6 +272,7 @@ export default {
         (pulse - p._dreadPrevPulse >= BEAT_RISE || A.onset)) {
       p._dreadPrevKickAt = p._dreadKickAt
       p._dreadKickAt = t
+      p._dreadDropFrom = p._dreadTopPrev ?? RAISED_TOP
       p._dreadKicks++
       kicked = true
     }
@@ -266,6 +297,7 @@ export default {
     else lift = p._dreadLift
     const tremor = muted || lift === 0 ? 0 : Math.round(Math.sin(t * 37) * 1.6 * clamp01(A.bass))
     const top = Math.min(CONTACT_TOP, tupTop(lift) + tremor)
+    p._dreadTopPrev = top
 
     // --- tears ----------------------------------------------------------------
     const tear = p._dreadTear
@@ -273,7 +305,11 @@ export default {
       const kickTear = kicked && Math.random() < KICK_TEAR_CHANCE
       if (kickTear || Math.random() < AMBIENT_TEAR_RATE * dt) {
         tear.active = true
-        tear.row = 1 + Math.floor(Math.random() * (VIZ_BOT - 1))
+        // 2026-10-20: through the hammer head, never bare margin -- a band
+        // torn across empty air left a few sheared girder fragments
+        // floating at the frame's edge, which read as a rendering bug.
+        // Across the head, the hammer itself visibly slips.
+        tear.row = 1 + Math.floor((top + 8 + Math.random() * (TUP_H - 24)) / F.cellH)
         const mag = 12 + Math.floor(Math.random() * 36)
         tear.shift = Math.random() < 0.5 ? -mag : mag
         tear.until = t + 0.08 + Math.random() * (TEAR_MAX_S - 0.08)
@@ -337,11 +373,15 @@ function paintBase(F) {
     for (let y = 30; y < FLOOR_Y; y += 64) rect(F, gx - 4, y, gx + 28, y + 3, mat(T_DIM, 5))
   }
 
-  // Floor, and hazard striping under it.
+  // Floor, and hazard striping under it. 2026-10-20: the striping down a
+  // tier to FAINT, and started on a cell-row boundary below the floor
+  // line's row -- sharing that row, it was lifted to the line's MUTED and
+  // read nearly as bright as the billet.
   rect(F, cx - 300, FLOOR_Y, cx + 300, FLOOR_Y + 2, mat(T_MUTED, 16))
-  for (let y = FLOOR_Y + 6; y < Math.min(H, FLOOR_Y + 22); y++) {
+  const hz0 = Math.ceil((FLOOR_Y + 3) / F.cellH) * F.cellH
+  for (let y = hz0; y < Math.min(H, hz0 + 14); y++) {
     for (let x = Math.max(0, cx - 300); x < Math.min(W, cx + 300); x++) {
-      if (((x + y) & 15) < 7) M[y * W + x] = mat(T_DIM, 7)
+      if (((x + y) & 15) < 7) M[y * W + x] = mat(T_FAINT, 9)
     }
   }
 
@@ -351,7 +391,7 @@ function paintBase(F) {
     for (let y = 80; y < FLOOR_Y - 30; y += 28) { dot(F, x0 + 8, y, mat(T_MUTED, 16)); dot(F, x1 - 8, y, mat(T_MUTED, 16)) }
     // Hazard bands at the foot.
     for (let y = FLOOR_Y - 26; y < FLOOR_Y - 2; y++) {
-      for (let x = x0 + 2; x < x1 - 2; x++) if (((x - y) & 15) < 7) M[y * W + x] = mat(T_DIM, 9)
+      for (let x = x0 + 2; x < x1 - 2; x++) if (((x - y) & 15) < 7) M[y * W + x] = mat(T_DIM, 6)
     }
   }
 
@@ -391,9 +431,26 @@ function paintForge(F, p, t, top, heat, since, muted) {
     for (let k = 0; k < idx.length; k++) if (M[idx[k]] === 0) M[idx[k]] = val[k]
   }
 
-  // The piston rod: polished, a lit stripe down one side.
-  rect(F, cx - 7, CYL_BOT, cx + 7, top, mat(T_MUTED, 9))
+  // The piston rod: polished, a lit stripe down one side. NORMAL, the
+  // head's own tier (rod and tup are one moving part; 2026-10-20).
+  rect(F, cx - 7, CYL_BOT, cx + 7, top, mat(T_NORMAL, 5))
   rect(F, cx - 4, CYL_BOT, cx - 1, top, mat(T_NORMAL, 16))
+
+  // The drop, as a smear (2026-10-20): for STREAK_S after a blow, the air
+  // the head fell through holds a dithered blur of it, densest at the head
+  // and thinning upward, so the tube's afterglow of the raised head (see
+  // the polish note in the header) joins the landed one as one motion
+  // instead of reading as a second hammer hanging above it. (Sparse
+  // vertical speed lines were tried first: they read as a comb of bristles
+  // standing on the head.)
+  if (!muted && since < STREAK_S && p._dreadDropFrom < top) {
+    const fade = 1 - since / STREAK_S, y0 = p._dreadDropFrom
+    for (let y = Math.max(0, y0 | 0); y < top; y++) {
+      const k = (y - y0) / Math.max(1, top - y0)
+      const d = Math.round(7 * fade * k)
+      if (d > 0) rect(F, cx - 86, y, cx + 86, y + 1, mat(T_MUTED, d))
+    }
+  }
 
   // The billet: hot steel. Squashed flatter and wider just after a blow.
   const fresh = !muted && since < 0.35
@@ -410,25 +467,35 @@ function paintForge(F, p, t, top, heat, since, muted) {
   // (A first cut put a square cast boss in the middle of the face; on the
   // tube it read as a window, the whole head as a cabinet. Ribs and a
   // tapered foot read as a hammer.)
+  // 2026-10-20: ONE tier (NORMAL) for the whole head -- body, edges, bolts,
+  // ears and die -- and one body density. The first cut shaded it in three
+  // vertical flanks at three densities, crossed by two rib stripes, under a
+  // NORMAL outline: with a cell taking its brightest pixel's tier, that
+  // rendered as rectangular blocks at different brightnesses, a mosaic
+  // rather than cast iron. Now the mass is one sparse dither lit only on
+  // its top and left faces (light from above-left), so the right side and
+  // the underside fall away into the dark without a drawn edge.
   const tb = top + TUP_H - 10      // the die's top
   const body = top + 56            // where the head starts to taper
-  rect(F, cx - 88, top, cx + 88, body, mat(T_NORMAL, 16))
-  rect(F, cx - 86, top + 2, cx - 40, body, mat(T_MUTED, 10))
-  rect(F, cx - 40, top + 2, cx + 46, body, mat(T_MUTED, 7))
-  rect(F, cx + 46, top + 2, cx + 86, body, mat(T_MUTED, 3))
-  for (const ry of [top + 18, top + 38]) rect(F, cx - 86, ry, cx + 86, ry + 3, mat(T_MUTED, 14))
+  const HEAD = mat(T_NORMAL, TUP_DENS), LIT = mat(T_NORMAL, 16)
+  rect(F, cx - 88, top, cx + 88, body, HEAD)
+  rect(F, cx - 88, top, cx + 88, top + 2, LIT)
+  rect(F, cx - 88, top, cx - 86, body, LIT)
   for (let y = body; y < tb; y++) {
     const hw = 88 - Math.round((y - body) * 18 / (tb - body))
-    rect(F, cx - hw, y, cx + hw, y + 1, mat(T_NORMAL, 16))
-    rect(F, cx - hw + 2, y, cx - 40, y + 1, mat(T_MUTED, 8))
-    rect(F, cx - 40, y, cx + 46, y + 1, mat(T_MUTED, 5))
-    rect(F, cx + 46, y, cx + hw - 2, y + 1, mat(T_MUTED, 2))
+    rect(F, cx - hw, y, cx + hw, y + 1, HEAD)
+    rect(F, cx - hw, y, cx - hw + 2, y + 1, LIT)
   }
-  for (const ex of [cx - 112, cx + 88]) block(F, ex, top + 10, ex + 24, top + 30, mat(T_MUTED, 8), mat(T_MUTED, 16))
-  for (const bx of [cx - 74, cx - 26, cx + 26, cx + 74]) dot(F, bx, top + 9, mat(T_NORMAL, 16), 2)
-  // The die, warmed by the billet as it comes down.
+  for (const ex of [cx - 112, cx + 88]) {
+    rect(F, ex, top + 10, ex + 24, top + 30, HEAD)
+    rect(F, ex, top + 10, ex + 24, top + 12, LIT)
+  }
+  for (const bx of [cx - 74, cx - 26, cx + 26, cx + 74]) dot(F, bx, top + 9, LIT, 2)
+  // The die, warmed by the billet as it comes down -- by density, in the
+  // head's tier, so it never steps a tier against the taper above it.
   const near = clamp01(1 - (CONTACT_TOP - top) / 50) * Math.min(1, heat)
-  rect(F, cx - 60, tb, cx + 60, tb + 10, mat(near > 0.5 ? T_NORMAL : T_MUTED, 12 + Math.round(near * 4)))
+  rect(F, cx - 60, tb, cx + 60, tb + 10, mat(T_NORMAL, 9 + Math.round(near * 7)))
+  rect(F, cx - 60, tb, cx + 60, tb + 1, LIT)
 
   if (muted) return
 
@@ -543,7 +610,7 @@ function compose(F, term, muted, jolt, tear) {
     for (let py = 0; py < cellH; py++) {
       const gy = cy * cellH + py
       const torn = gy >= tearY0 && gy < tearY1
-      packLine(F, cy, py, gy, gy - jolt, torn ? shiftBy : 0, torn)
+      packLine(F, cy, py, gy, gy - jolt, torn ? shiftBy : 0)
     }
     putRow(F, term, cy, muted)
   }
@@ -566,7 +633,7 @@ function reputRow(F, term, cy) {
 }
 
 /** One pixel row across the grid, into each cell's back buffer. */
-function packLine(F, cy, py, gy, sy, shift, torn) {
+function packLine(F, cy, py, gy, sy, shift) {
   const { cols, cellW, cellH, W, H, big0, big1, front, tops, anys } = F
   const M = F.mat, M32 = F.mat32
   const rowOk = sy >= 0 && sy < H
@@ -598,7 +665,6 @@ function packLine(F, cy, py, gy, sy, shift, torn) {
       const sx = x0 + px
       let v = 0
       if (rowOk && sx >= 0 && sx < W) v = M[base + sx]
-      else if (torn && hash2((cx * cellW + px) >> 2, gy) < 0.3) v = NOISE
       if (v !== 0 && BAYER[ph * 4 + (px & 3)] < (v & 31)) {
         row |= 1 << (cellW - 1 - px)
         if ((v >> 5) - 1 > top) top = (v >> 5) - 1

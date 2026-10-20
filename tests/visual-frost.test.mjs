@@ -235,3 +235,56 @@ test('FROST: re-entry after a long visit carries no kick clock from the last one
     assert.ok(h.program._frostLastT <= t + 0.05, `_frostLastT ${h.program._frostLastT} on a clock at ${t}`)
   } finally { h.shutdown() }
 })
+
+// 2026-10-20 polish (CRITIQUE-1020). Three notes, each read back here:
+//  - the reflection was a stair-stepped "moustache": it is now the heart's
+//    own width, drawn as horizontal dashes -- every third pixel row under
+//    the curb dark (TOKYO BAY's swell gaps);
+//  - muted, the tube was a hollow double line (a cookie cutter): it is a
+//    solid tube at DIM now -- unlit glass, not an outline;
+//  - the hang wires were ticks: the heart hangs lower, so they run at
+//    at least 26 pixels down from the canvas top (they ran 20 before).
+// Mutation-checked: the swell gap removed, the muted tube back at 108 (the
+// old FAINT walls), or HEART_TOP back at 22 each go red.
+const litRow = (h, py, x0, x1) => {
+  // Is any pixel lit on framebuffer row py (canvas-relative) between cells x0..x1?
+  const cy = 1 + Math.floor(py / 16), r = py % 16
+  for (let x = x0; x <= x1; x++) { const b = h.term.gfx[idx(h, x, cy)]; if (b && b[r]) return true }
+  return false
+}
+test('FROST: the reflection is the heart\'s width in dashes; the muted tube is solid; the wires hang', async () => {
+  const { h, fx, mod } = await bootFrost()
+  try {
+    settle(h, fx, 10)
+    const tube = mod.tubeCellsFor(h.term)
+    const xs = tube.map((p) => p.x)
+    const hx0 = Math.min(...xs), hx1 = Math.max(...xs)
+    const { curbY, FH } = h.program._frost
+    // Width: nothing in the water outside the heart's own columns (+1 for
+    // the swell and the halo).
+    const curbRow = 1 + Math.floor(curbY / 16)
+    const water = cellsWhere(h, () => true).filter((p) => p.y > curbRow)
+    assert.ok(water.length >= 30, `only ${water.length} cells of reflection`)
+    const wx0 = Math.min(...water.map((p) => p.x)), wx1 = Math.max(...water.map((p) => p.x))
+    assert.ok(wx0 >= hx0 - 1 && wx1 <= hx1 + 1, `reflection spans ${wx0}..${wx1}, the heart ${hx0}..${hx1}`)
+    // Dashes: the swell gaps are dark across the whole heart, the rows
+    // between them mostly lit.
+    let gaps = 0, gapLit = 0, rows = 0, rowsLit = 0
+    for (let py = curbY + 2; py < FH; py++) {
+      const on = litRow(h, py, hx0 - 1, hx1 + 1)
+      if ((py - curbY) % 3 === 0) { gaps++; if (on) gapLit++ } else { rows++; if (on) rowsLit++ }
+    }
+    assert.equal(gapLit, 0, `${gapLit}/${gaps} swell gaps carry light -- the reflection is not drawn in dashes`)
+    assert.ok(rowsLit >= rows * 0.6, `only ${rowsLit}/${rows} reflection rows are lit`)
+    // The wires: lit pixels from the canvas top down at the lobes' columns.
+    const G = h.program._frost
+    const wc = Math.floor(Math.round(G.cx + G.lobeDX) / G.adv)
+    let wire = 0
+    for (let py = 0; py < mod.HEART_TOP; py++) if (litRow(h, py, wc, wc)) wire++
+    assert.ok(wire >= 26, `the wires light only ${wire} of the top ${mod.HEART_TOP} pixel rows`)
+    // Muted: the tube is a solid DIM line, not FAINT walls.
+    for (let f = 0; f < 120; f++) drawWith(h, fx, 20 + f / 60, signal(), true)
+    const dim = tube.filter(({ x, y }) => h.term.gfx[idx(h, x, y)] && h.term.attrs[idx(h, x, y)] === DIM).length
+    assert.ok(dim >= tube.length * 0.8, `only ${dim}/${tube.length} muted tube cells are DIM glass`)
+  } finally { h.shutdown() }
+})

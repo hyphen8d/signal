@@ -99,6 +99,18 @@
 // Everything static is a pure function of the grid size, built once in
 // sceneTables(); a term of any width draws what a fresh init would.
 //
+// ---- 2026-10-20 polish ----
+// The critique (CRITIQUE-1020, KEEP with one minor note): the bridge's deck
+// and cables carried the same weight as the tower lattice, so the eye had
+// two subjects on the left half. The cause was the one-attribute-per-cell
+// rule above, not the tiers on paper: the deck was DIM, but a MUTED lamp
+// every 4px on it and a MUTED light every 5px on the cables put a lamp in
+// EVERY cell the bridge crossed, so every cell went MUTED and the 2px deck
+// and the cables drew at MUTED end to end -- the tower's weight, a tier
+// under. Now the deck is one pixel, and the deck lamps and cable lights sit
+// every 16px (one cell in two), so half the bridge draws at its own DIM and
+// the lit half is a string of lamps, not a bar. Nothing else changed.
+//
 // ---- history, condensed ----
 // 45th pass: RIPPLE was rain rings expanding from random points over a
 // faint full-screen '.' ':' neon shimmer. 2026-10-16 review: a dotted
@@ -284,7 +296,9 @@ export function sceneTables(cols, cw = 8, ch = 16) {
   const pa = Math.round(W * BRIDGE.pa), pb = Math.round(W * BRIDGE.pb), bEnd = Math.round(W * BRIDGE.end)
   const yd = HY - BRIDGE.deckUp, yp = HY - BRIDGE.pylonUp
   const bset = (x, y, v) => set(x, y, v, OWN.BRIDGE)
-  for (let x = -2; x <= bEnd; x++) { bset(x, yd, 1); bset(x, yd + 1, 1); if (x % 4 === 0) bset(x, yd - 1, 2) }
+  // 2026-10-20 polish: the deck is one pixel and its lamps one cell in two
+  // (see the header) -- the lamps lift a whole cell to MUTED.
+  for (let x = -2; x <= bEnd; x++) { bset(x, yd, 1); if (x % 16 === 4) bset(x, yd - 1, 2) }
   for (const px of [pa, pb]) {
     for (let y = yp; y < HY; y++) { bset(px - 1, y, 1); bset(px + 1, y, 1); if (y < yp + 3 || y === yp + 22) bset(px, y, 1) }
     bset(px, yp - 1, 2) // the pylon's aircraft light, a fixed point
@@ -293,7 +307,7 @@ export function sceneTables(cols, cw = 8, ch = 16) {
     for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) {
       const u = (x - x0) / (x1 - x0)
       const y = Math.round(y0 + (y1 - y0) * u + sag * 4 * u * (1 - u))
-      bset(x, y, (x % 5 === 0) ? 2 : 1)
+      bset(x, y, (x % 16 === 12) ? 2 : 1)
       if (x % 6 === 3) for (let yy = y + 2; yy < yd; yy += 2) bset(x, yy, 0)
     }
   }

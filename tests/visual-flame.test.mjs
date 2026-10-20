@@ -309,3 +309,67 @@ test('the LINE INPUT card opened from the visualizer does not run under the effe
     assert.equal(h.crt.params.decay, own, 'and the effect has its afterglow back once the card is down')
   } finally { h.shutdown() }
 })
+
+// ---- 2026-10-20 (polish pass) ----
+
+test('FLAME with no tap burns on a raised floor: never the 4-row hedge the synthetic troughs gave', async () => {
+  // syntheticAudio()'s bass wanders 0..0.66; on the tap's fuel range the
+  // troughs settled at 4-5 rows of the 21 (measured 4..14 over a minute).
+  // FUEL_SYNTH holds it at 9..12. Read over a full synthetic bass cycle
+  // (~27s), lowest one-second mean asserted.
+  const { h, fx, p } = await rig()
+  try {
+    const { Term } = await import('../src/term.js')
+    const { parseBDF } = await import('../src/bdf.js')
+    const font = parseBDF(readFileSync(new URL('../fonts/ter-u16n.bdf', import.meta.url), 'utf8'))
+    const term = new Term(font, 80, 25, 6, 5)
+    p.muted = false
+    p._au = null // no tap: the effect falls back to syntheticAudio(t)
+    fx.init(p, term)
+    fx.reset(p)
+    const rowPx = term.cols * term.font.cellW * term.font.cellH
+    const acc = new Array(term.rows).fill(0)
+    let n = 0
+    let lowest = Infinity
+    for (let t = 0; t <= 40; t += 1 / 30) {
+      fx.draw(p, { term }, t)
+      if (t < 8) continue
+      litByRow(term).forEach((v, y) => { acc[y] += v })
+      if (++n === 30) {
+        const top = acc.findIndex((v, y) => y >= 1 && v / n > rowPx / 10)
+        lowest = Math.min(lowest, top < 0 ? 0 : VIZ_BOT - top)
+        acc.fill(0)
+        n = 0
+      }
+    }
+    assert.ok(lowest >= 7, `the no-tap fire sank to ${lowest} rows`)
+  } finally { h.shutdown() }
+})
+
+test('FLAME catches a one-frame onset that lands between 30Hz steps', async () => {
+  // The tap raises `onset` for one render frame; at 60fps only every other
+  // frame steps the fire, so before the latch half of all kicks did nothing.
+  // Here the onset is shown on a frame that runs no step, and must still
+  // start a surge on the next one.
+  const { h, fx, p } = await rig()
+  try {
+    const { Term } = await import('../src/term.js')
+    const { parseBDF } = await import('../src/bdf.js')
+    const font = parseBDF(readFileSync(new URL('../fonts/ter-u16n.bdf', import.meta.url), 'utf8'))
+    const term = new Term(font, 80, 25, 6, 5)
+    p.muted = false
+    p._au = { level: 0.5, bass: 0.5, mid: 0.4, treble: 0.3, bands9: new Array(9).fill(0.4), onset: false, pulse: 0 }
+    fx.init(p, term)
+    fx.reset(p)
+    for (let t = 0; t <= 2; t += 1 / 60) fx.draw(p, { term }, t)
+    const tick0 = p._fire.tick
+    p._au = { ...p._au, onset: true }
+    fx.draw(p, { term }, p._fireLastStep + 0.25 / 30) // a frame that runs no step
+    assert.equal(p._fire.tick, tick0, 'setup: the onset frame ran no step')
+    assert.equal(p._fire.surge, null, 'setup: nothing surged yet')
+    p._au = { ...p._au, onset: false }
+    fx.draw(p, { term }, p._fireLastStep + 1.01 / 30)
+    assert.equal(p._fire.tick, tick0 + 1, 'setup: the next frame stepped')
+    assert.ok(p._fire.surge && p._fire.surge.xs.length > 0, 'the kick never reached the fire')
+  } finally { h.shutdown() }
+})

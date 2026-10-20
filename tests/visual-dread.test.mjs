@@ -7,8 +7,11 @@
 // hammer down) and settles back; that only a rising edge strikes; that it
 // strikes with no tap (syntheticAudio); that MUTED is faint, never BRIGHT,
 // never struck, and moves only in the billet's ember; that re-entry carries
-// no slam clock; that a tear shears one band sideways and lets go; and the
-// tube caps.
+// no slam clock; that a tear shears one band sideways, through the hammer
+// head, leaves a dark gap and lets go; the tube caps; and, since the
+// 2026-10-20 polish, that the head is one tier (no cell-block mosaic), the
+// hazard striping is FAINT, and the drop leaves a smear that is gone within
+// STREAK_S.
 //
 // The frame loop rewrites p._au every frame (visualizer.js), so the beat is
 // driven by calling the effect's draw directly with a crafted signal. Tears
@@ -277,17 +280,28 @@ test('DREAD: a tear shears one band of pixels sideways and lets go within TEAR_M
     const torn = Array.from({ length: term.cols }, (_, x) => cell(x))
     assert.deepEqual(torn.slice(3), clean.slice(0, term.cols - 3), 'the band is the same picture, slipped 3 cells')
     assert.notDeepEqual(torn, clean, 'and it did move')
-    assert.ok(torn.slice(0, 3).some((c) => c !== '.'), 'with junk in the gap it left')
-    // Natural tears: never longer than TEAR_MAX_S.
-    let started = null, longest = 0
+    // 2026-10-20: the gap it leaves is dark. It used to fill with noise,
+    // which in the margin read as stray glyph debris -- a rendering bug.
+    assert.deepEqual(torn.slice(0, 3), ['.', '.', '.'], 'the gap the slip left is dark')
+    // Natural tears: never longer than TEAR_MAX_S, and every one runs
+    // through the hammer head (2026-10-20: a band across bare air sheared a
+    // few girder fragments loose at the frame's edge and nothing else).
+    tear.active = false   // the forced one above is not a natural tear
+    let started = null, longest = 0, offHead = 0, tears = 0
     for (let i = 0; i < 2000; i++) {
       t += 0.016
       drawWith(h, fx, t, signal({ pulse: i % 30 === 0 ? 1 : 0.1 }))
+      if (tear.active && started == null) {
+        tears++
+        const y0 = (tear.row - 1) * 16, top = h.program._dreadTopPrev
+        if (y0 + 16 <= top || y0 >= top + mod.TUP_H) offHead++
+      }
       if (tear.active && started == null) started = t
       if (!tear.active && started != null) { longest = Math.max(longest, t - started); started = null }
     }
     assert.ok(longest > 0, 'tears happen while playing')
     assert.ok(longest <= mod.TEAR_MAX_S + 0.02, `a tear held ${longest.toFixed(2)}s`)
+    assert.equal(offHead, 0, `${offHead} of ${tears} tears missed the hammer head`)
   } finally { h.shutdown() }
 })
 
@@ -305,5 +319,70 @@ test('DREAD: no glyphs at all, and BRIGHT stays rare (tube bloom under the red t
     assert.equal(worstChars, 0, `${worstChars} character cells in one frame (shade blocks raster as slabs)`)
     assert.ok(worstBright >= 1, 'test setup: the blows did flash')
     assert.ok(worstBright <= 20, `${worstBright} BRIGHT cells in one frame at full level on a blow`)
+  } finally { h.shutdown() }
+})
+
+// 2026-10-20 polish: the critique saw the head as a striped mosaic (three
+// flank densities, two rib stripes, a NORMAL outline over MUTED fill, so its
+// cells stepped tier mid-face), the hazard floor nearly as bright as the
+// billet, and the raised head ghosting above the landed one on the kick.
+test('DREAD: the hammer head is one tier, face to face -- no mosaic of cell blocks', async () => {
+  const { h, fx, mod } = await bootDread()
+  try {
+    noTears(() => settle(h, fx, 1, signal({ bass: 0 })))
+    const { term } = h, cols = term.cols, mid = cols >> 1
+    const top = h.program._dreadTopPrev
+    // The body's cell rows, clear of its top edge and of the die below.
+    const tiers = new Set()
+    for (let y = 2 + Math.floor(top / 16); y <= Math.floor((top + 50) / 16); y++) {
+      for (let x = mid - 9; x <= mid + 9; x++) {
+        const i = (y + 0) * cols + x
+        if (term.gfx[i]) tiers.add(term.attrs[i] & (BRIGHT | 4 | 32 | 64))
+      }
+    }
+    assert.deepEqual([...tiers], [0], `the head's body cells span tiers ${[...tiers]} (want NORMAL only)`)
+    // The hazard striping is the floor's dimmest thing: FAINT.
+    const hz = 1 + Math.ceil((mod.FLOOR_Y + 3) / 16)
+    let faint = 0, other = 0
+    for (let x = 0; x < cols; x++) {
+      const i = hz * cols + x
+      if (!term.gfx[i]) continue
+      if (term.attrs[i] & 64) faint++; else other++
+    }
+    assert.ok(faint >= 40 && other === 0, `hazard row: ${faint} FAINT cells, ${other} brighter`)
+  } finally { h.shutdown() }
+})
+
+test('DREAD: the drop leaves a smear in the air it fell through, gone within STREAK_S', async () => {
+  const { h, fx, mod } = await bootDread()
+  try {
+    noTears(() => {
+      const bed = signal({ bass: 0 })
+      let t = settle(h, fx, 1, bed)
+      const { term } = h, cols = term.cols, mid = cols >> 1
+      const from = h.program._dreadTopPrev
+      // The cell rows the head fell through, above where it lands (the
+      // raised head filled them the frame before; landed, it is below them).
+      const rows = []
+      for (let y = 1 + Math.ceil(from / 16); y < 1 + Math.floor(mod.CONTACT_TOP / 16); y++) rows.push(y)
+      assert.ok(rows.length >= 2, 'test setup: the head has room to fall')
+      // Lit pixels there, away from the rod.
+      const air = () => {
+        let n = 0
+        for (const y of rows) {
+          for (let x = mid - 9; x <= mid + 9; x++) {
+            const g = x < mid - 1 || x > mid ? term.gfx[y * cols + x] : null
+            if (g) for (const r of g) for (let v = r; v; v >>= 1) n += v & 1
+          }
+        }
+        return n
+      }
+      t += 0.016; drawWith(h, fx, t, KICK)
+      const smear = air()
+      assert.ok(smear >= rows.length * 150, `only ${smear} px of smear in ${rows.length} rows on the blow`)
+      for (let n = 0; n < 8; n++) { t += 0.016; drawWith(h, fx, t, bed) }
+      assert.ok(t - h.program._dreadKickAt > mod.STREAK_S, 'test setup: past the smear')
+      assert.ok(air() <= 20, `the smear outlived STREAK_S (${air()} px)`)
+    })
   } finally { h.shutdown() }
 })

@@ -207,13 +207,17 @@ test('the 2026-09-13 effects draw correctly at a width other than the one they b
           const cellsDiffer = []
           for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < 80; x++) {
             const a = y * 80 + x, b = y * 100 + x
-            if (narrow.term.chars[a] !== fresh.term.chars[b] || narrow.term.attrs[a] !== fresh.term.attrs[b]) cellsDiffer.push(`${x},${y}`)
+            // ...and the bitmap's content, for a pixel effect (BACKROOM,
+            // 2026-10-20): its cells are all spaces to the character plane.
+            const ga = narrow.term.gfx[a], gb = fresh.term.gfx[b]
+            const gfxDiffer = !!ga !== !!gb || (ga && ga.join() !== gb.join())
+            if (gfxDiffer || narrow.term.chars[a] !== fresh.term.chars[b] || narrow.term.attrs[a] !== fresh.term.attrs[b]) cellsDiffer.push(`${x},${y}`)
           }
           assert.deepEqual(cellsDiffer.slice(0, 5), [], `${key} at 100 cols: ${cellsDiffer.length} cells in the first 80 columns differ from the 80-column frame`)
           const stray = []
           for (let y = 1; y < VIZ_BOT; y++) for (let x = 86; x < cols; x++) {
             const ch = String.fromCodePoint(fresh.term.chars[y * cols + x])
-            if (ch !== ' ') stray.push(`${x},${y}:${ch}`)
+            if (ch !== ' ' || fresh.term.gfx[y * cols + x]) stray.push(`${x},${y}:${ch}`)
           }
           assert.deepEqual(stray.slice(0, 5), [], `${key} drew ${stray.length} cells in the dark room right of its art`)
         }

@@ -25,6 +25,26 @@
 // '▄' shoulder line over a FAINT '▓' body, the back rank only '░' mass.
 // tests/visual-uprising.test.mjs holds all three.
 //
+// 2026-10-20 (polish). The critique, off the real tube: the crowd did not
+// read as people. The front rank's MUTED '▄' shoulder bars at staggered
+// heights over '▓' bodies rastered as a lit EQ bar chart -- the brightest
+// thing in the frame, ahead of the placards -- and the 'O'/'o' heads were
+// lost in it; and LOUD against KICK(+36ms) showed almost nothing, the surge
+// being a few arms at one edge only later. Changed, keeping the scene:
+// - The people are busts drawn as cell bitmaps (putGlyph): a round head on a
+//   neck and a thin shoulder arc, over the floor's own FAINT '░' mass. No
+//   half or dense block anywhere in the crowd. The font has no head-sized
+//   round glyph ('●' is a 4x4 speck -- tried first, this pass), which is the
+//   set rule "round things go through pixels" applied to the one round part.
+// - The surge's first SURGE_BAND (20) columns go up at once and its attack
+//   is one frame (0.07s -> 0.01s), so the KICK frame itself shows a quarter
+//   of the room with its arms up; the travel across the rest is unchanged.
+// - The placards' words are NORMAL (were MUTED), as the critic asked: the
+//   words lead, level with the surge; boxes and sticks stay DIM.
+// The critic's "a dark mass with only a head-and-shoulder edge lit" is the
+// FAINT '░' under DIM (front) / FAINT (back) arcs: the '░' is kept as that
+// mass, the '▓' bodies are gone.
+//
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
 
@@ -72,17 +92,24 @@ const SIGN_LOWER = 3                 // rows a sign sinks before it drops out
 // slow enough to read as a wave passing through people rather than the
 // whole frame flashing, fast enough to still be on the beat it came from.
 export const SURGE_SPEED = 55
+// 2026-10-20 (polish) -- the first SURGE_BAND columns from the wave's edge go
+// up AT ONCE, and only then does it travel. The critique: LOUD against KICK
+// (+36ms) showed almost nothing, because a wave that starts as one column at
+// the frame's edge is a handful of arms for the first quarter second -- the
+// kick itself was invisible and only its aftermath showed. A quarter of the
+// room answering on the hit is the beat; the travel is the wave.
+export const SURGE_BAND = 20
 // One wave at a time, near enough. Real onsets can fire every 220ms; waves
 // that close overlap into a crowd with its arms permanently up, which reads
 // as nothing happening. 0.9s is about a bar of a punk tempo's half-time.
 export const SURGE_REFRACTORY = 0.9
-const SURGE_ATTACK = 0.07            // s, arms go up fast...
+const SURGE_ATTACK = 0.01            // s, arms go up at once... (2026-10-20: was 0.07 -- still half-raised in the KICK frame)
 const SURGE_DECAY = 0.4              // s, ...and come down slower
 const SURGE_MAX = 4
 
 /** Arm-raise envelope of one surge at column x (0..s). Pure. */
 export function surgeEnvelope(sg, x, cols, t) {
-  const delay = (sg.dir > 0 ? x : cols - 1 - x) / SURGE_SPEED
+  const delay = Math.max(0, (sg.dir > 0 ? x : cols - 1 - x) - SURGE_BAND) / SURGE_SPEED
   const dt = t - sg.t0 - delay
   if (dt < 0) return 0
   if (dt < SURGE_ATTACK) return sg.s * (dt / SURGE_ATTACK)
@@ -119,6 +146,32 @@ function crowdFor(cols) {
   crowdFront = crowd.filter((pp) => pp.rank === 1)
   return crowd
 }
+
+// --- the busts ------------------------------------------------------------
+// 2026-10-20 (polish) -- a head and its shoulders as cell BITMAPS (putGlyph,
+// FLAME's renderer), not glyphs. The critique asked for heads as round
+// bumps rather than letters, and this font has no round glyph a head's size:
+// '●' is a 4x4 dot (it rendered as a speck in the first cut of this pass),
+// '○' the same as a ring, '☻' a face. So one static bitmap per part, drawn
+// at the person's tier: a filled 6x7 head on a short neck, and a
+// three-cell shoulder arc that is a lit EDGE only -- the dark mass under it
+// is the room. Static and never mutated, so the same-reference putGlyph
+// no-op (see FLAME) cannot bite; a tier change re-puts under the new attr.
+const bits = (rows) => {
+  const out = new Uint16Array(16)
+  rows.forEach((r, y) => { let w = 0; for (let x = 0; x < 8; x++) if (r[x] === '#') w |= 1 << (7 - x); out[y] = w })
+  return out
+}
+export const HEAD_BITS = bits([
+  '........', '........', '........', '........', '........', '........',
+  '..####..', '.######.', '.######.', '.######.', '.######.', '.######.',
+  '..####..', '...##...', '...##...', '...##...',
+])
+export const SHOULDER_BITS = [
+  bits(['........', '........', '.....###', '...##...', '..#.....', '.#......', '.#......', '#.......', '#.......']),
+  bits(['...##...', '...##...', '########']),
+  bits(['........', '........', '###.....', '...##...', '.....#..', '......#.', '......#.', '.......#', '.......#']),
+]
 
 export default {
   key: 'uprising',
@@ -318,6 +371,7 @@ export default {
     // one step denser than the floor behind it -- without lighting the room.
     for (let y = BACK_HEAD + 3; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) term.put(x, y, '░', FAINT)
     const put = (x, y, ch, attr) => { if (x >= 0 && x < cols) term.put(x, y, ch, attr) }
+    const glyph = (x, y, b, attr) => { if (x >= 0 && x < cols) term.putGlyph(x, y, b, attr) }
     for (let n = 0; n < people.length; n++) {
       const pp = people[n]
       const front = pp.rank === 1
@@ -343,38 +397,44 @@ export default {
       // the room lighting up rather than as more of the same. Nothing in
       // the crowd is BRIGHT any more: the wave is many cells, and a wave of
       // BRIGHT across the bottom third blooms into a band on the tube.
+      // Body history. Shoulders were lower half-blocks under the head, then
+      // solid down to the floor; neighbours overlap, so below the shoulders
+      // it is one mass -- the silhouette that makes the heads read as a crowd.
+      // 2026-09-13 (tube check) -- '▓' rather than '█', for the same bloom
+      // reason as the floor above. 2026-09-13 (audit L6) -- '▒', over a '░'
+      // floor. 2026-10-16 (design pass) -- the critique: the mass read as a
+      // wall, a band of mixed '▓▒' blocks with heads set in it, crenellated;
+      // the ranks were split, the back rank DIM heads on FAINT shoulders over
+      // the floor's '░', the front rank a MUTED '▄' shoulder edge over a
+      // FAINT '▓' body.
+      // 2026-10-20 (polish) -- the critique, off the real tube: the front
+      // rank's MUTED '▄' shoulder bars at staggered heights over '▓' bodies
+      // rastered as a lit bar chart -- an equaliser, the brightest thing in
+      // the frame, ahead of the placards, with the 'O' heads lost in it.
+      // Half and dense blocks light whole slabs of their cells, however low
+      // the tier (the 2026-09-13 floor lesson again, one rank up). Now a
+      // person is drawn by a thin lit EDGE over dark mass: a round head and
+      // a shoulder arc (bitmaps -- see HEAD_BITS), so a rank reads as a row
+      // of busts and the mass under it as the room's
+      // shadow ('░' FAINT, the floor's own fill; no denser body at all).
+      // Front heads MUTED and shoulders DIM; back heads DIM and shoulders
+      // FAINT; the surge lifts heads and arms to NORMAL.
       const headAttr = surged ? NORMAL : front ? MUTED : DIM
-      const shoulderAttr = front ? MUTED : FAINT
+      const shoulderAttr = front ? DIM : FAINT
       const bodyAttr = FAINT
       const armAttr = surged ? NORMAL : front ? DIM : FAINT
-      // Body: shoulders as lower half-blocks under the head, then solid down
-      // to the floor. Neighbours overlap, so below the shoulders it is one
-      // mass -- the silhouette that makes the heads read as a crowd.
-      // 2026-09-13 (tube check) -- '▓' rather than '█', for the same bloom
-      // reason as the floor above: a step denser than the floor's '▒', so a
-      // body still reads against the mass, without lighting the whole cell.
-      // 2026-09-13 (audit L6) -- '▒' now, over a '░' floor: see the floor.
-      // 2026-10-16 (design pass) -- the critique: the mass read as a wall, a
-      // band of mixed '▓▒' blocks with heads set in it, crenellated. Now the
-      // two ranks are drawn differently. The back rank is DIM heads on FAINT
-      // shoulders over the floor's own '░' -- the dim mass the room recedes
-      // into, with nothing denser than the floor. The front rank is a lit
-      // top edge ('▄' shoulders under the head, MUTED) with a FAINT '▓' body
-      // below: the shoulder line is what draws each person, and the '▓' is
-      // dark mass under it -- FAINT, so it is coverage without light (the
-      // audit-L6 lesson).
-      for (let y = hy + 1; y < VIZ_BOT; y++) {
-        const sh = y === hy + 1
-        const ch = sh ? '▄' : front ? '▓' : '░'
-        const a = sh ? shoulderAttr : bodyAttr
-        put(cx - 1, y, ch, a)
-        put(cx, y, ch, a)
-        put(cx + 1, y, ch, a)
+      // Below the shoulders: the room's mass, '░' to the floor, so a front
+      // person standing in the back rank's bodies blanks their arcs.
+      for (let k = -1; k <= 1; k++) glyph(cx + k, hy + 1, SHOULDER_BITS[k + 1], shoulderAttr)
+      for (let y = hy + 2; y < VIZ_BOT; y++) {
+        put(cx - 1, y, '░', bodyAttr)
+        put(cx, y, '░', bodyAttr)
+        put(cx + 1, y, '░', bodyAttr)
       }
       // Front rank heads stand in the back rank's bodies; clearing the cells
-      // either side is the halo that keeps an `O` from vanishing into `███`.
+      // either side is the halo that keeps a head from vanishing into the mass.
       if (front) { put(cx - 1, hy, ' '); put(cx + 1, hy, ' ') }
-      put(cx, hy, front ? 'O' : 'o', headAttr)
+      glyph(cx, hy, HEAD_BITS, headAttr)
       if (raise < 0.3) continue
       const full = raise >= 0.65
       const g = pp.gesture
@@ -395,7 +455,9 @@ export default {
     // crowd, which is the subject (BRIGHT words in NORMAL boxes, crisper than
     // anything below them). Now a MUTED word in a DIM box: still read first
     // as words, but a tier under a surging arm, so the wave is the brightest
-    // thing that moves.
+    // thing that moves. 2026-10-20 (polish) -- the words back up to NORMAL,
+    // level with the surge: the next critique wanted the words to lead, and
+    // with the crowd's bars gone the room no longer competes with them.
     for (const sg of signs) {
       if (!sg.visible) continue
       const w = sg.word.length
@@ -408,7 +470,7 @@ export default {
         term.put(x, sg.y - 1, corner ? (lx ? '┌' : '┐') : '─', DIM)
         term.put(x, edge, corner ? (lx ? '└' : '┘') : '─', DIM)
         const ix = x - sg.x
-        term.put(x, sg.y, corner ? '│' : ix >= 0 && ix < w ? sg.word[ix] : ' ', corner ? DIM : MUTED)
+        term.put(x, sg.y, corner ? '│' : ix >= 0 && ix < w ? sg.word[ix] : ' ', corner ? DIM : NORMAL)
       }
     }
   },
