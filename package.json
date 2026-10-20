@@ -12,6 +12,7 @@
     "lint": "node tools/lint-roster.js",
     "lyrics": "node tools/lyrics-audit.mjs",
     "record": "node tools/record-demo.mjs",
+    "ship": "node tools/ship.mjs",
     "shoot": "node tools/shoot.mjs",
     "stamp": "node tools/stamp.js",
     "stations": "node tools/stations-to-md.js",

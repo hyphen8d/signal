@@ -21,6 +21,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { nextStamp } from './lib/stamp.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const file = path.join(here, '..', 'build.json')
@@ -28,10 +29,10 @@ const file = path.join(here, '..', 'build.json')
 let prev = ''
 try { prev = JSON.parse(readFileSync(file, 'utf8')).build || '' } catch (e) {}
 
-const today = new Date().toISOString().slice(0, 10)
-const [prevDay, prevN] = prev.split('.')
-const n = prevDay === today ? Number(prevN || 0) + 1 : 1
-const build = `${today}.${n}`
+// The arithmetic lives in tools/lib/stamp.mjs (2026-10-20), shared with
+// tools/ship.mjs, which also has to beat origin/main's stamp, not only this
+// checkout's.
+const build = nextStamp(prev)
 
 writeFileSync(file, JSON.stringify({ build }) + '\n')
 console.log(`build.json: ${prev || '(none)'} -> ${build}`)
