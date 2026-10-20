@@ -79,6 +79,7 @@ for (const [station, fx] of [
   ['cold-wave', 'frost'],
   ['city-lights', 'ripple'],
   ['green-room', 'flowfield'],
+  ['tradewinds', 'lagoon'],
 ]) {
   test(`lazy raster paints the same framebuffer as a raster per frame (${fx})`, async () => {
     const eager = await run(station, fx, true)
