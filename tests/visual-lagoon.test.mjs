@@ -1,242 +1,295 @@
-// LAGOON (TRADEWINDS, 2026-09-13) -- what the effect actually leaves on the
-// grid, read back off it the way tests/visuals.test.mjs reads BREACH's words:
-// the canvas contract (every cell of rows 1..21 repainted, nothing outside),
-// that it moves, that re-entry after a long visit carries no stale flare,
-// and that the three things the picture promises -- a round moon, a horizon,
-// and the moon's reflection UNDER the moon -- are legible every frame.
+// LAGOON (TRADEWINDS), rebuilt 2026-10-20 in beam-resolution pixel art
+// (putGlyph bitmaps, FLAME's technique; TOKYO BAY's packer). What it leaves
+// on the grid, read off the gfx plane -- a putGlyph() cell holds a space in
+// the character plane, so a character reading of this effect sees nothing:
+//  - the canvas contract (every cell repainted, by put or putGlyph; nothing
+//    outside rows 1..21) and no text on the canvas;
+//  - the picture: a round full moon, its glitter path on the water UNDER it,
+//    the palm, and the torches as the only NORMAL at rest;
+//  - THE BEAT: a kick doubles both flames (read as their height in lit
+//    pixels), lights their cores BRIGHT -- the only BRIGHT on screen -- and
+//    lets go within a second;
+//  - level sets the resting height; no tap: the synthetic ~0.9s pulse still
+//    kicks; muted: no kicks, nothing BRIGHT, flames low but burning, water
+//    still moving;
+//  - re-entry carries no kick clock over.
+//
+// The frame loop rewrites p._au every frame (visualizer.js), so everything
+// about the beat is driven by calling the effect's draw directly with a
+// crafted signal, as tests/visual-ripple.test.mjs does.
 //
 // Run: node --test tests/visual-lagoon.test.mjs
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { boot } from './harness.mjs'
-import { parseBDF } from '../src/bdf.js'
-import { BRIGHT } from '../src/term.js'
 
-const here = path.dirname(fileURLToPath(import.meta.url))
 const VIZ_BOT = 22
+// Attribute bits, src/cellgrid.js.
+const BRIGHT = 1, DIM = 4, MUTED = 32, FAINT = 64
+// Tier of an attribute byte, dark to light: FAINT 0 .. BRIGHT 4.
+const tierOf = (a) => (a & FAINT) ? 0 : (a & DIM) ? 1 : (a & MUTED) ? 2 : (a & BRIGHT) ? 4 : 3
 const effectT = (h) => (Date.now() - h.program._vizEnterAt) / 1000
-const attrAt = (h, x, y) => h.term.attrs[y * h.term.cols + x]
+
+const signal = (over = {}) => ({
+  level: 0.6, bass: 0.5, mid: 0.4, treble: 0.3,
+  bands9: new Array(9).fill(0.45), onset: false, pulse: 0.15, ...over,
+})
 
 async function bootLagoon() {
   const h = await boot({ station: 'tradewinds' })
   h.powerOn()
   h.key('v')
   assert.equal(h.program.activeVisualKey(), 'lagoon', 'TRADEWINDS should land on LAGOON')
-  return h
-}
-
-/** The effect module from the SAME instance the program imported. */
-async function lagoonModule() {
   const { VISUALS } = await import(`../visuals/index.js?v=${globalThis.SIGNAL_BUILD}`)
-  return VISUALS.lagoon
+  const mod = await import(`../visuals/lagoon.js?v=${globalThis.SIGNAL_BUILD}`)
+  const S = mod.sceneTables(h.term.cols, h.term.font.cellW, h.term.font.cellH)
+  return { h, fx: VISUALS.lagoon, mod, S }
 }
 
-/** Moon cells: the rim's half-blocks, in the sky above the island.
- *  2026-10-16 (design pass) -- the moon is its rim now, not a block of
- *  '@#O' letters; the island's crest also uses '▄', so the search stays in
- *  the moon's own columns and above the island's tallest row. */
-const RIM = '▀▄▌▐'
-let moonCellOf = null
-function moonCells(h) {
-  const cells = []
-  for (let y = 1; y < 11; y++) {
-    const r = h.row(y)
-    for (let x = 40; x < 63; x++) if (RIM.includes(r[x])) cells.push({ x, y })
+function drawWith(h, fx, t, A, muted = false) {
+  h.program.muted = muted
+  h.program._au = A
+  fx.draw(h.program, { term: h.term }, t)
+}
+
+/** Is canvas pixel (x, y) lit, and at what tier (-1 = dark)? Canvas pixel
+ *  row 0 is the top of grid row 1. */
+function px(h, x, y) {
+  const { cellW, cellH } = h.term.font
+  const cx = Math.floor(x / cellW), cy = Math.floor(y / cellH) + 1
+  const i = cy * h.term.cols + cx
+  const bits = h.term.gfx[i]
+  if (!bits) return -1
+  return (bits[y % cellH] >> (cellW - 1 - (x % cellW))) & 1 ? tierOf(h.term.attrs[i]) : -1
+}
+
+/** A flame's height: the topmost pixel row above its cup holding at least
+ *  three lit MUTED-or-brighter pixels within the fire box's width. Sparks
+ *  are 2px wide, so a lone spark does not count. */
+function flameHeight(h, S, ti) {
+  const { tx, cupY } = S.torches[ti]
+  let top = cupY
+  for (let y = cupY - 1; y >= 0; y--) {
+    let n = 0
+    for (let x = tx - 24; x <= tx + 24; x++) if (px(h, x, y) >= 2) n++
+    if (n >= 3) top = y
   }
-  return cells
+  return cupY - top
 }
 
-test('LAGOON: repaints every canvas cell and nothing outside rows 1..21', async () => {
-  const h = await bootLagoon()
+function brightCells(h) {
+  let n = 0
+  for (let i = h.term.cols; i < h.term.cols * VIZ_BOT; i++) if (h.term.gfx[i] && tierOf(h.term.attrs[i]) === 4) n++
+  return n
+}
+
+/** Copy of the water's bitmaps, for comparing frames. */
+function waterSnap(h, S) {
+  const out = []
+  for (let y = Math.floor(S.HY / S.ch) + 2; y < VIZ_BOT; y++) for (let x = 0; x < h.term.cols; x++) {
+    const bits = h.term.gfx[y * h.term.cols + x]
+    out.push(bits ? Array.from(bits) : null)
+  }
+  return out
+}
+function changedPixels(a, b) {
+  let n = 0
+  for (let i = 0; i < a.length; i++) {
+    const ra = a[i], rb = b[i]
+    for (let k = 0; k < 16; k++) { let d = (ra ? ra[k] : 0) ^ (rb ? rb[k] : 0); while (d) { n += d & 1; d >>>= 1 } }
+  }
+  return n
+}
+
+test('LAGOON: repaints every canvas cell, by put or putGlyph, and nothing outside rows 1..21', async () => {
+  const { h, fx } = await bootLagoon()
   try {
-    h.advance(1500)
-    const fx = await lagoonModule()
-    const put = h.term.put
-    const hit = new Uint8Array(h.term.cols * VIZ_BOT)
+    const origDraw = fx.draw, origPut = h.term.put, origGlyph = h.term.putGlyph, cols = h.term.cols
     const outside = []
-    h.term.put = function (x, y, ...rest) {
-      if (y < 1 || y >= VIZ_BOT) outside.push(`${x},${y}`)
-      else if (x >= 0 && x < this.cols) hit[y * this.cols + x] = 1
-      return put.call(this, x, y, ...rest)
+    let hit = null, frames = 0, short = 0, glyphs = 0
+    const mark = (x, y) => { if (y < 1 || y >= VIZ_BOT) outside.push(y); else if (x >= 0 && x < cols) hit[y * cols + x] = 1 }
+    h.term.put = function (x, y, ...rest) { if (hit) mark(x, y); return origPut.call(this, x, y, ...rest) }
+    h.term.putGlyph = function (x, y, ...rest) { if (hit) { mark(x, y); glyphs++ } return origGlyph.call(this, x, y, ...rest) }
+    fx.draw = function (...args) {
+      hit = new Uint8Array(cols * VIZ_BOT)
+      try { return origDraw.apply(this, args) } finally {
+        let missed = 0
+        for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < cols; x++) if (!hit[y * cols + x]) missed++
+        if (missed) short++
+        frames++
+        hit = null
+      }
     }
-    try {
-      fx.draw(h.program, { term: h.term }, effectT(h))
-    } finally { h.term.put = put }
-    assert.deepEqual(outside.slice(0, 5), [], `${outside.length} puts landed outside the canvas`)
-    let missed = 0
-    for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < h.term.cols; x++) if (!hit[y * h.term.cols + x]) missed++
-    assert.equal(missed, 0, `${missed} canvas cells were not repainted this frame`)
-    let lit = 0
-    for (let y = 1; y < VIZ_BOT; y++) lit += h.row(y).replace(/ /g, '').length
-    assert.ok(lit > 400, `only ${lit} non-space cells on the canvas`)
+    try { h.advance(3000) } finally { fx.draw = origDraw; h.term.put = origPut; h.term.putGlyph = origGlyph }
+    assert.ok(frames > 100, `draw should have run (ran ${frames})`)
+    assert.ok(glyphs > frames * 300, `only ${glyphs} bitmap cells over ${frames} frames -- the picture is not in pixels`)
+    assert.deepEqual([...new Set(outside)], [], 'the effect wrote to rows outside the canvas')
+    assert.equal(short, 0, `${short} of ${frames} frames left canvas cells unpainted`)
+    // No text on the canvas: the old build's '/' palm, '▓' island and
+    // '▄▀▌▐' moon are gone, and so is every '~'/'≈' (they raster as NNNN).
+    for (let y = 1; y < VIZ_BOT; y++) assert.equal(h.row(y).trim(), '', `characters on canvas row ${y}: ${h.row(y)}`)
   } finally { h.shutdown() }
 })
 
-test('LAGOON: every character it draws exists in the BDF font', async () => {
-  const font = parseBDF(readFileSync(path.join(here, '..', 'fonts', 'ter-u16n.bdf'), 'utf8'))
-  const h = await bootLagoon()
+test('LAGOON: the picture reads back -- a round full moon, its glitter path under it, a palm, the torches brightest', async () => {
+  const { h, fx, S } = await bootLagoon()
   try {
-    const seen = new Set()
-    for (let i = 0; i < 120; i++) {
-      h.advance(100)
-      for (let y = 1; y < VIZ_BOT; y++) for (const ch of h.row(y)) seen.add(ch)
+    fx.reset(h.program)
+    let t = 50
+    for (let i = 0; i < 30; i++) { drawWith(h, fx, t, signal()); t += 1 / 30 }
+    const { W, HY, mx, my, R } = S
+    // The moon: lit pixels fill a disc (not a ring, not a slab), and its
+    // extent is round once the pixel aspect is allowed for.
+    let x0 = W, x1 = 0, y0 = HY, y1 = 0, inside = 0, lit = 0
+    // Above the island shoulder, whose rim runs under the moon at the horizon.
+    for (let y = 0; y < HY - 24; y++) for (let x = mx - R - 4; x <= mx + R + 4; x++) {
+      const v = px(h, x, y)
+      const inDisc = (x - mx) ** 2 + ((y - my) * 1.2) ** 2 < (R - 2) ** 2
+      if (inDisc) { inside++; if (v >= 1) lit++ }
+      if (v >= 1) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y) }
     }
-    const missing = [...seen].filter((ch) => !font.glyphs.has(ch.codePointAt(0)))
-    assert.deepEqual(missing, [], 'glyphs not in ter-u16n.bdf render as blanks')
+    const share = lit / inside
+    assert.ok(share > 0.3 && share < 0.7, `the moon's face is ${(share * 100).toFixed(0)}% lit -- a dithered disc, neither ring nor slab`)
+    const aspect = ((x1 - x0 + 1) / (y1 - y0 + 1)) / 1.2
+    assert.ok(Math.abs(aspect - 1) < 0.12, `the moon is ${x1 - x0 + 1}x${y1 - y0 + 1} px: not round on the tube (${aspect.toFixed(2)})`)
+    // The glitter path: MUTED water pixels, centred under the moon.
+    let sum = 0, n = 0
+    // (Within 100px of it: the torch cups and flames are MUTED too.)
+    for (let y = HY + 1; y < S.H; y++) for (let x = mx - 100; x <= mx + 100; x++) if (px(h, x, y) === 2) { sum += x; n++ }
+    assert.ok(n > 300, `only ${n} MUTED glitter pixels on the water`)
+    assert.ok(Math.abs(sum / n - mx) < 12, `the glitter path is centred at ${(sum / n).toFixed(0)}, the moon at ${mx}`)
+    // The palm: a trunk and fronds in the left third, above the horizon.
+    let palm = 0
+    for (let y = 0; y < HY; y++) for (let x = 0; x < W * 0.32; x++) if (px(h, x, y) >= 0) palm++
+    assert.ok(palm > 2500, `only ${palm} lit pixels where the palm stands`)
+    // At rest the flames are the top tier, and nothing else reaches it.
+    let worst = 0, normalOff = 0
+    for (let cy = 1; cy < VIZ_BOT; cy++) for (let cx = 0; cx < h.term.cols; cx++) {
+      const i = cy * h.term.cols + cx
+      if (!h.term.gfx[i]) continue
+      const tr = tierOf(h.term.attrs[i])
+      worst = Math.max(worst, tr)
+      const near = S.torches.some(({ tx }) => Math.abs(cx * S.cw + 4 - tx) <= 30)
+      if (tr >= 3 && !near) normalOff++
+    }
+    assert.equal(worst, 3, `at rest the flames are NORMAL and nothing is BRIGHT (top tier ${worst})`)
+    assert.equal(normalOff, 0, `${normalOff} NORMAL cells away from the torches -- only the fire may lead`)
+    for (let ti = 0; ti < S.torches.length; ti++) assert.ok(flameHeight(h, S, ti) >= 12, `torch ${ti} is not burning`)
   } finally { h.shutdown() }
 })
 
-test('LAGOON: the scene moves', async () => {
-  const h = await bootLagoon()
+test('LAGOON: a kick doubles both flames, lights them BRIGHT and throws sparks, then lets go', async () => {
+  // The same timeline twice, with and without one kick. Mutation-checked
+  // 2026-10-20: with the kick's edge out of reach (BEAT_RISE 2) this, the
+  // no-tap test and the re-entry test go red; with the plume() call
+  // removed (the kick left to propagation alone) the doubling does --
+  // 20px at rest, 22px just after -- which is the KICK tile's whole story.
+  const { h, fx, S } = await bootLagoon()
+  const rnd = Math.random
   try {
-    h.advance(1000)
-    const a = Array.from({ length: VIZ_BOT - 1 }, (_, i) => h.row(i + 1)).join('\n')
-    h.advance(1200)
-    const b = Array.from({ length: VIZ_BOT - 1 }, (_, i) => h.row(i + 1)).join('\n')
-    assert.notEqual(a, b, 'two frames 1.2s apart are identical')
+    // Seeded, the same seed both runs: the fire is random, and two runs on
+    // different draws differ by a tongue or two -- the kick has to show
+    // against the SAME fire without it, not against luck.
+    const seed = () => { let a = 0x2545f491; Math.random = () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
+    const heights = () => S.torches.map((_, ti) => flameHeight(h, S, ti))
+    const avg = (rows) => rows[0].map((_, ti) => rows.reduce((s, r) => s + r[ti], 0) / rows.length)
+    const run = (kick) => {
+      seed()
+      fx.reset(h.program)
+      h.program._lagoonLvl = 0.6
+      let t = 100
+      const restRows = []
+      for (let i = 0; i < 60; i++) { drawWith(h, fx, t, signal()); t += 1 / 60; if (i >= 50) restRows.push(heights()) }
+      assert.equal(brightCells(h), 0, 'BRIGHT on screen with no kick')
+      // The kick frame, then 0.02-0.07s after it: the KICK tile.
+      drawWith(h, fx, t, signal({ pulse: kick ? 1 : 0.15, onset: kick })); t += 1 / 60
+      const earlyRows = []
+      let bright = 0
+      for (let i = 0; i < 4; i++) { drawWith(h, fx, t, signal()); t += 1 / 60; earlyRows.push(heights()); bright = Math.max(bright, brightCells(h)) }
+      for (let i = 0; i < 5; i++) { drawWith(h, fx, t, signal()); t += 1 / 60 }
+      const sparks = h.program._lagoon.sparks.length
+      for (let i = 0; i < 70; i++) { drawWith(h, fx, t, signal()); t += 1 / 60 }
+      return { rest: avg(restRows), early: avg(earlyRows), bright, sparks, after: brightCells(h) }
+    }
+    const loud = run(false)
+    const kick = run(true)
+    S.torches.forEach((_, ti) => {
+      assert.ok(kick.early[ti] >= 1.7 * kick.rest[ti], `torch ${ti}: ${kick.rest[ti].toFixed(0)}px at rest, ${kick.early[ti].toFixed(0)}px just after the kick -- not doubled`)
+      assert.ok(kick.early[ti] >= 1.5 * loud.early[ti], `torch ${ti}: ${kick.early[ti].toFixed(0)}px kicked vs ${loud.early[ti].toFixed(0)}px on the same timeline without`)
+    })
+    assert.ok(kick.bright >= 2, `the kick lit only ${kick.bright} cells BRIGHT`)
+    assert.equal(loud.bright, 0, 'BRIGHT with no kick')
+    assert.ok(kick.sparks >= 8, `only ${kick.sparks} sparks in the air 0.15s after the kick`)
+    assert.equal(kick.after, 0, 'the flare held past a second -- a strobe at any real tempo')
+  } finally { Math.random = rnd; h.shutdown() }
+})
+
+test('LAGOON: level sets the resting height -- a loud passage burns taller than a quiet one', async () => {
+  const { h, fx, S } = await bootLagoon()
+  try {
+    const settle = (level) => {
+      fx.reset(h.program)
+      let t = 300
+      for (let i = 0; i < 240; i++) { drawWith(h, fx, t, signal({ level })); t += 1 / 60 }
+      // Averaged over a second: the fire is random, one frame is not a height.
+      let sum = 0
+      for (let i = 0; i < 30; i++) { drawWith(h, fx, t, signal({ level })); t += 1 / 30; sum += flameHeight(h, S, 1) }
+      return sum / 30
+    }
+    const quiet = settle(0.1), loud = settle(0.95)
+    assert.ok(loud > quiet * 1.3, `near torch: ${quiet.toFixed(0)}px quiet, ${loud.toFixed(0)}px loud`)
   } finally { h.shutdown() }
 })
 
-test('LAGOON: re-entry after a long visit carries no flare from the previous visit', async () => {
-  // _lagoonFlareAt is the effect's one absolute effect-clock value. Forced to
-  // the end of a two-minute visit (as DREAD's tear is forced), then muted so
-  // no synthetic onset can overwrite it during the check -- without that, a
-  // missing reset() hides behind the next random onset about three runs in
-  // four. The draw does not self-heal it, so reset() is what this tests.
-  // 2026-09-13 (audit L12) -- the two minutes are compressed: the entry stamp
-  // is moved back 120s instead of rendering 7500 frames of it. What this bug
-  // class needs is an effect clock ~120s ahead at exit, and the draw's t is
-  // computed from _vizEnterAt (visualizer.js), so that is exactly the state a
-  // real long visit leaves. Still red with reset() emptied.
-  const h = await bootLagoon()
+test('LAGOON: with no tap the synthetic ~0.9s pulse still kicks the torches', async () => {
+  const { h } = await bootLagoon()
   try {
-    h.advance(1000)
-    h.program._vizEnterAt -= 120000
-    h.advance(500)
-    h.program._lagoonFlareAt = effectT(h)
-    h.program.muted = true
-    h.key('e')
-    h.advance(500)
-    h.key('v')
-    h.advance(2000)
+    const s0 = h.program._lagoonStep
+    h.advance(4000)
+    const steps = h.program._lagoonStep - s0
+    assert.ok(steps >= 3 && steps <= 6, `${steps} kicks in 4s on syntheticAudio's ~0.9s pulse`)
+  } finally { h.shutdown() }
+})
+
+test('LAGOON: muted, no kick and nothing BRIGHT -- but the torches burn low and the water moves', async () => {
+  const { h, fx, S } = await bootLagoon()
+  try {
+    fx.reset(h.program)
+    let t = 200
+    const s0 = h.program._lagoonStep
+    let bright = 0
+    const snaps = []
+    const fh = S.torches.map(() => 0)
+    for (let i = 0; i < 90; i++) {
+      drawWith(h, fx, t, signal({ pulse: i % 10 ? 0 : 1, onset: true }), true); t += 1 / 30
+      bright += brightCells(h)
+      if (i % 30 === 0) snaps.push(waterSnap(h, S))
+      // Averaged over the last second: one frame's tongue is not a height.
+      if (i >= 60) S.torches.forEach((_, ti) => { fh[ti] += flameHeight(h, S, ti) / 30 })
+    }
+    assert.equal(h.program._lagoonStep, s0, 'a kick landed while muted')
+    assert.equal(bright, 0, 'BRIGHT cells while muted')
+    assert.ok(changedPixels(snaps[0], snaps[2]) > 200, 'the lagoon froze while muted')
+    fh.forEach((v, ti) => assert.ok(v >= 8 && v <= 36, `muted torch ${ti} burns ${v.toFixed(0)}px -- should be low but alight`))
+  } finally { h.shutdown() }
+})
+
+test('LAGOON: re-entry after a long visit carries no kick clock from the previous visit', async () => {
+  const { h } = await bootLagoon()
+  try {
+    // Any clock left over sits far in the restarted one's future (the
+    // 2026-09-12 audit's M5 shape). Mutation-checked: deleting reset()'s
+    // _lagoonKickAt line goes red.
+    h.advance(8000)
+    h.key('e'); h.advance(500)
+    h.key('v'); h.advance(100)
     const t = effectT(h)
-    assert.ok(t < 5, `effect clock should have restarted (t=${t.toFixed(1)})`)
-    assert.ok(!(h.program._lagoonFlareAt > t), `flare stamped at ${h.program._lagoonFlareAt}s on a clock at ${t.toFixed(1)}s`)
-    assert.ok(moonCells(h).length > 30, 'the moon should still be up after re-entry')
-    let lit = 0
-    for (let y = 1; y < VIZ_BOT; y++) lit += h.row(y).replace(/ /g, '').length
-    assert.ok(lit > 300, `only ${lit} non-space cells after re-entry`)
-  } finally { h.shutdown() }
-})
-
-test('LAGOON: a round moon above a horizon, with its reflection under it', async () => {
-  const h = await bootLagoon()
-  const { moonCell } = await import(`../visuals/lagoon.js?v=${globalThis.SIGNAL_BUILD}`)
-  moonCellOf = moonCell
-  try {
-    for (let i = 0; i < 40; i++) {
-      h.advance(150)
-      // The moon: a disc roughly twice as wide as it is tall in cells, which
-      // is what a circle is on ~2:1 cells.
-      const moon = moonCells(h)
-      assert.ok(moon.length > 30, `moon rim has only ${moon.length} cells`)
-      const xs = moon.map((c) => c.x), ys = moon.map((c) => c.y)
-      const w = Math.max(...xs) - Math.min(...xs) + 1
-      const ht = Math.max(...ys) - Math.min(...ys) + 1
-      assert.ok(w >= 13 && w <= 17 && ht >= 6 && ht <= 8, `moon is ${w}x${ht} cells`)
-      assert.ok(w / ht > 1.7 && w / ht < 2.6, `moon aspect ${(w / ht).toFixed(2)} is not a circle on 2:1 cells`)
-      const moonX = (Math.max(...xs) + Math.min(...xs)) / 2
-      // A rim, not a slab and not text: no letters in the disc, and its
-      // inside is mostly dark.
-      let inside = 0, dark = 0
-      for (let y = Math.min(...ys); y <= Math.max(...ys); y++) {
-        for (let x = Math.min(...xs); x <= Math.max(...xs); x++) {
-          const ch = h.row(y)[x]
-          assert.ok(!/[@#O0]/.test(ch), `moon face drawn in letters at ${x},${y}: '${ch}'`)
-          if (moonCellOf(x, y) === 'in') { inside++; if (ch === ' ' || ch === '░') dark++ }
-        }
-      }
-      assert.ok(inside > 40 && dark === inside, `moon interior: ${dark}/${inside} cells dark`)
-      const moonBottom = Math.max(...ys)
-
-      // The horizon: a row that is mostly the horizon rule, below the moon
-      // and about two-thirds of the way down the canvas.
-      let horizon = -1
-      for (let y = 1; y < VIZ_BOT; y++) if ((h.row(y).match(/─/g) || []).length >= 40) { horizon = y; break }
-      assert.ok(horizon >= 12 && horizon <= 15, `no horizon row near two-thirds down (found ${horizon})`)
-      assert.ok(horizon > moonBottom, 'the moon should sit above the horizon')
-
-      // The reflection: '=' dashes are drawn only by the moon path, and they
-      // must sit under the moon -- centred on it, never far off it.
-      const dashes = []
-      for (let y = horizon + 1; y < VIZ_BOT; y++) {
-        const r = h.row(y)
-        for (let x = 0; x < r.length; x++) if (r[x] === '=') dashes.push(x)
-      }
-      assert.ok(dashes.length >= 4, `only ${dashes.length} reflection dashes`)
-      const mean = dashes.reduce((a, b) => a + b, 0) / dashes.length
-      assert.ok(Math.abs(mean - moonX) <= 3, `reflection centred at ${mean.toFixed(1)}, moon at ${moonX}`)
-      assert.ok(dashes.every((x) => Math.abs(x - moonX) <= 9), 'a reflection dash strayed from under the moon')
-    }
-  } finally { h.shutdown() }
-})
-
-test('LAGOON: torches stand on the beach and flare on an onset', async () => {
-  // 2026-10-16 (design pass) -- the flare used to be one '*' per torch, and
-  // the LOUD and KICK captures could not be told apart. It is now a column
-  // of BRIGHT flame standing on each cup for the whole flare: three rows
-  // fresh, two as it dies. Counted here as BRIGHT cells in the torches'
-  // own columns above the flame body, which is exactly what the tube shows.
-  // Mutation-checked: with the column loop emptied this goes red.
-  const h = await bootLagoon()
-  const { TORCHES } = await import(`../visuals/lagoon.js?v=${globalThis.SIGNAL_BUILD}`)
-  try {
-    h.program.muted = true // no synthetic onsets: the flare below is the only one
-    h.advance(1000)
-    const cups = () => Array.from({ length: VIZ_BOT - 1 }, (_, i) => h.row(i + 1)).join('\n').split('\\#/').length - 1
-    const flame = () => {
-      let n = 0
-      for (const { x, cupY } of TORCHES) {
-        for (let y = Math.max(1, cupY - 5); y <= cupY - 2; y++) {
-          for (let dx = -1; dx <= 1; dx++) if (h.row(y)[x + dx] !== ' ' && attrAt(h, x + dx, y) & BRIGHT) n++
-        }
-      }
-      return n
-    }
-    assert.equal(cups(), 2, 'both torch cups should be on the grid')
-    const before = flame()
-    // Muted, the torches burn low: at most a tongue each.
-    assert.ok(before <= 2, `muted torches should burn low (${before} BRIGHT flame cells)`)
-    h.program._lagoonFlareAt = effectT(h)
-    h.advance(50)
-    assert.ok(flame() >= 6, `an onset should stand a 3-row BRIGHT column on both torches (saw ${flame()})`)
-    h.advance(400)
-    assert.ok(flame() >= 4, `the column should hold for the flare (saw ${flame()} at 0.45s)`)
-    h.advance(1500)
-    assert.ok(flame() <= before, 'the flare should die back down within a moment')
-  } finally { h.shutdown() }
-})
-
-test('LAGOON: the palm is one trunk stroke and a few long fronds, no hut', async () => {
-  // 2026-10-16 (design pass) -- the trunk drew two characters a row and the
-  // fronds were near-flat with leaflets and 'o/o' coconuts: on the tube it
-  // read as a hut. Now: exactly one trunk character per row below the
-  // crown, and no coconuts.
-  const h = await bootLagoon()
-  try {
-    for (let i = 0; i < 10; i++) {
-      h.advance(300)
-      for (let y = 12; y < VIZ_BOT; y++) {
-        const left = h.row(y).slice(0, 12)
-        const trunk = left.replace(/[^(/]/g, '').length
-        assert.equal(trunk, 1, `row ${y} carries ${trunk} trunk strokes: ${JSON.stringify(left)}`)
-      }
-      const crown = Array.from({ length: 8 }, (_, i) => h.row(i + 1).slice(0, 36)).join('\n')
-      assert.ok(!/o.o/.test(crown), 'no coconuts on the crown')
-    }
+    assert.ok(t < 1, `effect clock should have restarted (t=${t.toFixed(2)})`)
+    assert.ok(h.program._lagoonKickAt <= t + 0.05, `kick clock ${h.program._lagoonKickAt} on a clock at ${t}`)
+    assert.ok(h.program._lagoonSimT <= t + 0.05, `fire clock ${h.program._lagoonSimT} on a clock at ${t}`)
+    const s0 = h.program._lagoonStep
+    h.advance(2500)
+    assert.ok(h.program._lagoonStep > s0, 'no kick landed after re-entry')
   } finally { h.shutdown() }
 })
