@@ -36,9 +36,9 @@
 // the real thing -- the same caveat shoot.mjs carries), and the track
 // progress bar, which reads the YouTube player's own real-time clock and so
 // runs `slow` times fast against everything else on screen.
-import { spawn, spawnSync } from 'node:child_process'
-import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync, mkdirSync, statSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { spawnSync } from 'node:child_process'
+import { writeFileSync, rmSync, mkdirSync, statSync } from 'node:fs'
+import { CACHE, CHROME, connectCdp, launchChrome, onExit, slowClockScript } from './lib/capture.mjs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -50,7 +50,7 @@ const SLOW = +flag('slow', 6)
 const W = +flag('width', 960), H = +flag('height', 600)
 const FPS = +flag('fps', 35)            // frames per app-second; see the header
 const SHOTS = path.join(ROOT, 'screenshots')
-const OUT = path.join(tmpdir(), 'signal-demo-frames')
+const OUT = path.join(CACHE, 'demo-frames')
 
 // 2026-10-12 (audit, LOW) -- the boot station and the preset pressed are
 // derived from the roster, not hardcoded. The first cut booted
@@ -78,50 +78,19 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 // 2026-10-12 (audit, LOW) -- fail clearly up front rather than spawning
 // `undefined` (an opaque ERR_INVALID_ARG_TYPE) or recording a minute of
 // frames only to find ffmpeg missing at the end.
-const CHROME = ['/usr/bin/google-chrome-stable', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/chrome']
-  .find((p) => spawnSync('test', ['-x', p]).status === 0)
-if (!CHROME) { console.error('No Chrome/Chromium found (looked in /usr/bin). Install one, or add its path to CHROME in this file.'); process.exit(1) }
+if (!CHROME) { console.error('No Chrome/Chromium found. Install one, or add its path to CHROME in tools/lib/capture.mjs.'); process.exit(1) }
 if (spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status !== 0) { console.error('ffmpeg not found on PATH; it assembles the frames.'); process.exit(1) }
+// 2026-10-20 -- Chrome comes from tools/lib/capture.mjs: the one-capture-at-
+// a-time lock, its own process group (killed on any exit, including a
+// Ctrl-C mid-recording, which used to leave it running), and a profile under
+// ~/.cache/signal/runs/ removed on exit. The frames moved out of /tmp too:
+// a recording is thousands of JPEGs, and /tmp is a shared tmpfs here.
+const chrome = await launchChrome({ kind: 'record', width: W, height: H })
 rmSync(OUT, { recursive: true, force: true }); mkdirSync(OUT, { recursive: true })
-const profile = mkdtempSync(path.join(tmpdir(), 'signal-rec-'))
-const chrome = spawn(CHROME, [
-  '--headless=new', '--remote-debugging-port=0', `--window-size=${W},${H}`,
-  '--no-first-run', '--no-default-browser-check', '--use-gl=angle', '--use-angle=swiftshader',
-  '--enable-unsafe-swiftshader', '--mute-audio', '--autoplay-policy=no-user-gesture-required',
-  '--hide-scrollbars', `--user-data-dir=${profile}`, 'about:blank',
-], { stdio: ['ignore', 'ignore', 'pipe'] })
-chrome.stderr.on('data', () => {})
-const portFile = path.join(profile, 'DevToolsActivePort')
-let port
-for (let i = 0; i < 80 && !port; i++) {
-  if (existsSync(portFile)) { const n = +readFileSync(portFile, 'utf8').split('\n')[0]; if (n) port = n }
-  if (!port) await sleep(250)
-}
-let wsUrl
-for (let i = 0; i < 80 && !wsUrl; i++) {
-  try {
-    const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()
-    wsUrl = list.find((t) => t.type === 'page' && t.webSocketDebuggerUrl)?.webSocketDebuggerUrl
-  } catch {}
-  if (!wsUrl) await sleep(250)
-}
-const ws = new WebSocket(wsUrl)
-await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej })
-let seq = 0
-const pending = new Map()
-const onEvent = new Map()
-ws.onmessage = (m) => {
-  const msg = JSON.parse(m.data)
-  if (msg.id && pending.has(msg.id)) {
-    const { res, rej } = pending.get(msg.id); pending.delete(msg.id)
-    msg.error ? rej(new Error(JSON.stringify(msg.error))) : res(msg.result)
-  } else if (msg.method && onEvent.has(msg.method)) {
-    onEvent.get(msg.method)(msg.params)
-  }
-}
-const send = (method, params = {}) => new Promise((res, rej) => {
-  const id = ++seq; pending.set(id, { res, rej }); ws.send(JSON.stringify({ id, method, params }))
-})
+if (!args.includes('--keep')) onExit(() => rmSync(OUT, { recursive: true, force: true })) // a Ctrl-C leaves no frames either
+const cdp = await connectCdp(chrome.wsUrl)
+const { send } = cdp
+const onEvent = { set: (m, fn) => cdp.on(m, fn) }
 const ev = async (e) => {
   const r = await send('Runtime.evaluate', { expression: e, returnByValue: true, awaitPromise: true })
   return r.exceptionDetails ? 'THREW: ' + (r.exceptionDetails.exception?.description || '').slice(0, 140) : r.result?.value
@@ -140,19 +109,7 @@ const key = async (k) => {
 }
 
 // --- the slowed clock, installed before any page script runs ---------------
-const CLOCK = `(() => {
-  const SLOW = ${SLOW}
-  const realNow = Date.now.bind(Date)
-  const realPerf = performance.now.bind(performance)
-  const t0 = realNow(), p0 = realPerf()
-  Date.now = () => t0 + (realNow() - t0) / SLOW
-  performance.now = () => (realPerf() - p0) / SLOW
-  const rAF = requestAnimationFrame.bind(window)
-  window.requestAnimationFrame = (cb) => rAF(() => cb(performance.now()))
-  const sT = setTimeout.bind(window), sI = setInterval.bind(window)
-  window.setTimeout = (fn, d, ...a) => sT(fn, (d || 0) * SLOW, ...a)
-  window.setInterval = (fn, d, ...a) => sI(fn, (d || 0) * SLOW, ...a)
-})()`
+const CLOCK = slowClockScript(SLOW)
 
 // Page.startScreencast pushes a frame whenever the page paints, with no
 // round-trip per frame -- captureScreenshot in a loop managed 4.4 frames per
@@ -220,12 +177,9 @@ try {
 } catch (err) {
   failed = err
 } finally {
-  ws.close(); chrome.kill()
-  // The profile is a fresh mkdtemp per run and was never removed: one
-  // Chrome profile left in /tmp per recording. Wait for Chrome to let go of
-  // it first, or the delete races the process still writing to it.
-  await new Promise((r) => { if (chrome.exitCode !== null) r(); else { chrome.once('exit', r); setTimeout(r, 3000) } })
-  rmSync(profile, { recursive: true, force: true })
+  // close() waits for Chrome to exit before removing its profile (the
+  // delete otherwise races the process still writing to it).
+  cdp.close(); await chrome.close()
 }
 if (failed) {
   rmSync(OUT, { recursive: true, force: true })

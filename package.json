@@ -19,6 +19,8 @@
     "test": "node --test tests/*.test.mjs",
     "verify": "node tools/verify-roster.js",
     "voice": "node tools/voice-render.mjs",
-    "watch": "node tools/roster-watch.mjs"
+    "watch": "node tools/roster-watch.mjs",
+    "preview": "node tools/viz-preview.mjs",
+    "vizsheet": "node tools/viz-sheet.mjs"
   }
 }
