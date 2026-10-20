@@ -85,6 +85,33 @@ const { VIZ_BOT } = await import(`../layout.js?v=${V}`)
 // (per-row dirty tracking -- see its doc comment), so an in-place rewrite
 // would never be re-rastered here. Two bitmaps per cell, alternated per
 // step: a fresh reference every step, zero allocation.
+
+// ---- 2026-10-20 polish pass (critique of the 10-20 contact sheets) ----
+// Matt approved FLAME live on 2026-09-22, so this pass changed as little
+// as it could. The critic raised three things:
+//  - "A full-width dark seam splits the fire into two decks" (LOUD and
+//    every KICK tile). NOT A BUG, and not phosphor persistence either --
+//    viz-preview (no persistence) shows it too. It is the MUTED tile's
+//    banked-down bed still rising: the field climbs one sim row per 30Hz
+//    step, so a mute->loud change travels up the canvas as a dark band for
+//    ~5s, and the sheet takes LOUD 1.5s after MUTED. On the capture tube
+//    (~2fps) the 3-steps-a-frame catch-up clamp slows the sim ~5x, which
+//    is why the band sat in place across all four tiles. Held at LOUD for
+//    8s there is no seam. Left alone: a fire flaring up after a quiet
+//    stretch is supposed to look like that.
+//  - "NO TAP is a 4-row hedge." Real, in the synthetic signal's troughs:
+//    measured 4..14 rows over a minute. NO TAP gets its own fuel range
+//    (FUEL_SYNTH), 9..12 rows; a real tap keeps the 57th pass's range.
+//  - "LOUD and KICK look alike." Part of that was a real bug: `onset` is
+//    up for one render frame and only every other frame steps the fire,
+//    so half of all kicks never flared it or threw sparks. The onset is
+//    latched now. On top, a kick drives three narrow spots on the grate to
+//    full heat for a quarter second (the surge), so licks grow out of the
+//    bed. Painting tall tongues straight into the field was tried first
+//    and rejected the same day: the field is carried up rigidly, so they
+//    read as tree trunks. The surge is subtle in a still -- the fire cannot
+//    rise faster than ~4 cell rows a second -- and that was preferred to a
+//    still-friendly shape that looks wrong moving.
 const FIRE_MAX = 52 // heat levels the dither resolves; mean cooling is 1/3 level per sim row
 // The bed may run hotter than the dither can show: heat above FIRE_MAX
 // renders as the capped core, but it buys HEIGHT, since height is the bed's
@@ -97,6 +124,23 @@ const FIRE_MAX = 52 // heat levels the dither resolves; mean cooling is 1/3 leve
 // the cap, 14-15 without; the test now reads it that way.
 const FIRE_CAP = FIRE_MAX * 2
 const FIRE_HZ = 30
+// Bass -> fuel. FUEL_TAP is the 57th pass's range, untouched: a real tap
+// banks the fire right down in a quiet stretch and that is the point.
+// FUEL_SYNTH (2026-10-20) is for NO TAP only. syntheticAudio()'s bass
+// wanders 0..0.66 on a ~27s cycle, so on the tap's range a visitor with no
+// tap -- most of them -- spent the troughs looking at a 4-5 row hedge
+// (measured over a minute: 4..14 rows of the 21's canvas, 1-second means).
+// There is no music being misrepresented by holding it up, so the floor
+// rises and the swing narrows: 9..12 rows, about half the canvas.
+const FUEL_TAP = [0.4, 1.5]
+const FUEL_SYNTH = [0.8, 1.05]
+// Hot tongues an onset grows out of the bed (see stepFire): how many, for
+// how many 30Hz steps, how wide (sim px, ~1/e half-width) and how much fuel
+// over the bed's own.
+const TONGUES = 3
+const SURGE_STEPS = 8
+const SURGE_W = 5
+const SURGE_HEAT = 1.2
 const FIRE_SPARKS = 32
 // 4x4 ordered dither -- ordered, not error-diffused: a regular screen
 // reads as a deliberate treatment, a scattered one as noise.
@@ -130,6 +174,8 @@ export default {
       heat: new Uint8Array(W * H),
       bed: new Float32Array(W),
       sparks: [],
+      kickPending: false,
+      surge: null,
       tick: 0,
       front: 0,
       bufs: [0, 1].map(() => Array.from({ length: term.cols * rows }, () => new Uint16Array(cellH))),
@@ -153,13 +199,22 @@ export default {
     if (!p._fire || p._fire.cols !== term.cols) this.alloc(p, term)
     const F = p._fire
     const A = p.muted ? SILENT_AUDIO : (p._au || syntheticAudio(t))
+    // NO TAP burns on a raised floor (2026-10-20): see FUEL_SYNTH.
+    const fuelRange = !p.muted && !p._au ? FUEL_SYNTH : FUEL_TAP
+    // Latch the onset until a step consumes it (2026-10-20). The tap raises
+    // `onset` for one render frame, and at 60fps only every other frame runs
+    // a 30Hz step -- so half of all kicks never reached the fire: no flare,
+    // no spark burst. Measured while building the tongues, which were
+    // missing from the KICK still for exactly that reason.
+    if (A.onset) F.kickPending = true
     if (t < p._fireLastStep) p._fireLastStep = 0
     // Fixed step, at most 3 per frame; past that the clock is snapped
     // forward, so a stalled tab resumes rather than burning a backlog.
     let steps = 0
     while (t - p._fireLastStep >= 1 / FIRE_HZ && steps < 3) {
       p._fireLastStep += 1 / FIRE_HZ
-      stepFire(F, A)
+      stepFire(F, A, fuelRange, F.kickPending)
+      F.kickPending = false
       steps++
     }
     if (t - p._fireLastStep > 0.25) p._fireLastStep = t
@@ -179,18 +234,27 @@ export default {
   },
 }
 
-function stepFire(F, A) {
+function stepFire(F, A, [fLo, fHi] = FUEL_TAP, kick = A.onset) {
   const { W, H, heat, bed, sparks } = F
   const tk = ++F.tick
-  const fuel = auMul(A, A.bass, 0.4, 1.5)
-  const flare = A.pulse * 0.35 + (A.onset ? 0.3 : 0)
+  const fuel = auMul(A, A.bass, fLo, fHi)
+  const flare = A.pulse * 0.35 + (kick ? 0.3 : 0)
   const base = (H - 1) * W
+  // Tongues (2026-10-20): an onset picks a few narrow spots on the grate and
+  // drives them to full heat for a quarter second, so tall licks grow up out
+  // of the bed instead of the whole bed lifting a little. Fed in at the BED
+  // and left to the propagation, deliberately: a lick painted straight into
+  // the field (tried first, the same day) is carried up rigidly one sim row
+  // a step and read as a row of tree trunks.
+  if (kick) F.surge = { left: SURGE_STEPS, xs: Array.from({ length: TONGUES }, (_, k) => (W * (k + 0.15 + Math.random() * 0.7)) / TONGUES) }
+  const surge = F.surge && F.surge.left-- > 0 ? F.surge.xs : null
   for (let x = 0; x < W; x++) {
     // Two slow sines at unrelated frequencies wander bright columns along
     // the grate: a flat source is a flat fire.
     const a = Math.sin(x * 0.055 + tk * 0.05)
     const b = Math.sin(x * 0.017 - tk * 0.031)
-    const target = (0.7 + 0.19 * a + 0.15 * b) * fuel + flare
+    let target = (0.7 + 0.19 * a + 0.15 * b) * fuel + flare
+    if (surge) for (const sx of surge) { const d = (x - sx) / SURGE_W; target += SURGE_HEAT * Math.exp(-d * d) }
     bed[x] = bed[x] * 0.5 + target * 0.5 // eased, not snapped (47th pass)
     heat[base + x] = Math.min(FIRE_CAP, Math.max(0, Math.round(FIRE_MAX * bed[x])))
   }
@@ -211,7 +275,7 @@ function stepFire(F, A) {
   // Sparks are written into the heat field, so the same dither lights them
   // and they cool as they rise. Emitted only from hot bed, so they come in
   // bursts.
-  const emit = A.onset ? 6 : (Math.random() < 0.5 ? 1 : 0)
+  const emit = kick ? 6 : (Math.random() < 0.5 ? 1 : 0)
   for (let k = 0; k < emit && sparks.length < FIRE_SPARKS; k++) {
     const x = (Math.random() * W) | 0
     if (heat[base + x] > FIRE_MAX * 0.75) sparks.push({ x, y: H - 2, vy: 0.9 + Math.random() * 1.6, life: 1 })
