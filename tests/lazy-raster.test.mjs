@@ -8,7 +8,7 @@
 // redrawn from the planes' current state. This proves it the only way that
 // counts: one seed, two boots, one rasterising every frame and one only at
 // the checkpoints, and the framebuffers compared byte for byte -- across the
-// radio itself and the five effects that draw beam-resolution bitmaps
+// radio itself and the six effects that draw beam-resolution bitmaps
 // through putGlyph(), which are where a deferred raster could plausibly
 // diverge (a bitmap mutated in place without a fresh putGlyph() -- see the
 // note in the harness's advance()).
@@ -79,6 +79,7 @@ for (const [station, fx] of [
   ['cold-wave', 'frost'],
   ['city-lights', 'ripple'],
   ['green-room', 'flowfield'],
+  ['midnight-neon', 'bubbletubes'],
 ]) {
   test(`lazy raster paints the same framebuffer as a raster per frame (${fx})`, async () => {
     const eager = await run(station, fx, true)
