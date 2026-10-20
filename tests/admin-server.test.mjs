@@ -246,6 +246,24 @@ test('the dashboard shoots THIS server, not the deployed site', () => {
   assert.ok(!url.includes('github.io'), 'never production')
 })
 
+test('the suite task and npm test share one compile cache, gitignored and never served', async () => {
+  // 2026-10-20 (test-speed pass) -- the cache directory is named twice
+  // (package.json's `test` script and TASKS.test), and SHIP stages the
+  // whole tree, so ~70MB of V8 blobs is one missing .gitignore line from
+  // a commit. Asserted here rather than trusted.
+  const root = path.join(here, '..')
+  const [, , env] = admin.TASKS.test.cmd()
+  const dir = env?.NODE_COMPILE_CACHE
+  assert.ok(dir, 'the suite task must set NODE_COMPILE_CACHE')
+  const rel = path.relative(root, dir)
+  const { readFileSync } = await import('node:fs')
+  const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
+  assert.ok(pkg.scripts.test.startsWith(`NODE_COMPILE_CACHE=${rel} `), `npm test must use ${rel} too: ${pkg.scripts.test}`)
+  const r = spawnSync('git', ['check-ignore', '-q', `${rel}/x`], { cwd: root })
+  assert.equal(r.status, 0, `${rel} must be gitignored`)
+  assert.equal(admin.servable(`${rel}/x`), false, `${rel} must not be served`)
+})
+
 // 2026-09-12 (audit, M15) -- tools/dev-server.py carries a deliberate copy
 // of the allowlist, "kept identical" by eye, and had no test at all -- on
 // the server that binds every interface. Same lists, same assertions.

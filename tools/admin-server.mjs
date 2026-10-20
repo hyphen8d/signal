@@ -222,9 +222,18 @@ const testFiles = () => readdirSync(abs('tests')).filter(f => f.endsWith('.test.
 // target; the URL is the address this server actually bound, because the
 // systemd unit binds the tailnet and 127.0.0.1 would not reach it there.
 const localAppUrl = () => `http://${LOOPBACK ? '127.0.0.1' : (HOST.includes(':') ? `[${HOST}]` : HOST)}:${PORT}/`
+// 2026-10-20 (test-speed pass) -- the suite runs with Node's module compile
+// cache, the same as `npm test` in package.json. Every harness boot imports
+// a fresh module graph under a unique `?v=test<n>`, and those tags are the
+// same n on every run of a given file, so V8's code cache hits on the second
+// run onward: measured ~10% less CPU on program/game/visuals. The directory
+// is gitignored (SHIP stages the whole tree and must never sweep ~70MB of V8
+// blobs into a commit) and dot-prefixed, so the static allowlist refuses it
+// too. A third element of cmd() is extra env for the child.
+const COMPILE_CACHE = { NODE_COMPILE_CACHE: abs('.node-compile-cache') }
 export const TASKS = {
   lint: { label: 'lint roster', cmd: () => ['node', ['tools/lint-roster.js']] },
-  test: { label: 'test suite', cmd: () => ['node', ['--test', ...testFiles()]] },
+  test: { label: 'test suite', cmd: () => ['node', ['--test', ...testFiles()], COMPILE_CACHE] },
   verify: { label: 'verify roster', network: true, cmd: () => ['node', ['tools/verify-roster.js']] },
   stamp: { label: 'bump build stamp', cmd: () => ['node', ['tools/stamp.js']] },
   stations: { label: 'regenerate stations.md', cmd: () => ['node', ['tools/stations-to-md.js']] },
@@ -806,8 +815,8 @@ async function handleApi(req, res, url) {
     return withLock(res, `task "${task}"`, async () => {
       const ac = abortOnDisconnect(res)
       const s = openStream(res)
-      const [cmd, args] = spec.cmd()
-      const code = await run(cmd, args, s.emit, { signal: ac.signal })
+      const [cmd, args, env] = spec.cmd()
+      const code = await run(cmd, args, s.emit, { signal: ac.signal, env })
       s.emit({ type: 'exit', code, task })
       return s.end()
     })
@@ -824,8 +833,8 @@ async function handleApi(req, res, url) {
     let failed = null
     for (const task of steps) {
       s.emit({ type: 'step', task, label: TASKS[task].label })
-      const [cmd, args] = TASKS[task].cmd()
-      const code = await run(cmd, args, s.emit, { signal: ac.signal })
+      const [cmd, args, env] = TASKS[task].cmd()
+      const code = await run(cmd, args, s.emit, { signal: ac.signal, env })
       s.emit({ type: 'step-done', task, code })
       if (code !== 0) { failed = task; break }
     }
@@ -914,8 +923,8 @@ async function ship(req, res, message, includeNetwork) {
   ]
   for (const [task, label] of pipeline) {
     s.emit({ type: 'step', task, label })
-    const [cmd, args] = TASKS[task].cmd()
-    const code = await run(cmd, args, s.emit, { signal: ac.signal })
+    const [cmd, args, env] = TASKS[task].cmd()
+    const code = await run(cmd, args, s.emit, { signal: ac.signal, env })
     s.emit({ type: 'step-done', task, code })
     if (code !== 0) {
       restoreStamp()
