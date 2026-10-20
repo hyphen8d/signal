@@ -6,7 +6,8 @@
 // (rejects -- no network in tests), and a FAKE CLOCK. `performance.now()`
 // and `Date.now()` both read the harness's `now`, which only moves when a
 // test calls advance(); advance() then drives program.frame() in 16ms
-// steps and rasterises the real Term, so a test can power the set on, wait
+// steps (rasterising the real Term only when something reads the beam
+// framebuffer -- see `eagerRaster` below), so a test can power the set on, wait
 // out the boot readout, open the guide, and assert on the text grid --
 // exactly the sequences that used to break, replayed deterministically in
 // a few milliseconds.
@@ -55,7 +56,7 @@ function codeFor(key) {
   return key
 }
 
-export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null, game = false, anyBand = true, build = false, reducedMotion = false } = {}) {
+export async function boot({ saved = null, mobile = false, tap = null, player = false, lyrics = null, station = null, track = null, weather = null, game = false, anyBand = true, build = false, reducedMotion = false, eagerRaster = false } = {}) {
   const tag = `test${++bootCount}`
   let now = 0
   const store = new Map()
@@ -647,9 +648,42 @@ export async function boot({ saved = null, mobile = false, tap = null, player = 
         now = Math.min(end, now + step)
         runDueTimers()
         program.frame(screen, now / 1000)
-        if (term.dirty) term.raster()
+        // 2026-10-20 (test-speed pass) -- lazy raster. This line used to run
+        // term.raster() unconditionally, every simulated frame, and was 25%
+        // of the CPU in program.test + visuals.test while NOT ONE test or
+        // tool read the framebuffer it produced: every assertion here reads
+        // the cell planes (chars/attrs/inverse/gfx). Rasterising is now on
+        // demand -- h.fb / h.flushRaster() below -- and that is exact, not an
+        // approximation, because CellGrid's dirty rows are CUMULATIVE: put()
+        // only ever sets a row's flag, raster() is the only thing that clears
+        // them, and each dirty row is redrawn from scratch out of the
+        // planes' current state, so one raster after N frames paints the
+        // same bytes N rasters would have. The cursor stamp is the one piece
+        // of history raster() keeps (_cursorStamp), and it compares against
+        // the last raster that ran, whichever frame that was.
+        //
+        // One honest divergence: a gfx bitmap mutated IN PLACE without a
+        // fresh putGlyph() (the FLAME trap -- a same-reference putGlyph is a
+        // no-op, so the row is never marked) shows its stale picture in an
+        // eager/real-browser framebuffer but whatever it holds at flush time
+        // here. That is a bug in the effect the lazy harness would hide in a
+        // pixel assertion, which is why the equivalence test in
+        // tests/lazy-raster.test.mjs boots eager and lazy from one seed through a
+        // bitmap effect and compares the bytes. `eagerRaster: true` restores
+        // the old per-frame behaviour for that test and anything else that
+        // needs to watch the framebuffer frame by frame.
+        if (eagerRaster && term.dirty) term.raster()
       }
     },
+    /** Bring the beam framebuffer up to date and return it (see the lazy
+     *  raster note in advance()). Every read of term.fb goes through here;
+     *  reading h.term.fb directly sees whatever the last flush left. */
+    flushRaster() {
+      if (term.dirty) term.raster()
+      return term.fb
+    },
+    /** The beam-intensity framebuffer, current as of now. */
+    get fb() { return h.flushRaster() },
     /** Touch gestures, the way program.js reads them off touchstart/touchend. */
     touch(x0, y0, x1, y1, dt = 80) {
       const ev = (touches, changed) => ({ touches, changedTouches: changed, target: null, preventDefault() {} })

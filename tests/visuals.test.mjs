@@ -13,6 +13,18 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { boot } from './harness.mjs'
 
+// 2026-10-20 (test-speed pass) -- the three M5 re-entry tests below visited
+// for 120 simulated seconds, because that is how the bug was found ("after a
+// two-minute visit"). Nothing in them needs two minutes: the stale state is
+// an absolute effect-clock value from the last visit, and the assertions
+// compare it against a re-entered clock at ~2s, with margins of 0.2-8s. A
+// 20s visit leaves every stale value ~18s in the future, which still trips
+// each one -- mutation-checked by deleting the guarded line of each reset()
+// (BREACH's word/resolveAt clear, RIPPLE's startT reset, DREAD's
+// tear.active = false): all three go red, three runs out of three. RIPPLE's
+// visit alone had been 23 of this file's 31 seconds.
+const M5_VISIT_MS = 20000
+
 const effectT = (h) => (Date.now() - h.program._vizEnterAt) / 1000
 
 /** Enter the visualizer on a station whose own visual is `key`. */
@@ -51,12 +63,13 @@ test('BREACH: every resolved word is legible on the grid for its whole beat (H4)
 })
 
 test('BREACH: re-entry clears stale words and stale resolve schedules (M5)', async () => {
-  // A two-minute visit leaves wordUntil/resolveAt values around t=120; the
-  // clock restarts at 0 on re-entry, so without reset() those columns sat
-  // lit (or silent) until the clock climbed back past them.
+  // A long visit leaves wordUntil/resolveAt values far up the clock (t=120
+  // when found; M5_VISIT_MS here); the clock restarts at 0 on re-entry, so
+  // without reset() those columns sat lit (or silent) until the clock
+  // climbed back past them.
   const h = await bootInto('breach', 'cipher')
   try {
-    h.advance(120000)
+    h.advance(M5_VISIT_MS)
     h.key('e')
     h.advance(500)
     h.key('v')
@@ -79,7 +92,7 @@ test('RIPPLE: re-entry re-seeds every slot instead of leaving them in the future
   // pulse's kicks at ~0, 0.9 and 1.8s have each started one.
   const h = await bootInto('ripple', 'city-lights')
   try {
-    h.advance(120000)
+    h.advance(M5_VISIT_MS)
     h.key('e')
     h.advance(500)
     h.key('v')
@@ -98,7 +111,7 @@ test('DREAD: a tear active at exit does not come back as a held strobe (M5)', as
   // draw itself writes, then the visit ends with it still up.
   const h = await bootInto('dread', 'nin')
   try {
-    h.advance(120000)
+    h.advance(M5_VISIT_MS)
     const tear = h.program._dreadTear
     tear.active = true
     tear.row = 5
