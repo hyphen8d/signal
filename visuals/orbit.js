@@ -137,7 +137,10 @@ const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((b) => 
 // the disc into visible cell-sized boxes wherever two neighbours landed on
 // different tiers (a track dot raising one night cell to MUTED drew a
 // hollow square), the very blockiness the pixels were meant to remove.
-const PIX_TIER = NORMAL, PIX_INV = 1 / LV_NORMAL
+const PIX_TIER = NORMAL
+// The dither thresholds at that tier, in beam units: a pixel lights when
+// its intensity beats its cell of the 4x4 screen.
+const DITHER = Float32Array.from(BAYER, (b) => Math.max(CELL_MIN, b * LV_NORMAL))
 // The surface map's resolution: longitude x latitude.
 const MAP_W = 256, MAP_H = 128
 
@@ -252,9 +255,19 @@ function build(term) {
       map[j * MAP_W + k] = cloud ? 2 : land ? 1 : 0
     }
   }
+  // The per-frame loops visit only the pixels that can light: the disc's,
+  // and the halo's in order of distance from the limb, so a narrow halo
+  // stops early. (Visiting the whole box cost ~2x, measured.)
+  const discIdx = [], haloIdx = []
+  for (let i = 0; i < n; i++) if (kind[i] === 1) discIdx.push(i); else if (kind[i] === 2) haloIdx.push(i)
+  haloIdx.sort((a, b) => dist[a] - dist[b])
+  const dayL = new Float32Array(n), haloBase = new Float32Array(n)
+  for (const i of discIdx) dayL[i] = DAY_PEAK * day[i] * limb[i]
+  for (const i of haloIdx) haloBase[i] = HALO_NIGHT + (HALO_SUN - HALO_NIGHT) * sunw[i]
   return {
     cols, cellW, cellH, adv, rows, c0, c1, BX, BW, BH,
-    kind, day, limb, lon0, latI, dist, sunw, map,
+    kind, dayL, lon0, latI, dist, haloBase, map,
+    discIdx: Int32Array.from(discIdx), haloIdx: Int32Array.from(haloIdx),
     lum: new Uint8Array(n),
     // Two bitmaps per cell, alternated per frame: putGlyph() skips a
     // same-reference re-put, so a bitmap rewritten in place never shows.
@@ -323,24 +336,28 @@ export default {
     const twinkle = 0.08 + 0.4 * A.treble
 
     // --- the planet and its halo, in pixels ---------------------------------
-    const { kind, day, limb, lon0, latI, dist, sunw, map, lum, BW, BH, BX, adv, cellW, cellH, c0, c1 } = G
-    const spinI = (clock / ORBIT_SPIN_S) * MAP_W
-    const hk = 1 / haloWidth(breath)
+    const { kind, dayL, lon0, latI, dist, haloBase, map, discIdx, haloIdx, lum, BW, BH, BX, adv, cellW, cellH, c0, c1 } = G
+    const spinI = ((clock / ORBIT_SPIN_S) % 1) * MAP_W
+    const hw = haloWidth(breath)
+    const hk = 1 / hw
     const glowUp = 0.92 + 0.12 * breath
-    for (let i = 0, n = BW * BH; i < n; i++) {
-      const k = kind[i]
-      if (k === 0) { lum[i] = 0; continue }
-      if (k === 1) {
-        const m = map[latI[i] * MAP_W + (((lon0[i] + spinI) | 0) % MAP_W)]
-        // Sea 0.82, land 0.5 (a darker patch), cloud 1.0 (a lighter one).
-        const surf = m === 2 ? 1 : m === 1 ? 0.5 : 0.82
-        const lit = DAY_PEAK * day[i] * warm * surf * limb[i]
-        const night = m === 1 ? NIGHT_LAND : m === 2 ? NIGHT_CLOUD : NIGHT_SEA
-        lum[i] = Math.min(PIX_MAX, Math.max(lit, night))
-      } else {
-        const v = (HALO_NIGHT + (HALO_SUN - HALO_NIGHT) * sunw[i]) * Math.exp(-dist[i] * hk) * glowUp
-        lum[i] = v < 4 ? 0 : Math.min(PIX_MAX, v)
-      }
+    // Sea 0.82, land 0.5 (a darker patch), cloud 1.0 (a lighter one).
+    const SURF0 = 0.82 * warm, SURF1 = 0.5 * warm, SURF2 = warm
+    lum.fill(0)
+    for (let j = 0, n = discIdx.length; j < n; j++) {
+      const i = discIdx[j]
+      const m = map[latI[i] * MAP_W + (((lon0[i] + spinI) | 0) & (MAP_W - 1))]
+      const lit = dayL[i] * (m === 2 ? SURF2 : m === 1 ? SURF1 : SURF0)
+      const night = m === 1 ? NIGHT_LAND : m === 2 ? NIGHT_CLOUD : NIGHT_SEA
+      lum[i] = lit > PIX_MAX ? PIX_MAX : lit > night ? lit : night
+    }
+    // Past ~5.5 e-folds the glow is under 4 and would not light a pixel.
+    const reach = hw * 5.5
+    for (let j = 0, n = haloIdx.length; j < n; j++) {
+      const i = haloIdx[j]
+      if (dist[i] > reach) break
+      const v = haloBase[i] * Math.exp(-dist[i] * hk) * glowUp
+      if (v >= 4) lum[i] = v > PIX_MAX ? PIX_MAX : v
     }
 
     // Track and trail points that fall in the pixel area go into the pixel
@@ -392,14 +409,7 @@ export default {
       for (let x = 0; x < cols; x++) {
         if (x >= c0 && x <= c1 && inPixels(x, y)) {
           const base = r * cellH * BW + (x - c0) * adv
-          let m = 0
-          for (let py = 0; py < cellH; py++) {
-            const o = base + py * BW
-            for (let px = 0; px < cellW; px++) if (lum[o + px] > m) m = lum[o + px]
-          }
-          if (m < CELL_MIN) { term.put(x, y, ' '); continue }
-          const attr = PIX_TIER
-          const inv = PIX_INV
+          // One pass: the tier is fixed, so no max-scan is needed first.
           const bits = bufs[r * cols + x]
           let any = 0
           for (let py = 0; py < cellH; py++) {
@@ -407,12 +417,12 @@ export default {
             const b4 = (py & 3) * 4
             let w = 0
             for (let px = 0; px < cellW; px++) {
-              if (lum[o + px] * inv > BAYER[b4 + (px & 3)]) w |= 1 << (cellW - 1 - px)
+              if (lum[o + px] > DITHER[b4 + (px & 3)]) w |= 1 << (cellW - 1 - px)
             }
             bits[py] = w
             any |= w
           }
-          if (any) term.putGlyph(x, y, bits, attr)
+          if (any) term.putGlyph(x, y, bits, PIX_TIER)
           else term.put(x, y, ' ')
           continue
         }
