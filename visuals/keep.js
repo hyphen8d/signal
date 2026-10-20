@@ -28,6 +28,27 @@
 // The keep is the one mass in the frame again. Still ambient: nothing
 // thumps, the mist thickens with bass and level.
 //
+// 2026-10-20 (polish, from the set critique) -- "the mist is solid
+// horizontal bars plus NNNN strings, and the moon outshines the castle."
+// Three tweaks, subject and composition untouched:
+// - MIST: the '─' wisp bodies rastered as long solid shelves and '~'
+//   rasters as 'N' on this font (banned set-wide now). The mist is a
+//   putGlyph() pixel haze in the open air of the bottom rows: sparse DIM
+//   pixels in long flat bands, a fixed per-pixel grain under a drifting
+//   field, so it rolls without boiling (renderMist). The set rule this
+//   follows: anything soft goes through pixels, hard mass stays in
+//   characters -- the castle stays characters.
+// - BRIGHTNESS ORDER: the moon NORMAL -> DIM; the torchlit windows now run
+//   MUTED (quiet) .. BRIGHT (loud), so the subject's lights lead.
+// - THE SWELL: LOUD and MUTED showed the same torchlight, because the
+//   flicker, not the music, decided the tier. Warmth now sets the tier
+//   and the flicker is a shimmer on top (torch()). Still no thump.
+// - CRAG: one flat shade ('░', FAINT) with no flecks or half-block edges;
+//   the two-shade stepped rock read as brick rubble.
+// Not changed: the masonry's '▓' (the critic noted its column-stripe
+// raster, but it is the glyph audit M1 settled on to stop the keep
+// blooming as a slab, and the castle is the part the critique says works).
+//
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
 
@@ -86,12 +107,6 @@ export const KEEP_MOON = { cx: 68, cy: 4.5, r: 4.2, bx: 2.0, by: 0, br: 3.8 }
 // toward the bottom of the canvas so the crag's base is buried and the
 // castle's upper half never is.
 export const KEEP_MIST_TOP = 12
-// Wisp thresholds on the mist density (design pass): above THIN a cell is
-// a '~' wisp end, above THICK a '─' wisp body, and over stone only a
-// density above STONE shows (as a body).
-export const KEEP_WISP_THIN = 0.42
-export const KEEP_WISP_THICK = 0.56
-export const KEEP_WISP_STONE = 0.64
 
 // Bats. One flock at a time; its timing lives on the effect clock, so
 // reset() clears it (see there). Speed in columns per second -- 2026-09-13:
@@ -240,7 +255,6 @@ function buildScene(cols) {
     for (let x = Math.max(0, l); x <= Math.min(cols - 1, r); x++) {
       const i = y * cols + x
       kind[i] = ROCK
-      const edge = x === l || x === r
       // 2026-09-13 (tube check) -- the crag was '█' with '▓' speckle at DIM,
       // and it glared for the same reason as the keep above. Inverted: '▓'
       // with '█' speckle, at FAINT, so the rock sits a step darker than the
@@ -248,7 +262,13 @@ function buildScene(cols) {
       // 2026-09-13 (audit M1) -- stepped down once more with the masonry:
       // '▒' with '▓' speckle, so the rock is still the darker of the two
       // and no '█' is left in it at all.
-      ch[i] = edge ? '▄' : hash2(x, y * 5) > 0.82 ? '▓' : '▒'
+      // 2026-10-20 (polish) -- one shade, no speckle and no '▄' edge: the
+      // '▓' flecks and half-block edges read as two shades of stepped
+      // brick rubble on the tube. The crag is now plain '░' at FAINT: one
+      // flat shade, clearly darker than the '▓' masonry it carries ('▒'
+      // was tried first and in the preview the crag and the keep's footing
+      // merged into one slab).
+      ch[i] = '░'
       attr[i] = FAINT
     }
   }
@@ -270,7 +290,12 @@ function buildScene(cols) {
       if (!top && !bot) continue
       kind[i] = MOON
       ch[i] = top && bot ? '█' : top ? '▀' : '▄'
-      attr[i] = NORMAL
+      // 2026-10-20 (polish) -- NORMAL -> DIM: the crescent was the
+      // brightest thing in the frame, ahead of the torchlit windows
+      // (rubric 3), and it is ~40 lit cells to a window's one. The windows
+      // now run MUTED (quiet) .. BRIGHT (loud); the moon sits a
+      // tier under their floor.
+      attr[i] = DIM
     }
   }
 
@@ -292,21 +317,108 @@ function buildScene(cols) {
 
 /** 0..1 torchlight for window `w` at time t. Stateless: independent sines
  *  per window plus a stepped hash for the gutter, so no two windows flicker
- *  together and nothing needs re-arming. */
-function torch(w, t, A, muted) {
+ *  together and nothing needs re-arming.
+ *
+ *  2026-10-20 (polish) -- the swell lives HERE now. The critique set LOUD
+ *  beside MUTED and found no difference in the torchlight: the old curve
+ *  multiplied a wide flicker (0.55..1.1) by a narrow warmth (0.7..1.2), so
+ *  flicker decided the tier and the music barely moved it. Now warmth sets
+ *  the base (quiet ~0.5 = MUTED, loud ~0.8 = BRIGHT) and the flicker is a
+ *  +-12% shimmer on top, so the windows visibly brighten as a passage
+ *  swells and still never thump: the pulse term stays small and is gated
+ *  by level (a dungeon synth track has almost no beat, and a window
+ *  flashing on one would be exactly the strobe this effect must never be). */
+export function torch(w, t, A, muted) {
   // Muted: a still, silent ruin -- the torches keep burning, low and
   // steady. 2026-09-13: fully dark windows under mute read as the effect
   // having stopped, and the building is the subject.
-  if (muted) return 0.46
+  if (muted) return KEEP_TORCH_STILL
   const i = w.i
-  const flick = 0.72 + 0.17 * Math.sin(t * 1.7 + i * 2.1) + 0.11 * Math.sin(t * 4.3 + i * 5.3)
-    + 0.16 * (hash2(i * 7 + 1, Math.floor(t * 5 + i * 0.37)) - 0.5)
+  const flick = 1 + 0.07 * Math.sin(t * 1.7 + i * 2.1) + 0.05 * Math.sin(t * 4.3 + i * 5.3)
+    + 0.12 * (hash2(i * 7 + 1, Math.floor(t * 5 + i * 0.37)) - 0.5)
   // Warmth from mid and level -- the keyboard pad, which is where this
-  // genre's energy actually is. The pulse term is small on purpose: a
-  // dungeon synth track has almost no beat, and a window flashing on one
-  // would be exactly the strobe this effect must never be.
-  const warm = 0.7 + 0.5 * (0.55 * A.mid + 0.45 * A.level) + 0.18 * A.pulse * A.level
+  // genre's energy actually is.
+  const e = Math.max(0, Math.min(1, 0.55 * A.mid + 0.45 * A.level))
+  const warm = 0.25 + 0.8 * e + 0.06 * A.pulse * A.level
   return Math.max(0, Math.min(1, flick * warm))
+}
+// Muted torchlight: MUTED and steady -- still a tier over the moon (DIM).
+export const KEEP_TORCH_STILL = 0.5
+
+/** Torchlight 0..1 -> [glyph, attr]. A lit window is a full cell at
+ *  MUTED, NORMAL or BRIGHT; the tier carries the swell. */
+export function torchCell(v) {
+  if (v > 0.7) return ['█', BRIGHT]
+  if (v > 0.56) return ['█', NORMAL]
+  if (v > 0.4) return ['█', MUTED]
+  if (v > 0.3) return ['▓', DIM]
+  return ['▒', FAINT]
+}
+
+// --- mist: pixel haze (2026-10-20 polish) ----------------------------------
+function hashI(x, y) {
+  let h = (x * 374761393 + y * 668265263) | 0
+  h = Math.imul(h ^ (h >>> 13), 1274126177)
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296
+}
+function vnoise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y)
+  const fx = x - xi, fy = y - yi
+  const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy)
+  const a = hashI(xi, yi), b = hashI(xi + 1, yi), c = hashI(xi, yi + 1), d = hashI(xi + 1, yi + 1)
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v
+}
+// Renders per second of the haze bitmaps: it drifts a pixel at a time, so
+// 20Hz is smooth on the tube at a third of the cost of every frame.
+export const KEEP_MIST_HZ = 20
+// The densest the haze ever gets, as a share of a cell's pixels. A haze,
+// not a fill: much past a third, a cell reads as a shade block again.
+export const KEEP_MIST_MAX = 0.34
+
+/** Renders the haze into the back buffers and flips: one bitmap per mist
+ *  cell, lit pixels chosen by a FIXED per-pixel hash against a density
+ *  field -- long flat value noise (stretched ~10:1 sideways, so it lies in
+ *  bands the way ground mist does) drifting on the accumulated phase. The
+ *  hash never changes, so the grain does not boil; only the field moves
+ *  under it. Open air only (sky and the dark under the ridge lines): the
+ *  crag and the castle stand in front of the mist. */
+function renderMist(M, S, ph, thick, glyphs) {
+  const { cols, cellW, cellH, top, rows } = M
+  M.front ^= 1
+  const bufs = M.bufs[M.front]
+  const H = rows * cellH
+  for (let cy = 0; cy < rows; cy++) {
+    const y = top + cy
+    for (let cx = 0; cx < cols; cx++) {
+      const k = S.kind[y * cols + cx]
+      const j = cy * cols + cx
+      if (k !== SKY && k !== RIDGE) { M.lit[j] = 0; continue }
+      const bits = bufs[j]
+      // A ridge rim crossing the mist keeps its line: its own glyph is
+      // OR'd under the haze (same DIM tier), so the mountain does not
+      // vanish where a band of haze passes in front of it.
+      const rc = S.ch[y * cols + cx]
+      const rim = rc !== ' ' ? glyphs.get(rc.codePointAt(0)) : null
+      let any = 0
+      for (let r = 0; r < cellH; r++) {
+        const py = cy * cellH + r
+        // Ramps up toward the bottom of the canvas.
+        const base = Math.pow((py + 1) / H, 1.3)
+        let word = 0
+        for (let c = 0; c < cellW; c++) {
+          const px = cx * cellW + c
+          const n = 0.62 * vnoise(px / 70 - ph * 2.2, py / 7 + 0.3 * Math.sin(px / 90 + ph * 0.5))
+            + 0.38 * vnoise(px / 30 - ph * 4.1 + 9.3, py / 4 - ph * 0.3)
+          const d = Math.min(1, base * thick * Math.max(0, (n - 0.36) / 0.64) * 1.8)
+          if (hashI(px, py) < d * KEEP_MIST_MAX) word |= 1 << (cellW - 1 - c)
+        }
+        if (rim && word) word |= rim[r]
+        bits[r] = word
+        any |= word
+      }
+      M.lit[j] = any ? 1 : 0
+    }
+  }
 }
 
 export default {
@@ -319,6 +431,8 @@ export default {
     p._keepBatsNotBefore = KEEP_BAT_FIRST
     p._keepLastT = null         // previous frame's t, for the mist's dt
     p._keepMistPhase = 0        // accumulated drift, not a clock
+    p._keepMist = null          // haze bitmaps, sized on first draw
+    p._keepMistRenderT = -Infinity // effect-clock time of the last haze render
   },
   /** Re-arms clocks/accumulators on every visualizer entry. */
   reset(p) {
@@ -334,12 +448,27 @@ export default {
     p._keepBatsNotBefore = KEEP_BAT_FIRST
     p._keepLastT = null
     p._keepMistPhase = 0
+    p._keepMistRenderT = -Infinity
   },
   draw(p, s, t) {
     const { term } = s
     const cols = term.cols
     if (!p._keepScene || p._keepScene.cols !== cols) p._keepScene = buildScene(cols)
     const S = p._keepScene
+    if (!p._keepMist || p._keepMist.cols !== cols) {
+      const { cellW, cellH } = term.font
+      const rows = VIZ_BOT - KEEP_MIST_TOP
+      // Two bitmaps per cell, alternated per render: a same-reference
+      // putGlyph is a no-op, so a bitmap rewritten in place never
+      // re-rasters (CLAUDE.md, the FLAME trap).
+      p._keepMist = {
+        cols, cellW, cellH, top: KEEP_MIST_TOP, rows, front: 0,
+        bufs: [0, 1].map(() => Array.from({ length: cols * rows }, () => new Uint16Array(cellH))),
+        lit: new Uint8Array(cols * rows),
+      }
+      p._keepMistRenderT = -Infinity
+    }
+    const M = p._keepMist
     const muted = !!p.muted
     const A = muted ? SILENT_AUDIO : (p._au || syntheticAudio(t))
 
@@ -358,9 +487,14 @@ export default {
     // Thickness: bass and level, floor 0.78 so a quiet passage (or mute)
     // still has mist around the crag.
     const thick = 0.78 + 0.55 * (0.6 * A.bass + 0.4 * A.level)
+    // A clock that went backwards (re-entry) re-renders at once.
+    if (t < p._keepMistRenderT) p._keepMistRenderT = -Infinity
+    if (t - p._keepMistRenderT >= 1 / KEEP_MIST_HZ) {
+      p._keepMistRenderT = t
+      renderMist(M, S, ph, thick, term.font.glyphs)
+    }
 
     for (let y = 1; y < VIZ_BOT; y++) {
-      const mistBase = y < KEEP_MIST_TOP ? 0 : Math.pow((y - KEEP_MIST_TOP + 1) / (VIZ_BOT - KEEP_MIST_TOP), 1.25)
       for (let x = 0; x < cols; x++) {
         const i = y * cols + x
         const k = S.kind[i]
@@ -388,17 +522,15 @@ export default {
         // thin ends and '─' through its thick middle, DIM, drifting with
         // the phase. Over stone only the thick middles show, so the crag
         // is veiled by lines across it rather than painted out.
-        if (mistBase > 0 && k !== MOON) {
-          const n = 0.5
-            + 0.28 * Math.sin(x * 0.07 - ph * 0.8 + y * 1.9)
-            + 0.22 * Math.sin(x * 0.16 - ph * 1.4 - y * 2.7 + 2.0)
-            + 0.14 * Math.sin(x * 0.035 - ph * 0.4 + y * 0.9 + 4.0)
-          const d = mistBase * n * thick
-          const solid = k === ROCK || k === WINDOW || k === GATE
-          if (d > (solid ? KEEP_WISP_STONE : KEEP_WISP_THIN)) {
-            term.put(x, y, d > KEEP_WISP_THICK ? '─' : '~', DIM)
-            continue
-          }
+        // 2026-10-20 (polish) -- and the wisps went too. On the tube the
+        // '─' bodies rastered as long solid shelves (with a dark scanline
+        // band under each), and '~' rasters as 'N' on this font, so the
+        // bottom rows read as shelving and text. The mist is a pixel haze
+        // now (renderMist above): sparse lit pixels in long flat bands,
+        // DIM, open air only, the crag standing in front of it.
+        if (y >= KEEP_MIST_TOP && M.lit[(y - KEEP_MIST_TOP) * cols + x]) {
+          term.putGlyph(x, y, M.bufs[M.front][(y - KEEP_MIST_TOP) * cols + x], DIM)
+          continue
         }
         term.put(x, y, c, a)
       }
@@ -409,8 +541,7 @@ export default {
     // if it's above the mist line, which all the lit ones are).
     for (const w of S.windows) {
       const v = torch(w, t, A, muted)
-      const c = v > 0.55 ? '█' : v > 0.4 ? '▓' : v > 0.26 ? '▒' : '░'
-      const a = v > 0.74 ? BRIGHT : v > 0.55 ? NORMAL : v > 0.4 ? MUTED : v > 0.26 ? DIM : FAINT
+      const [c, a] = torchCell(v)
       term.put(w.x, w.y, c, a)
     }
 

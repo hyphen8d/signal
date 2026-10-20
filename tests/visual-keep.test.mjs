@@ -39,6 +39,20 @@ async function bootKeep() {
 
 const canvasText = (h) => { let s = ''; for (let y = 1; y < CANVAS_BOT; y++) s += h.row(y); return s }
 const nonSpace = (s) => s.replace(/ /g, '').length
+// Cells with ink on them: a character, or a putGlyph() bitmap (the mist,
+// since 2026-10-20) -- a bitmap cell reads back as a space, so a
+// character count alone would call the haze empty sky.
+const inked = (h) => {
+  let n = 0
+  const { cols } = h.term
+  for (let y = 1; y < CANVAS_BOT; y++) {
+    for (let x = 0; x < cols; x++) {
+      const i = y * cols + x
+      if (h.term.chars[i] !== 0x20 || h.term.gfx[i]) n++
+    }
+  }
+  return n
+}
 const attrAt = (h, x, y) => h.term.attrs[y * h.term.cols + x]
 const charAt = (h, x, y) => h.row(y)[x]
 
@@ -55,12 +69,19 @@ test('KEEP: repaints every canvas cell and nothing outside rows 1..21', async ()
     const fx = VISUALS.keep
     const origDraw = fx.draw
     const origPut = h.term.put
+    const origGlyph = h.term.putGlyph
     const cols = h.term.cols
     const outside = []
     let hit = null, frames = 0, short = 0
+    const mark = (x, y) => { if (hit) { if (y < 1 || y >= CANVAS_BOT) outside.push(y); else if (x >= 0 && x < cols) hit[y * cols + x] = 1 } }
     h.term.put = function (x, y, ...rest) {
-      if (hit) { if (y < 1 || y >= CANVAS_BOT) outside.push(y); else if (x >= 0 && x < cols) hit[y * cols + x] = 1 }
+      mark(x, y)
       return origPut.call(this, x, y, ...rest)
+    }
+    // The mist is putGlyph() pixels since 2026-10-20; a haze cell counts.
+    h.term.putGlyph = function (x, y, ...rest) {
+      mark(x, y)
+      return origGlyph.call(this, x, y, ...rest)
     }
     fx.draw = function (...args) {
       hit = new Uint8Array(cols * CANVAS_BOT)
@@ -77,11 +98,12 @@ test('KEEP: repaints every canvas cell and nothing outside rows 1..21', async ()
     } finally {
       fx.draw = origDraw
       h.term.put = origPut
+      h.term.putGlyph = origGlyph
     }
     assert.ok(frames > 100, `draw should have run (ran ${frames})`)
     assert.deepEqual([...new Set(outside)], [], `the effect wrote to rows outside the canvas`)
     assert.equal(short, 0, `${short} of ${frames} frames left canvas cells unpainted`)
-    const n = nonSpace(canvasText(h))
+    const n = inked(h)
     assert.ok(n > 500, `only ${n} non-space cells -- the scene is barely there`)
     // Mood over busyness: the frame must still be mostly not-bright.
     let loud = 0
@@ -93,14 +115,21 @@ test('KEEP: repaints every canvas cell and nothing outside rows 1..21', async ()
 test('KEEP: moves -- mist and torchlight change between frames', async () => {
   const h = await bootKeep()
   try {
+    // 2026-10-20 -- the mist is putGlyph() pixels, so a row is compared by
+    // its bitmaps as well as its characters.
+    const rowSig = (y) => {
+      let s = h.row(y)
+      for (let x = 0; x < h.term.cols; x++) { const g = h.term.gfx[y * h.term.cols + x]; s += g ? g.join('.') : '-' }
+      return s
+    }
+    const snap = () => Array.from({ length: CANVAS_BOT }, (_, y) => rowSig(y))
     h.advance(2000)
-    const a = canvasText(h)
+    const ra = snap()
     h.advance(2000)
-    const b = canvasText(h)
-    assert.notEqual(a, b, 'two frames two seconds apart are identical')
+    const rb = snap()
+    assert.notDeepEqual(ra, rb, 'two frames two seconds apart are identical')
     // The movement is in the mist bank, not only a star twinkling.
     let lower = 0
-    const ra = a.match(/.{80}/gu), rb = b.match(/.{80}/gu)
     for (let y = 15; y < 21; y++) if (ra[y] !== rb[y]) lower++
     assert.ok(lower >= 3, `only ${lower} of the lower rows changed -- the mist is not drifting`)
   } finally { h.shutdown() }
@@ -128,7 +157,10 @@ test('KEEP: the castle silhouette reads back -- crenellations, a tall tower, sol
     // 2026-10-16 (design pass) -- 400 -> 340: the ridges' '▄' rims used to
     // count here, and they are line-drawn now. The castle and crag alone
     // are ~380.
-    assert.ok(solid > 340, `only ${solid} solid cells in the silhouette`)
+    // 2026-10-20 (polish) -- 340 -> 300: the crag's '▄' edge cells went
+    // (one flat shade of '░' now, which this set does not count). The
+    // castle alone is ~337.
+    assert.ok(solid > 300, `only ${solid} solid cells in the silhouette`)
     // The moon: a crescent of block cells in the upper right, clear of the castle.
     let moon = 0
     for (let y = 1; y < 9; y++) for (let x = 60; x < 80; x++) if (SOLID.has(rows[y][x])) moon++
@@ -189,7 +221,7 @@ test('KEEP: muted, the ruin goes still -- steady torches, no bats', async () => 
     Math.random = () => 0
     try { h.advance(6000) } finally { Math.random = rnd }
     assert.equal(h.program._keepBats, null, 'bats flew while muted')
-    assert.ok(nonSpace(canvasText(h)) > 500, 'the scene emptied out while muted')
+    assert.ok(inked(h) > 500, 'the scene emptied out while muted')
   } finally { h.shutdown() }
 })
 
@@ -237,7 +269,7 @@ test('KEEP: a flight in progress at exit does not come back stuck (re-entry)', a
     assert.ok(!bats || (bats.startT <= t && t - bats.startT <= FLIGHT_S), `flight carried startT ${bats && bats.startT.toFixed(1)}s onto a clock at ${t.toFixed(1)}s`)
     assert.ok(h.program._keepBatsNotBefore <= t + 15, `next flight gated until ${h.program._keepBatsNotBefore.toFixed(1)}s on a clock at ${t.toFixed(1)}s`)
     assert.ok(h.program._keepLastT <= t, 'mist clock carried from the previous visit')
-    assert.ok(nonSpace(canvasText(h)) > 500, 'the frame is empty after re-entry')
+    assert.ok(inked(h) > 500, 'the frame is empty after re-entry')
     // And flights still happen on this visit. 2026-09-13 (audit L12) -- this
     // waited up to four minutes of frames for a random flight; with every
     // roll forced, the only thing that can hold a flight back is the gate,
@@ -313,45 +345,120 @@ test('KEEP: the mountains are an outline, so the keep is the one mass (design pa
   } finally { h.shutdown() }
 })
 
-test('KEEP: the mist is sparse drifting wisps, not blocks (design pass)', async () => {
-  // 2026-10-16 -- the mist was '░▒' blocks with ':'/'.' speckle, and the
-  // bottom third read as rubble on the tube. It is now '~' and '─' wisps at
-  // DIM. Over two seconds of frames: no block or speckle glyph in the mist
-  // rows that the old bank drew (the crag's own '▒' is excluded by reading
-  // only open-air cells, i.e. cells that are not stone in the scene),
-  // wisps present and moving, and sparse.
-  // Mutation-checked: with the old block bank restored this goes red on
-  // the first assertion.
+
+test('KEEP: the mist is a sparse pixel haze, no wisp glyphs (polish)', async () => {
+  // 2026-10-16 the mist went from '░▒' blocks to '~'/'─' wisps; 2026-10-20
+  // the wisps went too: on the tube the '─' bodies read as solid shelves
+  // and '~' rasters as 'N' on this font. The mist is putGlyph() pixels now.
+  // Read back over two seconds of frames: no wisp or block glyph in the
+  // open air of the mist rows, haze bitmaps present at DIM and sparse (a
+  // haze, not a fill), and moving.
+  // Mutation-checked: with the old wisp branch restored, the first
+  // assertion goes red; with KEEP_MIST_MAX at 0.9 the density one does.
   const h = await bootKeep()
   try {
     h.advance(1000)
     const { KEEP_MIST_TOP } = await import(`../visuals/keep.js?v=${globalThis.SIGNAL_BUILD}`)
     const S = h.program._keepScene
-    const ROCKISH = new Set([3, 4, 5]) // ROCK, WINDOW, GATE in keep.js
-    let junk = 0, wisps = 0, air = 0, notDim = 0
+    const { cols } = h.term
+    const cellPx = h.term.font.cellW * h.term.font.cellH
+    const popcount = (w) => { let n = 0; while (w) { n += w & 1; w >>>= 1 } return n }
+    const AIR = new Set([0, 2]) // SKY, RIDGE in keep.js
+    let junk = 0, haze = 0, notDim = 0, lit = 0, px = 0, maxCell = 0
     const frames = []
     for (let f = 0; f < 20; f++) {
       h.advance(100)
       let snap = ''
       for (let y = KEEP_MIST_TOP; y < CANVAS_BOT; y++) {
         const r = h.row(y)
-        snap += r
-        for (let x = 0; x < h.term.cols; x++) {
-          if (ROCKISH.has(S.kind[y * S.cols + x])) continue
-          air++
-          if ('░▒▓█:.'.includes(r[x])) junk++
-          if (r[x] === '~' || r[x] === '─') {
-            wisps++
-            if (attrAt(h, x, y) !== DIM) notDim++
-          }
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x
+          if (!AIR.has(S.kind[i])) continue
+          if ('░▒▓█~─≈'.includes(r[x])) junk++
+          const g = h.term.gfx[i]
+          if (!g) continue
+          haze++
+          snap += `${x},${y}:${g.join('.')};`
+          if (attrAt(h, x, y) !== DIM) notDim++
+          let c = 0
+          for (const w of g) c += popcount(w)
+          lit += c
+          maxCell = Math.max(maxCell, c / cellPx)
+          px += cellPx
         }
       }
       frames.push(snap)
     }
-    assert.equal(junk, 0, `${junk} block/speckle cells in open-air mist`)
-    assert.ok(wisps > 20 * 8, `only ${wisps} wisp cells over 20 frames`)
-    assert.ok(wisps / air < 0.35, `wisps cover ${(100 * wisps / air).toFixed(0)}% of the open air -- a bank, not wisps`)
-    assert.equal(notDim, 0, `${notDim} wisp cells not at DIM`)
-    assert.notEqual(frames[0], frames[frames.length - 1], 'the wisps do not drift')
+    assert.equal(junk, 0, `${junk} wisp/block glyphs in the open-air mist`)
+    assert.ok(haze > 20 * 30, `only ${haze} haze cells over 20 frames`)
+    assert.equal(notDim, 0, `${notDim} haze cells not at DIM`)
+    assert.ok(lit / px < 0.12, `haze cells are ${(100 * lit / px).toFixed(0)}% lit on average -- a fill, not a haze`)
+    assert.ok(maxCell < 0.5, `a haze cell is ${(100 * maxCell).toFixed(0)}% lit -- reads as a shade block`)
+    assert.notEqual(frames[0], frames[frames.length - 1], 'the haze does not drift')
+  } finally { h.shutdown() }
+})
+
+test('KEEP: the windows carry the swell and outshine the moon (polish)', async () => {
+  // 2026-10-20 -- the critique found the moon (NORMAL) the brightest thing
+  // in the frame and no difference in torchlight between LOUD and MUTED.
+  // The moon is DIM now; lit windows run MUTED (quiet) .. BRIGHT (loud).
+  // Two halves: torch() itself, quiet vs loud over many seconds of flicker
+  // (the swell must move the tier, not just the flicker), and the grid --
+  // every moon cell under every window while muted, the windows' floor.
+  // Mutation-checked: with the old curve (warm 0.7..1.2 on a 0.55..1.1
+  // flicker) the quiet/loud split goes red; with the moon back at NORMAL
+  // the ordering does.
+  const { torch, torchCell } = await import(`../visuals/keep.js?v=${globalThis.SIGNAL_BUILD}`)
+  const quiet = { level: 0.15, mid: 0.15, bass: 0.1, pulse: 0 }
+  const loud = { level: 0.8, mid: 0.65, bass: 0.6, pulse: 0 }
+  let qBright = 0, lBright = 0, qMuted = 0, n = 0
+  for (let k = 0; k < 400; k++) {
+    const t = k * 0.05, w = { i: k % 6 }
+    const qa = torchCell(torch(w, t, quiet, false))[1], la = torchCell(torch(w, t, loud, false))[1]
+    n++
+    if (qa === BRIGHT) qBright++
+    if (la === BRIGHT) lBright++
+    if (qa & (MUTED | DIM)) qMuted++
+  }
+  assert.ok(lBright / n > 0.6, `loud windows BRIGHT on only ${lBright}/${n} samples`)
+  assert.equal(qBright, 0, 'quiet windows reached BRIGHT -- no swell left to show')
+  assert.ok(qMuted / n > 0.6, `quiet windows sit at MUTED on only ${qMuted}/${n} samples`)
+
+  const level = (a) => a & BRIGHT ? 255 : a & FAINT ? 100 : a & DIM ? 150 : a & MUTED ? 180 : 205
+  const h = await bootKeep()
+  try {
+    const S = h.program._keepScene
+    const { cols } = h.term
+    const moonCells = []
+    for (let i = 0; i < S.kind.length; i++) if (S.kind[i] === 1) moonCells.push(i) // MOON
+    assert.ok(moonCells.length >= 8, 'no moon in the scene')
+    h.program.muted = true
+    h.advance(1000)
+    const moonMax = Math.max(...moonCells.map((i) => level(h.term.attrs[i])))
+    const winMin = Math.min(...S.windows.map((w) => level(h.term.attrs[w.y * cols + w.x])))
+    assert.ok(winMin > moonMax, `muted: a window (${winMin}) is not brighter than the moon (${moonMax})`)
+  } finally { h.shutdown() }
+})
+
+test('KEEP: the crag is one flat shade, darker than the masonry (polish)', async () => {
+  // 2026-10-20 -- two shades of stepped blocks ('▒' with '▓' flecks and
+  // '▄' edges) read as brick rubble. One glyph, FAINT, lighter-inked than
+  // the keep's '▓'.
+  const h = await bootKeep()
+  try {
+    h.advance(500)
+    const S = h.program._keepScene
+    const { KEEP_ART_TOP, KEEP_ART } = await import(`../visuals/keep.js?v=${globalThis.SIGNAL_BUILD}`)
+    const glyphs = new Set()
+    const attrs = new Set()
+    for (let y = KEEP_ART_TOP + KEEP_ART.length; y < CANVAS_BOT; y++) {
+      for (let x = 0; x < h.term.cols; x++) {
+        const i = y * h.term.cols + x
+        if (S.kind[i] !== 3) continue // ROCK
+        glyphs.add(S.ch[i]); attrs.add(S.attr[i])
+      }
+    }
+    assert.deepEqual([...glyphs], ['░'], `crag glyphs: ${[...glyphs].join('')}`)
+    assert.deepEqual([...attrs], [FAINT])
   } finally { h.shutdown() }
 })
