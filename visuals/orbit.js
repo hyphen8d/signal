@@ -33,34 +33,66 @@
 // SLOW ORBIT is ambient; the station is '═╡■╞═', BRIGHT on both passes, with
 // a NORMAL->MUTED->DIM trail that no longer punches holes in the disc.
 //
+// 2026-10-20 (polish) -- the critique, off the real tube: "a coffee bean".
+// The ▓▒░ crescent rastered as vertical stripes and the continents as
+// stepped diagonal slabs (rubric 4); the disc stood as an upright egg,
+// because the "row = 2 units" geometry assumed a 2:1 cell where the 4:3
+// face gives ~2.4:1 (OUTRUN's header measured the same); the halo's tier
+// step looked the same MUTED and LOUD (rubric 2); and the FAINT track was
+// invisible, so the station sat alone at the left with nothing behind it.
+// The set rule the critique proposed -- anything soft or round goes through
+// pixels -- is exactly a planet. What changed, subject and composition kept:
+//   - ORBIT_ASPECT 2 -> 2.4 (8x16 cells, the blank ninth column, a 4:3
+//     face) and R 17 -> 18 columns, so the disc is round on the tube.
+//   - THE PLANET is per-cell pixel bitmaps (term.putGlyph, NEON HEART's
+//     packer): a dithered sphere lit by the same light, with a soft
+//     terminator, mild limb darkening, continents as darker density
+//     patches, cloud as lighter ones, a dim stippled night side. The
+//     surface is one precomputed lon/lat map scrolled by the spin, so the
+//     per-frame cost is a lookup per pixel, not trig.
+//   - THE BREATH is the halo's WIDTH now, not a tier step: a 1-2px rim of
+//     atmosphere at rest that widens into several pixels of dithered glow
+//     on the swell (haloWidth()), brightest sunward. Muted, it is the thin
+//     rim -- visibly different from LOUD.
+//   - THE TRACK: the near half is MUTED (and crosses the planet's face as
+//     pixel dots, in front of the disc), the far half DIM in open space and
+//     occluded by the disc. The trail does the same, so the station's path
+//     reads across the planet instead of stopping at the limb.
+//   - Unchanged: the station '═╡■╞═' BRIGHT, the only BRIGHT thing; the
+//     day side tops out at NORMAL; stars as characters.
+//
 // Imports below are the stamped-dynamic kind (`?v=<build>`) so a deploy can
 // never mix this module with a stale copy of another -- see main.js.
 
-import { BRIGHT, DIM, FAINT, MUTED, NORMAL } from '../src/term.js'
+import { BRIGHT, DIM, MUTED, NORMAL } from '../src/term.js'
 const V = globalThis.SIGNAL_BUILD ?? ''
 const { SILENT_AUDIO, syntheticAudio } = await import(`../audio/tap.js?v=${V}`)
 const { VIZ_BOT } = await import(`../layout.js?v=${V}`)
 const { hash2, visualizerLevelAttr } = await import(`./shared.js?v=${V}`)
 
-// Geometry is in "square units": one unit = one column, and a row is two
-// units tall (the ~2:1 cell). Radius 17 is 17 columns wide and 8.5 rows
-// tall, which on the 21-row canvas leaves a row or two of space above and
-// below the halo. Centred left of the middle so the orbit's right-hand
-// swing and a strip of open stars share the other side.
+// Geometry is in "square units": one unit = one column, and a row is
+// ORBIT_ASPECT units tall. 2026-10-20: 2.4, not 2 -- an 8x16 cell plus its
+// blank ninth column, stretched onto the 4:3 face, is 2.4x as tall as it is
+// wide, and at 2 the disc stood as an egg. Radius 18 columns is 7.5 rows.
+// Centred left of the middle so the orbit's right-hand swing and a strip
+// of open stars share the other side.
 export const ORBIT_CX = 33
 export const ORBIT_CY = 11
-export const ORBIT_R = 17
-export const ORBIT_ASPECT = 2
-// Halo band width outside the limb, square units. 2.4 rather than ~1.5:
-// at the top and bottom of the disc a row is 2 units, so a thinner band
-// skips whole rows there and the ring reads as two brackets, not a circle.
-export const ORBIT_HALO = 2.4
+export const ORBIT_R = 18
+export const ORBIT_ASPECT = 2.4
+// The halo's glow: e-folding width in square units (one unit is ~6.7
+// display pixels), at rest and added at full breath.
+export const HALO_W0 = 0.22
+export const HALO_WB = 1.2
+// Beyond this distance past the limb nothing is lit; with one more unit,
+// the extent of the cells drawn as pixels.
+export const ORBIT_HALO = 3.4
 
 // The orbit: an ellipse in the orbital plane (semi-axes A x B square units)
 // tilted in screen space by TILT radians -- rising to the right -- so it
 // reads as inclined rather than edge-on. A = 30 keeps the glyph on screen at
-// both ends (cols ~3..63). B = 7 puts the near pass ~3.5 rows below centre
-// and the far pass ~3.5 above, both well inside the disc, so each crossing
+// both ends (cols ~3..63). B = 7 puts the near pass ~3 rows below centre
+// and the far pass ~3 above, both well inside the disc, so each crossing
 // is an unambiguous in-front / behind moment.
 export const ORBIT_A = 30
 export const ORBIT_B = 7
@@ -78,32 +110,52 @@ export const ORBIT_SPIN_S = 80
 // Panels either side of a module, five wide, always BRIGHT.
 export const ORBIT_GLYPH = '═╡■╞═'
 
-// Light from upper-left and a little in front. z = 0.6 (not larger) is
-// what puts the terminator inside the disc's right third: a light straight
-// from the viewer would light a full disc and there would be no night side.
-// 2026-10-16 (design pass) -- z down to 0.36. With shade blocks for the day
-// side, z = 0.6 lit three quarters of the disc as one slab of ▓ that
-// outshone everything; this puts the terminator just right of centre, so
-// the day side reads as a crescent and the night side as a dark disc.
+// Light from upper-left and a little in front; z = 0.36 puts the
+// terminator just right of centre, so the day side reads as a crescent and
+// the night side as a dark disc (2026-10-16 design pass).
 const LX = -0.86, LY = -0.36, LZ = 0.36
 const TAU = Math.PI * 2
-// Lit-side shade steps (design pass): the day value at which a cell goes
-// to ░, ▒ and ▓. LO sits so the terminator is a column or two of ░.
-export const ORBIT_SHADE_LO = 0.12
-export const ORBIT_SHADE_MID = 0.36
-export const ORBIT_SHADE_HI = 0.62
-const SHADE = [' ', '░', '▒', '▓']
-// Breath above which the halo ring steps DIM -> MUTED.
-export const ORBIT_BREATH_STEP = 0.35
 
-/** Is cell (x, y) on the planet's disc? */
+// Pixel intensities, on src/term.js's 0..255 beam scale.
+const LV_NORMAL = 205, LV_MUTED = 180, LV_DIM = 150
+// The day side's peak: NORMAL, never BRIGHT -- the station leads.
+export const DAY_PEAK = 212
+const PIX_MAX = 228 // under BRIGHT's 232 threshold, whatever `warm` does
+// Night side: a stipple, land a shade darker, so the dark disc is a solid
+// silhouette with the continents still faintly there.
+const NIGHT_SEA = 40, NIGHT_LAND = 24, NIGHT_CLOUD = 50
+// Halo at the limb, sunward and on the night side.
+const HALO_SUN = 196, HALO_NIGHT = 140
+// Track dots over the planet (near half only).
+const TRACK_LUM = 175
+const CELL_MIN = 12
+// 4x4 ordered dither -- FLAME's / NEON HEART's.
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((b) => (b + 0.5) / 16)
+// ONE beam tier for every pixel cell, NORMAL, with brightness carried by
+// dither density alone. NEON HEART picks each cell's tier from its
+// brightest pixel, which suits a thin tube; on a filled sphere it tiled
+// the disc into visible cell-sized boxes wherever two neighbours landed on
+// different tiers (a track dot raising one night cell to MUTED drew a
+// hollow square), the very blockiness the pixels were meant to remove.
+const PIX_TIER = NORMAL, PIX_INV = 1 / LV_NORMAL
+// The surface map's resolution: longitude x latitude.
+const MAP_W = 256, MAP_H = 128
+
+/** Is cell (x, y) on the planet's disc (its centre inside)? */
 export function inPlanet(x, y) {
   const dx = x - ORBIT_CX, dy = (y - ORBIT_CY) * ORBIT_ASPECT
   return dx * dx + dy * dy < ORBIT_R * ORBIT_R
 }
 
+/** Is cell (x, y) drawn as pixels -- the disc and the halo's reach? */
+export function inPixels(x, y) {
+  const dx = x - ORBIT_CX, dy = (y - ORBIT_CY) * ORBIT_ASPECT
+  const R = ORBIT_R + ORBIT_HALO + 1
+  return dx * dx + dy * dy < R * R
+}
+
 /** Is cell (x, y) outside the disc but touching it (8-neighbour)? The
- *  halo ring. */
+ *  halo's innermost ring. */
 export function touchesPlanet(x, y) {
   if (inPlanet(x, y)) return false
   for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
@@ -134,6 +186,83 @@ export function glyphCell(o) {
   return { x: Math.round(o.x) - (ORBIT_GLYPH.length >> 1), y: Math.round(o.y) }
 }
 
+/** The halo's e-folding width (square units) at a breath of 0..1. */
+export const haloWidth = (breath) => HALO_W0 + HALO_WB * Math.max(0, Math.min(1, breath))
+
+/** Per-width geometry, built on first draw (most sessions never open this
+ *  effect -- FLAME's laziness) and rebuilt if the width changes. For every
+ *  pixel in the planet's box: on the disc, its static lighting and its
+ *  base map coordinates; off it, its distance past the limb and how
+ *  sunward it is. Framebuffer coordinates count each cell's blank ninth
+ *  column, so the geometry is placed where it is seen. */
+function build(term) {
+  const cols = term.cols
+  const { cellW, cellH } = term.font
+  const adv = cellW + 1
+  const rows = VIZ_BOT - 1
+  const reach = ORBIT_R + ORBIT_HALO + 1
+  const c0 = Math.max(0, Math.floor(ORBIT_CX - reach)), c1 = Math.min(cols - 1, Math.ceil(ORBIT_CX + reach))
+  const BX = c0 * adv, BW = (c1 - c0 + 1) * adv, BH = rows * cellH
+  const n = BW * BH
+  const kind = new Uint8Array(n) // 0 out of reach, 1 disc, 2 halo
+  const day = new Float32Array(n), limb = new Float32Array(n)
+  const lon0 = new Float32Array(n), latI = new Uint8Array(n)
+  const dist = new Float32Array(n), sunw = new Float32Array(n)
+  const R = ORBIT_R
+  for (let Y = 0; Y < BH; Y++) {
+    // Cell-coordinate position of the pixel centre (a cell's centre maps
+    // to its integer coordinate, as inPlanet() asks).
+    const cy = 1 + (Y + 0.5) / cellH - 0.5
+    const dy = (cy - ORBIT_CY) * ORBIT_ASPECT
+    for (let X = 0; X < BW; X++) {
+      const cx = (BX + X + 0.5) / adv - 0.5
+      const dx = cx - ORBIT_CX
+      const r = Math.sqrt(dx * dx + dy * dy)
+      const i = Y * BW + X
+      if (r < R) {
+        kind[i] = 1
+        const nx = dx / R, ny = dy / R
+        const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny))
+        const lam = nx * LX + ny * LY + nz * LZ
+        // Lambert with a soft wrap: the terminator is a gradient a few
+        // pixels wide, smoothstepped so it reads as a curve, not a band.
+        const d = Math.min(1, Math.max(0, (lam + 0.12) / 0.62))
+        day[i] = d * d * (3 - 2 * d) * Math.min(1, 0.55 + 0.6 * Math.max(0, lam))
+        limb[i] = 0.72 + 0.28 * nz
+        lon0[i] = ((Math.atan2(nx, nz) / TAU) * MAP_W + MAP_W * 4) % MAP_W
+        latI[i] = Math.min(MAP_H - 1, Math.max(0, Math.floor((Math.asin(Math.max(-1, Math.min(1, ny))) / Math.PI + 0.5) * MAP_H)))
+      } else if (r < R + ORBIT_HALO) {
+        kind[i] = 2
+        dist[i] = r - R
+        const s = (dx * LX + dy * LY) / r // -1 (night) .. 1 (sunward)
+        sunw[i] = Math.max(0, Math.min(1, 0.5 + 0.6 * s))
+      }
+    }
+  }
+  // The surface: 0 sea, 1 land, 2 cloud (over either). The 2026-10-16
+  // formulas, sampled once onto a lon/lat map.
+  const map = new Uint8Array(MAP_W * MAP_H)
+  for (let j = 0; j < MAP_H; j++) {
+    const lat = ((j + 0.5) / MAP_H - 0.5) * Math.PI
+    for (let k = 0; k < MAP_W; k++) {
+      const lon = ((k + 0.5) / MAP_W) * TAU
+      const land = Math.sin(lon * 2 + 1.1 * Math.sin(lat * 2.3 + 0.6)) +
+        0.3 * Math.sin(lon * 3.3 - lat * 2.4 + 1.9) + 0.25 * Math.cos(lat * 4) > 0.7
+      const cloud = Math.sin(lat * 6 + 1.2 * Math.sin(lon * 1.7 + lat)) > 0.9
+      map[j * MAP_W + k] = cloud ? 2 : land ? 1 : 0
+    }
+  }
+  return {
+    cols, cellW, cellH, adv, rows, c0, c1, BX, BW, BH,
+    kind, day, limb, lon0, latI, dist, sunw, map,
+    lum: new Uint8Array(n),
+    // Two bitmaps per cell, alternated per frame: putGlyph() skips a
+    // same-reference re-put, so a bitmap rewritten in place never shows.
+    bufs: [0, 1].map(() => Array.from({ length: cols * rows }, () => new Uint16Array(cellH))),
+    front: 0,
+  }
+}
+
 export default {
   key: 'orbit',
   label: 'ORBIT',
@@ -147,6 +276,7 @@ export default {
     p._orbitClock = Math.random() * ORBIT_LAP_S
     p._orbitLastT = null
     p._orbitBreath = 0
+    p._orbitG = null
   },
   /** Re-arms clocks/accumulators on every visualizer entry. */
   reset(p) {
@@ -165,6 +295,8 @@ export default {
     const { term } = s
     const cols = term.cols
     const A = p.muted ? SILENT_AUDIO : (p._au || syntheticAudio(t))
+    if (!p._orbitG || p._orbitG.cols !== cols) p._orbitG = build(term)
+    const G = p._orbitG
 
     // Delta clamped to 0.1s: a stalled or throttled tab resumes the orbit
     // with at most a tenth of a second's step rather than a jump.
@@ -189,130 +321,127 @@ export default {
     const trailS = 0.8 + 1.8 * A.level
     // Treble is twinkle AMPLITUDE only; the twinkle rate is fixed per star.
     const twinkle = 0.08 + 0.4 * A.treble
-    const spin = TAU * clock / ORBIT_SPIN_S
-    const R = ORBIT_R, R2 = R * R, HR = R + ORBIT_HALO, HR2 = HR * HR
 
-    for (let y = 1; y < VIZ_BOT; y++) {
-      const dy = (y - ORBIT_CY) * ORBIT_ASPECT
-      // This row's first and last disc cell, for the limb line.
-      const half = R2 - dy * dy
-      let rowL = -1, rowR = -1
-      if (half > 0) {
-        const w = Math.sqrt(half)
-        rowL = Math.floor(ORBIT_CX - w)
-        rowR = Math.ceil(ORBIT_CX + w)
-        while (rowL <= rowR && !inPlanet(rowL, y)) rowL++
-        while (rowR >= rowL && !inPlanet(rowR, y)) rowR--
+    // --- the planet and its halo, in pixels ---------------------------------
+    const { kind, day, limb, lon0, latI, dist, sunw, map, lum, BW, BH, BX, adv, cellW, cellH, c0, c1 } = G
+    const spinI = (clock / ORBIT_SPIN_S) * MAP_W
+    const hk = 1 / haloWidth(breath)
+    const glowUp = 0.92 + 0.12 * breath
+    for (let i = 0, n = BW * BH; i < n; i++) {
+      const k = kind[i]
+      if (k === 0) { lum[i] = 0; continue }
+      if (k === 1) {
+        const m = map[latI[i] * MAP_W + (((lon0[i] + spinI) | 0) % MAP_W)]
+        // Sea 0.82, land 0.5 (a darker patch), cloud 1.0 (a lighter one).
+        const surf = m === 2 ? 1 : m === 1 ? 0.5 : 0.82
+        const lit = DAY_PEAK * day[i] * warm * surf * limb[i]
+        const night = m === 1 ? NIGHT_LAND : m === 2 ? NIGHT_CLOUD : NIGHT_SEA
+        lum[i] = Math.min(PIX_MAX, Math.max(lit, night))
+      } else {
+        const v = (HALO_NIGHT + (HALO_SUN - HALO_NIGHT) * sunw[i]) * Math.exp(-dist[i] * hk) * glowUp
+        lum[i] = v < 4 ? 0 : Math.min(PIX_MAX, v)
       }
+    }
+
+    // Track and trail points that fall in the pixel area go into the pixel
+    // buffer as 2x2 dots: the near half crosses the planet's face, the far
+    // half is occluded by the disc. Returns false if the point is outside
+    // the pixel area (the caller draws a character there instead).
+    const dot = (o, v) => {
+      const cx = Math.round(o.x), cy = Math.round(o.y)
+      if (!inPixels(cx, cy)) return false
+      if (cy < 1 || cy >= VIZ_BOT || v <= 0) return true
+      const X = Math.round((o.x + 0.5) * adv) - BX - 1
+      const Y = Math.round((o.y - 0.5) * cellH) - 1
+      for (let j = 0; j < 2; j++) for (let k = 0; k < 2; k++) {
+        const x = X + k, y = Y + j
+        if (x < 0 || y < 0 || x >= BW || y >= BH) continue
+        const i = y * BW + x
+        if (!o.front && kind[i] === 1) continue
+        if (v > lum[i]) lum[i] = v
+      }
+      return true
+    }
+    const charDots = []
+    // The orbit track (2026-10-20): near half MUTED, far half DIM -- at
+    // FAINT it could not be seen at all on green. Over the halo's reach the
+    // far half is left out entirely; it is behind the planet's air.
+    for (let k = 0; k < 96; k++) {
+      const o = orbitAt((k / 96) * ORBIT_LAP_S)
+      if (!dot(o, o.front ? TRACK_LUM : 0)) charDots.push([o, o.front ? MUTED : DIM])
+    }
+    // Trail: the same pure orbitAt() asked about the last trailS seconds,
+    // oldest first so newer, brighter samples overwrite older ones. Newest
+    // third NORMAL, then MUTED, then DIM -- the one thing beside the
+    // station brighter than the planet behind it.
+    const step = 0.06
+    const nTrail = Math.floor(trailS / step)
+    for (let k = nTrail; k >= 1; k--) {
+      const o = orbitAt(clock - k * step)
+      const age = k / nTrail
+      if (!dot(o, age < 0.34 ? LV_NORMAL : age < 0.67 ? LV_MUTED : LV_DIM)) {
+        charDots.push([o, age < 0.34 ? NORMAL : age < 0.67 ? MUTED : DIM])
+      }
+    }
+
+    // --- pack pixels into cells; stars everywhere else ----------------------
+    G.front ^= 1
+    const bufs = G.bufs[G.front]
+    for (let y = 1; y < VIZ_BOT; y++) {
+      const r = y - 1
       for (let x = 0; x < cols; x++) {
-        const dx = x - ORBIT_CX
-        const rr2 = dx * dx + dy * dy
-        if (rr2 < R2) {
-          // The planet. Unit normal on the sphere, Lambert against L with a
-          // small wrap (+0.1) so the terminator is a soft band of a column
-          // or two rather than a hard edge.
-          const nx = dx / R, ny = dy / R
-          const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny))
-          const lam = nx * LX + ny * LY + nz * LZ
-          const day = Math.min(1, Math.max(0, (lam + 0.1) / 1.1))
-          // The limb (design pass): the row's first and last disc cell are
-          // a solid ( ) line, so the disc closes on the night side too.
-          // Lit limb NORMAL, night limb MUTED -- never FAINT, which is the
-          // tier that made the night side vanish on the tube.
-          if (x === rowL || x === rowR) {
-            term.put(x, y, x === rowL ? '(' : ')', day > 0.15 ? NORMAL : MUTED)
-            continue
+        if (x >= c0 && x <= c1 && inPixels(x, y)) {
+          const base = r * cellH * BW + (x - c0) * adv
+          let m = 0
+          for (let py = 0; py < cellH; py++) {
+            const o = base + py * BW
+            for (let px = 0; px < cellW; px++) if (lum[o + px] > m) m = lum[o + px]
           }
-          // Surface in longitude/latitude, so features ride the curvature:
-          // they crawl fast across the middle and foreshorten at the limb,
-          // which is what makes the drift read as rotation, not a scroll.
-          const lon = Math.atan2(nx, nz) + spin
-          const lat = Math.asin(Math.max(-1, Math.min(1, ny)))
-          const land = Math.sin(lon * 2 + 1.1 * Math.sin(lat * 2.3 + 0.6)) +
-            0.3 * Math.sin(lon * 3.3 - lat * 2.4 + 1.9) + 0.25 * Math.cos(lat * 4) > 0.7
-          const cloud = Math.sin(lat * 6 + 1.2 * Math.sin(lon * 1.7 + lat)) > 0.9
-          // Shade blocks for the lit crescent: the planet is a solid body,
-          // the one place in this picture where mass is the point. Land is
-          // one step DARKER than sea (a patch, not punctuation); cloud keeps
-          // the shade and lifts one beam tier, so it reads as a sheen over
-          // the surface rather than more rock.
-          const v = Math.pow(day, 0.8) * warm
-          let k = v >= ORBIT_SHADE_HI ? 3 : v >= ORBIT_SHADE_MID ? 2 : v >= ORBIT_SHADE_LO ? 1 : 0
-          if (land && k > 0) k--
-          if (k === 0) {
-            // Night side: a FAINT stipple fill, so the disc stays a solid
-            // silhouette against the stars; the MUTED limb carries its edge.
-            term.put(x, y, '░', FAINT)
-          } else {
-            const tier = k === 3 ? (cloud ? NORMAL : MUTED) : k === 2 ? (cloud ? MUTED : DIM) : (cloud ? MUTED : DIM)
-            term.put(x, y, SHADE[k], tier)
+          if (m < CELL_MIN) { term.put(x, y, ' '); continue }
+          const attr = PIX_TIER
+          const inv = PIX_INV
+          const bits = bufs[r * cols + x]
+          let any = 0
+          for (let py = 0; py < cellH; py++) {
+            const o = base + py * BW
+            const b4 = (py & 3) * 4
+            let w = 0
+            for (let px = 0; px < cellW; px++) {
+              if (lum[o + px] * inv > BAYER[b4 + (px & 3)]) w |= 1 << (cellW - 1 - px)
+            }
+            bits[py] = w
+            any |= w
           }
-        } else if (rr2 < HR2) {
-          // Atmosphere (design pass): ONE continuous ring of dots -- every
-          // cell touching the disc -- that steps DIM -> MUTED as the breath
-          // rises. The old 2.4-unit band of graded ':'/'·' was thinner than
-          // a tier step everywhere, so its breathing never showed on the
-          // tube. Swells, never flashes: the breath is eased (see above).
-          // The sunward half sits one tier up (scattering), so the swell
-          // reads there as MUTED->NORMAL and the night half still
-          // closes the circle at DIM.
-          if (touchesPlanet(x, y)) {
-            const sun = dx * LX + dy * LY > 0
-            const up = breath > ORBIT_BREATH_STEP
-            term.put(x, y, '·', sun ? (up ? NORMAL : MUTED) : (up ? MUTED : DIM))
-          } else term.put(x, y, ' ')
+          if (any) term.putGlyph(x, y, bits, attr)
+          else term.put(x, y, ' ')
+          continue
+        }
+        // Stars: two stateless hash layers drifting at different rates, so
+        // the one-column steps a text grid forces land at different
+        // moments and read as parallax rather than the sky jumping.
+        const fx = Math.floor(x + clock * 0.05)
+        const nxs = Math.floor(x + clock * 0.13)
+        const hf = hash2(fx, y * 7 + 3)
+        const hn = hash2(nxs + 500, y * 13 + 11)
+        if (hn < 0.011) {
+          const h = hash2(nxs * 3.1, y + 91)
+          const v = 0.3 + 0.25 * h + twinkle * Math.sin(t * (0.6 + h * 2.2) + h * 40)
+          term.put(x, y, v > 0.62 ? '+' : '.', visualizerLevelAttr(Math.max(0, Math.min(1, v))))
+        } else if (hf < 0.02) {
+          const h = hash2(fx * 1.7, y + 37)
+          const v = 0.12 + 0.12 * h + twinkle * 0.6 * Math.sin(t * (0.4 + h * 1.6) + h * 25)
+          term.put(x, y, '.', visualizerLevelAttr(Math.max(0, Math.min(0.5, v))))
         } else {
-          // Stars: two stateless hash layers drifting at different rates, so
-          // the one-column steps a text grid forces land at different
-          // moments and read as parallax rather than the sky jumping.
-          const fx = Math.floor(x + clock * 0.05)
-          const nxs = Math.floor(x + clock * 0.13)
-          const hf = hash2(fx, y * 7 + 3)
-          const hn = hash2(nxs + 500, y * 13 + 11)
-          if (hn < 0.011) {
-            const h = hash2(nxs * 3.1, y + 91)
-            const v = 0.3 + 0.25 * h + twinkle * Math.sin(t * (0.6 + h * 2.2) + h * 40)
-            term.put(x, y, v > 0.62 ? '+' : '.', visualizerLevelAttr(Math.max(0, Math.min(1, v))))
-          } else if (hf < 0.02) {
-            const h = hash2(fx * 1.7, y + 37)
-            const v = 0.12 + 0.12 * h + twinkle * 0.6 * Math.sin(t * (0.4 + h * 1.6) + h * 25)
-            term.put(x, y, '.', visualizerLevelAttr(Math.max(0, Math.min(0.5, v))))
-          } else {
-            term.put(x, y, ' ')
-          }
+          term.put(x, y, ' ')
         }
       }
     }
-
-    // The orbit track: a sparse FAINT dotting of the ellipse, only in open
-    // space. Over the disc and halo it would scratch a line through the
-    // planet's shading; outside them it is what makes the path read as an
-    // inclined orbit before the station has shown the whole of it.
-    for (let k = 0; k < 64; k++) {
-      const o = orbitAt((k / 64) * ORBIT_LAP_S)
+    // Track and trail in open space, as characters (trail last, so it
+    // writes over the track).
+    for (const [o, attr] of charDots) {
       const cx = Math.round(o.x), cy = Math.round(o.y)
       if (cy < 1 || cy >= VIZ_BOT || cx < 0 || cx >= cols) continue
-      const dx = cx - ORBIT_CX, dy = (cy - ORBIT_CY) * ORBIT_ASPECT
-      if (dx * dx + dy * dy < HR2) continue
-      term.put(cx, cy, '·', FAINT)
-    }
-
-    // Trail: the same pure orbitAt() asked about the last trailS seconds,
-    // oldest first so newer, brighter samples overwrite older ones. Points
-    // on the far half that fall on the disc are occluded like the glyph.
-    const step = 0.06
-    const n = Math.floor(trailS / step)
-    for (let k = n; k >= 1; k--) {
-      const o = orbitAt(clock - k * step)
-      const cx = Math.round(o.x), cy = Math.round(o.y)
-      if (cy < 1 || cy >= VIZ_BOT || cx < 0 || cx >= cols) continue
-      // Design pass: in front of the disc too. A '·' put over a shade
-      // block punches a black hole in the planet the size of the trail.
-      if (inPlanet(cx, cy)) continue
-      // Newest third NORMAL, then MUTED, then DIM: the trail is the one
-      // thing beside the station brighter than the planet behind it.
-      const age = k / n
-      term.put(cx, cy, '·', age < 0.34 ? NORMAL : age < 0.67 ? MUTED : DIM)
+      term.put(cx, cy, '·', attr)
     }
 
     // The station. Occluded per cell, so it slides behind the limb a
