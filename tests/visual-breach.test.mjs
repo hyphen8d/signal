@@ -1,7 +1,7 @@
 // BREACH (CIPHER, design pass 2026-10-16) -- what the effect leaves on the
 // grid, read back off it: the canvas contract at three widths, that the
 // subject is there (a login box, its rows, its bar), that the rain is
-// streams with a BRIGHT head and a NORMAL neck over a mostly black screen,
+// streams with a NORMAL head and a MUTED neck over a mostly black screen,
 // that a kick is visible in the box -- and that steady loud audio is not a
 // kick -- that mute is faint (no BRIGHT anywhere) but never blank, that a
 // resolved word never lands on the box, and that re-entry starts a fresh
@@ -22,7 +22,7 @@ import { Term } from '../src/term.js'
 
 const VIZ_BOT = 22
 // Attribute bits, src/cellgrid.js.
-const BRIGHT = 1, NORMAL = 0
+const BRIGHT = 1, NORMAL = 0, MUTED = 32
 
 const signal = (over = {}) => ({
   level: 0.6, bass: 0.4, mid: 0.4, treble: 0.3,
@@ -98,7 +98,7 @@ test('BREACH: the subject is on the grid -- a login box with its rows and its ba
   } finally { h.shutdown() }
 })
 
-test('BREACH: the rain is streams -- BRIGHT head, NORMAL neck -- over a mostly black screen', async () => {
+test('BREACH: the rain is streams -- NORMAL head, MUTED neck -- over a mostly black screen', async () => {
   const { h, fx, mod } = await bootBreach()
   try {
     fx.reset(h.program)
@@ -109,11 +109,14 @@ test('BREACH: the rain is streams -- BRIGHT head, NORMAL neck -- over a mostly b
       for (const c of h.program._breachCols) { c.word = null; c.resolveAt = 1e9 }
       drawWith(h, fx, 1 + f * 0.05, signal())
       h.program._breachCols.forEach((c, x) => {
-        const hr = Math.floor(c.head)
+        const hr = mod.headRow(c, b.y - 1)
         if (hr < 3 || hr >= VIZ_BOT || x >= h.term.cols) return
         if (inBox(b, x, hr) || inBox(b, x, hr - 1) || inBox(b, x, hr - 2)) return
-        assert.equal(attrAt(h, x, hr), BRIGHT, `column ${x}: head not BRIGHT`)
-        assert.equal(attrAt(h, x, hr - 1), NORMAL, `column ${x}: neck not NORMAL`)
+        if (c.low && hr - 1 < b.y - 1) return // a low stream begins at the margin row
+        // 2026-10-20 (polish) -- was BRIGHT head, NORMAL neck: BRIGHT is the
+        // resolved words' tier alone now (see RAIN_HEAD in breach.js).
+        assert.equal(attrAt(h, x, hr), NORMAL, `column ${x}: head not NORMAL`)
+        assert.equal(attrAt(h, x, hr - 1), MUTED, `column ${x}: neck not MUTED`)
         assert.ok(/[0-9A-F]/.test(h.row(hr)[x]), `column ${x}: head is not a hex digit`)
         checked++
       })
@@ -228,5 +231,111 @@ test('BREACH: re-entry starts a fresh attempt (no carried progress, kick or gran
     assert.equal(h.program._breachKick, 0)
     assert.equal(h.program._breachGranted, 0)
     assert.deepEqual(h.program._breachKeys, [null, null, null])
+  } finally { h.shutdown() }
+})
+
+test('BREACH: a kick visibly jumps the bar -- several cells, not one (polish)', async () => {
+  // 2026-10-20 -- the critic's sheet showed a kick moving the bar 5% -> 11%,
+  // one cell, which reads as nothing. Read off the grid: the bar's filled
+  // cells before and after one kick.
+  // Mutation-checked: red with KICK_STEP back at 0.05.
+  const { h, fx, mod } = await bootBreach()
+  try {
+    assert.ok(mod.KICK_STEP >= 0.15 && mod.KICK_STEP <= 0.25, `KICK_STEP ${mod.KICK_STEP} outside the 15-25% the critique asked for`)
+    fx.reset(h.program)
+    const b = mod.boxRect(h.term.cols)
+    const filled = () => [...h.row(b.y + mod.ROW_BAR)].filter((c) => c === '█').length
+    let t = 1
+    drawWith(h, fx, t, signal({ pulse: 0.15 }))
+    const before = filled()
+    drawWith(h, fx, (t += 1 / 60), signal({ level: 0.95, onset: true, pulse: 1 }))
+    const jump = filled() - before
+    assert.ok(jump >= 4, `a kick filled ${jump} more bar cell(s)`)
+  } finally { h.shutdown() }
+})
+
+test('BREACH: the KEY field is fixed slots -- only a kick changes it, never CIPHER\'s glyph (polish)', async () => {
+  // 2026-10-20 -- the field was the three newest words, re-laid on every
+  // resolve anywhere; on the tube each re-lay ghosted through the last and
+  // read as overprinted garbage. Now: words resolving while the slots are
+  // full leave the KEY row byte-identical; a kick rewrites exactly one
+  // slot; the glyph is never offered.
+  // Mutation-checked: red with offerKey() writing straight into a slot
+  // (no candidate), and red with the glyph exclusion removed.
+  const { h, fx, mod } = await bootBreach()
+  try {
+    fx.reset(h.program)
+    const b = mod.boxRect(h.term.cols)
+    const keyRow = () => h.row(b.y + mod.ROW_KEY).slice(b.x, b.x + b.w)
+    const slots = () => [0, 1, 2].map((i) => {
+      const x = b.x + 10 + i * (mod.KEY_SLOT_W + 1)
+      return h.row(b.y + mod.ROW_KEY).slice(x, x + mod.KEY_SLOT_W)
+    })
+    for (const w of ['ROOT', 'ACK', 'SYN']) mod.offerKey(h.program, w)
+    let t = 1
+    drawWith(h, fx, t, signal({ pulse: 0.15 }))
+    assert.deepEqual(slots(), ['ROOT ', 'ACK  ', 'SYN  '])
+    const row0 = keyRow()
+    // Words keep resolving (and the glyph with them): nothing moves.
+    for (const w of ['ADMIN', '404', mod.KEY_GLYPH, 'AUTH']) {
+      mod.offerKey(h.program, w)
+      drawWith(h, fx, (t += 1 / 60), signal({ pulse: 0.15 }))
+      assert.equal(keyRow(), row0, `resolving ${w} changed the KEY field`)
+    }
+    // A kick accepts the last candidate into ONE slot.
+    drawWith(h, fx, (t += 1 / 60), signal({ level: 0.95, onset: true, pulse: 1 }))
+    const after = slots()
+    const changed = after.filter((s, i) => s !== ['ROOT ', 'ACK  ', 'SYN  '][i])
+    assert.equal(changed.length, 1, `a kick changed ${changed.length} slots: ${JSON.stringify(after)}`)
+    assert.equal(changed[0], 'AUTH ')
+    // Over a long run of real resolves and kicks, the glyph never reaches it.
+    for (let i = 0; i < 600; i++) {
+      const kick = i % 30 === 0
+      drawWith(h, fx, (t += 1 / 60), signal(kick ? { level: 0.9, onset: true, pulse: 1 } : { pulse: 0.15 }))
+      assert.ok(!keyRow().includes('╬'), `CIPHER's glyph in the KEY field: ${keyRow()}`)
+    }
+  } finally { h.shutdown() }
+})
+
+test('BREACH: BRIGHT in the rain is the words alone, and the rain thins above the box (polish)', async () => {
+  // 2026-10-20 -- resolved words sat at the rain heads' tier, and the rows
+  // above the box were dense enough to read as a wall. Two readings over
+  // many frames: every BRIGHT cell outside the box belongs to a held word,
+  // and the lit share of the rows above the box is well under the rows
+  // below it.
+  // Mutation-checked: red with RAIN_HEAD back at BRIGHT (first half), and
+  // with LOW_SHARE at 0 (second half).
+  const { h, fx, mod } = await bootBreach()
+  try {
+    fx.reset(h.program)
+    const b = mod.boxRect(h.term.cols)
+    const { cols } = h.term
+    let strayBright = 0, wordCells = 0, upLit = 0, upN = 0, dnLit = 0, dnN = 0
+    let t = 1
+    for (let f = 0; f < 600; f++) {
+      drawWith(h, fx, (t += 1 / 60), signal({ bands9: new Array(9).fill(0.6) }))
+      if (f < 120) continue
+      const held = new Set()
+      h.program._breachCols.forEach((c, x) => {
+        if (!c.word) return
+        for (let k = 0; k < c.word.length; k++) held.add(c.wordRow * cols + x + k)
+      })
+      for (let y = 1; y < VIZ_BOT; y++) {
+        for (let x = 0; x < cols; x++) {
+          if (inBox(b, x, y)) continue
+          const lit = h.row(y)[x] !== ' '
+          if (lit && (attrAt(h, x, y) & BRIGHT)) {
+            if (held.has(y * cols + x)) wordCells++
+            else strayBright++
+          }
+          if (inBox(b, x, b.y)) continue // compare the same columns above and below
+          if (y < b.y - 1) { upN++; if (lit) upLit++ } else if (y > b.y + b.h) { dnN++; if (lit) dnLit++ }
+        }
+      }
+    }
+    assert.ok(wordCells > 50, `too few word cells to judge (${wordCells})`)
+    assert.equal(strayBright, 0, `${strayBright} BRIGHT rain cells that are not a word`)
+    const up = upLit / upN, dn = dnLit / dnN
+    assert.ok(up < dn * 0.75, `rows above the box are ${(100 * up).toFixed(0)}% lit vs ${(100 * dn).toFixed(0)}% below -- not thinned`)
   } finally { h.shutdown() }
 })
