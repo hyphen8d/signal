@@ -8,6 +8,14 @@
 // (the '█' and BRIGHT caps are the tube-bloom lesson from UPRISING and KEEP,
 // which the text grid otherwise cannot see), and that mute settles it.
 //
+// 2026-10-20 (polish) -- the ball and the floor are cell BITMAPS now
+// (putGlyph), so everything about them is read off term.gfx and the
+// attribute plane: a character-reading test sees a pixel cell as a space.
+// The panel geometry the floor is checked against comes from the module
+// (panelAtPixel), and what is asserted is what the critique saw on the tube:
+// a lit tile that fills its panel and nothing outside it (no staircase, no
+// two tiles fused), a round mosaic ball whose bright glints sit on its rim.
+//
 // The frame loop rewrites p._au every frame (visualizer.js), so everything
 // about the beat is driven by calling the effect's draw directly with a
 // crafted signal.
@@ -24,12 +32,34 @@ import { parseBDF } from '../src/bdf.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const VIZ_BOT = 22
-// Attribute bits, src/cellgrid.js.
+// Attribute bits, src/cellgrid.js. NORMAL is 0.
 const BRIGHT = 1, DIM = 4, MUTED = 32, FAINT = 64
+const ADV = 9, CELL_W = 8, CELL_H = 16
 const effectT = (h) => (Date.now() - h.program._vizEnterAt) / 1000
 const canvasRows = (h) => Array.from({ length: VIZ_BOT - 1 }, (_, i) => h.row(i + 1))
-const nonSpace = (h) => canvasRows(h).join('').replace(/ /g, '').length
 const attrAt = (h, x, y) => h.term.attrs[y * h.term.cols + x]
+const gfxAt = (h, x, y) => h.term.gfx[y * h.term.cols + x]
+/** Cells holding something: a non-space character or a bitmap. */
+const inked = (h) => {
+  let n = 0
+  for (let y = 1; y < VIZ_BOT; y++) {
+    const r = h.row(y)
+    for (let x = 0; x < h.term.cols; x++) if (r[x] !== ' ' || gfxAt(h, x, y)) n++
+  }
+  return n
+}
+const popcount = (bits) => {
+  let n = 0
+  for (let y = 0; y < bits.length; y++) { let w = bits[y]; while (w) { n += w & 1; w >>= 1 } }
+  return n
+}
+/** Whether framebuffer pixel (px, py) is lit in its cell's bitmap. */
+const pixelOn = (h, px, py) => {
+  const c = Math.floor(px / ADV), r = Math.floor(py / CELL_H), bx = px % ADV
+  if (bx >= CELL_W) return false
+  const g = gfxAt(h, c, r)
+  return !!g && ((g[py % CELL_H] >> (CELL_W - 1 - bx)) & 1) === 1
+}
 
 const signal = (over = {}) => ({
   level: 0.6, bass: 0.4, mid: 0.4, treble: 0.3,
@@ -53,100 +83,121 @@ function drawWith(h, fx, t, A) {
   fx.draw(h.program, { term: h.term }, t)
 }
 
-/** The set of lit tiles, read off the grid: a tile is lit when most of its
- *  interior cells hold a shade glyph (its dark margin and a passing spot
- *  cannot tip that either way). */
-function litTiles(h, mod) {
-  const shade = new Map(), total = new Map()
-  for (let y = mod.FLOOR_TOP; y < VIZ_BOT; y++) {
-    const row = h.row(y)
-    for (let x = 0; x < h.term.cols; x++) {
-      // 2026-10-16 -- its fill cells, not its whole interior: every tile now
-      // keeps a dark inset beside its rails, and on the back rows that inset
-      // is most of the tile.
-      const k = mod.floorFillAt(x, y)
-      if (k < 0) continue
+/** Per tile: how many of its panel pixels are lit, out of how many, read
+ *  off the bitmaps -- skipping the cells a fleck was painted into this
+ *  frame, which light whatever they cross. Also counts lit pixels in the
+ *  joints (outside every panel) the same way. */
+function panelCover(h, mod) {
+  const on = new Map(), total = new Map()
+  let jointOn = 0
+  const spots = h.program._dancefloorSpotCells || new Set()
+  const cols = h.term.cols
+  for (let py = mod.FLOOR_TOP * CELL_H; py < VIZ_BOT * CELL_H; py++) {
+    for (let px = 0; px < cols * ADV; px++) {
+      if (px % ADV >= CELL_W) continue
+      if (spots.has(Math.floor(py / CELL_H) * cols + Math.floor(px / ADV))) continue
+      const k = mod.panelAtPixel(px, py)
+      const lit = pixelOn(h, px, py)
+      if (k < 0) { if (lit) jointOn++; continue }
       total.set(k, (total.get(k) || 0) + 1)
-      if (row[x] === '░' || row[x] === '▒') shade.set(k, (shade.get(k) || 0) + 1)
+      if (lit) on.set(k, (on.get(k) || 0) + 1)
     }
   }
+  return { on, total, jointOn }
+}
+
+/** The set of lit tiles, read off the bitmaps: a tile is lit when well over
+ *  the dark panels' coverage of its pixels are on. */
+function litTiles(h, mod) {
+  const { on, total } = panelCover(h, mod)
   const lit = []
-  for (const [k, n] of total) if ((shade.get(k) || 0) / n > 0.4) lit.push(k)
+  for (const [k, n] of total) if ((on.get(k) || 0) / n > 0.3) lit.push(k)
   return lit.sort((a, b) => a - b).join(',')
 }
 
-/** Reads the mirror ball back: the cord over its top, and for each of its
- *  rows the outer extent of its outline glyphs inside the ball's columns.
- *  Returns a reason string on failure, or null. */
+/** The ball read back off its bitmaps: its lit pixel rows, extents and
+ *  coverage. Returns a reason string on failure, or null. */
 function ballProblem(h, mod) {
   const { BALL_X0, BALL_Y0, BALL_W, BALL_H, BALL_CX } = mod
   if (h.row(1)[BALL_CX] !== '│') return 'no cord over the ball'
-  const OUTLINE = '.-‾´`()_'
-  const widths = []
-  for (let r = 0; r < BALL_H; r++) {
-    const row = h.row(BALL_Y0 + r)
-    let l = -1, rt = -1
-    for (let x = BALL_X0; x < BALL_X0 + BALL_W; x++) {
-      if (OUTLINE.includes(row[x])) { if (l < 0) l = x; rt = x }
+  const rows = []
+  let lit = 0, area = 0
+  for (let py = BALL_Y0 * CELL_H; py < (BALL_Y0 + BALL_H + 1) * CELL_H; py++) {
+    let l = -1, r = -1
+    for (let px = BALL_X0 * ADV; px < (BALL_X0 + BALL_W) * ADV; px++) {
+      if (pixelOn(h, px, py)) { if (l < 0) l = px; r = px }
     }
-    if (l < 0) return `ball row ${r} has no outline`
-    // Symmetric about the cord, within a column.
-    if (Math.abs((l + rt) / 2 - BALL_CX) > 1) return `ball row ${r} is off-centre (${l}..${rt})`
-    widths.push(rt - l + 1)
+    if (l >= 0) rows.push({ py, l, r })
   }
-  // Widest at the middle row, narrowing to the top and bottom.
-  const mid = Math.floor(BALL_H / 2)
-  for (let r = 0; r < mid; r++) {
-    if (widths[r] > widths[r + 1]) return `ball widens toward the top at row ${r}: ${widths}`
-    if (widths[BALL_H - 1 - r] > widths[BALL_H - 2 - r]) return `ball widens toward the bottom: ${widths}`
+  if (rows.length < 60) return `the ball is only ${rows.length} pixel rows tall`
+  const height = rows[rows.length - 1].py - rows[0].py + 1
+  // The widest rows, by median of the top few, so a glint's arm sticking
+  // past the rim cannot set the width on its own.
+  const widths = rows.map((r) => r.r - r.l + 1).sort((a, b) => b - a)
+  const width = widths[Math.min(5, widths.length - 1)]
+  // Round on the face: the pixel aspect is (4/3) / (720/400).
+  const aspect = (4 / 3) / ((h.term.cols * ADV) / (h.term.rows * CELL_H))
+  const roundness = (width * aspect) / height
+  if (roundness < 0.88 || roundness > 1.12) return `the ball is not round (w ${width}px x h ${height}px, ${roundness.toFixed(2)})`
+  // Centred on the cord, within a few pixels.
+  const mid = rows[Math.floor(rows.length / 2)]
+  const cx = BALL_CX * ADV + CELL_W / 2
+  if (Math.abs((mid.l + mid.r) / 2 - cx) > 4) return `the ball is off its cord (${mid.l}..${mid.r} about ${cx})`
+  // Facets, not a solid disc and not an empty ring: inside the rim, a
+  // mosaic of lit dither and dark joints.
+  for (const r of rows) {
+    for (let px = r.l + 6; px <= r.r - 6; px++) {
+      if (px % ADV >= CELL_W) continue
+      area++
+      if (pixelOn(h, px, r.py)) lit++
+    }
   }
-  // Round on ~2:1 cells: the widest row spans about twice the row count.
-  const aspect = widths[mid] / (BALL_H * 2)
-  if (aspect < 0.9 || aspect > 1.25) return `ball aspect ${aspect.toFixed(2)} is not round (${widths})`
-  if (widths[0] > widths[mid] * 0.75) return `ball's top row is too wide to be round (${widths})`
+  const cover = lit / area
+  if (cover < 0.3 || cover > 0.85) return `the ball's interior is ${(cover * 100).toFixed(0)}% lit -- ${cover < 0.3 ? 'no facets' : 'a solid disc'}`
   return null
 }
 
-/** The ball's interior (between the outline on each of its gap rows). */
-function ballInterior(h, mod) {
-  const { BALL_X0, BALL_Y0, BALL_H } = mod
-  const cells = []
-  for (let r = 1; r < BALL_H - 1; r++) {
-    const row = h.row(BALL_Y0 + r)
-    const seg = row.slice(BALL_X0, BALL_X0 + 15)
-    const l = seg.search(/[.´()`]/)
-    const rt = 14 - [...seg].reverse().join('').search(/[.´()`]/)
-    for (let x = l + 1; x < rt; x++) cells.push(seg[x])
+/** The ball's bitmaps as one string, to see it turn. */
+const ballBits = (h, mod) => {
+  const out = []
+  for (let y = mod.BALL_Y0; y < mod.BALL_Y0 + mod.BALL_H; y++) {
+    for (let x = mod.BALL_X0; x < mod.BALL_X0 + mod.BALL_W; x++) { const g = gfxAt(h, x, y); out.push(g ? g.join('.') : '-') }
   }
-  return cells
+  return out.join('|')
 }
 
 test('DANCEFLOOR: repaints every canvas cell and nothing outside rows 1..21', async () => {
   const { h, fx } = await bootFloor()
   try {
     h.advance(1500)
-    const put = h.term.put
+    const put = h.term.put, putGlyph = h.term.putGlyph
     const hit = new Uint8Array(h.term.cols * VIZ_BOT)
     const outside = []
-    h.term.put = function (x, y, ...rest) {
+    const mark = function (x, y) {
       if (y < 1 || y >= VIZ_BOT) outside.push(`${x},${y}`)
       else if (x >= 0 && x < this.cols) hit[y * this.cols + x] = 1
-      return put.call(this, x, y, ...rest)
     }
+    h.term.put = function (x, y, ...rest) { mark.call(this, x, y); return put.call(this, x, y, ...rest) }
+    h.term.putGlyph = function (x, y, ...rest) { mark.call(this, x, y); return putGlyph.call(this, x, y, ...rest) }
+    const frames = []
     try {
+      // Frames that re-pack nothing (same floor, same ball) as well as ones
+      // that re-pack everything: an unchanged cell must still be re-put.
       fx.draw(h.program, { term: h.term }, effectT(h))
-      // A kick with everything up, too, so the flare's extra cells are in scope.
+      fx.draw(h.program, { term: h.term }, effectT(h) + 0.001)
+      frames.push(hit.reduce((a, b) => a + b, 0))
+      hit.fill(0)
       fx.draw(h.program, { term: h.term }, effectT(h) + 0.5)
       h.program._au = signal({ level: 1, bass: 1, treble: 1, pulse: 1, onset: true })
       fx.draw(h.program, { term: h.term }, effectT(h) + 1)
-    } finally { h.term.put = put }
+    } finally { h.term.put = put; h.term.putGlyph = putGlyph }
     assert.deepEqual(outside.slice(0, 5), [], `${outside.length} puts landed outside the canvas`)
     let missed = 0
     for (let y = 1; y < VIZ_BOT; y++) for (let x = 0; x < h.term.cols; x++) if (!hit[y * h.term.cols + x]) missed++
     assert.equal(missed, 0, `${missed} canvas cells were not repainted this frame`)
-    const lit = nonSpace(h)
-    assert.ok(lit > 300, `only ${lit} non-space cells on the canvas`)
-    assert.ok(lit < 1680 * 0.4, `${lit} non-space cells -- the room should be mostly dark`)
+    assert.equal(frames[0], h.term.cols * (VIZ_BOT - 1), 'an unchanged frame left cells un-put')
+    const n = inked(h)
+    assert.ok(n > 300, `only ${n} inked cells on the canvas`)
   } finally { h.shutdown() }
 })
 
@@ -168,10 +219,9 @@ test('DANCEFLOOR: it moves -- frames a second apart differ, on the wall and on t
   const { h, mod } = await bootFloor()
   try {
     h.advance(1000)
-    const a = canvasRows(h), ballA = ballInterior(h, mod).join('')
+    const a = canvasRows(h), ballA = ballBits(h, mod)
     h.advance(1200)
-    const b = canvasRows(h), ballB = ballInterior(h, mod).join('')
-    assert.notEqual(a.join('\n'), b.join('\n'), 'two frames 1.2s apart are identical')
+    const b = canvasRows(h), ballB = ballBits(h, mod)
     let wall = 0
     for (let y = 0; y < mod.FLOOR_TOP - 1; y++) if (a[y] !== b[y]) wall++
     assert.ok(wall >= 3, `only ${wall} wall rows changed -- the spots are not sweeping`)
@@ -206,30 +256,50 @@ test('DANCEFLOOR: re-entry after a long visit carries no beat clock from the pre
     assert.ok(t < 5, `effect clock should have restarted (t=${t.toFixed(1)})`)
     assert.ok(!(h.program._dancefloorBeatAt > t), `beat stamped at ${h.program._dancefloorBeatAt}s on a clock at ${t.toFixed(1)}s`)
     assert.ok(h.program._dancefloorStep - stepAtEntry >= 2, 'the floor did not step in two seconds after re-entry')
-    assert.ok(nonSpace(h) > 300, `only ${nonSpace(h)} non-space cells after re-entry`)
+    assert.ok(inked(h) > 300, `only ${inked(h)} inked cells after re-entry`)
   } finally { h.shutdown() }
 })
 
-test('DANCEFLOOR: the mirror ball is round, hung on its cord, faceted and lit -- every frame', async () => {
+test('DANCEFLOOR: the mirror ball is round, hung on its cord, a faceted mosaic -- every frame', async () => {
   const { h, mod } = await bootFloor()
   try {
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 30; i++) {
       h.advance(150)
       assert.equal(ballProblem(h, mod), null, `frame ${i}`)
-      const inside = ballInterior(h, mod)
-      const blank = inside.filter((c) => c === ' ').length
-      // Facets, not a disc and not an empty ring: some reflection glyphs,
-      // some dark grout, never a solid fill.
-      assert.ok(inside.length >= 50, `ball interior is only ${inside.length} cells`)
-      assert.ok(blank / inside.length > 0.15, `ball interior is ${blank}/${inside.length} blank -- a solid disc`)
-      assert.ok(blank / inside.length < 0.7, `ball interior is ${blank}/${inside.length} blank -- no facets`)
-      assert.ok(new Set(inside.filter((c) => c !== ' ')).size >= 2, 'the facets are all one glyph')
-      assert.ok(inside.filter((c) => c === '█').length <= 3, 'more than a handful of block glints on the ball')
-      // The spotlight's point is on the ball, and is the bright thing.
-      const { x, y } = mod.SPOT_ON_BALL
-      assert.equal(h.row(y)[x], '█', 'the spotlight point is missing')
-      assert.ok(attrAt(h, x, y) & BRIGHT, 'the spotlight point should be BRIGHT')
     }
+  } finally { h.shutdown() }
+})
+
+// 2026-10-20 (polish). The critique: the ball read as a SKULL -- two block
+// glints side by side in its upper half for eyes and a row of them below
+// for teeth. Every bright thing on the ball must now sit on its rim.
+test('DANCEFLOOR: the ball\'s glints are on its rim, BRIGHT, at most a few -- no eyes', async () => {
+  const { h, fx, mod } = await bootFloor()
+  try {
+    const cx = mod.BALL_CX * ADV + CELL_W / 2, cy = mod.BALL_CY * CELL_H + CELL_H / 2
+    const aspect = (4 / 3) / ((h.term.cols * ADV) / (h.term.rows * CELL_H))
+    let spotGlint = 0
+    for (let f = 0; f < 60; f++) {
+      drawWith(h, fx, 40 + f * 0.1, signal({ treble: 1, level: 1, bass: 1, pulse: f % 5 === 0 ? 1 : 0.1 }))
+      let brightCells = 0
+      for (let y = mod.BALL_Y0 - 1; y < mod.BALL_Y0 + mod.BALL_H + 1; y++) {
+        for (let x = mod.BALL_X0; x < mod.BALL_X0 + mod.BALL_W; x++) {
+          if (!gfxAt(h, x, y) || !(attrAt(h, x, y) & BRIGHT)) continue
+          brightCells++
+          // A BRIGHT cell's centre is near the rim: never deep inside.
+          const dx = ((x * ADV + CELL_W / 2) - cx) * aspect / mod.BALL_R
+          const dy = ((y * CELL_H + CELL_H / 2) - cy) / mod.BALL_R
+          const rr = Math.hypot(dx, dy)
+          assert.ok(rr > 0.62, `frame ${f}: a BRIGHT cell at ${x},${y} is inside the ball (r=${rr.toFixed(2)}) -- an eye`)
+          // And on the lit, left side: never mirrored on the right.
+          assert.ok(dx < 0.35, `frame ${f}: a BRIGHT cell at ${x},${y} on the ball's right side`)
+        }
+      }
+      assert.ok(brightCells <= (mod.MAX_GLINTS + 1) * 4, `frame ${f}: ${brightCells} BRIGHT cells on the ball`)
+      const g = mod.glintAt(h.term, mod.SPOT_GLINT_ANGLE)
+      if (attrAt(h, g.c, g.r) & BRIGHT) spotGlint++
+    }
+    assert.equal(spotGlint, 60, `the spotlight's glint was BRIGHT in only ${spotGlint} of 60 frames`)
   } finally { h.shutdown() }
 })
 
@@ -343,45 +413,38 @@ test('DANCEFLOOR: the spots on the wall travel together in one direction, as a t
   } finally { h.shutdown() }
 })
 
-test('DANCEFLOOR: full blocks stay accents, BRIGHT stays rare, and the floor never glares', async () => {
+test('DANCEFLOOR: no block characters, BRIGHT stays rare, and the floor never glares', async () => {
   const { h, fx, mod } = await bootFloor()
   try {
     const audit = (label) => {
-      let blocks = 0, bright = 0, floorShade = 0, floorCells = 0, glints = 0
+      let bright = 0, floorLit = 0, floorCells = 0
+      const spots = h.program._dancefloorSpotCells || new Set()
       for (let y = 1; y < VIZ_BOT; y++) {
         const row = h.row(y)
         for (let x = 0; x < h.term.cols; x++) {
-          const ch = row[x], a = attrAt(h, x, y)
-          // Facet glints: BRIGHT on the ball other than the spotlight's
-          // point. Counted on their own because a row of them is a bar on
-          // the tube even while the frame's BRIGHT total is within its cap.
-          const onBall = x >= mod.BALL_X0 && x < mod.BALL_X0 + mod.BALL_W && y >= mod.BALL_Y0 && y < mod.BALL_Y0 + mod.BALL_H
-          if (onBall && (a & BRIGHT) && !(x === mod.SPOT_ON_BALL.x && y === mod.SPOT_ON_BALL.y) && ch !== mod.SPOT_HEAD) {
-            glints++
-            assert.ok(glints <= mod.MAX_GLINTS, `${label}: ${glints} glints on the ball in one frame`)
-          }
-          if (ch === '█') {
-            blocks++
-            assert.ok(y < mod.FLOOR_TOP, `${label}: a block on the floor at ${x},${y}`)
-          }
-          if (a & BRIGHT) {
-            bright++
-            assert.ok('█*•'.includes(ch), `${label}: BRIGHT '${ch}' at ${x},${y} -- only glints and spots may be`)
+          const ch = row[x], a = attrAt(h, x, y), g = gfxAt(h, x, y)
+          assert.ok(!/[█▓▒░▀▄]/.test(ch), `${label}: block '${ch}' at ${x},${y}`)
+          const onBall = x >= mod.BALL_X0 && x < mod.BALL_X0 + mod.BALL_W && y >= mod.BALL_Y0 - 1 && y < mod.BALL_Y0 + mod.BALL_H + 1
+          if ((a & BRIGHT) && (g || ch !== ' ')) {
+            if (!onBall) bright++
+            assert.ok(onBall || ch === mod.SPOT_HEAD || spots.has(y * h.term.cols + x),
+              `${label}: BRIGHT at ${x},${y} -- only glints and spots may be`)
           }
           if (y >= mod.FLOOR_TOP) {
             floorCells++
-            if (ch === '░' || ch === '▒' || ch === '▓') {
-              floorShade++
-              assert.notEqual(ch, '▓', `${label}: dense shade on the floor`)
-            }
+            if (spots.has(y * h.term.cols + x)) continue
+            // Never NORMAL on the floor but where a fleck is.
+            if (g) assert.ok(a & (DIM | MUTED | FAINT), `${label}: floor cell ${x},${y} at NORMAL or above`)
+            if (g && popcount(g) / (CELL_W * CELL_H) > 0.3) floorLit++
+            if (g) assert.ok(popcount(g) / (CELL_W * CELL_H) <= 0.72, `${label}: floor cell ${x},${y} is ${popcount(g)}/128 lit -- a slab`)
           }
         }
       }
-      return { blocks, bright, floorShade: floorShade / floorCells }
+      return { bright, floorLit: floorLit / floorCells }
     }
-    let worst = { blocks: 0, bright: 0, floorShade: 0 }
+    let worst = { bright: 0, floorLit: 0 }
     const keep = (r) => { for (const k of Object.keys(worst)) worst[k] = Math.max(worst[k], r[k]) }
-    for (let i = 0; i < 60; i++) { h.advance(100); keep(audit(`synthetic frame ${i}`)) }
+    for (let i = 0; i < 40; i++) { h.advance(100); keep(audit(`synthetic frame ${i}`)) }
     // And the loudest case: every kick at full bass and treble, at every
     // routine of the floor.
     fx.reset(h.program)
@@ -391,9 +454,8 @@ test('DANCEFLOOR: full blocks stay accents, BRIGHT stays rare, and the floor nev
       drawWith(h, fx, t + 0.02, signal({ level: 1, bass: 1, treble: 1, onset: true, pulse: 1 }))
       keep(audit(`kick ${f}`))
     }
-    assert.ok(worst.blocks <= 1680 * 0.01, `${worst.blocks} '█' cells in one frame`)
-    assert.ok(worst.bright <= 16, `${worst.bright} BRIGHT cells in one frame`)
-    assert.ok(worst.floorShade <= 0.2, `${(worst.floorShade * 100).toFixed(0)}% of the floor filled with shade in one frame`)
+    assert.ok(worst.bright <= 16, `${worst.bright} BRIGHT spot cells in one frame`)
+    assert.ok(worst.floorLit <= 0.35, `${(worst.floorLit * 100).toFixed(0)}% of the floor lit in one frame`)
   } finally { h.shutdown() }
 })
 
@@ -404,12 +466,11 @@ test('DANCEFLOOR: muted, the ball keeps turning, the spots dim, the floor goes d
     h.program.muted = true
     h.advance(200)
     const step = h.program._dancefloorStep
-    const ballA = ballInterior(h, mod).join('')
+    const ballA = ballBits(h, mod)
     let spots = 0
     for (let i = 0; i < 30; i++) {
       h.advance(100)
-      const rows = canvasRows(h)
-      assert.ok(!/[░▒]/.test(rows.slice(mod.FLOOR_TOP - 1).join('')), 'lit tiles under mute')
+      assert.equal(litTiles(h, mod), '', 'lit tiles under mute')
       for (let y = 1; y < VIZ_BOT; y++) {
         for (let x = 0; x < h.term.cols; x++) {
           if (h.row(y)[x] !== mod.SPOT_HEAD) continue
@@ -417,15 +478,21 @@ test('DANCEFLOOR: muted, the ball keeps turning, the spots dim, the floor goes d
           assert.ok(attrAt(h, x, y) & (DIM | FAINT | MUTED), `a spot at full brightness under mute (${x},${y})`)
         }
       }
+      // Nothing BRIGHT at all: the spotlight's glint drops to NORMAL.
+      for (let y = 1; y < VIZ_BOT; y++) {
+        for (let x = 0; x < h.term.cols; x++) {
+          if (gfxAt(h, x, y)) assert.ok(!(attrAt(h, x, y) & BRIGHT), `BRIGHT bitmap at ${x},${y} under mute`)
+        }
+      }
     }
     assert.equal(h.program._dancefloorStep, step, 'the floor stepped under mute')
     assert.ok(spots > 0, 'every spot went out under mute -- the ball should still throw a few')
-    assert.notEqual(ballInterior(h, mod).join(''), ballA, 'the ball stopped turning under mute')
+    assert.notEqual(ballBits(h, mod), ballA, 'the ball stopped turning under mute')
     assert.equal(ballProblem(h, mod), null)
   } finally { h.shutdown() }
 })
 
-test('DANCEFLOOR: the dancers change pose on the beat', async () => {
+test('DANCEFLOOR: the dancers change pose on the beat, MUTED over the floor', async () => {
   const { h, fx, mod } = await bootFloor()
   try {
     h.advance(500)
@@ -435,6 +502,12 @@ test('DANCEFLOOR: the dancers change pose on the beat', async () => {
     drawWith(h, fx, 20, signal())
     const a = figures()
     for (const f of a) assert.match(f, /o/, `a dancer has no head: ${f}`)
+    // 2026-10-20 (polish) -- MUTED (was DIM): the critique asked for the
+    // dancers to read over the floor.
+    for (const x of mod.DANCER_X) {
+      const hx = h.row(mod.DANCER_Y).slice(x - 1, x + 2).indexOf('o') + x - 1
+      assert.ok(attrAt(h, hx, mod.DANCER_Y) & MUTED, `dancer's head at ${hx} is not MUTED`)
+    }
     drawWith(h, fx, 20.3, signal())
     assert.deepEqual(figures(), a, 'the dancers moved without a beat')
     drawWith(h, fx, 20.32, signal({ onset: true, pulse: 1 }))
@@ -443,67 +516,53 @@ test('DANCEFLOOR: the dancers change pose on the beat', async () => {
   } finally { h.shutdown() }
 })
 
-// 2026-10-16 (design pass). The critique: lit tiles rendered as stair-step
-// blobs that ignored the perspective -- solid NORMAL '▒' slabs with no tap --
-// and the ball, a DIM dotted ring, lost to the floor it hangs over.
-test('DANCEFLOOR: a lit tile is a light-shade trapezoid inside its rails, never touching a line or another tile', async () => {
+// 2026-10-20 (polish). The critique, of the character floor: lit tiles were
+// '░' staircases sloping with the rails -- tetromino blobs -- and the
+// character fixes it offered could not work at this size (a tile's interior
+// is 1-6 cells across, so "the same columns on every row" left the outer
+// tiles a single column or nothing). The floor is panels now; this reads
+// each lit tile back off the bitmaps and holds that it fills ITS panel and
+// that the joints between panels stay dark, so no tile can stair-step over a
+// joint or fuse with its neighbour. Mutation-checked: GROUT_PX = 0 (no
+// joints) and a panel test that ignores the tile index (every panel lit)
+// both fail here.
+test('DANCEFLOOR: a lit tile fills its own panel -- dark joints, no fused blobs, not a slab', async () => {
   const { h, fx, mod } = await bootFloor()
   try {
     h.advance(500)
     fx.reset(h.program)
-    let shaded = 0
-    for (let f = 0; f < 64; f++) {
+    let litSeen = 0
+    for (let f = 0; f < 24; f++) {
       const t = 50 + f * 0.5
       drawWith(h, fx, t, signal({ level: 1, bass: 1, pulse: 0.05 }))
       drawWith(h, fx, t + 0.02, signal({ level: 1, bass: 1, onset: true, pulse: 1 }))
-      for (let y = mod.FLOOR_TOP; y < VIZ_BOT; y++) {
-        const row = h.row(y)
-        for (let x = 0; x < h.term.cols; x++) {
-          if (!/[░▒▓█]/.test(row[x])) continue
-          shaded++
-          assert.equal(row[x], '░', `kick ${f}: '${row[x]}' on the floor at ${x},${y} -- tiles fill with '░' only`)
-          const k = mod.floorFillAt(x, y)
-          assert.ok(k >= 0, `kick ${f}: shade at ${x},${y} outside any tile's inset fill`)
-          // The dark inset: a horizontal neighbour that is shaded belongs to
-          // the same tile, so two tiles never fuse into one blob.
-          // And a lit cell never sits against a rail: read off the grid, not
-          // the tables, so a table that loses the inset cannot vouch for itself.
-          for (const dx of [-1, 1]) {
-            if (row[x + dx] === '░') assert.equal(mod.floorFillAt(x + dx, y), k, `kick ${f}: two tiles touch at ${x},${y}`)
-            assert.ok(!'/\\_│'.includes(row[x + dx]), `kick ${f}: lit cell at ${x},${y} touches the rail '${row[x + dx]}' -- no dark inset`)
-          }
-          // Never up to the ball's tier.
-          const a = attrAt(h, x, y)
-          assert.ok(a & (DIM | MUTED | FAINT), `kick ${f}: a lit tile at NORMAL at ${x},${y}`)
-        }
+      const { on, total, jointOn } = panelCover(h, mod)
+      assert.equal(jointOn, 0, `kick ${f}: ${jointOn} lit pixels in the joints between panels`)
+      for (const [k, n] of total) {
+        const c = (on.get(k) || 0) / n
+        // Either lit (about LIT_COVER, plus the bass) or dark (about the
+        // dark panels' 0.12) -- nothing in between, which is what a panel
+        // half lit by its neighbour's spill would look like.
+        assert.ok(c < 0.2 || (c > 0.4 && c < 0.72), `kick ${f}: tile ${k} is ${(c * 100).toFixed(0)}% lit`)
+        if (c > 0.4) litSeen++
       }
     }
-    assert.ok(shaded > 100, `only ${shaded} lit cells over 64 kicks`)
+    assert.ok(litSeen > 40, `only ${litSeen} lit tile-frames over 24 kicks`)
   } finally { h.shutdown() }
 })
 
-test('DANCEFLOOR: the ball is the brightest structure -- a MUTED ( ) ring with NORMAL facets', async () => {
+test('DANCEFLOOR: the ball is the brightest structure -- NORMAL facets over DIM/MUTED floor panels', async () => {
   const { h, mod } = await bootFloor()
   try {
-    const { BALL_X0, BALL_Y0, BALL_H } = mod
     for (let i = 0; i < 20; i++) {
       h.advance(150)
-      for (const r of [2, 3, 4]) {
-        assert.equal(h.row(BALL_Y0 + r)[BALL_X0], '(', `ball row ${r} has no '(' side`)
-        assert.equal(h.row(BALL_Y0 + r)[BALL_X0 + 14], ')', `ball row ${r} has no ')' side`)
-      }
       let normal = 0
-      for (let r = 0; r < BALL_H; r++) {
-        const row = h.row(BALL_Y0 + r)
-        for (let c = 0; c < 15; c++) {
-          const ch = row[BALL_X0 + c], a = attrAt(h, BALL_X0 + c, BALL_Y0 + r)
-          if ('()´`‾_-'.includes(ch)) {
-            assert.ok(!(a & (DIM | FAINT)), `frame ${i}: outline '${ch}' at row ${r} is dimmer than MUTED`)
-          }
-          if (ch === '■' && !(a & (DIM | MUTED | FAINT))) normal++
+      for (let y = mod.BALL_Y0; y < mod.BALL_Y0 + mod.BALL_H; y++) {
+        for (let x = mod.BALL_X0; x < mod.BALL_X0 + mod.BALL_W; x++) {
+          if (gfxAt(h, x, y) && !(attrAt(h, x, y) & (DIM | MUTED | FAINT | BRIGHT))) normal++
         }
       }
-      assert.ok(normal >= 2, `frame ${i}: only ${normal} NORMAL facets on the ball`)
+      assert.ok(normal >= 12, `frame ${i}: only ${normal} NORMAL cells on the ball`)
     }
   } finally { h.shutdown() }
 })
