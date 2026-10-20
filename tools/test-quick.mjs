@@ -24,7 +24,7 @@
 //   visuals/<k>.js       -> tests/visual-<k>.test.mjs, plus tests/visuals.test.mjs
 //                           (re-entry and odd-width checks across effects)
 //                           and tests/lazy-raster.test.mjs (it rasters the
-//                           five putGlyph effects). program.test's "every
+//                           putGlyph effects). program.test's "every
 //                           effect draws without throwing" is NOT picked --
 //                           the full suite is where that one earns its keep.
 //   stations.js          -> tests that name stations.js, plus roster.test
