@@ -148,6 +148,28 @@ test('RIPPLE: the picture reads back -- the tower brightest, lit windows, its re
   } finally { h.shutdown() }
 })
 
+// 2026-10-20 polish (CRITIQUE-1020: the bridge carried the tower's weight).
+// One attribute per cell: a single MUTED lamp lifts the whole cell, so
+// lamps in every cell drew the deck and cables at MUTED end to end. Read
+// off the static scene: at most half the cells the bridge crosses may
+// hold a MUTED-or-brighter bridge pixel (39% now, 70% before); the rest draw at the bridge's DIM.
+test('RIPPLE: the bridge draws mostly at DIM, its lamps in about one cell in two', async () => {
+  const { h, mod } = await bootCity()
+  try {
+    const S = mod.sceneTables(h.term.cols, h.term.font.cellW, h.term.font.cellH)
+    const cells = new Map() // cell index -> brightest bridge tier in it
+    for (let i = 0; i < S.sky.length; i++) {
+      if (S.own[i] !== mod.OWN.BRIDGE || S.sky[i] < 0) continue
+      const x = i % S.W, y = Math.floor(i / S.W)
+      const c = Math.floor(y / S.ch) * S.cols + Math.floor(x / S.cw)
+      cells.set(c, Math.max(cells.get(c) ?? -1, S.sky[i]))
+    }
+    const lit = [...cells.values()].filter((v) => v >= 2).length
+    assert.ok(cells.size > 40, `the bridge crosses only ${cells.size} cells`)
+    assert.ok(lit / cells.size <= 0.5, `${lit} of ${cells.size} bridge cells draw at MUTED -- the bridge is as heavy as the tower`)
+  } finally { h.shutdown() }
+})
+
 test('RIPPLE: a kick lights the tower BRIGHT and sends a ring across the bay that is still there a second later', async () => {
   // The same timeline twice, with and without one kick: everything else in
   // the picture (swell, glints, windows) is a function of the clock, so what
