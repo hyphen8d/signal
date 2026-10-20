@@ -56,6 +56,38 @@
 // brightest structure in the frame apart from its glints and the spot.
 // tests/visual-dancefloor.test.mjs holds both.
 //
+// 2026-10-20 (polish). The critique, off the real tube: the ball read as a
+// SKULL -- its '■' facets and the spotlight's '█' made two blocks side by
+// side in the upper half (eyes) and a row below (teeth); and the lit tiles
+// were still '░' staircases sloping with the rails, tetromino blobs despite
+// the 10-16 fix. Its offered character fixes were measured before trying
+// them, and neither fits this size: a tile's fill is 1-6 cells across, so
+// "light only the columns common to every row of the tile" leaves the outer
+// tiles a single column or nothing at all (8 of 32 tiles come out empty,
+// six more one column wide). And the set rule the same critique proposes --
+// anything round goes through pixels -- names the ball outright. So, keeping
+// the subject, the composition and the beat exactly as they were:
+// - The BALL is pixels (putGlyph, FROST's packing): a disc round on the
+//   face, tiled with a regular longitude/latitude mosaic whose joints turn
+//   with OMEGA, lit from the upper left; every glint is a small four-point
+//   star ON THE RIM, cut out of a dark halo, the spotlight's fixed on the
+//   upper left and the treble's on the same lit arc -- never a symmetric
+//   pair, never inside the disc. No '█', '■' or outline glyph remains.
+// - The FLOOR is pixels too: panels and dark joints, in the same
+//   perspective, the same tiles lighting on the same steps. A lit panel is
+//   its exact trapezoid, so there is no staircase to see and two lit tiles
+//   cannot fuse across a joint. It has no line glyphs at all -- which is
+//   also the critique's set note answered (OUTRUN's floor is lit LINES;
+//   this one is lit PANELS). The glare trap still governs: panels are
+//   pre-dithered to half coverage, DIM at rest and MUTED on the kick.
+// - The dancers are MUTED (were DIM), as asked, to read over the panels.
+// - The floor's spots are pixel flecks (a character there would punch a
+//   cell-sized hole in a panel); the wall's are still '•' characters.
+// Cost: a frame that re-packed every floor and ball cell took ~13ms in the
+// harness, so the floor is re-rendered only when a step, the kick's tier,
+// a bass step or mute changes it, plus the cells a fleck is in; the ball at
+// BALL_FPS. Every cell is still put every frame (re-put as it stands).
+//
 // Stored state: the step counter, the level latched at the last step, the
 // previous frame's pulse and the effect-clock time of the last step (the
 // rate limit). Everything else is a pure function of (x, y, t, audio); the
@@ -90,145 +122,351 @@ export const STEP_GAP_S = 0.22
 // Steps per pattern: two bars of four, then the floor changes routine.
 const STEPS_PER_PATTERN = 8
 
+// --- the pixels -----------------------------------------------------------------
+// 2026-10-20 (polish) -- the ball and the floor are drawn as cell bitmaps
+// through putGlyph() (FLAME's renderer, packed the way FROST packs): a
+// beam-intensity buffer the size of the canvas, each cell drawn at the
+// lowest tier that reaches its brightest pixel and dithered (4x4 Bayer) by
+// lum / that tier's level. Everything else -- the dancers, the wall's spots,
+// the cord -- stays characters. Why the two moved is in the header's
+// 2026-10-20 note.
+const LV_BRIGHT = 255, LV_NORMAL = 205, LV_MUTED = 180, LV_DIM = 150, LV_FAINT = 100
+const tierOf = (m) => (m >= 232 ? BRIGHT : m >= 193 ? NORMAL : m >= 166 ? MUTED : m >= 126 ? DIM : FAINT)
+const levelOf = (a) => (a === BRIGHT ? LV_BRIGHT : a === NORMAL ? LV_NORMAL : a === MUTED ? LV_MUTED : a === DIM ? LV_DIM : LV_FAINT)
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((b) => (b + 0.5) / 16)
+// Below this a cell is left dark rather than drawn as a few stray dots.
+const CELL_MIN = 14
+
+/** The pixel geometry for a term: cell size, the framebuffer's width, the
+ *  physical aspect of a pixel (FROST's formula: the face is 4:3), and the
+ *  buffers -- built once per term (keyed on the term itself: the cache
+ *  below records what THAT grid is showing, so two terms of one size must
+ *  not share it). The aspect is the 80-column desktop face's, whatever the
+ *  width: this is fixed art centred on column 40 (audit L5's rule -- a
+ *  wider term gets dark room either side, not a wider ball). */
+const PIX = new WeakMap()
+const ART_COLS = 80
+function pixFor(term) {
+  let P = PIX.get(term)
+  if (P) return P
+  const { cellW, cellH } = term.font
+  const adv = cellW + 1
+  const FW = term.cols * adv, FH = VIZ_BOT * cellH
+  P = {
+    cols: term.cols, cellW, cellH, adv, FW, FH,
+    aspect: (4 / 3) / ((ART_COLS * adv) / (term.rows * cellH)),
+    lum: new Uint8Array(FW * FH),
+    // Two bitmaps per cell, alternated PER CELL each time that cell is
+    // packed (RIPPLE's `which`): putGlyph() skips a same-reference re-put, so
+    // a bitmap rewritten in place never shows -- and a cell is only packed
+    // when something in it changed, so a per-frame flip could land on the
+    // reference the cell is still showing.
+    bufs: [0, 1].map(() => Array.from({ length: term.cols * VIZ_BOT }, () => new Uint16Array(cellH))),
+    which: new Uint8Array(term.cols * VIZ_BOT),
+    // What each cell shows now (null: blank), so an unchanged cell is
+    // re-put for the cost of a compare.
+    shown: new Array(term.cols * VIZ_BOT).fill(null),
+    attr: new Uint8Array(term.cols * VIZ_BOT),
+    floorKey: '', ballKey: '', spotCells: [],
+  }
+  PIX.set(term, P)
+  return P
+}
+
+/** Packs the cell (c, r) from the buffer: putGlyph at the tier of its
+ *  brightest pixel, or -- when it holds nothing -- a blank (`blank`) or
+ *  nothing at all (so what is drawn there already stays). */
+function packCell(term, P, c, r, blank) {
+  const { lum, FW, cellW, cellH, adv } = P
+  const base = r * cellH * FW + c * adv
+  let m = 0
+  for (let py = 0; py < cellH; py++) {
+    const o = base + py * FW
+    for (let px = 0; px < cellW; px++) if (lum[o + px] > m) m = lum[o + px]
+  }
+  const ci = r * P.cols + c
+  if (m < CELL_MIN) { P.shown[ci] = null; if (blank) term.put(c, r, ' '); return }
+  const attr = tierOf(m)
+  const inv = 1 / levelOf(attr)
+  P.which[ci] ^= 1
+  const bits = P.bufs[P.which[ci]][ci]
+  let any = 0
+  for (let py = 0; py < cellH; py++) {
+    const o = base + py * FW
+    const b4 = (py & 3) * 4
+    let w = 0
+    for (let px = 0; px < cellW; px++) if (lum[o + px] * inv > BAYER[b4 + (px & 3)]) w |= 1 << (cellW - 1 - px)
+    bits[py] = w
+    any |= w
+  }
+  P.shown[ci] = any ? bits : null
+  P.attr[ci] = attr
+  if (any) term.putGlyph(c, r, bits, attr)
+  else if (blank) term.put(c, r, ' ')
+}
+
+/** Re-puts what cell (c, r) already shows (a no-op on the grid when nothing
+ *  else drew there), or a blank. */
+function reput(term, P, c, r) {
+  const ci = r * P.cols + c
+  if (P.shown[ci]) term.putGlyph(c, r, P.shown[ci], P.attr[ci])
+  else term.put(c, r, ' ')
+}
+
 // --- the ball -----------------------------------------------------------------
-// Hand-drawn rather than computed: at this size a computed ellipse rounds
-// into a barrel. 15 columns by 7 rows on ~2:1 cells is round. The cord
-// comes down from row 1 to the top of the ball.
-export const BALL_X0 = 33
+// The ball's box on the grid, centre and pixel radius (vertical; the
+// horizontal radius is this over the pixel aspect, so it is round on the
+// face, not on the framebuffer). The cord comes down from row 1.
+// 2026-10-20 -- was a hand-drawn 15x7 character outline ('.-‾‾‾-.', '( )')
+// with a '■'/':'/'·' checker of facets inside: see the header's note.
+export const BALL_X0 = 31
 export const BALL_Y0 = 2
-export const BALL_W = 15
+export const BALL_W = 19
 export const BALL_H = 7
-export const BALL_CX = BALL_X0 + 7   // 40
-export const BALL_CY = BALL_Y0 + 3   // 5
-const BALL_ART = [
-  '   .-‾‾‾‾‾-.   ',
-  ' .´         `. ',
-  '(             )',
-  '(             )',
-  '(             )',
-  ' `.         .´ ',
-  '   `-._____.-´ ',
-]
-// Interior cells (the facets) are the spaces strictly between each row's
-// first and last outline glyph, on the rows that have a gap.
-const BALL_CELLS = []
-for (let r = 0; r < BALL_H; r++) {
-  const row = BALL_ART[r]
-  const first = row.search(/\S/), last = row.length - 1 - [...row].reverse().join('').search(/\S/)
-  for (let c = 0; c < BALL_W; c++) {
-    const ch = row[c]
-    if (ch !== ' ') BALL_CELLS.push({ c, r, ch, facet: false })
-    else if (c > first && c < last && r > 0 && r < BALL_H - 1) BALL_CELLS.push({ c, r, ch, facet: true })
+export const BALL_CX = 40
+export const BALL_CY = 5
+export const BALL_R = 52
+// Facets: a regular grid of longitude and latitude, the grout between them
+// one dark pixel, the longitude lines carried round by the turn.
+// 2026-09-13 -- 10 facets across the visible half; 2026-10-20 -- 14, with
+// 12 latitude bands, so a facet is ~15x12 pixels at the equator: a mosaic
+// you can see is a mosaic, compressing to slivers at the limb.
+const FACETS_PER_RAD = 14 / Math.PI
+const LAT_PER_RAD = 12 / Math.PI
+// The light falls from the upper left, toward the viewer.
+const LIGHT = (() => { const v = [-0.55, -0.62, 0.56], n = Math.hypot(...v); return v.map((c) => c / n) })()
+// Glints sit on the RIM only, in its lit upper-left arc -- never two in a
+// symmetric pair (the 10-20 critique's "skull": two block glints side by
+// side in the upper half read as eyes). The spotlight's is fixed; up to
+// MAX_GLINTS more twinkle along the arc with the treble.
+export const SPOT_GLINT_ANGLE = 3.75          // radians, screen angle (0 = right, y down)
+export const GLINT_ARC = [3.1, 4.6]           // the lit arc a treble glint may appear on
+export const MAX_GLINTS = 3
+// How often the ball is re-rendered: the turn moves an equator facet about
+// eight pixels a second, so 20 renders a second is every pixel of it.
+const BALL_FPS = 20
+
+/** Where a glint at screen angle `ang` sits: the cell holding it, and its
+ *  pixel centre. Exported so the tests can find the spotlight's glint. */
+export function glintAt(term, ang) {
+  const P = pixFor(term)
+  const cx = BALL_CX * P.adv + P.cellW / 2, cy = BALL_CY * P.cellH + P.cellH / 2
+  const rr = BALL_R * 0.96
+  const x = cx + Math.cos(ang) * rr / P.aspect, y = cy + Math.sin(ang) * rr
+  return { px: x, py: y, c: Math.floor(x / P.adv), r: Math.floor(y / P.cellH) }
+}
+
+/** The ball's per-pixel geometry, which never changes: each disc pixel's
+ *  longitude (and its left and upper neighbours'), whether a latitude joint
+ *  runs through it, its latitude band, the light it catches and whether it
+ *  is on the limb. Only the longitude moves with the turn, so a frame is
+ *  three floors and a compare per pixel. */
+function ballTable(P) {
+  if (P.ball) return P.ball
+  const { FW, aspect, adv, cellW, cellH } = P
+  const cx = BALL_CX * adv + cellW / 2, cy = BALL_CY * cellH + cellH / 2
+  const R = BALL_R, Rx = R / aspect
+  const x0 = Math.floor(cx - Rx - 1), x1 = Math.ceil(cx + Rx + 1)
+  const y0 = Math.floor(cy - R - 1), y1 = Math.ceil(cy + R + 1)
+  const lonOf = (dx, dy) => Math.atan2(dx, Math.sqrt(Math.max(0, 1 - dx * dx - dy * dy)))
+  const latOf = (dy) => Math.floor((Math.asin(Math.max(-1, Math.min(1, -dy))) + Math.PI / 2) * LAT_PER_RAD)
+  const px = [], lon = [], lonL = [], lonU = [], band = [], latJoint = [], lam = [], limb = []
+  for (let y = y0; y <= y1; y++) {
+    const dy = (y + 0.5 - cy) / R
+    for (let x = x0; x <= x1; x++) {
+      const dx = (x + 0.5 - cx) * aspect / R
+      const rr = dx * dx + dy * dy
+      if (rr > 1) continue
+      const nz = Math.sqrt(Math.max(0, 1 - rr))
+      px.push(y * FW + x)
+      lon.push(lonOf(dx, dy))
+      lonL.push(lonOf(dx - aspect / R, dy))
+      lonU.push(lonOf(dx, dy - 1 / R))
+      const fj = latOf(dy)
+      band.push(fj)
+      latJoint.push(fj !== latOf(dy - 1 / R) ? 1 : 0)
+      lam.push(Math.max(0, dx * LIGHT[0] + dy * LIGHT[1] + nz * LIGHT[2]))
+      limb.push(rr > 0.9 ? 1 : 0)
+    }
+  }
+  P.ball = {
+    cx, cy, px: Int32Array.from(px), lon: Float32Array.from(lon), lonL: Float32Array.from(lonL),
+    lonU: Float32Array.from(lonU), band: Int16Array.from(band), latJoint: Uint8Array.from(latJoint),
+    lam: Float32Array.from(lam), limb: Uint8Array.from(limb),
+  }
+  return P.ball
+}
+
+/** Renders the ball into the pixel buffer. */
+function ballPixels(P, t, glints) {
+  const { lum, FW, aspect, cellH } = P
+  const B = ballTable(P)
+  const { cx, cy } = B
+  const R = BALL_R
+  const rot = OMEGA * t
+  for (let k = 0; k < B.px.length; k++) {
+    const fi = Math.floor((B.lon[k] + rot) * FACETS_PER_RAD)
+    let v
+    // Grout: the pixel where the facet changes from its left or upper
+    // neighbour.
+    if (B.latJoint[k] || fi !== Math.floor((B.lonL[k] + rot) * FACETS_PER_RAD) || fi !== Math.floor((B.lonU[k] + rot) * FACETS_PER_RAD)) v = 18
+    else {
+      const h = hash2(((fi % 60) + 60) % 60, B.band[k] * 1.7 + 3)
+      // Every facet catches something (ambient), the lit ones a lot, and
+      // the hash makes them a mosaic of mirrors rather than a shaded disc.
+      v = 52 + 172 * Math.pow(B.lam[k], 1.3) * (0.4 + 0.6 * h)
+    }
+    // The limb: a thin lit rim, so the shadow side still has an edge.
+    if (B.limb[k] && v < 132) v = 132
+    lum[B.px[k]] = v > 228 ? 228 : v
+  }
+  // The cord, in pixels from the top of the canvas row 2 down to the ball.
+  const cxp = Math.round(cx)
+  for (let py = BALL_Y0 * cellH; py < cy - R + 2; py++) lum[py * FW + cxp] = Math.max(lum[py * FW + cxp], 150)
+  // Glints: a four-pointed star, BRIGHT, on the rim, cut out of a small
+  // dark halo -- without it the star's cell packs at BRIGHT with the
+  // facets around it nearly solid, and the star is lost in its own cell.
+  for (const { ang, s } of glints) {
+    const gx = cx + Math.cos(ang) * R * 0.96 / aspect, gy = cy + Math.sin(ang) * R * 0.96
+    const arm = Math.round(4 + 4 * s)
+    for (let y = Math.round(gy - arm * 0.75) - 1; y <= Math.round(gy + arm * 0.75) + 1; y++) {
+      for (let x = Math.round(gx - arm) - 1; x <= Math.round(gx + arm) + 1; x++) {
+        if (y < 0 || y >= P.FH || x < 0 || x >= FW) continue
+        const d = Math.hypot((x - gx) / arm, (y - gy) / (arm * 0.75))
+        if (d <= 1.05 && lum[y * FW + x] > 30) lum[y * FW + x] = 30
+      }
+    }
+    for (let k = -arm; k <= arm; k++) {
+      const fall = 255 - Math.abs(k) * (60 / arm)
+      const hx = Math.round(gx + k), hy = Math.round(gy)
+      const vx = Math.round(gx), vy = Math.round(gy + k * 0.75)
+      if (hy >= 0 && hy < P.FH && hx >= 0 && hx < FW) lum[hy * FW + hx] = Math.max(lum[hy * FW + hx], fall)
+      if (vy >= 0 && vy < P.FH && vx >= 0 && vx < FW) lum[vy * FW + vx] = Math.max(lum[vy * FW + vx], fall)
+    }
   }
 }
-// The spotlight's point on the ball: upper left, where a spot aimed down
-// from the ceiling at the viewer's side would strike it.
-export const SPOT_ON_BALL = { x: BALL_X0 + 4, y: BALL_Y0 + 2 }
-// Facets per radian of longitude. 2026-09-13 -- 10 facets across the half
-// sphere we see (pi/10 each) makes a facet ~2 cells at the equator and a
-// sliver at the limb, which is the compression that says sphere; the
-// equator moves at ~0.9 columns a second under OMEGA.
-const FACETS_PER_RAD = 10 / Math.PI
-// The most facet glints in one frame (see the glint pass in draw).
-export const MAX_GLINTS = 3
 
 // --- the floor --------------------------------------------------------------
-// One-point perspective. The vanishing point is at (40, VANISH_Y); a
-// floor line at offset o (in tiles from the centre) sits at x = 40 +
-// o * spacingAt(y). TILES_X tiles across at every depth, so the floor is a
-// trapezoid: ~28 columns wide at its back edge, the full width at the front.
+// One-point perspective. A floor line at offset o (in tiles from the
+// centre) sits at x = 40 + o * spacingAt(y). TILES_X tiles across at every
+// depth, so the floor is a trapezoid: ~28 columns wide at its back edge, the
+// full width at the front.
 export const VANISH_Y = 4
 export const FRONT_Y = VIZ_BOT - 1   // 21
 export const TILE_W = 10              // columns per tile on the front row
 export const TILES_X = 8
-// The rows the across-the-floor lines sit on, back to front. 2026-09-13 --
+// The rows the across-the-floor joints sit on, back to front. 2026-09-13 --
 // gaps of 1, 2, 3 rows and a cropped fourth: equal gaps read as a wall
 // of shelves, not a floor, and this is as much perspective as nine rows hold.
 export const LINE_ROWS = [10, 12, 15, 19]
 export const TILES_Z = LINE_ROWS.length   // the fourth runs off the bottom
 export const FLOOR_TOP = LINE_ROWS[0]
-// Depth in tile rows -> screen row, for the spots on the floor: the line
-// rows, plus a virtual line past the bottom for the cropped front row.
+// Depth in tile rows -> screen row, for the tiles and the spots on the
+// floor: the line rows, plus a virtual line past the bottom for the cropped
+// front row.
 const DEPTH_ROWS = [...LINE_ROWS, 24]
 export const spacingAt = (y) => TILE_W * (y - VANISH_Y) / (FRONT_Y - VANISH_Y)
-const lineX = (o, y) => BALL_CX + o * spacingAt(y)
+// Grout half-width in pixels: the dark joint between two panels. The floor
+// IS panels and joints -- no line glyphs -- which is what keeps it from
+// sharing OUTRUN's lit-line grid (the 10-20 critique's set note).
+const GROUT_PX = 1.4
+// How much of a panel's pixels a lit panel lights at its tier (Bayer
+// coverage), and an unlit one. Under 0.6 on purpose: full coverage at any
+// tier blooms into a slab on the tube (THE GLARE TRAP, above). The panels
+// are PRE-dithered at their own tier's level (a pixel is that level or 0):
+// the packer takes a cell's tier from its brightest pixel, so a panel
+// written as an even lum of level x coverage would land a tier or two down
+// and then fill its cell solid -- the first cut of this pass did exactly
+// that, and its kick panels were flat slabs.
+const LIT_COVER = 0.5
+const DARK_COVER = 0.12
+const panelPx = (lit, P, px, py) => {
+  const b = BAYER[(py & 3) * 4 + (px & 3)]
+  return lit ? (b < P.litCover ? P.litLv : 0) : (b < DARK_COVER ? LV_FAINT : 0)
+}
 
-// Compiled once per grid width: for every floor cell, which grid line (if
-// any) it carries and which tile interior (if any) it is. LINE_AT stores
-// o + TILES_X/2 + 1 (0 = no line); TILE_AT stores i + j * TILES_X + 1 (0 =
-// not a tile interior); MARGIN marks interior cells touching a line -- the
-// dark inset inside a lit tile, on every row since the 2026-10-16 design
-// pass (it was only rows whose tiles were 6+ columns wide, so the back rows
-// lit right up to their rails and adjacent tiles fused into blobs).
-// 2026-09-13 (audit L5) -- these were compiled at import for a fixed
-// COLS = 80 and read as `y * 80 + x`, so a term of any other width read the
-// next row's lines and tiles (stray fragments at columns 88-99 on a 100-column
-// term). Keyed on the width now and cached; the grid is fixed for a page's
-// life, so in practice this is built once. The picture stays centred on
-// BALL_CX: a wider term gets dark room either side, not a wider floor.
-const EDGE_L = new Float32Array(VIZ_BOT), EDGE_R = new Float32Array(VIZ_BOT)
-for (let y = FLOOR_TOP; y < VIZ_BOT; y++) { EDGE_L[y] = lineX(-TILES_X / 2, y); EDGE_R[y] = lineX(TILES_X / 2, y) }
-const FLOOR_TABLES = new Map()
-function floorTables(COLS) {
-  let tables = FLOOR_TABLES.get(COLS)
-  if (tables) return tables
-  const LINE_AT = new Int8Array(COLS * VIZ_BOT)
-  const LINE_RUN = new Int8Array(COLS * VIZ_BOT)   // 1 = the run's '/'/'\' end
-  const TILE_AT = new Int16Array(COLS * VIZ_BOT)
-  const MARGIN = new Uint8Array(COLS * VIZ_BOT)
-  const half = TILES_X / 2
-  for (let y = FLOOR_TOP; y < VIZ_BOT; y++) {
-    const onLineRow = LINE_ROWS.includes(y)
-    for (let o = -half; o <= half; o++) {
-      // A line crosses this row from its top edge to its bottom edge; draw
-      // it across however many columns that is. Past a column a row, the
-      // run is '_' with the slash at its upper end ("__/" rising to the
-      // centre), which reads as one shallow line instead of stair-steps.
-      const top = lineX(o, Math.max(FLOOR_TOP, y - 0.5)), bot = lineX(o, y + 0.5)
-      const n = Math.max(1, Math.round(Math.abs(bot - top)))
-      const start = Math.round((top + bot) / 2 - (n - 1) / 2)
-      for (let k = 0; k < n; k++) {
-        const x = start + k
-        if (x < 0 || x >= COLS) continue
-        LINE_AT[y * COLS + x] = o + half + 1
-        const upperEnd = o < 0 ? k === n - 1 : k === 0
-        LINE_RUN[y * COLS + x] = upperEnd ? 1 : 0
-      }
-    }
-    if (onLineRow) continue
-    let j = 0
-    while (j + 1 < LINE_ROWS.length && LINE_ROWS[j + 1] < y) j++
-    const sp = spacingAt(y)
-    for (let x = 0; x < COLS; x++) {
-      const at = y * COLS + x
-      if (LINE_AT[at]) continue
-      const u = (x - BALL_CX) / sp + half
-      if (u < 0 || u >= TILES_X) continue
-      TILE_AT[at] = Math.floor(u) + j * TILES_X + 1
-    }
-    for (let x = 0; x < COLS; x++) {
-      const at = y * COLS + x
-      if (TILE_AT[at] && ((x > 0 && LINE_AT[at - 1]) || (x < COLS - 1 && LINE_AT[at + 1]))) MARGIN[at] = 1
+/** Where a floor pixel is: tile (i, j) and how far it is from the nearest
+ *  joint in pixels, or null off the floor. Coordinates are in cell units
+ *  with integer = cell centre (so they line up with spacingAt and the old
+ *  character geometry). */
+function floorAt(X, Y, adv, cellH) {
+  if (Y < FLOOR_TOP) return null
+  let j = 0
+  while (j + 1 < DEPTH_ROWS.length - 1 && Y >= DEPTH_ROWS[j + 1]) j++
+  const sp = spacingAt(Y)
+  const u = (X - BALL_CX) / sp + TILES_X / 2
+  if (u < 0 || u >= TILES_X) return null
+  const i = Math.floor(u)
+  const fu = u - i
+  const dxJoint = Math.min(fu, 1 - fu) * sp * adv
+  const dyJoint = Math.min(Y - DEPTH_ROWS[j], DEPTH_ROWS[j + 1] - Y) * cellH
+  return { i, j, joint: Math.min(dxJoint, dyJoint) }
+}
+
+/** What the canvas pixel (px, py) is on the floor (framebuffer pixels, the
+ *  default cell size): a tile index (i + j * TILES_X), -1 for a joint, -2
+ *  off the floor. The tests read the bitmaps back against this. */
+export function panelAtPixel(px, py, adv = 9, cellH = 16) {
+  const f = floorAt((px + 0.5) / adv - 0.5, (py + 0.5) / cellH - 0.5, adv, cellH)
+  return !f ? -2 : f.joint < GROUT_PX ? -1 : f.i + f.j * TILES_X
+}
+
+/** Tile index the CENTRE of cell (x, y) falls in, or -1, on a grid `cols`
+ *  wide. */
+export function floorTileAt(x, y, cols = 80) {
+  if (x < 0 || x >= cols || y < FLOOR_TOP || y >= VIZ_BOT) return -1
+  const f = floorAt(x, y, 9, 16)
+  return f ? f.i + f.j * TILES_X : -1
+}
+
+/** A pixel-space point well inside tile (i, j): its centre at the middle of
+ *  its depth band. For the tests, to ask whether that tile is lit. */
+export function tileCentre(i, j) {
+  const Y = j < 3 ? (DEPTH_ROWS[j] + DEPTH_ROWS[j + 1]) / 2 : (DEPTH_ROWS[3] + FRONT_Y) / 2
+  return { x: BALL_CX + (i + 0.5 - TILES_X / 2) * spacingAt(Y), y: Y }
+}
+
+/** The floor's per-pixel geometry, built once per term size: which panel
+ *  each pixel of the floor rows belongs to, or -1 for a joint or off the
+ *  floor. */
+function floorTable(P) {
+  if (P.floor) return P.floor
+  const { FW, adv, cellH } = P
+  const y0 = FLOOR_TOP * cellH
+  const tile = new Int8Array(FW * (VIZ_BOT * cellH - y0)).fill(-1)
+  for (let py = y0; py < VIZ_BOT * cellH; py++) {
+    // Cell units, integer = cell centre: row r spans r-0.5..r+0.5.
+    const Y = (py + 0.5) / cellH - 0.5
+    for (let px = 0; px < FW; px++) {
+      const f = floorAt((px + 0.5) / adv - 0.5, Y, adv, cellH)
+      if (f && f.joint >= GROUT_PX) tile[(py - y0) * FW + px] = f.i + f.j * TILES_X
     }
   }
-  tables = { LINE_AT, LINE_RUN, TILE_AT, MARGIN }
-  FLOOR_TABLES.set(COLS, tables)
-  return tables
+  P.floor = { y0, tile }
+  return P.floor
 }
 
-/** Tile index (i + j * TILES_X) whose interior cell (x, y) is, or -1, on a
- *  grid `cols` wide (the 80-column desktop grid by default). */
-export function floorTileAt(x, y, cols = 80) {
-  if (x < 0 || x >= cols || y < 0 || y >= VIZ_BOT) return -1
-  return floorTables(cols).TILE_AT[y * cols + x] - 1
+/** Renders the floor's panels into the pixel buffer. */
+function floorPixels(P) {
+  const { lum, FW, lit } = P
+  const { y0, tile } = floorTable(P)
+  const off = y0 * FW
+  for (let k = 0; k < tile.length; k++) {
+    const i = tile[k]
+    lum[off + k] = i < 0 ? 0 : panelPx(lit[i], P, k % FW, y0 + (k - k % FW) / FW)
+  }
 }
 
-/** Tile index whose LIGHTABLE cell (x, y) is -- its interior less the dark
- *  inset beside its rails -- or -1. Exactly what a lit tile fills. */
-export function floorFillAt(x, y, cols = 80) {
-  if (x < 0 || x >= cols || y < 0 || y >= VIZ_BOT) return -1
-  const t = floorTables(cols)
-  return t.MARGIN[y * cols + x] ? -1 : t.TILE_AT[y * cols + x] - 1
+/** The same, for the pixels of one cell only (to take a spot back out). */
+function floorCellPixels(P, c, r) {
+  const { lum, FW, lit, adv, cellW, cellH } = P
+  const { y0, tile } = floorTable(P)
+  for (let py = r * cellH; py < (r + 1) * cellH; py++) {
+    for (let px = c * adv; px < c * adv + cellW; px++) {
+      const i = tile[(py - y0) * FW + px]
+      lum[py * FW + px] = i < 0 ? 0 : panelPx(lit[i], P, px, py)
+    }
+  }
 }
 
 /** Whether tile (i, j) is lit on step n with level lvl (0..1). The floor
@@ -316,6 +554,7 @@ const POSES = [
 export const DANCER_Y = FLOOR_TOP - 3   // heads; feet on the row above the back line
 export const DANCER_X = [27, 31, 49, 53]   // clear of the ball's columns 33..47
 
+
 const tier = (v) => v > 0.8 ? NORMAL : v > 0.55 ? MUTED : v > 0.28 ? DIM : FAINT
 
 export default {
@@ -345,7 +584,7 @@ export default {
   draw(p, s, t) {
     const { term } = s
     const cols = term.cols
-    const { LINE_AT, LINE_RUN, TILE_AT, MARGIN } = floorTables(cols)
+    const P = pixFor(term)
     const muted = !!p.muted
     const A = muted ? SILENT_AUDIO : (p._au || syntheticAudio(t))
 
@@ -365,74 +604,40 @@ export default {
     // the pulse lasts. Stateless -- the pulse is the envelope.
     const flare = muted ? 0 : pulse * pulse * Math.min(1, Math.max(0, (bass - 0.45) / 0.3))
 
-    // --- base: a dark room, the floor's lines and lit tiles -------------------
-    const half = TILES_X / 2
-    for (let y = 1; y < VIZ_BOT; y++) {
-      if (y < FLOOR_TOP) { for (let x = 0; x < cols; x++) term.put(x, y, ' '); continue }
-      const lineRow = LINE_ROWS.includes(y)
-      const l = Math.round(EDGE_L[y]), r = Math.round(EDGE_R[y])
-      for (let x = 0; x < cols; x++) {
-        const at = y * cols + x
-        const ln = LINE_AT[at]
-        const tile = TILE_AT[at] - 1
-        if (tile >= 0) {
-          const i = tile % TILES_X, j = (tile - i) / TILES_X
-          if (!muted && !MARGIN[at] && tileLit(i, j, n, p._dancefloorLvl)) {
-            // A lit tile: '░' only, DIM at rest and MUTED on the kick --
-            // never up to the ball's NORMAL facets. 2026-10-16 (design pass)
-            // -- it was '▒' NORMAL on the kick, which the tube rasters as a
-            // solid slab; syntheticAudio's pulse held it there long enough
-            // that the NO TAP capture was nothing but slabs.
-            const hot = pulse > 0.55
-            term.put(x, y, '░', hot ? MUTED : DIM)
-          } else term.put(x, y, ' ')
-          continue
-        }
-        if (!lineRow && !ln) { term.put(x, y, ' '); continue }
-        if (lineRow && (x < l || x > r) && !ln) { term.put(x, y, ' '); continue }
-        // A grid line. It picks up the glow of a lit tile beside it -- the
-        // light spilling out of the floor -- and swells with the bass.
-        let glow = 0
-        if (!muted) {
-          for (const [dx, dy] of NEIGH) {
-            const nt = floorTileAt(x + dx, y + dy)
-            if (nt >= 0 && tileLit(nt % TILES_X, (nt - nt % TILES_X) / TILES_X, n, p._dancefloorLvl)) { glow = 1; break }
-          }
-        }
-        const a = glow ? (bass > 0.55 || pulse > 0.55 ? MUTED : DIM) : FAINT
-        let ch
-        if (lineRow) ch = ln === half + 1 ? '┼' : '─'
-        else {
-          const o = ln - half - 1
-          ch = o === 0 ? '│' : LINE_RUN[at] ? (o < 0 ? '/' : '\\') : '_'
-        }
-        term.put(x, y, ch, a)
-      }
-    }
-
-    // --- the dancers ------------------------------------------------------------
-    // Each changes pose on the beat, offset from its neighbours so the four
-    // never move as one. Silhouettes against the floor: their cells blank
-    // what is behind them.
-    for (let d = 0; d < DANCER_X.length; d++) {
-      const pose = POSES[(n + d * 3) % POSES.length]
-      for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 3; c++) {
-          const ch = pose[r][c]
-          const x = DANCER_X[d] - 1 + c, y = DANCER_Y + r
-          if (ch !== ' ') term.put(x, y, ch, muted ? FAINT : DIM)
-        }
-      }
+    // --- the floor: panels and joints, in pixels ------------------------------
+    // A lit panel is DIM at rest and MUTED while the kick's pulse is up --
+    // never up to the ball's NORMAL; bass widens its coverage a little (in
+    // four steps). Muted, every panel is dark. The panels are re-rendered
+    // and re-packed only when that changes -- a step, the kick's tier, a
+    // bass step, mute -- since packing the whole floor every frame was most
+    // of the effect's cost; between, a cell is re-put as it stands.
+    const litTier = pulse > 0.55 ? MUTED : DIM
+    const cover = LIT_COVER + 0.035 * Math.round(4 * bass)
+    const floorKey = `${muted ? 'm' : n}|${litTier}|${cover}|${p._dancefloorLvl}`
+    const floorDirty = floorKey !== P.floorKey
+    if (floorDirty) {
+      P.floorKey = floorKey
+      const lit = P.lit || (P.lit = new Uint8Array(TILES_X * TILES_Z))
+      for (let k = 0; k < lit.length; k++) lit[k] = !muted && tileLit(k % TILES_X, (k - k % TILES_X) / TILES_X, n, p._dancefloorLvl) ? 1 : 0
+      P.litLv = levelOf(litTier)
+      P.litCover = cover
+      floorPixels(P)
     }
 
     // --- the spots ------------------------------------------------------------
     // Level decides how many of the ball's reflections are lit; muted, a
-    // few still turn, faint. Tails first, so a head always wins its cell.
-    const lit = muted ? 0.22 : 0.3 + 0.6 * level
+    // few still turn, faint. On the wall they are characters (the wall is
+    // empty dark, and a '•' is exactly a fleck); on the floor they go into
+    // the pixel buffer, so a fleck crossing a panel lights the panel rather
+    // than punching a character-sized hole in it. Tails first, so a head
+    // always wins its cell.
+    const litN = muted ? 0.22 : 0.3 + 0.6 * level
+    const wall = []
+    const spotCells = new Set()
     for (let pass = 0; pass < 2; pass++) {
       for (let i = 0; i < SPOT_N; i++) {
         const sp = SPOTS[i]
-        if (sp.rank >= lit) continue
+        if (sp.rank >= litN) continue
         const now = spotCell(sp, t)
         if (!now) continue
         if (pass === 0) {
@@ -443,84 +648,139 @@ export default {
           if (!was || Math.abs(was.x - now.x) > 6 || Math.abs(was.y - now.y) > 2) continue
           const tx = now.x + Math.sign(was.x - now.x), ty = now.y + Math.sign(was.y - now.y)
           if ((tx !== now.x || ty !== now.y) && tx >= 0 && tx < cols && ty >= 1 && ty < VIZ_BOT) {
-            term.put(tx, ty, SPOT_TAIL, muted ? FAINT : DIM)
+            if (now.wall) wall.push([tx, ty, SPOT_TAIL, muted ? FAINT : DIM])
+            else spotPixels(P, tx, ty, muted ? 60 : 120, 1, spotCells)
           }
           continue
         }
         if (now.x < 0 || now.x >= cols) continue
         // Spots fade into the wall's corners, where they would be glancing.
         const v = muted ? 0.3 : Math.min(1, now.edge * 1.6) * (0.62 + 0.25 * level)
-        const a = flare > 0.5 && sp.rank < 0.35 ? BRIGHT : tier(v + flare * 0.3)
-        term.put(now.x, now.y, SPOT_HEAD, a)
+        const flash = flare > 0.5 && sp.rank < 0.35
+        if (now.wall) wall.push([now.x, now.y, SPOT_HEAD, flash ? BRIGHT : tier(v + flare * 0.3)])
+        else spotPixels(P, now.x, now.y, flash ? 255 : muted ? 110 : 150 + 60 * Math.min(1, v + flare * 0.3), 2, spotCells)
       }
     }
 
-    // --- the ball and its cord ------------------------------------------------
-    term.put(BALL_CX, 1, '│', DIM)
-    let blockGlint = false, glints = 0
-    for (const cell of BALL_CELLS) {
-      const x = BALL_X0 + cell.c, y = BALL_Y0 + cell.r
-      if (!cell.facet) {
-        // The outline: one continuous MUTED ring (2026-10-16 -- it was a
-        // DIM dotted ring lit MUTED on one quarter, and lost to the floor).
-        term.put(x, y, cell.ch, MUTED)
-        continue
+    // --- the ball ---------------------------------------------------------------
+    // The spotlight's glint always (NORMAL under mute, BRIGHT otherwise);
+    // treble opens the gate for up to MAX_GLINTS more along the lit arc,
+    // each living a fifth of a second. Never two at mirrored places: they
+    // are all on one arc of the rim. Re-rendered at BALL_FPS, not every
+    // frame: the turn moves a facet a pixel every ~1/8s at the equator.
+    const glints = [{ ang: SPOT_GLINT_ANGLE, s: muted ? 0.3 : flare > 0.5 ? 1 : 0.6 }]
+    const slot = Math.floor(t * 5)
+    if (!muted) {
+      for (let k = 0; k < MAX_GLINTS; k++) {
+        if (hash2(slot, k * 7 + 1) > 0.25 + 0.6 * treble) continue
+        const ang = GLINT_ARC[0] + (GLINT_ARC[1] - GLINT_ARC[0]) * hash2(slot * 3 + 1, k * 11 + 5)
+        if (Math.abs(ang - SPOT_GLINT_ANGLE) < 0.3) continue   // never fused with the spotlight's
+        glints.push({ ang, s: 0.25 + 0.35 * hash2(slot, k + 40) })
       }
-      // Spherical facets: longitude from the column within this row's half
-      // width, so a facet is widest at the centre and a sliver at the limb;
-      // the turn slides them right to left (the near face of a ball whose
-      // reflections cross the far wall left to right).
-      const ny = (cell.r - 3) / 3.6
-      const hw = 7 * Math.sqrt(Math.max(0.05, 1 - ny * ny))
-      const nx = Math.max(-1, Math.min(1, (cell.c - 7) / hw))
-      const lon = Math.asin(nx)
-      const fid = Math.floor((lon + OMEGA * t) * FACETS_PER_RAD)
-      const fkey = ((fid % 60) + 60) % 60
-      const h = hash2(fkey, cell.r * 5 + 1)
-      // The spotlight falls from the upper left; facets on the far side of
-      // the ball are in its shadow.
-      const light = 0.5 + 0.5 * (-0.6 * nx - 0.5 * ny)
-      const b = h * light
-      // A mosaic: facets alternate in a checker (by facet column and row),
-      // the "on" squares carrying the reflection ramp and the "off" squares
-      // the dark grout between them. 2026-09-13 -- one ramp over every cell
-      // read as texture on a grey disc; the checker is what says tiles.
-      // '■' is the brightest facet glyph and only the most lit squares get
-      // it; it covers far less of its cell than a block does.
-      const on = ((fid + cell.r) & 1) === 0
-      let ch, a
-      if (on) {
-        ch = b > 0.36 ? '■' : b > 0.2 ? ':' : '·'
-        a = b > 0.36 ? NORMAL : b > 0.2 ? MUTED : DIM
-      } else {
-        ch = b > 0.45 ? '.' : ' '
-        a = DIM
+    }
+    const ballKey = `${Math.floor(t * BALL_FPS)}|${glints.map((g) => g.ang.toFixed(2) + g.s).join(',')}|${muted}`
+    const ballDirty = ballKey !== P.ballKey
+    if (ballDirty) {
+      P.ballKey = ballKey
+      P.lum.fill(0, 0, FLOOR_TOP * P.cellH * P.FW)
+      ballPixels(P, t, glints)
+      if (muted) {
+        // Under mute the spotlight's glint is the ball's brightest, but NORMAL.
+        const g = glintAt(term, SPOT_GLINT_ANGLE)
+        capCell(P, g.c, g.r, 228)
       }
-      // Glints: a facet with a high second hash catches the light as it
-      // turns through the lit quarter, twinkling a few times a second.
-      // Treble opens the gate wider; muted, none. At most one glint in a
-      // frame is a block, so they can never run together into a bar.
-      // 2026-09-13 -- capped at MAX_GLINTS a frame: at full treble the
-      // first cut lit nine, five of them in one row, which is a bar of
-      // BRIGHT on the tube rather than a glint.
-      if (!muted && glints < MAX_GLINTS && lon + 0.1 < 0 && ny < 0.3) {
-        const g = hash2(fkey * 3 + 11, cell.r)
-        if (g > 0.93 - 0.08 * treble && hash2(fkey + cell.r * 7, Math.floor(t * 5)) > 0.4) {
-          glints++
-          // ...and never beside the spotlight's own block, which would
-          // merge into a two-cell bar.
-          const nearSpot = Math.abs(x - SPOT_ON_BALL.x) <= 1 && Math.abs(y - SPOT_ON_BALL.y) <= 1
-          ch = g > 0.975 && !blockGlint && !nearSpot ? '█' : '*'
-          if (ch === '█') blockGlint = true
-          a = BRIGHT
+    }
+
+    // --- pack: the sky, the floor and the ball -------------------------------------
+    // Rows above the floor are the dark wall: blank, then the ball's cells
+    // (only where it has pixels) and the characters over it.
+    for (let y = 1; y < FLOOR_TOP; y++) {
+      for (let x = 0; x < cols; x++) {
+        const inBall = x >= BALL_X0 && x < BALL_X0 + BALL_W && y >= BALL_Y0 - 1 && y < BALL_Y0 + BALL_H + 1
+        if (!inBall) term.put(x, y, ' ')
+        else if (ballDirty) packCell(term, P, x, y, true)
+        else reput(term, P, x, y)
+      }
+    }
+    // The floor: every cell when the panels changed, else only the cells a
+    // spot is in now or was in last frame; the rest re-put as they stand.
+    const dirty = new Set(spotCells)
+    for (const ci of P.spotCells) dirty.add(ci)
+    for (let y = FLOOR_TOP; y < VIZ_BOT; y++) {
+      for (let x = 0; x < cols; x++) {
+        if (floorDirty || dirty.has(y * cols + x)) packCell(term, P, x, y, true)
+        else reput(term, P, x, y)
+      }
+    }
+    // Take this frame's spots back out of the buffer, so the floor under
+    // them is clean panel again for whatever packs those cells next.
+    for (const ci of spotCells) floorCellPixels(P, ci % cols, (ci - ci % cols) / cols)
+    P.spotCells = [...spotCells]
+    // What the last frame drew, for the tests: which floor cells a fleck
+    // was painted into (cell index y * cols + x). Layout, not a clock.
+    p._dancefloorSpotCells = spotCells
+
+
+    // --- the dancers ------------------------------------------------------------
+    // Each changes pose on the beat, offset from its neighbours so the four
+    // never move as one. Silhouettes against the wall: their cells blank
+    // what is behind them. 2026-10-20 (polish) -- MUTED (was DIM), as the
+    // critique asked, so they read over the floor's panels.
+    for (let d = 0; d < DANCER_X.length; d++) {
+      const pose = POSES[(n + d * 3) % POSES.length]
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const ch = pose[r][c]
+          const x = DANCER_X[d] - 1 + c, y = DANCER_Y + r
+          if (ch !== ' ') term.put(x, y, ch, muted ? DIM : MUTED)
         }
       }
+    }
+    // The wall's spots, over everything but the ball.
+    for (const [x, y, ch, a] of wall) {
+      if (ballCovers(P, x, y)) continue
       term.put(x, y, ch, a)
     }
-    // The spotlight's point: one cell, the brightest thing on the ball.
-    term.put(SPOT_ON_BALL.x, SPOT_ON_BALL.y, '█', muted ? NORMAL : BRIGHT)
+    // The cord, from the ceiling.
+    term.put(BALL_CX, 1, '│', DIM)
   },
 }
 
-// A line cell's neighbours, for picking up a lit tile's glow.
-const NEIGH = [[-1, 0], [1, 0], [0, -1], [0, 1]]
+/** A fleck of light on the floor, at cell (x, y): a small soft blob in the
+ *  pixel buffer, `w` pixels either side of the cell's centre. */
+function spotPixels(P, x, y, v, w, cells) {
+  const { lum, FW, adv, cellW, cellH } = P
+  if (y < FLOOR_TOP || y >= VIZ_BOT || x < 0 || x >= P.cols) return
+  // The blob stays inside its own cell (at most 4 pixels either side of
+  // the centre of an 8-pixel cell, 3 above and below), so one cell is dirty.
+  cells.add(y * P.cols + x)
+  const cx = x * adv + cellW / 2, cy = y * cellH + cellH / 2
+  for (let dy = -3; dy <= 3; dy++) {
+    for (let dx = -w * 2; dx <= w * 2; dx++) {
+      const d = (dx * dx) / (w * w * 4) + (dy * dy) / 9
+      if (d > 1) continue
+      const px = Math.round(cx + dx), py = Math.round(cy + dy)
+      if (px < 0 || px >= FW || py < FLOOR_TOP * cellH || py >= P.FH) continue
+      const o = py * FW + px
+      lum[o] = Math.max(lum[o], Math.round(v * (1 - 0.5 * d)))
+    }
+  }
+}
+
+/** Caps every pixel in cell (c, r) at `v`. */
+function capCell(P, c, r, v) {
+  const { lum, FW, adv, cellW, cellH } = P
+  for (let py = r * cellH; py < (r + 1) * cellH; py++) {
+    for (let px = c * adv; px < c * adv + cellW; px++) if (lum[py * FW + px] > v) lum[py * FW + px] = v
+  }
+}
+
+/** Whether the ball has pixels in cell (c, r). */
+function ballCovers(P, c, r) {
+  if (c < BALL_X0 || c >= BALL_X0 + BALL_W || r < BALL_Y0 - 1 || r >= BALL_Y0 + BALL_H + 1) return false
+  const { lum, FW, adv, cellW, cellH } = P
+  for (let py = r * cellH; py < (r + 1) * cellH; py++) {
+    for (let px = c * adv; px < c * adv + cellW; px++) if (lum[py * FW + px] >= CELL_MIN) return true
+  }
+  return false
+}

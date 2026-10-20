@@ -228,29 +228,45 @@ test('UPRISING: nothing block-shaped floats in the sky -- flyers are paper strok
   } finally { h.shutdown() }
 })
 
-test('UPRISING: the crowd is the subject -- the surge is the brightest thing, placards a tier under it', async () => {
+// 2026-10-20 (polish). The critique, off the real tube: the front rank's
+// MUTED '▄' shoulder bars over '▓' bodies rastered as a lit bar chart, the
+// brightest thing in the frame, with the heads lost in it; the placards'
+// words should lead; and LOUD against KICK showed almost nothing, because
+// the wave began as one column at the frame's edge. Now: bitmap busts (a
+// round head, a shoulder arc) over a FAINT '░' mass, NORMAL words, and a
+// SURGE_BAND of the room answering the kick at once.
+test('UPRISING: brightness -- the surge and the placard words are the only NORMAL, nothing is BRIGHT', async () => {
   const { h, fx } = await bootUprising()
+  const { HEAD_BITS } = await import(`../visuals/uprising.js?v=${globalThis.SIGNAL_BUILD}`)
   try {
     const at = (x, y) => h.term.attrs[y * h.term.cols + x]
     const isNormal = (a) => !(a & (ATTR.DIM | ATTR.MUTED | ATTR.FAINT))
     let surgeNormal = 0
     kickRun(h, fx, (f) => {
+      const words = new Set()
+      for (const sg of h.program._upriseSigns) {
+        if (!sg.visible) continue
+        for (let k = 0; k < sg.word.length; k++) words.add(sg.y * h.term.cols + sg.x + k)
+      }
       for (let y = 1; y < 22; y++) {
         const row = h.row(y)
         for (let x = 0; x < h.term.cols; x++) {
-          const a = at(x, y), ch = row[x]
+          const i = y * h.term.cols + x
+          const a = at(x, y), ch = row[x], gfx = h.term.gfx[i]
           assert.ok(!(a & ATTR.BRIGHT), `frame ${f}: BRIGHT '${ch}' at ${x},${y}`)
-          // NORMAL belongs to the crowd answering a surge, and nothing else.
-          if (isNormal(a) && ch !== ' ') {
-            assert.ok(y >= 13 && 'oO\\/|•Yv'.includes(ch), `frame ${f}: NORMAL '${ch}' at ${x},${y} is not a surging head or arm`)
-            if (y >= 15) surgeNormal++
-          }
+          if (!isNormal(a) || (ch === ' ' && !gfx) || words.has(i)) continue
+          // NORMAL otherwise belongs to the crowd answering a surge: a head
+          // bitmap or an arm, and nothing else.
+          const head = gfx === HEAD_BITS
+          assert.ok(y >= 13 && (head || (!gfx && '\\/|•Yv'.includes(ch))),
+            `frame ${f}: NORMAL ${gfx ? 'bitmap' : `'${ch}'`} at ${x},${y} is not a surging head or arm`)
+          if (y >= 15) surgeNormal++
         }
       }
-      // Every visible placard: a MUTED word in a DIM box.
+      // Every visible placard: a NORMAL word in a DIM box -- the words lead.
       for (const sg of h.program._upriseSigns) {
         if (!sg.visible) continue
-        assert.ok(at(sg.x, sg.y) & ATTR.MUTED, `frame ${f}: placard '${sg.word}' is not MUTED`)
+        assert.ok(isNormal(at(sg.x, sg.y)), `frame ${f}: placard '${sg.word}' is not NORMAL`)
         assert.ok(at(sg.x - 2, sg.y) & ATTR.DIM, `frame ${f}: placard '${sg.word}' box is not DIM`)
       }
     })
@@ -258,30 +274,81 @@ test('UPRISING: the crowd is the subject -- the surge is the brightest thing, pl
   } finally { h.shutdown() }
 })
 
-test('UPRISING: the front rank is a lit edge over dark mass -- MUTED head-and-shoulders on FAINT bodies', async () => {
+test('UPRISING: the crowd is busts over dark mass -- no half or dense blocks, heads round and lit above their shoulders', async () => {
   const { h } = await bootUprising()
+  const { HEAD_BITS, SHOULDER_BITS } = await import(`../visuals/uprising.js?v=${globalThis.SIGNAL_BUILD}`)
   try {
     h.key('m')   // at rest: no surge, no ambient arms
     h.advance(3000)
-    const at = (x, y) => h.term.attrs[y * h.term.cols + x]
-    let heads = 0
-    for (let y = 18; y <= 19; y++) {
-      const row = h.row(y)
-      for (let x = 1; x < h.term.cols - 1; x++) {
-        if (row[x] !== 'O') continue
-        heads++
-        assert.ok(at(x, y) & ATTR.MUTED, `front head at ${x},${y} is not MUTED`)
-        assert.equal(h.row(y + 1).slice(x - 1, x + 2), '▄▄▄', `front head at ${x},${y} has no shoulders under it`)
-        for (let k = -1; k <= 1; k++) assert.ok(at(x + k, y + 1) & ATTR.MUTED, `shoulder at ${x + k},${y + 1} is not MUTED`)
-        if (y + 2 < 22) assert.ok(h.row(y + 2)[x] === '▓' && at(x, y + 2) & ATTR.FAINT, `no FAINT body under the head at ${x},${y}`)
+    const cols = h.term.cols
+    const at = (x, y) => h.term.attrs[y * cols + x]
+    const gfx = (x, y) => h.term.gfx[y * cols + x]
+    // The bar chart, gone: nothing in the crowd's rows is a half or dense
+    // block, at any tier. Mutation-checked: restoring the '▄' shoulders or
+    // the '▓' bodies fails here.
+    for (let y = 15; y < 22; y++) {
+      const m = h.row(y).match(/[▀▄█▓▒▌▐]/)
+      assert.equal(m, null, `'${m && m[0]}' in the crowd at row ${y}: ${JSON.stringify(h.row(y))}`)
+    }
+    let front = 0, back = 0
+    for (let y = 15; y < 21; y++) {
+      for (let x = 1; x < cols - 1; x++) {
+        if (gfx(x, y) !== HEAD_BITS) continue
+        if (y >= 18) {
+          // A front bust: neck and shoulder line under the head. (Only the
+          // centre is asserted: the arc pieces either side are shared with
+          // overlapping neighbours, and a head's halo blanks them.)
+          front++
+          assert.equal(gfx(x, y + 1), SHOULDER_BITS[1], `no neck under the front head at ${x},${y}`)
+          assert.ok(at(x, y) & ATTR.MUTED, `front head at ${x},${y} is not MUTED`)
+          assert.ok(at(x, y + 1) & ATTR.DIM, `front shoulder at ${x},${y + 1} is not DIM`)
+          if (y + 2 < 22) assert.ok(h.row(y + 2)[x] === '░' && at(x, y + 2) & ATTR.FAINT, `no FAINT mass under the bust at ${x},${y}`)
+        } else {
+          // A back bust, which the front rank may stand in front of.
+          back++
+          assert.ok(at(x, y) & ATTR.DIM, `back head at ${x},${y} is not DIM`)
+          if (gfx(x, y + 1) === SHOULDER_BITS[1]) assert.ok(at(x, y + 1) & ATTR.FAINT, `back shoulder at ${x},${y + 1} is not FAINT`)
+        }
       }
     }
-    assert.ok(heads >= 15, `only ${heads} front-rank heads`)
-    // The mass is FAINT throughout: no shade cell at any brighter tier.
+    assert.ok(front >= 15, `only ${front} front-rank heads`)
+    assert.ok(back >= 15, `only ${back} back-rank heads`)
     for (let y = 16; y < 22; y++) {
-      for (let x = 0; x < h.term.cols; x++) {
-        if ("░▒▓".includes(h.row(y)[x])) assert.ok(at(x, y) & ATTR.FAINT, `shade '${h.row(y)[x]}' at ${x},${y} is lit above FAINT`)
+      for (let x = 0; x < cols; x++) {
+        if (h.row(y)[x] === '░') assert.ok(at(x, y) & ATTR.FAINT, `mass at ${x},${y} is lit above FAINT`)
       }
     }
   } finally { h.shutdown() }
 })
+
+test('UPRISING: the kick lands at once -- a band of the room has its arms up a frame after the onset', async () => {
+  // Mutation-checked: SURGE_BAND = 0 (the wave starting as one column at the
+  // edge) or SURGE_ATTACK back at 0.07 both fail here.
+  const { h, fx } = await bootUprising()
+  try {
+    const quiet = { level: 0.3, bass: 0.2, mid: 0.3, treble: 0.3, bands9: new Array(9).fill(0.3), onset: false, pulse: 0 }
+    const hit = { ...quiet, bass: 0.95, onset: true, pulse: 1 }
+    // Arms raised high: anything armlike above and beside the heads (13..17).
+    const up = () => {
+      let n = 0
+      for (let y = 13; y <= 17; y++) {
+        const r = h.row(y)
+        for (let x = 0; x < 20; x++) if ('\\/|•Y'.includes(r[x])) n++
+      }
+      return n
+    }
+    const run = (withHit) => {
+      fx.reset(h.program)
+      h.program.muted = false
+      for (let f = 0; f <= 2; f++) {
+        h.program._au = withHit && f === 1 ? hit : quiet
+        fx.draw(h.program, { term: h.term }, 20 + f / 60)
+      }
+      return up()
+    }
+    const control = run(false)
+    const kicked = run(true)
+    assert.ok(kicked - control >= 12, `a frame after the kick only ${kicked - control} arm cells went up in the first 20 columns`)
+  } finally { h.shutdown() }
+})
+
