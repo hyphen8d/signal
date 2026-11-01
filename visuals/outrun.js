@@ -395,18 +395,23 @@ export default {
     }
 
     // --- sky characters: stars and birds, in cells the pixels left empty ---
+    // 2026-11-01 (audit L2) -- the column is `Math.round(x) % cols`: an x
+    // in [cols - 0.5, cols) rounds to `cols`, which as a flat key is
+    // (y + 1, 0) -- a star or a wrapping bird dropped a row at the left
+    // edge. Modulo keeps it on its own row; floor would shift every star
+    // half a cell.
     const sky = new Map()
     for (const star of p._outrunStars) {
       if (star.y >= HORIZON_Y - 1) continue
       const tw = 0.15 + 0.12 * Math.sin(t * star.speed + star.phase)
-      sky.set(Math.round(star.y) * term.cols + Math.round(star.x), ['.', visualizerLevelAttr(Math.max(0.05, tw))])
+      sky.set(Math.round(star.y) * term.cols + Math.round(star.x) % term.cols, ['.', visualizerLevelAttr(Math.max(0.05, tw))])
     }
     for (const bird of p._outrunBirds) {
       const bx = ((bird.x + t * bird.speed) % term.cols + term.cols) % term.cols
       const by = Math.round(bird.y + Math.sin(t * 0.6 + bird.bobPhase) * 0.6)
       if (by < 1 || by >= HORIZON_Y - 1) continue
       const flap = Math.sin(t * 6 + bird.flapPhase) > 0
-      sky.set(by * term.cols + Math.round(bx), [flap ? '^' : 'v', MUTED])
+      sky.set(by * term.cols + Math.round(bx) % term.cols, [flap ? '^' : 'v', MUTED])
     }
 
     // --- pack pixels into cells ---------------------------------------------

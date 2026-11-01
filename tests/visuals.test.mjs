@@ -126,7 +126,7 @@ test('DREAD: a tear active at exit does not come back as a held strobe (M5)', as
   } finally { h.shutdown() }
 })
 
-test('the 2026-09-13 effects draw correctly at a width other than the one they booted at (audit L5)', async () => {
+test('every effect draws correctly at a width other than the one they booted at (audits L5, 2026-11-01 L1)', async () => {
   // The grid is fixed for a page's life, so this is latent -- but three of
   // these effects kept width-shaped state that only held at 80 columns:
   // AURORA sized its buffers at init, DANCEFLOOR and BACKROOM compiled
@@ -141,13 +141,12 @@ test('the 2026-09-13 effects draw correctly at a width other than the one they b
   const { Term } = await import('../src/term.js')
   const { parseBDF } = await import('../src/bdf.js')
   const font = parseBDF(readFileSync(new URL('../fonts/ter-u16n.bdf', import.meta.url), 'utf8'))
-  const NEW = ['lagoon', 'uprising', 'keep', 'orbit', 'aurora', 'backroom', 'dancefloor', 'frost', 'boombap', 'isotope', 'ripple', 'drift']
   const VIZ_BOT = 22
   const h = await boot({ station: 'tradewinds' })
   const rnd = Math.random
   try {
     h.powerOn()
-    const { VISUALS } = await import(`../visuals/index.js?v=${globalThis.SIGNAL_BUILD}`)
+    const { VISUALS, VISUAL_KEYS } = await import(`../visuals/index.js?v=${globalThis.SIGNAL_BUILD}`)
     const p = h.program
     const seeded = () => { let a = 0x9e3779b9; Math.random = () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
     const signal = { level: 0.6, bass: 0.5, mid: 0.4, treble: 0.3, bands9: new Array(9).fill(0.45), onset: false, pulse: 0.2 }
@@ -188,15 +187,30 @@ test('the 2026-09-13 effects draw correctly at a width other than the one they b
       })
       return { rows, outside, missed, term }
     }
+    // Every registered effect, not a hand-kept list (2026-11-01, audit L1:
+    // the list named twelve and left out the six that predated it, and
+    // BREACH -- one of the six -- threw outright at 100 columns, its rain
+    // columns sized once at init).
+    //
+    // RANDOM_INIT is exempt from the carried-vs-fresh comparison ONLY. Their
+    // init draws a width-sized stream of Math.random (BREACH one rain column
+    // per grid column, OUTRUN its stars and birds across the width), so a
+    // carried run -- init at 80 consumes 80 columns' worth, then the draw
+    // rebuilds -- and a fresh one sit at different points of the same
+    // seeded stream and differ for that reason alone, not for stale state.
+    // The other claims still hold them: no write outside the canvas, every
+    // cell painted every frame, and no throw. Add an effect here only for
+    // that reason, and say so.
+    const RANDOM_INIT = new Set(['breach', 'outrun'])
     for (const cols of [60, 100]) {
-      for (const key of NEW) {
+      for (const key of VISUAL_KEYS) {
         const fx = VISUALS[key]
         const carried = run(fx, cols, 'boot')
         const fresh = run(fx, cols, 'self')
         assert.deepEqual(carried.outside.slice(0, 3), [], `${key} at ${cols} cols wrote outside the canvas`)
         assert.equal(carried.missed, 0, `${key} at ${cols} cols left ${carried.missed} cell-frames unpainted`)
         const diff = carried.rows.findIndex((r, i) => r !== fresh.rows[i])
-        assert.equal(diff, -1, `${key} at ${cols} cols: row ${diff + 1} differs from a fresh init at that width`)
+        if (!RANDOM_INIT.has(key)) assert.equal(diff, -1, `${key} at ${cols} cols: row ${diff + 1} differs from a fresh init at that width`)
         if (cols === 100 && (key === 'dancefloor' || key === 'backroom')) {
           // Fixed art at fixed columns: the first 80 columns of a 100-column
           // frame are the 80-column frame. This is the half that catches a
