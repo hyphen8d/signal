@@ -2937,3 +2937,50 @@ test('a throttled LRCLIB answer is retryable, not a verdict (2026-10-15 audit)',
     assert.equal(voice.lyricsStateFor(t), 'available', 'a 429 was cached as a permanent miss')
   } finally { h.shutdown() }
 })
+
+// 2026-11-01 (audit M2) -- a Ctrl/Cmd/Alt chord belongs to the browser.
+// Ctrl+R used to open the rear panel (with preventDefault, so the reload
+// never happened), Ctrl+P toggled power, Ctrl+C cycled the tint, Ctrl+F
+// went fullscreen. Each is checked for all three things a command does:
+// it acts, it clicks (isMappedKey), it calls preventDefault.
+test('Ctrl/Cmd/Alt chords are left to the browser; Shift chords still command', async () => {
+  const h = await boot()
+  try {
+    // STANDBY first: [P] is the one key that answers there.
+    h.advance(700)
+    let prevented = 0
+    const chord = (key, mod) => h.key(key, { [mod]: true, preventDefault() { prevented++ } })
+    for (const mod of ['ctrlKey', 'metaKey', 'altKey']) {
+      assert.equal(h.program.isMappedKey({ key: 'p', [mod]: true }), false, `${mod}+P must not click on STANDBY`)
+      chord('p', mod)
+      h.advance(200)
+      assert.equal(h.program._powerAnimating, false, `${mod}+P must not power the set on`)
+    }
+    h.powerOn(); h.advance(2000)
+    const state = () => ({ mode: h.program.displayModeIndex, panel: h.program.panelOpen, power: h.program.poweredOn, vol: h.program.volume, guide: h.program.guideOpen })
+    const before = state()
+    for (const mod of ['ctrlKey', 'metaKey', 'altKey']) {
+      for (const key of ['r', 'R', 'p', 'c', 'f', 'g', 'ArrowUp']) {
+        assert.equal(h.program.isMappedKey({ key, [mod]: true }), false, `${mod}+${key} must not click`)
+        chord(key, mod)
+        h.advance(50)
+      }
+    }
+    assert.equal(prevented, 0, 'no chord was preventDefault-ed -- the browser keeps its reload, print, copy, find')
+    assert.deepEqual(state(), before, 'and none of them acted')
+    // An overlay that closes on ANY key must not close on a chord either.
+    h.key('g'); h.advance(100)
+    assert.equal(h.program.guideOpen, true, 'test setup: guide open')
+    chord('r', 'ctrlKey'); h.advance(50)
+    assert.equal(h.program.guideOpen, true, 'Ctrl+R does not close the guide')
+    h.key('Escape'); h.advance(100)
+    assert.equal(h.program.guideOpen, false, 'test setup: guide closed')
+    // Shift is not a browser chord here: Shift+C is [C].
+    assert.equal(h.program.isMappedKey({ key: 'C', shiftKey: true }), true)
+    h.key('C', { shiftKey: true }); h.advance(50)
+    assert.notEqual(h.program.displayModeIndex, before.mode, 'Shift+C still cycles the tint')
+    // AltGr arrives as Ctrl+Alt on Windows; it is typing, not a chord.
+    const altGr = { key: 'c', ctrlKey: true, altKey: true, getModifierState: (m) => m === 'AltGraph' }
+    assert.equal(h.program.isMappedKey(altGr), true, 'an AltGr keypress is not a browser shortcut')
+  } finally { h.shutdown() }
+})

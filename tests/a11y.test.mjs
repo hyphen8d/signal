@@ -219,3 +219,33 @@ test('M, volume up, M announces both mutes', async () => {
     assert.deepEqual(h.announced.slice(from), ['Muted.', 'Sound on.', 'Muted.'])
   } finally { h.shutdown() }
 })
+
+// 2026-11-01 (audit L10) -- both cards take the keys while they are up, so
+// closing one is the moment the arrows become the radio's again. It was
+// silent: openPanel() announced itself, closePanel() did not, and the
+// weather card said nothing either way. Twice each, because the per-kind
+// dedup would swallow the second identical close without the forget().
+test('closing the rear panel or the weather card is said, every time', async () => {
+  const h = await boot({ player: true, station: 'city-lights' })
+  try {
+    h.powerOn()
+    h.advance(4000)
+    for (let i = 0; i < 2; i++) {
+      h.key('r'); h.advance(100)
+      assert.equal(h.program.panelOpen, true, 'test setup: panel open')
+      assert.ok(h.announced.at(-1).startsWith('Rear panel.'), h.announced.at(-1))
+      // Read as what was said BY the close, not as the last line: a
+      // swallowed second close leaves the first one sitting at at(-1).
+      const from = h.announced.length
+      h.key('r'); h.advance(700)
+      assert.deepEqual(h.announced.slice(from), ['Rear panel closed.'], `close #${i + 1}`)
+    }
+    for (let i = 0; i < 2; i++) {
+      h.key('w'); h.advance(100)
+      assert.equal(h.program.weatherOpen, true, 'test setup: weather card open')
+      const from = h.announced.length
+      h.key('Escape'); h.advance(700)
+      assert.deepEqual(h.announced.slice(from), ['Weather card closed.'], `close #${i + 1}`)
+    }
+  } finally { h.shutdown() }
+})
