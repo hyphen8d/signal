@@ -1020,13 +1020,21 @@ list.
   itself where the concept is a subject rather than a source.
   `tools/lint-roster.js` enforces the mechanical rules: **at most 9 public
   stations PER BAND**, a `band` that exists in `BANDS`, a `freq` inside that
-  band's range and spaced from its neighbours **on that band**, ≥10 tracks,
-  4-tone idents, glyphs present in the font, `visual` keys that exist, unique
-  IDs across the whole roster, descs that fit the guide's detail page, and
-  taglines within a flat `TAGLINE_MAX` of **43**. Secret stations are exempt
-  from the tagline and glyph rules, since neither is ever drawn. It also
-  asserts README's roster sentence still matches the roster — the
+  band's range and spaced from its neighbours **on that band**, 10-60
+  tracks (`MAX_TRACKS_PER_STATION`, raised from an effective 50 on
+  2026-11-01), 4-tone idents, glyphs present in the font, `visual` keys that
+  exist, unique IDs across the whole roster, descs that fit the guide's
+  detail page, and taglines within a flat `TAGLINE_MAX` of **43**. Secret
+  stations are exempt from the tagline, glyph and track-ceiling rules, since
+  none of them is ever drawn. It also asserts README's roster sentence and
+  stations/tracks badges still match the roster — the
   make-one-of-them-check discipline from the design-record note above.
+  Since 2026-11-01 those numbers are also **written**: `rewriteReadmeCounts()`
+  in `tools/lib/roster.mjs` (one set of patterns, read by lint and the
+  rewriter alike) runs wherever stations.md is regenerated — `npm run
+  stations`, every dashboard save, SHIP, and `ship.mjs pr`, which refuses if
+  either file changed — so a curation pass no longer means hand-typing
+  README. It throws rather than skip a reworded sentence.
 
   Two of those moved, and the old shapes are the ones to unlearn. The station
   ceiling was a flat 9 until 2026-08-31: it was never about the roster's size,

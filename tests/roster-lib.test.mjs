@@ -29,7 +29,7 @@ import {
   loadRosterFromText, patchStationField, patchStationTracks, verifyPatch,
   patchStationTracksDetailed, parseTracksBlock, findTracksRange,
   scanObjectFields, matchBracket, quoteJs, formatValue, buildRosterPayload,
-  findStationObjectRange,
+  findStationObjectRange, rewriteReadmeCounts, readmeCountClaims,
 } from '../tools/lib/roster.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -692,4 +692,62 @@ test('repoint: a track that `replaces` an id inherits that entry\'s comment bloc
   assert.deepEqual(hinted.droppedComments, [])
   assert.equal(hinted.text, src.replace("realTrack('be5AvQFzsu0',", "realTrack('ZZZZZZZZZZZ',"), 'exactly one id changed, comments kept')
   assert.throws(() => lib.patchStationTracksDetailed(src, 'city-lights', [{ ...tracks[0], replaces: 'nope' }]), /replaces/)
+})
+
+// ---------------------------------------------------------------------
+// README's derived counts (2026-11-01)
+// ---------------------------------------------------------------------
+// rewriteReadmeCounts() is what every stations.md writer now also runs, so
+// a dashboard save leaves README agreeing with the roster instead of
+// leaving it for lint to stop SHIP on. Its contract is the same as the
+// patchers': touch the numbers and nothing else, and refuse loudly rather
+// than skip what it cannot find.
+const README = readFileSync(path.join(ROOT, 'README.md'), 'utf8')
+
+test('README counts: rewriting the real README from the real roster is byte-identical', () => {
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(SRC)
+  assert.equal(rewriteReadmeCounts(README, STATIONS, SECRET_STATIONS), README)
+  // and every claim was actually found (an empty walk would also be a no-op)
+  const claims = readmeCountClaims(README, STATIONS, SECRET_STATIONS)
+  assert.equal(claims.filter((c) => c.miss).length, 0)
+  assert.equal(claims.length, 9, 'five sentence numbers + two badges x (URL, alt text)')
+})
+
+test('README counts: a changed roster rewrites exactly the derived numbers', () => {
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(SRC)
+  const pad = (st, n) => ({ ...st, tracks: [...st.tracks, ...Array.from({ length: n }, (_, i) => ({ youtubeId: `x${i}` }))] })
+  const shrink = (st, n) => ({ ...st, tracks: st.tracks.slice(0, n) })
+  // One station grown to 60, one shrunk to 11, a station dropped, a secret track added.
+  const pub = STATIONS.slice(0, -1).map((st, i) => (i === 0 ? pad(st, 60 - st.tracks.length) : i === 1 ? shrink(st, 11) : st))
+  const sec = SECRET_STATIONS.map((st, i) => (i === 0 ? pad(st, 1) : st))
+  const total = pub.reduce((n, s) => n + s.tracks.length, 0)
+  const secret = sec.reduce((n, s) => n + s.tracks.length, 0)
+  const out = rewriteReadmeCounts(README, pub, sec)
+  const minC = Math.min(...pub.map((s) => s.tracks.length))
+  assert.equal(minC, 11)
+  assert.match(out, new RegExp(`${pub.length} stations across two bands, ${total} tracks total \\(11-60 per station -- `))
+  assert.match(out, new RegExp(`carrying ${secret} more between them`))
+  assert.ok(out.includes(`[![stations: ${pub.length}](https://img.shields.io/badge/stations-${pub.length}-1f7a3a`))
+  assert.ok(out.includes(`[![tracks: ${total}](https://img.shields.io/badge/tracks-${total}-1f7a3a`))
+  // Nothing but digits moved: the same text with every digit run blanked.
+  const shape = (t) => t.replace(/\d+/g, '#')
+  assert.equal(shape(out), shape(README))
+  // And it is idempotent once it agrees.
+  assert.equal(rewriteReadmeCounts(out, pub, sec), out)
+  // The intro's "N curated stations" is NOT one of these (lint checks it on
+  // its own; the dashboard cannot add a station), so it is left alone.
+  assert.equal(/(\d+) curated stations/.exec(out)[1], /(\d+) curated stations/.exec(README)[1])
+})
+
+test('README counts: a missing pattern is a loud refusal, naming it, never a partial rewrite', () => {
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(SRC)
+  for (const [from, to, want] of [
+    [/tracks total/, 'songs total', /roster sentence/],
+    [/badge\/tracks-/, 'badge/songs-', /tracks badge \("tracks-N"\)/],
+    [/\[!\[stations:/, '[![dial:', /stations badge alt text/],
+  ]) {
+    const drifted = README.replace(from, to)
+    assert.notEqual(drifted, README)
+    assert.throws(() => rewriteReadmeCounts(drifted, STATIONS, SECRET_STATIONS), want)
+  }
 })

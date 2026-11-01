@@ -20,7 +20,8 @@
 //     regardless of callsign. Short-callsign stations lose a little headroom
 //     (CIPHER could have had 46), long-callsign ones gain a lot
 //     (DISTORTION FIELD had 36). See GUIDE_INDEX_COLS in ui/guide.js.
-//   - at least 10 tracks per station (README "Adding tracks")
+//   - at least 10 tracks per station (README "Adding tracks"), and at most
+//     MAX_TRACKS_PER_STATION (60) per PUBLIC station (2026-11-01, below)
 //   - 4 ident tones per station (10th pass: "station IDs set to 4 tones long")
 //   - every dial glyph actually exists in fonts/ter-u16n.bdf (an unmapped
 //     codepoint renders blank and silently deletes the station from the dial
@@ -53,6 +54,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { readmeCountClaims } from './lib/roster.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 globalThis.SIGNAL_BUILD ??= 'lint'
@@ -73,7 +75,34 @@ export const TAGLINE_MAX = 43
 // below), everyone else imports.
 export const MAX_PUBLIC_STATIONS_PER_BAND = 9
 
-// The guide's per-station detail page (drawGuidePageStation) gives `desc`
+// 2026-11-01 -- a real per-station ceiling. Until today the only upper bound
+// was README's roster sentence ("32-50 per station"), which lint asserted
+// against the roster -- so the "ceiling" moved whenever someone typed a new
+// max into README, and it stopped meaning anything at all the day those
+// numbers became regenerated rather than typed (rewriteReadmeCounts in
+// tools/lib/roster.mjs, same day). Matt raised the effective ceiling from 50
+// to 60 on 2026-11-01 for a curation pass of ~100 queued tracks, and it is
+// written down here as a rule so the next one is a decision, not a drift.
+// Curation over size: a station's identity is a lane, and past ~60 the bag
+// starts to feel like a playlist rather than a programme.
+//
+// PUBLIC stations only, like the tagline and glyph rules: a secret station is
+// reached by one key, is not in the guide index, and its size is a different
+// question (GREEN ROOM is a hidden room, not a lane on the dial). Exported so
+// the admin payload and the test read the number rather than restating it.
+export const MAX_TRACKS_PER_STATION = 60
+
+/** The floor and the ceiling on one station's track count. Exported, like
+ *  instrumentalProblems, so the ceiling can be tested on a synthetic
+ *  station: the real roster only ever shows it passing. */
+export function trackCountProblems(st, who = st.id) {
+  const n = st.tracks?.length ?? 0
+  if (!st.tracks || n < 10) return [`${who}: only ${n} tracks (min 10)`]
+  if (!st.secret && n > MAX_TRACKS_PER_STATION) return [`${who}: ${n} tracks; a public station holds at most ${MAX_TRACKS_PER_STATION}`]
+  return []
+}
+
+
 // exactly DESC_LINES lines at DESC_WIDTH columns -- contentWidth is
 // term.cols - 8, so 72 on the 80-column desktop grid -- and marks anything
 // past that with a trailing " ...". The mark is honest, but it is only
@@ -146,7 +175,7 @@ export async function lintRoster({ readmeText, shootText, issueFormText } = {}) 
     else if (!st.secret && st.tagline.length > TAGLINE_MAX) {
       problems.push(`${who}: tagline is ${st.tagline.length} chars; the guide index's LANE column fits ${TAGLINE_MAX}`)
     }
-    if (!st.tracks || st.tracks.length < 10) problems.push(`${who}: only ${st.tracks?.length ?? 0} tracks (min 10)`)
+    problems.push(...trackCountProblems(st, who))
     if (!st.secret && st.desc) {
       const lines = wordWrap(st.desc, DESC_WIDTH)
       if (lines.length > DESC_LINES) {
@@ -206,29 +235,12 @@ export async function lintRoster({ readmeText, shootText, issueFormText } = {}) 
   // Widened rather than reverting the prose: the sentence SHOULD say there
   // are two bands, and this rule's own failure message asks for exactly this
   // when the wording moves.
-  const claim = /(\d+)\s+stations\b[^,]*,\s+(\d+)\s+tracks total\s*\((\d+)-(\d+)\s+per station\b[^)]*carrying\s+(\d+)\s+more/.exec(readme)
-  if (!claim) {
-    // Deliberately loud. If the sentence was reworded, this rule stops
-    // checking anything at all and silently passes forever -- the exact
-    // failure mode it exists to prevent -- so a miss is reported, not shrugged
-    // off. Update the pattern above alongside the prose.
-    problems.push('README: could not find the "N stations, N tracks total (N-N per station ... carrying N more)" roster sentence -- if it was reworded, update the regex in lint-roster.js so this keeps checking')
-  } else {
-    const counts = STATIONS.map((s) => s.tracks.length)
-    const expect = {
-      stations: STATIONS.length,
-      total: counts.reduce((n, c) => n + c, 0),
-      min: Math.min(...counts),
-      max: Math.max(...counts),
-      secret: SECRET_STATIONS.reduce((n, s) => n + s.tracks.length, 0),
-    }
-    const got = {
-      stations: +claim[1], total: +claim[2], min: +claim[3], max: +claim[4], secret: +claim[5],
-    }
-    for (const k of ['stations', 'total', 'min', 'max', 'secret']) {
-      if (got[k] !== expect[k]) problems.push(`README roster sentence: ${k} says ${got[k]}, roster has ${expect[k]}`)
-    }
-  }
+  //
+  // A miss is deliberately loud. If the sentence was reworded, this rule
+  // stops checking anything at all and silently passes forever -- the exact
+  // failure mode it exists to prevent -- so a miss is reported, not shrugged
+  // off.
+  //
   // 2026-10-12 -- the header's "stations" and "tracks" badges are the same
   // claim again, in the first thing a visitor reads. They are static shields
   // badges (shields cannot read stations.js), so they get the same check and
@@ -236,10 +248,6 @@ export async function lintRoster({ readmeText, shootText, issueFormText } = {}) 
   // one combined badge until the same day, and split so each reads as a
   // single number. The version and license badges beside them are live (git
   // tag, LICENSE) and need none.
-  const badgeExpect = {
-    stations: STATIONS.length,
-    tracks: STATIONS.reduce((n, s) => n + s.tracks.length, 0),
-  }
   //
   // 2026-11-01 (audit L11) -- each badge states its number TWICE: in the
   // shields URL (the picture) and in the markdown alt text `[![tracks: N]`,
@@ -248,14 +256,22 @@ export async function lintRoster({ readmeText, shootText, issueFormText } = {}) 
   // number left the alt text claiming the old count with lint green. Both
   // copies are read now, each with its own loud miss, and neither number is
   // written here: both come from the roster.
-  for (const [label, want] of Object.entries(badgeExpect)) {
-    const copies = {
-      badge: new RegExp(`img\\.shields\\.io/badge/${label}-(\\d+)-`).exec(readme),
-      'badge alt text': new RegExp(`\\[!\\[${label}:\\s*(\\d+)\\]`).exec(readme),
-    }
-    for (const [what, m] of Object.entries(copies)) {
-      if (!m) problems.push(`README: could not find the ${label} ${what} ("${what === 'badge' ? `${label}-N` : `[![${label}: N]`}") in the header -- if it was reworded, update the regex in lint-roster.js so this keeps checking`)
-      else if (+m[1] !== want) problems.push(`README ${label} ${what}: says ${m[1]}, roster has ${want}`)
+  //
+  // 2026-11-01 (curation pass) -- the patterns moved to tools/lib/roster.mjs
+  // (README_ROSTER_SENTENCE, readmeBadgePatterns, walked by
+  // readmeCountClaims), because they now have a WRITER as well as this
+  // checker: rewriteReadmeCounts() regenerates these numbers wherever
+  // stations.md is regenerated, so a dashboard save no longer leaves README
+  // stale for SHIP to stop on. One definition of each pattern, read by both,
+  // so the writer cannot fix a different string from the one lint checks.
+  // The check stays: a hand edit of stations.js with no regeneration is
+  // still caught here, with the number to write (or `npm run stations`).
+  for (const c of readmeCountClaims(readme, STATIONS, SECRET_STATIONS)) {
+    if (c.miss) problems.push(c.miss)
+    else if (c.got !== c.want) {
+      problems.push(c.what === 'roster sentence'
+        ? `README roster sentence: ${c.key} says ${c.got}, roster has ${c.want} (npm run stations rewrites it)`
+        : `README ${c.label} ${c.what}: says ${c.got}, roster has ${c.want} (npm run stations rewrites it)`)
     }
   }
   // 2026-09-02 (audit, D1) -- index.html's meta/OG/twitter descriptions are

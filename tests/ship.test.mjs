@@ -168,6 +168,26 @@ test('pr stops when the suite fails, with nothing stamped or pushed', async (t) 
   assert.ok(!calls.some((c) => c[0] === 'gh' && c[2] === 'create'))
 })
 
+// 2026-11-01 -- the generator rewrites README's roster counts as well as
+// stations.md, so a branch that changed the roster without regenerating
+// leaves EITHER file dirty after the run; each is refused, by name, before
+// lint, the suite or a stamp. The stub stands in for a generator that found
+// something out of date.
+test('pr refuses when the generator changed stations.md or README.md, naming which', async (t) => {
+  for (const [file, want] of [['README.md', /README\.md was out of date/], ['stations.md', /stations\.md was out of date/]]) {
+    const fx = fixture(t)
+    const gen = () => { put(fx.work, file, '# regenerated\n'); return { code: 0 } }
+    const { ctx, calls, said } = ctxFor(fx, { gh: ghOk, node: { 'tools/stations-to-md.js': gen } })
+    const r = await pr(ctx, { title: 'x' })
+    assert.equal(r.code, 1, said())
+    assert.equal(r.step, 'stations')
+    assert.match(said(), want)
+    assert.ok(!calls.some((c) => c[0] === 'node' && c[1] !== 'tools/stations-to-md.js'), 'no lint, no suite')
+    assert.ok(!calls.some((c) => c[0] === 'gh' && c[2] === 'create'))
+    assert.equal(sh(fx.work, 'log', '-1', '--format=%s'), 'feature work', 'not stamped')
+  }
+})
+
 test('pr refuses when origin/main moves while the suite runs (re-fetch)', async (t) => {
   const fx = fixture(t)
   // A parallel session ships during our ~40s suite.
