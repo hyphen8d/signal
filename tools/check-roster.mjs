@@ -34,11 +34,13 @@
 //   node tools/check-roster.mjs --station=cipher
 //   node tools/check-roster.mjs --report        # read the record, no network
 //   node tools/check-roster.mjs --json          # for tools/admin-server.mjs
+//   node tools/check-roster.mjs --oembed-sweep  # oEmbed every track first; gone ones jump the queue
+//                                               # (what roster-watch runs -- see oembedSweep())
 
 import { readFileSync, writeFileSync, existsSync, renameSync, unlinkSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { oembed, playability, decayFlags, mapLimit, isThrottleSignature } from './lib/probe.mjs'
+import { oembed, oembedVerdict, playability, decayFlags, mapLimit, isThrottleSignature } from './lib/probe.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 // SIGNAL_HEALTH_STORE is for the suite only (2026-09-12): it lets a test
@@ -54,6 +56,7 @@ const asJson = args.includes('--json')
 const reportOnly = args.includes('--report')
 const stationArg = flag('station')
 const batchSize = +flag('batch', 40)
+const sweepOembed = args.includes('--oembed-sweep')
 /** Probes in a row that must agree before a flag counts as confirmed. */
 export const CONFIRM_STRIKES = 2
 /** How far apart two strikes must be for the second to count.
@@ -183,7 +186,15 @@ export function recordProbe(prev, { flags, e = {}, p = {}, track = {}, now = Dat
  *  of a full pass (~19 days at batch 40 over 747 tracks). See the note at
  *  its call site. A row whose last probe was UNVERIFIED still counts as
  *  flagged if it was before (heldFlags). */
-export function nextBatch(tracks, records, batchSize) {
+//
+// 2026-11-01 (audit M3) -- `urgent` is the ids the day's oEmbed sweep found
+// GONE (see oembedSweep). They go ahead of everything, flagged rows
+// included, but inside the same flaggedCap slots: a channel termination
+// that takes forty tracks at once must not stop the sweep either, and the
+// excess rotates through on later runs exactly as excess flags do. Once
+// probed, a gone track IS a flagged row (DEAD 404), so the confirm-twice
+// and notify-once machinery takes it from there -- no second flagging path.
+export function nextBatch(tracks, records, batchSize, urgent = []) {
   const size = Math.max(0, batchSize)
   const byAge = (a, b) => {
     const ra = records[a.youtubeId], rb = records[b.youtubeId]
@@ -192,12 +203,63 @@ export function nextBatch(tracks, records, batchSize) {
     if (!rb) return 1
     return Date.parse(ra.at) - Date.parse(rb.at)
   }
-  const flagged = tracks.filter((t) => heldFlags(records[t.youtubeId]).length).sort(byAge)
-  const first = flagged.slice(0, flaggedCap(size))
+  const isUrgent = new Set(urgent)
+  const gone = tracks.filter((t) => isUrgent.has(t.youtubeId)).sort(byAge)
+  const flagged = tracks.filter((t) => !isUrgent.has(t.youtubeId) && heldFlags(records[t.youtubeId]).length).sort(byAge)
+  const first = [...gone, ...flagged].slice(0, flaggedCap(size))
   const taken = new Set(first.map((t) => t.youtubeId))
   const rest = tracks.filter((t) => !taken.has(t.youtubeId)).sort(byAge)
   return [...first, ...rest].slice(0, size)
 }
+/** Consecutive unanswered oEmbed requests before the sweep gives up: the
+ *  endpoint is throttling, and the rest of the sweep would be noise. */
+export const OEMBED_GIVE_UP = 10
+/** A scattered few unanswered requests get one more try, in sequence. */
+export const OEMBED_RETRY_MAX = 25
+
+/** One oEmbed request per roster track: the cheap check for a TAKEDOWN.
+ *
+ *  2026-11-01 (audit M3). The deep probe walks the roster ~40 tracks a day,
+ *  so a video taken down the day after its turn was not seen for a full
+ *  pass -- ~20 days -- while `npm run verify`, one oEmbed call per track,
+ *  would have caught it that afternoon. That is not hypothetical: the audit
+ *  found three CITY LIGHTS tracks answering 404 that the health record still
+ *  showed as OK. oEmbed is a different endpoint from the throttled watch
+ *  page and answers ~750 requests without complaint, so the daily watch
+ *  runs this first and hands anything GONE to nextBatch() as `urgent`.
+ *
+ *  What it does NOT do is record anything. It only reorders the queue, and
+ *  the deep probe (which asks oEmbed again, then the watch page) writes the
+ *  record -- so a gone track becomes DEAD 404 with one strike, confirms on
+ *  the next spaced run, and is notified once, through exactly the machinery
+ *  every other finding uses. A parallel "oEmbed says dead, notify" path
+ *  would have needed its own confirmation and its own notify-once memory.
+ *
+ *  `gone` is oembedVerdict()'s word, which is 401/404/410 only. A 429, a
+ *  5xx or a network error is UNANSWERED: never promoted (that would read a
+ *  throttle as a mass takedown) and never counted as checked. The summary
+ *  says `complete: false` when anything stayed unanswered, and roster-watch
+ *  will not call that run clean. Pure apart from `check`, which the tests
+ *  replace. */
+export async function oembedSweep(tracks, { check = oembed, concurrency = 6 } = {}) {
+  const ids = [...new Set(tracks.map((t) => t.youtubeId))]
+  const gone = [], unanswered = []
+  let ok = 0, miss = 0, throttled = false
+  const tally = (id, v) => { if (v === 'ok') ok++; else if (v === 'gone') gone.push(id); else unanswered.push(id) }
+  await mapLimit(ids, concurrency, async (id) => {
+    if (throttled) { unanswered.push(id); return }
+    const v = oembedVerdict(await check(id))
+    miss = v === 'unanswered' ? miss + 1 : 0
+    if (miss >= OEMBED_GIVE_UP) throttled = true
+    tally(id, v)
+  })
+  if (!throttled && unanswered.length && unanswered.length <= OEMBED_RETRY_MAX) {
+    const again = unanswered.splice(0)
+    for (const id of again) tally(id, oembedVerdict(await check(id)))
+  }
+  return { total: ids.length, answered: ok + gone.length, gone, unanswered: unanswered.length, throttled, complete: unanswered.length === 0 }
+}
+
 // Every human line goes to stderr so --json owns stdout, exactly as
 // audition.js does it -- one code path, so the dashboard and the terminal
 // cannot disagree about a flag.
@@ -414,6 +476,7 @@ async function runMain() {
   }
 
   let throttled = false
+  let oembedResult = null
   if (!reportOnly) {
     // Oldest first, never-checked before that: the queue orders itself, so
     // repeated runs walk the whole roster without anyone tracking position.
@@ -428,7 +491,21 @@ async function runMain() {
     // one row of the batch per flag.
     // 2026-10-12 (audit, M4) -- up to a quarter of the batch; see
     // FLAGGED_SHARE for why flagged-first needed a ceiling.
-    const queue = nextBatch(tracks, store.records, batchSize)
+    //
+    // 2026-11-01 (audit M3) -- with --oembed-sweep, anything oEmbed calls
+    // GONE today goes to the very front; see oembedSweep().
+    if (sweepOembed) {
+      say(`oEmbed sweep: ${tracks.length} track(s)...`)
+      oembedResult = await oembedSweep(tracks)
+      const o = oembedResult
+      say(`oEmbed sweep: ${o.answered}/${o.total} answered, ${o.gone.length} gone${o.unanswered ? `, ${o.unanswered} UNANSWERED${o.throttled ? ' (throttled -- stopped early)' : ''}` : ''}.`)
+      for (const id of o.gone) {
+        const t = tracks.find((x) => x.youtubeId === id)
+        say(`  ${id}  ${(t?.callsign ?? '').padEnd(17)} oEmbed says gone -- probing it first  ${t?.title ?? ''}`)
+      }
+    }
+    const queue = nextBatch(tracks, store.records, batchSize, oembedResult?.gone ?? [])
+    if (oembedResult) oembedResult.promoted = queue.filter((t) => oembedResult.gone.includes(t.youtubeId)).length
 
     if (!queue.length) say('Nothing to check.')
     else {
@@ -468,7 +545,9 @@ async function runMain() {
     }
   }
 
-  const summary = { ...summarise(tracks, store.records), throttled }
+  // `oembed` is null when no sweep ran (a manual batch, --report): absent
+  // evidence, not a clean sweep.
+  const summary = { ...summarise(tracks, store.records), throttled, oembed: oembedResult }
   if (asJson) { process.stdout.write(JSON.stringify(summary)); return }
 
   say('')

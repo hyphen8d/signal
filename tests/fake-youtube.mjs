@@ -16,7 +16,15 @@
 //
 // SIGNAL_FAKE_YT is JSON: { "default": <answer>, "ids": { "<youtubeId>": <answer> } }
 // where an answer is 'ok', 'throttle', 'unverified', or a playabilityStatus
-// such as 'LOGIN_REQUIRED' / 'UNPLAYABLE'.
+// such as 'LOGIN_REQUIRED' / 'UNPLAYABLE' -- all about the WATCH page, with
+// oEmbed answering 200 -- or one about oEmbed itself (2026-11-01, audit M3):
+// 'gone' (404, a takedown), 'private' (401), 'oembed-throttle' (429 every
+// time), 'oembed-error' (the request throws), 'oembed-flaky' (429 on the
+// first ask in this process, 200 after). Those are the shapes oembed()
+// reads -- a status code, or a thrown fetch -- and a gone video's watch page
+// is never asked for, because the deep probe stops at a non-200 oEmbed.
+// SIGNAL_FAKE_YT_LOG, if set, gets one line per request ("oembed <id>" /
+// "watch <id>"), so a test can see the order the probe asked in.
 const cfg = JSON.parse(process.env.SIGNAL_FAKE_YT || '{}')
 const answerFor = (id) => cfg.ids?.[id] ?? cfg.default ?? 'ok'
 const COUNTRIES = Array.from({ length: 120 }, (_, i) => `"C${i}"`).concat('"US"').join(',')
@@ -27,10 +35,23 @@ const reply = (status, url, body) => ({
   json: async () => (typeof body === 'string' ? JSON.parse(body) : body),
 })
 
+const asked = new Map()
+const { appendFileSync } = await import('node:fs')
 globalThis.fetch = async (input) => {
   const url = String(input)
   const id = url.match(/[?&]v=([\w-]{11})/)?.[1]
-  if (url.includes('/oembed?')) return reply(200, url, { title: `fake ${id}`, author_name: 'fake channel' })
+  const kind = url.includes('/oembed?') ? 'oembed' : 'watch'
+  if (process.env.SIGNAL_FAKE_YT_LOG) appendFileSync(process.env.SIGNAL_FAKE_YT_LOG, `${kind} ${id}\n`)
+  if (url.includes('/oembed?')) {
+    const a = answerFor(id)
+    const n = (asked.get(id) ?? 0) + 1
+    asked.set(id, n)
+    if (a === 'gone') return reply(404, url, 'Not Found')
+    if (a === 'private') return reply(401, url, 'Unauthorized')
+    if (a === 'oembed-throttle' || (a === 'oembed-flaky' && n === 1)) return reply(429, url, 'Too Many Requests')
+    if (a === 'oembed-error') throw new TypeError('fetch failed')
+    return reply(200, url, { title: `fake ${id}`, author_name: 'fake channel' })
+  }
   if (url.includes('/watch?')) {
     const a = answerFor(id)
     if (a === 'throttle') return reply(429, 'https://www.google.com/sorry/index', 'sorry')

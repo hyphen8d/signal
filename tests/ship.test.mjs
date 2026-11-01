@@ -16,7 +16,7 @@ import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import os from 'node:os'
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
-import { makeCtx, realRun, pr, merge, verify, parsePrUrl, isAppFile } from '../tools/ship.mjs'
+import { makeCtx, realRun, pr, merge, verify, parsePrUrl, isAppFile, changedAppFiles } from '../tools/ship.mjs'
 import { nextStamp, compareStamps } from '../tools/lib/stamp.mjs'
 
 const sh = (cwd, ...args) => {
@@ -281,7 +281,7 @@ test('merge confirms by origin/main, not by gh -- a fatal error after a real mer
   assert.equal(r.merged, true)
   assert.equal(r.stamp, '2026-10-20.2')
   const m = calls.find((c) => c[2] === 'merge')
-  assert.deepEqual(m.slice(1), ['pr', 'merge', '4242', '--merge'], 'plain --merge, no --delete-branch')
+  assert.deepEqual(m.slice(1), ['pr', 'merge', '4242', '--merge', '--match-head-commit', sh(fx.remote, 'rev-parse', 'feature')], 'plain --merge, no --delete-branch, pinned to the head it checked')
   // The served checkout was on main and clean: fast-forwarded.
   assert.equal(stampOf(fx.served, 'HEAD'), '2026-10-20.2')
   assert.match(said(), /node tools\/ship\.mjs verify 2026-10-20\.2/)
@@ -382,6 +382,27 @@ test('verify: LIVE when the stamp is up and every changed app file matches', asy
   assert.equal(r.verdict, 'live', said())
   assert.equal(r.code, 0)
   assert.deepEqual(r.files, ['main.js'], 'only what changed since the previous deploy; build.json and tools/ excluded')
+})
+
+// 2026-11-01 (audit M4): a branch stamped twice -- change, stamp, review
+// fix, re-stamp -- then merged --no-ff. Without --first-parent the log
+// walked into the branch and took its first stamp for the previous deploy,
+// so main.js (changed before it) was never compared.
+test('changedAppFiles spans the whole merge of a twice-stamped branch', async (t) => {
+  const fx = fixture(t)                       // work: main.js changed on 'feature'
+  put(fx.work, 'build.json', JSON.stringify({ build: '2026-10-20.2' }) + '\n')
+  sh(fx.work, 'commit', '-qam', 'Stamp 2026-10-20.2')
+  put(fx.work, 'program.js', '// v3, a review fix\n')
+  sh(fx.work, 'commit', '-qam', 'review fix')
+  put(fx.work, 'build.json', JSON.stringify({ build: '2026-10-20.3' }) + '\n')
+  sh(fx.work, 'commit', '-qam', 'Stamp 2026-10-20.3')
+  sh(fx.work, 'push', '-q', 'origin', 'feature')
+  sh(fx.other, 'fetch', '-q', 'origin', 'feature')
+  sh(fx.other, 'merge', '-q', '--no-ff', '--no-edit', 'FETCH_HEAD')
+  sh(fx.other, 'push', '-q')
+  sh(fx.work, 'fetch', '-q', 'origin')
+  const { ctx } = ctxFor(fx)
+  assert.deepEqual((await changedAppFiles(ctx)).sort(), ['main.js', 'program.js'])
 })
 
 test('isAppFile keeps what a browser fetches and drops repo furniture', () => {

@@ -19,8 +19,8 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import {
-  recordProbe, nextBatch, summarise, heldFlags, flaggedCap,
-  CONFIRM_SPACING_MS, CONFIRM_STRIKES,
+  recordProbe, nextBatch, summarise, heldFlags, flaggedCap, oembedSweep,
+  CONFIRM_SPACING_MS, CONFIRM_STRIKES, OEMBED_GIVE_UP,
 } from '../tools/check-roster.mjs'
 import { bumpStreak, notifications, newFindings, sweepMargin, classify, describe as describeRun } from '../tools/roster-watch.mjs'
 import { STATIONS } from '../stations.js'
@@ -296,4 +296,161 @@ test('a second batch WAITS for a live one, and runs once it is released', async 
     holder.kill()
     rmSync(dir, { recursive: true, force: true })
   }
+})
+
+// --- 2026-11-01 audit M3: a takedown is seen the day it happens -----------
+//
+// The deep probe reaches a given track once a pass (~20 days); oEmbed sees a
+// takedown at once. The daily watch sweeps oEmbed over the whole roster and
+// pushes anything GONE to the front of that day's deep probe, which records
+// it as an ordinary flag -- so confirm-twice and notify-once are the same
+// machinery as for every other finding.
+
+test('nextBatch: oEmbed-gone ids go first, ahead of flagged rows, inside the flagged cap', () => {
+  const at = (h) => new Date(T0 - h * HOUR).toISOString()
+  const tracks = [], records = {}
+  for (let i = 0; i < 10; i++) { tracks.push({ youtubeId: `f${i}` }); records[`f${i}`] = { at: at(1 + i), flags: ['UNPLAYABLE'], strikes: 1 } }
+  for (let i = 0; i < 20; i++) { tracks.push({ youtubeId: `c${i}` }); records[`c${i}`] = { at: at(50 + i), flags: [] } }
+  // Checked half an hour ago and fine -- the last thing the rotation reaches.
+  for (const id of ['k0', 'k1']) { tracks.push({ youtubeId: id }); records[id] = { at: at(0.5), flags: [] } }
+  const ids = (b) => b.map((t) => t.youtubeId)
+  assert.deepEqual(ids(nextBatch(tracks, records, 8)).slice(0, 2), ['f9', 'f8'], 'control: flagged rows lead')
+  const batch = ids(nextBatch(tracks, records, 8, ['k0', 'k1']))
+  assert.deepEqual(batch.slice(0, 2).sort(), ['k0', 'k1'], 'gone rows lead the batch, ahead of flagged ones')
+  assert.ok(!batch.some((id) => id.startsWith('f')), 'and they take the flagged slots, not extra ones')
+  assert.equal(batch.length, 8)
+  // A takedown wave cannot take the batch: still flaggedCap.
+  const small = ids(nextBatch(tracks, records, 4, ['k0', 'k1']))
+  assert.equal(flaggedCap(4), 1)
+  assert.equal(small.filter((id) => id.startsWith('k')).length, 1, `two gone rows in a one-slot cap: ${small}`)
+})
+
+test('oembedSweep: gone is gone, unanswered is neither gone nor checked, a throttle stops it', async () => {
+  const tracks = ['a', 'b', 'c', 'd'].map((youtubeId) => ({ youtubeId }))
+  const answers = { a: { ok: true, status: 200 }, b: { ok: false, status: 404 }, c: { ok: false, status: 401 }, d: { ok: false, status: 429 } }
+  let asked = 0
+  const flaky = await oembedSweep(tracks, { check: async (id) => (id === 'd' && ++asked > 1 ? answers.a : answers[id]) })
+  assert.deepEqual(flaky.gone.sort(), ['b', 'c'])
+  assert.equal(flaky.unanswered, 0, 'a scattered 429 gets one retry')
+  assert.equal(flaky.complete, true)
+
+  const stuck = await oembedSweep(tracks, { check: async (id) => answers[id] })
+  assert.deepEqual(stuck.gone.sort(), ['b', 'c'], 'a 429 is never promoted as gone')
+  assert.equal(stuck.unanswered, 1)
+  assert.equal(stuck.answered, 3, 'nor counted as answered')
+  assert.equal(stuck.complete, false)
+
+  const many = Array.from({ length: 200 }, (_, i) => ({ youtubeId: `t${i}` }))
+  let n = 0
+  const storm = await oembedSweep(many, { check: async () => { n++; return { ok: false, status: 429 } } })
+  assert.equal(storm.throttled, true)
+  assert.deepEqual(storm.gone, [], 'a throttle storm is not a mass takedown')
+  assert.equal(storm.unanswered, 200)
+  assert.ok(n < 200 && n >= OEMBED_GIVE_UP, `it stopped asking (${n} requests)`)
+})
+
+test('check-roster main(): an oEmbed takedown jumps the queue, is recorded DEAD, and only with --oembed-sweep', () => {
+  for (const sweep of [true, false]) {
+    const dir = scratch()
+    try {
+      const store = path.join(dir, 'roster-health.json')
+      const log = path.join(dir, 'fetches.log')
+      const now = Date.now()
+      // Every cipher track checked and clean; A the most recently, so it is
+      // the LAST the rotation would reach.
+      const records = {}
+      cipher.tracks.forEach((t, i) => { records[t.youtubeId] = { at: iso(now - (100 + i) * HOUR), flags: [], strikes: 0 } })
+      records[A] = { at: iso(now - HOUR), flags: [], strikes: 0 }
+      writeFileSync(store, JSON.stringify({ version: 1, records }))
+      const r = runNode('check-roster.mjs', ['--json', '--station=cipher', '--batch=3', ...(sweep ? ['--oembed-sweep'] : [])], {
+        SIGNAL_HEALTH_STORE: store, SIGNAL_FAKE_YT_LOG: log,
+        SIGNAL_FAKE_YT: JSON.stringify({ default: 'ok', ids: { [A]: 'gone', [B]: 'oembed-throttle' } }),
+      })
+      assert.equal(r.status, 0, r.stderr)
+      const summary = JSON.parse(r.stdout)
+      const rec = JSON.parse(readFileSync(store, 'utf8')).records
+      if (!sweep) {
+        assert.equal(summary.oembed, null, 'no sweep ran, and the summary does not pretend one did')
+        assert.deepEqual(rec[A].flags, [], 'control: without the sweep A waits its turn -- the ~20-day hole')
+        continue
+      }
+      assert.deepEqual(summary.oembed.gone, [A])
+      assert.equal(summary.oembed.total, cipher.tracks.length)
+      assert.equal(summary.oembed.unanswered, 1, 'the throttled one is unanswered')
+      assert.equal(summary.oembed.complete, false)
+      assert.equal(summary.oembed.promoted, 1)
+      assert.match(rec[A].flags[0], /^DEAD 404/, 'the deep probe recorded the takedown')
+      assert.equal(rec[A].strikes, 1, 'one sighting: confirm-twice still applies')
+      assert.equal(summary.flagged.find((f) => f.youtubeId === A).confirmed, false)
+      assert.ok(!(rec[B].flags ?? []).some((f) => f.startsWith('DEAD')), 'a throttled oEmbed must never read as dead')
+      // The sweep ran BEFORE the deep probe chose its batch.
+      const lines = readFileSync(log, 'utf8').trim().split('\n')
+      const firstWatch = lines.findIndex((l) => l.startsWith('watch '))
+      assert.ok(lines.slice(0, firstWatch).filter((l) => l.startsWith('oembed ')).length >= cipher.tracks.length,
+        'every track was swept before the first watch-page probe')
+    } finally { rmSync(dir, { recursive: true, force: true }) }
+  }
+})
+
+test('roster-watch main(): a takedown is unconfirmed, then notified once; a throttled sweep is never clean', () => {
+  const dir = scratch()
+  try {
+    const store = path.join(dir, 'roster-health.json')
+    const state = path.join(dir, 'roster-watch-state.json')
+    const log = path.join(dir, 'notify.log')
+    const now = Date.now()
+    // The whole roster checked an hour ago and clean: the rotation would not
+    // come back to any of it for weeks.
+    const records = {}
+    for (const st of STATIONS) for (const t of st.tracks) records[t.youtubeId] = { at: iso(now - HOUR), flags: [], strikes: 0 }
+    writeFileSync(store, JSON.stringify({ version: 1, records }))
+    const env = {
+      SIGNAL_HEALTH_STORE: store, SIGNAL_WATCH_STATE: state, SIGNAL_WATCH_NOTIFY_LOG: log,
+      SIGNAL_FAKE_YT: JSON.stringify({ default: 'ok', ids: { [A]: 'gone' } }),
+    }
+    // A day passes between runs: move the record's clock back, as the tests
+    // above seed it, rather than wait CONFIRM_SPACING_MS.
+    const dayPasses = () => {
+      const j = JSON.parse(readFileSync(store, 'utf8'))
+      for (const rec of Object.values(j.records)) {
+        rec.at = iso(Date.parse(rec.at) - 24 * HOUR)
+        if (rec.strikeAt) rec.strikeAt = iso(Date.parse(rec.strikeAt) - 24 * HOUR)
+      }
+      writeFileSync(store, JSON.stringify(j))
+    }
+    const run = (e = env) => {
+      if (existsSync(log)) rmSync(log)
+      const r = runNode('roster-watch.mjs', ['--batch=40'], e)
+      const st = JSON.parse(readFileSync(state, 'utf8'))
+      const notes = existsSync(log) ? readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l)) : []
+      return { r, st, notes }
+    }
+    const one = run()
+    assert.equal(one.st.lastOutcome, 'unconfirmed', one.r.stderr)
+    assert.deepEqual(one.notes, [], 'one sighting wakes nobody')
+    assert.equal(one.st.history.at(-1).oembed.gone, 1)
+    assert.equal(one.st.history.at(-1).oembed.complete, true)
+    dayPasses()
+    const two = run()
+    assert.equal(two.st.lastOutcome, 'findings', two.r.stderr)
+    assert.equal(two.notes.length, 1)
+    assert.equal(two.notes[0].urgency, 'critical')
+    assert.match(two.notes[0].body, /DEAD 404/)
+    assert.deepEqual(two.st.findings.map((f) => f.youtubeId), [A])
+    dayPasses()
+    assert.deepEqual(run().notes, [], 'the same takedown is not news twice')
+    const s = runNode('roster-watch.mjs', ['--status', '--json'], env)
+    assert.equal(JSON.parse(s.stdout).oembed.gone, 1, '--status --json carries the last sweep, for the dashboard')
+    assert.match(runNode('roster-watch.mjs', ['--status'], env).stdout, /oembed {3}: \d+\/\d+ answered, 1 gone/)
+
+    // An oEmbed that will not answer: not clean, and not dead.
+    rmSync(state)
+    writeFileSync(store, JSON.stringify({ version: 1, records }))
+    const thr = run({ ...env, SIGNAL_FAKE_YT: JSON.stringify({ default: 'oembed-throttle' }) })
+    assert.equal(thr.st.lastOutcome, 'incomplete', thr.r.stderr)
+    assert.equal(thr.st.streak.incomplete, 1, 'it moves the stall counter')
+    assert.equal(thr.st.history.at(-1).oembed.complete, false)
+    const after = JSON.parse(readFileSync(store, 'utf8')).records
+    assert.ok(!Object.values(after).some((r) => (r.flags ?? []).some((f) => f.startsWith('DEAD'))), 'a throttled oEmbed recorded a DEAD flag')
+  } finally { rmSync(dir, { recursive: true, force: true }) }
 })

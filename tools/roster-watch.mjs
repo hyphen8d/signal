@@ -96,6 +96,13 @@ function loadState() {
  *  which is the exact "unfinished run reads as fine" failure this file
  *  exists to prevent. The stall is now counted from summary.throttled
  *  directly; see bumpStreak and notifications. */
+//
+// 2026-11-01 (audit M3) -- the run now starts with an oEmbed sweep of the
+// whole roster (check-roster --oembed-sweep), and a sweep that left tracks
+// UNANSWERED (throttled, erroring) did not do the one thing it is for, so
+// that run is 'incomplete', never 'clean', and moves the stall counter the
+// same way a throttled deep probe does.
+export const oembedIncomplete = (summary) => !!summary?.oembed && summary.oembed.complete === false
 export function classify({ exitCode, summary, crashed }) {
   if (crashed || !summary) return 'error'
   // 2026-09-22 -- a flag has to be seen TWICE before it wakes anyone.
@@ -108,7 +115,7 @@ export function classify({ exitCode, summary, crashed }) {
   // notified. See shouldNotify.
   if ((summary.flaggedConfirmed ?? summary.flaggedCount) > 0) return 'findings'
   if (summary.flaggedCount > 0 || exitCode === 1) return 'unconfirmed'
-  if (summary.throttled) return 'incomplete'
+  if (summary.throttled || oembedIncomplete(summary)) return 'incomplete'
   return 'clean'
 }
 
@@ -162,7 +169,7 @@ export function shouldNotify(outcome, streak, ctx = {}) {
  *  and must still move the stall counter. Only a run that got through
  *  (or a crash, which has its own streak) resets it. */
 export function bumpStreak(streak, outcome, summary) {
-  const throttled = outcome === 'incomplete' || (outcome !== 'error' && summary?.throttled === true)
+  const throttled = outcome === 'incomplete' || (outcome !== 'error' && (summary?.throttled === true || oembedIncomplete(summary)))
   return {
     incomplete: throttled ? (streak.incomplete ?? 0) + 1 : 0,
     error: outcome === 'error' ? (streak.error ?? 0) + 1 : 0,
@@ -260,7 +267,8 @@ export function describe(outcome, summary, streak, { newIds } = {}) {
   }
   if (outcome === 'incomplete') return {
     title: 'SIGNAL roster: the sweep is stuck',
-    body: `Throttled ${streak.incomplete} run(s) in a row, so coverage is not advancing.\n${cov}`,
+    body: `Throttled ${streak.incomplete} run(s) in a row, so coverage is not advancing.\n${cov}` +
+      (oembedIncomplete(summary) ? `\noEmbed takedown sweep: ${summary.oembed.unanswered} of ${summary.oembed.total} unanswered` : ''),
     urgency: 'normal',
   }
   if (outcome === 'error') return {
@@ -273,7 +281,8 @@ export function describe(outcome, summary, streak, { newIds } = {}) {
 
 function runCheck() {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, ['tools/check-roster.mjs', '--json', `--batch=${BATCH}`], {
+    // --oembed-sweep (2026-11-01, audit M3): takedowns jump the queue.
+    const child = spawn(process.execPath, ['tools/check-roster.mjs', '--json', '--oembed-sweep', `--batch=${BATCH}`], {
       cwd: root, stdio: ['ignore', 'pipe', 'pipe'],
     })
     let out = '', err = ''
@@ -320,6 +329,8 @@ async function main() {
       // for as long as they last (2026-10-12).
       findings: state.findings ?? [],
       margin: last ? sweepMargin(last.total, BATCH, last.staleDays, last.flagged) : null,
+      // The last run's oEmbed takedown sweep (2026-11-01), or null.
+      oembed: last?.oembed ?? null,
     }))
     return
   }
@@ -337,6 +348,9 @@ async function main() {
     for (const f of findings) console.log(`  ${String(f.callsign).padEnd(17)} ${f.youtubeId}  ${(f.flags ?? []).join(' ')}`)
     const lastEntry = state.history[state.history.length - 1]
     const margin = lastEntry ? sweepMargin(lastEntry.total, BATCH, lastEntry.staleDays, lastEntry.flagged) : null
+    const o = lastEntry?.oembed
+    if (o) console.log(`oembed   : ${o.answered}/${o.total} answered, ${o.gone} gone (${o.promoted ?? 0} probed first)${o.complete ? '' : ` -- INCOMPLETE, ${o.unanswered} unanswered${o.throttled ? ' (throttled)' : ''}`}`)
+    else if (lastEntry) console.log('oembed   : no takedown sweep on the last run')
     if (margin) console.log(`margin   : full pass ~${margin.passDays.toFixed(0)}d at batch ${margin.batch}${margin.flaggedSlots ? ` (${margin.flaggedSlots} slot(s) re-probing flags)` : ''}, horizon ${margin.horizonDays}d -- ${margin.status === 'tight' ? 'TIGHT, raise the batch or the horizon' : 'ok'}`)
     console.log('history  :')
     for (const h of state.history.slice(-10)) {
@@ -401,6 +415,13 @@ async function main() {
     // here can never disagree with the tool that owns the number. Old
     // entries without the field fall back to sweepMargin's default.
     staleDays: res.summary?.staleDays,
+    // The takedown sweep, as counts (2026-11-01). Absent when none ran.
+    oembed: res.summary?.oembed ? {
+      total: res.summary.oembed.total, answered: res.summary.oembed.answered,
+      gone: res.summary.oembed.gone.length, promoted: res.summary.oembed.promoted ?? 0,
+      unanswered: res.summary.oembed.unanswered, throttled: res.summary.oembed.throttled,
+      complete: res.summary.oembed.complete,
+    } : undefined,
   }
   // 2026-09-02 (audit, L9) -- temp + rename, so a crash mid-write cannot
   // truncate the state file. loadState() fails soft to empty, which sounds

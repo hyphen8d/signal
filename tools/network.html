@@ -1546,6 +1546,11 @@ function healthWatchEl(w) {
     if (incStreak > 0 && w.lastOutcome !== 'incomplete') {
       when += ` · and throttled${incStreak > 1 ? ` ${incStreak} runs running` : ''} — the sweep is not advancing`
     }
+    // 2026-11-01 (audit M3) -- the daily oEmbed takedown sweep. An
+    // incomplete one is also why a run reads 'incomplete', so say which.
+    const o = w.oembed
+    if (o && !o.complete) when += ` · oEmbed takedown sweep incomplete: ${o.unanswered} of ${o.total} unanswered`
+    else if (o && o.gone) when += ` · oEmbed: ${o.gone} gone, ${o.promoted || 0} probed first`
   }
 
   const runs = el('span', { class: 'runs', title: 'the last runs, oldest left' })

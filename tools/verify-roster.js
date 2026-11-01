@@ -22,6 +22,7 @@
 
 import { STATIONS, SECRET_STATIONS } from '../stations.js'
 import { lintRoster } from './lint-roster.js'
+import { oembed, oembedVerdict, mapLimit } from './lib/probe.mjs'
 
 const args = process.argv.slice(2)
 const stationArg = args.find(a => a.startsWith('--station='))
@@ -35,29 +36,13 @@ if (onlyStation && stations.length === 0) {
   process.exit(2)
 }
 
-async function checkTrack(youtubeId) {
-  const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`
-  try {
-    const res = await fetch(url)
-    return { ok: res.status === 200, status: res.status }
-  } catch (err) {
-    return { ok: false, status: 'ERR', error: String(err?.message ?? err) }
-  }
-}
-
-// Small concurrency cap so this doesn't hammer the endpoint or trip a rate limit.
-async function mapLimit(items, limit, fn) {
-  const results = new Array(items.length)
-  let next = 0
-  async function worker() {
-    while (next < items.length) {
-      const i = next++
-      results[i] = await fn(items[i], i)
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
-  return results
-}
+// 2026-11-01 (audit M3) -- the oEmbed request and the concurrency cap are
+// tools/lib/probe.mjs's, not copies: roster-watch now runs the same check
+// every day (check-roster --oembed-sweep), and the two must not be able to
+// disagree about what oEmbed said. probe.mjs's oembedVerdict() is also what
+// separates a takedown (401/404) from an endpoint that did not answer; this
+// tool still lists both, since a person reading it can tell them apart.
+const checkTrack = (youtubeId) => oembed(youtubeId)
 
 async function main() {
   // Offline rules first (tools/lint-roster.js) -- cheap, and a broken roster
@@ -87,7 +72,7 @@ async function main() {
     if (bad.length) {
       console.log(`${st.callsign} (${st.id}${st.secret ? ', secret' : ''}) -- ${bad.length} problem(s):`)
       for (const b of bad) {
-        console.log(`  [${b.status}] ${b.track.title} -- ${b.track.artist} (youtu.be/${b.track.youtubeId})`)
+        console.log(`  [${b.status}${oembedVerdict(b) === 'unanswered' ? ' -- no answer, NOT a verdict on the video' : ''}] ${b.track.title} -- ${b.track.artist} (youtu.be/${b.track.youtubeId})`)
         failures.push({ station: st.id, ...b })
       }
       console.log('')
