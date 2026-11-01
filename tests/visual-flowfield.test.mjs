@@ -247,9 +247,31 @@ test('LAVA LAMP: with no tap it still breathes and kicks, on syntheticAudio', as
   const { h } = await bootLamp()
   try {
     assert.equal(h.program._au, null, 'test setup: no tap')
+    // 2026-11-01 (audit L4) -- counting changes of _lavaKickAt alone passed
+    // with the kick's AMOUNT at zero: the clock still ticked, nothing on
+    // screen did. So each kick that lands after the lamp has settled (no
+    // BRIGHT on the frame before it) is read back off the grid as well, the
+    // LOUD-vs-KICK test's comparison on syntheticAudio: the wax flares
+    // BRIGHT and the light blows out against the frame between the kicks.
+    // Measured: ~11-12k lit px between kicks, ~15.8k on one, 0 -> ~67
+    // BRIGHT cells. Mutation-checked with _lavaKickAmt forced to 0.
     const seen = new Set()
-    for (let i = 0; i < 200; i++) { h.advance(16); seen.add(h.program._lavaKickAt) }
+    const settled = []
+    let prev = null, last = h.program._lavaKickAt
+    for (let i = 0; i < 200; i++) {
+      h.advance(16)
+      seen.add(h.program._lavaKickAt)
+      const now = { lit: litPixels(h.term), bright: cellsWith(h.term, BRIGHT) }
+      if (h.program._lavaKickAt !== last && prev && prev.bright === 0) settled.push({ before: prev, on: now })
+      last = h.program._lavaKickAt
+      prev = now
+    }
     assert.ok(seen.size >= 3, `only ${seen.size - 1} kicks in 3.2s without a tap`)
+    assert.ok(settled.length >= 2, `only ${settled.length} kicks landed on a settled lamp -- test setup`)
+    for (const { before, on } of settled) {
+      assert.ok(on.bright >= 15, `a kick with no tap left only ${on.bright} BRIGHT cells -- the wax should flare`)
+      assert.ok(on.lit > before.lit * 1.2, `a kick with no tap lit ${on.lit} px against ${before.lit} between kicks`)
+    }
     assert.ok(cellsWith(h.term, null) + cellsWith(h.term, BRIGHT) >= 10, 'no lit wax without a tap')
   } finally { h.shutdown() }
 })
@@ -386,33 +408,48 @@ test('LAVA LAMP: the kick lights the haze round the lamp, not the far room', asy
 test('LAVA LAMP: on the kick the liquid glows from the centre, with no notch where the wax is', async () => {
   const { h, fx, mod } = await bootLamp()
   try {
-    let t = settle(h, fx, 1)
-    t += 0.016; drawWith(h, fx, t, signal(KICK))
     // Pixel-level, off the effect's own wax field: a liquid pixel is a glass
     // pixel clear of the rim, the highlight stripe and the wax's fringe.
-    const F = h.program._lava, cols = h.term.cols
+    const cols = h.term.cols
     const cx = (cols * CELL_W) >> 1
-    const FB_W = F.fBuf.length / (mod.GLASS_BOT - mod.GLASS_TOP), FB_HALF = (FB_W - 1) / 2
-    const tally = () => ({ on: 0, n: 0 })
-    const centre = tally(), outer = tally(), inWax = tally(), clear = tally()
-    for (let y = mod.GLASS_TOP + 20; y < mod.GLASS_BOT - 20; y++) {
-      const hw = mod.lampRow(y)[1]
-      for (let x = Math.ceil(cx - hw + 3); x <= cx + hw - 3; x++) {
-        const dx = x - cx, adx = Math.abs(dx)
-        if (dx < 0 && adx > hw * 0.5 && adx < hw * 0.72) continue
-        if (F.fBuf[(y - mod.GLASS_TOP) * FB_W + FB_HALF + dx] > 0.25) continue
-        const ci = (1 + Math.floor(y / CELL_H)) * cols + Math.floor(x / CELL_W)
-        const g = h.term.gfx[ci]
-        const on = g && (g[y % CELL_H] >> (CELL_W - 1 - (x % CELL_W))) & 1 ? 1 : 0
-        const wax = !(h.term.attrs[ci] & (MUTED | DIM | FAINT))
-        const band = wax ? null : adx < hw * 0.4 ? centre : adx > hw * 0.75 ? outer : null
-        for (const b of [band, wax ? inWax : clear]) {
-          if (b) { b.on += on; b.n++ }
+    const liquidShares = () => {
+      const F = h.program._lava
+      const FB_W = F.fBuf.length / (mod.GLASS_BOT - mod.GLASS_TOP), FB_HALF = (FB_W - 1) / 2
+      const tally = () => ({ on: 0, n: 0 })
+      const centre = tally(), outer = tally(), inWax = tally(), clear = tally()
+      for (let y = mod.GLASS_TOP + 20; y < mod.GLASS_BOT - 20; y++) {
+        const hw = mod.lampRow(y)[1]
+        for (let x = Math.ceil(cx - hw + 3); x <= cx + hw - 3; x++) {
+          const dx = x - cx, adx = Math.abs(dx)
+          if (dx < 0 && adx > hw * 0.5 && adx < hw * 0.72) continue
+          if (F.fBuf[(y - mod.GLASS_TOP) * FB_W + FB_HALF + dx] > 0.25) continue
+          const ci = (1 + Math.floor(y / CELL_H)) * cols + Math.floor(x / CELL_W)
+          const g = h.term.gfx[ci]
+          const on = g && (g[y % CELL_H] >> (CELL_W - 1 - (x % CELL_W))) & 1 ? 1 : 0
+          const wax = !(h.term.attrs[ci] & (MUTED | DIM | FAINT))
+          const band = wax ? null : adx < hw * 0.4 ? centre : adx > hw * 0.75 ? outer : null
+          for (const b of [band, wax ? inWax : clear]) {
+            if (b) { b.on += on; b.n++ }
+          }
         }
       }
+      return { centre, outer, inWax, clear }
     }
     const share = (b) => b.on / Math.max(1, b.n)
+    let t = settle(h, fx, 1)
+    t += 0.034; drawWith(h, fx, t, signal())
+    const loud = liquidShares()
+    t += 0.016; drawWith(h, fx, t, signal(KICK))
+    const { centre, outer, inWax, clear } = liquidShares()
     assert.ok(centre.n > 200 && outer.n > 100 && inWax.n > 50 && clear.n > 200, 'test setup: too few liquid pixels')
+    // 2026-11-01 (audit L4) -- the two shape claims below held with the kick
+    // switched off (_lavaKickAmt = 0): the falloff and the thinning are
+    // there on every frame. This is the claim that is about the kick: the
+    // liquid at the centre is far denser on it than on the LOUD frame just
+    // before. Measured: 0.12 -> 0.28. Mutation-checked with _lavaKickAmt
+    // forced to 0.
+    assert.ok(share(centre) > share(loud.centre) * 1.5,
+      `the liquid at the centre is ${share(centre).toFixed(2)} on the kick against ${share(loud.centre).toFixed(2)} on the LOUD frame -- no glow`)
     // Old: one flat density across the glass (outer/centre ~1), and the
     // liquid in a wax cell lifted to the wax's tier at full density -- the
     // stepped notch.
