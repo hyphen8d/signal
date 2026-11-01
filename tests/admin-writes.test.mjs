@@ -232,6 +232,39 @@ test('a repoint save (`replaces`) keeps the old entry\'s comment block on the ne
   } finally { restore() }
 })
 
+// 2026-11-01 (audit L8) -- a ship-check's fetch and SHIP's own preflight
+// fetch must never overlap: two fetches in one repo can fail on "cannot lock
+// ref", and SHIP then refuses spuriously. The remote's upload-pack is
+// wrapped to log when each fetch starts and ends and to take a second about
+// it, so an overlap is a fact in the log rather than a lucky collision.
+// SHIP is made to stop right after its fetch by putting the remote ahead.
+test('SHIP waits out an in-flight ship-check fetch rather than fetching beside it (L8)', async () => {
+  const log = path.join(tmp, 'fetches.log')
+  const wrapper = path.join(tmp, 'slow-upload-pack.sh')
+  writeFileSync(wrapper, `#!/bin/sh\necho "start $$" >> '${log}'\nsleep 1\necho "end $$" >> '${log}'\nexec git-upload-pack "$@"\n`, { mode: 0o755 })
+  const other = path.join(tmp, 'other-l8')
+  try {
+    git('fetch', '-q'); git('merge', '-q', '--ff-only', 'origin/main')
+    sh(tmp, 'git', ['clone', '-q', path.join(tmp, 'remote.git'), 'other-l8'])
+    sh(other, 'git', ['-c', 'user.email=o@o', '-c', 'user.name=o', 'commit', '-q', '--allow-empty', '-m', 'moved'])
+    sh(other, 'git', ['push', '-q'])
+    writeFileSync(path.join(root, 'README.md'), read('README.md') + '\nedit\n')
+    git('config', 'remote.origin.uploadpack', wrapper)
+    const check = request({ path: '/api/ship-check', headers: ADMIN })
+    await new Promise((r) => setTimeout(r, 300))           // the check's fetch is under way
+    const ship = post('/api/ship', { message: 'x', confirm: true })
+    const [c, s] = await Promise.all([check, ship])
+    assert.ok(c.json.blockers.some((b) => /ahead of you/.test(b)), c.text)
+    assert.match(s.text, /ahead of you/, 'SHIP fetched, and refused on what it found -- not on a fetch error')
+    const lines = readFileSync(log, 'utf8').trim().split('\n').map((l) => l.split(' ')[0])
+    assert.deepEqual(lines, ['start', 'end', 'start', 'end'], `fetches overlapped:\n${readFileSync(log, 'utf8')}`)
+  } finally {
+    try { git('config', '--unset', 'remote.origin.uploadpack') } catch (e) {}
+    rmSync(log, { force: true })
+    restore()
+  }
+})
+
 test('GET /api/ship-check answers with the same blockers SHIP would refuse on (dashboard UI)', async () => {
   // The SHIP test above leaves the remote a commit ahead; catch up first.
   git('fetch', '-q'); git('merge', '-q', '--ff-only', 'origin/main')
