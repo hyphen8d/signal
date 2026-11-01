@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { STATION_LINER_FILES, ensureLyricsFetched, isInstrumental, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId, stopLiveVoice } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { BOOT_HOLD_MS, BOOT_LINE_STAGGER_MS, BOOT_REVEAL_MS, BOOT_TEXT_DELAY_MS, BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, LISTENER_MAIL, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
+const { BOOT_HOLD_MS, BOOT_LINE_STAGGER_MS, BOOT_REVEAL_MS, BOOT_TEXT_DELAY_MS, BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, LISTENER_MAIL, MAPPED_KEYS, isBrowserShortcut, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -3168,6 +3168,7 @@ export default {
   // key()'s actual side effects to find out.
   isMappedKey(e) {
     if (this._reloading) return false // see reloadForBuild
+    if (isBrowserShortcut(e)) return false // see key() and isBrowserShortcut
     // 67th pass -- checked ahead of the poweredOn branch now: [I] on
     // STANDBY (see key() below) can open the guide while still powered
     // off, so guideOpen no longer implies poweredOn the way it used to.
@@ -3253,6 +3254,19 @@ export default {
   },
   key(s, e) {
     if (this._reloading) return // see reloadForBuild -- the page is already leaving
+    // 2026-11-01 (audit M2) -- a Ctrl/Cmd/Alt chord is the browser's, not
+    // the radio's. Nothing here read the modifiers, so Ctrl+R answered as
+    // [R] -- preventDefault, a click, the rear panel -- and the reload never
+    // happened; Ctrl+P powered the set instead of printing, Ctrl+C cycled
+    // the tint instead of copying, Ctrl+F went fullscreen instead of find.
+    // Returned before ANYTHING, preventDefault included, so the browser
+    // gets the event exactly as if the set were not listening, and before
+    // isMappedKey() so it does not click either (that function asks the
+    // same question first, so the two cannot drift). Shift is not on the
+    // list: Shift+C, Shift+T and Shift+0 are real commands. keyUp() is left
+    // alone on purpose -- it only ever DELETES from the held set, and a
+    // release must land whatever is held with it.
+    if (isBrowserShortcut(e)) return
     // 2026-08-22, round 4 -- same reasoning as onTouchStart's: true for
     // this function's synchronous body (and whatever it calls directly),
     // so loadTrack() knows a fresh mute-for-autoplay it triggers can be

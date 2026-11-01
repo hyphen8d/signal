@@ -63,6 +63,22 @@ export const MAPPED_KEYS = new Set([
   'q', 'Q',
 ])
 
+// 2026-11-01 (audit M2) -- is this keydown a browser or OS shortcut rather
+// than a command? Any Ctrl, Cmd (metaKey) or Alt chord is: Ctrl+R is a
+// reload, not [R]. key() and isMappedKey() both ask this first, so the
+// radio neither acts, clicks nor preventDefaults on one. Shift is NOT a
+// modifier here -- Shift+C, Shift+T and Shift+0 (')') are real commands.
+// AltGr is excepted: on Windows it arrives as Ctrl+Alt, and on a layout
+// that types a character through it that keypress is typing, not a chord.
+// None of MAPPED_KEYS needs AltGr on a common layout today; the exception
+// is there so that adding one never turns into a dead key on someone
+// else's keyboard.
+export function isBrowserShortcut(e) {
+  if (!e) return false
+  if (e.getModifierState?.('AltGraph')) return false
+  return !!(e.ctrlKey || e.metaKey || e.altKey)
+}
+
 // [Q] QSL (2026-10-14) -- where listener mail goes. One copy, read by both
 // the key (program.js writeIn) and the guide's About page, so the address
 // on screen and the address the mail opens to cannot drift apart.
