@@ -394,6 +394,61 @@
       "rationale": "Not a proposal: the roster upload itself. Flagged UNPLAYABLE (\"Video unavailable\") by the daily health sweep on 2026-10-11, confirmed 2026-10-12 and by a hand probe the same day, while oEmbed still returned 200. Recorded here so the id is never re-proposed; the track was dropped from NEON STASIS with no replacement upload.",
       "rejectedAt": "2026-10-12",
       "rejectedReason": "upload went unavailable; removed from the roster, song not in question"
+    },
+    {
+      "stationId": "city-lights",
+      "youtubeId": "tWqZASIxlqs",
+      "title": "Sparkle",
+      "artist": "Tatsuro Yamashita",
+      "proposedBy": "roster-watch",
+      "proposedAt": "2026-11-01",
+      "rationale": "Not a proposal: the roster upload itself. Flagged oEmbed 404 / \"Video unavailable\" by the health sweep (TIPO channel takedown), re-confirmed 2026-11-01. Recorded here so the id is never re-proposed; the track stays on CITY LIGHTS under pqobRu9aR3M (Tatsuro Yamashita official, 256s, 249 countries).",
+      "rejectedAt": "2026-11-01",
+      "rejectedReason": "upload went unavailable; re-pointed to another upload of the same recording, song not in question"
+    },
+    {
+      "stationId": "city-lights",
+      "youtubeId": "FCoOyPa6k-U",
+      "title": "Ride On Time",
+      "artist": "Tatsuro Yamashita",
+      "proposedBy": "roster-watch",
+      "proposedAt": "2026-11-01",
+      "rationale": "Not a proposal: the roster upload itself. Flagged oEmbed 404 / \"Video unavailable\" by the health sweep (TIPO channel takedown), re-confirmed 2026-11-01. Recorded here so the id is never re-proposed; the track stays on CITY LIGHTS under be5AvQFzsu0 (Hi-Fi Radio, 352s, 249 countries).",
+      "rejectedAt": "2026-11-01",
+      "rejectedReason": "upload went unavailable; re-pointed to another upload of the same recording, song not in question"
+    },
+    {
+      "stationId": "city-lights",
+      "youtubeId": "S_9LEfENEMw",
+      "title": "Bomber",
+      "artist": "Tatsuro Yamashita",
+      "proposedBy": "roster-watch",
+      "proposedAt": "2026-11-01",
+      "rationale": "Not a proposal: the roster upload itself. Flagged oEmbed 404 / \"Video unavailable\" by the health sweep (TIPO channel takedown), re-confirmed 2026-11-01. Recorded here so the id is never re-proposed; the track stays on CITY LIGHTS under -hkFL1WOJNo (Kenny.T - City Pop Track, 344s, 249 countries).",
+      "rejectedAt": "2026-11-01",
+      "rejectedReason": "upload went unavailable; re-pointed to another upload of the same recording, song not in question"
+    },
+    {
+      "stationId": "tradewinds",
+      "youtubeId": "7xRuJiHijlU",
+      "title": "Tiki",
+      "artist": "The Gene Rains Group",
+      "proposedBy": "roster-watch",
+      "proposedAt": "2026-10-23",
+      "rationale": "Not a proposal: the roster upload itself. Flagged UNPLAYABLE (\"Video unavailable\") by the daily health sweep from 2026-10-23 (6 strikes) while oEmbed still returned 200; re-confirmed 2026-11-01. Recorded here so the id is never re-proposed; the track stays on TRADEWINDS under KVriE_cp_yk (Forgottenchannels, 180s, 249 countries).",
+      "rejectedAt": "2026-11-01",
+      "rejectedReason": "upload went unavailable; re-pointed to another upload of the same recording, song not in question"
+    },
+    {
+      "stationId": "tradewinds",
+      "youtubeId": "yjyzRv67oBE",
+      "title": "Shangri-La",
+      "artist": "The Gene Rains Group",
+      "proposedBy": "roster-watch",
+      "proposedAt": "2026-10-23",
+      "rationale": "Not a proposal: the roster upload itself. Flagged UNPLAYABLE (\"Video unavailable\") by the daily health sweep from 2026-10-23 (6 strikes) while oEmbed still returned 200; re-confirmed 2026-11-01. Recorded here so the id is never re-proposed; the slot went to Lotus Land, HPdE5Vdtdzo (Gene Rains - Topic, 212s, 123 countries), with q243fPsJIK4 (Forgottenchannels) as the same-song backup.",
+      "rejectedAt": "2026-11-01",
+      "rejectedReason": "upload went unavailable; replaced with a different song to keep the channels spread"
     }
   ]
 }

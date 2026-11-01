@@ -479,7 +479,8 @@
     "Verify original-artist credit carefully -- a song has been mis-credited to the wrong artist before (a listed \"Casiio\" cover turned out to actually be Yasuha's original).",
     "Sourcing runs opposite to the guitar stations: most of this catalogue was never officially uploaded, so fan and archive channels carry roughly two thirds of the roster and are accepted here out of necessity. Prefer artist \"- Topic\", label channels (Victor, Sony Music (Japan), VAP, PANAM, MUSIC Liverary) and artist-official where they exist -- they are also the defence against the mis-credit rule above, since fan re-uploads are where covers get labelled as originals.",
     "Check region-locking, not just oEmbed -- unique to this station. Japanese label uploads are commonly geo-fenced and an oEmbed 200 says nothing about it; confirm the video is US-available and embeddable before proposing. Watch for Night Tempo \"Showa Groove\" mixes (modern remixes), live cuts, and \"Original Basic Track\" uploads that are backing-track outtakes.",
-    "The mis-credit warning above earned itself three times in one pass (2026-08-29), all of them Topic uploads that look correct in a result list: 'AIRPORT LADY' on Ai Furihata - Topic is a cover, not Kadomatsu; 'Bomber' on Hirotaka Mori - Topic is not Yamashita; a Nanako Sato search returns 'Nanaco', a different artist. Read the CHANNEL, not the title. Related: Casiopea's Asayake has no clean upload of the 1979 original -- the available ones are 'Casiopea 3rd', the later lineup re-recording it."
+    "The mis-credit warning above earned itself three times in one pass (2026-08-29), all of them Topic uploads that look correct in a result list: 'AIRPORT LADY' on Ai Furihata - Topic is a cover, not Kadomatsu; 'Bomber' on Hirotaka Mori - Topic is not Yamashita; a Nanako Sato search returns 'Nanaco', a different artist. Read the CHANNEL, not the title. Related: Casiopea's Asayake has no clean upload of the 1979 original -- the available ones are 'Casiopea 3rd', the later lineup re-recording it.",
+    "FAN-CHANNEL TAKEDOWNS ARE THE STANDING RISK HERE, and they come in batches. 2026-10-15: \"Commander\" went and took Ride On Time and Bomber with it; both were re-pointed to \"TIPO\". 2026-11-01: TIPO went too, taking Sparkle, Ride On Time and Bomber at once. So: take the official channel whenever one carries the song (Sparkle is now on Yamashita's own), and when only fan uploads exist, do not stack a dead channel's tracks onto one replacement channel -- the three were spread across three channels so the next takedown costs one."
    ],
    "rejections": [
     {
@@ -495,6 +496,27 @@
      "reason": "DEAD UPLOAD, not a curation call: this id 404s on oEmbed -- flagged DEAD 404 by the health watch's probes 2026-10-14 (08:01 and 19:24) and confirmed by verify-roster.js 2026-10-15. Both CITY LIGHTS tracks on the fan channel \"Commander\" died together, so it reads as a channel takedown. Re-pointed to S_9LEfENEMw (TIPO) the same day; the track itself stays. Do not re-add this id.",
      "rejectedAt": "2026-10-15",
      "youtubeId": "SIGr6dc_2Sc"
+    },
+    {
+     "artist": "Tatsuro Yamashita",
+     "track": "Sparkle",
+     "reason": "DEAD UPLOAD, not a curation call: this id 404s on oEmbed. All three CITY LIGHTS tracks on the fan channel \"TIPO\" (Sparkle, Ride On Time, Bomber) died together -- oEmbed 404 and watch page ERROR \"Video unavailable\", re-confirmed 2026-11-01 -- so it reads as a channel takedown, the second in three weeks (TIPO had taken two of these in from the \"Commander\" takedown of 2026-10-15). Re-pointed to pqobRu9aR3M, Yamashita's own official channel (4:16 vs 4:14, 249 countries); the track itself stays. Do not re-add this id.",
+     "rejectedAt": "2026-11-01",
+     "youtubeId": "tWqZASIxlqs"
+    },
+    {
+     "artist": "Tatsuro Yamashita",
+     "track": "Ride On Time",
+     "reason": "DEAD UPLOAD, not a curation call: this id 404s on oEmbed. All three CITY LIGHTS tracks on the fan channel \"TIPO\" (Sparkle, Ride On Time, Bomber) died together -- oEmbed 404 and watch page ERROR \"Video unavailable\", re-confirmed 2026-11-01 -- so it reads as a channel takedown, the second in three weeks (TIPO had taken two of these in from the \"Commander\" takedown of 2026-10-15). No official or Topic upload exists; re-pointed to be5AvQFzsu0 (Hi-Fi Radio, 5:52 vs 5:51, 249 countries), a channel new to the station so the three are spread across three channels. The track itself stays. Do not re-add this id.",
+     "rejectedAt": "2026-11-01",
+     "youtubeId": "FCoOyPa6k-U"
+    },
+    {
+     "artist": "Tatsuro Yamashita",
+     "track": "Bomber",
+     "reason": "DEAD UPLOAD, not a curation call: this id 404s on oEmbed. All three CITY LIGHTS tracks on the fan channel \"TIPO\" (Sparkle, Ride On Time, Bomber) died together -- oEmbed 404 and watch page ERROR \"Video unavailable\", re-confirmed 2026-11-01 -- so it reads as a channel takedown, the second in three weeks (TIPO had taken two of these in from the \"Commander\" takedown of 2026-10-15). No official or Topic upload exists; re-pointed to -hkFL1WOJNo (Kenny.T - City Pop Track, already used here, 5:44 vs 5:58, 249 countries). The track itself stays. Do not re-add this id.",
+     "rejectedAt": "2026-11-01",
+     "youtubeId": "S_9LEfENEMw"
     }
    ]
   },
@@ -964,6 +986,20 @@
      "reason": "A live cafe recording beside the album cut in search; the album cut QAPpsWcozao shipped.",
      "youtubeId": "DtyB-EUPY8c",
      "rejectedAt": "2026-09-12"
+    },
+    {
+     "artist": "The Gene Rains Group",
+     "track": "Tiki",
+     "reason": "DEAD UPLOAD, not a curation call: watch page UNPLAYABLE \"Video unavailable\" from 2026-10-23 (6 strikes, re-confirmed 2026-11-01) while oEmbed still returned 200. Both tracks on The Gene Rains Group - Topic died together -- a release pulled from distribution. Re-pointed to KVriE_cp_yk (Forgottenchannels, 3:00 vs 3:00, 249 countries); the track itself stays. Do not re-add this id.",
+     "rejectedAt": "2026-11-01",
+     "youtubeId": "7xRuJiHijlU"
+    },
+    {
+     "artist": "The Gene Rains Group",
+     "track": "Shangri-La",
+     "reason": "DEAD UPLOAD, not a curation call: watch page UNPLAYABLE \"Video unavailable\" from 2026-10-23 (6 strikes, re-confirmed 2026-11-01) while oEmbed still returned 200. Both tracks on The Gene Rains Group - Topic died together -- a release pulled from distribution. No Topic upload of Shangri-La survives; the only healthy one (q243fPsJIK4, Forgottenchannels, 3:05) would have put both Gene Rains tracks back on one channel against the SPREAD THE CHANNELS rule, so the slot went to Lotus Land (HPdE5Vdtdzo, Gene Rains - Topic, 3:32, 123 countries). q243fPsJIK4 stays a clean backup. The song is not in question. Do not re-add this id.",
+     "rejectedAt": "2026-11-01",
+     "youtubeId": "yjyzRv67oBE"
     }
    ]
   },
