@@ -48,7 +48,19 @@ test('the readout is one block: every line after the banner shares a left edge',
       assert.equal(edges.size, 1, `one left edge on ${mobile ? 'lite' : 'desktop'}: ${[...edges]}`)
       const colons = new Set(body.filter((r) => r.includes(' : ')).map((r) => r.indexOf(' : ')))
       assert.equal(colons.size, 1, 'the colons line up')
-      for (const r of body) assert.ok(r.trimEnd().length <= h.term.cols, 'fits the grid')
+      // 2026-11-01 (audit L5) -- this used to assert each ROW's length was
+      // within cols, which cannot fail: term.text() clips at the grid edge,
+      // so an overrun reads back as a row of exactly cols. Asked of what was
+      // BUILT instead, and then checked that what was built is what landed.
+      const { lines, x, width } = h.program.bootReadout(h.term)
+      assert.ok(x >= 0, `block starts on the grid (x=${x})`)
+      assert.ok(x + width <= h.term.cols, `block fits the grid: x ${x} + width ${width} <= ${h.term.cols} (${mobile ? 'lite' : 'desktop'})`)
+      // The last line is swapped for the tap's state as it lands; width
+      // already allows for its widest form, so only the others are compared.
+      const built = lines.slice(1, -1).filter(Boolean)
+      for (const l of built) {
+        assert.ok(rows.includes((' '.repeat(x) + l).padEnd(h.term.cols)), `"${l}" drawn whole at x=${x}`)
+      }
     } finally { h.shutdown() }
   }
 })
