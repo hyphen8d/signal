@@ -1144,6 +1144,17 @@ flowchart LR
   fires on the streak alone — with one flag on the record, six throttled
   days in a row used to notify nothing.
 
+  **A takedown jumps the queue** (2026-11-01, audit M3): the watch runs
+  `check-roster --oembed-sweep`, one oEmbed request per track before the
+  batch is chosen, because the rotation reaches a given track once a pass
+  (~20 days) and three CITY LIGHTS 404s sat in the record as OK that long.
+  Anything oEmbed calls GONE (401/404 only, `oembedVerdict()` in probe.mjs)
+  goes to the front, inside the same `flaggedCap` slots, and the deep probe
+  records it as an ordinary flag -- so confirm-twice and notify-once handle
+  it, with no second flagging path. A 429/5xx/network error is unanswered:
+  never promoted, never DEAD (decayFlags writes UNVERIFIED for it now), and
+  a sweep left unanswered makes the run `incomplete`, never `clean`.
+
   The rule it exists for: **`check-roster` exits 0 when throttled**, since it
   found nothing wrong — it merely never looked. So the obvious scheduler
   (fire it, check the exit code, stay quiet on 0) reports an unfinished sweep
