@@ -76,6 +76,54 @@ export function normalizePanel(raw, opts = {}) {
   return out
 }
 
+/** The rows the LISTENER set, read out of a saved payload -- as opposed to
+ *  rows that merely hold a default. normalizePanel() lays these over
+ *  defaultPanel() at every boot, so an untouched row keeps following the
+ *  default (the reduced-motion one included) instead of freezing at
+ *  whatever the default was on the day of the first save.
+ *
+ *  2026-11-01 (audit M1) -- the first shape saved `panel` WHOLE on every
+ *  save (the 2026-10-15 note in state.js), and init() fills every row, so
+ *  the first [C], lock or volume press of a first visit wrote all four.
+ *  From then on the saved row beat prefers-reduced-motion forever: a
+ *  visitor who switched the OS setting on afterwards kept the flicker, and
+ *  one whose first visit was made under it stayed CALM for good -- on
+ *  mobile, with no card to undo it. The whole-payload rule was written for
+ *  a reduced-motion visitor who CHOSE FULL; it could not tell that visitor
+ *  from one who never opened the card. Now only setPanelOption() adds a
+ *  row, and the payload is `panelSet`, a new key, so the two shapes can
+ *  never be confused.
+ *
+ *  An old `panel` payload still cannot say which rows were touched, so it
+ *  is read as: a row holding its built default (row.def, the NON-reduced
+ *  one) is untouched; a row anywhere else was set. For HUM, STATIC and
+ *  VOICE that loses nothing -- untouched and "set to the default" give the
+ *  same value today. For SCREEN it means an old `full` is dropped and an
+ *  old `calm` kept, and that asymmetry is the decision: each way of being
+ *  wrong lands on the less-motion side. Dropping `full` is wrong only for
+ *  a reduced-motion visitor who explicitly picked FULL in the two weeks
+ *  the old shape was live, and costs them one [R] press, after which it
+ *  sticks in the new shape for good. Keeping it would leave every visitor
+ *  whose first save happened before they turned reduce-motion on staring
+ *  at the flicker their OS asked us to stop -- and that is nearly every
+ *  old payload, because nearly every `full` in one was written by init(),
+ *  not by a hand. Keeping `calm` errs the same way: the worst case is a
+ *  calm picture someone did not ask for, never a flickering one. */
+export function panelChoices(saved) {
+  const out = {}
+  if (!saved || typeof saved !== 'object') return out
+  const fresh = saved.panelSet && typeof saved.panelSet === 'object'
+  const raw = fresh ? saved.panelSet : saved.panel
+  if (!raw || typeof raw !== 'object') return out
+  for (const row of PANEL_ROWS) {
+    const v = raw[row.key]
+    if (!row.options.includes(v)) continue
+    if (!fresh && v === row.def) continue // old whole payload: a default is not a choice
+    out[row.key] = v
+  }
+  return out
+}
+
 /** One [<-]/[->] press. Clamps at the ends rather than wrapping: these are
  *  pots and switches with stops, and a wrap would make [->] on NORMAL turn
  *  the hum OFF -- the opposite of what the arrow says. Returns the value

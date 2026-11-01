@@ -112,6 +112,12 @@ export default {
 
   setPanelOption(s, key, value) {
     this.panel = { ...this.panel, [key]: value }
+    // Only a row set HERE is saved (2026-11-01, audit M1): see panelChoices()
+    // in settings.js for why a whole-panel save froze the reduced-motion
+    // default. Setting a row to the value it already defaults to still
+    // counts -- that is someone answering the question, and it must stick
+    // when the default under it changes.
+    this.panelSet = { ...this.panelSet, [key]: value }
     this.applyPanel(s, key)
     saveSignalState(this)
     if (this.panelOpen) this.drawPanelCard(s)

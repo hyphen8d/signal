@@ -37,7 +37,7 @@ const { default: guide } = await import(`./ui/guide.js?v=${V}`)
 const { default: tapConsentUi } = await import(`./ui/tap-consent.js?v=${V}`)
 const { default: weatherUi } = await import(`./ui/weather.js?v=${V}`)
 const { default: rearPanelUi } = await import(`./ui/rear-panel.js?v=${V}`)
-const { OPTION_LABELS, PANEL_ROWS, normalizePanel, prefersReducedMotion } = await import(`./settings.js?v=${V}`)
+const { OPTION_LABELS, PANEL_ROWS, normalizePanel, panelChoices, prefersReducedMotion } = await import(`./settings.js?v=${V}`)
 const { default: visualizer } = await import(`./visualizer.js?v=${V}`)
 const { default: game } = await import(`./game.js?v=${V}`)
 
@@ -576,7 +576,12 @@ export default {
     // rather than flickering until the first power-on. Read outside the
     // `if (saved)` block because the reduced-motion default has to apply to
     // a first visit too -- that is the visit it matters most on.
-    this.panel = normalizePanel(saved?.panel, { reducedMotion: prefersReducedMotion() })
+    // 2026-11-01 (audit M1) -- two fields now: panelSet is the rows the
+    // listener actually set (all that state.js saves), panel is those laid
+    // over this boot's defaults. An untouched row therefore re-reads the
+    // reduced-motion default every load; see panelChoices() in settings.js.
+    this.panelSet = panelChoices(saved)
+    this.panel = normalizePanel(this.panelSet, { reducedMotion: prefersReducedMotion() })
     this.applyPanel(s)
     // ?station=<id> (2026-08-27, admin-backend pass) -- boots straight to a
     // named station, secret ones included. It exists for the identity
