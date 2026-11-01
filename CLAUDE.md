@@ -587,7 +587,9 @@ concurrency buys nothing -- only less work does):
   `h.term.fb` directly). That is byte-exact because dirty rows accumulate
   until `raster()` clears them; `tests/lazy-raster.test.mjs` proves it
   against `boot({ eagerRaster: true })` across the radio and every
-  `putGlyph` effect. **A new pixel effect belongs in that test's list.**
+  `putGlyph` effect. **The list builds itself** (2026-11-01) from the
+  registry and each module's `putGlyph` calls, so a new pixel effect is
+  covered once a station ships it.
 - **Node's compile cache**, in `.node-compile-cache/` (gitignored, ~70MB, per
   machine): the harness's `?v=test<n>` tags repeat run to run, which is what
   makes it hit. package.json and the admin server's suite task both name it;
