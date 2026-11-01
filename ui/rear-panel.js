@@ -80,6 +80,16 @@ export default {
     playPanelSound(false)
     // Same footprint as the weather card, so the same put-back.
     this.redrawWeatherRegion(s)
+    // 2026-11-01 (audit L10) -- the opening was said and the closing was
+    // not, so a screen-reader user who pressed [R] again heard nothing and
+    // could not know whether the arrows now tuned the radio or still set
+    // the panel -- which is the whole difference between [<-] turning the
+    // hum down and seeking off the station. No forget() needed here, unlike
+    // the weather card's close: every close follows openPanel()'s own line
+    // of the same kind, so the dedup never sees two closes in a row. The
+    // put-back above repaints the station and track through their own
+    // deduped kinds, so nothing else is said.
+    announce('Rear panel closed.', 'panel')
   },
 
   /** Would this arrow MOVE anything? isMappedKey() asks before the click,
