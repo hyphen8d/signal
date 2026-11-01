@@ -222,13 +222,13 @@ test('a repoint save (`replaces`) keeps the old entry\'s comment block on the ne
     const state = (await request({ path: '/api/state', headers: ADMIN })).json
     const st = state.roster.stations.find((s) => s.id === 'city-lights')
     const tracks = st.tracks.map(({ youtubeId, title, artist }) => ({ youtubeId, title, artist }))
-    const i = tracks.findIndex((t) => t.youtubeId === 'FCoOyPa6k-U')
-    tracks[i] = { ...tracks[i], youtubeId: 'ZZZZZZZZZZZ', replaces: 'FCoOyPa6k-U' }
+    const i = tracks.findIndex((t) => t.youtubeId === 'be5AvQFzsu0')
+    tracks[i] = { ...tracks[i], youtubeId: 'ZZZZZZZZZZZ', replaces: 'be5AvQFzsu0' }
     const before = read('stations.js')
     const r = await post('/api/save-tracks', { stationId: 'city-lights', tracks, baseHash: state.hashes.stations })
     assert.equal(r.status, 200, r.text)
     assert.deepEqual(r.json.droppedComments, [])
-    assert.equal(read('stations.js'), before.replace("realTrack('FCoOyPa6k-U',", "realTrack('ZZZZZZZZZZZ',"))
+    assert.equal(read('stations.js'), before.replace("realTrack('be5AvQFzsu0',", "realTrack('ZZZZZZZZZZZ',"))
   } finally { restore() }
 })
 

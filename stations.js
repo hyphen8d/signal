@@ -925,7 +925,15 @@ export const STATIONS = [
     visual: 'ripple',
     tracks: [
       realTrack('5zTkTlj2h9E', 'Stay With Me', 'Miki Matsubara'),
-      realTrack('tWqZASIxlqs', 'Sparkle', 'Tatsuro Yamashita'),
+      // 2026-11-01 -- re-pointed, same recording: tWqZASIxlqs sat on the fan
+      // channel "TIPO", and all three TIPO uploads here (this, Ride On Time
+      // and Bomber) went oEmbed 404 / "Video unavailable" together -- the
+      // second fan-channel takedown in three weeks, TIPO having taken two of
+      // them in from the "Commander" takedown on 2026-10-15. This one has an
+      // official home: Yamashita's own channel, 4:16 against TIPO's 4:14,
+      // 249 countries, no flags -- the 1982 recording with the video made for
+      // it in 2023. Same channel as Loveland, Island.
+      realTrack('pqobRu9aR3M', 'Sparkle', 'Tatsuro Yamashita'),
       realTrack('8ageCZxJ-WQ', '4:00AM', 'Taeko Onuki'),
       realTrack('4X7ZvpwBiKA', 'Flyday Chinatown', 'Yasuha'),
       realTrack('k-BrT2SQ7SI', "Cat's Eye", 'Anri'),
@@ -936,7 +944,16 @@ export const STATIONS = [
       // went 404 the same day -- a channel takedown, the standing risk of the
       // fan-archive sourcing this station accepts. TIPO's upload is 5:51
       // against the old 6:00, no flags, and the channel is already used here.
-      realTrack('FCoOyPa6k-U', 'Ride On Time', 'Tatsuro Yamashita'),
+      //
+      // 2026-11-01 -- re-pointed again: TIPO went too (see Sparkle above),
+      // FCoOyPa6k-U oEmbed 404. No official or Topic upload of the song
+      // exists, so it stays fan-sourced: Hi-Fi Radio, "Ride On Time (1980,
+      // Remastered)", 5:52 against TIPO's 5:51, 249 countries, no flags. A
+      // channel new to the station on purpose -- the three dead TIPO tracks
+      // now sit on three different channels, so the next takedown costs one.
+      // Passed over: the 4:25-4:26 uploads (Kend Ronal, Salvador2k), which
+      // are the single edit rather than the album cut the station had.
+      realTrack('be5AvQFzsu0', 'Ride On Time', 'Tatsuro Yamashita'),
       realTrack('T_lC2O1oIew', 'Plastic Love', 'Mariya Takeuchi'),
       realTrack('XJWqHmY-g9U', 'Telephone Number', 'Junko Ohashi'),
       realTrack('B6O09Jx4ONM', 'Love Step', 'Miharu Koshi'),
@@ -1030,7 +1047,16 @@ export const STATIONS = [
       // Time above). TIPO again, 5:58 against the old 5:57; TIPO's 5:12
       // upload of the same title was passed over as a likely edit. NOT
       // Hirotaka Mori - Topic's "Bomber", which is a different artist.
-      realTrack('S_9LEfENEMw', 'Bomber', 'Tatsuro Yamashita'),
+      //
+      // 2026-11-01 -- re-pointed again: TIPO went too (see Sparkle above),
+      // S_9LEfENEMw oEmbed 404. No official or Topic upload exists. Now on
+      // "Kenny.T - City Pop Track", already used here (4:00AM, September)
+      // and the one fan channel on this station that has outlived both
+      // takedowns: 5:44 against TIPO's 5:58, 249 countries, no flags. The
+      // 14s is most likely the fade -- the alternative was Kend Ronal's
+      // 5:12, the same suspected edit TIPO's 5:12 was passed over as.
+      // Hirotaka Mori - Topic's Bomber is still the wrong artist.
+      realTrack('-hkFL1WOJNo', 'Bomber', 'Tatsuro Yamashita'),
       realTrack('pSbzx-0wbs0', 'Two Call', 'Kaoru Akimoto'),
     ] },
   // 22nd pass -- outlaw channel dropped completely, 9 channels being the
@@ -2111,8 +2137,25 @@ export const STATIONS = [
       realTrack('eZ1BWvwz-1Y', 'Busy Port', 'Martin Denny'),
       realTrack('UP0ocIaey4I', 'Yellow Bird', 'Arthur Lyman'),
       realTrack('8VoGolxjRsA', 'Akaka Falls', 'Arthur Lyman'),
-      realTrack('7xRuJiHijlU', 'Tiki', 'The Gene Rains Group'),
-      realTrack('yjyzRv67oBE', 'Shangri-La', 'The Gene Rains Group'),
+      // 2026-11-01 -- both Gene Rains tracks died together: 7xRuJiHijlU and
+      // yjyzRv67oBE (The Gene Rains Group - Topic) watch-page UNPLAYABLE
+      // "Video unavailable" from 2026-10-23, six strikes, while oEmbed still
+      // answered 200 -- a release pulled from distribution, which takes a
+      // Topic channel's whole album at once. That is the SPREAD THE CHANNELS
+      // rule in the profile, so the two replacements deliberately sit on
+      // different channels rather than both moving to one:
+      //   Tiki -- same song on the archive channel Forgottenchannels, 3:00
+      //   against the Topic's 3:00, 249 countries, no flags.
+      //   Shangri-La -> Lotus Land -- no Topic upload of Shangri-La survives;
+      //   the only one found (q243fPsJIK4, Forgottenchannels, 3:05 vs 3:01,
+      //   249 countries) would have put both Rains tracks back on a single
+      //   channel. Lotus Land is the title track of his Lotus Land LP, a
+      //   single track on Gene Rains - Topic (a different channel from the
+      //   dead one), 3:32, 123 countries, no flags. q243fPsJIK4 is the backup
+      //   if either dies. Credited as The Gene Rains Group for consistency
+      //   with Tiki, as the second-pass note above sets out.
+      realTrack('KVriE_cp_yk', 'Tiki', 'The Gene Rains Group'),
+      realTrack('HPdE5Vdtdzo', 'Lotus Land', 'The Gene Rains Group'),
       realTrack('c7UlDiP66GI', 'Sweet Pikake Serenade', 'The Waitiki 7'),
       realTrack('QAPpsWcozao', 'Ruby', 'The Waitiki 7'),
       realTrack('0fxAl-e6QNw', 'Jungle River Boat', 'Les Baxter'),

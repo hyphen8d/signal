@@ -682,14 +682,14 @@ test('repoint: a track that `replaces` an id inherits that entry\'s comment bloc
   const lib = await import('../tools/lib/roster.mjs')
   const st = lib.loadRosterFromText(src).STATIONS.find((s) => s.id === 'city-lights')
   const tracks = st.tracks.map(({ youtubeId, title, artist }) => ({ youtubeId, title, artist }))
-  const i = tracks.findIndex((t) => t.youtubeId === 'FCoOyPa6k-U')
+  const i = tracks.findIndex((t) => t.youtubeId === 'be5AvQFzsu0')
   assert.ok(i >= 0, 'test setup: the commented Ride On Time entry exists')
   // Without the hint the old entry's notes are reported dropped...
   const bare = lib.patchStationTracksDetailed(src, 'city-lights', tracks.map((t, k) => k === i ? { ...t, youtubeId: 'ZZZZZZZZZZZ' } : t))
   assert.equal(bare.droppedComments.length, 1)
   // ...with it, they stay above the new id and nothing else in the file moves.
-  const hinted = lib.patchStationTracksDetailed(src, 'city-lights', tracks.map((t, k) => k === i ? { ...t, youtubeId: 'ZZZZZZZZZZZ', replaces: 'FCoOyPa6k-U' } : t))
+  const hinted = lib.patchStationTracksDetailed(src, 'city-lights', tracks.map((t, k) => k === i ? { ...t, youtubeId: 'ZZZZZZZZZZZ', replaces: 'be5AvQFzsu0' } : t))
   assert.deepEqual(hinted.droppedComments, [])
-  assert.equal(hinted.text, src.replace("realTrack('FCoOyPa6k-U',", "realTrack('ZZZZZZZZZZZ',"), 'exactly one id changed, comments kept')
+  assert.equal(hinted.text, src.replace("realTrack('be5AvQFzsu0',", "realTrack('ZZZZZZZZZZZ',"), 'exactly one id changed, comments kept')
   assert.throws(() => lib.patchStationTracksDetailed(src, 'city-lights', [{ ...tracks[0], replaces: 'nope' }]), /replaces/)
 })
