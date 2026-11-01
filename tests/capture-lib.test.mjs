@@ -7,12 +7,12 @@
 // Chrome, a tool still running from an older checkout).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync, utimesSync } from 'node:fs'
 import { inflateSync } from 'node:zlib'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import {
-  acquireLock, chromePidsFor, isAlive, makeRunDir, normArgs, planReap, procStart, runOwner,
+  acquireLock, breakStale, chromePidsFor, isAlive, makeRunDir, normArgs, planReap, procStart, runOwner,
 } from '../tools/lib/capture.mjs'
 import { crc32, encodePNG } from '../tools/lib/png.mjs'
 import { previewEffect, sheet, tintFramebuffer } from '../tools/viz-preview.mjs'
@@ -64,6 +64,38 @@ test('lock: a dead holder is stale and broken; a live one times out rather than 
       acquireLock({ file, reentrant: false, poll: 10, timeoutMs: 60, log: quiet, alive: () => true }),
       /still held by pid 4242/)
     assert.equal(JSON.parse(readFileSync(file, 'utf8')).pid, 4242)
+  } finally { rmSync(dir, { recursive: true, force: true }) }
+})
+
+// 2026-11-01 (audit L9) -- breaking a stale lock is exclusive. The race it
+// closes needs three processes interleaved inside microseconds, so the test
+// drives the guard directly: while another breaker holds `.break`, the
+// lock is not touched at all (the rename-aside version moved it regardless).
+test('lock: breaking a stale lock is exclusive, and never takes a fresh one', () => {
+  const dir = scratch()
+  try {
+    const file = path.join(dir, 'capture.lock')
+    const dead = { pid: 2 ** 22 + 4242, start: '1' }
+    const brk = `${file}.break`
+    writeFileSync(file, JSON.stringify(dead))
+    // Another breaker is mid-break: hands off.
+    writeFileSync(brk, '1\n')
+    assert.equal(breakStale(file, dead), false)
+    assert.equal(JSON.parse(readFileSync(file, 'utf8')).pid, dead.pid, 'left for the breaker that holds .break')
+    assert.ok(existsSync(brk), "someone else's .break is not ours to remove while fresh")
+    // A .break left by a breaker that died is cleared on sight, and the next
+    // poll breaks.
+    const old = new Date(Date.now() - 60_000)
+    utimesSync(brk, old, old)
+    assert.equal(breakStale(file, dead), false)
+    assert.ok(!existsSync(brk))
+    assert.equal(breakStale(file, dead), true)
+    assert.ok(!existsSync(file) && !existsSync(brk))
+    // The lock was already broken and retaken by a live waiter: untouched.
+    writeFileSync(file, JSON.stringify({ pid: process.pid, start: 'live' }))
+    assert.equal(breakStale(file, dead), false)
+    assert.equal(JSON.parse(readFileSync(file, 'utf8')).pid, process.pid)
+    assert.ok(!existsSync(brk), 'our .break is always released')
   } finally { rmSync(dir, { recursive: true, force: true }) }
 })
 
