@@ -102,10 +102,6 @@
   table.tracks .row-actions button.danger { border-color: var(--line); color: var(--ink-dim); }
   table.tracks tr:hover .row-actions button.danger,
   table.tracks .row-actions button.danger:focus-visible { border-color: var(--red); color: var(--red); }
-  .ship-ready { margin: 10px 0 6px; font-size: 12px; }
-  .ship-ready.ok { color: var(--green); }
-  .ship-ready.blocked { color: var(--red); }
-  .ship-ready.checking { color: var(--ink-dim); }
   .repoint-banner { border: 1px solid var(--amber); color: var(--amber); padding: 6px 10px; margin-bottom: 10px; font-size: 12px; }
   #unsaved-slot { display: flex; gap: 6px; align-items: center; }
   .chevron { color: var(--ink-faint); width: 1em; }
@@ -276,6 +272,9 @@
     border-bottom: 1px solid var(--line); margin: 0 -28px 16px; padding: 10px 28px 8px;
   }
   .topbar-row { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+  /* The first row carries the clock and lamp, which have height of their
+     own; centred, so the help button does not drop to their baseline. */
+  .topbar-row:first-child { align-items: center; }
   .topbar h1 { margin: 0; }
   .spacer { flex: 1; }
   .jump { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
@@ -334,6 +333,252 @@
   :focus-visible { outline: 1px solid var(--amber); outline-offset: 1px; }
   .panel-head:focus-visible { background: #11181c; }
   [role=button] { cursor: pointer; }
+
+  /* ==== the control room (2026-11-02) ================================
+     The dashboard dressed as a network's master control room: a studio
+     clock, an ON AIR lamp, a programme meter, and SHIP as a transmitter key
+     with its sequence of lamps. "Would a real radio have this?" is the
+     app's test; this page's version is "would the room that runs the
+     network have this?" -- and every piece below is something that room has,
+     doing the job it does there: the lamp says the air is held, the meter
+     says a programme is running, the key is held, not tapped.
+
+     Colour, in the spirit of the header above. One new token and it is a
+     LAMP, not a status: --tally is a studio tally light's warm red, pushed
+     brighter and toward orange than --red (15deg against --red's 9deg,
+     much higher luminance), and it is only ever drawn as a FILL with a
+     glow -- a lit lamp. --red stays text and borders only, as it always
+     was, so "on air" and "failed" never arrive as the same mark: one is a
+     glowing block, the other an outline. The unlit state of every lamp is
+     the theme's own --line/--panel, so a dark lamp reads as the hardware
+     it is rather than as a disabled control. */
+  :root { --tally: #ff6a3d; --tally-dim: #3a1a12; }
+  .cr-group { display: inline-flex; align-items: center; gap: 10px; }
+  /* -- studio clock: 60 second-dots round a digital readout, the clock on
+        every studio wall. The dots are information (the seconds), so they
+        tick under reduced motion too; nothing on it animates between. */
+  .studio-clock { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); }
+  .studio-clock svg { width: 30px; height: 30px; display: block; }
+  .studio-clock circle { fill: var(--line); }
+  .studio-clock circle.on { fill: var(--cyber); }
+  .studio-clock circle.q { fill: var(--ink-faint); }
+  .studio-clock circle.q.on { fill: var(--cyber); }
+  .clk-time { font-size: 15px; letter-spacing: .06em; font-variant-numeric: tabular-nums; color: var(--cyber); }
+  .clk-date { display: block; font-size: 9.5px; letter-spacing: .14em; color: var(--ink-faint); text-transform: uppercase; }
+  /* -- the ON AIR lamp. Dark: an engraved legend on an unlit lens. Lit: the
+        tally fill and a soft glow, breathing slowly -- unless the viewer
+        asked for less motion, when it is simply lit. */
+  .onair { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+  .onair .lens {
+    font-size: 11px; font-weight: bold; letter-spacing: .22em; padding: 4px 9px 4px 11px;
+    border: 1px solid #3a2a26; border-radius: 3px; color: #5a3a32; background: #120c0b;
+    transition: background .25s, color .25s, box-shadow .25s;
+  }
+  .onair .who { font-size: 9.5px; letter-spacing: .08em; color: var(--ink-faint); max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .onair.lit .lens {
+    background: var(--tally); color: #2a0d05; border-color: #ff9a76;
+    box-shadow: 0 0 10px 1px rgba(255, 106, 61, .55), 0 0 26px 4px rgba(255, 106, 61, .18);
+    animation: tally-breathe 2.6s ease-in-out infinite;
+  }
+  .onair.lit .who { color: var(--tally); }
+  @keyframes tally-breathe {
+    0%, 100% { box-shadow: 0 0 10px 1px rgba(255, 106, 61, .55), 0 0 26px 4px rgba(255, 106, 61, .18); }
+    50%      { box-shadow: 0 0 6px 0 rgba(255, 106, 61, .35), 0 0 14px 2px rgba(255, 106, 61, .10); }
+  }
+  .sound-btn { font-size: 10px; padding: 2px 8px; }
+  /* -- the programme meter bridge. Segments lit from the line rate of
+        whatever this page is streaming; see tools/lib/control-room.mjs. */
+  .bridge { display: inline-flex; align-items: center; gap: 9px; font-size: 11px; color: var(--ink-faint); }
+  .bridge .lbl { font-size: 9.5px; letter-spacing: .16em; }
+  .vu { display: inline-flex; gap: 2px; align-items: flex-end; height: 12px; }
+  .vu i { display: block; width: 4px; height: 12px; background: #141b20; border-radius: 1px; }
+  .vu i.g { background: var(--green); } .vu i.a { background: var(--amber); } .vu i.r { background: var(--red); }
+  .vu i.pk { outline: 1px solid var(--ink-dim); outline-offset: -1px; }
+  .bridge .what { color: var(--ink-dim); min-width: 0; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bridge .what.live { color: var(--ink); }
+  .bridge .suite { display: none; align-items: center; gap: 6px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .bridge .suite.on { display: inline-flex; }
+  .bridge .suite .bar { width: 90px; height: 4px; background: #141b20; border-radius: 2px; overflow: hidden; }
+  .bridge .suite .bar > span { display: block; height: 100%; width: 0; background: var(--cyber); }
+  .bridge .suite.fail { color: var(--red); } .bridge .suite.fail .bar > span { background: var(--red); }
+  .bridge .rm-lines { display: none; font-variant-numeric: tabular-nums; }
+  .lasttx { color: var(--ink-faint); font-size: 11px; }
+  .lasttx b { color: var(--ink-dim); font-weight: normal; }
+
+  /* -- the transmitter: readiness, the sequence lamps, the key. */
+  .tx { margin-top: 12px; border: 1px solid var(--line); border-radius: 3px; background: #0b0f12; padding: 12px 14px; }
+  .tx-ready { display: flex; align-items: baseline; gap: 10px; font-size: 12px; }
+  .tx-ready .flag-word { font-weight: bold; letter-spacing: .18em; font-size: 11px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 2px; color: var(--ink-faint); white-space: nowrap; }
+  .tx-ready.ok .flag-word { color: var(--green); border-color: #2e5a2e; }
+  .tx-ready.blocked .flag-word { color: var(--red); border-color: #5a2e2e; }
+  .tx-ready .why { color: var(--ink-dim); }
+  .tx-ready.blocked .why div { color: var(--red); }
+  .tx-lamps { display: flex; align-items: flex-start; margin: 16px 0 14px; flex-wrap: wrap; row-gap: 10px; }
+  .tx-lamp { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 64px; position: relative; }
+  /* the wire between lamps: drawn from each lamp back to the previous one */
+  .tx-lamp + .tx-lamp::before { content: ''; position: absolute; top: 6px; right: 50%; width: 100%; height: 1px; background: var(--line); z-index: 0; margin-right: 8px; }
+  .tx-lamp .bulb { width: 13px; height: 13px; border-radius: 50%; background: #11171b; border: 1px solid var(--line); position: relative; z-index: 1; }
+  .tx-lamp .name { font-size: 9.5px; letter-spacing: .14em; color: var(--ink-faint); }
+  .tx-lamp .sub { font-size: 9.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; min-height: 1em; }
+  .tx-lamp.run .bulb { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 8px rgba(232, 184, 74, .7); animation: lamp-blink 1s steps(2, jump-none) infinite; }
+  .tx-lamp.run .name { color: var(--amber); }
+  .tx-lamp.pass .bulb { background: var(--green); border-color: var(--green); box-shadow: 0 0 6px rgba(106, 212, 106, .45); }
+  .tx-lamp.pass .name { color: var(--green); }
+  .tx-lamp.fail .bulb { background: var(--red); border-color: var(--red); box-shadow: 0 0 10px rgba(232, 96, 74, .8); }
+  .tx-lamp.fail .name { color: var(--red); }
+  .tx-lamp.pass + .tx-lamp::before, .tx-lamp.pass + .tx-lamp.run::before { background: #2e5a2e; }
+  @keyframes lamp-blink { 0% { opacity: 1; } 100% { opacity: .45; } }
+  .tx-verdict { margin-left: auto; align-self: center; font-size: 11px; font-weight: bold; letter-spacing: .2em; padding: 6px 12px; border-radius: 3px; border: 1px solid var(--line); color: var(--ink-faint); white-space: nowrap; }
+  .tx-verdict.onair { background: var(--tally); color: #2a0d05; border-color: #ff9a76; box-shadow: 0 0 14px 2px rgba(255, 106, 61, .5); }
+  .tx-verdict.offair { color: var(--red); border-color: var(--red); }
+  .tx-key-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .tx-key {
+    position: relative; overflow: hidden; min-width: 250px; height: 46px; padding: 0 18px;
+    border: 1px solid #5a2e22; background: #140d0b; color: #d98a6e; border-radius: 4px;
+    font-size: 12px; font-weight: bold; letter-spacing: .2em; touch-action: none; user-select: none; -webkit-user-select: none;
+  }
+  .tx-key:hover:not(:disabled) { border-color: var(--tally); color: var(--tally); }
+  .tx-key .fill { position: absolute; inset: 0; background: var(--tally); transform-origin: left center; transform: scaleX(var(--hold, 0)); opacity: .9; pointer-events: none; }
+  .tx-key .cap { position: relative; z-index: 1; pointer-events: none; }
+  .tx-key.holding { border-color: var(--tally); }
+  .tx-key.holding .cap, .tx-key.keyed .cap { color: #fff3ec; text-shadow: 0 0 6px rgba(42, 13, 5, .9); }
+  .tx-key.keyed { box-shadow: 0 0 16px 2px rgba(255, 106, 61, .45); }
+  .tx-key.keyed .fill { opacity: 1; }
+  /* Keyed is disabled (one transmission at a time) but must read LIT, not
+     greyed out: the generic button:disabled dimming is undone here. */
+  .tx-key.keyed:disabled { opacity: 1; cursor: default; }
+  .tx-key-hint { font-size: 11px; color: var(--ink-faint); }
+  .tx-key-hint.nudge { color: var(--amber); }
+
+  /* Asked for less motion: every lamp is simply lit or not, the meter
+     becomes a line count, and the key's fill steps rather than sweeps. The
+     hold itself is unchanged -- it is the safety, not a decoration. */
+  /* ==== the rack (2026-11-02, visual pass) ===========================
+     Every tool panel is a rack unit and every station row a channel strip.
+     All of it is CSS gradients on the theme's own neutrals: the faceplate is
+     --panel lifted a step toward --line with a brushed grain at 1-2% white,
+     the screws are --ink-faint over --bg, the engraving is --ink-faint cut
+     into a --bg strip. No new hues -- the LEDs reuse the status colours, so
+     green/amber/red mean on a unit what they mean everywhere else here.
+     Readability first: the grain is below what you notice on text, and an
+     open unit's insides are a flat recessed well, not the textured face. */
+  :root {
+    --face-hi: #161d21; --face-lo: #0d1114;     /* --panel, a step up and down */
+    --screw: #66757f; --screw-rim: #1d252a;     /* --ink-faint family */
+    --engrave: #4d5c66;
+  }
+  .panel {
+    background:
+      /* One screw per rack ear, centred on the 1U head row -- two stacked
+         in a 42px head read as an "=" sign (first screenshot). */
+      linear-gradient(135deg, transparent 4.3px, #0b0f11 4.3px 5.7px, transparent 5.7px) left 6px top 15px / 10px 10px no-repeat,
+      linear-gradient(135deg, transparent 4.3px, #0b0f11 4.3px 5.7px, transparent 5.7px) right 6px top 15px / 10px 10px no-repeat,
+      radial-gradient(circle, var(--screw) 0 3px, var(--screw-rim) 3.5px 4.4px, transparent 4.9px) left 6px top 15px / 10px 10px no-repeat,
+      radial-gradient(circle, var(--screw) 0 3px, var(--screw-rim) 3.5px 4.4px, transparent 4.9px) right 6px top 15px / 10px 10px no-repeat,
+      repeating-linear-gradient(90deg, rgba(255,255,255,.016) 0 1px, transparent 1px 3px, rgba(0,0,0,.05) 3px 4px),
+      linear-gradient(180deg, var(--face-hi), var(--face-lo));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.6), 0 2px 5px rgba(0,0,0,.45);
+    transition: box-shadow .18s, transform .18s;
+  }
+  .panel-head { padding-left: 26px; padding-right: 26px; min-height: 42px; }
+  .panel-head:hover { background: rgba(255,255,255,.018); }
+  /* Pulled out of the rack: a deeper shadow under the face, and the body a
+     recessed well that slides down from behind it. */
+  .panel.open { box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.6); transform: translateX(-2px); }
+  .panel.open .panel-body { background: rgba(4,6,8,.62); box-shadow: inset 0 3px 8px rgba(0,0,0,.55); animation: unit-out .2s ease-out; margin: 0 22px 22px; border: 1px solid #12181b; border-radius: 2px; }
+  @keyframes unit-out { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .unit-tag {
+    font-size: 9px; letter-spacing: .2em; color: var(--engrave); white-space: nowrap;
+    background: #090c0e; border: 1px solid #1c2327; border-radius: 2px; padding: 2px 7px;
+    text-shadow: 0 1px 0 rgba(255,255,255,.07), 0 -1px 0 rgba(0,0,0,.9);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.8);
+  }
+  .led { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #1a2126; box-shadow: inset 0 1px 1px rgba(0,0,0,.8), 0 0 0 1px #0a0d0f; }
+  .led.ok { background: var(--green); box-shadow: 0 0 6px rgba(106,212,106,.65), 0 0 0 1px #0a0d0f; }
+  .led.warn { background: var(--amber); box-shadow: 0 0 6px rgba(232,184,74,.65), 0 0 0 1px #0a0d0f; }
+  .led.bad { background: var(--red); box-shadow: 0 0 7px rgba(232,96,74,.8), 0 0 0 1px #0a0d0f; }
+  .led.busy { background: var(--amber); box-shadow: 0 0 7px rgba(232,184,74,.8), 0 0 0 1px #0a0d0f; animation: lamp-blink .9s steps(2, jump-none) infinite; }
+  .led.air { background: var(--tally); box-shadow: 0 0 8px rgba(255,106,61,.8), 0 0 0 1px #0a0d0f; }
+  .led.dim { background: #2a4a2e; box-shadow: inset 0 1px 1px rgba(0,0,0,.6), 0 0 0 1px #0a0d0f; }
+
+  /* -- channel strips: the glyph as a backlit key, the dial position, the
+        track count as a short meter against the per-station ceiling. */
+  .glyph.keycap {
+    width: 24px; height: 22px; display: inline-grid; place-items: center; flex: none;
+    border: 1px solid #4a3d1c; border-radius: 3px; color: #ffd98a;
+    background: radial-gradient(circle at 50% 40%, rgba(232,184,74,.32), rgba(232,184,74,.07) 72%), #120f08;
+    text-shadow: 0 0 5px rgba(232,184,74,.9); box-shadow: inset 0 0 6px rgba(232,184,74,.22), 0 1px 0 rgba(0,0,0,.6);
+  }
+  .secret .glyph.keycap { color: #ffb3a6; border-color: #5a2a22; background: radial-gradient(circle at 50% 40%, rgba(232,96,74,.32), rgba(232,96,74,.07) 72%), #130a08; text-shadow: 0 0 5px rgba(232,96,74,.9); box-shadow: inset 0 0 6px rgba(232,96,74,.22); }
+  .posmark { position: relative; width: 56px; height: 12px; flex: none; }
+  .posmark::before { content: ''; position: absolute; left: 0; right: 0; bottom: 2px; height: 5px;
+    background: repeating-linear-gradient(90deg, var(--ink-faint) 0 1px, transparent 1px 7px) left bottom / 100% 3px no-repeat,
+                linear-gradient(var(--line), var(--line)) left bottom / 100% 1px no-repeat; }
+  .posmark i { position: absolute; bottom: 0; width: 2px; height: 11px; margin-left: -1px; background: var(--cyber); box-shadow: 0 0 4px rgba(107,199,255,.7); }
+  .trk-vu { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .trk-vu .segs { display: inline-flex; gap: 1px; }
+  .trk-vu .segs i { width: 3px; height: 9px; background: #182025; border-radius: 1px; }
+  .trk-vu .segs i.on { background: var(--ink-dim); }
+  .trk-vu.full .segs i.on { background: var(--amber); }
+
+  /* -- the jump bar's tuning dials: one per band, stations at their real
+        frequencies, a needle that travels to the one you jump to. */
+  .dial-wrap { display: inline-flex; align-items: flex-end; gap: 8px; margin-left: 10px; }
+  .dial { position: relative; width: 340px; height: 36px; flex: none;
+    background:
+      repeating-linear-gradient(90deg, var(--ink-faint) 0 1px, transparent 1px calc(100% / 16)) left bottom / 100% 4px no-repeat,
+      repeating-linear-gradient(90deg, var(--ink-dim) 0 1px, transparent 1px calc(100% / 8)) left bottom / calc(100% + 1px) 7px no-repeat,
+      linear-gradient(var(--line), var(--line)) left bottom 7px / 100% 1px no-repeat;
+  }
+  .dial .end { position: absolute; bottom: -1px; font-size: 8.5px; color: var(--ink-faint); transform: translateY(100%); }
+  .dial .end.lo { left: 0; } .dial .end.hi { right: 0; }
+  .dial-mark { position: absolute; bottom: 9px; width: 18px; margin-left: -9px; height: 27px; padding: 0; border: 0; background: none; border-radius: 2px;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 1px; cursor: pointer; font-family: var(--mono); }
+  .dial-mark .ab { font-size: 8.5px; line-height: 9px; color: var(--ink-dim); letter-spacing: 0; }
+  .dial-mark.hi .ab { margin-bottom: 9px; }
+  .dial-mark .pip { width: 6px; height: 6px; border-radius: 50%; background: #2b3a43; box-shadow: 0 0 0 1px #0a0d0f; }
+  .dial-mark:hover .ab, .dial-mark:focus-visible .ab { color: var(--ink); }
+  .dial-mark:hover .pip, .dial-mark:focus-visible .pip { background: var(--cyber); box-shadow: 0 0 5px rgba(107,199,255,.8); }
+  .dial-mark:hover:not(:disabled) { border: 0; }
+  .dial-mark.dirty .pip { background: var(--amber); } .dial-mark.dirty .ab { color: var(--amber); }
+  .dial-mark.flagged .pip { background: var(--red); box-shadow: 0 0 5px rgba(232,96,74,.8); } .dial-mark.flagged .ab { color: var(--red); }
+  .dial-needle { position: absolute; bottom: 0; height: 30px; width: 2px; margin-left: -1px; background: var(--cyber); box-shadow: 0 0 6px rgba(107,199,255,.75); transition: left .45s cubic-bezier(.3,.9,.3,1.05), opacity .3s; pointer-events: none; opacity: .9; }
+  .dial-needle.parked { opacity: .25; }
+  .dial-read { font-size: 10px; color: var(--cyber); min-width: 128px; white-space: nowrap; font-variant-numeric: tabular-nums; align-self: center; }
+  .dial-read .f { color: var(--ink-dim); }
+  .jump { align-items: flex-end; row-gap: 6px; padding-bottom: 12px; }
+  .jump-break { flex-basis: 100%; height: 0; }
+  .dial-wrap:first-of-type { margin-left: 0; }
+
+  /* -- seven-segment readouts: drawn segments, with the unlit ones ghosted
+        the way a real LED display shows its dark bars. Colour is
+        currentColor, so each readout keeps the token its text had. */
+  .seg { display: inline-block; vertical-align: -2px; line-height: 0; }
+  .seg svg { height: 100%; width: auto; display: block; overflow: visible; }
+  .seg polygon, .seg circle { fill: currentColor; }
+  .seg .off { opacity: .07; }
+  .seg.sm { height: 13px; } .seg.md { height: 15px; } .seg.lg { height: 22px; }
+  .seg.glow svg { filter: drop-shadow(0 0 3px currentColor); }
+  .clk-time .seg { color: var(--cyber); }
+  .totals .seg { color: var(--ink); margin-right: 3px; }
+  .conn-status .seg { color: var(--green); }
+
+  /* -- headers in the tube's own BOLD face (ter-u16b.bdf, the font
+        term.js draws BOLD cells with), 1:1 so every pixel lands on one. */
+  .bdf { display: inline-flex; align-items: center; color: inherit; position: relative; top: 2px; }
+  .bdf svg { height: 16px; width: auto; display: block; fill: currentColor; filter: drop-shadow(0 0 2px rgba(204,225,239,.18)); }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel, .panel.open { transition: none; transform: none; }
+    .panel.open .panel-body { animation: none; }
+    .led.busy { animation: none; }
+    .dial-needle { transition: none; }
+    .onair.lit .lens, .tx-lamp.run .bulb { animation: none; }
+    .onair .lens { transition: none; }
+    .vu { display: none; }
+    .bridge .rm-lines { display: inline; }
+  }
 </style>
 </head>
 <body>
@@ -343,10 +588,21 @@
     <h1 class="wordmark"><svg id="wordmark" role="img" aria-label="SIGNAL" shape-rendering="crispEdges"></svg><span class="sub">— network ops</span></h1>
     <span class="conn-status" id="conn-status" style="margin:0"></span>
     <span class="spacer"></span>
+    <span class="cr-group">
+      <span class="studio-clock" id="studio-clock" aria-hidden="true"><svg viewBox="-16 -16 32 32" id="clock-ring"></svg><span><span class="clk-time" id="clk-time">--:--:--</span><span class="clk-date" id="clk-date"></span></span></span>
+      <span class="onair" id="onair" role="status" aria-live="polite" title="Lit while the server's writer lock is held -- a SHIP, a save, a task, or a roster health batch (including the daily timer's). Nothing else can write while it is lit."><span class="lens">ON AIR</span><span class="who" id="onair-who">off air</span></span>
+      <button class="sound-btn" id="btn-sound" title="Control-room sounds: key clicks, a station's ident when you open it, the sign-on line when a SHIP goes out, static when something fails. Remembered in this browser.">♪ sound</button>
+    </span>
     <button class="helpbtn" id="btn-help" title="Show or hide the explanatory lines under each control">? help</button>
   </div>
   <div class="topbar-row" id="topbar-actions" style="display:none">
     <span class="totals" id="totals" style="margin:0"></span>
+    <span class="lasttx" id="lasttx"></span>
+    <span class="bridge" id="bridge" title="The programme meter: how fast output is arriving from whatever this page is running. A line rate, not progress -- it says something is talking, not how far along it is. The suite readout beside it IS a count: finished tests against the last complete run's total.">
+      <span class="lbl">PGM</span><span class="vu" id="vu"></span><span class="rm-lines" id="rm-lines"></span>
+      <span class="what" id="bridge-what">idle</span>
+      <span class="suite" id="bridge-suite"><span class="bar"><span></span></span><span class="txt"></span></span>
+    </span>
     <span class="spacer"></span>
     <span id="unsaved-slot"></span>
   </div>
@@ -479,6 +735,14 @@ import {
   STANDBY_LOGO_LETTER_H, STANDBY_LOGO_GAP,
 } from '/layout.js'
 
+// The control room's rules (2026-11-02) -- the hold-to-transmit key, the
+// meter ballistics, the suite count, the lamp caption. In a lib for the
+// reason roster.mjs is: tests/control-room.test.mjs holds them in Node.
+import {
+  TX_HOLD_MS, createHoldKey, lineRate, vuTarget, vuStep, vuSegments,
+  createSuiteCounter, suiteReadout, onAirCaption, txLamps,
+} from '/tools/lib/control-room.mjs'
+
 // ---- the header wordmark ---------------------------------------------
 // The STANDBY splash's wordmark (ui/desktop.js drawStandbyLogo, 63rd pass),
 // rebuilt in SVG so the dashboard wears the same mark the set shows when it
@@ -556,10 +820,15 @@ async function api(path, body) {
   // reject is hashed only on the way BACK: it re-reads and merges on the
   // server, so it never needs to prove what it loaded.
   if (body !== undefined && which && path !== 'reject') body = { ...body, baseHash: hashes[which] }
+  if (body !== undefined) airKick()
   const res = await fetch('/api/' + path, body === undefined
     ? { headers: { 'X-Signal-Admin': '1' } }
     : { method: 'POST', headers: HDR, body: JSON.stringify(body) })
   const json = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+  // 2026-11-02 (control room) -- a write's outcome, heard: the receiver's
+  // lock tone when a save, approve or rejection lands, static when the
+  // server refuses one. Here, once, so every write path gets it.
+  if (body !== undefined && HASHED[path]) { airKick(); cue(res.ok ? 'confirm' : 'fail', 0.3) }
   if (!res.ok) {
     if (json.stale) {
       const g = document.getElementById('global-msg')
@@ -576,6 +845,15 @@ async function api(path, body) {
  *  as it arrives, so a 90-second verify shows its output while it runs
  *  rather than in one lump at the end. */
 async function streamApi(path, body, onEvent) {
+  // 2026-11-02 (control room) -- every stream drives the PGM meter and
+  // kicks the ON AIR lamp, here rather than at each call site.
+  const obs = streamObserver(path, body)
+  airKick()
+  try { return await streamApiInner(path, body, (ev) => { obs.event(ev); onEvent(ev) }) }
+  catch (e) { obs.refused(); throw e }
+  finally { obs.close(); airKick() }
+}
+async function streamApiInner(path, body, onEvent) {
   const res = await fetch('/api/' + path, { method: 'POST', headers: HDR, body: JSON.stringify(body) })
   if (!res.ok) {
     const j = await res.json().catch(() => ({}))
@@ -683,6 +961,596 @@ applyHelp()
 // that is exactly the hole el()'s retired `html` attribute was (2026-10-15).
 const help = (markup) => { const p = el('p', { class: 'help' }); p.innerHTML = markup; return p }
 
+// =====================================================================
+// THE CONTROL ROOM (2026-11-02)
+// =====================================================================
+// The dashboard as a network's master control room. Four instruments, each
+// reading something real -- nothing here is decoration that could disagree
+// with the state it dresses:
+//   - the ON AIR lamp reads the server's writer lock (GET /api/on-air),
+//     including a health batch the daily timer started outside the server;
+//   - the PGM meter reads the line rate of whatever this page is streaming,
+//     and the suite readout counts finished tests against the last complete
+//     run (a "~", never a timer);
+//   - SHIP is a transmitter key you HOLD, in front of -- never instead of --
+//     its confirmations and the server's refusals;
+//   - sound is SIGNAL's own: audio/sfx.js's synthesized controls and the
+//     network sign-on clip, through the same modules the receiver plays.
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)')
+// Browser storage is a convenience here and nothing more: a private window
+// can refuse it outright, so every touch is wrapped and a refusal just means
+// the default.
+const prefs = {
+  get(k) { try { return localStorage.getItem(k) } catch (e) { return null } },
+  set(k, v) { try { localStorage.setItem(k, v) } catch (e) {} },
+}
+
+// ---- sound ------------------------------------------------------------
+// ON by default (this is a room with speakers in it), remembered per
+// browser. Gates only the room's own cues; the VOICE & DROPS previews and
+// the ident editor's play buttons are explicit requests and always sound.
+//
+// Module identity: '/audio/sfx.js?v=' -- with the `?v=`, empty -- is the
+// SAME URL audio/voice.js imports it by on this page (its `?v=${V}` with no
+// SIGNAL_BUILD set), so the room, the voice previews and voice.js all share
+// one AudioContext and one speaker bus. The bare '/audio/sfx.js' the voice
+// panel used to import was a second instance with a second context, which
+// only worked because nothing had yet asked both for a node at once.
+const SOUND_KEY = 'signal-admin.sound'
+let soundOn = prefs.get(SOUND_KEY) !== 'off'
+let sfxPromise = null
+const sfxLib = () => (sfxPromise ??= import('/audio/sfx.js?v='))
+// The network sign-on line -- "you're now listening to the SIGNAL radio
+// network", the 53rd pass's original take (the receiver itself now opens
+// with the shorter welcome-tuned-in). Played when a SHIP lands: the one
+// moment this page puts something on the air.
+const SIGN_ON = '/audio/network-id.mp3'
+async function cue(kind, arg) {
+  if (!soundOn) return
+  try {
+    const s = await sfxLib()
+    if (kind === 'key') s.playKeyClick()
+    else if (kind === 'relay') s.playRelayThunk(true)       // the transmitter relay closing
+    else if (kind === 'confirm') s.playLockTone()           // a save or approve landed
+    else if (kind === 'fail') s.playStaticBurst(arg ?? 0.45, 0.13, 1400)
+    else if (kind === 'ident') { if (arg?.ident?.length) s.playIdent(arg.ident, arg.identTempo || 1) }
+    else if (kind === 'signon') {
+      const info = await clipInfo(SIGN_ON)
+      if (info.error) return
+      const { playProcessedVoiceClip, audioCtx } = await voiceLib()
+      const ctx = audioCtx()
+      playProcessedVoiceClip(info.buffer, ctx, ctx.currentTime)
+    }
+  } catch (e) { /* no audio here -- the room is silent, not broken */ }
+}
+function paintSoundBtn() {
+  const b = document.getElementById('btn-sound')
+  b.textContent = soundOn ? '♪ sound on' : '♪ sound off'
+  b.className = 'sound-btn' + (soundOn ? ' primary' : '')
+  b.setAttribute('aria-pressed', String(soundOn))
+}
+document.getElementById('btn-sound').addEventListener('click', () => {
+  soundOn = !soundOn
+  prefs.set(SOUND_KEY, soundOn ? 'on' : 'off')
+  paintSoundBtn()
+  cue('key')
+})
+paintSoundBtn()
+// Key clicks: every button, chip, tab and panel header, on PRESS (pointer
+// or Enter/Space), the way a hardware key clicks as it goes down rather
+// than when the action finishes. The TX key has its own cues, and a station
+// header plays its ident instead. Loading sfx.js on the first press is also
+// what puts the AudioContext behind a user gesture, which it must be.
+const CLICKABLE = 'button, .chip, .tab, .panel-head, .unsaved-pill'
+function clickCue(target) {
+  const t = target.closest?.(CLICKABLE)
+  if (!t || t.disabled || t.closest('.tx-key') || t.dataset.cue === 'ident') return
+  cue('key')
+}
+document.addEventListener('pointerdown', (e) => { if (e.button === 0) clickCue(e.target) }, true)
+document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) clickCue(e.target) }, true)
+
+// ---- the studio clock -------------------------------------------------
+// The wall clock every studio runs to: sixty second-dots round the time,
+// lit up to the current second. It ticks under reduced motion too -- a
+// clock changing its reading is information, not animation.
+const clockDots = []
+;(function buildClock() {
+  const svg = document.getElementById('clock-ring')
+  const NS = 'http://www.w3.org/2000/svg'
+  for (let i = 0; i < 60; i++) {
+    const a = (i / 60) * Math.PI * 2 - Math.PI / 2
+    const c = document.createElementNS(NS, 'circle')
+    c.setAttribute('cx', (Math.cos(a) * 13).toFixed(2))
+    c.setAttribute('cy', (Math.sin(a) * 13).toFixed(2))
+    c.setAttribute('r', i % 5 === 0 ? '1.35' : '0.85')
+    if (i % 15 === 0) c.classList.add('q')
+    svg.appendChild(c)
+    clockDots.push(c)
+  }
+})()
+const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+function tickClock() {
+  const d = new Date()
+  const p2 = (n) => String(n).padStart(2, '0')
+  // 2026-11-02 (visual pass) -- the time in seven segments, set in place.
+  const time = `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`
+  const clk = document.getElementById('clk-time')
+  if (!clk.seg) { clk.textContent = ''; clk.seg = segDisplay(time, 'lg', 'glow'); clk.appendChild(clk.seg) }
+  else clk.seg.set(time)
+  document.getElementById('clk-date').textContent = `${DAYS[d.getDay()]} ${p2(d.getDate())} ${MONTHS[d.getMonth()]}`
+  const s = d.getSeconds()
+  clockDots.forEach((c, i) => c.classList.toggle('on', i <= s))
+  if (s === 0 && boot) renderLastTx()
+  // Re-armed to the next second boundary, so the readout turns over WITH
+  // the second rather than up to a second late.
+  setTimeout(tickClock, 1000 - (Date.now() % 1000) + 5)
+}
+// First tick deferred: it draws segments, whose geometry consts are
+// declared further down this module and are not initialised yet here.
+setTimeout(tickClock, 0)
+
+// "last tx": the newest stamp commit on HEAD (bootState's lastTransmission).
+function renderLastTx() {
+  const box = document.getElementById('lasttx')
+  const tx = boot?.lastTransmission
+  box.textContent = ''
+  if (!tx) return
+  box.title = `The last commit that touched build.json: ${tx.hash} at ${tx.at}. Every deploy is stamped, so this is the last time anything went to air, from this page or from ship.mjs.`
+  box.append('last tx ', el('b', {}, healthAgo(tx.at)), tx.stamp ? ` · ${tx.stamp}` : '')
+}
+
+// ---- the ON AIR lamp --------------------------------------------------
+// Polled, because the lock has holders this page never hears from: another
+// tab's SHIP, the daily health timer. Every 2s while the tab is visible;
+// kicked at once when this page starts or finishes a write, so its own
+// actions light the lamp without waiting for the poll.
+let airState = null
+let airMissing = false
+async function pollOnAir() {
+  try {
+    const r = await fetch('/api/on-air')
+    // A 404 is a server older than this page -- the route needs a restart
+    // of signal-admin to exist. Said on the lamp rather than left dark,
+    // because dark is also what "nothing is running" looks like.
+    airMissing = r.status === 404
+    airState = r.ok ? await r.json() : null
+  } catch (e) { airState = null }
+  const lamp = document.getElementById('onair')
+  lamp.classList.toggle('lit', !!airState?.onAir)
+  document.getElementById('onair-who').textContent = airMissing ? 'lamp needs a server restart' : onAirCaption(airState)
+}
+let airKickTimer = 0
+function airKick() { clearTimeout(airKickTimer); airKickTimer = setTimeout(pollOnAir, 120) }
+setInterval(() => { if (!document.hidden) pollOnAir() }, 2000)
+pollOnAir()
+
+// ---- the programme meter ----------------------------------------------
+const SUITE_KEY = 'signal-admin.suiteTotal'
+const VU_SEGS = 24
+const vuCells = []
+;(function buildVu() {
+  const vu = document.getElementById('vu')
+  for (let i = 0; i < VU_SEGS; i++) { const c = document.createElement('i'); vu.appendChild(c); vuCells.push(c) }
+})()
+const meter = {
+  active: new Map(),      // run id -> label; several streams can run at once
+  nextId: 0,
+  stamps: [],             // arrival times of output lines, ~last second
+  lines: 0,
+  level: 0, peak: 0, peakAt: 0, last: 0, raf: 0, paintedAt: 0,
+  suite: null, suitePrev: null,
+}
+let suiteSink = null      // the TX panel's SUITE lamp, while a SHIP runs
+function meterOpen(label) {
+  const id = ++meter.nextId
+  meter.active.set(id, label)
+  meter.lines = 0
+  paintBridgeWhat()
+  return id
+}
+function meterRelabel(id, label) { if (meter.active.has(id)) { meter.active.set(id, label); paintBridgeWhat() } }
+function meterClose(id) {
+  meter.active.delete(id)
+  paintBridgeWhat()
+  kickMeter()
+}
+function paintBridgeWhat() {
+  const what = document.getElementById('bridge-what')
+  const labels = [...meter.active.values()]
+  what.textContent = labels.length ? labels[labels.length - 1] + (labels.length > 1 ? ` +${labels.length - 1}` : '') : 'idle'
+  what.classList.toggle('live', labels.length > 0)
+  paintLines(true)
+}
+function meterFeed(ev) {
+  if (ev.type !== 'out' && ev.type !== 'err') return
+  meter.stamps.push(performance.now())
+  meter.lines++
+  if (meter.suite && meter.suite.feed(ev.text)) paintSuite(false)
+  kickMeter()
+  paintLines(false)
+}
+function kickMeter() {
+  if (REDUCED.matches || meter.raf) return
+  meter.raf = requestAnimationFrame(meterFrame)
+}
+function meterFrame(now) {
+  meter.raf = 0
+  const dt = meter.last ? Math.min(100, now - meter.last) : 16
+  meter.last = now
+  while (meter.stamps.length && now - meter.stamps[0] > 1000) meter.stamps.shift()
+  meter.level = vuStep(meter.level, vuTarget(lineRate(meter.stamps, now)), dt)
+  // Peak hold: the highest segment stays marked for 1.5s, then follows down.
+  if (meter.level >= meter.peak || now - meter.peakAt > 1500) { meter.peak = meter.level; meter.peakAt = now }
+  paintVu()
+  if (meter.level > 0.004 || meter.stamps.length) meter.raf = requestAnimationFrame(meterFrame)
+  else { meter.last = 0; meter.level = meter.peak = 0; paintVu() }
+}
+function paintVu() {
+  const { lit, zone } = vuSegments(meter.level, VU_SEGS)
+  const pk = Math.min(VU_SEGS - 1, Math.round(meter.peak * VU_SEGS) - 1)
+  vuCells.forEach((c, i) => {
+    const cls = (i < lit ? zone(i) : '') + (i === pk && pk >= lit ? ' pk' : '')
+    if (c.className !== cls) c.className = cls
+  })
+}
+// Reduced motion: no needle, a line count instead, repainted at most 4x/s.
+function paintLines(force) {
+  if (!REDUCED.matches) return
+  const now = performance.now()
+  if (!force && now - meter.paintedAt < 250) return
+  meter.paintedAt = now
+  document.getElementById('rm-lines').textContent = meter.active.size ? `${meter.lines} lines` : ''
+}
+function suiteBegin() {
+  meter.suite = createSuiteCounter()
+  meter.suitePrev = Number(prefs.get(SUITE_KEY)) || null
+  paintSuite(false)
+}
+function suiteEnd() {
+  const c = meter.suite
+  if (!c) return
+  // Only a run that reached its own summary becomes the next reference --
+  // a killed run's count would make the next readout lie low.
+  if (c.total) prefs.set(SUITE_KEY, String(c.total))
+  paintSuite(c.total != null)
+  meter.suite = null
+}
+function paintSuite(finished) {
+  const c = meter.suite
+  const box = document.getElementById('bridge-suite')
+  if (!c) return
+  const r = suiteReadout(c.done, c.failed, meter.suitePrev, finished)
+  box.className = 'suite on' + (c.failed ? ' fail' : '')
+  box.querySelector('.bar > span').style.width = r.frac == null ? '0' : `${(r.frac * 100).toFixed(1)}%`
+  box.querySelector('.txt').textContent = 'SUITE ' + r.text
+  box.title = r.frac == null
+    ? 'No previous complete run in this browser to measure against, so this is a count, not a fraction.'
+    : `Finished tests against the ${meter.suitePrev} the last complete run reached here. "~" because the suite may have grown since.`
+  suiteSink?.(r)
+}
+/** Wraps one stream: opens a meter run, feeds it, lights the suite readout
+ *  for a suite step, cues the result. Called by streamApi() for every
+ *  stream, so no panel can forget it. */
+function streamLabel(path, body) {
+  if (path === 'run') return 'TASK · ' + (boot?.tasks?.[body?.task]?.label || body?.task)
+  return { preflight: 'PREFLIGHT', ship: 'SHIP', audition: 'AUDITION', health: 'HEALTH BATCH' }[path] || path.toUpperCase()
+}
+const CUED_STREAMS = new Set(['run', 'preflight', 'ship'])
+function streamObserver(path, body) {
+  const id = meterOpen(streamLabel(path, body))
+  const isSuiteTask = path === 'run' && body?.task === 'test'
+  if (isSuiteTask) suiteBegin()
+  unitBusy(path, +1)
+  return {
+    event(ev) {
+      meterFeed(ev)
+      if (ev.type === 'step') {
+        meterRelabel(id, `${streamLabel(path, body)} · ${ev.label}`)
+        if (ev.task === 'test') suiteBegin()
+      }
+      if (ev.type === 'step-done' && ev.task === 'test') suiteEnd()
+      if (ev.type === 'exit') {
+        if (isSuiteTask) suiteEnd()
+        // Exit codes mean "it failed" only for these three; audition and a
+        // health batch exit nonzero to report findings, which is data.
+        if (CUED_STREAMS.has(path)) cue(ev.code === 0 ? (path === 'ship' ? 'signon' : 'confirm') : 'fail')
+        if (path === 'run' || path === 'preflight') { unitState.ops = ev.code === 0 ? 'ok' : 'bad'; paintLeds() }
+      }
+    },
+    refused() { if (CUED_STREAMS.has(path)) cue('fail') },
+    // A stream that ends with its suite still counting was cut off: drop
+    // the count rather than let it stand as a reference.
+    close() { meter.suite = null; meterClose(id); unitBusy(path, -1) },
+  }
+}
+
+// =====================================================================
+// THE RACK (2026-11-02, visual pass)
+// =====================================================================
+// The control room's furniture: tool panels as numbered rack units with a
+// status LED each, station rows as channel strips, a tuning dial per band
+// in the jump bar, seven-segment readouts, and panel headers drawn in the
+// tube's own bitmap face. Purely visual -- nothing here decides anything;
+// each LED reads state some other part of the page already holds.
+
+// ---- seven-segment readouts -------------------------------------------
+// Drawn, not a webfont: each digit is seven hexagonal bars in a 12x22 cell,
+// with the unlit bars ghosted. The wrapper carries role=img and the plain
+// value as its aria-label, so a screen reader hears "2026-11-02.3", not
+// seven polygons.
+const SEG_ON = {
+  0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc', 5: 'afgcd', 6: 'afgedc',
+  7: 'abc', 8: 'abcdefg', 9: 'abcdfg', '-': 'g', ' ': '',
+}
+const SEG_T = 2.6
+const hBar = (x1, x2, cy) => { const h = SEG_T / 2; return `${x1},${cy} ${x1 + h},${cy - h} ${x2 - h},${cy - h} ${x2},${cy} ${x2 - h},${cy + h} ${x1 + h},${cy + h}` }
+const vBar = (cx, y1, y2) => { const h = SEG_T / 2; return `${cx},${y1} ${cx + h},${y1 + h} ${cx + h},${y2 - h} ${cx},${y2} ${cx - h},${y2 - h} ${cx - h},${y1 + h}` }
+const SEG_GEOM = {
+  a: hBar(2.4, 9.6, 1.4), g: hBar(2.4, 9.6, 11), d: hBar(2.4, 9.6, 20.6),
+  f: vBar(1.4, 2.2, 10.4), b: vBar(10.6, 2.2, 10.4),
+  e: vBar(1.4, 11.6, 19.8), c: vBar(10.6, 11.6, 19.8),
+}
+const SVGNS = 'http://www.w3.org/2000/svg'
+const svgEl = (tag, attrs) => { const e = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v); return e }
+/** A seven-segment readout. size: 'sm' | 'md' | 'lg'. Returns the element,
+ *  with .set(text) to change it in place (the clock calls it every second). */
+function segDisplay(text, size = 'md', extra = '') {
+  const wrap = document.createElement('span')
+  wrap.className = `seg ${size} ${extra}`.trim()
+  wrap.setAttribute('role', 'img')
+  let shape = null
+  let bars = []
+  const build = (t) => {
+    wrap.textContent = ''
+    bars = []
+    const svg = svgEl('svg', {})
+    const g = svgEl('g', { transform: 'skewX(-6)' })
+    let x = 2
+    for (const ch of t) {
+      if (ch === ':' || ch === '.') {
+        if (ch === ':') { g.appendChild(svgEl('circle', { cx: x + 1.8, cy: 7, r: 1.4 })); g.appendChild(svgEl('circle', { cx: x + 1.8, cy: 15, r: 1.4 })) }
+        else g.appendChild(svgEl('circle', { cx: x + 1.4, cy: 20.4, r: 1.4 }))
+        bars.push(null)
+        x += ch === ':' ? 5 : 4
+        continue
+      }
+      const cell = {}
+      for (const [k, pts] of Object.entries(SEG_GEOM)) {
+        const p = svgEl('polygon', { points: pts, transform: `translate(${x} 0)` })
+        g.appendChild(p)
+        cell[k] = p
+      }
+      bars.push(cell)
+      x += 14
+    }
+    svg.setAttribute('viewBox', `0 0 ${x + 1} 22`)
+    svg.appendChild(g)
+    wrap.appendChild(svg)
+  }
+  wrap.set = (raw) => {
+    const t = String(raw)
+    wrap.setAttribute('aria-label', t)
+    const s = [...t].map((c) => (c === ':' || c === '.') ? c : '8').join('')
+    if (s !== shape) { shape = s; build(t) }
+    ;[...t].forEach((ch, i) => {
+      const cell = bars[i]
+      if (!cell) return
+      const on = SEG_ON[ch] ?? ''
+      for (const [k, p] of Object.entries(cell)) p.setAttribute('class', on.includes(k) ? '' : 'off')
+    })
+  }
+  wrap.set(text)
+  return wrap
+}
+
+// ---- the tube's bitmap face --------------------------------------------
+// Panel headers in ter-u16b.bdf -- the face term.js draws BOLD cells with --
+// parsed by the app's own src/bdf.js and drawn the way the wordmark is: one
+// <path> of 1x1 runs, crispEdges, at 1:1 so a font pixel is a screen pixel.
+// The real text sits beside it in an .sr-only span, so it is still read,
+// found by Ctrl+F and copied as text. Until the font loads (or if it never
+// does) a header is plain text, which is exactly what it was before.
+let tubeFont = null
+async function loadTubeFont() {
+  try {
+    const [{ parseBDF }, res] = await Promise.all([import('/src/bdf.js'), fetch('/fonts/ter-u16b.bdf')])
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    tubeFont = parseBDF(await res.text())
+  } catch (e) { tubeFont = null }
+}
+const bdfCache = new Map()
+function bdfLabel(text) {
+  const t = String(text ?? '')
+  const wrap = document.createElement('span')
+  wrap.className = 'bdf'
+  if (!tubeFont) { wrap.textContent = t; return wrap }
+  let d = bdfCache.get(t)
+  const { glyphs, cellW, cellH } = tubeFont
+  if (d == null) {
+    const parts = []
+    ;[...t].forEach((ch, i) => {
+      const rows = glyphs.get(ch.codePointAt(0)) || glyphs.get(63)
+      if (!rows) return
+      for (let y = 0; y < cellH; y++) {
+        let x = 0
+        while (x < cellW) {
+          if (!((rows[y] >> (cellW - 1 - x)) & 1)) { x++; continue }
+          const x0 = x
+          while (x < cellW && ((rows[y] >> (cellW - 1 - x)) & 1)) x++
+          parts.push(`M${i * cellW + x0} ${y}h${x - x0}v1h${x0 - x}z`)
+        }
+      }
+    })
+    d = parts.join('')
+    bdfCache.set(t, d)
+  }
+  // Rows 2..14 hold every capital and descender this face draws; cropping
+  // the empty top and bottom keeps the header's line box tight.
+  const svg = svgEl('svg', { viewBox: `0 2 ${[...t].length * cellW} ${cellH - 3}`, 'shape-rendering': 'crispEdges', 'aria-hidden': 'true', style: `height:${cellH - 3}px` })
+  svg.appendChild(svgEl('path', { d }))
+  wrap.appendChild(el('span', { class: 'sr-only' }, t))
+  wrap.appendChild(svg)
+  return wrap
+}
+
+// ---- rack units ---------------------------------------------------------
+// Numbered in page order. The LED says one thing per unit, from state the
+// page already holds: busy (amber, blinking) while a stream from that unit
+// runs, then the unit's own verdict.
+const UNITS = ['panel-ops', 'panel-deploy', 'panel-audition', 'panel-pending', 'panel-overlaps', 'panel-voice', 'panel-health']
+const STREAM_UNIT = { run: 'panel-ops', preflight: 'panel-ops', ship: 'panel-deploy', audition: 'panel-audition', health: 'panel-health' }
+const unitBusyCount = {}
+const unitState = { ops: null, deploy: null }
+function unitBusy(path, delta) {
+  const u = STREAM_UNIT[path]
+  if (!u) return
+  unitBusyCount[u] = Math.max(0, (unitBusyCount[u] || 0) + delta)
+  paintLeds()
+}
+function dressUnits() {
+  UNITS.forEach((id, i) => {
+    const head = document.querySelector(`#${id} > .panel-head`)
+    if (!head || head.querySelector('.unit-tag')) return
+    const title = head.querySelector('.callsign')
+    const name = title.textContent
+    head.prepend(el('span', { class: 'led', 'data-led': id, 'aria-hidden': 'true' }),
+      el('span', { class: 'unit-tag', 'aria-hidden': 'true' }, `UNIT ${String(i + 1).padStart(2, '0')}`))
+    title.textContent = ''
+    title.appendChild(bdfLabel(name))
+  })
+}
+/** [class, title] for a unit's LED. */
+function ledFor(id) {
+  if (unitBusyCount[id]) return id === 'panel-deploy' ? ['air', 'transmitting'] : ['busy', 'running']
+  if (id === 'panel-ops') return unitState.ops === 'ok' ? ['ok', 'last run passed'] : unitState.ops === 'bad' ? ['bad', 'last run failed'] : ['', 'nothing run yet']
+  if (id === 'panel-deploy') {
+    if (tx.verdict?.cls === 'offair') return ['bad', 'the last SHIP stopped']
+    return tx.ready === 'ok' ? ['ok', 'TX READY'] : tx.ready === 'blocked' ? ['warn', 'TX BLOCKED'] : ['', 'readiness not checked']
+  }
+  if (id === 'panel-audition') return audResult?.unverified || audResult?.searchFailures?.length ? ['warn', 'the last run was incomplete'] : ['', '']
+  if (id === 'panel-pending') return pendingData?.pending?.length ? ['warn', `${pendingData.pending.length} waiting`] : ['', 'queue empty']
+  if (id === 'panel-overlaps') return roster?.dupeIds?.length ? ['bad', 'duplicate track ids'] : ['dim', 'no duplicates']
+  if (id === 'panel-health') {
+    if (healthError) return ['bad', 'record could not be read']
+    if (!health) return ['', 'loading']
+    const flagged = health.flagged || []
+    if (flagged.some((f) => f.confirmed !== false)) return ['bad', 'confirmed findings']
+    if (flagged.length) return ['warn', 'unconfirmed findings']
+    return ['ok', 'nothing flagged']
+  }
+  return ['', '']
+}
+function paintLeds() {
+  for (const led of document.querySelectorAll('[data-led]')) {
+    const [cls, why] = ledFor(led.dataset.led)
+    led.className = 'led ' + cls
+    led.title = why
+  }
+}
+
+// ---- channel strips -------------------------------------------------------
+let bandTable = null       // tuning.js BANDS, loaded once at connect
+async function loadBands() {
+  // '?v=' for the module-identity reason sfx.js has it: the same URL any
+  // other import of tuning.js on this page would use. tuning.js reaches a
+  // browser cleanly (layout.js, stations.js -- both pure).
+  try { bandTable = (await import('/tuning.js?v=')).BANDS } catch (e) { bandTable = null }
+}
+const bandOf = (st) => bandTable?.find((b) => b.key === (st.band || 'ym'))
+const dialPct = (band, f) => Math.max(0, Math.min(100, (f - band.freqMin) / (band.freqMax - band.freqMin) * 100))
+function posMark(st) {
+  const band = bandOf(st)
+  if (!band || st.secret) return el('span', { class: 'posmark', 'aria-hidden': 'true', style: 'visibility:hidden' })
+  const f = Number(fieldValue(st, 'freq'))
+  return el('span', { class: 'posmark', title: `${f.toFixed(1)} on ${band.label} (${band.freqMin}–${band.freqMax})`, 'aria-hidden': 'true' },
+    el('i', { style: `left:${dialPct(band, f)}%` }))
+}
+// The ceiling is lint's (MAX_TRACKS_PER_STATION, sent in /api/state's
+// limits); twelve segments of it. Amber only AT the ceiling -- a station
+// near it is not a problem, and a meter that went red for most of the
+// roster would be wallpaper.
+function trackMeter(n) {
+  const max = boot?.limits?.MAX_TRACKS_PER_STATION
+  if (!max) return el('span', { class: 'badge' }, `${n} trk`)
+  const SEGS = 12
+  const lit = Math.min(SEGS, Math.round(n / max * SEGS))
+  const segs = el('span', { class: 'segs' })
+  for (let i = 0; i < SEGS; i++) segs.appendChild(el('i', { class: i < lit ? 'on' : '' }))
+  return el('span', { class: 'trk-vu' + (n >= max ? ' full' : ''), title: `${n} of the ${max}-track ceiling` }, segs, `${n} trk`)
+}
+
+// ---- the tuning dials ---------------------------------------------------
+// One per band, stations at their real frequencies from tuning.js's band
+// table. Markers are buttons -- focusable, Enter/Space jump, aria-labelled
+// with the callsign and frequency -- with their initials staggered on two
+// rows, because ZM has stations 23 kHz apart. The readout beside a dial
+// names the station under the pointer or focus, else the one the needle is on.
+const needleAt = {}        // band key -> station id
+function renderDials(bar, groups) {
+  for (const g of groups) {
+    if (g.label === 'secret' || !bandTable) {
+      bar.appendChild(el('span', { class: 'lbl', style: 'margin-left:8px' }, g.label))
+      for (const st of g.stations) bar.appendChild(stationChip(st))
+      continue
+    }
+    const band = bandOf(g.stations[0])
+    const dial = el('div', { class: 'dial', role: 'group', 'aria-label': `${band.label} band dial` },
+      el('span', { class: 'end lo' }, String(band.freqMin)), el('span', { class: 'end hi' }, String(band.freqMax)))
+    const read = el('span', { class: 'dial-read', 'aria-hidden': 'true' })
+    const showRead = (st) => {
+      read.textContent = ''
+      if (st) read.append(String(st.callsign), ' ', el('span', { class: 'f' }, Number(st.freq).toFixed(1)))
+      else read.append(el('span', { class: 'f' }, `${band.label} · ${g.stations.length} stations`))
+    }
+    const needle = el('span', { class: 'dial-needle' + (needleAt[band.key] ? '' : ' parked') })
+    const parkedSt = stationById(needleAt[band.key])
+    needle.style.left = parkedSt ? `${dialPct(band, parkedSt.freq)}%` : '0%'
+    g.stations.forEach((st, i) => {
+      const dirty = isDirty(st) || identDirty(st)
+      const flagged = stationHealth(st.id).confirmed
+      const abbr = st.callsign.split(' ').map((w) => w[0]).join('')
+      const m = el('button', {
+        class: 'dial-mark' + (i % 2 ? ' hi' : '') + (dirty ? ' dirty' : '') + (flagged ? ' flagged' : ''),
+        style: `left:${dialPct(band, st.freq)}%`,
+        'aria-label': `${st.callsign}, ${st.freq.toFixed(1)}${dirty ? ', unsaved changes' : ''}${flagged ? `, ${flagged} flagged` : ''}`,
+        title: `${st.callsign} — ${st.freq.toFixed(1)}${dirty ? ' — UNSAVED changes' : ''}${flagged ? ` — ${flagged} flagged track(s)` : ''}`,
+        onclick: () => openStation(st.id),
+      }, el('span', { class: 'ab' }, abbr), el('span', { class: 'pip' }))
+      for (const [on, fn] of [['mouseenter', () => showRead(st)], ['focus', () => showRead(st)],
+        ['mouseleave', () => showRead(stationById(needleAt[band.key]))], ['blur', () => showRead(stationById(needleAt[band.key]))]]) m.addEventListener(on, fn)
+      dial.appendChild(m)
+    })
+    dial.appendChild(needle)
+    showRead(parkedSt)
+    bar.appendChild(el('span', { class: 'dial-wrap' }, el('span', { class: 'lbl' }, band.label), dial, read))
+  }
+}
+function stationChip(st) {
+  const dirty = isDirty(st) || identDirty(st)
+  const flagged = stationHealth(st.id).confirmed
+  return el('button', {
+    class: 'chip' + (dirty ? ' dirty' : '') + (st.secret ? ' secret' : '') + (flagged ? ' flagged' : ''),
+    title: `${st.callsign}${st.secret ? ' (secret)' : ` — ${st.freq.toFixed(1)}`}${dirty ? ' — UNSAVED changes' : ''}${flagged ? ` — ${flagged} flagged track(s)` : ''}`,
+    onclick: () => openStation(st.id),
+  }, st.callsign.split(' ').map((w) => w[0]).join('') + (dirty ? ' •' : '') + (flagged ? ' !' : ''))
+}
+/** Swing the needle to a station: only the needle and the readout move, so
+ *  the CSS transition carries it rather than a re-render snapping it. */
+function swingNeedle(st) {
+  const band = !st.secret && bandOf(st)
+  if (!band) return
+  needleAt[band.key] = st.id
+  const dial = [...document.querySelectorAll('.dial')].find((d) => d.getAttribute('aria-label') === `${band.label} band dial`)
+  const needle = dial?.querySelector('.dial-needle')
+  if (!needle) return
+  needle.classList.remove('parked')
+  needle.style.left = `${dialPct(band, st.freq)}%`
+  const read = dial.parentElement.querySelector('.dial-read')
+  if (read) { read.textContent = ''; read.append(String(st.callsign), ' ', el('span', { class: 'f' }, Number(st.freq).toFixed(1))) }
+}
+
 // What each Node tool actually does, how long it takes, and whether it
 // writes anything. The button labels come from the server (they are the
 // tool's own name); this is the part a label cannot carry.
@@ -731,6 +1599,10 @@ async function connect() {
   roster = boot.roster
   pendingData = boot.pending
   programText = (await api('source').catch(() => null))?.text || ''
+  // 2026-11-02 (visual pass) -- the tube's font and the band table, both
+  // optional: a failure leaves plain-text headers and the old chips.
+  await Promise.all([loadTubeFont(), loadBands()])
+  dressUnits()
   document.getElementById('connect-screen').style.display = 'none'
   document.getElementById('app').style.display = 'block'
   render()
@@ -748,7 +1620,7 @@ async function loadHealth() {
   healthError = null
   try { health = await api('health') }
   catch (e) { healthError = String(e.message ?? e) }
-  renderHealth(); renderStations(); renderJump()
+  renderHealth(); renderStations(); renderJump(); paintLeds()
 }
 // youtubeId -> the flagged-row summary for it, or nothing.
 const healthFor = (id) => health?.flagged?.find(f => f.youtubeId === id)
@@ -762,8 +1634,12 @@ function render() {
   const t = roster.totals
   document.getElementById('topbar-actions').style.display = ''
   document.getElementById('jump').style.display = ''
-  document.getElementById('totals').innerHTML =
-    `<b>${t.stationCount}</b> stations &middot; <b>${t.trackCount}</b> tracks &middot; <b>${t.uniqueArtists}</b> unique artists`
+  // 2026-11-02 (visual pass) -- the three headline counts as segment
+  // readouts; each carries its plain value as an aria-label.
+  const totals = document.getElementById('totals')
+  totals.textContent = ''
+  totals.append(segDisplay(t.stationCount, 'md'), 'stations · ', segDisplay(t.trackCount, 'md'), 'tracks · ',
+    segDisplay(t.uniqueArtists, 'md'), 'unique artists')
   // The roster size appears in three other bits of copy. It used to be typed
   // into each of them, and had drifted to 432 against a real 386 -- the line
   // immediately above was right only because it is computed. All of them now
@@ -772,6 +1648,7 @@ function render() {
   document.getElementById('btn-check-all').title =
     `oEmbed-checks every track on every station. Network, and slow on a ${t.trackCount}-track roster.`
   renderConnStatus()
+  renderLastTx()
   renderJump()
   renderUnsaved()
   renderOps()
@@ -782,6 +1659,7 @@ function render() {
   renderVoice()
   renderHealth()
   renderStations()
+  paintLeds()
 }
 
 // 11 station panels plus five tool panels is more than a screen, and the
@@ -801,23 +1679,18 @@ function renderJump() {
       onclick: () => { const p = document.getElementById(id); p.classList.add('open'); p.scrollIntoView({ block: 'start' }) },
     }, label))
   }
-  for (const g of stationGroups()) {
-    bar.appendChild(el('span', { class: 'lbl', style: 'margin-left:8px' }, g.label))
-    for (const st of g.stations) {
-      const dirty = isDirty(st) || identDirty(st)
-      const flagged = stationHealth(st.id).confirmed
-      bar.appendChild(el('button', {
-        class: 'chip' + (dirty ? ' dirty' : '') + (st.secret ? ' secret' : '') + (flagged ? ' flagged' : ''),
-        title: `${st.callsign}${st.secret ? ' (secret)' : ` — ${st.freq.toFixed(1)}`}${dirty ? ' — UNSAVED changes' : ''}${flagged ? ` — ${flagged} flagged track(s)` : ''}`,
-        onclick: () => openStation(st.id),
-      }, st.callsign.split(' ').map(w => w[0]).join('') + (dirty ? ' •' : '') + (flagged ? ' !' : '')))
-    }
-  }
+  // 2026-11-02 (visual pass) -- the bands are tuning dials now; the secret
+  // stations, which sit on no dial, keep their chips. See renderDials().
+  bar.appendChild(el('span', { class: 'jump-break', 'aria-hidden': 'true' }))
+  renderDials(bar, stationGroups())
 }
 
+const identCue = (st) => cue('ident', { ident: fieldValue(st, 'ident'), identTempo: fieldValue(st, 'identTempo') })
 function openStation(id) {
   const p = document.getElementById('panel-' + id)
   if (!p) return
+  if (!p.classList.contains('open') && stationById(id)) identCue(stationById(id))
+  if (stationById(id)) swingNeedle(stationById(id))
   p.classList.add('open')
   p.scrollIntoView({ block: 'start' })
 }
@@ -859,7 +1732,7 @@ function renderConnStatus() {
   // broadcasting also the most redundant. The build stamp and branch stay:
   // those are the two things you actually cannot see from anywhere else on
   // the page.
-  box.appendChild(el('span', {}, 'build ', el('b', {}, String(boot.build?.stamp ?? boot.build?.build ?? '—'))))
+  box.appendChild(el('span', {}, 'build ', segDisplay(String(boot.build?.stamp ?? boot.build?.build ?? '-'), 'md')))
   box.appendChild(el('span', {}, 'branch ', el('b', {}, String(g.branch))))
   if (g.dirty.length) box.appendChild(el('span', { class: 'warn' }, `${g.dirty.length} uncommitted file(s)`))
 }
@@ -1032,69 +1905,201 @@ function renderDeploy() {
     'It stops at the first failure, and commits nothing when it does. ' +
     '<b>It stages everything in the working tree</b>, not just roster changes — check the file list above.'))
 
+  // 2026-11-02 (control room) -- SHIP is a transmitter key now: hold it
+  // TX_HOLD_MS to key the transmitter, and only THEN do the two confirm()s
+  // run, exactly as they did behind the old click; the server's refusals
+  // are untouched. A click, a tap or a stray Enter does nothing at all. The
+  // steps render as a lamp sequence, lit from the server's own step events.
+  // All of it reads `tx` (module state, below) rather than closures over
+  // these elements, because a refresh mid-SHIP ("reload from disk", or
+  // SHIP's own refreshAll on success) rebuilds this panel -- and the old
+  // step chips and log went blank at exactly the moment you wanted them.
   const msg = el('input', { type: 'text', placeholder: 'commit message', title: 'Required. Becomes the git commit message verbatim.' })
+  msg.value = tx.draft
+  msg.addEventListener('input', () => { tx.draft = msg.value; msg.classList.remove('bad') })
   const netBox = el('input', { type: 'checkbox' })
-  const { box: console_, bar: consoleBar } = consoleBox('ship log')
-  const stepsRow = el('div', { class: 'steps' })
-  const shipBtn = el('button', {
-    class: 'go',
-    title: 'stamp → stations.md → lint → suite → add → commit → push. Asks before it does anything.',
-  }, 'SHIP')
-  shipBtn.addEventListener('click', async () => {
-    const message = msg.value.trim()
-    if (!message) { msg.classList.add('bad'); return }
-    msg.classList.remove('bad')
-    if (Object.keys(edits).length || Object.keys(identEdits).length) {
-      if (!confirm('You have unsaved dashboard edits that are not on disk yet. They will NOT be included. Ship anyway?')) return
-    }
-    if (!confirm(`Ship to ${g.branch}${g.upstream ? ` → ${g.upstream}` : ''}?\n\n"${message}"`)) return
-    shipBtn.disabled = true
-    console_.innerHTML = ''
-    stepsRow.innerHTML = ''
-    const stepEls = {}
-    try {
-      await streamApi('ship', { message, confirm: true, includeNetwork: netBox.checked }, (ev) => {
-        if (ev.type === 'step') {
-          stepEls[ev.task] = el('span', { class: 'step running' }, ev.label)
-          stepsRow.appendChild(stepEls[ev.task])
-          logLine(console_, ev)
-        } else if (ev.type === 'step-done') {
-          stepEls[ev.task]?.classList.remove('running')
-          stepEls[ev.task]?.classList.add(ev.code === 0 ? 'pass' : 'fail')
-        } else if (ev.type === 'git') { boot.git = ev.state }
-        else if (ev.type === 'exit') {
-          logLine(console_, { type: ev.code === 0 ? 'info' : 'err', text: ev.code === 0 ? '\nshipped.' : `\nstopped at ${ev.failed}` })
-          if (ev.code === 0) { msg.value = ''; refreshAll() }
-        } else logLine(console_, ev)
-      })
-    } catch (e) { logLine(console_, { type: 'err', text: String(e.message ?? e) }) }
-    shipBtn.disabled = false
+  netBox.checked = tx.includeNetwork
+  netBox.addEventListener('change', () => {
+    if (tx.running) { netBox.checked = tx.includeNetwork; return }
+    Object.assign(tx, { includeNetwork: netBox.checked, states: {}, subs: {}, verdict: null })
+    paintTx()
   })
+  const { box: console_, bar: consoleBar } = consoleBox('ship log')
+  for (const ev of tx.log) logLine(console_, ev)
 
-  const row = el('div', { class: 'ship-row' }, msg, shipBtn,
+  // Readiness -- GET /api/ship-check runs the same gate SHIP runs before it
+  // stamps (2026-10-15), so TX READY and the refusal cannot disagree.
+  const ready = el('div', { class: 'tx-ready checking' })
+  const paintReady = (cls, word, lines) => {
+    ready.className = 'tx-ready ' + cls
+    ready.textContent = ''
+    ready.append(el('span', { class: 'flag-word' }, word), el('span', { class: 'why' }, ...lines.map((l) => el('div', {}, l))))
+  }
+  paintReady('checking', 'TX ···', ['checking whether SHIP can go…'])
+
+  const lampsRow = el('div', { class: 'tx-lamps', 'aria-label': 'transmitter sequence' })
+  const fill = el('span', { class: 'fill' })
+  const cap = el('span', { class: 'cap' }, 'HOLD TO TRANSMIT')
+  const key = el('button', {
+    class: 'tx-key', type: 'button',
+    title: `Hold ${TX_HOLD_MS / 1000}s to SHIP: stamp → stations.md → lint → suite → add → commit → push. Release early and nothing happens. The confirmations still follow.`,
+  }, fill, cap)
+  const baseHint = `hold ${TX_HOLD_MS / 1000}s · release early to cancel · Space or Enter on the key works too · it still asks before sending`
+  const hint = el('span', { class: 'tx-key-hint' }, baseHint)
+  let hintTimer = 0
+  const nudge = (text) => {
+    hint.textContent = text; hint.className = 'tx-key-hint nudge'
+    clearTimeout(hintTimer)
+    hintTimer = setTimeout(() => { hint.textContent = baseHint; hint.className = 'tx-key-hint' }, 4000)
+  }
+  txDom = { lampsRow, key, cap, console_, hint, baseHint }
+  paintTx()
+
+  const hold = createHoldKey()
+  let raf = 0
+  // Under reduced motion the fill steps in quarters rather than sweeping --
+  // it is still the only sign the hold is being counted, so it stays.
+  const setFill = (p) => key.style.setProperty('--hold', String(REDUCED.matches ? Math.floor(p * 4) / 4 : p))
+  const frame = () => {
+    raf = 0
+    const now = performance.now()
+    if (hold.tick(now)) { keyed(); return }
+    setFill(hold.progress(now))
+    if (hold.holding) raf = requestAnimationFrame(frame)
+  }
+  const down = () => {
+    if (tx.running) return
+    if (!msg.value.trim()) {
+      msg.classList.add('bad'); msg.focus()
+      nudge('a commit message first: it becomes the commit, verbatim')
+      cue('fail', 0.12)
+      return
+    }
+    if (!hold.press(performance.now())) return
+    key.classList.add('holding')
+    cue('key')
+    raf = requestAnimationFrame(frame)
+  }
+  const up = () => {
+    const r = hold.release(performance.now())
+    cancelAnimationFrame(raf); raf = 0
+    key.classList.remove('holding')
+    if (r === 'fired') return keyed()          // completed with no frame to see it
+    if (r === 'cancelled') { setFill(0); nudge(`released early: nothing sent. Hold the key for ${TX_HOLD_MS / 1000}s.`) }
+  }
+  async function keyed() {
+    key.classList.remove('holding'); key.classList.add('keyed'); setFill(1)
+    cue('relay')
+    // A beat for the full key to paint before a modal confirm() freezes it.
+    await new Promise((r) => setTimeout(r, 40))
+    const sent = await transmit(g, msg.value.trim())
+    hold.reset()
+    if (!sent) { key.classList.remove('keyed'); setFill(0); nudge('not sent.') }
+  }
+  key.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return
+    e.preventDefault()
+    try { key.setPointerCapture(e.pointerId) } catch (err) {}
+    key.focus()
+    down()
+  })
+  for (const name of ['pointerup', 'pointercancel', 'lostpointercapture', 'blur']) key.addEventListener(name, up)
+  key.addEventListener('keydown', (e) => {
+    if (e.key !== ' ' && e.key !== 'Enter') return
+    e.preventDefault()          // no synthetic click: a click never ships
+    if (!e.repeat) down()
+  })
+  key.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); up() } })
+
+  const row = el('div', { class: 'ship-row' }, msg,
     el('label', { class: 'save-msg', title: 'Adds the full oEmbed sweep before committing. Minutes.' },
       netBox, ' also verify every track (slow)'))
-  // 2026-10-15 (dashboard UI) -- whether SHIP would go through, BEFORE it is
-  // pressed. GET /api/ship-check runs the same gate SHIP runs before it
-  // stamps (on main, upstream, no merge in progress, not behind after a
-  // fetch, something to ship), so this line and the refusal cannot disagree.
-  const ready = el('div', { class: 'ship-ready checking' }, 'checking whether SHIP can go…')
-  body.appendChild(ready)
   api('ship-check').then((c) => {
-    ready.className = 'ship-ready ' + (c.blockers.length ? 'blocked' : 'ok')
-    ready.textContent = ''
+    tx.ready = c.blockers.length ? 'blocked' : 'ok'
+    paintLeds()
     if (!c.blockers.length) {
-      ready.append('ready to ship', c.behind === 0 ? ' — up to date with ' + (c.git.upstream || 'the remote') : '')
+      paintReady('ok', 'TX READY', [`SHIP would go${c.behind === 0 ? ' — up to date with ' + (c.git.upstream || 'the remote') : ''}`])
     } else {
-      ready.append('SHIP would refuse:')
-      for (const b of c.blockers) ready.append(el('div', {}, '· ' + b))
+      paintReady('blocked', 'TX BLOCKED', c.blockers.map((b) => '· ' + b))
+      key.title = 'SHIP would refuse right now -- holding the key will not change that:\n' + c.blockers.join('\n')
     }
-    shipBtn.title = c.blockers.length ? 'SHIP would refuse right now:\n' + c.blockers.join('\n') : shipBtn.title
-  }).catch((e) => { ready.className = 'ship-ready blocked'; ready.textContent = 'could not check: ' + (e.message ?? e) })
+  }).catch((e) => paintReady('blocked', 'TX ?', ['could not check: ' + (e.message ?? e)]))
   body.appendChild(row)
-  body.appendChild(stepsRow)
+  body.appendChild(el('div', { class: 'tx' }, ready, lampsRow, el('div', { class: 'tx-key-row' }, key, hint)))
   body.appendChild(consoleBar)
   body.appendChild(console_)
+}
+
+// ---- the transmitter's state (2026-11-02, control room) ----------------
+// Module-level so a re-render of the Deploy panel mid-SHIP picks up where
+// the sequence is (see renderDeploy). `states` is task -> run|pass|fail.
+const tx = { running: false, includeNetwork: false, draft: '', states: {}, subs: {}, verdict: null, log: [], ready: null }
+let txDom = null
+function paintTx() {
+  if (!txDom) return
+  const { lampsRow, key, cap } = txDom
+  lampsRow.textContent = ''
+  for (const [task, name] of txLamps(tx.includeNetwork)) {
+    lampsRow.appendChild(el('div', { class: 'tx-lamp ' + (tx.states[task] || '') },
+      el('span', { class: 'bulb' }), el('span', { class: 'name' }, name), el('span', { class: 'sub' }, tx.subs[task] || '')))
+  }
+  const v = tx.verdict
+  lampsRow.appendChild(el('span', { class: 'tx-verdict ' + (v?.cls || '') }, v?.text || (tx.running ? 'KEYED' : 'STANDBY')))
+  key.disabled = tx.running
+  if (tx.running) { key.classList.add('keyed'); key.style.setProperty('--hold', '1') }
+  // Done: the key springs back. A failed SHIP re-renders nothing (only a
+  // success refreshes the page), so without this it stayed fully lit with
+  // its legend unreadable on the fill -- caught in the failure screenshot.
+  else if (!key.classList.contains('holding')) { key.classList.remove('keyed'); key.style.setProperty('--hold', '0') }
+  paintLeds()
+  cap.textContent = tx.running ? 'TRANSMITTING' : 'HOLD TO TRANSMIT'
+  if (tx.running) txDom.hint.textContent = 'on air: the lamps follow the server\'s own steps; closing this tab cancels up to the commit, never after'
+  else if (txDom.hint.textContent.startsWith('on air:')) txDom.hint.textContent = txDom.baseHint
+}
+function txLog(ev) {
+  tx.log.push(ev)
+  if (txDom) logLine(txDom.console_, ev)
+}
+/** What the old SHIP click handler did, unchanged in substance: both
+ *  confirmations, then the stream. Resolves false if either confirmation
+ *  was declined (nothing sent), true once a transmission was attempted. */
+async function transmit(g, message) {
+  if (!message) return false
+  if (Object.keys(edits).length || Object.keys(identEdits).length) {
+    if (!confirm('You have unsaved dashboard edits that are not on disk yet. They will NOT be included. Ship anyway?')) return false
+  }
+  if (!confirm(`Ship to ${g.branch}${g.upstream ? ` → ${g.upstream}` : ''}?\n\n"${message}"`)) return false
+  Object.assign(tx, { running: true, states: {}, subs: {}, verdict: null, log: [] })
+  if (txDom) txDom.console_.innerHTML = ''
+  paintTx()
+  suiteSink = (r) => { tx.subs.test = r.text.replace(/ tests$/, ''); paintTx() }
+  let exit = null
+  try {
+    await streamApi('ship', { message, confirm: true, includeNetwork: tx.includeNetwork }, (ev) => {
+      if (ev.type === 'step') { tx.states[ev.task] = 'run'; txLog(ev); paintTx() }
+      else if (ev.type === 'step-done') { tx.states[ev.task] = ev.code === 0 ? 'pass' : 'fail'; paintTx() }
+      else if (ev.type === 'git') { boot.git = ev.state }
+      else if (ev.type === 'exit') {
+        exit = ev
+        txLog({ type: ev.code === 0 ? 'info' : 'err', text: ev.code === 0 ? '\nshipped.' : `\nstopped at ${ev.failed}` })
+      } else txLog(ev)
+    })
+  } catch (e) { txLog({ type: 'err', text: String(e.message ?? e) }) }
+  suiteSink = null
+  const lampName = Object.fromEntries(txLamps(true))
+  if (exit?.code === 0) {
+    tx.verdict = { cls: 'onair', text: 'ON AIR' }
+    tx.draft = ''
+  } else {
+    // The refusals SHIP makes before stamping (wrong branch, behind, nothing
+    // to ship) light no step: they read REFUSED, and the log says why.
+    const at = exit?.failed
+    tx.verdict = { cls: 'offair', text: at && lampName[at] ? `OFF AIR · ${lampName[at]}` : 'REFUSED' }
+  }
+  tx.running = false
+  paintTx()
+  if (exit?.code === 0) refreshAll()
+  return true
 }
 
 // =====================================================================
@@ -1135,7 +2140,7 @@ function renderAudition() {
     try {
       await streamApi('audition', { stationId, searches, ids }, (ev) => {
         if (ev.type === 'result') { audResult = ev.result; if (ev.raw) logLine(console_, { type: 'err', text: ev.raw }) }
-        else if (ev.type === 'exit') renderAuditionResult(out, stationId)
+        else if (ev.type === 'exit') { renderAuditionResult(out, stationId); paintLeds() }
         else logLine(console_, ev)
       })
     } catch (e) { logLine(console_, { type: 'err', text: String(e.message ?? e) }) }
@@ -1398,6 +2403,7 @@ async function mapLimit(items, limit, fn) {
 }
 
 function renderPending() {
+  paintLeds()
   const summary = document.getElementById('pending-summary')
   const body = document.getElementById('pending-body')
   const n = pendingData.pending.length
@@ -1733,7 +2739,9 @@ function renderHealth() {
 let voiceMod = null
 async function voiceLib() {
   if (!voiceMod) {
-    const [voice, sfx] = await Promise.all([import('/audio/voice.js'), import('/audio/sfx.js')])
+    // sfxLib(), not a bare import('/audio/sfx.js'): see the control room's
+    // sound note -- the bare URL was a second sfx.js instance (2026-11-02).
+    const [voice, sfx] = await Promise.all([import('/audio/voice.js'), sfxLib()])
     voiceMod = { ...voice, audioCtx: sfx.audioCtx }
   }
   return voiceMod
@@ -1998,7 +3006,7 @@ function renderStations() {
 
 function badgeFor(st) {
   const s = st.stats
-  const b = [el('span', { class: 'badge' }, `${tracksFor(st).length} trk`), el('span', { class: 'badge' }, `${s.artistCount} art`)]
+  const b = [trackMeter(tracksFor(st).length), el('span', { class: 'badge' }, `${s.artistCount} art`)]
   // 2026-10-15 (dashboard UI) -- health first, and "tagline ok" only when it
   // is NOT: lint already guarantees it, so a green badge on all 18 stations
   // said nothing while a dead track on the station said nothing either.
@@ -2021,15 +3029,23 @@ function renderStationPanel(st) {
     class: 'panel-head', role: 'button', tabindex: '0',
     'aria-expanded': 'false',
     title: `${st.callsign} — ${st.tracks.length} tracks. Click to open.`,
+    'data-cue': 'ident',
     onclick: () => {
       panel.classList.toggle('open')
       head.setAttribute('aria-expanded', String(panel.classList.contains('open')))
+      // 2026-11-02 (control room) -- opening a station plays its ident, the
+      // four tones the receiver plays on lock: the station announcing itself
+      // as you reach for it. On open only, never on hover or close.
+      if (panel.classList.contains('open')) identCue(st)
     },
   },
     el('span', { class: 'chevron' }, '▶'),
     el('span', { class: 'freq' }, st.secret ? '(secret)' : Number(fieldValue(st, 'freq')).toFixed(1)),
-    el('span', { class: 'glyph' }, fieldValue(st, 'glyph') || (st.secret ? '●' : '·')),
-    el('span', { class: 'callsign' }, fieldValue(st, 'callsign')),
+    // 2026-11-02 (visual pass) -- a channel strip: where it sits on its
+    // band, its glyph as a backlit key, its callsign in the tube's face.
+    posMark(st),
+    el('span', { class: 'glyph keycap', 'aria-hidden': 'true' }, fieldValue(st, 'glyph') || (st.secret ? '●' : '·')),
+    el('span', { class: 'callsign' }, bdfLabel(fieldValue(st, 'callsign'))),
     el('span', { class: 'tagline' }, fieldValue(st, 'tagline') || ''),
     el('div', { class: 'badges' }, ...badgeFor(st)))
   const body = el('div', { class: 'panel-body' })

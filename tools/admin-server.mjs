@@ -119,6 +119,12 @@ const WRITABLE = new Set([
   'README.md',
   'tools/pending-tracks.json',
   'tools/station-profiles.json',
+  // 2026-11-02 -- SHIP's restoreStamp() writes this back when a step fails
+  // after the stamp. It was never in this set, so the write threw inside
+  // restoreStamp's own try/catch and was swallowed: every failed SHIP left
+  // build.json bumped while its log said "build stamp restored". Found by
+  // the control room's failure screenshot (three failures, three stamps up).
+  'build.json',
 ])
 
 const abs = (rel) => path.resolve(ROOT, rel)
@@ -669,7 +675,22 @@ async function bootState() {
     tasks: Object.fromEntries(Object.entries(TASKS).map(([k, v]) => [k, { label: v.label, network: !!v.network }])),
     build: readJson('build.json', null),
     git: await gitState(),
+    lastTransmission: await lastTransmission(),
   }
+}
+
+// 2026-11-02 (control room) -- "last transmission" on the dashboard's top
+// bar: the newest commit on HEAD that touched build.json. Every deploy
+// carries a stamp (SHIP stamps first; ship.mjs stamps the branch it
+// merges), so this is the last time anything went to air, whichever tool
+// sent it -- not merely the last time THIS dashboard's SHIP did. Read on
+// boot and on every refresh, never polled: it is a spawn, and it only
+// changes when a SHIP or a pull lands, both of which refresh.
+async function lastTransmission() {
+  const r = await git(['log', '-1', '--format=%cI%x09%h', '--', 'build.json'])
+  if (r.code !== 0 || !r.out) return null
+  const [at, hash] = r.out.split('\t')
+  return { at, hash, stamp: readJson('build.json', null)?.build ?? null }
 }
 
 // ---------------------------------------------------------------------
@@ -690,6 +711,31 @@ async function withLock(res, what, fn) {
   if (busy) return sendJson(res, 409, { error: `busy: ${busy} is running -- try again when it finishes`, busy })
   busy = what
   try { return await fn() } finally { busy = null }
+}
+
+// 2026-11-02 (control room) -- who holds the air, for the dashboard's ON
+// AIR lamp. Two writers can: this process's lock above, and a roster health
+// batch run from OUTSIDE it (the daily systemd timer, or a terminal), which
+// takes check-roster.mjs's own file lock beside the record. The lamp reads
+// both, because a lamp that stayed dark while the timer rewrote
+// roster-health.json under SHIP's `add -A` would be the one wrong answer it
+// could give. Read-only and cheap on purpose -- a file read and a signal-0
+// probe, no spawn, no fetch -- because the page polls it; /api/ship-check
+// answers `busy` too, but does a `git fetch` whenever nothing is, which is
+// nothing to poll. A GET, so no header is needed, and it reveals nothing a
+// cross-origin page could use: a no-cors fetch cannot read the answer.
+const HEALTH_LOCK = path.join(ROOT, 'tools', '.roster-health.json.lock')
+export function healthLockHolder(lockPath = HEALTH_LOCK) {
+  let pid = 0
+  try { pid = Number(readFileSync(lockPath, 'utf8')) || 0 } catch (e) { return null }
+  if (!pid) return null
+  // The same liveness rule check-roster's acquireLock() applies: a lock
+  // whose owner is gone is stale, and stale is not on air.
+  try { process.kill(pid, 0); return pid } catch (e) { return e.code === 'EPERM' ? pid : null }
+}
+function onAir() {
+  const healthBatch = healthLockHolder()
+  return { busy, healthBatch, onAir: !!(busy || healthBatch) }
 }
 // Fired when the browser that asked for a streaming task goes away -- a
 // closed tab or a dropped SSH tunnel. Before this, closing the tab LOOKED
@@ -743,6 +789,7 @@ async function handleApi(req, res, url) {
 
   if (route === 'state' && req.method === 'GET') return sendJson(res, 200, await bootState())
   if (route === 'git' && req.method === 'GET') return sendJson(res, 200, await gitState())
+  if (route === 'on-air' && req.method === 'GET') return sendJson(res, 200, onAir())
   // Would SHIP go through right now? The SAME checks SHIP runs before it
   // stamps (shipBlockers), so the Deploy panel can say so before the button
   // is pressed rather than after (2026-10-15, dashboard UI). Includes a

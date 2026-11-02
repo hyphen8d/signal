@@ -260,6 +260,32 @@ local bare remote, mutation-checked):
   commit subjects went through it as innerHTML. `help()` is the one
   deliberate innerHTML left, for authored literals only.
 
+**The control room (2026-11-02)** dresses the dashboard as a network's
+master control room, and every instrument reads something real. The **ON AIR
+lamp** reads the writer lock through `GET /api/on-air` (cheap, read-only,
+polled every 2s): this server's `busy` plus `check-roster`'s own
+`.roster-health.json.lock`, so the daily timer's batch lights it too. Do not
+point it at `/api/ship-check`, which runs a `git fetch`. The **PGM meter** is
+the line rate of whatever the page is streaming (a rate, never shown as
+progress), and the **suite readout** counts finished `✔/✖/﹣` lines against
+the last *complete* run's count in localStorage, with a `~`. **SHIP is a
+hold-to-transmit key** (`TX_HOLD_MS`, 1.2s; pointer or Space/Enter). A click
+does nothing. The hold only gets you to the two `confirm()`s that were always
+there, and the server's refusals are untouched. The key goes in front of
+those confirmations and never replaces them. The rules (hold state machine,
+meter ballistics, suite counter, lamp caption, SHIP's lamp order, which a
+test reads off `ship()`) live in `tools/lib/control-room.mjs`, held by
+`tests/control-room.test.mjs`. **Sound** is the app's own `audio/sfx.js` and
+the `network-id.mp3` sign-on, imported as `/audio/sfx.js?v=` so the page
+shares voice.js's instance and AudioContext (a bare URL is a second
+instance). A top-bar toggle mutes it, default on.
+The same day's visual pass (rack units with status LEDs, channel strips,
+per-band tuning dials in the jump bar, seven-segment readouts, headers in
+`ter-u16b.bdf` through `src/bdf.js`) is presentation only. It reads
+`tuning.js`'s BANDS and lint's `MAX_TRACKS_PER_STATION` rather than
+restating them, and every bitmap or segment readout carries its plain text
+(`.sr-only` / `aria-label`).
+
 `tools/lib/roster.mjs` is the stations.js parse/patch layer, imported by BOTH
 the server and the page — which is why it has no `node:` imports at all. Add
 one and the dashboard stops loading. Two patchers:

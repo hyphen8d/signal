@@ -270,7 +270,13 @@ test('LAVA LAMP: with no tap it still breathes and kicks, on syntheticAudio', as
     assert.ok(settled.length >= 2, `only ${settled.length} kicks landed on a settled lamp -- test setup`)
     for (const { before, on } of settled) {
       assert.ok(on.bright >= 15, `a kick with no tap left only ${on.bright} BRIGHT cells -- the wax should flare`)
-      assert.ok(on.lit > before.lit * 1.2, `a kick with no tap lit ${on.lit} px against ${before.lit} between kicks`)
+      // 2026-11-02 -- was 1.2, which sat ON the real distribution: measured
+      // over 80 kicks the ratio runs 1.19-1.45 (the between-kicks frame
+      // varies 11-13k px), so ~1 run in 8 failed on a kick that plainly
+      // landed (15851 vs 13218 = 1.199). With the kick forced off it is
+      // 0.999-1.001 and BRIGHT is 0, so 1.1 splits the two with margin on
+      // both sides; the BRIGHT floor above stays the sharper guard.
+      assert.ok(on.lit > before.lit * 1.1, `a kick with no tap lit ${on.lit} px against ${before.lit} between kicks`)
     }
     assert.ok(cellsWith(h.term, null) + cellsWith(h.term, BRIGHT) >= 10, 'no lit wax without a tap')
   } finally { h.shutdown() }

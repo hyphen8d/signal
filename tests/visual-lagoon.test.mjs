@@ -232,13 +232,19 @@ test('LAGOON: level sets the resting height -- a loud passage burns taller than 
       fx.reset(h.program)
       let t = 300
       for (let i = 0; i < 240; i++) { drawWith(h, fx, t, signal({ level })); t += 1 / 60 }
-      // Averaged over a second: the fire is random, one frame is not a height.
+      // Averaged over FOUR seconds: the fire is random, one frame is not a
+      // height. 2026-11-02 -- one second was too short: measured over 40
+      // runs the loud/quiet ratio ran 1.29-2.08 with the level working and
+      // 0.90-1.25 with it removed (restRows' level term zeroed), so the old
+      // 1.3 floor failed ~1 suite run in 20 and could not have caught the
+      // bug reliably either. Over 4s: 1.50-1.95 real, 0.84-1.22 removed;
+      // 1.35 sits in the gap.
       let sum = 0
-      for (let i = 0; i < 30; i++) { drawWith(h, fx, t, signal({ level })); t += 1 / 30; sum += flameHeight(h, S, 1) }
-      return sum / 30
+      for (let i = 0; i < 120; i++) { drawWith(h, fx, t, signal({ level })); t += 1 / 30; sum += flameHeight(h, S, 1) }
+      return sum / 120
     }
     const quiet = settle(0.1), loud = settle(0.95)
-    assert.ok(loud > quiet * 1.3, `near torch: ${quiet.toFixed(0)}px quiet, ${loud.toFixed(0)}px loud`)
+    assert.ok(loud > quiet * 1.35, `near torch: ${quiet.toFixed(0)}px quiet, ${loud.toFixed(0)}px loud`)
   } finally { h.shutdown() }
 })
 

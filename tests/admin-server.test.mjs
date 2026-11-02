@@ -90,6 +90,7 @@ const ALLOWED = [
   '/fonts/ter-u16n.bdf', '/screenshots/hero.jpg',
   '/tools/network.html',   // the dashboard
   '/tools/lib/roster.mjs', // which imports this
+  '/tools/lib/control-room.mjs', // ...and this (2026-11-02, the ON AIR lamp, meters, TX key)
   // 2026-09-21 -- the install manifest and what it names. A manifest that
   // 404s fails silently: the page still works, it just cannot be installed.
   '/manifest.json', '/icon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png',
@@ -162,6 +163,18 @@ test('admin-server: the four request-path guards hold', async () => {
     const limits = JSON.parse(state.body).limits
     assert.equal(limits.MAX_PUBLIC_STATIONS_PER_BAND, 9, 'per-band cap missing from the boot payload')
     assert.equal(limits.MAX_PUBLIC_STATIONS, undefined, 'the retired flat cap is still being sent')
+
+    // 2026-11-02 (control room) -- the ON AIR lamp's poll. A GET, answered
+    // without the header like every read, dark with nothing running.
+    // Mutation-checked: answering `onAir: true` unconditionally fails here.
+    const air = await request(port, { path: '/api/on-air', headers: { Host: '127.0.0.1' } })
+    assert.equal(air.status, 200, air.body)
+    const a = JSON.parse(air.body)
+    assert.equal(a.busy, null, 'nothing holds the lock on a fresh server')
+    assert.equal(a.onAir, !!a.healthBatch, 'the lamp is lit only by a holder it can name')
+    // ...and it is read-only: POSTing to it is no route at all.
+    const airPost = await request(port, { method: 'POST', path: '/api/on-air', headers: { Host: '127.0.0.1', 'X-Signal-Admin': '1' } })
+    assert.equal(airPost.status, 404)
   } finally {
     child.kill()
   }
