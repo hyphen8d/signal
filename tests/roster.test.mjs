@@ -4,7 +4,7 @@
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { lintRoster, instrumentalProblems } from '../tools/lint-roster.js'
+import { lintRoster, instrumentalProblems, trackCountProblems, MAX_TRACKS_PER_STATION } from '../tools/lint-roster.js'
 
 globalThis.SIGNAL_BUILD ??= 'roster'
 globalThis.matchMedia ??= () => ({ matches: false })
@@ -27,6 +27,19 @@ test('instrumental fields: a verdict about a track that is not there, or on the 
   one({ id: 'wrong-kind-i', tracks, instrumental: true, instrumentalTracks: ['AAAAAAAAAAA'] }, /instrumentalTracks only means something on a vocal station/)
   one({ id: 'stale', tracks, instrumental: true, vocalTracks: ['ZZZZZZZZZZZ'] }, /lists ZZZZZZZZZZZ, which is not one of this station's tracks/)
   one({ id: 'not-array', tracks, instrumental: true, vocalTracks: 'AAAAAAAAAAA' }, /must be an array/)
+})
+
+// 2026-11-01 -- the per-station ceiling (60, raised from an effective 50 for
+// the 2026-11-01 curation pass). Synthetic, for the same reason as above.
+test('track count: a public station over the ceiling is a problem; a secret one is exempt', () => {
+  const st = (n, extra = {}) => ({ id: 's', tracks: Array.from({ length: n }, () => ({})), ...extra })
+  assert.equal(MAX_TRACKS_PER_STATION, 60)
+  assert.deepEqual(trackCountProblems(st(60)), [], 'exactly at the ceiling is fine')
+  assert.deepEqual(trackCountProblems(st(10)), [], 'exactly at the floor is fine')
+  assert.match(trackCountProblems(st(61))[0], /61 tracks; a public station holds at most 60/)
+  assert.deepEqual(trackCountProblems(st(61, { secret: true })), [], 'secret stations are not held to it')
+  assert.match(trackCountProblems(st(9))[0], /only 9 tracks \(min 10\)/)
+  assert.match(trackCountProblems({ id: 's' })[0], /only 0 tracks/)
 })
 
 test('stations.js passes the roster rules', async (t) => {
@@ -112,6 +125,18 @@ test("README's header badges are asserted, picture and alt text both", async () 
     const { problems } = await lintRoster({ readmeText: readme.replace(from, to) })
     assert.equal(only(problems, want).length, 1, `${from} -> ${to}\n${problems.join('\n')}`)
   }
+})
+
+// 2026-11-01 -- the sentence's patterns now live in tools/lib/roster.mjs and
+// are shared with the rewriter; lint must still read them and still be loud.
+test("README's roster sentence is asserted through the shared patterns", async () => {
+  const tracks = STATIONS.reduce((n, s) => n + s.tracks.length, 0)
+  const off = readme.replace(`${tracks} tracks total`, `${tracks + 1} tracks total`)
+  assert.notEqual(off, readme)
+  const { problems } = await lintRoster({ readmeText: off })
+  assert.equal(only(problems, new RegExp(`README roster sentence: total says ${tracks + 1}, roster has ${tracks}`)).length, 1, problems.join('\n'))
+  const gone = await lintRoster({ readmeText: readme.replace('tracks total', 'songs total') })
+  assert.equal(only(gone.problems, /could not find the "N stations, N tracks total/).length, 1)
 })
 
 test('the track-suggestion form is asserted against the roster', async () => {

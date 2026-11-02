@@ -20,13 +20,35 @@
 // `npm run stations` producing the old shape. It imports the library now, and
 // the duplicate is gone rather than kept in step by hand.
 
-import { writeFileSync } from 'node:fs'
+// 2026-11-01: it also rewrites README's derived counts -- the roster
+// sentence and the stations/tracks badges -- with rewriteReadmeCounts(),
+// the same function the admin server's saves call. README is computed
+// FIRST and both files are written only once both exist, so a README whose
+// sentence was reworded (the rewriter throws, naming the pattern) fails
+// this command with nothing written, rather than half of it. README is
+// written only when its numbers actually changed, so a no-op run leaves its
+// mtime alone; tools/ship.mjs reads `git status` on both files after this.
+
+import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { STATIONS } from '../stations.js'
-import { buildStationsMd } from './lib/roster.mjs'
+import { STATIONS, SECRET_STATIONS } from '../stations.js'
+import { buildStationsMd, rewriteReadmeCounts } from './lib/roster.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const outPath = path.join(here, '..', 'stations.md')
+const readmePath = path.join(here, '..', 'README.md')
+const readme = readFileSync(readmePath, 'utf8')
+let nextReadme
+try {
+  nextReadme = rewriteReadmeCounts(readme, STATIONS, SECRET_STATIONS)
+} catch (e) {
+  console.error(e.message)
+  process.exit(1)
+}
 writeFileSync(outPath, buildStationsMd(STATIONS))
 console.log(`Wrote ${outPath}`)
+if (nextReadme !== readme) {
+  writeFileSync(readmePath, nextReadme)
+  console.log(`Updated the roster counts in ${readmePath}`)
+}

@@ -35,7 +35,7 @@ import path from 'node:path'
 import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import {
-  loadRosterFromText, buildRosterPayload, buildStationsMd,
+  loadRosterFromText, buildRosterPayload, buildStationsMd, rewriteReadmeCounts,
   patchStationTracksDetailed, patchStationField, verifyPatch,
 } from './lib/roster.mjs'
 import { mergeRejection } from './lib/rejections.mjs'
@@ -114,6 +114,9 @@ globalThis.matchMedia ??= () => ({ matches: false })
 const WRITABLE = new Set([
   'stations.js',
   'stations.md',
+  // 2026-11-01 -- README's derived counts only (rewriteReadmeCounts); the
+  // saves below are the one caller. Not a licence to write README prose.
+  'README.md',
   'tools/pending-tracks.json',
   'tools/station-profiles.json',
 ])
@@ -237,7 +240,7 @@ export const TASKS = {
   test: { label: 'test suite', cmd: () => ['node', ['--test', ...testFiles()], COMPILE_CACHE] },
   verify: { label: 'verify roster', network: true, cmd: () => ['node', ['tools/verify-roster.js']] },
   stamp: { label: 'bump build stamp', cmd: () => ['node', ['tools/stamp.js']] },
-  stations: { label: 'regenerate stations.md', cmd: () => ['node', ['tools/stations-to-md.js']] },
+  stations: { label: "regenerate stations.md + README's counts", cmd: () => ['node', ['tools/stations-to-md.js']] },
   deadfeedback: { label: 'input-feedback sweep', cmd: () => ['node', ['tools/dead-feedback.mjs']] },
   shoot: { label: 'regenerate screenshots', network: true, cmd: () => ['node', ['tools/shoot.mjs', `--url=${localAppUrl()}`]] },
   health: { label: 'roster health batch', network: true, cmd: () => ['node', ['tools/check-roster.mjs']] },
@@ -427,15 +430,35 @@ function openStream(res) {
 // checking the value came back, and only then write. A failed check is a
 // refusal to write, never a warning next to a write that already happened.
 // ---------------------------------------------------------------------
+// 2026-11-01 -- the files generated from the roster: stations.md, and
+// README's derived counts (the roster sentence and both badges, via
+// rewriteReadmeCounts in tools/lib/roster.mjs -- the patterns lint asserts).
+// Before this, every approve/remove/repoint left README stale and SHIP
+// stopped at lint until someone hand-typed the numbers. Computed and
+// written as two steps so the save paths can refuse before touching
+// stations.js; README is written only when a number moved.
+function derivedFiles(STATIONS, SECRET_STATIONS) {
+  const readme = readRepoFile('README.md')
+  const nextReadme = rewriteReadmeCounts(readme, STATIONS, SECRET_STATIONS)
+  return { 'stations.md': buildStationsMd(STATIONS), ...(nextReadme !== readme ? { 'README.md': nextReadme } : {}) }
+}
+function writeDerived(derived) {
+  for (const [rel, text] of Object.entries(derived)) writeRepoFile(rel, text)
+}
+
 function saveTracks(stationId, tracks) {
   const src = readRepoFile('stations.js')
   const { text, keptComments, droppedComments } = patchStationTracksDetailed(src, stationId, tracks)
   // The full check (2026-10-15): which tracks, in order, and that every other
   // station came through untouched -- not just the count.
   verifyPatch(text, stationId, tracks, { before: src })
+  const { STATIONS, SECRET_STATIONS } = loadRosterFromText(text)
+  // Derived files computed BEFORE anything is written, so a README the
+  // rewriter cannot read refuses the save whole (a 409 naming the pattern)
+  // rather than landing stations.js and leaving README for lint to stop on.
+  const derived = derivedFiles(STATIONS, SECRET_STATIONS)
   writeRepoFile('stations.js', text)
-  const { STATIONS } = loadRosterFromText(text)
-  writeRepoFile('stations.md', buildStationsMd(STATIONS))
+  writeDerived(derived)
   // droppedComments is surfaced to the dashboard rather than swallowed. A
   // comment attached to a track you removed usually SHOULD go with it, but
   // "usually" is not "always", and this used to be silent -- 33 lines of
@@ -452,12 +475,15 @@ async function saveIdentity(stationId, fields) {
   verifyPatch(next, stationId, fields, { before: src })
   if (next === src) return { changed: 0, unchanged: true }
   const renamed = Object.prototype.hasOwnProperty.call(fields, 'callsign')
-  writeRepoFile('stations.js', next)
   // A callsign, tagline, freq or ident change all show up in stations.md,
   // so it is regenerated here for the same reason a track edit regenerates
-  // it -- the generated file is never allowed to lag the source.
+  // it -- the generated file is never allowed to lag the source. (README's
+  // counts cannot change from an identity edit; they are rewritten anyway,
+  // since it is a no-op when they agree and one rule is easier to trust.)
   const { STATIONS, SECRET_STATIONS } = loadRosterFromText(next)
-  writeRepoFile('stations.md', buildStationsMd(STATIONS))
+  const derived = derivedFiles(STATIONS, SECRET_STATIONS)
+  writeRepoFile('stations.js', next)
+  writeDerived(derived)
   const station = [...STATIONS, ...SECRET_STATIONS].find(s => s.id === stationId)
   return {
     changed: Object.keys(fields).length,
@@ -608,7 +634,7 @@ async function bootState() {
     import('../src/bdf.js'),
     import(`../tuning.js?v=admin-${mt('tuning.js')}`),
   ])
-  const { TAGLINE_MAX, MAX_PUBLIC_STATIONS_PER_BAND } = await import(`./lint-roster.js?v=admin-${mt('tools/lint-roster.js')}`)
+  const { TAGLINE_MAX, MAX_PUBLIC_STATIONS_PER_BAND, MAX_TRACKS_PER_STATION } = await import(`./lint-roster.js?v=admin-${mt('tools/lint-roster.js')}`)
   // SCREEN is the CRT baseline every station's `crt: {}` is an override on
   // top of (crt-hooks.js: `{ ...SCREEN, ...station.crt }`). The editor shows
   // it as the fallback for each field, so "no value here" reads as a real
@@ -637,6 +663,8 @@ async function bootState() {
       // code reaching for the old flat name fails loudly instead of
       // rendering a limit that no longer exists.
       MIN_TRACKS: 10, IDENT_TONES: 4, MAX_PUBLIC_STATIONS_PER_BAND,
+      // 2026-11-01 -- the per-station ceiling, from lint like the band cap.
+      MAX_TRACKS_PER_STATION,
     },
     tasks: Object.fromEntries(Object.entries(TASKS).map(([k, v]) => [k, { label: v.label, network: !!v.network }])),
     build: readJson('build.json', null),
@@ -915,7 +943,7 @@ async function ship(req, res, message, includeNetwork) {
   // by hand, which is the whole argument for this button existing.
   const pipeline = [
     ['stamp', 'bumping build stamp'],
-    ['stations', 'regenerating stations.md'],
+    ['stations', "regenerating stations.md and README's counts"],
     ['lint', 'linting roster'],
     ['test', 'running the suite'],
     ...(includeNetwork ? [['verify', 'verifying every track (network)']] : []),

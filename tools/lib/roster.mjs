@@ -1124,6 +1124,112 @@ export function buildStationsMd(STATIONS) {
 }
 
 // ---------------------------------------------------------------------
+// README's derived counts -- the patterns lint asserts, and the rewriter.
+// ---------------------------------------------------------------------
+
+// 2026-11-01 -- README makes the same roster claim four times over: the
+// roster sentence ("16 stations across two bands, 686 tracks total (32-50
+// per station -- ... carrying 57 more)") and the stations/tracks shields
+// badges, each of which states its number twice (URL and alt text).
+// lint-roster.js asserted all of them, which was right, but nothing WROTE
+// them: every approve/remove/repoint on the dashboard left README stale and
+// SHIP stopped at lint until someone hand-typed the numbers (PR #96 did
+// exactly that). With ~100 tracks about to come through the queue, that is
+// one hand-edit per save.
+//
+// So the numbers are now derived the same way stations.md is: regenerated
+// by every writer that regenerates stations.md (tools/stations-to-md.js,
+// the admin server's two save paths, and so SHIP and tools/ship.mjs). The
+// PATTERNS live here, once, and both lint (which asserts) and the rewriter
+// (which writes) read them -- two copies of a regex are the same drift risk
+// as two copies of a number. In this file rather than lint-roster.js
+// because this module has no imports, which is what lets the dashboard and
+// the server both load it.
+//
+// Every number is spliced in at its own match index (the `d` flag), so a
+// rewrite touches ONLY the digits: the prose around them, the "curation
+// over symmetry" aside, the badge colours, every other byte comes back as
+// it was. A pattern that does not match THROWS, naming what it looked for
+// -- the same loud miss lint gives, because a rewriter that skips a
+// reworded sentence quietly hands the problem back to lint at SHIP time.
+
+/** The roster sentence. Groups, in order: stations, total, min, max, secret.
+ *  `stations` may be followed by a qualifier ("16 stations across two
+ *  bands"), widened 2026-08-31 -- see lint-roster.js. */
+export const README_ROSTER_SENTENCE = /(\d+)\s+stations\b[^,]*,\s+(\d+)\s+tracks total\s*\((\d+)-(\d+)\s+per station\b[^)]*carrying\s+(\d+)\s+more/d
+export const README_ROSTER_KEYS = ['stations', 'total', 'min', 'max', 'secret']
+/** The badges: each label states its number in the shields URL (the
+ *  picture) and in the markdown alt text (what a screen reader reads). */
+export const README_BADGE_LABELS = ['stations', 'tracks']
+export const readmeBadgePatterns = (label) => ({
+  badge: new RegExp(`img\\.shields\\.io/badge/${label}-(\\d+)-`, 'd'),
+  'badge alt text': new RegExp(`\\[!\\[${label}:\\s*(\\d+)\\]`, 'd'),
+})
+const BADGE_SHAPE = { badge: (l) => `${l}-N`, 'badge alt text': (l) => `[![${l}: N]` }
+
+/** What the roster says README should say. STATIONS is the public roster
+ *  (secret stations are a separate total, as the sentence words it). */
+export function readmeExpectedCounts(STATIONS, SECRET_STATIONS = []) {
+  const counts = STATIONS.map((s) => s.tracks.length)
+  const total = counts.reduce((n, c) => n + c, 0)
+  return {
+    sentence: {
+      stations: STATIONS.length,
+      total,
+      min: Math.min(...counts),
+      max: Math.max(...counts),
+      secret: SECRET_STATIONS.reduce((n, s) => n + s.tracks.length, 0),
+    },
+    badges: { stations: STATIONS.length, tracks: total },
+  }
+}
+
+/** Every counted claim in README, as found. Each entry is
+ *  { what, key, label, want, got, index, length }, or { what, label, miss }
+ *  when the pattern missed -- `miss` is the message lint prints. One walk, used
+ *  by both lint (compare) and the rewriter (splice), so the two cannot
+ *  disagree about what a claim is or where it sits. */
+export function readmeCountClaims(readme, STATIONS, SECRET_STATIONS = []) {
+  const expect = readmeExpectedCounts(STATIONS, SECRET_STATIONS)
+  const claims = []
+  const m = README_ROSTER_SENTENCE.exec(readme)
+  if (!m) {
+    claims.push({ what: 'roster sentence', miss: 'README: could not find the "N stations, N tracks total (N-N per station ... carrying N more)" roster sentence -- if it was reworded, update README_ROSTER_SENTENCE in tools/lib/roster.mjs so this keeps checking' })
+  } else {
+    README_ROSTER_KEYS.forEach((k, i) => {
+      const [start, end] = m.indices[i + 1]
+      claims.push({ what: 'roster sentence', key: k, want: expect.sentence[k], got: +m[i + 1], index: start, length: end - start })
+    })
+  }
+  for (const label of README_BADGE_LABELS) {
+    for (const [what, re] of Object.entries(readmeBadgePatterns(label))) {
+      const b = re.exec(readme)
+      if (!b) {
+        claims.push({ what, label, miss: `README: could not find the ${label} ${what} ("${BADGE_SHAPE[what](label)}") in the header -- if it was reworded, update readmeBadgePatterns in tools/lib/roster.mjs so this keeps checking` })
+      } else {
+        const [start, end] = b.indices[1]
+        claims.push({ what, label, key: label, want: expect.badges[label], got: +b[1], index: start, length: end - start })
+      }
+    }
+  }
+  return claims
+}
+
+/** README with every derived count rewritten from the roster, every other
+ *  byte untouched. Throws if any pattern misses (see the block comment). */
+export function rewriteReadmeCounts(readme, STATIONS, SECRET_STATIONS = []) {
+  const claims = readmeCountClaims(readme, STATIONS, SECRET_STATIONS)
+  const misses = claims.filter((c) => c.miss)
+  if (misses.length) throw new Error(`cannot update README's roster counts:\n  ${misses.map((c) => c.miss).join('\n  ')}`)
+  // Right to left, so an earlier splice never moves a later index.
+  let out = readme
+  for (const c of [...claims].sort((a, b) => b.index - a.index)) {
+    out = out.slice(0, c.index) + String(c.want) + out.slice(c.index + c.length)
+  }
+  return out
+}
+
+// ---------------------------------------------------------------------
 // Roster stats / payload
 // ---------------------------------------------------------------------
 

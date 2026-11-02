@@ -217,6 +217,46 @@ test('SHIP refuses, before stamping, on a clean tree, off main, and behind the r
   }
 })
 
+// 2026-11-01 -- a track save regenerates README's roster counts along with
+// stations.md, so a dashboard approve/remove no longer leaves SHIP stopped at
+// lint over a number nobody typed. Asserted the strong way: the copy's own
+// lint passes after the save, and README's diff is exactly the two lines that
+// carry a track total (the tracks badge and the sentence).
+test('a track save rewrites README\'s roster counts, and nothing else in README', async () => {
+  try {
+    const state = (await request({ path: '/api/state', headers: ADMIN })).json
+    const st = state.roster.stations.find((s) => s.id === 'cipher')
+    const tracks = st.tracks.slice(0, -1).map(({ youtubeId, title, artist }) => ({ youtubeId, title, artist }))
+    const total = state.roster.stations.filter((s) => !s.secret).reduce((n, s) => n + s.tracks.length, 0)
+    assert.ok(read('README.md').includes(`badge/tracks-${total}-`), 'README agreed with the roster before the save')
+    const r = await post('/api/save-tracks', { stationId: 'cipher', tracks, baseHash: state.hashes.stations })
+    assert.equal(r.status, 200, r.text)
+    const readme = read('README.md')
+    assert.ok(readme.includes(`[![tracks: ${total - 1}](https://img.shields.io/badge/tracks-${total - 1}-`), 'both copies of the tracks badge')
+    assert.match(readme, new RegExp(`, ${total - 1} tracks total \\(`), 'the roster sentence')
+    assert.equal(git('diff', '--numstat', '--', 'README.md'), '2\t2\tREADME.md')
+    const lint = spawnSync(process.execPath, ['tools/lint-roster.js'], { cwd: root, encoding: 'utf8' })
+    assert.equal(lint.status, 0, lint.stdout + lint.stderr)
+  } finally { restore() }
+})
+
+test('a save whose README counts cannot be found is refused whole: stations.js untouched', async () => {
+  try {
+    writeFileSync(path.join(root, 'README.md'), read('README.md').replace('tracks total', 'songs total'))
+    git('commit', '-qam', 'reword')
+    const before = read('stations.js')
+    const fresh = (await request({ path: '/api/source', headers: ADMIN })).json.hash
+    const state = (await request({ path: '/api/state', headers: ADMIN })).json
+    const st = state.roster.stations.find((s) => s.id === 'cipher')
+    const tracks = st.tracks.slice(0, -1).map(({ youtubeId, title, artist }) => ({ youtubeId, title, artist }))
+    const r = await post('/api/save-tracks', { stationId: 'cipher', tracks, baseHash: fresh })
+    assert.equal(r.status, 409, r.text)
+    assert.match(r.json.error, /roster sentence/)
+    assert.equal(read('stations.js'), before, 'stations.js was not written')
+    assert.equal(git('status', '--porcelain'), '', 'nothing was written')
+  } finally { git('reset', '-q', '--hard', 'HEAD~1'); restore() }
+})
+
 test('a repoint save (`replaces`) keeps the old entry\'s comment block on the new id (dashboard UI)', async () => {
   try {
     const state = (await request({ path: '/api/state', headers: ADMIN })).json

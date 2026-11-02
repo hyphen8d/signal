@@ -194,7 +194,7 @@ export async function pr(ctx, opts = {}) {
   if (ctx.dryRun) {
     const reuse = await reusableStamp(ctx, mainStampBefore)
     const planned = reuse || nextStamp([await stampAt(ctx, 'HEAD'), mainStampBefore], ctx.today())
-    say(ctx, `[dry-run] would check stations.md, then ${skipTests ? 'SKIP lint and the suite' : 'run lint and the full suite'}`)
+    say(ctx, `[dry-run] would check stations.md and README's counts, then ${skipTests ? 'SKIP lint and the suite' : 'run lint and the full suite'}`)
     say(ctx, `[dry-run] would re-fetch, then ${reuse ? `reuse the stamp commit for ${reuse}` : `stamp ${planned} (origin/main is at ${mainStampBefore || '(none)'}) and commit "Stamp ${planned}"`}`)
     say(ctx, `[dry-run] would push ${branch} and ${existing ? `update PR #${existing.number}` : 'open a PR with gh pr create'}`)
     return { code: 0, dryRun: true, stamp: planned, existing }
@@ -202,10 +202,16 @@ export async function pr(ctx, opts = {}) {
 
   // stations.md is generated, and SHIP regenerates it on every deploy. A
   // branch that edited stations.js and forgot it would ship a stale doc.
+  // 2026-11-01 -- the same generator now rewrites README's roster counts
+  // (sentence + badges), so README is checked the same way: a branch that
+  // changed the roster without regenerating gets both files fixed in the
+  // working tree and is refused until they are reviewed and committed.
   const md = await ctx.run('node', ['tools/stations-to-md.js'])
   if (md.code !== 0) { say(ctx, `stations.md generator failed:\n${md.stderr}`); return { code: 1, step: 'stations' } }
-  if (out(await git(ctx, ['status', '--porcelain', '--', 'stations.md']))) {
-    say(ctx, 'cannot ship: stations.md was out of date and has been regenerated -- review and commit it, then re-run')
+  const stale = out(await git(ctx, ['status', '--porcelain', '--', 'stations.md', 'README.md']))
+  if (stale) {
+    const files = ['stations.md', 'README.md'].filter((f) => stale.includes(f)).join(' and ')
+    say(ctx, `cannot ship: ${files} ${files.includes(' and ') ? 'were' : 'was'} out of date and has been regenerated -- review and commit, then re-run`)
     return { code: 1, step: 'stations' }
   }
 

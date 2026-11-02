@@ -30,7 +30,8 @@
 //   stations.js          -> tests that name stations.js, plus roster.test
 //                           (which runs the lint). A roster edit reaches every
 //                           harness boot, but what it usually breaks is lint.
-//   README.md            -> roster.test (lint asserts README's roster line).
+//   README.md            -> roster.test (lint asserts README's roster line),
+//                           roster-lib.test (the counts rewriter round-trips it).
 //   .gitignore           -> admin-server.test (it checks what is ignored).
 //   tools/..., tests/<helper>.mjs, package.json, tools/*.json, build.json
 //                        -> every test file that names it (by basename, with a
@@ -154,7 +155,8 @@ export function mapFile(file) {
     }
   }
   if (f === 'stations.js') return { tests: [...new Set([...testsNaming(f), 'tests/roster.test.mjs'])], why: 'the roster: lint + the tests that read stations.js' }
-  if (f === 'README.md') return { tests: ['tests/roster.test.mjs'], why: "lint asserts README's roster sentence" }
+  // 2026-11-01: + roster-lib.test, whose README-counts rewriter round-trips the real README.
+  if (f === 'README.md') return { tests: ['tests/roster.test.mjs', 'tests/roster-lib.test.mjs'], why: "lint asserts README's roster sentence; the counts rewriter round-trips it" }
   if (f === '.gitignore') return { tests: ['tests/admin-server.test.mjs'], why: 'admin-server.test checks what git ignores' }
   if (/^(tools\/|tests\/[^/]+\.mjs$|package\.json$|build\.json$)/.test(f)) {
     const named = testsNaming(f)

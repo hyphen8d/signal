@@ -691,7 +691,7 @@ const TASK_HELP = {
   test: 'The full headless suite — boots the real program against a fake clock and asserts on the text grid. <b>~5s, no network.</b>',
   verify: 'oEmbed-checks <i>every</i> track on the roster. <b class="tag-net">Network, slow.</b> Proves a video resolves; not that it is embeddable or in-region.',
   stamp: 'Bumps build.json, which main.js reads to cache-bust every module. <b class="tag-write">Writes.</b> Required before any deploy — SHIP does it for you.',
-  stations: 'Regenerates stations.md from stations.js. <b class="tag-write">Writes.</b> Never hand-edit that file; saves here already re-run this.',
+  stations: 'Regenerates stations.md from stations.js, and rewrites README\'s roster counts (the sentence and the stations/tracks badges). <b class="tag-write">Writes.</b> Never hand-edit stations.md or those numbers; saves here already re-run this.',
   deadfeedback: 'Presses every key in every view and diffs against a do-nothing control, to find controls that click but change nothing. <b>~1 min.</b>',
   shoot: 'Re-shoots screenshots/ by driving headless Chrome against THIS server -- the tree you are about to ship, not the deployed site. <b class="tag-net">Slow</b>, <b class="tag-write">writes</b>. Run it after changing a screen the README shows, before SHIP.',
 }
@@ -2273,7 +2273,7 @@ async function saveTracks(st) {
       g.style.color = 'var(--amber)'
     } else {
       g.textContent = `saved ${st.callsign} (${res.trackCount} tracks) — ${res.keptComments} comment block(s) carried across, ` +
-        `stations.md regenerated. Run preflight, then SHIP.`
+        `stations.md and README's counts regenerated. Run preflight, then SHIP.`
       g.style.color = 'var(--green)'
     }
   } catch (e) {
