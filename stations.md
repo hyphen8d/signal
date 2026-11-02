@@ -329,13 +329,13 @@ Ident tones (Hz): 523.3, 784, 659.3, 987.8
 Tracks (50):
 
 1. **Stay With Me** -- Miki Matsubara  ([youtu.be/5zTkTlj2h9E](https://youtu.be/5zTkTlj2h9E))
-2. **Sparkle** -- Tatsuro Yamashita  ([youtu.be/tWqZASIxlqs](https://youtu.be/tWqZASIxlqs))
+2. **Sparkle** -- Tatsuro Yamashita  ([youtu.be/pqobRu9aR3M](https://youtu.be/pqobRu9aR3M))
 3. **4:00AM** -- Taeko Onuki  ([youtu.be/8ageCZxJ-WQ](https://youtu.be/8ageCZxJ-WQ))
 4. **Flyday Chinatown** -- Yasuha  ([youtu.be/4X7ZvpwBiKA](https://youtu.be/4X7ZvpwBiKA))
 5. **Cat's Eye** -- Anri  ([youtu.be/k-BrT2SQ7SI](https://youtu.be/k-BrT2SQ7SI))
 6. **Say Goodbye** -- Hiroshi Sato  ([youtu.be/vUQjdwRno5g](https://youtu.be/vUQjdwRno5g))
 7. **Moment Of Twilight** -- Minako Yoshida  ([youtu.be/k7VkzjSe5Ng](https://youtu.be/k7VkzjSe5Ng))
-8. **Ride On Time** -- Tatsuro Yamashita  ([youtu.be/FCoOyPa6k-U](https://youtu.be/FCoOyPa6k-U))
+8. **Ride On Time** -- Tatsuro Yamashita  ([youtu.be/be5AvQFzsu0](https://youtu.be/be5AvQFzsu0))
 9. **Plastic Love** -- Mariya Takeuchi  ([youtu.be/T_lC2O1oIew](https://youtu.be/T_lC2O1oIew))
 10. **Telephone Number** -- Junko Ohashi  ([youtu.be/XJWqHmY-g9U](https://youtu.be/XJWqHmY-g9U))
 11. **Love Step** -- Miharu Koshi  ([youtu.be/B6O09Jx4ONM](https://youtu.be/B6O09Jx4ONM))
@@ -376,7 +376,7 @@ Tracks (50):
 46. **Summer Breeze** -- Piper  ([youtu.be/9TT_oIzTT74](https://youtu.be/9TT_oIzTT74))
 47. **Town** -- Minako Yoshida  ([youtu.be/mCHy6H2QDEY](https://youtu.be/mCHy6H2QDEY))
 48. **Tuxedo Connection** -- Hitomi Tohyama  ([youtu.be/AeH1xq2PpjQ](https://youtu.be/AeH1xq2PpjQ))
-49. **Bomber** -- Tatsuro Yamashita  ([youtu.be/S_9LEfENEMw](https://youtu.be/S_9LEfENEMw))
+49. **Bomber** -- Tatsuro Yamashita  ([youtu.be/-hkFL1WOJNo](https://youtu.be/-hkFL1WOJNo))
 50. **Two Call** -- Kaoru Akimoto  ([youtu.be/pSbzx-0wbs0](https://youtu.be/pSbzx-0wbs0))
 
 ## HACKBACK -- 808.0
@@ -775,8 +775,8 @@ Tracks (32):
 25. **Busy Port** -- Martin Denny  ([youtu.be/eZ1BWvwz-1Y](https://youtu.be/eZ1BWvwz-1Y))
 26. **Yellow Bird** -- Arthur Lyman  ([youtu.be/UP0ocIaey4I](https://youtu.be/UP0ocIaey4I))
 27. **Akaka Falls** -- Arthur Lyman  ([youtu.be/8VoGolxjRsA](https://youtu.be/8VoGolxjRsA))
-28. **Tiki** -- The Gene Rains Group  ([youtu.be/7xRuJiHijlU](https://youtu.be/7xRuJiHijlU))
-29. **Shangri-La** -- The Gene Rains Group  ([youtu.be/yjyzRv67oBE](https://youtu.be/yjyzRv67oBE))
+28. **Tiki** -- The Gene Rains Group  ([youtu.be/KVriE_cp_yk](https://youtu.be/KVriE_cp_yk))
+29. **Lotus Land** -- The Gene Rains Group  ([youtu.be/HPdE5Vdtdzo](https://youtu.be/HPdE5Vdtdzo))
 30. **Sweet Pikake Serenade** -- The Waitiki 7  ([youtu.be/c7UlDiP66GI](https://youtu.be/c7UlDiP66GI))
 31. **Ruby** -- The Waitiki 7  ([youtu.be/QAPpsWcozao](https://youtu.be/QAPpsWcozao))
 32. **Jungle River Boat** -- Les Baxter  ([youtu.be/0fxAl-e6QNw](https://youtu.be/0fxAl-e6QNw))

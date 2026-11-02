@@ -23,7 +23,7 @@ const { STATIC_CENTRE_DEFAULT, playBandBump, playBootTick, playDetent, playIdent
 const { TAP_BANDS, audioTapBootLine, maybeRetryAudioTapInGesture, queryMicPermission, resumeAudioTapIfGranted, sampleAudioTap, startAudioTap } = await import(`./audio/tap.js?v=${V}`)
 const { STATION_LINER_FILES, ensureLyricsFetched, isInstrumental, loadLinerBuffer, loadStationIdBuffer, loadWelcomeLineBuffer, lyricsStateFor, maybePlayLinerDrop, playNetworkId, playStationId, stopLiveVoice } = await import(`./audio/voice.js?v=${V}`)
 const { MOBILE_LITE, PHOSPHORS, SCREEN } = await import(`./config.js?v=${V}`)
-const { BOOT_HOLD_MS, BOOT_LINE_STAGGER_MS, BOOT_REVEAL_MS, BOOT_TEXT_DELAY_MS, BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, LISTENER_MAIL, MAPPED_KEYS, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
+const { BOOT_HOLD_MS, BOOT_LINE_STAGGER_MS, BOOT_REVEAL_MS, BOOT_TEXT_DELAY_MS, BREAK_HOLD_MS, BREAK_POLL_MS, DISPLAY_MODES, DUCK_IN_MS, DUCK_LEVEL, DUCK_OUT_MS, DUCK_TICK_MS, KONAMI_CODE, LISTENER_MAIL, MAPPED_KEYS, isBrowserShortcut, REVEAL_CEILING_MS, SLEEP_FADE_MS, SLEEP_STEPS, VISUALIZER_KEYS } = await import(`./constants.js?v=${V}`)
 const { crtBase, flashCrtGlitch, flashFocusSnap, rampCrtParams, setCrtCharacter, setCrtDegradation } = await import(`./crt-hooks.js?v=${V}`)
 const { BOX_BOTTOM_FLASH_ATTR, BOX_BOTTOM_REST_ATTR, BOX_BOTTOM_ROWS, BOX_X0, BOX_X1, DIAL_X0, DIAL_X1, DIAL_Y, METERS_BOT_Y, METERS_DIVIDER_X, STATION_Y, centerX, clearGrid, standbyLayout, truncate } = await import(`./layout.js?v=${V}`)
 const { loadSignalState, saveSignalState } = await import(`./state.js?v=${V}`)
@@ -37,7 +37,7 @@ const { default: guide } = await import(`./ui/guide.js?v=${V}`)
 const { default: tapConsentUi } = await import(`./ui/tap-consent.js?v=${V}`)
 const { default: weatherUi } = await import(`./ui/weather.js?v=${V}`)
 const { default: rearPanelUi } = await import(`./ui/rear-panel.js?v=${V}`)
-const { OPTION_LABELS, PANEL_ROWS, normalizePanel, prefersReducedMotion } = await import(`./settings.js?v=${V}`)
+const { OPTION_LABELS, PANEL_ROWS, normalizePanel, panelChoices, prefersReducedMotion } = await import(`./settings.js?v=${V}`)
 const { default: visualizer } = await import(`./visualizer.js?v=${V}`)
 const { default: game } = await import(`./game.js?v=${V}`)
 
@@ -576,7 +576,12 @@ export default {
     // rather than flickering until the first power-on. Read outside the
     // `if (saved)` block because the reduced-motion default has to apply to
     // a first visit too -- that is the visit it matters most on.
-    this.panel = normalizePanel(saved?.panel, { reducedMotion: prefersReducedMotion() })
+    // 2026-11-01 (audit M1) -- two fields now: panelSet is the rows the
+    // listener actually set (all that state.js saves), panel is those laid
+    // over this boot's defaults. An untouched row therefore re-reads the
+    // reduced-motion default every load; see panelChoices() in settings.js.
+    this.panelSet = panelChoices(saved)
+    this.panel = normalizePanel(this.panelSet, { reducedMotion: prefersReducedMotion() })
     this.applyPanel(s)
     // ?station=<id> (2026-08-27, admin-backend pass) -- boots straight to a
     // named station, secret ones included. It exists for the identity
@@ -1082,6 +1087,89 @@ export default {
     for (const { delay, fn } of beats) this.fxAfter('power', delay, fn, { always: true })
   },
 
+  /** The POST readout's lines and the one left edge they share, built off
+   *  real state. Its own method (2026-11-01, audit L5) so a test can read
+   *  what was BUILT: term.text() clips at the grid edge, so a line that
+   *  overran the readout could never be seen overrunning from the rows. */
+  bootReadout(term) {
+    // 26th pass -- a longer, better cold boot sequence, along the lines of
+    // cyberspace.online's -- looked at cyberspace's actual boot live: a
+    // dense retro-BIOS POST (hostname/kernel/hardware probe lines, a RAM
+    // map, per-module load bars) before it lands on the app. SIGNAL is a
+    // receiver, not an OS, so this borrows that probe-block density and
+    // key:value voice but keeps it in-fiction -- tuner/antenna/preset-table
+    // diagnostics instead of kernel modules. Values are pulled from the
+    // real constants (the active band's edges, its own preset count) so this
+    // can't drift out of sync with the actual band/roster the way a hardcoded
+    // line could. 2026-08-31: both are read PER BAND -- a set that booted
+    // announcing the whole roster and one band's edges would be describing a
+    // receiver that does not exist.
+    // 2026-10-16 -- THE COPY PASS. Four things were wrong, none of them
+    // errors. PRESETS read "8 STATIONS LOADED": true of the band, and read
+    // by everyone as the whole set, which has 16 across two. Two pairs of
+    // lines said one thing twice (PRESETS / PRESET TABLE LOADED, and
+    // OSCILLATOR CALIBRATING... / TUNER CALIBRATED), and SIGNAL LOCK ARMED
+    // named nothing that exists. And the readout ignored the two facts that
+    // change what the next few seconds sound like: which station it is
+    // coming back up on, and whether the rear panel has turned anything
+    // down -- a boot that says HUM OFF explains a quiet set before anyone
+    // wonders about it. Same number of probe lines, same pacing. Every
+    // value is still read off real state, per the note above.
+    const bandInfo = bandFor(this.band)
+    const bootStation = this.mode === 'locked' ? this.lockedStation : null
+    // A secret station is never named here: a ?station= link to one would
+    // otherwise spell out its callsign on the POST, a beat ahead of the
+    // reveal that is the whole point of finding it.
+    const stationValue = bootStation
+      ? `${bootStation.freq.toFixed(1)}  ${bootStation.secret ? 'UNLISTED' : bootStation.callsign}`
+      : `${this.freq.toFixed(1)}  NO CARRIER`
+    // Only what differs from the set as built (PANEL_ROWS' `def`), so a set
+    // nobody has touched says FACTORY rather than reading out four
+    // defaults. On the lite grid the list does not fit 42 columns, and
+    // collapses to a count rather than truncating mid-word.
+    const turnedDown = PANEL_ROWS.filter((r) => this.panel?.[r.key] && this.panel[r.key] !== r.def)
+    let panelValue = turnedDown.length
+      ? turnedDown.map((r) => `${r.label} ${OPTION_LABELS[this.panel[r.key]]}`).join('  ')
+      : 'FACTORY'
+    if ('REAR PANEL  : '.length + panelValue.length > term.cols - 2) panelValue = `${turnedDown.length} TURNED DOWN`
+    const bootLines = [
+      // 2026-08-28 -- "MODEL " dropped here for the same reason it was
+      // dropped from the title bar's plate (drawChrome): the set is called
+      // the SG-1, and the word only announced that a model number followed.
+      // Kept in step with the plate deliberately -- the nameplate and the
+      // POST banner are the two places the set says its own name, and a
+      // rename that reaches one and not the other is exactly the drift the
+      // SYNAPSE pass got caught by.
+      'SG-1  SIGNAL RECEIVER',
+      '',
+      `BAND        : ${bandInfo.label}  ${bandInfo.freqMin.toFixed(1)} - ${bandInfo.freqMax.toFixed(1)} KHZ`,
+      `STATIONS    : ${this.bandPresets().length} ON ${bandInfo.label}, ${STATIONS.length} ACROSS ${BANDS.length} BANDS`,
+      `DIAL        : ${stationValue}`,
+      `REAR PANEL  : ${panelValue}`,
+      '',
+      '[ OK ] TUBES WARM',
+      '[ OK ] OSCILLATOR LOCKED, QUARTZ',
+      '[ OK ] ANTENNA CONTINUITY',
+      // 52nd pass -- a count of the distinct visualizer effects actually
+      // assigned across the roster, via a Set over STATIONS[].visual rather
+      // than a hardcoded number, so it cannot drift the next time a
+      // station's effect changes. (It replaced a SQUELCH SET line, for a
+      // squelch that never existed.) "EFFECTS" since 2026-10-16: the
+      // visualizer calls them effects everywhere else.
+      `[ OK ] ${new Set(STATIONS.map((st) => st.visual)).size} VISUALIZER EFFECTS`,
+      '[ OK ] AUDIO PATH READY',
+    ]
+    // 2026-10-16 -- one left edge for the whole readout under a centred
+    // banner, rather than every line centred on its own string: that made
+    // the colons and the [ OK ]s land in a different column on every row,
+    // the same wander the guide's control table was rebuilt to remove
+    // (2026-08-26). Measured with the widest thing the last line can turn
+    // into, so the block does not jump when the tap is live.
+    const bootBlockW = Math.max(...bootLines.slice(1).map((l) => l.length), '[ OK ] AUDIO TAP: LINE'.length)
+    const bootBlockX = centerX(term.cols, 'x'.repeat(bootBlockW))
+    return { lines: bootLines, x: bootBlockX, width: bootBlockW }
+  },
+
   powerUp(s) {
     // 50th pass -- `|| this._powerAnimating`, not just poweredOn. poweredOn
     // doesn't go true until the REVEAL_DELAY beat ~5s in, and key() lets P
@@ -1190,81 +1278,7 @@ export default {
     // stays as a cheap defensive no-op in case anything else ever nudges it.
     if (s?.crt?.params) s.crt.params.decay = crtBase.decay
 
-    // 26th pass -- a longer, better cold boot sequence, along the lines of
-    // cyberspace.online's -- looked at cyberspace's actual boot live: a
-    // dense retro-BIOS POST (hostname/kernel/hardware probe lines, a RAM
-    // map, per-module load bars) before it lands on the app. SIGNAL is a
-    // receiver, not an OS, so this borrows that probe-block density and
-    // key:value voice but keeps it in-fiction -- tuner/antenna/preset-table
-    // diagnostics instead of kernel modules. Values are pulled from the
-    // real constants (the active band's edges, its own preset count) so this
-    // can't drift out of sync with the actual band/roster the way a hardcoded
-    // line could. 2026-08-31: both are read PER BAND -- a set that booted
-    // announcing the whole roster and one band's edges would be describing a
-    // receiver that does not exist.
-    // 2026-10-16 -- THE COPY PASS. Four things were wrong, none of them
-    // errors. PRESETS read "8 STATIONS LOADED": true of the band, and read
-    // by everyone as the whole set, which has 16 across two. Two pairs of
-    // lines said one thing twice (PRESETS / PRESET TABLE LOADED, and
-    // OSCILLATOR CALIBRATING... / TUNER CALIBRATED), and SIGNAL LOCK ARMED
-    // named nothing that exists. And the readout ignored the two facts that
-    // change what the next few seconds sound like: which station it is
-    // coming back up on, and whether the rear panel has turned anything
-    // down -- a boot that says HUM OFF explains a quiet set before anyone
-    // wonders about it. Same number of probe lines, same pacing. Every
-    // value is still read off real state, per the note above.
-    const bandInfo = bandFor(this.band)
-    const bootStation = this.mode === 'locked' ? this.lockedStation : null
-    // A secret station is never named here: a ?station= link to one would
-    // otherwise spell out its callsign on the POST, a beat ahead of the
-    // reveal that is the whole point of finding it.
-    const stationValue = bootStation
-      ? `${bootStation.freq.toFixed(1)}  ${bootStation.secret ? 'UNLISTED' : bootStation.callsign}`
-      : `${this.freq.toFixed(1)}  NO CARRIER`
-    // Only what differs from the set as built (PANEL_ROWS' `def`), so a set
-    // nobody has touched says FACTORY rather than reading out four
-    // defaults. On the lite grid the list does not fit 42 columns, and
-    // collapses to a count rather than truncating mid-word.
-    const turnedDown = PANEL_ROWS.filter((r) => this.panel?.[r.key] && this.panel[r.key] !== r.def)
-    let panelValue = turnedDown.length
-      ? turnedDown.map((r) => `${r.label} ${OPTION_LABELS[this.panel[r.key]]}`).join('  ')
-      : 'FACTORY'
-    if ('REAR PANEL  : '.length + panelValue.length > term.cols - 2) panelValue = `${turnedDown.length} TURNED DOWN`
-    const bootLines = [
-      // 2026-08-28 -- "MODEL " dropped here for the same reason it was
-      // dropped from the title bar's plate (drawChrome): the set is called
-      // the SG-1, and the word only announced that a model number followed.
-      // Kept in step with the plate deliberately -- the nameplate and the
-      // POST banner are the two places the set says its own name, and a
-      // rename that reaches one and not the other is exactly the drift the
-      // SYNAPSE pass got caught by.
-      'SG-1  SIGNAL RECEIVER',
-      '',
-      `BAND        : ${bandInfo.label}  ${bandInfo.freqMin.toFixed(1)} - ${bandInfo.freqMax.toFixed(1)} KHZ`,
-      `STATIONS    : ${this.bandPresets().length} ON ${bandInfo.label}, ${STATIONS.length} ACROSS ${BANDS.length} BANDS`,
-      `DIAL        : ${stationValue}`,
-      `REAR PANEL  : ${panelValue}`,
-      '',
-      '[ OK ] TUBES WARM',
-      '[ OK ] OSCILLATOR LOCKED, QUARTZ',
-      '[ OK ] ANTENNA CONTINUITY',
-      // 52nd pass -- a count of the distinct visualizer effects actually
-      // assigned across the roster, via a Set over STATIONS[].visual rather
-      // than a hardcoded number, so it cannot drift the next time a
-      // station's effect changes. (It replaced a SQUELCH SET line, for a
-      // squelch that never existed.) "EFFECTS" since 2026-10-16: the
-      // visualizer calls them effects everywhere else.
-      `[ OK ] ${new Set(STATIONS.map((st) => st.visual)).size} VISUALIZER EFFECTS`,
-      '[ OK ] AUDIO PATH READY',
-    ]
-    // 2026-10-16 -- one left edge for the whole readout under a centred
-    // banner, rather than every line centred on its own string: that made
-    // the colons and the [ OK ]s land in a different column on every row,
-    // the same wander the guide's control table was rebuilt to remove
-    // (2026-08-26). Measured with the widest thing the last line can turn
-    // into, so the block does not jump when the tap is live.
-    const bootBlockW = Math.max(...bootLines.slice(1).map((l) => l.length), '[ OK ] AUDIO TAP: LINE'.length)
-    const bootBlockX = centerX(term.cols, 'x'.repeat(bootBlockW))
+    const { lines: bootLines, x: bootBlockX } = this.bootReadout(term)
     // Pacing -- 68th pass, rethought (was a ~5.5s cold-boot POST on every
     // single power-on, 15th/26th passes). STANDBY is now the receiver's
     // resting "on" state, not "off" -- the tube's already warm and lit the
@@ -3168,6 +3182,7 @@ export default {
   // key()'s actual side effects to find out.
   isMappedKey(e) {
     if (this._reloading) return false // see reloadForBuild
+    if (isBrowserShortcut(e)) return false // see key() and isBrowserShortcut
     // 67th pass -- checked ahead of the poweredOn branch now: [I] on
     // STANDBY (see key() below) can open the guide while still powered
     // off, so guideOpen no longer implies poweredOn the way it used to.
@@ -3253,6 +3268,19 @@ export default {
   },
   key(s, e) {
     if (this._reloading) return // see reloadForBuild -- the page is already leaving
+    // 2026-11-01 (audit M2) -- a Ctrl/Cmd/Alt chord is the browser's, not
+    // the radio's. Nothing here read the modifiers, so Ctrl+R answered as
+    // [R] -- preventDefault, a click, the rear panel -- and the reload never
+    // happened; Ctrl+P powered the set instead of printing, Ctrl+C cycled
+    // the tint instead of copying, Ctrl+F went fullscreen instead of find.
+    // Returned before ANYTHING, preventDefault included, so the browser
+    // gets the event exactly as if the set were not listening, and before
+    // isMappedKey() so it does not click either (that function asks the
+    // same question first, so the two cannot drift). Shift is not on the
+    // list: Shift+C, Shift+T and Shift+0 are real commands. keyUp() is left
+    // alone on purpose -- it only ever DELETES from the held set, and a
+    // release must land whatever is held with it.
+    if (isBrowserShortcut(e)) return
     // 2026-08-22, round 4 -- same reasoning as onTouchStart's: true for
     // this function's synchronous body (and whatever it calls directly),
     // so loadTrack() knows a fresh mute-for-autoplay it triggers can be

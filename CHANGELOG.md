@@ -2236,6 +2236,22 @@ fixed in full. No change to the radio itself.
   remove buttons only light up on the row you point at; stations are
   grouped by band; Audition remembers the last station.
 
+### Audit: the radio itself (2026-11-01)
+
+- **Ctrl/Cmd+R reloads the page again.** With the set on, it opened the
+  rear panel instead, and Ctrl+P, Ctrl+C and Ctrl+F were power, colour and
+  fullscreen rather than print, copy and find. Any Ctrl, Cmd or Alt chord
+  is now left to the browser; Shift still works (Shift+C, Shift+T, Shift+0).
+- **The reduce-motion setting is followed on every visit, not just the
+  first.** The rear panel saved all four settings the first time anything
+  was saved, so whatever SCREEN was that day stuck for good. Only the
+  settings you actually change are remembered now; the rest follow your
+  system. Picking FULL by hand still sticks.
+- **Closing the rear panel or the weather card is announced** to screen
+  readers, so it is clear the arrows are tuning the radio again.
+- **Tests:** a boot-readout width check that could never fail now checks
+  the lines as built.
+
 ## [0.9] — 2026-08-23
 
 ### Visualizer

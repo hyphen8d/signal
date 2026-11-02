@@ -318,13 +318,17 @@ export async function merge(ctx, number) {
     return refuse(`its stamp ${headStamp || '(none)'} is not newer than origin/main's ${mainStamp || '(none)'} -- run node tools/ship.mjs pr on ${info.headRefName} to re-stamp`)
   }
   if (ctx.dryRun) {
-    say(ctx, `[dry-run] would run: gh pr merge ${number} --merge   (stamp ${headStamp} over ${mainStamp})`)
+    say(ctx, `[dry-run] would run: gh pr merge ${number} --merge --match-head-commit ${head}   (stamp ${headStamp} over ${mainStamp})`)
     return { code: 0, dryRun: true, stamp: headStamp }
   }
   // Plain --merge: --delete-branch's local cleanup has failed on a worktree
   // AFTER a successful merge, so its exit code is not evidence either way.
+  // --match-head-commit (2026-11-01, audit L7): every check above judged
+  // `head`; a push to the branch between that read and this call would
+  // otherwise merge commits nobody checked (an unstamped one, say). GitHub
+  // refuses the merge when the head has moved.
   say(ctx, `merging PR #${number} (stamp ${headStamp})`)
-  const r = await ctx.run('gh', ['pr', 'merge', String(number), '--merge'])
+  const r = await ctx.run('gh', ['pr', 'merge', String(number), '--merge', '--match-head-commit', head])
   const said = (r.stdout + r.stderr).trim()
   if (said) say(ctx, `gh said (exit ${r.code}; not trusted either way): ${said}`)
   return confirmMerged(ctx, { ...info, stamp: headStamp })
@@ -404,9 +408,17 @@ export function isAppFile(rel) {
 }
 
 /** App files changed on origin/main since the previous deploy, which is
- *  the commit before the last one that touched build.json. */
+ *  the commit before the last one that touched build.json.
+ *
+ *  --first-parent (2026-11-01, audit M4): main's own line is the deploy
+ *  history. Without it, history simplification follows a merge into the
+ *  side that is TREESAME for build.json -- the PR branch -- so a branch
+ *  stamped twice (a re-run `ship pr` after review fixes) offered its own
+ *  never-deployed first stamp as "the previous deploy", and every app file
+ *  changed before that stamp dropped out of the byte comparison while
+ *  verify still said LIVE. */
 export async function changedAppFiles(ctx) {
-  const stamps = out(await git(ctx, ['log', '--format=%H', '-n', '2', 'origin/main', '--', 'build.json'])).split('\n').filter(Boolean)
+  const stamps = out(await git(ctx, ['log', '--first-parent', '--format=%H', '-n', '2', 'origin/main', '--', 'build.json'])).split('\n').filter(Boolean)
   const range = stamps.length === 2 ? [stamps[1], 'origin/main'] : null
   const list = range
     ? out(await git(ctx, ['diff', '--name-only', '--diff-filter=d', range[0], range[1]]))

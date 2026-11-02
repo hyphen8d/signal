@@ -17,7 +17,9 @@ const S = await import('../settings.js')
 
 const openPanel = (h) => { h.powerOn(); h.advance(2000); h.key('r'); h.advance(100) }
 const snapshot = (h, y0, y1) => { const out = []; for (let y = y0; y <= y1; y++) out.push(h.row(y)); return out }
-const savedPanel = (h) => JSON.parse(globalThis.localStorage.getItem('signal:state:v1')).panel
+const savedState = () => JSON.parse(globalThis.localStorage.getItem('signal:state:v1'))
+// The rows the listener set (2026-11-01, audit M1) -- the only rows saved.
+const savedPanel = () => savedState().panelSet
 /** Select a row by key from wherever the cursor is, through the real keys. */
 const selectRow = (h, key) => {
   const want = S.PANEL_ROWS.findIndex((r) => r.key === key)
@@ -45,6 +47,23 @@ test('a saved SCREEN choice beats the reduced-motion default, both ways', () => 
   assert.equal(S.normalizePanel({ screen: 'full' }, { reducedMotion: true }).screen, 'full')
   assert.equal(S.normalizePanel({ screen: 'calm' }, { reducedMotion: false }).screen, 'calm')
   assert.equal(S.normalizePanel({}, { reducedMotion: true }).screen, 'calm')
+})
+
+// 2026-11-01 (audit M1) -- what counts as the listener's choice.
+test('panelChoices: a new payload is taken at its word; an old whole one keeps only non-defaults', () => {
+  // The new shape lists rows the listener set, defaults included -- a FULL
+  // picked by hand is a choice, and must survive a reduced-motion default.
+  assert.deepEqual(S.panelChoices({ panelSet: { screen: 'full', hum: 'bogus' } }), { screen: 'full' })
+  // The old shape saved every row whether touched or not, so a row at its
+  // built default is read as untouched: SCREEN's old FULL falls back to the
+  // default (CALM under reduced motion), an old CALM is kept.
+  assert.deepEqual(S.panelChoices({ panel: { hum: 'normal', static: 'low', voice: 'on', screen: 'full' } }), { static: 'low' })
+  assert.deepEqual(S.panelChoices({ panel: { hum: 'normal', static: 'normal', voice: 'on', screen: 'calm' } }), { screen: 'calm' })
+  // The new key wins when both are present (a payload is one or the other
+  // in practice; this pins which is authoritative if not).
+  assert.deepEqual(S.panelChoices({ panel: { screen: 'calm' }, panelSet: {} }), {})
+  assert.deepEqual(S.panelChoices(null), {})
+  assert.deepEqual(S.panelChoices({ panel: 'junk' }), {})
 })
 
 test('settings stop at their ends rather than wrapping', () => {
@@ -227,10 +246,59 @@ test('reduced motion boots CALM; a saved FULL overrides it', async () => {
     assert.equal(h.program.panel.screen, 'calm')
     assert.equal(h.crt.params.flicker, 0)
   } finally { h.shutdown() }
-  h = await boot({ reducedMotion: true, saved: { panel: { screen: 'full' } } })
+  h = await boot({ reducedMotion: true, saved: { panelSet: { screen: 'full' } } })
   try {
     assert.equal(h.program.panel.screen, 'full')
     assert.ok(h.crt.params.flicker > 0)
+  } finally { h.shutdown() }
+})
+
+// 2026-11-01 (audit M1). Every payload here is one the APP wrote, read back
+// out of the harness's localStorage -- the hand-written payloads above are
+// why the frozen default went unseen: no test ever saved through init()'s
+// fully-populated panel and then rebooted under a different OS setting.
+test('an untouched SCREEN follows reduced motion across reloads; a chosen one sticks', async () => {
+  // 1. A first visit with no OS preference: power on and press [C] -- a
+  //    save that has nothing to do with the panel.
+  let h = await boot()
+  let payload
+  try {
+    h.powerOn(); h.advance(2000)
+    h.key('c'); h.advance(100)
+    payload = savedState()
+    assert.ok(payload, 'test setup: the app saved')
+    assert.equal(payload.panelSet, undefined, 'no row was touched, so none is saved')
+  } finally { h.shutdown() }
+  // 2. The OS setting is switched on afterwards: the next visit is CALM.
+  h = await boot({ reducedMotion: true, saved: payload })
+  try {
+    assert.equal(h.program.panel.screen, 'calm', 'the reduced-motion default applies after a save')
+    assert.equal(h.crt.params.flicker, 0)
+    // 3. That visitor explicitly turns the tube back to FULL...
+    openPanel(h)
+    selectRow(h, 'screen')
+    h.key('ArrowRight')
+    assert.equal(h.program.panel.screen, 'full')
+    payload = savedState()
+    assert.deepEqual(payload.panelSet, { screen: 'full' })
+  } finally { h.shutdown() }
+  // ...and stays FULL with the OS setting still on -- the 2026-10-15 promise.
+  h = await boot({ reducedMotion: true, saved: payload })
+  try {
+    assert.equal(h.program.panel.screen, 'full', 'an explicit FULL beats the default')
+    assert.ok(h.crt.params.flicker > 0)
+  } finally { h.shutdown() }
+  // 4. The other direction: a first visit made under reduced motion, a save,
+  //    and the OS setting switched off -- the tube is FULL again.
+  h = await boot({ reducedMotion: true })
+  try {
+    h.powerOn(); h.advance(2000)
+    h.key('c'); h.advance(100)
+    payload = savedState()
+  } finally { h.shutdown() }
+  h = await boot({ reducedMotion: false, saved: payload })
+  try {
+    assert.equal(h.program.panel.screen, 'full', 'a CALM nobody chose does not outlive the OS setting')
   } finally { h.shutdown() }
 })
 

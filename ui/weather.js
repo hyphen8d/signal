@@ -30,6 +30,7 @@ const { playPanelSound } = await import(`../audio/sfx.js?v=${V}`)
 const { centerXRange, drawBoxTop, drawBoxBottom, drawBoxSide } = await import(`../layout.js?v=${V}`)
 const { saveSignalState } = await import(`../state.js?v=${V}`)
 const WX = await import(`../weather.js?v=${V}`)
+const { announce, forget } = await import(`../a11y.js?v=${V}`)
 
 // 2026-09-02 (audit, B5) -- the floor between forecast ATTEMPTS, read by
 // tickWeather(). Distinct from WX_MAX_AGE_MS (weather.js), which is how old
@@ -128,6 +129,12 @@ export default {
     // never touched, and a full redrawMainScreen() here would blink the
     // whole set for an overlay that only ever owned nine rows.
     this.redrawWeatherRegion(s)
+    // 2026-11-01 (audit L10) -- said, as the rear panel's close is: the
+    // card takes the keys while it is up, so a screen-reader user needs to
+    // hear that they are the radio's again. Forgotten first so a second
+    // open-and-close is not swallowed as a repeat of the first.
+    forget('weather')
+    announce('Weather card closed.', 'weather')
   },
 
   /** Put back exactly what the card was sitting on. */

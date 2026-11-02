@@ -60,7 +60,15 @@ export function saveSignalState(program) {
       // has to stay FULL, and a default-shaped payload could not say that.
       // Read back per-key by normalizePanel(), so a retired value costs one
       // row its position and nothing else.
-      panel: program.panel || undefined,
+      // 2026-11-01 (audit M1) -- superseded: saving every row is what froze
+      // the reduced-motion default at the first save, because init() fills
+      // all four and the first [C] or lock wrote them as if chosen. Now only
+      // the rows setPanelOption() touched are saved, under a NEW key so an
+      // old whole `panel` is never mistaken for a list of choices. The FULL
+      // promise above still holds: picking FULL is a touch, so it is saved.
+      // settings.js's panelChoices() has the reasoning and the read of old
+      // payloads. `panel` is no longer written, so the next save drops it.
+      panelSet: program.panelSet && Object.keys(program.panelSet).length ? program.panelSet : undefined,
     }))
   } catch (e) {}
 }

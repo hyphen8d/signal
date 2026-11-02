@@ -35,9 +35,12 @@
 //   tools/..., tests/<helper>.mjs, package.json, tools/*.json, build.json
 //                        -> every test file that names it (by basename, with a
 //                           path or quote boundary so `roster.mjs` does not
-//                           match `check-roster.mjs`). A tool no test names
-//                           is reported, not escalated: shoot.mjs has no
-//                           tests and running all 650 would not test it.
+//                           match `check-roster.mjs`), PLUS every test that
+//                           reaches it through tools/ and tests/ (see
+//                           dependents() below), and every test naming one
+//                           of those. A tool nothing reaches is reported,
+//                           not escalated: shoot.mjs has no tests and
+//                           running all 650 would not test it.
 //   docs, images, audio clips, fonts, stations.md -> nothing to run.
 //   ANYTHING ELSE        -> the full suite, and it says which file forced it.
 //                           That is program.js, config.js, src/, ui/,
@@ -70,6 +73,73 @@ function testsNaming(file) {
   return TESTS.filter((t) => t !== file && (sources.get(t).includes(file) || re.test(sources.get(t))))
 }
 
+// 2026-11-01 (audit L6) -- naming alone missed every library: no test
+// names tools/lib/git-checks.mjs or tools/stamp.js, yet admin-writes and
+// ship drive both; probe.mjs reached only probe.test, not the
+// health-wiring and roster-watch tests that run it through check-roster.
+// So tools/ and tests/ helpers are read as a graph -- a file depends on
+// what it imports (static, `export from`, literal `import()`, relative
+// specifiers only, the `?v=` query cut off) and on any `tools/<x>` path
+// it spells out as a string, which is how the admin server's TASKS and
+// the tests' spawns run a tool -- and a change maps to everything that
+// reaches it. App code is not in the graph: it has its own branches above
+// and below, and an edge from a tool into app code would point the wrong
+// way for this question anyway. Comment lines are skipped, so a header
+// that MENTIONS a tool is not an edge. One read of ~90 files: milliseconds.
+let graph = null
+const isCode = (f) => /\.(m?js)$/.test(f)
+function listGraphFiles() {
+  const out = []
+  const walk = (dir) => {
+    for (const e of readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+      const r = `${dir}/${e.name}`
+      if (e.isDirectory()) walk(r)
+      else if (isCode(e.name)) out.push(r)
+    }
+  }
+  walk('tools')
+  for (const f of readdirSync(path.join(ROOT, 'tests'))) if (f.endsWith('.mjs')) out.push(`tests/${f}`)
+  return out
+}
+/** ROOT-relative files under tools/ or tests/ that `file` imports or spawns. */
+export function dependenciesOf(file, src) {
+  const deps = new Set()
+  const code = src.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n')
+  const add = (r) => { if (/^(tools|tests)\//.test(r) && isCode(r) && r !== file && existsSync(path.join(ROOT, r))) deps.add(r) }
+  const dir = path.posix.dirname(file)
+  // Relative module specifiers: from './x', import('./x'), import(`../x?v=${V}`).
+  for (const m of code.matchAll(/(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)['"`](\.{1,2}\/[^'"`?$]+)/g)) {
+    add(path.posix.normalize(`${dir}/${m[1]}`))
+  }
+  // A tool path as a process argument -- first in an argv array, or joined
+  // onto a root: ['tools/x.mjs', ...], ['node', ['tools/x.js']],
+  // path.join(root, 'tools/x.mjs'). Only argv-shaped strings: a tool path
+  // in a message or a `changed.includes(...)` check is not a dependency.
+  for (const m of code.matchAll(/(?:\[\s*|path\.join\([^,()]+,\s*)['"`](?:\.\.\/|\/)*(tools\/[\w./-]+\.m?js)\b/g)) add(m[1])
+  // path.join(..., 'tools', 'x.mjs') -- the tests' way of spawning one.
+  for (const m of code.matchAll(/'tools'\s*,\s*'([\w.-]+\.m?js)'/g)) add(`tools/${m[1]}`)
+  return [...deps]
+}
+/** Every file in the graph that reaches `file`, directly or not. */
+export function dependents(file) {
+  if (!graph) {
+    graph = new Map()                         // file -> files that depend on it
+    for (const f of listGraphFiles()) {
+      for (const d of dependenciesOf(f, readFileSync(path.join(ROOT, f), 'utf8'))) {
+        if (!graph.has(d)) graph.set(d, new Set())
+        graph.get(d).add(f)
+      }
+    }
+  }
+  const seen = new Set()
+  const queue = [file]
+  while (queue.length) {
+    for (const up of graph.get(queue.shift()) ?? []) if (!seen.has(up)) { seen.add(up); queue.push(up) }
+  }
+  seen.delete(file)
+  return [...seen].sort()
+}
+
 /** -> { tests: string[] | ALL, why: string } for one changed file. */
 export function mapFile(file) {
   const f = rel(file)
@@ -87,8 +157,17 @@ export function mapFile(file) {
   if (f === 'README.md') return { tests: ['tests/roster.test.mjs'], why: "lint asserts README's roster sentence" }
   if (f === '.gitignore') return { tests: ['tests/admin-server.test.mjs'], why: 'admin-server.test checks what git ignores' }
   if (/^(tools\/|tests\/[^/]+\.mjs$|package\.json$|build\.json$)/.test(f)) {
-    const t = testsNaming(f)
-    return { tests: t, why: t.length ? 'tests that name it' : 'no test names it -- nothing to run for this one' }
+    const named = testsNaming(f)
+    const via = isCode(f) ? dependents(f) : []
+    const t = [...new Set([
+      ...named,
+      ...via.filter((d) => /^tests\/[^/]+\.test\.mjs$/.test(d)),
+      ...via.filter((d) => !d.startsWith('tests/')).flatMap(testsNaming),
+    ])].sort()
+    const why = !t.length ? 'nothing names or reaches it -- nothing to run for this one'
+      : t.length === named.length ? 'tests that name it'
+      : `tests that name it or reach it (via ${via.filter((d) => !/\.test\.mjs$/.test(d)).map((d) => path.posix.basename(d)).join(', ') || 'direct imports'})`
+    return { tests: t, why }
   }
   if (/\.(md|png|jpe?g|gif|mp4|mp3|svg|bdf|ico|webmanifest)$/i.test(f) || /^(screenshots|fonts|\.github|dist)\//.test(f) || ['LICENSE', 'NOTICE', 'manifest.json'].includes(f)) {
     return { tests: [], why: 'docs or assets: no test reads it' }

@@ -17,7 +17,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { decayFlags, isThrottleSignature, playability, NARROW_LICENCE_MAX } from '../tools/lib/probe.mjs'
+import { decayFlags, isThrottleSignature, playability, oembedVerdict, NARROW_LICENCE_MAX } from '../tools/lib/probe.mjs'
 
 test('playability reads the throttle off WHERE the answer came from', async () => {
   // 2026-09-12 (audit, L5). fetch follows the 429's redirect, so the final
@@ -80,6 +80,22 @@ test('a dead oEmbed short-circuits to DEAD and nothing else', () => {
   const flags = decayFlags({ ok: false, status: 404 }, {})
   assert.equal(flags.length, 1)
   assert.match(flags[0], /^DEAD 404/)
+})
+
+// 2026-11-01 (audit M3) -- only "gone" is DEAD. A throttled or failed
+// oEmbed is a probe that did not happen; it was being recorded as DEAD 429,
+// a strike toward a confirmed finding about a track nobody had seen.
+test('oEmbed: 401/404 are gone; a 429, 5xx, 403 or network error is unanswered, never DEAD', () => {
+  for (const status of [401, 404, 410]) {
+    assert.equal(oembedVerdict({ ok: false, status }), 'gone', String(status))
+    assert.match(decayFlags({ ok: false, status }, {})[0], new RegExp(`^DEAD ${status}`))
+  }
+  for (const e of [{ status: 429 }, { status: 500 }, { status: 503 }, { status: 403 }, { status: 'ERR', error: 'fetch failed' }]) {
+    assert.equal(oembedVerdict({ ok: false, ...e }), 'unanswered', String(e.status))
+    const flags = decayFlags({ ok: false, ...e }, {})
+    assert.deepEqual(flags.map((f) => f.startsWith('UNVERIFIED(oEmbed')), [true], `${e.status}: ${flags}`)
+  }
+  assert.equal(oembedVerdict({ ok: true, status: 200 }), 'ok')
 })
 
 test('age-gating is flagged -- the IFrame player cannot satisfy a login', () => {

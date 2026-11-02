@@ -184,17 +184,39 @@ function releaseShared() {
 
 // Break a stale lock without stealing a fresh one: two waiters can both see
 // the same dead holder, and the slower one's unlink would delete the lock the
-// faster one has just taken. Rename is atomic, so move it aside, look at what
-// was actually moved, and put it back if it was not the dead holder's.
-function breakStale(file, holder) {
-  const aside = `${file}.stale-${process.pid}-${Date.now()}`
-  try { fs.renameSync(file, aside) } catch { return }
-  let moved = null
-  try { moved = JSON.parse(fs.readFileSync(aside, 'utf8')) } catch { /* unparseable: stale by definition */ }
-  if (moved && holder && (moved.pid !== holder.pid || moved.start !== holder.start)) {
-    try { fs.linkSync(aside, file) } catch { /* someone else holds it now; theirs wins */ }
+// faster one has just taken.
+//
+// 2026-11-01 (audit L9) -- breaking is now EXCLUSIVE, behind a `.break` file
+// taken with `wx`. The rename-aside version it replaces was itself racy three
+// ways: A breaks the stale lock and takes it; B, which had seen the same dead
+// holder, renames A's fresh lock aside to look at it; C finds no lock and
+// takes one; B's put-back then fails and A's lock is gone -- A and C both
+// hold it, two Chromes, nothing killed. Under the break lock nothing else
+// can remove the lock file (a live holder only unlinks its own, and the dead
+// holder cannot), so "re-read, still the dead holder, unlink" is atomic
+// enough. A breaker that loses the `.break` race just returns and re-polls.
+// A `.break` older than BREAK_STALE_MS belongs to a breaker that died inside
+// that few-microsecond window; it is cleared so the next poll can break.
+const BREAK_STALE_MS = 30_000
+export function breakStale(file, holder) {
+  const brk = `${file}.break`
+  try { fs.writeFileSync(brk, `${process.pid}\n`, { flag: 'wx' }) } catch (e) {
+    if (e.code === 'EEXIST') {
+      try { if (Date.now() - fs.statSync(brk).mtimeMs > BREAK_STALE_MS) fs.unlinkSync(brk) } catch { /* gone */ }
+    }
+    return false
   }
-  try { fs.unlinkSync(aside) } catch { /* fine */ }
+  try {
+    let now = null
+    try { now = JSON.parse(fs.readFileSync(file, 'utf8')) } catch (e) { if (e.code === 'ENOENT') return false }
+    const stale = holder
+      ? !!now && now.pid === holder.pid && now.start === holder.start
+      : !now && Date.now() - fs.statSync(file).mtimeMs > 5000
+    if (stale) fs.unlinkSync(file)
+    return stale
+  } catch { return false } finally {
+    try { fs.unlinkSync(brk) } catch { /* fine */ }
+  }
 }
 
 // --- run dirs (profile + scratch), and the reaper -----------------------------

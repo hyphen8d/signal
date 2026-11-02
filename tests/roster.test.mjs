@@ -94,6 +94,26 @@ test("README's opening station count is asserted, every copy of it", async () =>
   assert.equal(only(missing.problems, /README: lost its "N curated stations/).length, 1)
 })
 
+// 2026-11-01 (audit L11) -- both copies of each header badge's number, the
+// shields URL and the alt text. The counts come from the roster, never a
+// literal: a curation pass changes them.
+test("README's header badges are asserted, picture and alt text both", async () => {
+  const tracks = STATIONS.reduce((n, s) => n + s.tracks.length, 0)
+  const cases = [
+    [`badge/tracks-${tracks}-`, `badge/tracks-${tracks + 1}-`, new RegExp(`README tracks badge: says ${tracks + 1}, roster has ${tracks}`)],
+    [`[![tracks: ${tracks}]`, `[![tracks: ${tracks + 1}]`, new RegExp(`README tracks badge alt text: says ${tracks + 1}, roster has ${tracks}`)],
+    [`badge/stations-${STATIONS.length}-`, `badge/stations-${STATIONS.length + 1}-`, /README stations badge: says/],
+    [`[![stations: ${STATIONS.length}]`, `[![stations: ${STATIONS.length + 1}]`, /README stations badge alt text: says/],
+    [`[![tracks: ${tracks}]`, '[![tracks]', /could not find the tracks badge alt text/],
+    [`badge/tracks-${tracks}-`, 'badge/songs-', /could not find the tracks badge \("tracks-N"\)/],
+  ]
+  for (const [from, to, want] of cases) {
+    assert.ok(readme.includes(from), `README carries ${from} (the roster and README must agree for this test to mean anything)`)
+    const { problems } = await lintRoster({ readmeText: readme.replace(from, to) })
+    assert.equal(only(problems, want).length, 1, `${from} -> ${to}\n${problems.join('\n')}`)
+  }
+})
+
 test('the track-suggestion form is asserted against the roster', async () => {
   // The exact shape of the drift it sat in: a retired station still listed,
   // a current one absent.

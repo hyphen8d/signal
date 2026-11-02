@@ -193,16 +193,21 @@ function putStr(term, x, y, str, attr, max) {
   return n
 }
 
+/** One rain column per grid column, each freshly spawned. */
+function buildCols(n) {
+  return Array.from({ length: n }, () => {
+    const col = { speed: 0, head: 0, len: 0, seed: 0, resolveAt: -1, word: null, wordRow: 0, wordUntil: 0 }
+    respawn(col, true)
+    return col
+  })
+}
+
 export default {
   key: 'breach',
   label: 'BREACH',
   /** Seeds this effect's state on the program object (once, at boot). */
   init(p, term) {
-    p._breachCols = Array.from({ length: term.cols }, () => {
-      const col = { speed: 0, head: 0, len: 0, seed: 0, resolveAt: -1, word: null, wordRow: 0, wordUntil: 0 }
-      respawn(col, true)
-      return col
-    })
+    p._breachCols = buildCols(term.cols)
     // 2026-08-23 (live audio tap) -- BREACH's rain-speed accumulator clock,
     // same reasoning as _outrunPhaseT: speed reacts via per-column phase
     // advance, never by scaling the `t * col.speed` term itself.
@@ -283,6 +288,12 @@ export default {
     if (t < p._breachLastT) p._breachLastT = t
     const bdt = Math.min(0.1, Math.max(0, t - p._breachLastT))
     p._breachLastT = t
+    // 2026-11-01 (audit L1) -- the columns are sized at init, but the loop
+    // below runs to term.cols: drawn on a wider term than the one it booted
+    // on, cols[x] past the old width was undefined and the draw threw. The
+    // grid is fixed for a page's life, so this was latent; rebuilt on a
+    // width change the way FLAME's `p._fire.cols !== term.cols` is.
+    if (p._breachCols.length !== term.cols) p._breachCols = buildCols(term.cols)
     const cols = p._breachCols
     const box = boxRect(term.cols)
     const bx0 = box.x - 1, bx1 = box.x + box.w, by0 = box.y - 1, by1 = box.y + box.h

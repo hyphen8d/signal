@@ -34,6 +34,27 @@ export const UA = {
   cookie: 'CONSENT=YES+1',
 }
 
+// What an oEmbed answer MEANS, defined once (2026-11-01, audit M3).
+//
+// oEmbed says "this video is gone" in exactly two ways: 404 (removed, or no
+// such id) and 401 (made private, or embedding revoked -- oEmbed refuses an
+// embed it may not serve). 410 is included for completeness. Everything
+// else that is not a 200 -- a 429, a 5xx, a 403 (which YouTube also sends
+// to clients it has decided to block), a network error -- is the ENDPOINT
+// not answering, and says nothing about the video. That split matters
+// twice: roster-watch's daily oEmbed sweep promotes a gone track to the
+// front of the deep probe, and must never promote a throttled one (a 429
+// storm would read as a mass takedown) nor count one as checked; and
+// decayFlags below used to write `DEAD 429` into the health record for a
+// throttled oEmbed, a strike toward a confirmed "dead" finding for a track
+// nobody had actually looked at.
+export const OEMBED_GONE = new Set([401, 404, 410])
+/** 'ok' | 'gone' | 'unanswered' for an oembed() result. */
+export function oembedVerdict(e) {
+  if (e?.ok) return 'ok'
+  return OEMBED_GONE.has(e?.status) ? 'gone' : 'unanswered'
+}
+
 export async function oembed(id) {
   try {
     const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`, { headers: UA })
@@ -107,6 +128,9 @@ export async function playability(id) {
 export const NARROW_LICENCE_MAX = 20
 
 export function decayFlags(e, p) {
+  // 2026-11-01 (audit M3) -- only a "gone" answer is DEAD; an oEmbed that
+  // did not answer is a probe that did not happen. See oembedVerdict().
+  if (!e.ok && oembedVerdict(e) === 'unanswered') return [`UNVERIFIED(oEmbed ${e.status}${e.error ? `: ${e.error}` : ''})`]
   if (!e.ok) return [`DEAD ${e.status}${e.error ? ` (${e.error})` : ''}`]
   const flags = []
   // Loudest first: without this the row reads as "checked, nothing wrong"

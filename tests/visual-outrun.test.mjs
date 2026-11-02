@@ -260,3 +260,34 @@ test('OUTRUN: muted, the sun drops off BRIGHT and the road still drives', async 
     assert.ok(cellsWhere(h, () => true).length > 400, 'muted picture should stay up')
   } finally { h.shutdown() }
 })
+
+test('OUTRUN: a star or bird at the right edge stays on its own row (audit L2)', async () => {
+  // An x in [cols - 0.5, cols) rounds to `cols`; keyed flat as
+  // `y * cols + round(x)` that is (y + 1, 0) -- the glyph dropped a row at
+  // the left edge (every bird hit it on each wrap). Mutation-checked: with
+  // the `% cols` removed from the sky keys this goes red.
+  const { h, fx } = await bootOutrun()
+  const p = h.program
+  const saved = { stars: p._outrunStars, birds: p._outrunBirds }
+  try {
+    const cols = h.term.cols
+    const t = settle(h, fx, 5)
+    const at = (x, y) => String.fromCodePoint(h.term.chars[y * cols + x])
+    // Column 0 of rows 2..5 is open sky: no pixels to hide a glyph under.
+    for (let y = 2; y <= 5; y++) assert.ok(!h.term.gfx[y * cols], `col 0 row ${y} should be open sky for this test`)
+    p._outrunStars = [{ x: cols - 0.3, y: 3, phase: 0, speed: 0 }]
+    p._outrunBirds = []
+    drawWith(h, fx, t, signal())
+    assert.equal(at(0, 3), '.', 'the star at x=cols-0.3 should wrap to column 0 of ITS row')
+    assert.equal(at(0, 4), ' ', 'the star dropped a row')
+    // A bird with no speed and no bob sits exactly where it was put.
+    p._outrunStars = []
+    p._outrunBirds = [{ x: cols - 0.2, y: 2, speed: 0, flapPhase: 0, bobPhase: -0.6 * (t + 1 / 60) }]
+    drawWith(h, fx, t + 1 / 60, signal())
+    assert.match(at(0, 2), /[\^v]/, 'the bird at x=cols-0.2 should wrap to column 0 of its row')
+    assert.equal(at(0, 3), ' ', 'the bird dropped a row')
+  } finally {
+    p._outrunStars = saved.stars; p._outrunBirds = saved.birds
+    h.shutdown()
+  }
+})

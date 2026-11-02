@@ -240,10 +240,23 @@ export async function lintRoster({ readmeText, shootText, issueFormText } = {}) 
     stations: STATIONS.length,
     tracks: STATIONS.reduce((n, s) => n + s.tracks.length, 0),
   }
+  //
+  // 2026-11-01 (audit L11) -- each badge states its number TWICE: in the
+  // shields URL (the picture) and in the markdown alt text `[![tracks: N]`,
+  // which is what a screen reader reads and what shows when the image does
+  // not load. Only the URL was checked, so a hand-edit of the picture's
+  // number left the alt text claiming the old count with lint green. Both
+  // copies are read now, each with its own loud miss, and neither number is
+  // written here: both come from the roster.
   for (const [label, want] of Object.entries(badgeExpect)) {
-    const badge = new RegExp(`img\\.shields\\.io/badge/${label}-(\\d+)-`).exec(readme)
-    if (!badge) problems.push(`README: could not find the "${label}-N" shields badge in the header -- if it was reworded, update the regex in lint-roster.js so this keeps checking`)
-    else if (+badge[1] !== want) problems.push(`README ${label} badge: says ${badge[1]}, roster has ${want}`)
+    const copies = {
+      badge: new RegExp(`img\\.shields\\.io/badge/${label}-(\\d+)-`).exec(readme),
+      'badge alt text': new RegExp(`\\[!\\[${label}:\\s*(\\d+)\\]`).exec(readme),
+    }
+    for (const [what, m] of Object.entries(copies)) {
+      if (!m) problems.push(`README: could not find the ${label} ${what} ("${what === 'badge' ? `${label}-N` : `[![${label}: N]`}") in the header -- if it was reworded, update the regex in lint-roster.js so this keeps checking`)
+      else if (+m[1] !== want) problems.push(`README ${label} ${what}: says ${m[1]}, roster has ${want}`)
+    }
   }
   // 2026-09-02 (audit, D1) -- index.html's meta/OG/twitter descriptions are
   // the same roster claim one layer further out, and the layer social

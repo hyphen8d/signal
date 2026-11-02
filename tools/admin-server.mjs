@@ -837,6 +837,15 @@ async function handleApi(req, res, url) {
     const { message, confirm, includeNetwork } = await readBody(req)
     if (confirm !== true) return sendJson(res, 400, { error: 'ship requires confirm:true' })
     if (!message || !String(message).trim()) return sendJson(res, 400, { error: 'a commit message is required' })
+    // 2026-11-01 (audit L8) -- a ship-check is a `git fetch` that runs
+    // outside the writer lock (it is a GET, and the panel polls it), and
+    // SHIP's own preflight fetches too: two fetches in one repo at once can
+    // fail on "cannot lock ref" and SHIP then refuses for no reason. So SHIP
+    // waits out an in-flight check before taking the lock. No new one can
+    // start after that: shipCheck() answers `busy` without fetching once
+    // the lock is held, and nothing awaits between this loop and withLock()
+    // setting it.
+    while (shipCheckInFlight) await shipCheckInFlight.catch(() => {})
     return withLock(res, 'SHIP', () => ship(req, res, String(message).trim(), includeNetwork))
   }
   return handleApiRest(req, res, url, route)

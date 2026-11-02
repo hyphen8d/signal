@@ -587,7 +587,9 @@ concurrency buys nothing -- only less work does):
   `h.term.fb` directly). That is byte-exact because dirty rows accumulate
   until `raster()` clears them; `tests/lazy-raster.test.mjs` proves it
   against `boot({ eagerRaster: true })` across the radio and every
-  `putGlyph` effect. **A new pixel effect belongs in that test's list.**
+  `putGlyph` effect. **The list builds itself** (2026-11-01) from the
+  registry and each module's `putGlyph` calls, so a new pixel effect is
+  covered once a station ships it.
 - **Node's compile cache**, in `.node-compile-cache/` (gitignored, ~70MB, per
   machine): the harness's `?v=test<n>` tags repeat run to run, which is what
   makes it hit. package.json and the admin server's suite task both name it;
@@ -1143,6 +1145,17 @@ flowchart LR
   counts every throttled run whatever it was labelled, and the stall notice
   fires on the streak alone — with one flag on the record, six throttled
   days in a row used to notify nothing.
+
+  **A takedown jumps the queue** (2026-11-01, audit M3): the watch runs
+  `check-roster --oembed-sweep`, one oEmbed request per track before the
+  batch is chosen, because the rotation reaches a given track once a pass
+  (~20 days) and three CITY LIGHTS 404s sat in the record as OK that long.
+  Anything oEmbed calls GONE (401/404 only, `oembedVerdict()` in probe.mjs)
+  goes to the front, inside the same `flaggedCap` slots, and the deep probe
+  records it as an ordinary flag -- so confirm-twice and notify-once handle
+  it, with no second flagging path. A 429/5xx/network error is unanswered:
+  never promoted, never DEAD (decayFlags writes UNVERIFIED for it now), and
+  a sweep left unanswered makes the run `incomplete`, never `clean`.
 
   The rule it exists for: **`check-roster` exits 0 when throttled**, since it
   found nothing wrong — it merely never looked. So the obvious scheduler

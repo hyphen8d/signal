@@ -73,24 +73,37 @@ async function run(station, fx, eagerRaster) {
   return shots
 }
 
-for (const [station, fx] of [
-  ['distortion-field', 'flame'],
-  ['nin', 'dread'],
-  ['cold-wave', 'frost'],
-  ['city-lights', 'ripple'],
-  ['green-room', 'flowfield'],
-  ['neon-stasis', 'drift'],
-  ['drift-mode', 'aurora'],
-  ['after-hours', 'backroom'],
-  ['the-crypt', 'keep'],
-  ['circuit-crush', 'outrun'],
-  ['hackback', 'boombap'],
-  ['mirrorball', 'dancefloor'],
-  ['slow-orbit', 'orbit'],
-  ['rise-up', 'uprising'],
-  ['tradewinds', 'lagoon'],
-  ['midnight-neon', 'bubbletubes'],
-]) {
+// The effects under test are DERIVED, not listed (2026-11-01, audit L3):
+// every registered effect (visuals/index.js) whose module calls putGlyph(),
+// each booted on the station that ships it. This test is the only
+// same-bitmap guard most of those effects have -- deleting OUTRUN's
+// double-buffer swap left all of OUTRUN's own tests green and only this one
+// red -- so a hand-kept list that forgot the next pixel effect would leave
+// it with no guard at all and nothing saying so. Comments are stripped
+// before the search, so a module whose comments merely mention putGlyph
+// is not mistaken for one that calls it.
+const { readFileSync } = await import('node:fs')
+const { VISUAL_KEYS } = await import('../visuals/index.js')
+const { STATIONS, SECRET_STATIONS } = await import('../stations.js')
+const callsPutGlyph = (key) => {
+  const src = readFileSync(new URL(`../visuals/${key}.js`, import.meta.url), 'utf8')
+  return /\.putGlyph\s*\(/.test(src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''))
+}
+const PIXEL_EFFECTS = VISUAL_KEYS.filter(callsPutGlyph).map((fx) => {
+  const station = [...STATIONS, ...SECRET_STATIONS].find((s) => s.visual === fx)
+  return [station?.id, fx]
+})
+
+test('lazy raster: every putGlyph effect is covered, each from a station that ships it', () => {
+  // A floor, so a broken search (a renamed method, a moved directory) that
+  // finds nothing cannot pass by testing nothing: sixteen effects drew
+  // through putGlyph when this was written.
+  assert.ok(PIXEL_EFFECTS.length >= 16, `found only ${PIXEL_EFFECTS.length} putGlyph effects: ${PIXEL_EFFECTS.map(([, fx]) => fx)}`)
+  const orphans = PIXEL_EFFECTS.filter(([station]) => !station).map(([, fx]) => fx)
+  assert.deepEqual(orphans, [], 'a putGlyph effect no station ships cannot be booted onto here -- give this test a way to reach it')
+})
+
+for (const [station, fx] of PIXEL_EFFECTS.filter(([station]) => station)) {
   test(`lazy raster paints the same framebuffer as a raster per frame (${fx})`, async () => {
     const eager = await run(station, fx, true)
     const lazy = await run(station, fx, false)
