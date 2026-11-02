@@ -183,6 +183,11 @@ test('a write waits for nothing: it is refused while another writer holds the lo
   const busy = await post('/api/save-identity', { stationId: 'cipher', fields: { tagline: 'x' } })
   assert.equal(busy.status, 409)
   assert.match(busy.json.error, /busy/)
+  // 2026-11-02 (control room) -- the ON AIR lamp reads the same lock, and
+  // names the holder the 409 named.
+  const air = await request({ path: '/api/on-air' })
+  assert.equal(air.json?.onAir, true, air.text)
+  assert.equal(air.json.busy, 'task "deadfeedback"')
   req.destroy()   // the tab closes
   let freed = false
   for (let i = 0; i < 40 && !freed; i++) {
@@ -190,6 +195,7 @@ test('a write waits for nothing: it is refused while another writer holds the lo
     freed = (await post('/api/pending', { pending: [], rejected: [] })).json?.busy === undefined
   }
   assert.ok(freed, 'the lock was released once the requester went away')
+  assert.equal((await request({ path: '/api/on-air' })).json?.busy, null, 'and the lamp went dark with it')
   restore()
 })
 
@@ -215,6 +221,29 @@ test('SHIP refuses, before stamping, on a clean tree, off main, and behind the r
   } finally {
     git('checkout', '-q', 'main'); spawnSync('git', ['branch', '-qD', 'side'], { cwd: root }); restore()
   }
+})
+
+// 2026-11-02 -- a SHIP that fails AFTER stamping puts the stamp back. It
+// said it did ("build stamp restored") and did not: build.json was missing
+// from WRITABLE, so restoreStamp()'s write threw into its own try/catch.
+// Mutation-checked: removing 'build.json' from WRITABLE fails this.
+test('a SHIP that fails after the stamp restores build.json, and commits nothing', async () => {
+  // The refusal test above leaves this copy BEHIND the remote, and a later
+  // test relies on that; catch up for this one, and put HEAD back after.
+  const head = git('rev-parse', 'HEAD')
+  git('fetch', '-q'); git('merge', '-q', '--ff-only', 'origin/main')
+  const subject = git('log', '-1', '--format=%s')
+  const stamp = read('build.json')
+  try {
+    const src = read('stations.js')
+    const m = src.match(/tagline: '([^']*)'/)
+    writeFileSync(path.join(root, 'stations.js'), src.replace(m[0], `tagline: '${m[1]} -- padded well past the guide index LANE column'`))
+    const r = await post('/api/ship', { message: 'lint refuses this', confirm: true })
+    assert.match(r.text, /"failed":"lint"/, r.text.slice(-400))
+    assert.match(r.text, /bumping build stamp/, 'it got as far as stamping')
+    assert.equal(read('build.json'), stamp, 'the stamp was put back')
+    assert.equal(git('log', '-1', '--format=%s'), subject, 'nothing was committed')
+  } finally { restore(); git('reset', '-q', '--hard', head) }
 })
 
 // 2026-11-01 -- a track save regenerates README's roster counts along with
