@@ -1,10 +1,10 @@
 # SIGNAL -- station roster
 
-Generated from stations.js. 16 stations, 686 tracks total.
+Generated from stations.js. 16 stations, 808 tracks total.
 
 # YM band
 
-8 stations, 360 tracks. Its own dial, its own `1`-`9` presets.
+8 stations, 420 tracks. Its own dial, its own `1`-`9` presets.
 
 ## CIPHER -- 133.7
 
@@ -12,7 +12,7 @@ Generated from stations.js. 16 stations, 686 tracks total.
 
 Ident tones (Hz): 523.3, 349.2, 587.3, 293.7
 
-Tracks (48):
+Tracks (55):
 
 1. **Firestarter** -- The Prodigy  ([youtu.be/wmin5WkOuPw](https://youtu.be/wmin5WkOuPw))
 2. **Omen** -- The Prodigy  ([youtu.be/xMVTKOoy1uk](https://youtu.be/xMVTKOoy1uk))
@@ -62,6 +62,13 @@ Tracks (48):
 46. **Zion** -- Fluke  ([youtu.be/cFffoHmn8XA](https://youtu.be/cFffoHmn8XA))
 47. **Battleflag** -- Lo Fidelity Allstars  ([youtu.be/B99nd2iKGOw](https://youtu.be/B99nd2iKGOw))
 48. **Ready Steady Go** -- Paul Oakenfold  ([youtu.be/MSv3Oez4O-4](https://youtu.be/MSv3Oez4O-4))
+49. **Leave Home** -- The Chemical Brothers  ([youtu.be/4QKi8DorEpM](https://youtu.be/4QKi8DorEpM))
+50. **Pearl's Girl** -- Underworld  ([youtu.be/iullHn3Smzc](https://youtu.be/iullHn3Smzc))
+51. **Radio Babylon** -- Meat Beat Manifesto  ([youtu.be/TEe5mpmKxW8](https://youtu.be/TEe5mpmKxW8))
+52. **Da Antidote** -- Stanton Warriors  ([youtu.be/p8QEMNgiwfY](https://youtu.be/p8QEMNgiwfY))
+53. **Born Too Slow** -- The Crystal Method  ([youtu.be/H6BEkPzstJQ](https://youtu.be/H6BEkPzstJQ))
+54. **Zerotonine** -- Junkie XL  ([youtu.be/8dPe_RrD_Ro](https://youtu.be/8dPe_RrD_Ro))
+55. **Roll the Dice** -- Lunatic Calm  ([youtu.be/62i8aS7Zy_0](https://youtu.be/62i8aS7Zy_0))
 
 ## DISTORTION FIELD -- 199.7
 
@@ -69,7 +76,7 @@ Tracks (48):
 
 Ident tones (Hz): 392, 349.2, 311.2, 261.6
 
-Tracks (50):
+Tracks (58):
 
 1. **Smells Like Teen Spirit** -- Nirvana  ([youtu.be/hTWKbfoikeg](https://youtu.be/hTWKbfoikeg))
 2. **Black Hole Sun** -- Soundgarden  ([youtu.be/3mbBbFH9fAg](https://youtu.be/3mbBbFH9fAg))
@@ -121,6 +128,14 @@ Tracks (50):
 48. **Only Happy When It Rains** -- Garbage  ([youtu.be/GpBFOJ3R0M4](https://youtu.be/GpBFOJ3R0M4))
 49. **Plowed** -- Sponge  ([youtu.be/OGKRr0NmgFM](https://youtu.be/OGKRr0NmgFM))
 50. **Shine** -- Collective Soul  ([youtu.be/iuB1A2VJ3-k](https://youtu.be/iuB1A2VJ3-k))
+51. **Bruise Violet** -- Babes in Toyland  ([youtu.be/XON5kVxHBYA](https://youtu.be/XON5kVxHBYA))
+52. **Stars** -- Hum  ([youtu.be/gMEB4HNNZ2I](https://youtu.be/gMEB4HNNZ2I))
+53. **Somebody to Shove** -- Soul Asylum  ([youtu.be/OrrE5bCA5lg](https://youtu.be/OrrE5bCA5lg))
+54. **Comedown** -- Bush  ([youtu.be/cPlgoNY2xqw](https://youtu.be/cPlgoNY2xqw))
+55. **Seven** -- Sunny Day Real Estate  ([youtu.be/GS3dDQpSeAQ](https://youtu.be/GS3dDQpSeAQ))
+56. **50ft Queenie** -- PJ Harvey  ([youtu.be/jKLiU7Hq93w](https://youtu.be/jKLiU7Hq93w))
+57. **Stardog Champion** -- Mother Love Bone  ([youtu.be/prij-gGXITk](https://youtu.be/prij-gGXITk))
+58. **Cumbersome** -- Seven Mary Three  ([youtu.be/NjNn4bbbgSw](https://youtu.be/NjNn4bbbgSw))
 
 ## COLD WAVE -- 273.0
 
@@ -128,7 +143,7 @@ Tracks (50):
 
 Ident tones (Hz): 440, 659.3, 554.4, 440
 
-Tracks (50):
+Tracks (57):
 
 1. **Blue Monday '88** -- New Order  ([youtu.be/9GMjH1nR0ds](https://youtu.be/9GMjH1nR0ds))
 2. **Just Like Heaven** -- The Cure  ([youtu.be/1ASpBpT8bRQ](https://youtu.be/1ASpBpT8bRQ))
@@ -180,6 +195,13 @@ Tracks (50):
 48. **Oh Yeah** -- Yello  ([youtu.be/Ya1ySdk9Oao](https://youtu.be/Ya1ySdk9Oao))
 49. **Hold Me Now** -- Thompson Twins  ([youtu.be/qMpBobAonKs](https://youtu.be/qMpBobAonKs))
 50. **You Spin Me Round (Like a Record)** -- Dead Or Alive  ([youtu.be/rc6vowZjWOs](https://youtu.be/rc6vowZjWOs))
+51. **Love Is a Stranger** -- Eurythmics  ([youtu.be/9cFzKPdImjo](https://youtu.be/9cFzKPdImjo))
+52. **Duel** -- Propaganda  ([youtu.be/GwvO97FbmW0](https://youtu.be/GwvO97FbmW0))
+53. **Relax** -- Frankie Goes to Hollywood  ([youtu.be/AKBbMlp0nEA](https://youtu.be/AKBbMlp0nEA))
+54. **Too Shy** -- Kajagoogoo  ([youtu.be/2azCuCWf63Q](https://youtu.be/2azCuCWf63Q))
+55. **The Politics of Dancing** -- Re-Flex  ([youtu.be/AN40EWNZK8A](https://youtu.be/AN40EWNZK8A))
+56. **Dancing with Tears in My Eyes** -- Ultravox  ([youtu.be/SzGJ13_KVOo](https://youtu.be/SzGJ13_KVOo))
+57. **Love Action (I Believe in Love)** -- The Human League  ([youtu.be/7SfuxmpLpO8](https://youtu.be/7SfuxmpLpO8))
 
 ## NEON STASIS -- 321.0
 
@@ -187,7 +209,7 @@ Tracks (50):
 
 Ident tones (Hz): 523.3, 440, 349.2, 523.3
 
-Tracks (38):
+Tracks (45):
 
 1. **Sembikiya Restaurant** -- Cat System Corp  ([youtu.be/xAh-nngGZ6I](https://youtu.be/xAh-nngGZ6I))
 2. **Roadtrips in Spring** -- Waterfront Dining  ([youtu.be/boofE5_HtkI](https://youtu.be/boofE5_HtkI))
@@ -227,6 +249,13 @@ Tracks (38):
 36. **Parkway** -- Luxury Elite  ([youtu.be/Z7JGPByPr8s](https://youtu.be/Z7JGPByPr8s))
 37. **Upscale** -- Luxury Elite  ([youtu.be/z8KIa6tWoAE](https://youtu.be/z8KIa6tWoAE))
 38. **Crystal** -- Luxury Elite  ([youtu.be/xJLcvKeVcFI](https://youtu.be/xJLcvKeVcFI))
+39. **Just A Little More Shopping** -- PowerPCME  ([youtu.be/8GMI47qipEM](https://youtu.be/8GMI47qipEM))
+40. **Bluelight specials going on now!** -- PowerPCME  ([youtu.be/6e0dJkZ7Wig](https://youtu.be/6e0dJkZ7Wig))
+41. **Up Next** -- Luxury Elite  ([youtu.be/Z2u_Ok9irCk](https://youtu.be/Z2u_Ok9irCk))
+42. **S.W.A.K.** -- Luxury Elite  ([youtu.be/puaPTW0DjqA](https://youtu.be/puaPTW0DjqA))
+43. **Okinawa** -- Waterfront Dining  ([youtu.be/fh5TXDKnAro](https://youtu.be/fh5TXDKnAro))
+44. **Miami Wicked** -- Waterfront Dining  ([youtu.be/vqKP2wqsAj0](https://youtu.be/vqKP2wqsAj0))
+45. **Enter Through The Lobby** -- Disconscious  ([youtu.be/9m7M6wpjuUU](https://youtu.be/9m7M6wpjuUU))
 
 ## RISE UP -- 440.0
 
@@ -234,7 +263,7 @@ Tracks (38):
 
 Ident tones (Hz): 440, 440, 440, 659.3
 
-Tracks (34):
+Tracks (42):
 
 1. **Rise Above** -- Black Flag  ([youtu.be/wDUYCyajDcs](https://youtu.be/wDUYCyajDcs))
 2. **My War** -- Black Flag  ([youtu.be/ga6v91ZGL1U](https://youtu.be/ga6v91ZGL1U))
@@ -270,6 +299,14 @@ Tracks (34):
 32. **Police Story** -- Black Flag  ([youtu.be/4MGsEaDT8zE](https://youtu.be/4MGsEaDT8zE))
 33. **Fuck Authority** -- Pennywise  ([youtu.be/9ivNaKshsYE](https://youtu.be/9ivNaKshsYE))
 34. **Punk Rock Song** -- Bad Religion  ([youtu.be/sUli-Y0gZOs](https://youtu.be/sUli-Y0gZOs))
+35. **Rebel Girl** -- Bikini Kill  ([youtu.be/L0oeqAQ1qE8](https://youtu.be/L0oeqAQ1qE8))
+36. **Merchandise** -- Fugazi  ([youtu.be/RQ8muwMQNbg](https://youtu.be/RQ8muwMQNbg))
+37. **Which Side Are You On?** -- Dropkick Murphys  ([youtu.be/WVMZUwFFJCc](https://youtu.be/WVMZUwFFJCc))
+38. **Unfuck the World** -- Prophets of Rage  ([youtu.be/TDrHkGQgHvI](https://youtu.be/TDrHkGQgHvI))
+39. **American Idiot** -- Green Day  ([youtu.be/kqkGY9jsBOw](https://youtu.be/kqkGY9jsBOw))
+40. **Franco Un-American** -- NOFX  ([youtu.be/1k57HJ0SBEg](https://youtu.be/1k57HJ0SBEg))
+41. **John Wayne Was a Nazi** -- MDC  ([youtu.be/SoyusTUFdl0](https://youtu.be/SoyusTUFdl0))
+42. **Religious Wars** -- Subhumans  ([youtu.be/2rozOOvrs4w](https://youtu.be/2rozOOvrs4w))
 
 ## ATOMIC -- 529.0
 
@@ -277,7 +314,7 @@ Tracks (34):
 
 Ident tones (Hz): 392, 493.9, 493.9, 587.3
 
-Tracks (40):
+Tracks (48):
 
 1. **I Don't Want to Set the World on Fire** -- The Ink Spots  ([youtu.be/GkHd1d_UVOE](https://youtu.be/GkHd1d_UVOE))
 2. **Crawl Out Through the Fallout** -- Sheldon Allman  ([youtu.be/Q9bSOaSuScQ](https://youtu.be/Q9bSOaSuScQ))
@@ -319,6 +356,14 @@ Tracks (40):
 38. **Easy Living** -- Billie Holiday  ([youtu.be/a2FeSEiXaR0](https://youtu.be/a2FeSEiXaR0))
 39. **Mighty Mighty Man** -- Roy Brown  ([youtu.be/B2DkxG6-Pko](https://youtu.be/B2DkxG6-Pko))
 40. **Dear Hearts and Gentle People** -- Bob Crosby and the Bobcats  ([youtu.be/hOEAGZZoq7w](https://youtu.be/hOEAGZZoq7w))
+41. **A Wonderful Guy** -- Tex Beneke  ([youtu.be/L0OH5I62tgo](https://youtu.be/L0OH5I62tgo))
+42. **Ac-Cent-Tchu-Ate the Positive** -- Bing Crosby & The Andrews Sisters  ([youtu.be/el_dGzqvIgw](https://youtu.be/el_dGzqvIgw))
+43. **Happy Times** -- Bob Crosby and the Bobcats  ([youtu.be/xwQPsihhngM](https://youtu.be/xwQPsihhngM))
+44. **He's a Demon, He's a Devil, He's a Doll** -- Betty Hutton  ([youtu.be/IYM7y7QY0l0](https://youtu.be/IYM7y7QY0l0))
+45. **One More Tomorrow** -- Frankie Carle  ([youtu.be/52-nTVaG2gA](https://youtu.be/52-nTVaG2gA))
+46. **Worry Worry Worry** -- The Three Suns  ([youtu.be/pUDv3h09VBc](https://youtu.be/pUDv3h09VBc))
+47. **Undecided** -- Ella Fitzgerald & Chick Webb  ([youtu.be/FtaGfixdATM](https://youtu.be/FtaGfixdATM))
+48. **Rocket 69** -- Todd Rhodes & Connee Allen  ([youtu.be/SiAk2Q4a0lA](https://youtu.be/SiAk2Q4a0lA))
 
 ## CITY LIGHTS -- 780.0
 
@@ -326,7 +371,7 @@ Tracks (40):
 
 Ident tones (Hz): 523.3, 784, 659.3, 987.8
 
-Tracks (50):
+Tracks (57):
 
 1. **Stay With Me** -- Miki Matsubara  ([youtu.be/5zTkTlj2h9E](https://youtu.be/5zTkTlj2h9E))
 2. **Sparkle** -- Tatsuro Yamashita  ([youtu.be/pqobRu9aR3M](https://youtu.be/pqobRu9aR3M))
@@ -378,6 +423,13 @@ Tracks (50):
 48. **Tuxedo Connection** -- Hitomi Tohyama  ([youtu.be/AeH1xq2PpjQ](https://youtu.be/AeH1xq2PpjQ))
 49. **Bomber** -- Tatsuro Yamashita  ([youtu.be/-hkFL1WOJNo](https://youtu.be/-hkFL1WOJNo))
 50. **Two Call** -- Kaoru Akimoto  ([youtu.be/pSbzx-0wbs0](https://youtu.be/pSbzx-0wbs0))
+51. **Tasogare** -- Mai Yamane  ([youtu.be/PiYXAnB9J2U](https://youtu.be/PiYXAnB9J2U))
+52. **Chuo Freeway** -- Yumi Matsutoya  ([youtu.be/Wr66ohyVebs](https://youtu.be/Wr66ohyVebs))
+53. **Carnaval** -- Taeko Onuki  ([youtu.be/AbNHFFHt0xU](https://youtu.be/AbNHFFHt0xU))
+54. **Love Was Really Gone** -- Makoto Matsushita  ([youtu.be/aef1j0PM3Sg](https://youtu.be/aef1j0PM3Sg))
+55. **Dramatic Rain** -- Junichi Inagaki  ([youtu.be/q0IgLS10W34](https://youtu.be/q0IgLS10W34))
+56. **Windy Summer** -- Anri  ([youtu.be/-8WTumwpvmg](https://youtu.be/-8WTumwpvmg))
+57. **Baby Blue** -- Ginji Ito  ([youtu.be/tcq2QmpxmSs](https://youtu.be/tcq2QmpxmSs))
 
 ## HACKBACK -- 808.0
 
@@ -385,7 +437,7 @@ Tracks (50):
 
 Ident tones (Hz): 220, 293.7, 349.2, 293.7
 
-Tracks (50):
+Tracks (58):
 
 1. **Can I Kick It?** -- A Tribe Called Quest  ([youtu.be/D-uV8TGjaGU](https://youtu.be/D-uV8TGjaGU))
 2. **Award Tour** -- A Tribe Called Quest  ([youtu.be/P800UWoE9xs](https://youtu.be/P800UWoE9xs))
@@ -437,10 +489,18 @@ Tracks (50):
 48. **The Ghetto** -- Too $hort  ([youtu.be/0Cjj3YMrkEM](https://youtu.be/0Cjj3YMrkEM))
 49. **Mistadobalina** -- Del the Funky Homosapien  ([youtu.be/e29ZR1MNOUA](https://youtu.be/e29ZR1MNOUA))
 50. **I Seen a Man Die** -- Scarface  ([youtu.be/cGwUE0V9Gqw](https://youtu.be/cGwUE0V9Gqw))
+51. **Have a Nice Day** -- Roxanne Shanté  ([youtu.be/5QkEHUMmpyM](https://youtu.be/5QkEHUMmpyM))
+52. **Fat Cats, Bigga Fish** -- The Coup  ([youtu.be/j8U6jdEgJeE](https://youtu.be/j8U6jdEgJeE))
+53. **Tennessee** -- Arrested Development  ([youtu.be/EepXpfn2bj4](https://youtu.be/EepXpfn2bj4))
+54. **Summertime** -- DJ Jazzy Jeff & The Fresh Prince  ([youtu.be/Kr0tTbTbmVA](https://youtu.be/Kr0tTbTbmVA))
+55. **Make Room** -- Tha Alkaholiks  ([youtu.be/obD-4HRfk4I](https://youtu.be/obD-4HRfk4I))
+56. **My Philosophy** -- Boogie Down Productions  ([youtu.be/h1vKOchATXs](https://youtu.be/h1vKOchATXs))
+57. **Looking at the Front Door** -- Main Source  ([youtu.be/ecsuf_MYrBY](https://youtu.be/ecsuf_MYrBY))
+58. **Space Age Pimpin'** -- 8Ball & MJG  ([youtu.be/ib9biVUc5EU](https://youtu.be/ib9biVUc5EU))
 
 # ZM band
 
-8 stations, 326 tracks. Its own dial, its own `1`-`9` presets.
+8 stations, 388 tracks. Its own dial, its own `1`-`9` presets.
 
 ## THE CRYPT -- 1031.0
 
@@ -448,7 +508,7 @@ Tracks (50):
 
 Ident tones (Hz): 220, 207.7, 174.6, 130.8
 
-Tracks (32):
+Tracks (40):
 
 1. **Whitebark Forest** -- Mountain Realm  ([youtu.be/APZIre8Tm60](https://youtu.be/APZIre8Tm60))
 2. **Dungeon Stairs** -- Mountain Realm  ([youtu.be/YKe_zJEGcWQ](https://youtu.be/YKe_zJEGcWQ))
@@ -482,6 +542,14 @@ Tracks (32):
 30. **Moss Shod Battlements** -- Fief  ([youtu.be/KLDjf0kuHF8](https://youtu.be/KLDjf0kuHF8))
 31. **The Knight of the Elves Blows His Horn** -- Fief  ([youtu.be/O-fowRk_8Hw](https://youtu.be/O-fowRk_8Hw))
 32. **Thorngrove** -- Old Tower  ([youtu.be/fgcAelgqRR8](https://youtu.be/fgcAelgqRR8))
+33. **Night's Spell** -- Old Tower  ([youtu.be/MobljdsjRe0](https://youtu.be/MobljdsjRe0))
+34. **Upon Her Sword the Sunlight Shone** -- Fief  ([youtu.be/XjAzDmdy4Sc](https://youtu.be/XjAzDmdy4Sc))
+35. **Darkling Magic Winds** -- Old Tower  ([youtu.be/54GY9rVr6eo](https://youtu.be/54GY9rVr6eo))
+36. **The Lakes Beneath the Lakes** -- Sequestered Keep  ([youtu.be/QxHY04WtEFM](https://youtu.be/QxHY04WtEFM))
+37. **Wizardwindwanderer** -- Sequestered Keep  ([youtu.be/Bdcgz-aACuw](https://youtu.be/Bdcgz-aACuw))
+38. **Castle Garden (Of Fire and Frost)** -- Lord Lovidicus  ([youtu.be/wC9ZJWCiSFk](https://youtu.be/wC9ZJWCiSFk))
+39. **The Dire Fortress Awaits Assailment** -- Lord Lovidicus  ([youtu.be/bAbv8Q-iTaI](https://youtu.be/bAbv8Q-iTaI))
+40. **Footpaths** -- Hole Dweller  ([youtu.be/FkTmPzBKO4o](https://youtu.be/FkTmPzBKO4o))
 
 ## MIRRORBALL -- 1054.0
 
@@ -489,7 +557,7 @@ Tracks (32):
 
 Ident tones (Hz): 220, 220, 440, 329.6
 
-Tracks (40):
+Tracks (47):
 
 1. **Le Freak** -- Chic  ([youtu.be/7PC-AcrHEKU](https://youtu.be/7PC-AcrHEKU))
 2. **Good Times** -- Chic  ([youtu.be/PP_JBPGkd-Y](https://youtu.be/PP_JBPGkd-Y))
@@ -531,6 +599,13 @@ Tracks (40):
 38. **Instant Replay** -- Dan Hartman  ([youtu.be/9C7rHWKc8x0](https://youtu.be/9C7rHWKc8x0))
 39. **Ain't Nobody** -- Rufus and Chaka Khan  ([youtu.be/T_3FY2kEdOI](https://youtu.be/T_3FY2kEdOI))
 40. **Fire** -- Ohio Players  ([youtu.be/1xqMY8UAGgg](https://youtu.be/1xqMY8UAGgg))
+41. **TSOP (The Sound of Philadelphia)** -- MFSB featuring The Three Degrees  ([youtu.be/LS2PQs_IRNk](https://youtu.be/LS2PQs_IRNk))
+42. **Shake Your Groove Thing** -- Peaches & Herb  ([youtu.be/w3e8SXWjNg4](https://youtu.be/w3e8SXWjNg4))
+43. **Bad Luck** -- Harold Melvin & The Blue Notes  ([youtu.be/mykhgDJvp6g](https://youtu.be/mykhgDJvp6g))
+44. **Best of My Love** -- The Emotions  ([youtu.be/Pbg66_KdJ5Q](https://youtu.be/Pbg66_KdJ5Q))
+45. **We Are Family** -- Sister Sledge  ([youtu.be/7LJBmXkB9o8](https://youtu.be/7LJBmXkB9o8))
+46. **Don't Stop the Music** -- Yarbrough & Peoples  ([youtu.be/aK2-L2y25Bg](https://youtu.be/aK2-L2y25Bg))
+47. **Do It ('Til You're Satisfied)** -- B.T. Express  ([youtu.be/yvIQX_eDmN0](https://youtu.be/yvIQX_eDmN0))
 
 ## SLOW ORBIT -- 1092.0
 
@@ -538,7 +613,7 @@ Tracks (40):
 
 Ident tones (Hz): 329.6, 392, 440, 587.3
 
-Tracks (32):
+Tracks (40):
 
 1. **After the Rain** -- Jens Buchert  ([youtu.be/aIB70PVSCnY](https://youtu.be/aIB70PVSCnY))
 2. **On the Run** -- Jens Buchert  ([youtu.be/EqwRXoAxn7I](https://youtu.be/EqwRXoAxn7I))
@@ -572,6 +647,14 @@ Tracks (32):
 30. **Beautiful Day** -- Fascinating Earthbound Objects  ([youtu.be/a9pqTHlPMXI](https://youtu.be/a9pqTHlPMXI))
 31. **Venice Beach** -- Celeste Lear  ([youtu.be/Ily1plRBESw](https://youtu.be/Ily1plRBESw))
 32. **Digitalis** -- Celeste Lear  ([youtu.be/zur8YJXlCQ4](https://youtu.be/zur8YJXlCQ4))
+33. **Suzuki** -- Tosca  ([youtu.be/9J_7QwB5Syk](https://youtu.be/9J_7QwB5Syk))
+34. **Kiara** -- Bonobo  ([youtu.be/L-kyRh7N-kE](https://youtu.be/L-kyRh7N-kE))
+35. **Kong** -- Bonobo  ([youtu.be/pkACVyU4PmA](https://youtu.be/pkACVyU4PmA))
+36. **La Femme d'Argent** -- Air  ([youtu.be/YUX8fUrKRNU](https://youtu.be/YUX8fUrKRNU))
+37. **Polaris** -- Zero 7  ([youtu.be/IeZwLOoXW78](https://youtu.be/IeZwLOoXW78))
+38. **High Noon** -- Kruder & Dorfmeister  ([youtu.be/ba0BUnBtRsk](https://youtu.be/ba0BUnBtRsk))
+39. **Shaolin Satellite** -- Thievery Corporation  ([youtu.be/imMzpILg6Lk](https://youtu.be/imMzpILg6Lk))
+40. **Nights Interlude** -- Nightmares on Wax  ([youtu.be/Uwz7QTk2hyk](https://youtu.be/Uwz7QTk2hyk))
 
 ## AFTER HOURS -- 1200.0
 
@@ -579,7 +662,7 @@ Tracks (32):
 
 Ident tones (Hz): 349.2, 415.3, 370, 370
 
-Tracks (40):
+Tracks (48):
 
 1. **I Guess I'll Hang My Tears Out to Dry** -- Dexter Gordon  ([youtu.be/AkofGzKRFj4](https://youtu.be/AkofGzKRFj4))
 2. **Don't Explain** -- Dexter Gordon  ([youtu.be/dpjM7wwSTxI](https://youtu.be/dpjM7wwSTxI))
@@ -621,6 +704,14 @@ Tracks (40):
 38. **Darn That Dream** -- Art Farmer  ([youtu.be/7mOQxBen6wk](https://youtu.be/7mOQxBen6wk))
 39. **It Never Entered My Mind** -- Keith Jarrett  ([youtu.be/xEvrZcBZbds](https://youtu.be/xEvrZcBZbds))
 40. **La Mesha** -- Joe Henderson  ([youtu.be/Ns4p9lVGYjc](https://youtu.be/Ns4p9lVGYjc))
+41. **Night Lights** -- Gerry Mulligan  ([youtu.be/Wf02V8AtMag](https://youtu.be/Wf02V8AtMag))
+42. **Blue and Sentimental** -- Ike Quebec  ([youtu.be/LXdOapA_lEo](https://youtu.be/LXdOapA_lEo))
+43. **Since I Fell for You** -- Stanley Turrentine & The Three Sounds  ([youtu.be/pPfP66z16Tk](https://youtu.be/pPfP66z16Tk))
+44. **In a Sentimental Mood** -- Duke Ellington & John Coltrane  ([youtu.be/5AhdgAcV0KM](https://youtu.be/5AhdgAcV0KM))
+45. **Love Theme from Spartacus** -- Yusef Lateef  ([youtu.be/4C_hhw49fdQ](https://youtu.be/4C_hhw49fdQ))
+46. **Left Alone** -- Mal Waldron  ([youtu.be/WQeN1bTDQLs](https://youtu.be/WQeN1bTDQLs))
+47. **Idle Moments** -- Grant Green  ([youtu.be/vRgvGOmEDSU](https://youtu.be/vRgvGOmEDSU))
+48. **Everything Happens to Me** -- Duke Jordan  ([youtu.be/qpbVRdPDYCM](https://youtu.be/qpbVRdPDYCM))
 
 ## SYNAPSE -- 1234.0
 
@@ -628,7 +719,7 @@ Tracks (40):
 
 Ident tones (Hz): 293.7, 349.2, 415.3, 466.2
 
-Tracks (50):
+Tracks (58):
 
 1. **TESLA** -- Mau P  ([youtu.be/rVp454wjqls](https://youtu.be/rVp454wjqls))
 2. **Take It Off** -- FISHER & Aatig  ([youtu.be/0CKkRtkzw4g](https://youtu.be/0CKkRtkzw4g))
@@ -680,6 +771,14 @@ Tracks (50):
 48. **Free Your Mind** -- Prospa & Cloonee  ([youtu.be/gJYjbDnyx-o](https://youtu.be/gJYjbDnyx-o))
 49. **Temptation** -- SIDEPIECE  ([youtu.be/6dx013HIzCU](https://youtu.be/6dx013HIzCU))
 50. **Wassup** -- Wax Motif  ([youtu.be/Fc0tcD9F4GU](https://youtu.be/Fc0tcD9F4GU))
+51. **Gimme That Bounce** -- Mau P  ([youtu.be/Y-iVeTyn7n0](https://youtu.be/Y-iVeTyn7n0))
+52. **Saving Up** -- Dom Dolla  ([youtu.be/5sgc8RJezrE](https://youtu.be/5sgc8RJezrE))
+53. **La Danza** -- John Summit  ([youtu.be/DrO5TTpxO24](https://youtu.be/DrO5TTpxO24))
+54. **A Drug From God** -- Chris Lake & NPC  ([youtu.be/nsmvBR37xps](https://youtu.be/nsmvBR37xps))
+55. **Believe** -- Eli Brown  ([youtu.be/EsR0RaLXnY0](https://youtu.be/EsR0RaLXnY0))
+56. **Different Side** -- Michael Bibi & KinAhau  ([youtu.be/NB95LaBYdsA](https://youtu.be/NB95LaBYdsA))
+57. **Losing Control** -- Odd Mob & OMNOM  ([youtu.be/Mg1QHSrkRx0](https://youtu.be/Mg1QHSrkRx0))
+58. **Da Fonk** -- Mochakk  ([youtu.be/6gq-MlQGkOY](https://youtu.be/6gq-MlQGkOY))
 
 ## DRIFT MODE -- 1321.0
 
@@ -687,7 +786,7 @@ Tracks (50):
 
 Ident tones (Hz): 392, 329.6, 370, 293.7
 
-Tracks (50):
+Tracks (58):
 
 1. **Weightless** -- Marconi Union  ([youtu.be/UfcAVejslrU](https://youtu.be/UfcAVejslrU))
 2. **Near Light** -- Olafur Arnalds  ([youtu.be/0kYc55bXJFI](https://youtu.be/0kYc55bXJFI))
@@ -739,6 +838,14 @@ Tracks (50):
 48. **Sore** -- Eluvium  ([youtu.be/00Ipvqnk5is](https://youtu.be/00Ipvqnk5is))
 49. **RH Negative** -- Rafael Anton Irisarri  ([youtu.be/ljypVwBF_e8](https://youtu.be/ljypVwBF_e8))
 50. **Forever Ago is Now** -- Rafael Anton Irisarri  ([youtu.be/nZyYcmK7a0I](https://youtu.be/nZyYcmK7a0I))
+51. **Structures from Silence** -- Steve Roach  ([youtu.be/jPMuZ5qhOJM](https://youtu.be/jPMuZ5qhOJM))
+52. **Clouds** -- Gigi Masin  ([youtu.be/i-VOfzpXFDk](https://youtu.be/i-VOfzpXFDk))
+53. **Dungtitled (In A Major)** -- Stars of the Lid  ([youtu.be/A9KldnpPkQI](https://youtu.be/A9KldnpPkQI))
+54. **Water Copy** -- Hiroshi Yoshimura  ([youtu.be/N-NDBd5rN3c](https://youtu.be/N-NDBd5rN3c))
+55. **Still Space** -- Satoshi Ashikawa  ([youtu.be/asCnBKb7vHI](https://youtu.be/asCnBKb7vHI))
+56. **Abandon Window** -- Jon Hopkins  ([youtu.be/mqU0XsELBCA](https://youtu.be/mqU0XsELBCA))
+57. **Perfumes III** -- Sarah Davachi  ([youtu.be/aGTX3eDLow4](https://youtu.be/aGTX3eDLow4))
+58. **The Pearl** -- Harold Budd / Brian Eno  ([youtu.be/qySCf2ovWJc](https://youtu.be/qySCf2ovWJc))
 
 ## TRADEWINDS -- 1559.0
 
@@ -746,7 +853,7 @@ Tracks (50):
 
 Ident tones (Hz): 523.3, 659.3, 783.9, 1046.5
 
-Tracks (32):
+Tracks (39):
 
 1. **Ringo Oiwake** -- Arthur Lyman  ([youtu.be/mitt1Qnkmgo](https://youtu.be/mitt1Qnkmgo))
 2. **Ke Kali Ne Au** -- Arthur Lyman  ([youtu.be/7QO2QuXEZS4](https://youtu.be/7QO2QuXEZS4))
@@ -780,6 +887,13 @@ Tracks (32):
 30. **Sweet Pikake Serenade** -- The Waitiki 7  ([youtu.be/c7UlDiP66GI](https://youtu.be/c7UlDiP66GI))
 31. **Ruby** -- The Waitiki 7  ([youtu.be/QAPpsWcozao](https://youtu.be/QAPpsWcozao))
 32. **Jungle River Boat** -- Les Baxter  ([youtu.be/0fxAl-e6QNw](https://youtu.be/0fxAl-e6QNw))
+33. **Sophisticated Savage** -- Les Baxter  ([youtu.be/tBDmq8Imdw0](https://youtu.be/tBDmq8Imdw0))
+34. **Kinkajou** -- Les Baxter  ([youtu.be/K_XMo9aWHGA](https://youtu.be/K_XMo9aWHGA))
+35. **Return to Paradise** -- Martin Denny  ([youtu.be/RXFPcbjSr-A](https://youtu.be/RXFPcbjSr-A))
+36. **Sim Sim** -- Arthur Lyman  ([youtu.be/0Xf9ijfz27Y](https://youtu.be/0Xf9ijfz27Y))
+37. **Voodoo** -- Robert Drasnin  ([youtu.be/rN9HyY0ez3E](https://youtu.be/rN9HyY0ez3E))
+38. **White Goddess** -- Frank Hunter and His Orchestra  ([youtu.be/_OKwtVOcFCU](https://youtu.be/_OKwtVOcFCU))
+39. **Ouanalao** -- The Waitiki 7  ([youtu.be/6ynrPbpx09M](https://youtu.be/6ynrPbpx09M))
 
 ## CIRCUIT CRUSH -- 1688.0
 
@@ -787,7 +901,7 @@ Tracks (32):
 
 Ident tones (Hz): 587.3, 466.2, 698.5, 932.3
 
-Tracks (50):
+Tracks (58):
 
 1. **Nightcall** -- Kavinsky  ([youtu.be/ZVS6Q_lbKQ0](https://youtu.be/ZVS6Q_lbKQ0))
 2. **Sunset** -- The Midnight  ([youtu.be/URma_gu1aNE](https://youtu.be/URma_gu1aNE))
@@ -839,3 +953,11 @@ Tracks (50):
 48. **Interceptor** -- Mitch Murder  ([youtu.be/hugowO0sSrM](https://youtu.be/hugowO0sSrM))
 49. **Brokendate** -- Com Truise  ([youtu.be/dTkGNEl55Ug](https://youtu.be/dTkGNEl55Ug))
 50. **Sleepwalking** -- NINA  ([youtu.be/LITFNKqEz_U](https://youtu.be/LITFNKqEz_U))
+51. **Dark All Day** -- GUNSHIP  ([youtu.be/60ruvzfXQoE](https://youtu.be/60ruvzfXQoE))
+52. **Roadgame** -- Kavinsky  ([youtu.be/diMo5wx5ZZ4](https://youtu.be/diMo5wx5ZZ4))
+53. **Vampires** -- The Midnight  ([youtu.be/WklkvT1Hs-g](https://youtu.be/WklkvT1Hs-g))
+54. **Star Eater** -- Daniel Deluxe  ([youtu.be/13rZdTurLNo](https://youtu.be/13rZdTurLNo))
+55. **22:39** -- Danger  ([youtu.be/cznpPMomJXw](https://youtu.be/cznpPMomJXw))
+56. **Blood Dragon Theme** -- Power Glove  ([youtu.be/MEtdyn2QEzA](https://youtu.be/MEtdyn2QEzA))
+57. **Andromeda** -- Dance With The Dead  ([youtu.be/q3lpoGABH6A](https://youtu.be/q3lpoGABH6A))
+58. **Accelerated** -- Miami Nights 1984  ([youtu.be/-pfsRJ2n9WQ](https://youtu.be/-pfsRJ2n9WQ))
