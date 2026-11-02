@@ -299,6 +299,14 @@ export const STATIONS = [
       realTrack('GpBFOJ3R0M4', 'Only Happy When It Rains', 'Garbage'),
       realTrack('OGKRr0NmgFM', 'Plowed', 'Sponge'),
       realTrack('iuB1A2VJ3-k', 'Shine', 'Collective Soul'),
+      realTrack('XON5kVxHBYA', 'Bruise Violet', 'Babes in Toyland'),
+      realTrack('gMEB4HNNZ2I', 'Stars', 'Hum'),
+      realTrack('OrrE5bCA5lg', 'Somebody to Shove', 'Soul Asylum'),
+      realTrack('cPlgoNY2xqw', 'Comedown', 'Bush'),
+      realTrack('GS3dDQpSeAQ', 'Seven', 'Sunny Day Real Estate'),
+      realTrack('jKLiU7Hq93w', '50ft Queenie', 'PJ Harvey'),
+      realTrack('prij-gGXITk', 'Stardog Champion', 'Mother Love Bone'),
+      realTrack('NjNn4bbbgSw', 'Cumbersome', 'Seven Mary Three'),
     ] },
   // RELIC SIGNAL (classical, 219.8) retired 2026-08-21 (28th pass, per
   // the station-naming pass) -- its classical lane overlapped with
@@ -554,6 +562,13 @@ export const STATIONS = [
       realTrack('Z7JGPByPr8s', 'Parkway', 'Luxury Elite'),
       realTrack('z8KIa6tWoAE', 'Upscale', 'Luxury Elite'),
       realTrack('xJLcvKeVcFI', 'Crystal', 'Luxury Elite'),
+      realTrack('8GMI47qipEM', 'Just A Little More Shopping', 'PowerPCME'),
+      realTrack('6e0dJkZ7Wig', 'Bluelight specials going on now!', 'PowerPCME'),
+      realTrack('Z2u_Ok9irCk', 'Up Next', 'Luxury Elite'),
+      realTrack('puaPTW0DjqA', 'S.W.A.K.', 'Luxury Elite'),
+      realTrack('fh5TXDKnAro', 'Okinawa', 'Waterfront Dining'),
+      realTrack('vqKP2wqsAj0', 'Miami Wicked', 'Waterfront Dining'),
+      realTrack('9m7M6wpjuUU', 'Enter Through The Lobby', 'Disconscious'),
     ] },
   { id: 'cold-wave', band: 'ym', freq: 273.0, callsign: 'COLD WAVE', tagline: 'synthetic hearts, borrowed neon',
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
@@ -651,6 +666,13 @@ export const STATIONS = [
       realTrack('Ya1ySdk9Oao', 'Oh Yeah', 'Yello'),
       realTrack('qMpBobAonKs', 'Hold Me Now', 'Thompson Twins'),
       realTrack('rc6vowZjWOs', 'You Spin Me Round (Like a Record)', 'Dead Or Alive'),
+      realTrack('9cFzKPdImjo', 'Love Is a Stranger', 'Eurythmics'),
+      realTrack('GwvO97FbmW0', 'Duel', 'Propaganda'),
+      realTrack('AKBbMlp0nEA', 'Relax', 'Frankie Goes to Hollywood'),
+      realTrack('2azCuCWf63Q', 'Too Shy', 'Kajagoogoo'),
+      realTrack('AN40EWNZK8A', 'The Politics of Dancing', 'Re-Flex'),
+      realTrack('SzGJ13_KVOo', 'Dancing with Tears in My Eyes', 'Ultravox'),
+      realTrack('7SfuxmpLpO8', 'Love Action (I Believe in Love)', 'The Human League'),
     ] },
   // MOMENTUM (chillhop/downtempo focus, 567.8) retired 2026-08-24, replaced
   // with MIDNIGHT NEON -- late-night
@@ -885,6 +907,14 @@ export const STATIONS = [
       realTrack('gJYjbDnyx-o', 'Free Your Mind', 'Prospa & Cloonee'),
       realTrack('6dx013HIzCU', 'Temptation', 'SIDEPIECE'),
       realTrack('Fc0tcD9F4GU', 'Wassup', 'Wax Motif'),
+      realTrack('Y-iVeTyn7n0', 'Gimme That Bounce', 'Mau P'),
+      realTrack('5sgc8RJezrE', 'Saving Up', 'Dom Dolla'),
+      realTrack('DrO5TTpxO24', 'La Danza', 'John Summit'),
+      realTrack('nsmvBR37xps', 'A Drug From God', 'Chris Lake & NPC'),
+      realTrack('EsR0RaLXnY0', 'Believe', 'Eli Brown'),
+      realTrack('NB95LaBYdsA', 'Different Side', 'Michael Bibi & KinAhau'),
+      realTrack('Mg1QHSrkRx0', 'Losing Control', 'Odd Mob & OMNOM'),
+      realTrack('6gq-MlQGkOY', 'Da Fonk', 'Mochakk'),
     ] },
 
   // 4 new stations added 2026-08-20, tracklists as given, all
@@ -1058,6 +1088,13 @@ export const STATIONS = [
       // Hirotaka Mori - Topic's Bomber is still the wrong artist.
       realTrack('-hkFL1WOJNo', 'Bomber', 'Tatsuro Yamashita'),
       realTrack('pSbzx-0wbs0', 'Two Call', 'Kaoru Akimoto'),
+      realTrack('PiYXAnB9J2U', 'Tasogare', 'Mai Yamane'),
+      realTrack('Wr66ohyVebs', 'Chuo Freeway', 'Yumi Matsutoya'),
+      realTrack('AbNHFFHt0xU', 'Carnaval', 'Taeko Onuki'),
+      realTrack('aef1j0PM3Sg', 'Love Was Really Gone', 'Makoto Matsushita'),
+      realTrack('q0IgLS10W34', 'Dramatic Rain', 'Junichi Inagaki'),
+      realTrack('-8WTumwpvmg', 'Windy Summer', 'Anri'),
+      realTrack('tcq2QmpxmSs', 'Baby Blue', 'Ginji Ito'),
     ] },
   // 22nd pass -- outlaw channel dropped completely, 9 channels being the
   // max for now. OUTLAW (freq 288.6, spaghetti-western/outlaw-country)
@@ -1190,6 +1227,14 @@ export const STATIONS = [
       realTrack('hugowO0sSrM', 'Interceptor', 'Mitch Murder'),
       realTrack('dTkGNEl55Ug', 'Brokendate', 'Com Truise'),
       realTrack('LITFNKqEz_U', 'Sleepwalking', 'NINA'),
+      realTrack('60ruvzfXQoE', 'Dark All Day', 'GUNSHIP'),
+      realTrack('diMo5wx5ZZ4', 'Roadgame', 'Kavinsky'),
+      realTrack('WklkvT1Hs-g', 'Vampires', 'The Midnight'),
+      realTrack('13rZdTurLNo', 'Star Eater', 'Daniel Deluxe'),
+      realTrack('cznpPMomJXw', '22:39', 'Danger'),
+      realTrack('MEtdyn2QEzA', 'Blood Dragon Theme', 'Power Glove'),
+      realTrack('q3lpoGABH6A', 'Andromeda', 'Dance With The Dead'),
+      realTrack('-pfsRJ2n9WQ', 'Accelerated', 'Miami Nights 1984'),
     ] },
   // 23rd pass: freq nudged 878.9 -> 854.9 -- stations 8 and 9 were too
   // close to each other. freqToCol() rounded 878.9 and HACKBACK's 893.7
@@ -1349,6 +1394,14 @@ export const STATIONS = [
       realTrack('4MGsEaDT8zE', 'Police Story', 'Black Flag'),
       realTrack('9ivNaKshsYE', 'Fuck Authority', 'Pennywise'),
       realTrack('sUli-Y0gZOs', 'Punk Rock Song', 'Bad Religion'),
+      realTrack('L0oeqAQ1qE8', 'Rebel Girl', 'Bikini Kill'),
+      realTrack('RQ8muwMQNbg', 'Merchandise', 'Fugazi'),
+      realTrack('WVMZUwFFJCc', 'Which Side Are You On?', 'Dropkick Murphys'),
+      realTrack('TDrHkGQgHvI', 'Unfuck the World', 'Prophets of Rage'),
+      realTrack('kqkGY9jsBOw', 'American Idiot', 'Green Day'),
+      realTrack('1k57HJ0SBEg', 'Franco Un-American', 'NOFX'),
+      realTrack('SoyusTUFdl0', 'John Wayne Was a Nazi', 'MDC'),
+      realTrack('2rozOOvrs4w', 'Religious Wars', 'Subhumans'),
     ] },
   { id: 'atomic', band: 'ym', freq: 529.0, callsign: 'ATOMIC', tagline: 'atomic swing, radioactive nostalgia', // 19th pass: trimmed
     // 32nd pass: guide's per-station detail page (see drawGuidePageStation).
@@ -1489,6 +1542,14 @@ export const STATIONS = [
       realTrack('a2FeSEiXaR0', 'Easy Living', 'Billie Holiday'),
       realTrack('B2DkxG6-Pko', 'Mighty Mighty Man', 'Roy Brown'),
       realTrack('hOEAGZZoq7w', 'Dear Hearts and Gentle People', 'Bob Crosby and the Bobcats'),
+      realTrack('L0OH5I62tgo', 'A Wonderful Guy', 'Tex Beneke'),
+      realTrack('el_dGzqvIgw', 'Ac-Cent-Tchu-Ate the Positive', 'Bing Crosby & The Andrews Sisters'),
+      realTrack('xwQPsihhngM', 'Happy Times', 'Bob Crosby and the Bobcats'),
+      realTrack('IYM7y7QY0l0', "He's a Demon, He's a Devil, He's a Doll", 'Betty Hutton'),
+      realTrack('52-nTVaG2gA', 'One More Tomorrow', 'Frankie Carle'),
+      realTrack('pUDv3h09VBc', 'Worry Worry Worry', 'The Three Suns'),
+      realTrack('FtaGfixdATM', 'Undecided', 'Ella Fitzgerald & Chick Webb'),
+      realTrack('SiAk2Q4a0lA', 'Rocket 69', 'Todd Rhodes & Connee Allen'),
     ] },
   // 20th pass -- new channel added for 0 called Hackback, built around
   // artists like Tribe Called Quest, De La Soul, Slick Rick, OutKast, Wu
@@ -1666,6 +1727,14 @@ export const STATIONS = [
       // 247 countries, no flags.
       realTrack('e29ZR1MNOUA', 'Mistadobalina', 'Del the Funky Homosapien'),
       realTrack('cGwUE0V9Gqw', 'I Seen a Man Die', 'Scarface'),
+      realTrack('5QkEHUMmpyM', 'Have a Nice Day', 'Roxanne Shanté'),
+      realTrack('j8U6jdEgJeE', 'Fat Cats, Bigga Fish', 'The Coup'),
+      realTrack('EepXpfn2bj4', 'Tennessee', 'Arrested Development'),
+      realTrack('Kr0tTbTbmVA', 'Summertime', 'DJ Jazzy Jeff & The Fresh Prince'),
+      realTrack('obD-4HRfk4I', 'Make Room', 'Tha Alkaholiks'),
+      realTrack('h1vKOchATXs', 'My Philosophy', 'Boogie Down Productions'),
+      realTrack('ecsuf_MYrBY', 'Looking at the Front Door', 'Main Source'),
+      realTrack('ib9biVUc5EU', "Space Age Pimpin'", '8Ball & MJG'),
     ] },
   // 52nd pass -- stations 1, 6, and 9 needed similar short descriptions to
   // fit the format the others have. Was a bare two-word tagline; added
@@ -1893,6 +1962,13 @@ export const STATIONS = [
       realTrack('cFffoHmn8XA', 'Zion', 'Fluke'),
       realTrack('B99nd2iKGOw', 'Battleflag', 'Lo Fidelity Allstars'),
       realTrack('MSv3Oez4O-4', 'Ready Steady Go', 'Paul Oakenfold'),
+      realTrack('4QKi8DorEpM', 'Leave Home', 'The Chemical Brothers'),
+      realTrack('iullHn3Smzc', "Pearl's Girl", 'Underworld'),
+      realTrack('TEe5mpmKxW8', 'Radio Babylon', 'Meat Beat Manifesto'),
+      realTrack('p8QEMNgiwfY', 'Da Antidote', 'Stanton Warriors'),
+      realTrack('H6BEkPzstJQ', 'Born Too Slow', 'The Crystal Method'),
+      realTrack('8dPe_RrD_Ro', 'Zerotonine', 'Junkie XL'),
+      realTrack('62i8aS7Zy_0', 'Roll the Dice', 'Lunatic Calm'),
     ] },
   // THE CRYPT (2026-08-31) -- ZM's third resident and the first station
   // founded ON the second band rather than moved to it. From issue #52,
@@ -1979,6 +2055,14 @@ export const STATIONS = [
       realTrack('KLDjf0kuHF8', 'Moss Shod Battlements', 'Fief'),
       realTrack('O-fowRk_8Hw', 'The Knight of the Elves Blows His Horn', 'Fief'),
       realTrack('fgcAelgqRR8', 'Thorngrove', 'Old Tower'),
+      realTrack('MobljdsjRe0', "Night's Spell", 'Old Tower'),
+      realTrack('XjAzDmdy4Sc', 'Upon Her Sword the Sunlight Shone', 'Fief'),
+      realTrack('54GY9rVr6eo', 'Darkling Magic Winds', 'Old Tower'),
+      realTrack('QxHY04WtEFM', 'The Lakes Beneath the Lakes', 'Sequestered Keep'),
+      realTrack('Bdcgz-aACuw', 'Wizardwindwanderer', 'Sequestered Keep'),
+      realTrack('wC9ZJWCiSFk', 'Castle Garden (Of Fire and Frost)', 'Lord Lovidicus'),
+      realTrack('bAbv8Q-iTaI', 'The Dire Fortress Awaits Assailment', 'Lord Lovidicus'),
+      realTrack('FkTmPzBKO4o', 'Footpaths', 'Hole Dweller'),
     ] },
   // SLOW ORBIT (2026-09-01) -- ZM 1092.0. Ambient and downtempo: chillout with
   // a pulse. The brief said "beats and grooves" and that is the boundary, not
@@ -2055,6 +2139,14 @@ export const STATIONS = [
       realTrack('a9pqTHlPMXI', 'Beautiful Day', 'Fascinating Earthbound Objects'),
       realTrack('Ily1plRBESw', 'Venice Beach', 'Celeste Lear'),
       realTrack('zur8YJXlCQ4', 'Digitalis', 'Celeste Lear'),
+      realTrack('9J_7QwB5Syk', 'Suzuki', 'Tosca'),
+      realTrack('L-kyRh7N-kE', 'Kiara', 'Bonobo'),
+      realTrack('pkACVyU4PmA', 'Kong', 'Bonobo'),
+      realTrack('YUX8fUrKRNU', "La Femme d'Argent", 'Air'),
+      realTrack('IeZwLOoXW78', 'Polaris', 'Zero 7'),
+      realTrack('ba0BUnBtRsk', 'High Noon', 'Kruder & Dorfmeister'),
+      realTrack('imMzpILg6Lk', 'Shaolin Satellite', 'Thievery Corporation'),
+      realTrack('Uwz7QTk2hyk', 'Nights Interlude', 'Nightmares on Wax'),
     ] },
   // TRADEWINDS (2026-09-01) -- ZM 1559.0. Exotica and tiki lounge, played
   // straight rather than winked at: vibraphone, bird calls, hand drums.
@@ -2159,6 +2251,13 @@ export const STATIONS = [
       realTrack('c7UlDiP66GI', 'Sweet Pikake Serenade', 'The Waitiki 7'),
       realTrack('QAPpsWcozao', 'Ruby', 'The Waitiki 7'),
       realTrack('0fxAl-e6QNw', 'Jungle River Boat', 'Les Baxter'),
+      realTrack('tBDmq8Imdw0', 'Sophisticated Savage', 'Les Baxter'),
+      realTrack('K_XMo9aWHGA', 'Kinkajou', 'Les Baxter'),
+      realTrack('RXFPcbjSr-A', 'Return to Paradise', 'Martin Denny'),
+      realTrack('0Xf9ijfz27Y', 'Sim Sim', 'Arthur Lyman'),
+      realTrack('rN9HyY0ez3E', 'Voodoo', 'Robert Drasnin'),
+      realTrack('_OKwtVOcFCU', 'White Goddess', 'Frank Hunter and His Orchestra'),
+      realTrack('6ynrPbpx09M', 'Ouanalao', 'The Waitiki 7'),
     ] },
   // DRIFT MODE, BROUGHT BACK 2026-09-01, on ZM rather than the band it left.
   //
@@ -2266,6 +2365,14 @@ export const STATIONS = [
       realTrack('00Ipvqnk5is', 'Sore', 'Eluvium'),
       realTrack('ljypVwBF_e8', 'RH Negative', 'Rafael Anton Irisarri'),
       realTrack('nZyYcmK7a0I', 'Forever Ago is Now', 'Rafael Anton Irisarri'),
+      realTrack('jPMuZ5qhOJM', 'Structures from Silence', 'Steve Roach'),
+      realTrack('i-VOfzpXFDk', 'Clouds', 'Gigi Masin'),
+      realTrack('A9KldnpPkQI', 'Dungtitled (In A Major)', 'Stars of the Lid'),
+      realTrack('N-NDBd5rN3c', 'Water Copy', 'Hiroshi Yoshimura'),
+      realTrack('asCnBKb7vHI', 'Still Space', 'Satoshi Ashikawa'),
+      realTrack('mqU0XsELBCA', 'Abandon Window', 'Jon Hopkins'),
+      realTrack('aGTX3eDLow4', 'Perfumes III', 'Sarah Davachi'),
+      realTrack('qySCf2ovWJc', 'The Pearl', 'Harold Budd / Brian Eno'),
     ] },
   // AFTER HOURS (2026-09-13) -- ZM 1200.0. Late-night jazz: the small-group
   // records that sound like the last set in a half-empty club -- ballads,
@@ -2399,6 +2506,14 @@ export const STATIONS = [
       realTrack('7mOQxBen6wk', 'Darn That Dream', 'Art Farmer'),
       realTrack('xEvrZcBZbds', 'It Never Entered My Mind', 'Keith Jarrett'),
       realTrack('Ns4p9lVGYjc', 'La Mesha', 'Joe Henderson'),
+      realTrack('Wf02V8AtMag', 'Night Lights', 'Gerry Mulligan'),
+      realTrack('LXdOapA_lEo', 'Blue and Sentimental', 'Ike Quebec'),
+      realTrack('pPfP66z16Tk', 'Since I Fell for You', 'Stanley Turrentine & The Three Sounds'),
+      realTrack('5AhdgAcV0KM', 'In a Sentimental Mood', 'Duke Ellington & John Coltrane'),
+      realTrack('4C_hhw49fdQ', 'Love Theme from Spartacus', 'Yusef Lateef'),
+      realTrack('WQeN1bTDQLs', 'Left Alone', 'Mal Waldron'),
+      realTrack('vRgvGOmEDSU', 'Idle Moments', 'Grant Green'),
+      realTrack('qpbVRdPDYCM', 'Everything Happens to Me', 'Duke Jordan'),
     ] },
   // MIRRORBALL (2026-09-13) -- ZM 1054.0. Disco, boogie and funk, 1974-83:
   // four on the floor, a bass line you can walk on, strings and horns up top,
@@ -2532,6 +2647,13 @@ export const STATIONS = [
       realTrack('9C7rHWKc8x0', 'Instant Replay', 'Dan Hartman'),
       realTrack('T_3FY2kEdOI', "Ain't Nobody", 'Rufus and Chaka Khan'),
       realTrack('1xqMY8UAGgg', 'Fire', 'Ohio Players'),
+      realTrack('LS2PQs_IRNk', 'TSOP (The Sound of Philadelphia)', 'MFSB featuring The Three Degrees'),
+      realTrack('w3e8SXWjNg4', 'Shake Your Groove Thing', 'Peaches & Herb'),
+      realTrack('mykhgDJvp6g', 'Bad Luck', 'Harold Melvin & The Blue Notes'),
+      realTrack('Pbg66_KdJ5Q', 'Best of My Love', 'The Emotions'),
+      realTrack('7LJBmXkB9o8', 'We Are Family', 'Sister Sledge'),
+      realTrack('aK2-L2y25Bg', "Don't Stop the Music", 'Yarbrough & Peoples'),
+      realTrack('yvIQX_eDmN0', "Do It ('Til You're Satisfied)", 'B.T. Express'),
     ] },
 ]
 
