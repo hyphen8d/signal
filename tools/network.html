@@ -453,7 +453,127 @@
   /* Asked for less motion: every lamp is simply lit or not, the meter
      becomes a line count, and the key's fill steps rather than sweeps. The
      hold itself is unchanged -- it is the safety, not a decoration. */
+  /* ==== the rack (2026-11-02, visual pass) ===========================
+     Every tool panel is a rack unit and every station row a channel strip.
+     All of it is CSS gradients on the theme's own neutrals: the faceplate is
+     --panel lifted a step toward --line with a brushed grain at 1-2% white,
+     the screws are --ink-faint over --bg, the engraving is --ink-faint cut
+     into a --bg strip. No new hues -- the LEDs reuse the status colours, so
+     green/amber/red mean on a unit what they mean everywhere else here.
+     Readability first: the grain is below what you notice on text, and an
+     open unit's insides are a flat recessed well, not the textured face. */
+  :root {
+    --face-hi: #161d21; --face-lo: #0d1114;     /* --panel, a step up and down */
+    --screw: #66757f; --screw-rim: #1d252a;     /* --ink-faint family */
+    --engrave: #4d5c66;
+  }
+  .panel {
+    background:
+      /* One screw per rack ear, centred on the 1U head row -- two stacked
+         in a 42px head read as an "=" sign (first screenshot). */
+      linear-gradient(135deg, transparent 4.3px, #0b0f11 4.3px 5.7px, transparent 5.7px) left 6px top 15px / 10px 10px no-repeat,
+      linear-gradient(135deg, transparent 4.3px, #0b0f11 4.3px 5.7px, transparent 5.7px) right 6px top 15px / 10px 10px no-repeat,
+      radial-gradient(circle, var(--screw) 0 3px, var(--screw-rim) 3.5px 4.4px, transparent 4.9px) left 6px top 15px / 10px 10px no-repeat,
+      radial-gradient(circle, var(--screw) 0 3px, var(--screw-rim) 3.5px 4.4px, transparent 4.9px) right 6px top 15px / 10px 10px no-repeat,
+      repeating-linear-gradient(90deg, rgba(255,255,255,.016) 0 1px, transparent 1px 3px, rgba(0,0,0,.05) 3px 4px),
+      linear-gradient(180deg, var(--face-hi), var(--face-lo));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.6), 0 2px 5px rgba(0,0,0,.45);
+    transition: box-shadow .18s, transform .18s;
+  }
+  .panel-head { padding-left: 26px; padding-right: 26px; min-height: 42px; }
+  .panel-head:hover { background: rgba(255,255,255,.018); }
+  /* Pulled out of the rack: a deeper shadow under the face, and the body a
+     recessed well that slides down from behind it. */
+  .panel.open { box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.6); transform: translateX(-2px); }
+  .panel.open .panel-body { background: rgba(4,6,8,.62); box-shadow: inset 0 3px 8px rgba(0,0,0,.55); animation: unit-out .2s ease-out; margin: 0 22px 22px; border: 1px solid #12181b; border-radius: 2px; }
+  @keyframes unit-out { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .unit-tag {
+    font-size: 9px; letter-spacing: .2em; color: var(--engrave); white-space: nowrap;
+    background: #090c0e; border: 1px solid #1c2327; border-radius: 2px; padding: 2px 7px;
+    text-shadow: 0 1px 0 rgba(255,255,255,.07), 0 -1px 0 rgba(0,0,0,.9);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.8);
+  }
+  .led { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #1a2126; box-shadow: inset 0 1px 1px rgba(0,0,0,.8), 0 0 0 1px #0a0d0f; }
+  .led.ok { background: var(--green); box-shadow: 0 0 6px rgba(106,212,106,.65), 0 0 0 1px #0a0d0f; }
+  .led.warn { background: var(--amber); box-shadow: 0 0 6px rgba(232,184,74,.65), 0 0 0 1px #0a0d0f; }
+  .led.bad { background: var(--red); box-shadow: 0 0 7px rgba(232,96,74,.8), 0 0 0 1px #0a0d0f; }
+  .led.busy { background: var(--amber); box-shadow: 0 0 7px rgba(232,184,74,.8), 0 0 0 1px #0a0d0f; animation: lamp-blink .9s steps(2, jump-none) infinite; }
+  .led.air { background: var(--tally); box-shadow: 0 0 8px rgba(255,106,61,.8), 0 0 0 1px #0a0d0f; }
+  .led.dim { background: #2a4a2e; box-shadow: inset 0 1px 1px rgba(0,0,0,.6), 0 0 0 1px #0a0d0f; }
+
+  /* -- channel strips: the glyph as a backlit key, the dial position, the
+        track count as a short meter against the per-station ceiling. */
+  .glyph.keycap {
+    width: 24px; height: 22px; display: inline-grid; place-items: center; flex: none;
+    border: 1px solid #4a3d1c; border-radius: 3px; color: #ffd98a;
+    background: radial-gradient(circle at 50% 40%, rgba(232,184,74,.32), rgba(232,184,74,.07) 72%), #120f08;
+    text-shadow: 0 0 5px rgba(232,184,74,.9); box-shadow: inset 0 0 6px rgba(232,184,74,.22), 0 1px 0 rgba(0,0,0,.6);
+  }
+  .secret .glyph.keycap { color: #ffb3a6; border-color: #5a2a22; background: radial-gradient(circle at 50% 40%, rgba(232,96,74,.32), rgba(232,96,74,.07) 72%), #130a08; text-shadow: 0 0 5px rgba(232,96,74,.9); box-shadow: inset 0 0 6px rgba(232,96,74,.22); }
+  .posmark { position: relative; width: 56px; height: 12px; flex: none; }
+  .posmark::before { content: ''; position: absolute; left: 0; right: 0; bottom: 2px; height: 5px;
+    background: repeating-linear-gradient(90deg, var(--ink-faint) 0 1px, transparent 1px 7px) left bottom / 100% 3px no-repeat,
+                linear-gradient(var(--line), var(--line)) left bottom / 100% 1px no-repeat; }
+  .posmark i { position: absolute; bottom: 0; width: 2px; height: 11px; margin-left: -1px; background: var(--cyber); box-shadow: 0 0 4px rgba(107,199,255,.7); }
+  .trk-vu { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .trk-vu .segs { display: inline-flex; gap: 1px; }
+  .trk-vu .segs i { width: 3px; height: 9px; background: #182025; border-radius: 1px; }
+  .trk-vu .segs i.on { background: var(--ink-dim); }
+  .trk-vu.full .segs i.on { background: var(--amber); }
+
+  /* -- the jump bar's tuning dials: one per band, stations at their real
+        frequencies, a needle that travels to the one you jump to. */
+  .dial-wrap { display: inline-flex; align-items: flex-end; gap: 8px; margin-left: 10px; }
+  .dial { position: relative; width: 340px; height: 36px; flex: none;
+    background:
+      repeating-linear-gradient(90deg, var(--ink-faint) 0 1px, transparent 1px calc(100% / 16)) left bottom / 100% 4px no-repeat,
+      repeating-linear-gradient(90deg, var(--ink-dim) 0 1px, transparent 1px calc(100% / 8)) left bottom / calc(100% + 1px) 7px no-repeat,
+      linear-gradient(var(--line), var(--line)) left bottom 7px / 100% 1px no-repeat;
+  }
+  .dial .end { position: absolute; bottom: -1px; font-size: 8.5px; color: var(--ink-faint); transform: translateY(100%); }
+  .dial .end.lo { left: 0; } .dial .end.hi { right: 0; }
+  .dial-mark { position: absolute; bottom: 9px; width: 18px; margin-left: -9px; height: 27px; padding: 0; border: 0; background: none; border-radius: 2px;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 1px; cursor: pointer; font-family: var(--mono); }
+  .dial-mark .ab { font-size: 8.5px; line-height: 9px; color: var(--ink-dim); letter-spacing: 0; }
+  .dial-mark.hi .ab { margin-bottom: 9px; }
+  .dial-mark .pip { width: 6px; height: 6px; border-radius: 50%; background: #2b3a43; box-shadow: 0 0 0 1px #0a0d0f; }
+  .dial-mark:hover .ab, .dial-mark:focus-visible .ab { color: var(--ink); }
+  .dial-mark:hover .pip, .dial-mark:focus-visible .pip { background: var(--cyber); box-shadow: 0 0 5px rgba(107,199,255,.8); }
+  .dial-mark:hover:not(:disabled) { border: 0; }
+  .dial-mark.dirty .pip { background: var(--amber); } .dial-mark.dirty .ab { color: var(--amber); }
+  .dial-mark.flagged .pip { background: var(--red); box-shadow: 0 0 5px rgba(232,96,74,.8); } .dial-mark.flagged .ab { color: var(--red); }
+  .dial-needle { position: absolute; bottom: 0; height: 30px; width: 2px; margin-left: -1px; background: var(--cyber); box-shadow: 0 0 6px rgba(107,199,255,.75); transition: left .45s cubic-bezier(.3,.9,.3,1.05), opacity .3s; pointer-events: none; opacity: .9; }
+  .dial-needle.parked { opacity: .25; }
+  .dial-read { font-size: 10px; color: var(--cyber); min-width: 128px; white-space: nowrap; font-variant-numeric: tabular-nums; align-self: center; }
+  .dial-read .f { color: var(--ink-dim); }
+  .jump { align-items: flex-end; row-gap: 6px; padding-bottom: 12px; }
+  .jump-break { flex-basis: 100%; height: 0; }
+  .dial-wrap:first-of-type { margin-left: 0; }
+
+  /* -- seven-segment readouts: drawn segments, with the unlit ones ghosted
+        the way a real LED display shows its dark bars. Colour is
+        currentColor, so each readout keeps the token its text had. */
+  .seg { display: inline-block; vertical-align: -2px; line-height: 0; }
+  .seg svg { height: 100%; width: auto; display: block; overflow: visible; }
+  .seg polygon, .seg circle { fill: currentColor; }
+  .seg .off { opacity: .07; }
+  .seg.sm { height: 13px; } .seg.md { height: 15px; } .seg.lg { height: 22px; }
+  .seg.glow svg { filter: drop-shadow(0 0 3px currentColor); }
+  .clk-time .seg { color: var(--cyber); }
+  .totals .seg { color: var(--ink); margin-right: 3px; }
+  .conn-status .seg { color: var(--green); }
+
+  /* -- headers in the tube's own BOLD face (ter-u16b.bdf, the font
+        term.js draws BOLD cells with), 1:1 so every pixel lands on one. */
+  .bdf { display: inline-flex; align-items: center; color: inherit; position: relative; top: 2px; }
+  .bdf svg { height: 16px; width: auto; display: block; fill: currentColor; filter: drop-shadow(0 0 2px rgba(204,225,239,.18)); }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
   @media (prefers-reduced-motion: reduce) {
+    .panel, .panel.open { transition: none; transform: none; }
+    .panel.open .panel-body { animation: none; }
+    .led.busy { animation: none; }
+    .dial-needle { transition: none; }
     .onair.lit .lens, .tx-lamp.run .bulb { animation: none; }
     .onair .lens { transition: none; }
     .vu { display: none; }
@@ -954,7 +1074,11 @@ const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', '
 function tickClock() {
   const d = new Date()
   const p2 = (n) => String(n).padStart(2, '0')
-  document.getElementById('clk-time').textContent = `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`
+  // 2026-11-02 (visual pass) -- the time in seven segments, set in place.
+  const time = `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`
+  const clk = document.getElementById('clk-time')
+  if (!clk.seg) { clk.textContent = ''; clk.seg = segDisplay(time, 'lg', 'glow'); clk.appendChild(clk.seg) }
+  else clk.seg.set(time)
   document.getElementById('clk-date').textContent = `${DAYS[d.getDay()]} ${p2(d.getDate())} ${MONTHS[d.getMonth()]}`
   const s = d.getSeconds()
   clockDots.forEach((c, i) => c.classList.toggle('on', i <= s))
@@ -963,7 +1087,9 @@ function tickClock() {
   // the second rather than up to a second late.
   setTimeout(tickClock, 1000 - (Date.now() % 1000) + 5)
 }
-tickClock()
+// First tick deferred: it draws segments, whose geometry consts are
+// declared further down this module and are not initialised yet here.
+setTimeout(tickClock, 0)
 
 // "last tx": the newest stamp commit on HEAD (bootState's lastTransmission).
 function renderLastTx() {
@@ -1116,6 +1242,7 @@ function streamObserver(path, body) {
   const id = meterOpen(streamLabel(path, body))
   const isSuiteTask = path === 'run' && body?.task === 'test'
   if (isSuiteTask) suiteBegin()
+  unitBusy(path, +1)
   return {
     event(ev) {
       meterFeed(ev)
@@ -1129,13 +1256,299 @@ function streamObserver(path, body) {
         // Exit codes mean "it failed" only for these three; audition and a
         // health batch exit nonzero to report findings, which is data.
         if (CUED_STREAMS.has(path)) cue(ev.code === 0 ? (path === 'ship' ? 'signon' : 'confirm') : 'fail')
+        if (path === 'run' || path === 'preflight') { unitState.ops = ev.code === 0 ? 'ok' : 'bad'; paintLeds() }
       }
     },
     refused() { if (CUED_STREAMS.has(path)) cue('fail') },
     // A stream that ends with its suite still counting was cut off: drop
     // the count rather than let it stand as a reference.
-    close() { meter.suite = null; meterClose(id) },
+    close() { meter.suite = null; meterClose(id); unitBusy(path, -1) },
   }
+}
+
+// =====================================================================
+// THE RACK (2026-11-02, visual pass)
+// =====================================================================
+// The control room's furniture: tool panels as numbered rack units with a
+// status LED each, station rows as channel strips, a tuning dial per band
+// in the jump bar, seven-segment readouts, and panel headers drawn in the
+// tube's own bitmap face. Purely visual -- nothing here decides anything;
+// each LED reads state some other part of the page already holds.
+
+// ---- seven-segment readouts -------------------------------------------
+// Drawn, not a webfont: each digit is seven hexagonal bars in a 12x22 cell,
+// with the unlit bars ghosted. The wrapper carries role=img and the plain
+// value as its aria-label, so a screen reader hears "2026-11-02.3", not
+// seven polygons.
+const SEG_ON = {
+  0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc', 5: 'afgcd', 6: 'afgedc',
+  7: 'abc', 8: 'abcdefg', 9: 'abcdfg', '-': 'g', ' ': '',
+}
+const SEG_T = 2.6
+const hBar = (x1, x2, cy) => { const h = SEG_T / 2; return `${x1},${cy} ${x1 + h},${cy - h} ${x2 - h},${cy - h} ${x2},${cy} ${x2 - h},${cy + h} ${x1 + h},${cy + h}` }
+const vBar = (cx, y1, y2) => { const h = SEG_T / 2; return `${cx},${y1} ${cx + h},${y1 + h} ${cx + h},${y2 - h} ${cx},${y2} ${cx - h},${y2 - h} ${cx - h},${y1 + h}` }
+const SEG_GEOM = {
+  a: hBar(2.4, 9.6, 1.4), g: hBar(2.4, 9.6, 11), d: hBar(2.4, 9.6, 20.6),
+  f: vBar(1.4, 2.2, 10.4), b: vBar(10.6, 2.2, 10.4),
+  e: vBar(1.4, 11.6, 19.8), c: vBar(10.6, 11.6, 19.8),
+}
+const SVGNS = 'http://www.w3.org/2000/svg'
+const svgEl = (tag, attrs) => { const e = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v); return e }
+/** A seven-segment readout. size: 'sm' | 'md' | 'lg'. Returns the element,
+ *  with .set(text) to change it in place (the clock calls it every second). */
+function segDisplay(text, size = 'md', extra = '') {
+  const wrap = document.createElement('span')
+  wrap.className = `seg ${size} ${extra}`.trim()
+  wrap.setAttribute('role', 'img')
+  let shape = null
+  let bars = []
+  const build = (t) => {
+    wrap.textContent = ''
+    bars = []
+    const svg = svgEl('svg', {})
+    const g = svgEl('g', { transform: 'skewX(-6)' })
+    let x = 2
+    for (const ch of t) {
+      if (ch === ':' || ch === '.') {
+        if (ch === ':') { g.appendChild(svgEl('circle', { cx: x + 1.8, cy: 7, r: 1.4 })); g.appendChild(svgEl('circle', { cx: x + 1.8, cy: 15, r: 1.4 })) }
+        else g.appendChild(svgEl('circle', { cx: x + 1.4, cy: 20.4, r: 1.4 }))
+        bars.push(null)
+        x += ch === ':' ? 5 : 4
+        continue
+      }
+      const cell = {}
+      for (const [k, pts] of Object.entries(SEG_GEOM)) {
+        const p = svgEl('polygon', { points: pts, transform: `translate(${x} 0)` })
+        g.appendChild(p)
+        cell[k] = p
+      }
+      bars.push(cell)
+      x += 14
+    }
+    svg.setAttribute('viewBox', `0 0 ${x + 1} 22`)
+    svg.appendChild(g)
+    wrap.appendChild(svg)
+  }
+  wrap.set = (raw) => {
+    const t = String(raw)
+    wrap.setAttribute('aria-label', t)
+    const s = [...t].map((c) => (c === ':' || c === '.') ? c : '8').join('')
+    if (s !== shape) { shape = s; build(t) }
+    ;[...t].forEach((ch, i) => {
+      const cell = bars[i]
+      if (!cell) return
+      const on = SEG_ON[ch] ?? ''
+      for (const [k, p] of Object.entries(cell)) p.setAttribute('class', on.includes(k) ? '' : 'off')
+    })
+  }
+  wrap.set(text)
+  return wrap
+}
+
+// ---- the tube's bitmap face --------------------------------------------
+// Panel headers in ter-u16b.bdf -- the face term.js draws BOLD cells with --
+// parsed by the app's own src/bdf.js and drawn the way the wordmark is: one
+// <path> of 1x1 runs, crispEdges, at 1:1 so a font pixel is a screen pixel.
+// The real text sits beside it in an .sr-only span, so it is still read,
+// found by Ctrl+F and copied as text. Until the font loads (or if it never
+// does) a header is plain text, which is exactly what it was before.
+let tubeFont = null
+async function loadTubeFont() {
+  try {
+    const [{ parseBDF }, res] = await Promise.all([import('/src/bdf.js'), fetch('/fonts/ter-u16b.bdf')])
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    tubeFont = parseBDF(await res.text())
+  } catch (e) { tubeFont = null }
+}
+const bdfCache = new Map()
+function bdfLabel(text) {
+  const t = String(text ?? '')
+  const wrap = document.createElement('span')
+  wrap.className = 'bdf'
+  if (!tubeFont) { wrap.textContent = t; return wrap }
+  let d = bdfCache.get(t)
+  const { glyphs, cellW, cellH } = tubeFont
+  if (d == null) {
+    const parts = []
+    ;[...t].forEach((ch, i) => {
+      const rows = glyphs.get(ch.codePointAt(0)) || glyphs.get(63)
+      if (!rows) return
+      for (let y = 0; y < cellH; y++) {
+        let x = 0
+        while (x < cellW) {
+          if (!((rows[y] >> (cellW - 1 - x)) & 1)) { x++; continue }
+          const x0 = x
+          while (x < cellW && ((rows[y] >> (cellW - 1 - x)) & 1)) x++
+          parts.push(`M${i * cellW + x0} ${y}h${x - x0}v1h${x0 - x}z`)
+        }
+      }
+    })
+    d = parts.join('')
+    bdfCache.set(t, d)
+  }
+  // Rows 2..14 hold every capital and descender this face draws; cropping
+  // the empty top and bottom keeps the header's line box tight.
+  const svg = svgEl('svg', { viewBox: `0 2 ${[...t].length * cellW} ${cellH - 3}`, 'shape-rendering': 'crispEdges', 'aria-hidden': 'true', style: `height:${cellH - 3}px` })
+  svg.appendChild(svgEl('path', { d }))
+  wrap.appendChild(el('span', { class: 'sr-only' }, t))
+  wrap.appendChild(svg)
+  return wrap
+}
+
+// ---- rack units ---------------------------------------------------------
+// Numbered in page order. The LED says one thing per unit, from state the
+// page already holds: busy (amber, blinking) while a stream from that unit
+// runs, then the unit's own verdict.
+const UNITS = ['panel-ops', 'panel-deploy', 'panel-audition', 'panel-pending', 'panel-overlaps', 'panel-voice', 'panel-health']
+const STREAM_UNIT = { run: 'panel-ops', preflight: 'panel-ops', ship: 'panel-deploy', audition: 'panel-audition', health: 'panel-health' }
+const unitBusyCount = {}
+const unitState = { ops: null, deploy: null }
+function unitBusy(path, delta) {
+  const u = STREAM_UNIT[path]
+  if (!u) return
+  unitBusyCount[u] = Math.max(0, (unitBusyCount[u] || 0) + delta)
+  paintLeds()
+}
+function dressUnits() {
+  UNITS.forEach((id, i) => {
+    const head = document.querySelector(`#${id} > .panel-head`)
+    if (!head || head.querySelector('.unit-tag')) return
+    const title = head.querySelector('.callsign')
+    const name = title.textContent
+    head.prepend(el('span', { class: 'led', 'data-led': id, 'aria-hidden': 'true' }),
+      el('span', { class: 'unit-tag', 'aria-hidden': 'true' }, `UNIT ${String(i + 1).padStart(2, '0')}`))
+    title.textContent = ''
+    title.appendChild(bdfLabel(name))
+  })
+}
+/** [class, title] for a unit's LED. */
+function ledFor(id) {
+  if (unitBusyCount[id]) return id === 'panel-deploy' ? ['air', 'transmitting'] : ['busy', 'running']
+  if (id === 'panel-ops') return unitState.ops === 'ok' ? ['ok', 'last run passed'] : unitState.ops === 'bad' ? ['bad', 'last run failed'] : ['', 'nothing run yet']
+  if (id === 'panel-deploy') {
+    if (tx.verdict?.cls === 'offair') return ['bad', 'the last SHIP stopped']
+    return tx.ready === 'ok' ? ['ok', 'TX READY'] : tx.ready === 'blocked' ? ['warn', 'TX BLOCKED'] : ['', 'readiness not checked']
+  }
+  if (id === 'panel-audition') return audResult?.unverified || audResult?.searchFailures?.length ? ['warn', 'the last run was incomplete'] : ['', '']
+  if (id === 'panel-pending') return pendingData?.pending?.length ? ['warn', `${pendingData.pending.length} waiting`] : ['', 'queue empty']
+  if (id === 'panel-overlaps') return roster?.dupeIds?.length ? ['bad', 'duplicate track ids'] : ['dim', 'no duplicates']
+  if (id === 'panel-health') {
+    if (healthError) return ['bad', 'record could not be read']
+    if (!health) return ['', 'loading']
+    const flagged = health.flagged || []
+    if (flagged.some((f) => f.confirmed !== false)) return ['bad', 'confirmed findings']
+    if (flagged.length) return ['warn', 'unconfirmed findings']
+    return ['ok', 'nothing flagged']
+  }
+  return ['', '']
+}
+function paintLeds() {
+  for (const led of document.querySelectorAll('[data-led]')) {
+    const [cls, why] = ledFor(led.dataset.led)
+    led.className = 'led ' + cls
+    led.title = why
+  }
+}
+
+// ---- channel strips -------------------------------------------------------
+let bandTable = null       // tuning.js BANDS, loaded once at connect
+async function loadBands() {
+  // '?v=' for the module-identity reason sfx.js has it: the same URL any
+  // other import of tuning.js on this page would use. tuning.js reaches a
+  // browser cleanly (layout.js, stations.js -- both pure).
+  try { bandTable = (await import('/tuning.js?v=')).BANDS } catch (e) { bandTable = null }
+}
+const bandOf = (st) => bandTable?.find((b) => b.key === (st.band || 'ym'))
+const dialPct = (band, f) => Math.max(0, Math.min(100, (f - band.freqMin) / (band.freqMax - band.freqMin) * 100))
+function posMark(st) {
+  const band = bandOf(st)
+  if (!band || st.secret) return el('span', { class: 'posmark', 'aria-hidden': 'true', style: 'visibility:hidden' })
+  const f = Number(fieldValue(st, 'freq'))
+  return el('span', { class: 'posmark', title: `${f.toFixed(1)} on ${band.label} (${band.freqMin}–${band.freqMax})`, 'aria-hidden': 'true' },
+    el('i', { style: `left:${dialPct(band, f)}%` }))
+}
+// The ceiling is lint's (MAX_TRACKS_PER_STATION, sent in /api/state's
+// limits); twelve segments of it. Amber only AT the ceiling -- a station
+// near it is not a problem, and a meter that went red for most of the
+// roster would be wallpaper.
+function trackMeter(n) {
+  const max = boot?.limits?.MAX_TRACKS_PER_STATION
+  if (!max) return el('span', { class: 'badge' }, `${n} trk`)
+  const SEGS = 12
+  const lit = Math.min(SEGS, Math.round(n / max * SEGS))
+  const segs = el('span', { class: 'segs' })
+  for (let i = 0; i < SEGS; i++) segs.appendChild(el('i', { class: i < lit ? 'on' : '' }))
+  return el('span', { class: 'trk-vu' + (n >= max ? ' full' : ''), title: `${n} of the ${max}-track ceiling` }, segs, `${n} trk`)
+}
+
+// ---- the tuning dials ---------------------------------------------------
+// One per band, stations at their real frequencies from tuning.js's band
+// table. Markers are buttons -- focusable, Enter/Space jump, aria-labelled
+// with the callsign and frequency -- with their initials staggered on two
+// rows, because ZM has stations 23 kHz apart. The readout beside a dial
+// names the station under the pointer or focus, else the one the needle is on.
+const needleAt = {}        // band key -> station id
+function renderDials(bar, groups) {
+  for (const g of groups) {
+    if (g.label === 'secret' || !bandTable) {
+      bar.appendChild(el('span', { class: 'lbl', style: 'margin-left:8px' }, g.label))
+      for (const st of g.stations) bar.appendChild(stationChip(st))
+      continue
+    }
+    const band = bandOf(g.stations[0])
+    const dial = el('div', { class: 'dial', role: 'group', 'aria-label': `${band.label} band dial` },
+      el('span', { class: 'end lo' }, String(band.freqMin)), el('span', { class: 'end hi' }, String(band.freqMax)))
+    const read = el('span', { class: 'dial-read', 'aria-hidden': 'true' })
+    const showRead = (st) => {
+      read.textContent = ''
+      if (st) read.append(String(st.callsign), ' ', el('span', { class: 'f' }, Number(st.freq).toFixed(1)))
+      else read.append(el('span', { class: 'f' }, `${band.label} · ${g.stations.length} stations`))
+    }
+    const needle = el('span', { class: 'dial-needle' + (needleAt[band.key] ? '' : ' parked') })
+    const parkedSt = stationById(needleAt[band.key])
+    needle.style.left = parkedSt ? `${dialPct(band, parkedSt.freq)}%` : '0%'
+    g.stations.forEach((st, i) => {
+      const dirty = isDirty(st) || identDirty(st)
+      const flagged = stationHealth(st.id).confirmed
+      const abbr = st.callsign.split(' ').map((w) => w[0]).join('')
+      const m = el('button', {
+        class: 'dial-mark' + (i % 2 ? ' hi' : '') + (dirty ? ' dirty' : '') + (flagged ? ' flagged' : ''),
+        style: `left:${dialPct(band, st.freq)}%`,
+        'aria-label': `${st.callsign}, ${st.freq.toFixed(1)}${dirty ? ', unsaved changes' : ''}${flagged ? `, ${flagged} flagged` : ''}`,
+        title: `${st.callsign} — ${st.freq.toFixed(1)}${dirty ? ' — UNSAVED changes' : ''}${flagged ? ` — ${flagged} flagged track(s)` : ''}`,
+        onclick: () => openStation(st.id),
+      }, el('span', { class: 'ab' }, abbr), el('span', { class: 'pip' }))
+      for (const [on, fn] of [['mouseenter', () => showRead(st)], ['focus', () => showRead(st)],
+        ['mouseleave', () => showRead(stationById(needleAt[band.key]))], ['blur', () => showRead(stationById(needleAt[band.key]))]]) m.addEventListener(on, fn)
+      dial.appendChild(m)
+    })
+    dial.appendChild(needle)
+    showRead(parkedSt)
+    bar.appendChild(el('span', { class: 'dial-wrap' }, el('span', { class: 'lbl' }, band.label), dial, read))
+  }
+}
+function stationChip(st) {
+  const dirty = isDirty(st) || identDirty(st)
+  const flagged = stationHealth(st.id).confirmed
+  return el('button', {
+    class: 'chip' + (dirty ? ' dirty' : '') + (st.secret ? ' secret' : '') + (flagged ? ' flagged' : ''),
+    title: `${st.callsign}${st.secret ? ' (secret)' : ` — ${st.freq.toFixed(1)}`}${dirty ? ' — UNSAVED changes' : ''}${flagged ? ` — ${flagged} flagged track(s)` : ''}`,
+    onclick: () => openStation(st.id),
+  }, st.callsign.split(' ').map((w) => w[0]).join('') + (dirty ? ' •' : '') + (flagged ? ' !' : ''))
+}
+/** Swing the needle to a station: only the needle and the readout move, so
+ *  the CSS transition carries it rather than a re-render snapping it. */
+function swingNeedle(st) {
+  const band = !st.secret && bandOf(st)
+  if (!band) return
+  needleAt[band.key] = st.id
+  const dial = [...document.querySelectorAll('.dial')].find((d) => d.getAttribute('aria-label') === `${band.label} band dial`)
+  const needle = dial?.querySelector('.dial-needle')
+  if (!needle) return
+  needle.classList.remove('parked')
+  needle.style.left = `${dialPct(band, st.freq)}%`
+  const read = dial.parentElement.querySelector('.dial-read')
+  if (read) { read.textContent = ''; read.append(String(st.callsign), ' ', el('span', { class: 'f' }, Number(st.freq).toFixed(1))) }
 }
 
 // What each Node tool actually does, how long it takes, and whether it
@@ -1186,6 +1599,10 @@ async function connect() {
   roster = boot.roster
   pendingData = boot.pending
   programText = (await api('source').catch(() => null))?.text || ''
+  // 2026-11-02 (visual pass) -- the tube's font and the band table, both
+  // optional: a failure leaves plain-text headers and the old chips.
+  await Promise.all([loadTubeFont(), loadBands()])
+  dressUnits()
   document.getElementById('connect-screen').style.display = 'none'
   document.getElementById('app').style.display = 'block'
   render()
@@ -1203,7 +1620,7 @@ async function loadHealth() {
   healthError = null
   try { health = await api('health') }
   catch (e) { healthError = String(e.message ?? e) }
-  renderHealth(); renderStations(); renderJump()
+  renderHealth(); renderStations(); renderJump(); paintLeds()
 }
 // youtubeId -> the flagged-row summary for it, or nothing.
 const healthFor = (id) => health?.flagged?.find(f => f.youtubeId === id)
@@ -1217,8 +1634,12 @@ function render() {
   const t = roster.totals
   document.getElementById('topbar-actions').style.display = ''
   document.getElementById('jump').style.display = ''
-  document.getElementById('totals').innerHTML =
-    `<b>${t.stationCount}</b> stations &middot; <b>${t.trackCount}</b> tracks &middot; <b>${t.uniqueArtists}</b> unique artists`
+  // 2026-11-02 (visual pass) -- the three headline counts as segment
+  // readouts; each carries its plain value as an aria-label.
+  const totals = document.getElementById('totals')
+  totals.textContent = ''
+  totals.append(segDisplay(t.stationCount, 'md'), 'stations · ', segDisplay(t.trackCount, 'md'), 'tracks · ',
+    segDisplay(t.uniqueArtists, 'md'), 'unique artists')
   // The roster size appears in three other bits of copy. It used to be typed
   // into each of them, and had drifted to 432 against a real 386 -- the line
   // immediately above was right only because it is computed. All of them now
@@ -1238,6 +1659,7 @@ function render() {
   renderVoice()
   renderHealth()
   renderStations()
+  paintLeds()
 }
 
 // 11 station panels plus five tool panels is more than a screen, and the
@@ -1257,18 +1679,10 @@ function renderJump() {
       onclick: () => { const p = document.getElementById(id); p.classList.add('open'); p.scrollIntoView({ block: 'start' }) },
     }, label))
   }
-  for (const g of stationGroups()) {
-    bar.appendChild(el('span', { class: 'lbl', style: 'margin-left:8px' }, g.label))
-    for (const st of g.stations) {
-      const dirty = isDirty(st) || identDirty(st)
-      const flagged = stationHealth(st.id).confirmed
-      bar.appendChild(el('button', {
-        class: 'chip' + (dirty ? ' dirty' : '') + (st.secret ? ' secret' : '') + (flagged ? ' flagged' : ''),
-        title: `${st.callsign}${st.secret ? ' (secret)' : ` — ${st.freq.toFixed(1)}`}${dirty ? ' — UNSAVED changes' : ''}${flagged ? ` — ${flagged} flagged track(s)` : ''}`,
-        onclick: () => openStation(st.id),
-      }, st.callsign.split(' ').map(w => w[0]).join('') + (dirty ? ' •' : '') + (flagged ? ' !' : '')))
-    }
-  }
+  // 2026-11-02 (visual pass) -- the bands are tuning dials now; the secret
+  // stations, which sit on no dial, keep their chips. See renderDials().
+  bar.appendChild(el('span', { class: 'jump-break', 'aria-hidden': 'true' }))
+  renderDials(bar, stationGroups())
 }
 
 const identCue = (st) => cue('ident', { ident: fieldValue(st, 'ident'), identTempo: fieldValue(st, 'identTempo') })
@@ -1276,6 +1690,7 @@ function openStation(id) {
   const p = document.getElementById('panel-' + id)
   if (!p) return
   if (!p.classList.contains('open') && stationById(id)) identCue(stationById(id))
+  if (stationById(id)) swingNeedle(stationById(id))
   p.classList.add('open')
   p.scrollIntoView({ block: 'start' })
 }
@@ -1317,7 +1732,7 @@ function renderConnStatus() {
   // broadcasting also the most redundant. The build stamp and branch stay:
   // those are the two things you actually cannot see from anywhere else on
   // the page.
-  box.appendChild(el('span', {}, 'build ', el('b', {}, String(boot.build?.stamp ?? boot.build?.build ?? '—'))))
+  box.appendChild(el('span', {}, 'build ', segDisplay(String(boot.build?.stamp ?? boot.build?.build ?? '-'), 'md')))
   box.appendChild(el('span', {}, 'branch ', el('b', {}, String(g.branch))))
   if (g.dirty.length) box.appendChild(el('span', { class: 'warn' }, `${g.dirty.length} uncommitted file(s)`))
 }
@@ -1600,6 +2015,8 @@ function renderDeploy() {
     el('label', { class: 'save-msg', title: 'Adds the full oEmbed sweep before committing. Minutes.' },
       netBox, ' also verify every track (slow)'))
   api('ship-check').then((c) => {
+    tx.ready = c.blockers.length ? 'blocked' : 'ok'
+    paintLeds()
     if (!c.blockers.length) {
       paintReady('ok', 'TX READY', [`SHIP would go${c.behind === 0 ? ' — up to date with ' + (c.git.upstream || 'the remote') : ''}`])
     } else {
@@ -1616,7 +2033,7 @@ function renderDeploy() {
 // ---- the transmitter's state (2026-11-02, control room) ----------------
 // Module-level so a re-render of the Deploy panel mid-SHIP picks up where
 // the sequence is (see renderDeploy). `states` is task -> run|pass|fail.
-const tx = { running: false, includeNetwork: false, draft: '', states: {}, subs: {}, verdict: null, log: [] }
+const tx = { running: false, includeNetwork: false, draft: '', states: {}, subs: {}, verdict: null, log: [], ready: null }
 let txDom = null
 function paintTx() {
   if (!txDom) return
@@ -1634,6 +2051,7 @@ function paintTx() {
   // success refreshes the page), so without this it stayed fully lit with
   // its legend unreadable on the fill -- caught in the failure screenshot.
   else if (!key.classList.contains('holding')) { key.classList.remove('keyed'); key.style.setProperty('--hold', '0') }
+  paintLeds()
   cap.textContent = tx.running ? 'TRANSMITTING' : 'HOLD TO TRANSMIT'
   if (tx.running) txDom.hint.textContent = 'on air: the lamps follow the server\'s own steps; closing this tab cancels up to the commit, never after'
   else if (txDom.hint.textContent.startsWith('on air:')) txDom.hint.textContent = txDom.baseHint
@@ -1722,7 +2140,7 @@ function renderAudition() {
     try {
       await streamApi('audition', { stationId, searches, ids }, (ev) => {
         if (ev.type === 'result') { audResult = ev.result; if (ev.raw) logLine(console_, { type: 'err', text: ev.raw }) }
-        else if (ev.type === 'exit') renderAuditionResult(out, stationId)
+        else if (ev.type === 'exit') { renderAuditionResult(out, stationId); paintLeds() }
         else logLine(console_, ev)
       })
     } catch (e) { logLine(console_, { type: 'err', text: String(e.message ?? e) }) }
@@ -1985,6 +2403,7 @@ async function mapLimit(items, limit, fn) {
 }
 
 function renderPending() {
+  paintLeds()
   const summary = document.getElementById('pending-summary')
   const body = document.getElementById('pending-body')
   const n = pendingData.pending.length
@@ -2587,7 +3006,7 @@ function renderStations() {
 
 function badgeFor(st) {
   const s = st.stats
-  const b = [el('span', { class: 'badge' }, `${tracksFor(st).length} trk`), el('span', { class: 'badge' }, `${s.artistCount} art`)]
+  const b = [trackMeter(tracksFor(st).length), el('span', { class: 'badge' }, `${s.artistCount} art`)]
   // 2026-10-15 (dashboard UI) -- health first, and "tagline ok" only when it
   // is NOT: lint already guarantees it, so a green badge on all 18 stations
   // said nothing while a dead track on the station said nothing either.
@@ -2622,8 +3041,11 @@ function renderStationPanel(st) {
   },
     el('span', { class: 'chevron' }, '▶'),
     el('span', { class: 'freq' }, st.secret ? '(secret)' : Number(fieldValue(st, 'freq')).toFixed(1)),
-    el('span', { class: 'glyph' }, fieldValue(st, 'glyph') || (st.secret ? '●' : '·')),
-    el('span', { class: 'callsign' }, fieldValue(st, 'callsign')),
+    // 2026-11-02 (visual pass) -- a channel strip: where it sits on its
+    // band, its glyph as a backlit key, its callsign in the tube's face.
+    posMark(st),
+    el('span', { class: 'glyph keycap', 'aria-hidden': 'true' }, fieldValue(st, 'glyph') || (st.secret ? '●' : '·')),
+    el('span', { class: 'callsign' }, bdfLabel(fieldValue(st, 'callsign'))),
     el('span', { class: 'tagline' }, fieldValue(st, 'tagline') || ''),
     el('div', { class: 'badges' }, ...badgeFor(st)))
   const body = el('div', { class: 'panel-body' })

@@ -279,6 +279,12 @@ test reads off `ship()`) live in `tools/lib/control-room.mjs`, held by
 the `network-id.mp3` sign-on, imported as `/audio/sfx.js?v=` so the page
 shares voice.js's instance and AudioContext (a bare URL is a second
 instance). A top-bar toggle mutes it, default on.
+The same day's visual pass (rack units with status LEDs, channel strips,
+per-band tuning dials in the jump bar, seven-segment readouts, headers in
+`ter-u16b.bdf` through `src/bdf.js`) is presentation only. It reads
+`tuning.js`'s BANDS and lint's `MAX_TRACKS_PER_STATION` rather than
+restating them, and every bitmap or segment readout carries its plain text
+(`.sr-only` / `aria-label`).
 
 `tools/lib/roster.mjs` is the stations.js parse/patch layer, imported by BOTH
 the server and the page — which is why it has no `node:` imports at all. Add
